@@ -1,0 +1,9 @@
+# Temporary files
+*.sw[op]
+*~
+
+# Compiled files
+*.pyc
+
+# Virtual environment
+virtualenv/
