@@ -1,4 +1,4 @@
-""" PyShrunk - Rutgers University URL Shortener
+""" shrunk - Rutgers University URL Shortener
 
 Implements database-level interactions for the shrunk application.
 """
