@@ -3,6 +3,7 @@
 *~
 
 # Compiled files
+__pycache__
 *.pyc
 
 # Virtual environment
