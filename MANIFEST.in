@@ -1,0 +1,8 @@
+include README.*
+exclude pip.req
+exclude run-db.sh
+exclude FUTURE.md
+recursive-include shrunk *.py
+recursive-exclude test *.py
+recursive-exclude data *
+recursive-exclude virtualenv *

@@ -2,9 +2,11 @@
 *.sw[op]
 *~
 
-# Compiled files
+# Build artifacts and the lake
 __pycache__
 *.pyc
+dist/
+shrunk.egg-info/
 
 # Virtual environment
 virtualenv/
