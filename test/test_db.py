@@ -3,7 +3,7 @@
 Unit tests for the database.
 """
 
-from db import ShrunkClient
+from shrunk import ShrunkClient
 
 
 def get_shrunk_connection():
@@ -43,7 +43,7 @@ def test_visit():
 
     hits = 4
     for _ in range(0, hits):
-        shrunk.visit(short_url)
+        shrunk.visit(short_url, "127.0.0.1")
 
     assert shrunk.get_num_visits(short_url) == hits
     
