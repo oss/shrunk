@@ -93,7 +93,7 @@ class ShrunkClient(object):
         :Returns:
           A response in JSON detailing the effect of the database operations.
         """
-        db = self.mongo.shrunk_urls
+        db = self._mongo.shrunk_urls
         if netid is None:
             return {"nRemoved" : 0}
         else:
