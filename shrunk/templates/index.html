@@ -5,7 +5,7 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 
-	<title>Rutgers Shrunk</title>
+	<title>Rutgers shRUnk</title>
 
 	<!-- Latest compiled and minified CSS -->
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">	
@@ -41,118 +41,32 @@
 	</nav>
 	<div class="container">
 		<div class="links-box col-md-8 col-md-offset-2">
+		{% for link in links %}
 			<article class="link-group">
-				<a href="#" class="title">
-					HackRU	
+				<a href="{{ link.long_url }}" class="title">
+					{{ link.title }}
 				</a>
 				<div class="short-link">
-					http://rutge.rs/d3f38d
+					http://rutge.rs/{{ link.short_url }}
 				</div>
 				<div class="date">
-					Nov 19 2014
+					{{ unix2date(link.timeCreated) }}
 				</div>
 				<div class="bottom-row">
-					Views: 14
+					{{ link.visits }}
 				</div>
 			</article>
+		{% else %}
 			<article class="link-group">
 				<a href="#" class="title">
-					HackRU	
+					shRUnk
 				</a>
-				<div class="short-link">
-					http://rutge.rs/d3f38d
-				</div>
-				<div class="date">
-					Nov 19 2014
-				</div>
 				<div class="bottom-row">
-					Views: 14
+					The official Rutgers University URL shortener. Click "add
+					link" above to get started.
 				</div>
 			</article>
-			<article class="link-group">
-				<a href="#" class="title">
-					HackRU	
-				</a>
-				<div class="short-link">
-					http://rutge.rs/d3f38d
-				</div>
-				<div class="date">
-					Nov 19 2014
-				</div>
-				<div class="bottom-row">
-					Views: 14
-				</div>
-			</article>
-			<article class="link-group">
-				<a href="#" class="title">
-					HackRU	
-				</a>
-				<div class="short-link">
-					http://rutge.rs/d3f38d
-				</div>
-				<div class="date">
-					Nov 19 2014
-				</div>
-				<div class="bottom-row">
-					Views: 14
-				</div>
-			</article>
-			<article class="link-group">
-				<a href="#" class="title">
-					HackRU	
-				</a>
-				<div class="short-link">
-					http://rutge.rs/d3f38d
-				</div>
-				<div class="date">
-					Nov 19 2014
-				</div>
-				<div class="bottom-row">
-					Views: 14
-				</div>
-			</article>
-			<article class="link-group">
-				<a href="#" class="title">
-					HackRU	
-				</a>
-				<div class="short-link">
-					http://rutge.rs/d3f38d
-				</div>
-				<div class="date">
-					Nov 19 2014
-				</div>
-				<div class="bottom-row">
-					Views: 14
-				</div>
-			</article>
-			<article class="link-group">
-				<a href="#" class="title">
-					HackRU	
-				</a>
-				<div class="short-link">
-					http://rutge.rs/d3f38d
-				</div>
-				<div class="date">
-					Nov 19 2014
-				</div>
-				<div class="bottom-row">
-					Views: 14
-				</div>
-			</article>
-			<article class="link-group">
-				<a href="#" class="title">
-					HackRU	
-				</a>
-				<div class="short-link">
-					http://rutge.rs/d3f38d
-				</div>
-				<div class="date">
-					Nov 19 2014
-				</div>
-				<div class="bottom-row">
-					Views: 14
-				</div>
-			</article>
+		{% endfor %}
 		</div>
 
 	</div>	
