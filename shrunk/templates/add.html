@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block body %}
+  <form name="add_link" action="{{ url_for('add_link') }}" method="POST">
+	<label for="long_url">URL:</label>
+	<input type="text" name="long_url" id="long_url" />
+	<label for="title">Title:</label>
+	<input type="text" name="title" id="title" />
+	<label for="netid">NetID:</label>
+	<input type="text" name="netid" id="netid" />
+
+	<button type="submit">Shrink!</button>
+  </form>
+{% endblock %}
