@@ -8,6 +8,7 @@ from wtforms import Form, TextField, validators
 from flask import Flask, render_template, request, redirect
 from flask_login import LoginManager, login_required, current_user, logout_user
 from flask_auth import Auth
+from Flask import g
 
 from shrunk.client import ShrunkClient
 from shrunk.user import User, get_user, RULoginForm
@@ -32,22 +33,64 @@ login_manager.init_app(app)
 login_manager.login_view = '/login'
 
 
+### Helper Functions ###
+def formattime(datetime):
+    """Utility function for formatting datetimes.
+
+    This formats datetimes to look like "09/24/2015 - 20:14:00".
+    """
+    return datetime.strftime("%m/%d/%Y - %H/%M/%S")
+
+# Allows us to use the function in our templates
+app.jinja_env.globals.update(formattime=formattime)
+
+
 @login_manager.user_loader
 def load_user(userid):
     """Loads user object for login.
-    
+
     :Parameters:
       - `userid`: An id for the user (typically a NetID).
     """
     return User(userid)
 
 
+def render_login(**kwargs):
+    """Renders the login template.
+
+    Takes a WTForm in the keyword arguments.
+    """
+    return render_template('login.html', **kwargs)
+
+
+def login_success(user):
+    """Function executed on successful login.
+
+    Redirects the user to the homepage.
+
+    :Parameters:
+      - `user`: The user that has logged in.
+    """
+    return redirect('/')
+
+
+def get_dbclient():
+    """Gets a reference to a ShrunkClient for database operations."""
+    if g.client is None:
+        g.client = ShrunkClient(app.config["DB_HOST"], app.config["DB_PORT"])
+
+    return g.client
+
+
 ### Views ###
 @app.route("/")
 def render_index():
     """Renders the homepage."""
-    # TODO
-    pass
+    client = get_dbclient()
+    if current_user is not None:
+        links = client.get_urls(current_user)
+    return render_template("index.html", links=links)
+
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
@@ -80,21 +123,3 @@ def delete_link():
     pass
 
 
-### Helper Functions ###
-def render_login(**kwargs):
-    """Renders the login template.
-    
-    Takes a WTForm in the keyword arguments.
-    """
-    return render_template('login.html', **kwargs)
-
-
-def login_success(user):
-    """Function executed on successful login.
-
-    Redirects the user to the homepage.
-
-    :Parameters:
-      - `user`: The user that has logged in.
-    """
-    return redirect('/')

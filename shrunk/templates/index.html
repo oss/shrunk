@@ -8,8 +8,8 @@
 	<title>Rutgers shRUnk</title>
 
 	<!-- Latest compiled and minified CSS -->
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">	
-	<link rel="stylesheet" href="./shrunk.css">	
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+        <link rel="stylesheet" href="{{ url_for('static', filename='shrunk.css') }}">
 	<!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
 	<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
 	<!--[if lt IE 9]>
@@ -41,21 +41,45 @@
 
 		</div>
 	</nav>
+	{% if new_url and new_target_url %}
+	<div class="notification">
+		Successfully created <a href="{{ new_target-url }}">http://rutge.rs/{{ short_url }}</a>.
+	</div>
+	{% endif %}
+	{% if deleted_url %}
+	<div class="notification">
+		Successfully deleted http://rutge.rs/{{ deleted_url }}.
+	</div>
+	{% endif %}
 	<div class="container">
 		<div class="links-box col-md-8 col-md-offset-2">
 		{% for link in links %}
 			<article class="link-group">
-				<a href="{{ link.long_url }}" class="title">
-					{{ link.title }}
+				<a href="{{ link['url'] }}" class="title">
+					{% if link['title'] %}
+						{{ link['title'] }}
+					{% else %}
+						{{ link['_id'] ]}}
+					{% endif %}
 				</a>
 				<div class="short-link">
-					http://rutge.rs/{{ link.short_url }}
+					http://rutge.rs/{{ link['_id'] }}
 				</div>
 				<div class="date">
-					{{ unix2date(link.timeCreated) }}
+					{{ formattime(link['timeCreated']) }}
+				</div>
+				<div class="date">
+					{{ link['visits'] }}
 				</div>
 				<div class="bottom-row">
-					{{ link.visits }}
+					<form method="POST" action="/delete">
+						<input type="hidden" name="short_url" id="short_url" value="{{ link['_id'] }}" />
+						<button type="submit">Delete</button>
+					</form>
+					<form method="POST" action="/edit">
+						<input type="hidden" name="short_url" id="short_url" value="{{ link['_id'] }}" />
+						<button type="submit">Edit</button>
+					</form>
 				</div>
 			</article>
 		{% else %}
@@ -71,7 +95,7 @@
 		{% endfor %}
 		</div>
 
-	</div>	
+	</div>
 	<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 	<!-- Include all compiled plugins (below), or include individual files as needed -->
