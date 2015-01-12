@@ -1,0 +1,17 @@
+import os
+basedir = os.path.abspath(os.path.dirname(__file__))
+
+SECRET_KEY = ''
+
+AUTH = {
+    'methods': ['ldap', 'local'],
+    'ldap': {
+        'host': '',
+        'port': 123,
+        'uid': '',
+        'encryption': '',
+        'base_dn': '',
+        'bind_dn': '',
+        'bind_pass': '',
+    }
+}
