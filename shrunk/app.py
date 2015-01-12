@@ -9,7 +9,6 @@ from flask import Flask, render_template, request, redirect
 from flask_login import LoginManager, login_required, current_user, logout_user
 from flask_auth import Auth
 
-#import secrets
 from shrunk.client import ShrunkClient
 from shrunk.user import User, get_user, RULoginForm
 
@@ -17,11 +16,7 @@ from shrunk.user import User, get_user, RULoginForm
 # Create application
 app = Flask(__name__)
 
-# Default configuration can be overridden via SHRUNK_SETTINGS
-app.config.update({
-    "DB_HOST": "localhost",
-    "DB_PORT": 27017
-})
+# Import settings in config.py
 app.config.from_pyfile("config.py", silent=True)
 app.secret_key = app.config['SECRET_KEY']
 
@@ -36,25 +31,27 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = '/login'
 
+
 @login_manager.user_loader
 def load_user(userid):
-    """ Loads user object """
+    """Loads user object for login.
+    
+    :Parameters:
+      - `userid`: An id for the user (typically a NetID).
+    """
     return User(userid)
 
 
-####################################
-# Begin views
-####################################
-
+### Views ###
 @app.route("/")
 def render_index():
-    """ Renders the homepage. """
+    """Renders the homepage."""
     # TODO
     pass
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
-    """ Handles authentication. """
+    """Handles authentication."""
     a = Auth(app.config['AUTH'], get_user)
     return a.login(request, RULoginForm, render_login, login_success)
 
@@ -62,7 +59,7 @@ def login():
 @app.route("/logout")
 @login_required
 def logout():
-    """ Handles logging out """
+    """Handles logging out."""
     logout_user()
     return redirect('/')
 
@@ -70,30 +67,34 @@ def logout():
 @app.route("/add", methods=["GET", "POST"])
 @login_required
 def add_link():
-    """ Adds a new link for the current user. """
+    """Adds a new link for the current user."""
     #TODO
     pass
 
 
-@app.route("/delete", methods=["GET"])
+@app.route("/delete", methods=["GET", "POST"])
 @login_required
 def delete_link():
-    """ Deletes a link. """
+    """Deletes a link."""
     # TODO
     pass
 
-####################################
-# End views
-####################################
 
-
-# Helper functions
-
+### Helper Functions ###
 def render_login(**kwargs):
-    """ Renders the login template with wtform as kwargs """
+    """Renders the login template.
+    
+    Takes a WTForm in the keyword arguments.
+    """
     return render_template('login.html', **kwargs)
 
 
 def login_success(user):
-    """ Function to execute on successful login. Redirects to homepage """
+    """Function executed on successful login.
+
+    Redirects the user to the homepage.
+
+    :Parameters:
+      - `user`: The user that has logged in.
+    """
     return redirect('/')

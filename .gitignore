@@ -2,6 +2,9 @@
 *.sw[op]
 *~
 
+# Secrets
+shrunk/config.py
+
 # Build artifacts and the lake
 __pycache__
 *.pyc
