@@ -1,1 +1,11 @@
+Flask==0.10.1
+Flask-Auth==0.1
+Flask-Login==0.2.11
+Jinja2==2.7.3
+MarkupSafe==0.23
+WTForms==2.0.1
+Werkzeug==0.9.6
+itsdangerous==0.24
+pyasn1==0.1.7
 pymongo==2.7.2
+python3-ldap==0.9.7

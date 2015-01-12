@@ -1,0 +1,20 @@
+<div class='row'>
+    <div class='large-12 column'>	
+        <h2>Please log in using your netid and password to continue.</h2>
+    </div>
+</div>
+<hr />
+<div class='row'>
+    <div class='large-6 column'>	
+        <form method="post" action="" name="login">
+            {% for field in form %}
+                {{ field.label }}
+                <br />
+                {{ field }}
+                <br />
+                <br />
+            {% endfor %}
+            <input class='button round' type="submit" value="Submit" /><br />
+        </form>
+    </div>
+</div>
