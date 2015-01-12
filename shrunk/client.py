@@ -5,16 +5,24 @@ Implements database-level interactions for the shrunk application.
 import datetime
 import random
 import string
+import sys
 
 import pymongo
+
+
+class ShrunkDuplicateIdException(Exception):
+    """Raised when trying to add a duplicate key to the database."""
+    pass
 
 
 class ShrunkClient(object):
     """A class for database interactions."""
 
+    ALPHABET = string.digits + string.ascii_uppercase
+    """The alphabet used for encoding short urls."""
+
     def __init__(self, host=None, port=None):
-        """
-        Create a new client connection.
+        """Create a new client connection.
 
         This client uses MongoDB. No network traffic occurs until a data method
         is called.
@@ -27,30 +35,50 @@ class ShrunkClient(object):
         """
         self._mongo = pymongo.MongoClient(host, port)
 
-    def create_short_url(self, long_url, netid=None):
+    def create_short_url(self, long_url, short_url=None, netid=None, title=None):
         """Given a long URL, create a new short URL.
-        
+
         Randomly creates a new short URL and updates the Shrunk database.
 
         :Parameters:
           - `long_url`: The original URL to shrink.
+          - `short_url` (optional): A custom name for the short URL. A random
+            one is generated if none is specified.
           - `netid` (optional): The creator of this URL.
+          - `title` (optional): A descriptive title for this URL.
 
         :Returns:
-          The shortened URL, or None if an error occurs.
+          The shortened URL.
         """
-        short_url  = ShrunkClient._generate_unique_key()
+        custom_url = short_url is not None
         db = self._mongo.shrunk_urls
-
-        # Update MongoDB
-        db.urls.insert({
+        document = {
             "_id" : short_url,
             "url" : long_url,
-            "netid" : netid,
             "timeCreated" : datetime.datetime.now(),
             "visits" : 0
-        })
-        return short_url
+        }
+        if netid is not None:
+            document["netid"] = netid
+        if title is not None:
+            document["title"] = title
+
+        # Generate a unique key and update MongoDB
+        if custom_url:
+            try:
+                response = db.urls.insert(document)
+            except pymongo.errors.DuplicateKeyError:
+                raise ShrunkDuplicateIdException()
+        else:
+            response = None
+            while response is None:
+                try:
+                    document["_id"] = ShrunkClient._generate_unique_key()
+                    response = db.urls.insert(document)
+                except pymongo.errors.DuplicateKeyError:
+                        continue
+
+        return response
 
     def delete_url(self, short_url):
         """Given a short URL, delete it from the database.
@@ -168,10 +196,16 @@ class ShrunkClient(object):
           - `netid`: A Rutgers NetID
 
         :Returns:
-          A JSON-compatible Python dict containing a list of URLs.
+          A list containing JSON-compatible Python dicts representing the links
+          found. If the user has no links, then an empty list is returned.
         """
         db = self._mongo.shrunk_urls
-        return db.urls.find({"netid" : netid})
+        cursor = db.urls.find({"netid" : netid})
+        if cursor is None:
+            # Internal error?
+            return []
+        else:
+            return [result for result in cursor]
 
     def visit(self, short_url, source_ip):
         """Visits the given URL and logs visit information.
@@ -202,9 +236,26 @@ class ShrunkClient(object):
 
     @staticmethod
     def _generate_unique_key():
-        """Generates a unique key in the database."""
-        # TODO
-        length = random.choice(range(5, 10))
-        return "".join(
-                random.choice(string.ascii_uppercase + string.digits)
-                    for _ in range(length))
+        """Generates a unique key."""
+        return ShrunkClient._base_encode(random.randint(46700, sys.maxsize))
+
+    @staticmethod
+    def _base_encode(integer):
+        """Encodes an integer into our arbitrary link alphabet.
+
+        Given an integer, convert it to base-36. Letters are case-insensitive;
+        this function uses uppercase arbitrarily.
+
+        :Parameters:
+          - `integer`: An integer.
+
+        :Returns:
+          A string composed of characters from ShrunkClient.ALPHABET.
+          """
+        length = len(ShrunkClient.ALPHABET)
+        result = []
+        while integer != 0:
+            result.append(ShrunkClient.ALPHABET[integer % length])
+            integer /= length
+
+        return "".join(reversed(result))
