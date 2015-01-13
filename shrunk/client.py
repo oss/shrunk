@@ -5,7 +5,6 @@ Implements database-level interactions for the shrunk application.
 import datetime
 import random
 import string
-import sys
 
 import pymongo
 
@@ -20,6 +19,20 @@ class ShrunkClient(object):
 
     ALPHABET = string.digits + string.ascii_uppercase
     """The alphabet used for encoding short urls."""
+
+    URL_MIN = 46656
+    """The shortest allowable URL.
+
+    This is the value of '1000' in the URL base encoding. Guarantees that all
+    URLs are at least four characters long.
+    """
+
+    URL_MAX = 1218440915568415773
+    """The longest allowable URL.
+
+    This is the value of '999999999999' in the URL base encoding. Guarantees
+    that all URLs do not exceed twelve characters.
+    """
 
     def __init__(self, host=None, port=None):
         """Create a new client connection.
@@ -237,7 +250,8 @@ class ShrunkClient(object):
     @staticmethod
     def _generate_unique_key():
         """Generates a unique key."""
-        return ShrunkClient._base_encode(random.randint(46700, sys.maxsize))
+        return ShrunkClient._base_encode(
+                random.randint(ShrunkClient.URL_MIN, ShrunkClient.URL_MAX))
 
     @staticmethod
     def _base_encode(integer):
