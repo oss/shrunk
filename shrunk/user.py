@@ -13,6 +13,14 @@ class User(UserMixin):
         self.netid = netid
         self.id = netid
 
+    def __str__(self):
+      """Returns the NetID of this user."""
+      return self.netid
+
+    def __repr__(self):
+      """Returns the NetID of this user."""
+      return self.netid
+
 
 def get_user(fields):
     """Gets a user object from fields.
