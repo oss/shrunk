@@ -21,7 +21,7 @@
 	<nav class="navbar navbar-default navbar-fixed-top" role="navigation">
 		<div class="container">
 			<div class="navbar-header col-md-2">
-				<a class="navbar-brand" href="#">
+                                <a class="navbar-brand" href="/">
 					Rutgers
 				</a>
 			</div>
@@ -59,7 +59,7 @@
 					{% if link['title'] %}
 						{{ link['title'] }}
 					{% else %}
-						{{ link['_id'] ]}}
+						{{ link['_id'] }}
 					{% endif %}
 				</a>
 				<div class="short-link">
@@ -69,7 +69,7 @@
 					{{ formattime(link['timeCreated']) }}
 				</div>
 				<div class="date">
-					{{ link['visits'] }}
+					Visits: {{ link['visits'] }}
 				</div>
 				<div class="bottom-row">
 					<form method="POST" action="/delete">

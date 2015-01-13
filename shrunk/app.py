@@ -5,10 +5,9 @@ Sets up a Flask application for shRUnk.
 import logging
 
 from wtforms import Form, TextField, validators
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, g
 from flask_login import LoginManager, login_required, current_user, logout_user
 from flask_auth import Auth
-from Flask import g
 
 from shrunk.client import ShrunkClient
 from shrunk.user import User, get_user, RULoginForm
@@ -25,6 +24,7 @@ app.secret_key = app.config['SECRET_KEY']
 format = "%(levelname)s %(asctime)s: %(message)s [in %(pathname)s:%(lineno)d]"
 handler = logging.FileHandler("shrunk.log")
 handler.setLevel(logging.INFO)
+app.logger.addHandler(handler)
 handler.setFormatter(logging.Formatter(format))
 
 # Initialize login manager
@@ -39,7 +39,7 @@ def formattime(datetime):
 
     This formats datetimes to look like "09/24/2015 - 20:14:00".
     """
-    return datetime.strftime("%m/%d/%Y - %H/%M/%S")
+    return datetime.strftime("%m/%d/%Y - %H:%M:%S")
 
 # Allows us to use the function in our templates
 app.jinja_env.globals.update(formattime=formattime)
@@ -76,7 +76,7 @@ def login_success(user):
 
 def get_dbclient():
     """Gets a reference to a ShrunkClient for database operations."""
-    if g.client is None:
+    if not hasattr(g, "client"):
         g.client = ShrunkClient(app.config["DB_HOST"], app.config["DB_PORT"])
 
     return g.client
@@ -84,12 +84,18 @@ def get_dbclient():
 
 ### Views ###
 @app.route("/")
-def render_index():
+def render_index(**kwargs):
     """Renders the homepage."""
     client = get_dbclient()
-    if current_user is not None:
-        links = client.get_urls(current_user)
-    return render_template("index.html", links=links)
+
+    try:
+        links = client.get_urls(current_user.netid)
+        app.logger.info("Rendering index for user {}".format(current_user))
+    except AttributeError:
+        links = []
+        app.logger.info("Rendering index for anonymous user.")
+
+    return render_template("index.html", links=links, **kwargs)
 
 
 @app.route("/login", methods=['GET', 'POST'])
@@ -120,6 +126,17 @@ def add_link():
 def delete_link():
     """Deletes a link."""
     # TODO
+    client = get_dbclient()
+
+    # TODO Handle the response intelligently, or put that logic somewhere else
+    if request.method == "POST":
+        client.delete_url(request.form["short_url"])
+    return render_index(deleted_url=request.form["short_url"])
+
+
+@app.route("/edit", methods=["GET", "POST"])
+@login_required
+def edit_link():
+    """Edits a link."""
+    # TODO
     pass
-
-
