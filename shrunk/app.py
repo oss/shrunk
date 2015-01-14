@@ -4,13 +4,13 @@ Sets up a Flask application for shRUnk.
 """
 import logging
 
-from wtforms import Form, TextField, validators
 from flask import Flask, render_template, request, redirect, g
 from flask_login import LoginManager, login_required, current_user, logout_user
 from flask_auth import Auth
 
 from shrunk.client import ShrunkClient
 from shrunk.user import User, get_user, RULoginForm
+from shrunk.forms import LinkForm
 
 
 # Create application
@@ -24,8 +24,8 @@ app.secret_key = app.config['SECRET_KEY']
 format = "%(levelname)s %(asctime)s: %(message)s [in %(pathname)s:%(lineno)d]"
 handler = logging.FileHandler("shrunk.log")
 handler.setLevel(logging.INFO)
-app.logger.addHandler(handler)
 handler.setFormatter(logging.Formatter(format))
+app.logger.addHandler(handler)
 
 # Initialize login manager
 login_manager = LoginManager()
