@@ -117,15 +117,29 @@ def logout():
 @login_required
 def add_link():
     """Adds a new link for the current user."""
-    #TODO
-    pass
+    form = LinkForm(request.form)
+    if request.method == "POST" and form.validate():
+        # TODO Handle an error on db insert
+        kwargs = form.to_json()
+        response = get_dbclient().create_short_url(
+            netid=current_user.netid,
+            **kwargs
+        )
+        return render_index(new_url=response, new_target_url=kwargs["long_url"])
+
+    if not request.form:
+        form = LinkForm()
+    return render_template("link.html",
+                           netid=current_user.netid,
+                           action_header="Create a Link",
+                           action="add_link",
+                           submit_text="Shrink!",)
 
 
 @app.route("/delete", methods=["GET", "POST"])
 @login_required
 def delete_link():
     """Deletes a link."""
-    # TODO
     client = get_dbclient()
 
     # TODO Handle the response intelligently, or put that logic somewhere else

@@ -32,25 +32,27 @@
 						<input type="text" class="form-control" placeholder="Search">
 					</div>
 				</form>
-                                <form action="./add.html">
-                                  <button type="submit" class="btn btn-default navbar-btn navbar-left">Add Link</button>
-                                </action>
+				<form method="GET" action="{{ url_for('add_link') }}">
+				  <button type="submit" class="btn btn-default navbar-btn navbar-left">Add Link</button>
+				</form>
 
 				<button type="button" class="btn btn-default navbar-btn navbar-right">Menu</button>
 			</div>
 
 		</div>
 	</nav>
-	{% if new_url and new_target_url %}
-	<div class="notification">
-		Successfully created <a href="{{ new_target-url }}">http://rutge.rs/{{ short_url }}</a>.
+	<div class="container">
+	  {% if new_url and new_target_url %}
+	  <div class="alert-area">
+		  Successfully created <a href="{{ new_target_url }}">http://rutge.rs/{{ new_url }}</a>.
+	  </div>
+	  {% endif %}
+	  {% if deleted_url %}
+	  <div class="alert-area">
+		  Successfully deleted http://rutge.rs/{{ deleted_url }}.
+	  </div>
+	  {% endif %}
 	</div>
-	{% endif %}
-	{% if deleted_url %}
-	<div class="notification">
-		Successfully deleted http://rutge.rs/{{ deleted_url }}.
-	</div>
-	{% endif %}
 	<div class="container">
 		<div class="links-box col-md-8 col-md-offset-2">
 		{% for link in links %}
