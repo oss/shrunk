@@ -1,0 +1,3 @@
+var shrunk = shrunk || function() {
+	
+}
