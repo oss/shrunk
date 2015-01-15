@@ -27,11 +27,11 @@ class ShrunkClient(object):
     URLs are at least four characters long.
     """
 
-    URL_MAX = 1218440915568415773
+    URL_MAX = 2821109907455
     """The longest allowable URL.
 
-    This is the value of '999999999999' in the URL base encoding. Guarantees
-    that all URLs do not exceed twelve characters.
+    This is the value of 'zzzzzzzz' in the URL base encoding. Guarantees that
+    all URLs do not exceed eight characters.
     """
 
     def __init__(self, host=None, port=None):
@@ -213,7 +213,8 @@ class ShrunkClient(object):
           found. If the user has no links, then an empty list is returned.
         """
         db = self._mongo.shrunk_urls
-        cursor = db.urls.find({"netid" : netid})
+        cursor = db.urls.find({"netid" : netid},
+                              sort=[("timeCreated", pymongo.DESCENDING)])
         if cursor is None:
             # Internal error?
             return []

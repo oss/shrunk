@@ -37,9 +37,9 @@ login_manager.login_view = '/login'
 def formattime(datetime):
     """Utility function for formatting datetimes.
 
-    This formats datetimes to look like "09/24/2015 - 20:14:00".
+    This formats datetimes to look like "Nov 19 2015".
     """
-    return datetime.strftime("%m/%d/%Y - %H:%M:%S")
+    return datetime.strftime("%b %d %Y")
 
 # Allows us to use the function in our templates
 app.jinja_env.globals.update(formattime=formattime)
