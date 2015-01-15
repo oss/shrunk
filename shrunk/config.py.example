@@ -1,17 +1,34 @@
-import os
-basedir = os.path.abspath(os.path.dirname(__file__))
+""" shrunk - Rutgers University URL Shortener
 
-SECRET_KEY = ''
+Configuration options for shrunk. This is an example file; modify this and save
+it as config.py.
+"""
+
+DB_HOST = "localhost"
+"""The host machine for the database."""
+
+DB_PORT = 27017
+"""The database's port on the host machine."""
+
+SECRET_KEY = "something_secret"
+"""A secret key for Flask."""
+
+SHRUNK_URL = "http://shrunk.yourdomain.com"
+"""The public URL for shrunk."""
+
+LINKSERVER_URL = "http://shru.nk"
+"""The public URL for the link server."""
 
 AUTH = {
-    'methods': ['ldap', 'local'],
-    'ldap': {
-        'host': '',
-        'port': 123,
-        'uid': '',
-        'encryption': '',
-        'base_dn': '',
-        'bind_dn': '',
-        'bind_pass': '',
+    "methods": ["ldap"],
+    "ldap": {
+        "host": "ldap.yourdomain.com",
+        "port": 123,
+        "uid": "",
+        "encryption": "",
+        "base_dn": "",
+        "bind_dn": "",
+        "bind_pass": ""
     }
 }
+"""Authentication options for login."""
