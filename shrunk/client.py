@@ -218,7 +218,7 @@ class ShrunkClient(object):
             # Internal error?
             return []
         else:
-            return [result for result in cursor]
+            return list(cursor)
 
     def visit(self, short_url, source_ip):
         """Visits the given URL and logs visit information.
