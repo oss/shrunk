@@ -146,11 +146,3 @@ def delete_link():
     if request.method == "POST":
         client.delete_url(request.form["short_url"])
     return render_index(deleted_url=request.form["short_url"])
-
-
-@app.route("/edit", methods=["GET", "POST"])
-@login_required
-def edit_link():
-    """Edits a link."""
-    # TODO
-    pass
