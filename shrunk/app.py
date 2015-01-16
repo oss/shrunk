@@ -2,15 +2,13 @@
 
 Sets up a Flask application for shRUnk.
 """
-import logging
-
 from flask import Flask, render_template, request, redirect, g
 from flask_login import LoginManager, login_required, current_user, logout_user
 from flask_auth import Auth
 
-from shrunk.client import ShrunkClient
-from shrunk.user import User, get_user, RULoginForm
-from shrunk.forms import LinkForm
+from shrunk.forms import LinkForm, RULoginForm
+from shrunk.user import User, get_user
+from shrunk.util import get_db_client, set_logger, formattime
 
 
 # Create application
@@ -21,25 +19,12 @@ app.config.from_pyfile("config.py", silent=True)
 app.secret_key = app.config['SECRET_KEY']
 
 # Initialize logging
-format = "%(levelname)s %(asctime)s: %(message)s [in %(pathname)s:%(lineno)d]"
-handler = logging.FileHandler("shrunk.log")
-handler.setLevel(logging.INFO)
-handler.setFormatter(logging.Formatter(format))
-app.logger.addHandler(handler)
+set_logger(app)
 
 # Initialize login manager
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = '/login'
-
-
-### Helper Functions ###
-def formattime(datetime):
-    """Utility function for formatting datetimes.
-
-    This formats datetimes to look like "Nov 19 2015".
-    """
-    return datetime.strftime("%b %d %Y")
 
 # Allows us to use the function in our templates
 app.jinja_env.globals.update(formattime=formattime)
@@ -74,19 +59,11 @@ def login_success(user):
     return redirect('/')
 
 
-def get_dbclient():
-    """Gets a reference to a ShrunkClient for database operations."""
-    if not hasattr(g, "client"):
-        g.client = ShrunkClient(app.config["DB_HOST"], app.config["DB_PORT"])
-
-    return g.client
-
-
 ### Views ###
 @app.route("/")
 def render_index(**kwargs):
     """Renders the homepage."""
-    client = get_dbclient()
+    client = get_db_client(app, g)
 
     try:
         links = client.get_urls(current_user.netid)
@@ -118,10 +95,11 @@ def logout():
 def add_link():
     """Adds a new link for the current user."""
     form = LinkForm(request.form)
+    client = get_db_client(app, g)
     if request.method == "POST" and form.validate():
         # TODO Handle an error on db insert
         kwargs = form.to_json()
-        response = get_dbclient().create_short_url(
+        response = client.create_short_url(
             netid=current_user.netid,
             **kwargs
         )
@@ -140,7 +118,7 @@ def add_link():
 @login_required
 def delete_link():
     """Deletes a link."""
-    client = get_dbclient()
+    client = get_db_client(app, g)
 
     # TODO Handle the response intelligently, or put that logic somewhere else
     if request.method == "POST":

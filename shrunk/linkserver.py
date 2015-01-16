@@ -2,11 +2,10 @@
 
 Sets up a Flask application for the link server.
 """
-import logging
-
 from flask import Flask, render_template, request, redirect, g
 
 import shrunk.client
+import shrunk.util
 
 
 # Create application
@@ -17,19 +16,7 @@ app.config.from_pyfile("config.py", silent=True)
 app.secret_key = app.config['SECRET_KEY']
 
 # Initialize logging
-format = "%(levelname)s %(asctime)s: %(message)s [in %(pathname)s:%(lineno)d]"
-handler = logging.FileHandler("shrunk.log")
-handler.setLevel(logging.INFO)
-handler.setFormatter(logging.Formatter(format))
-app.logger.addHandler(handler)
-
-
-def get_dbclient():
-    """Gets a reference to a ShrunkClient for database operations."""
-    if not hasattr(g, "client"):
-        g.client = shrunk.client.ShrunkClient(app.config["DB_HOST"], app.config["DB_PORT"])
-
-    return g.client
+shrunk.util.set_logger(app)
 
 
 ### Views ###
@@ -44,7 +31,7 @@ def redirect_link(short_url):
     :Parameters:
       - `short_url`: A string containing a shrunk-ified URL.
     """
-    client = get_dbclient()
+    client = shrunk.util.get_db_client(app, g)
     app.logger.info("{} requests {}".format(request.remote_addr, short_url))
 
     # Perform a lookup and redirect

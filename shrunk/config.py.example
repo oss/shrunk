@@ -32,3 +32,9 @@ AUTH = {
     }
 }
 """Authentication options for login."""
+
+LOG_FORMAT = "%(levelname)s %(asctime)s: %(message)s [in %(pathname)s:%(lineno)d]"
+"""The format for the logger."""
+
+LOG_FILENAME = "shrunk.log"
+"""The name of the log file."""
