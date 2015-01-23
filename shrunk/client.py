@@ -248,6 +248,19 @@ class ShrunkClient(object):
             "time" : datetime.datetime.now()
         })
 
+    def is_blacklisted(self, netid):
+        """Finds if a user is blacklisted by checking the blacklist collection.
+        :Parameters:
+          - `netid`L A Rutgers NetID
+
+        :Returns
+          True if the user is in the blacklist collection, false otherwise.
+        """
+        db = self._mongo.shrunk_users
+        if db.blacklist.find_one({"netid" : netid}) is None:
+            return False
+        return True
+
     @staticmethod
     def _generate_unique_key():
         """Generates a unique key."""

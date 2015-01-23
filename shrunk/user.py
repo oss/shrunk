@@ -3,6 +3,9 @@
 User object used for authentication.
 """
 from flask_login import UserMixin
+from flask_auth import LoginForm
+from wtforms import TextField, PasswordField, validators
+from shrunk.client import ShrunkClient
 
 
 class User(UserMixin):
@@ -10,6 +13,10 @@ class User(UserMixin):
     def __init__(self, netid):
         self.netid = netid
         self.id = netid
+        self.client = ShrunkClient()
+
+    def is_active(self):
+        return not self.client.is_blacklisted(self.netid)
 
     def __str__(self):
       """Returns the NetID of this user."""

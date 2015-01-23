@@ -6,6 +6,9 @@
 <hr />
 <div class='row'>
     <div class='large-6 column'>	
+        {% if error %}
+            <p><b>Error:</b> {{ error }}</p>
+        {% endif %}
         <form method="post" action="" name="login">
             {% for field in form %}
                 {{ field.label }}
