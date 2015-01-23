@@ -41,10 +41,11 @@
 		<div class="tool-box col-xs-12 col-sm-2">
 			<div class="container">
 				<div class="netID">
-					netid123
+					<!-- TODO Handle the case when no one's logged in. -->
+					{{ current_user.netid }}
 				</div>
 				<div class="log-out">
-					<a href="#">Log out</a>
+					<a href="{{ url_for('logout') }}">Log out</a>
 				</div>
 				<div class="group-select">
 					<div class="btn-group">
@@ -61,42 +62,41 @@
 		</div>
 
 		<div class="links-box col-xs-12 col-sm-8 col-sm-offset-1">
-		{% for link in links %}
-			<article class="link-group">
-				<a href="{{ link['url'] }}" class="title">
-					{% if link['title'] %}
-						{{ link['title'] }}
-					{% else %}
-						{{ link['_id'] }}
-					{% endif %}
-				</a>
-				<div class="short-link">
-					http://rutge.rs/{{ link['_id'] }}
-				</div>
-				<div class="date">
-					{{ formattime(link['timeCreated']) }}
-				</div>
-				<div class="date">
-					Visits: {{ link['visits'] }}
-				</div>
-				<div class="bottom-row">
-					<form method="POST" action="/delete">
-						<input type="hidden" name="short_url" id="short_url" value="{{ link['_id'] }}" />
-						<button type="submit">Delete</button>
-					</form>
-				</div>
-			</article>
-		{% else %}
-			<article class="link-group">
-				<a href="#" class="title">
-					shRUnk
-				</a>
-				<div class="bottom-row">
-					The official Rutgers University URL shortener. Click "add
-					link" above to get started.
-				</div>
-			</article>
-		{% endfor %}
+			{% for link in links %}
+				<article class="link-group clearfix">
+					<div class="link-info">
+						<a href="{{ link['url'] }}" class="title">
+							{% if link['title'] %}
+								{{ link['title'] }}
+							{% else %}
+								{{ link['_id'] }}
+							{% endif %}
+						</a>
+						<div class="short-link">
+							<a href="http://rutge.rs/{{ link['_id'] }}">http://rutge.rs/{{ link['_id'] }}</a>
+						</div>
+						<div class="date">
+							{{ formattime(link['timeCreated']) }}
+						</div>
+						<div class="bottom-row">
+							Views: {{ link['visits'] }}
+						</div>
+					</div>
+					<div class="hover-controls">
+						<!-- TODO This won't work; we might need JavaScript. Also, get an image -->
+						<a href="{{ url_for('delete_link') }}">x</a>
+					</div>
+				</article>
+			{% else %}
+				<article class="link-group clearfix">
+					<a href="#" class="title">
+						shRUnk
+					</a>
+					<div class="bottom-row">
+						The official Rutgers University URL shortener. Use the navigation bar above to start adding links.
+					</div>
+				</article>
+			{% endfor %}
 		</div>
 
 	</div>
