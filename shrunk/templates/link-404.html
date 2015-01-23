@@ -31,23 +31,14 @@
 	</nav>
 	<div class="container">
 
-                {% if error %}
-                    <p><b>Error:</b> {{ error }}</p>
-                {% endif %}
-		<div class="login-box col-xs-12 col-sm-4 col-sm-offset-4">
-			<div class="hero">shrunk</div>
-			<div class="login-message">
-				Hi! Please log in to continue
+		<div class="not-found-box col-xs-12 col-sm-6 col-sm-offset-3">
+			<div class="hero">Not Found</div>
+			<div class="message">
+				Sorry, this link does not exist. Want to change that? 
 			</div>
-			<form class="login-form">
-				<div class="form-group">
-					<input type="netid" class="form-control" id="loginNetID" placeholder="Net ID">
-				</div>
-				<div class="form-group">
-					<input type="password" class="form-control" id="loginPassword" placeholder="Password">
-				</div>
-				<button type="submit" class="login-button btn btn-default">Log in</button>
-			</form>
+			<div class="message">
+				<a href="">Log in to Rutgers Shrunk</a> and shrink some URLs.
+			</div>
 		</div>
 	</div>  
 	<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
