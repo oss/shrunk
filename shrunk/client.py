@@ -284,6 +284,6 @@ class ShrunkClient(object):
         result = []
         while integer != 0:
             result.append(ShrunkClient.ALPHABET[integer % length])
-            integer /= length
+            integer //= length
 
         return "".join(reversed(result))
