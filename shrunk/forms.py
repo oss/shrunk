@@ -2,7 +2,7 @@
 
 Forms used for the application.
 """
-from wtforms import Form, TextField, PasswordField, validators
+from wtforms import Form, TextField, PasswordField, RadioField, validators
 from flask_auth import LoginForm
 
 import shrunk.filters as filters
@@ -30,3 +30,29 @@ class RULoginForm(LoginForm):
     username = TextField('Netid', validators=[validators.DataRequired()])
     password = PasswordField('Password',
             validators=[validators.DataRequired()])
+
+
+class BlacklistUserForm(Form):
+    """A WTForm for banning users. Accessible by admin only"""
+    netid = TextField('Netid', validators=[validators.DataRequired()])
+    action = RadioField('Action', choices=[('ban', 'Ban User'), ('allow',
+            'Unban User')], validators=[validators.DataRequired()],
+            default='ban')
+
+    def to_json(self):
+        """Exports the form's fields into a JSON-compatible dictionary."""
+        return {
+            "netid": self.netid.data,
+            "action": self.action.data
+        }
+
+class AddAdminForm(Form):
+    """A WTForm for adding new administrators. Accessible by admin only"""
+    netid = TextField('Netid', validators=[validators.DataRequired()])
+
+class BlockLinksForm(Form):
+    """ A WTForm for blocking unwanted urls. Accessible by admin only"""
+    link = TextField('Link', validators=[validators.DataRequired()])
+    action = RadioField('Action', choices=[('block', 'Block Url'), ('allow',
+            'Allow Url')], validators=[validators.DataRequired()],
+            default='block')

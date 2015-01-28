@@ -65,6 +65,13 @@ class ShrunkClient(object):
         """
         custom_url = short_url is not None
         db = self._mongo.shrunk_urls
+
+        #Check if url is blocked
+        base_url = long_url[(long_url.find("://") + 3):] #Strip protocol
+        base_url = base_url[: base_url.find("/")] # Strip path
+        if db.blocked_urls.find_one({"url" : { "$regex" : "%s*" % base_url }}):
+            return False
+
         document = {
             "_id" : short_url,
             "url" : long_url,
@@ -202,6 +209,28 @@ class ShrunkClient(object):
             # There were no values to unpack
             return None
 
+    def get_all_urls(self, filter_dict=None):
+        """Gets all the URLs created.
+        :Parameters:
+          - `filter_dict`: Mongo filter to be applied to the query
+
+        :Returns:
+          A list containing JSON-compatible Python dicts representing the links
+          found. If there are no links, then an empty list is returned.
+        """
+        db = self._mongo.shrunk_urls
+        if not filter_dict:
+            cursor = db.urls.find(sort=[("timeCreated", pymongo.DESCENDING)])
+        else:
+            cursor = db.urls.find(filter_dict,
+                                  sort=[("timeCreated", pymongo.DESCENDING)])
+        if cursor is None:
+            # Internal error?
+            return []
+        else:
+            return list(cursor)
+
+
     def get_urls(self, netid):
         """Gets all the URLs created by the given NetID.
         
@@ -212,14 +241,7 @@ class ShrunkClient(object):
           A list containing JSON-compatible Python dicts representing the links
           found. If the user has no links, then an empty list is returned.
         """
-        db = self._mongo.shrunk_urls
-        cursor = db.urls.find({"netid" : netid},
-                              sort=[("timeCreated", pymongo.DESCENDING)])
-        if cursor is None:
-            # Internal error?
-            return []
-        else:
-            return list(cursor)
+        return self.get_all_urls(filter_dict={'netid' : netid})
 
     def visit(self, short_url, source_ip):
         """Visits the given URL and logs visit information.
@@ -260,6 +282,99 @@ class ShrunkClient(object):
         if db.blacklist.find_one({"netid" : netid}) is None:
             return False
         return True
+
+    def blacklist_user(self, netid, banned_by):
+        """Adds a user to the blacklist collection.
+        :Parameters:
+            - `netid`: A Rutgers NetID.
+            - `banned_by`: The NetID of the administrator that banned this
+              person.
+        """
+        db = self._mongo.shrunk_users
+        if not self.is_blacklisted(netid):
+            return db.blacklist.insert({
+                'netid' : netid,
+                'banned_by' : [ banned_by ]
+            })
+        else:
+            update = {'$addToSet' : {'banned_by' : banned_by}}
+            return db.blacklist.update({'netid' : netid}, update, upsert=False,
+                    multi=False)
+
+    def allow_user(self, netid):
+        """Removes a user from the blacklist collection.
+        :Parameters:
+            - `netid`: A Rutgers NetID.
+        """
+        db = self._mongo.shrunk_users
+        if self.is_blacklisted:
+            db.blacklist.remove({'netid' : netid})
+            return True
+        return False
+
+    def is_admin(self, netid):
+        """ Finds if a user is an administrator by checking the administrators
+        collection.
+        :Parameters:
+          - `netid`: A Rutgers NetID.
+
+        :Returns:
+          True if the user is in the administrators collection, False
+          otherwise.
+        """
+        db = self._mongo.shrunk_users
+        if db.administrators.find_one({'netid' : netid}) is None:
+            return False
+        return True
+
+    def add_admin(self, netid, added_by):
+        """Adds a user to the administrators collection.
+        :Parameters:
+            - `netid`: A Rutgers NetID.
+            - `added_by`: The NetID of the administrator that added this
+              person.
+        """
+        db = self._mongo.shrunk_users
+        if not self.is_admin(netid):
+            return db.administrators.insert({"netid" : netid, "added_by" :
+                added_by})
+
+    def is_blocked(self, url):
+        """ Finds if a url is blocked by checking the blocked_urls collection.
+        :Parameters:
+          - `url`: The url to check.
+
+        :Returns:
+          True if the url is in the blocked_urls collection, False
+          otherwise.
+        """
+        db = self._mongo.shrunk_urls
+        if db.blocked_urls.find_one({'url' : url}) is None:
+            return False
+        return True
+
+    def block_link(self, url, blocked_by):
+        """Adds a link to the blocked_urls collection.
+        :Parameters:
+            - `url`: The url to block.
+            - `blocked_by`: A Rutgers NetID of the administrators that is doing
+              the blocking.
+        """
+        db = self._mongo.shrunk_urls
+        if not self.is_blocked(url):
+            res = db.blocked_urls.insert({'url' : url, 'blocked_by' : blocked_by})
+            # Find any urls that should be deleted
+            db.urls.remove({"url" : { "$regex" : url }})
+            return res
+
+    def allow_link(self, url):
+        """Removes a link from the blocked_urls collection.
+        :Parameters:
+            - `url`: The url to allow.
+        """
+        db = self._mongo.shrunk_urls
+        return db.blocked_urls.remove({'url' : { '$regex' : url }})
+
 
     @staticmethod
     def _generate_unique_key():

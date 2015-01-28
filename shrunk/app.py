@@ -6,8 +6,9 @@ from flask import Flask, render_template, request, redirect, g
 from flask_login import LoginManager, login_required, current_user, logout_user
 from flask_auth import Auth
 
-from shrunk.forms import LinkForm, RULoginForm
-from shrunk.user import User, get_user
+from shrunk.forms import LinkForm, RULoginForm, BlacklistUserForm, AddAdminForm
+from shrunk.forms import BlockLinksForm
+from shrunk.user import User, get_user, admin_required
 from shrunk.util import get_db_client, set_logger, formattime
 
 
@@ -58,6 +59,9 @@ def login_success(user):
     """
     return redirect('/')
 
+def unauthorized_admin():
+    return redirect("/")
+
 
 ### Views ###
 @app.route("/")
@@ -65,15 +69,23 @@ def render_index(**kwargs):
     """Renders the homepage."""
     client = get_db_client(app, g)
 
+    is_admin = not current_user.is_anonymous() and current_user.is_admin()
     try:
-        links = client.get_urls(current_user.netid)
+        netid = current_user.netid
+        if is_admin:
+            links = client.get_all_urls()
+        else:
+            links = client.get_urls(netid)
         app.logger.info("Rendering index for user {}".format(current_user))
     except AttributeError:
         links = []
+        netid = None
         app.logger.info("Rendering index for anonymous user.")
 
     return render_template("index.html",
                            links=links,
+                           admin=is_admin,
+                           netid=netid,
                            linkserver_url=app.config["LINKSERVER_URL"],
                            **kwargs)
 
@@ -107,6 +119,8 @@ def add_link():
                 netid=current_user.netid,
                 **kwargs
             )
+            if not response:
+                return render_template("add.html", errors=["Blocked Link"])
             return render_index(new_url=response,
                                 new_target_url=kwargs["long_url"])
         else:
@@ -128,3 +142,48 @@ def delete_link():
 	app.logger.info("Deleting URL: {}".format(request.form["short_url"]))
         client.delete_url(request.form["short_url"])
     return render_index(deleted_url=request.form["short_url"])
+
+@app.route("/admin/<action>", methods=["GET", "POST"])
+@login_required
+@admin_required(unauthorized_admin)
+def admin(action=None):
+    """Renders the admin interface.
+    :Parameters:
+      - `action`: Which action to take. This can be one of the following:
+        1. blacklist - Go to blacklist panel used for blacklisting users
+        2. add - Go to add panel used for adding additional admins
+        3. blocklink - Go to block link panel, used for blacklisting long urls
+    """
+
+    client = get_db_client(app, g)
+    if action == 'blacklist':
+        form = BlacklistUserForm(request.form)
+        if request.method == "POST" and form.validate():
+            if form.action.data == 'ban':
+                res = client.blacklist_user(form.netid.data, current_user.netid)
+            else:
+                res = client.allow_user(form.netid.data)
+            return render_template('admin_blacklist.html', form=form, msg='Success!')
+        return render_template('admin_blacklist.html', form=form)
+
+    elif action == 'add':
+        form = AddAdminForm(request.form)
+        if request.method == "POST" and form.validate():
+            res = client.add_admin(form.netid.data, current_user.netid)
+            return render_template('admin_add.html', form=form, msg='Success!')
+        return render_template('admin_add.html', form=form)
+
+    elif action == 'blocklink':
+        form = BlockLinksForm(request.form)
+        if request.method == "POST" and form.validate():
+            fields = form.to_json()
+            if fields['action'] == 'block':
+                res = client.block_link(fields['link'], current_user.netid)
+            else:
+                res = client.allow_link(fields['link'])
+            return render_template('admin_block_links.html', form=form,
+                                   msg='Success!')
+        return render_template('admin_block_links.html', form=form)
+
+    else:
+        return redirect('/')

@@ -53,6 +53,9 @@
 				<div class="log-out">
 					<a href="{{ url_for('logout') }}">Log Out</a>
 				</div>
+                {% if admin %}
+                    <label><input id="display-alll" type="checkbox" onclick='toggleLinks(this, "{{ netid }}");'>Display All</label>
+                {% endif %}
 			{% else %}
 				<div class="log-out">
 					<a href="{{ url_for('login') }}">Log In</a>
@@ -75,6 +78,11 @@
 						<div class="short-link">
 							<a href="{{ linkserver_url }}/{{ link['_id'] }}">{{ linkserver_url }}/{{ link['_id'] }}</a>
 						</div>
+                        {% if admin %}
+                        <div class="owner" netid="{{ link['netid'] }}">
+                            Owner: {{ link['netid'] }}
+                        </div>
+                        {% endif %}
 						<div class="date">
 							{{ formattime(link['timeCreated']) }}
 						</div>
@@ -106,7 +114,11 @@
 	<!-- Include all compiled plugins (below), or include individual files as needed -->
 	<!-- Latest compiled and minified JavaScript -->
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+<<<<<<< HEAD
 	<script src="http://underscorejs.org/underscore-min.js"></script>
 	<script src="http://backbonejs.org/backbone-min.js"></script>
+=======
+    <script src="{{ url_for('static', filename='shrunk.js') }}"></script>
+>>>>>>> Adding administrator interface
   </body>
 </html>
