@@ -42,24 +42,22 @@
 	<div class="container">
 		<div class="tool-box col-xs-12 col-sm-2">
 			<div class="container">
+			{% if current_user.netid %}
 				<div class="netID">
 					<!-- TODO Handle the case when no one's logged in. -->
 					{{ current_user.netid }}
 				</div>
+                                <div class="add-link">
+					<a href="{{ url_for('add_link') }}">Add a Link</a>
+                                </div>
 				<div class="log-out">
-					<a href="{{ url_for('logout') }}">Log out</a>
+					<a href="{{ url_for('logout') }}">Log Out</a>
 				</div>
-				<div class="group-select">
-					<div class="btn-group">
-						<button class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-expanded="false">
-							My Links <span class="caret"></span>
-						</button>
-						<ul class="dropdown-menu" role="menu">
-							<li><a href="#">Group A</a></li>
-							<li><a href="#">Group 2</a></li>
-						</ul>
-					</div>
+			{% else %}
+				<div class="log-out">
+					<a href="{{ url_for('login') }}">Log In</a>
 				</div>
+			{% endif %}
 			</div>
 		</div>
 
@@ -85,9 +83,9 @@
 						</div>
 					</div>
 					<div class="hover-controls">
-						<div onClick="delete_link('{{ link['_id'] }}')">
+						<a onClick="delete_link('{{ link['_id'] }}')">
 							<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
-                                                </div>
+                                                </a>
 					</div>
 				</article>
 			{% else %}
