@@ -23,7 +23,7 @@
 	<nav class="navbar navbar-default navbar-fixed-top" role="navigation">
 		<div class="container">
 			<div class="navbar-header">
-				<a class="navbar-brand" href="#">
+				<a class="navbar-brand" href="{{ url_for('render_index') }}">
                                   <img alt="Rutgers" src="{{ url_for('static', filename='img/RU_LOGOTYPE_REVWHITE.png') }}" width="175px">
 				</a>
 			</div>
@@ -73,7 +73,7 @@
 							{% endif %}
 						</a>
 						<div class="short-link">
-							<a href="http://rutge.rs/{{ link['_id'] }}">http://rutge.rs/{{ link['_id'] }}</a>
+							<a href="{{ linkserver_url }}/{{ link['_id'] }}">{{ linkserver_url }}/{{ link['_id'] }}</a>
 						</div>
 						<div class="date">
 							{{ formattime(link['timeCreated']) }}

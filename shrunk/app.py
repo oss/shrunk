@@ -72,7 +72,10 @@ def render_index(**kwargs):
         links = []
         app.logger.info("Rendering index for anonymous user.")
 
-    return render_template("index.html", links=links, **kwargs)
+    return render_template("index.html",
+                           links=links,
+                           linkserver_url=app.config["LINKSERVER_URL"],
+                           **kwargs)
 
 
 @app.route("/login", methods=['GET', 'POST'])
