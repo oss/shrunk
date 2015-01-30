@@ -122,5 +122,6 @@ def delete_link():
 
     # TODO Handle the response intelligently, or put that logic somewhere else
     if request.method == "POST":
+	app.logger.info("Deleting URL: {}".format(request.form["short_url"]))
         client.delete_url(request.form["short_url"])
     return render_index(deleted_url=request.form["short_url"])
