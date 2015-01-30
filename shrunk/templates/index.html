@@ -84,7 +84,9 @@
 					</div>
 					<div class="hover-controls">
 						<!-- TODO This won't work; we might need JavaScript. Also, get an image -->
-						<a href="{{ url_for('delete_link') }}">x</a>
+						<a href="{{ url_for('delete_link') }}">
+                                                  <span class="glyphicon glyphicon-remove" aria-hidden="true"</span>
+                                                </a>
 					</div>
 				</article>
 			{% else %}
