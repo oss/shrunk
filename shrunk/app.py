@@ -110,11 +110,7 @@ def add_link():
 
     if not request.form:
         form = LinkForm()
-    return render_template("link.html",
-                           netid=current_user.netid,
-                           action_header="Create a Link",
-                           action="add_link",
-                           submit_text="Shrink!",)
+    return render_template("add.html", netid=current_user.netid)
 
 
 @app.route("/delete", methods=["GET", "POST"])
