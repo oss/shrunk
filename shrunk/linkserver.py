@@ -37,7 +37,7 @@ def redirect_link(short_url):
     # Perform a lookup and redirect
     long_url = client.get_long_url(short_url.upper())
     if long_url is None:
-        return render_template("notfound.html", short_url=short_url)
+        return render_template("link-404.html", short_url=short_url)
     else:
         client.visit(short_url, request.remote_addr)
         return redirect(long_url)

@@ -9,9 +9,9 @@
 
 	<!-- Latest compiled and minified CSS -->
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">    
-	<!-- <link rel="stylesheet" href="./shrunk.css">     -->
 	<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
-	<link rel="stylesheet" href="../public/css/shrunk.css"> 
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/shrunk.css') }}">
+	<link rel="icon" type="image/ico" href="{{ url_for('static', filename='img/favicon.ico') }}">
 	<!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
 	<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
 	<!--[if lt IE 9]>
@@ -23,8 +23,8 @@
 	<nav class="navbar navbar-default navbar-fixed-top" role="navigation">
 		<div class="container">
 			<div class="navbar-header">
-				<a class="navbar-brand" href="#">
-					<img alt="Rutgers" src="../public/img/RU_LOGOTYPE_REVWHITE.png" width="175px">
+				<a class="navbar-brand" href="{{ url_for('render_index') }}">
+                                  <img alt="Rutgers" src="{{ url_for('static', filename='img/RU_LOGOTYPE_REVWHITE.png') }}" width="175px">
 				</a>
 			</div>
 		</div>
@@ -37,7 +37,7 @@
 				Sorry, this link does not exist. Want to change that? 
 			</div>
 			<div class="message">
-				<a href="">Log in to Rutgers Shrunk</a> and shrink some URLs.
+                                <a href="{{ url_for('render_index') }}">Log in to Rutgers Shrunk</a> and shrink some URLs.
 			</div>
 		</div>
 	</div>  
