@@ -137,3 +137,10 @@ body {
 .link-group .hover-controls {
 	float: right;
 }
+
+.shrunk-errors {
+	border: 2px solid rgb(255, 237, 150);
+	background-color: rgb(255, 255, 211);
+	padding-left: 10px;
+	padding-top: 5px;
+}

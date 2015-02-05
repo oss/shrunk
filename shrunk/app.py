@@ -99,14 +99,18 @@ def add_link():
     """Adds a new link for the current user."""
     form = LinkForm(request.form)
     client = get_db_client(app, g)
-    if request.method == "POST" and form.validate():
-        # TODO Handle an error on db insert
-        kwargs = form.to_json()
-        response = client.create_short_url(
-            netid=current_user.netid,
-            **kwargs
-        )
-        return render_index(new_url=response, new_target_url=kwargs["long_url"])
+    if request.method == "POST":
+        if form.validate():
+            # TODO Handle an error on db insert
+            kwargs = form.to_json()
+            response = client.create_short_url(
+                netid=current_user.netid,
+                **kwargs
+            )
+            return render_index(new_url=response,
+                                new_target_url=kwargs["long_url"])
+        else:
+            return render_template("add.html", errors=form.errors)
 
     if not request.form:
         form = LinkForm()
