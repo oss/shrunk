@@ -9,6 +9,7 @@
 
 	<!-- Latest compiled and minified CSS -->
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">	
+	<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
 	<link rel="stylesheet" href="{{ url_for('static', filename='css/shrunk.css') }}">
 	<link rel="icon" type="image/ico" href="{{ url_for('static', filename='img/favicon.ico') }}">
 	<!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
@@ -44,7 +45,6 @@
 			<div class="container">
 			{% if current_user.netid %}
 				<div class="netID">
-					<!-- TODO Handle the case when no one's logged in. -->
 					{{ current_user.netid }}
 				</div>
                                 <div class="add-link">

@@ -9,9 +9,9 @@
 
 	<!-- Latest compiled and minified CSS -->
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">    
-	<!-- <link rel="stylesheet" href="./shrunk.css">     -->
 	<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
-	<link rel="stylesheet" href="../public/css/shrunk.css"> 
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/shrunk.css') }}">
+	<link rel="icon" type="image/ico" href="{{ url_for('static', filename='img/favicon.ico') }}">
 	<!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
 	<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
 	<!--[if lt IE 9]>
@@ -23,8 +23,8 @@
 	<nav class="navbar navbar-default navbar-fixed-top" role="navigation">
 		<div class="container">
 			<div class="navbar-header">
-				<a class="navbar-brand" href="#">
-					<img alt="Rutgers" src="../public/img/RU_LOGOTYPE_REVWHITE.png" width="175px">
+				<a class="navbar-brand" href="{{ url_for('render_index') }}">
+                                  <img alt="Rutgers" src="{{ url_for('static', filename='img/RU_LOGOTYPE_REVWHITE.png') }}" width="175px">
 				</a>
 			</div>
 		</div>
@@ -39,12 +39,14 @@
 			<div class="login-message">
 				Hi! Please log in to continue
 			</div>
-			<form class="login-form">
+			<form class="login-form" method="POST" action="" name="login">
 				<div class="form-group">
-					<input type="netid" class="form-control" id="loginNetID" placeholder="Net ID">
+					{{ form.username(class='form-control', placeholder='NetID') }}
+					<!--<input type="netid" class="form-control" id="Netid" name="Netid" placeholder="NetID">-->
 				</div>
 				<div class="form-group">
-					<input type="password" class="form-control" id="loginPassword" placeholder="Password">
+					{{ form.password(class='form-control', placeholder='Password') }}
+					<!--<input type="password" class="form-control" id="Password" name="Password" placeholder="Password">-->
 				</div>
 				<button type="submit" class="login-button btn btn-default">Log in</button>
 			</form>
