@@ -163,8 +163,7 @@ body {
     float: right;
 }
 
-.shrunk-errors {
-    border: 2px solid rgb(255, 237, 150);
+.shrunk-messages {
     background-color: rgb(255, 255, 211);
     padding-left: 10px;
     padding-top: 5px;

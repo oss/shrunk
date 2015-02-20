@@ -2,7 +2,7 @@
 {% block content %}
 <div class="links-box col-xs-12 col-sm-8 col-sm-offset-1">
 	{% if query %}
-	<div class="shrunk-errors">
+	<div class="shrunk-messages">
 		{% if links %}
 			Showing results for: <strong>{{ query }}</strong>
 		{% else %}
@@ -11,7 +11,7 @@
 	</div>
 	{% endif %}
 	{% if new_url %}
-	<div class="shrunk-errors">
+	<div class="shrunk-messages">
 		Added successfully!
 	</div>
 	{% endif %}
