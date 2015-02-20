@@ -59,6 +59,7 @@ def login_success(user):
     """
     return redirect('/')
 
+
 def unauthorized_admin():
     return redirect("/")
 
@@ -73,6 +74,15 @@ def render_index(**kwargs):
     matching their search query are shown.
     """
     client = get_db_client(app, g)
+    links_per_page = app.config["MAX_DISPLAY_LINKS"]
+
+    # Grab the current page number
+    try:
+        page = int(request.args["p"])
+    except:
+        page = 0
+
+    # If this exists, execute a search query
     try:
         query = request.args["search"]
     except:
@@ -85,14 +95,22 @@ def render_index(**kwargs):
             if query:
                 links = client.search(query)
             else:
-                links = client.get_all_urls()
+                count = client.count_links()
+                maxpages = count // links_per_page
+                page = min(max(page, 0), maxpages)
+                links = client.get_all_urls(skip=(page*links_per_page),
+                                            limit=links_per_page)
         else:
             if query:
                 links = client.search(query, netid=current_user.netid)
                 app.logger.info("{} searches: {}".format(current_user.netid,
                     query))
             else:
-                links = client.get_urls(netid)
+                count = client.count_links(netid)
+                maxpages = count // links_per_page
+                page = min(max(page, 0), maxpages)
+                links = client.get_urls(netid, skip=(page*links_per_page),
+                                        limit=links_per_page)
                 app.logger.info("Rendering index for user {}".format(current_user))
     except AttributeError:
         links = []
@@ -100,11 +118,13 @@ def render_index(**kwargs):
         app.logger.info("Rendering index for anonymous user.")
 
     return render_template("index.html",
-                           links=links,
                            admin=is_admin,
-                           netid=netid,
+                           links=links,
                            linkserver_url=app.config["LINKSERVER_URL"],
+                           netid=netid,
+                           page=page,
                            query=query,
+                           total_pages=maxpages,
                            **kwargs)
 
 

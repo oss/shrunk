@@ -48,6 +48,25 @@ class ShrunkClient(object):
         """
         self._mongo = pymongo.MongoClient(host, port)
 
+    def count_links(self, netid=None):
+        """Counts the number of created links.
+
+        Gives a count on the number of created links for the given NetID. If no
+        specific user is specified, this returns a global count for all users.
+
+        :Parameters:
+          - `netid` (optional): Specify a NetID to count their links; if None,
+            finds a global count
+
+        :Returns:
+          A nonnegative integer.
+        """
+        db = self._mongo.shrunk_urls
+        if netid:
+            return db.urls.find({"netid": netid}).count()
+        else:
+            return db.urls.count()
+
     def create_short_url(self, long_url, short_url=None, netid=None, title=None):
         """Given a long URL, create a new short URL.
 
@@ -209,10 +228,13 @@ class ShrunkClient(object):
             # There were no values to unpack
             return None
 
-    def get_all_urls(self, filter_dict=None):
+    def get_all_urls(self, filter_dict=None, skip=0, limit=0):
         """Gets all the URLs created.
+
         :Parameters:
-          - `filter_dict`: Mongo filter to be applied to the query
+          - `filter_dict` (optional): Mongo filter to be applied to the query
+          - `skip` (optional): The number of results to skip
+          - `limit` (optional): The maximum number of results
 
         :Returns:
           A list containing JSON-compatible Python dicts representing the links
@@ -220,9 +242,13 @@ class ShrunkClient(object):
         """
         db = self._mongo.shrunk_urls
         if not filter_dict:
-            cursor = db.urls.find(sort=[("timeCreated", pymongo.DESCENDING)])
+            cursor = db.urls.find(skip=skip,
+                                  limit=limit,
+                                  sort=[("timeCreated", pymongo.DESCENDING)])
         else:
             cursor = db.urls.find(filter_dict,
+                                  skip=skip,
+                                  limit=limit,
                                   sort=[("timeCreated", pymongo.DESCENDING)])
         if cursor is None:
             # Internal error?
@@ -230,17 +256,20 @@ class ShrunkClient(object):
         else:
             return list(cursor)
 
-    def get_urls(self, netid):
+    def get_urls(self, netid, skip=0, limit=0):
         """Gets all the URLs created by the given NetID.
         
         :Parameters:
           - `netid`: A Rutgers NetID
+          - `skip` (optional): The number of results to skip
+          - `limit` (optional): The maximum number of results
 
         :Returns:
           A list containing JSON-compatible Python dicts representing the links
           found. If the user has no links, then an empty list is returned.
         """
-        return self.get_all_urls(filter_dict={'netid' : netid})
+        return self.get_all_urls(filter_dict={'netid' : netid}, skip=skip,
+                                 limit=limit)
 
     def search(self, search_string, netid=None):
         """Search for URLs containing the given search string.

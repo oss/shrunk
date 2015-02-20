@@ -38,3 +38,6 @@ LOG_FORMAT = "%(levelname)s %(asctime)s: %(message)s [in %(pathname)s:%(lineno)d
 
 LOG_FILENAME = "shrunk.log"
 """The name of the log file."""
+
+MAX_DISPLAY_LINKS = 50
+"""The maximum number of links to display per page."""
