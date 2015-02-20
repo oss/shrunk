@@ -298,7 +298,7 @@ class ShrunkClient(object):
     def is_blacklisted(self, netid):
         """Finds if a user is blacklisted by checking the blacklist collection.
         :Parameters:
-          - `netid`L A Rutgers NetID
+          - `netid` A Rutgers NetID
 
         :Returns
           True if the user is in the blacklist collection, false otherwise.
