@@ -25,3 +25,15 @@ var delete_link = function(short_url) {
     form.submit();
     document.body.removeChild(form);
 }
+
+function toggleLinks(cb, netid) {
+    $("article.link-group").each(function() {
+        if(cb.checked)
+            $(this).css("display", "block");
+        else {
+            link_info = $(this).children(".link-info");
+            if($(link_info).children(".owner").attr("netid") != netid)
+                $(this).css("display", "none");
+        }
+    });
+}

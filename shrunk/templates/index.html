@@ -67,7 +67,7 @@
 					<a href="{{ url_for('logout') }}">Log Out</a>
 				</div>
                 {% if admin %}
-                    <label><input id="display-alll" type="checkbox" onclick='toggleLinks(this, "{{ netid }}");'>Display All</label>
+                    <label>Display All <input id="display-alll" type="checkbox" onclick='toggleLinks(this, "{{ netid }}");' checked></label>
                 {% endif %}
 			{% else %}
 				<div class="log-out">

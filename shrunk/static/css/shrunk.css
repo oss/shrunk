@@ -37,7 +37,7 @@ body {
 }
 
 */
-.search-bar .form-control {
+.search-bar .form-group .form-control {
     border: none;
     min-height: 48px;
     color: #1E0208;
@@ -181,7 +181,7 @@ Media Queries
 ---- */
 
 @media (min-width: 768px) and (max-width: 1024px) {
-    .search-bar .form-control {
+    .search-bar .form-group .form-control {
         border: none;
         min-height: 48px;
         color: #1E0208;
@@ -199,7 +199,7 @@ Media Queries
         text-align: center;
     }
 
-    .search-bar .form-control {
+    .search-bar .form-group .form-control {
         border: none;
         min-height: 48px;
         color: #1E0208;
