@@ -54,19 +54,19 @@
 			</div>
 		</div>
 
-		{% if errors %}
-		<div class="shrunk-errors links-box col-xs-12 col-sm-8 col-sm-offset-1">
-			Uh oh:
-			<ul>
-			{% for error in errors %}
-				{% for suberror in errors[error] %}
-					<li> {{ suberror }} </li>
-				{% endfor %}
-			{% endfor %}
-			</ul>
-		</div>
-		{% endif %}
 		<div class="links-box col-xs-12 col-sm-8 col-sm-offset-1">
+			{% if errors %}
+			<div class="shrunk-errors">
+				Uh oh:
+				<ul>
+				{% for error in errors %}
+					{% for suberror in errors[error] %}
+						<li> {{ suberror }} </li>
+					{% endfor %}
+				{% endfor %}
+				</ul>
+			</div>
+			{% endif %}
 			<article class="link-group clearfix">
 				<form method="POST" action="{{ url_for('add_link') }}" name="link_form" class="add-link">
 					<div class="title">
@@ -78,7 +78,7 @@
 					<div class="netID">
 						<input type="hidden" id="netid" name="netid" value="{{ netid }}">
 					</div>
-					<button type="submit" class="login-button btn btn-default">Add</button>
+					<button type="submit" class="login-button btn btn-default">Add a URL</button>
 				</form>
 			</article>
 		</div>

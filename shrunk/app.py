@@ -142,7 +142,9 @@ def add_link():
             return render_index(new_url=response,
                                 new_target_url=kwargs["long_url"])
         else:
-            return render_template("add.html", errors=form.errors)
+            return render_template("add.html",
+                                   errors=form.errors,
+                                   netid=current_user.netid)
 
     if not request.form:
         form = LinkForm()

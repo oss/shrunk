@@ -32,7 +32,7 @@
 			<form class="search-bar navbar-form">
 				<div class="form-group" style="display:inline;">
 					<div class="input-group" style="display:table;">
-						<input class="form-control" name="search" placeholder="Search for link or paste a link to add" autocomplete="off" autofocus="autofocus" type="text">
+						<input class="form-control" name="search" value="{{ query }}" placeholder="Search for link or paste a link to add" autocomplete="off" autofocus="autofocus" type="text">
 						<span class="input-group-addon" style="width:1%;"><span class="glyphicon glyphicon-search"></span></span>
 					</div>
 				</div>
@@ -65,6 +65,20 @@
 		</div>
 
 		<div class="links-box col-xs-12 col-sm-8 col-sm-offset-1">
+			{% if query %}
+			<div class="shrunk-errors">
+				{% if links %}
+					Showing results for: <strong>{{ query }}</strong>
+				{% else %}
+					No results found for: <strong>{{ query }}</strong>
+				{% endif %}
+			</div>
+			{% endif %}
+			{% if new_url %}
+			<div class="shrunk-errors">
+				Added successfully!
+			</div>
+			{% endif %}
 			{% for link in links %}
 				<article class="link-group clearfix">
 					<div class="link-info">
@@ -97,6 +111,7 @@
 					</div>
 				</article>
 			{% else %}
+				{% if not query %}
 				<article class="link-group clearfix">
 					<a href="#" class="title">
 						shRUnk
@@ -105,6 +120,7 @@
 						The official Rutgers University URL shortener. Use the navigation bar above to start adding links.
 					</div>
 				</article>
+				{% endif %}
 			{% endfor %}
 		</div>
 
