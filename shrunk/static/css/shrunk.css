@@ -121,6 +121,11 @@ body {
     line-height: 25px;
 }
 
+
+.links-box .footer {
+    display: none;
+}
+
 .links-box {
     padding: 0;
 }
@@ -214,6 +219,15 @@ Media Queries
 }
 
 @media (max-width: 768px) {
+
+    .tool-box .footer {
+        display: none;
+    }
+
+    .links-box .footer {
+        display: auto;
+    }
+
     .navbar-collapse {
         margin-top: 20px;
     }
