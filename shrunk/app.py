@@ -66,17 +66,34 @@ def unauthorized_admin():
 ### Views ###
 @app.route("/")
 def render_index(**kwargs):
-    """Renders the homepage."""
+    """Renders the homepage.
+
+    Renders the homepage for the current user. By default, this renders all of
+    the links owned by them. If a search has been made, then only the links
+    matching their search query are shown.
+    """
     client = get_db_client(app, g)
+    try:
+        query = request.args["search"]
+    except:
+        query = ""
 
     is_admin = not current_user.is_anonymous() and current_user.is_admin()
     try:
         netid = current_user.netid
         if is_admin:
-            links = client.get_all_urls()
+            if query:
+                links = client.search(query)
+            else:
+                links = client.get_all_urls()
         else:
-            links = client.get_urls(netid)
-        app.logger.info("Rendering index for user {}".format(current_user))
+            if query:
+                links = client.search(query, netid=current_user.netid)
+                app.logger.info("{} searches: {}".format(current_user.netid,
+                    query))
+            else:
+                links = client.get_urls(netid)
+                app.logger.info("Rendering index for user {}".format(current_user))
     except AttributeError:
         links = []
         netid = None
@@ -87,6 +104,7 @@ def render_index(**kwargs):
                            admin=is_admin,
                            netid=netid,
                            linkserver_url=app.config["LINKSERVER_URL"],
+                           query=query,
                            **kwargs)
 
 
