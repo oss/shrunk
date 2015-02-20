@@ -45,6 +45,7 @@ body {
 	/*width: 100%;*/
 }
 
+.form-box,
 .tool-box,
 .links-box,
 .login-box,
@@ -102,6 +103,10 @@ body {
 
 .links-box {
 	padding: 0;
+}
+
+.form-box {
+    padding-bottom: 15px;
 }
 
 .tool-box {

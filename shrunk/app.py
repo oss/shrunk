@@ -139,14 +139,15 @@ def delete_link():
 
     # TODO Handle the response intelligently, or put that logic somewhere else
     if request.method == "POST":
-	app.logger.info("Deleting URL: {}".format(request.form["short_url"]))
+        app.logger.info("Deleting URL: {}".format(request.form["short_url"]))
         client.delete_url(request.form["short_url"])
     return render_index(deleted_url=request.form["short_url"])
 
+@app.route("/admin/")
 @app.route("/admin/<action>", methods=["GET", "POST"])
 @login_required
 @admin_required(unauthorized_admin)
-def admin(action=None):
+def admin_sub(action=None):
     """Renders the admin interface.
     :Parameters:
       - `action`: Which action to take. This can be one of the following:
@@ -155,35 +156,40 @@ def admin(action=None):
         3. blocklink - Go to block link panel, used for blacklisting long urls
     """
 
+    netid = current_user.netid
+    if action == None:
+        return render_template("admin.html", netid=netid)
     client = get_db_client(app, g)
     if action == 'blacklist':
         form = BlacklistUserForm(request.form)
         if request.method == "POST" and form.validate():
             if form.action.data == 'ban':
-                res = client.blacklist_user(form.netid.data, current_user.netid)
+                res = client.blacklist_user(form.netid.data, netid)
             else:
                 res = client.allow_user(form.netid.data)
-            return render_template('admin_blacklist.html', form=form, msg='Success!')
-        return render_template('admin_blacklist.html', form=form)
+            return render_template('admin_blacklist.html', form=form,
+                                   netid=netid, msg='Success!')
+        return render_template('admin_blacklist.html', netid=netid, form=form)
 
     elif action == 'add':
         form = AddAdminForm(request.form)
         if request.method == "POST" and form.validate():
             res = client.add_admin(form.netid.data, current_user.netid)
-            return render_template('admin_add.html', form=form, msg='Success!')
-        return render_template('admin_add.html', form=form)
+            return render_template('admin_add.html', form=form, netid=netid,
+                                   msg='Success!')
+        return render_template('admin_add.html', form=form, netid=netid)
 
     elif action == 'blocklink':
         form = BlockLinksForm(request.form)
         if request.method == "POST" and form.validate():
-            fields = form.to_json()
-            if fields['action'] == 'block':
-                res = client.block_link(fields['link'], current_user.netid)
+            if form.action.data == 'block':
+                res = client.block_link(form.link.data, netid)
             else:
-                res = client.allow_link(fields['link'])
+                res = client.allow_link(form.link.data)
             return render_template('admin_block_links.html', form=form,
-                                   msg='Success!')
-        return render_template('admin_block_links.html', form=form)
+                                   msg='Success!', netid=netid)
+        return render_template('admin_block_links.html', form=form,
+                               netid=netid)
 
     else:
         return redirect('/')
