@@ -230,7 +230,6 @@ class ShrunkClient(object):
         else:
             return list(cursor)
 
-
     def get_urls(self, netid):
         """Gets all the URLs created by the given NetID.
         
@@ -242,6 +241,32 @@ class ShrunkClient(object):
           found. If the user has no links, then an empty list is returned.
         """
         return self.get_all_urls(filter_dict={'netid' : netid})
+
+    def search(self, search_string, netid=None):
+        """Search for URLs containing the given search string.
+
+        Searches for links where the title or URL contain the given search
+        string. The search is non-case-sensitive.
+
+        :Parameters:
+          - `search_string`: A query string
+          - `netid` (optional): Search for links only owned by this NetID
+
+        :Returns:
+          A JSON-compatible dictionary containing links matching the query. This
+          is guaranteed to match the format of get_urls.
+        """
+        db = self._mongo.shrunk_urls
+        match = {"$regex" : search_string, "$options" : "i"}
+        query = {"$or" : [{"url" : match}, {"title" : match}]}
+        if netid is not None:
+            query["netid"] = netid
+
+        cursor = db.urls.find(query)
+        if cursor is None:
+            return []
+        else:
+            return list(cursor)
 
     def visit(self, short_url, source_ip):
         """Visits the given URL and logs visit information.
