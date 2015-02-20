@@ -1,54 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-	<meta charset="utf-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-	<title>Shrunk</title>
+    <title>Shrunk</title>
 
-	<!-- Latest compiled and minified CSS -->
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">	
-	<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
-	<link rel="stylesheet" href="{{ url_for('static', filename='css/shrunk.css') }}">
-	<link rel="icon" type="image/ico" href="{{ url_for('static', filename='img/favicon.ico') }}">
-	<!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-	<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-	<!--[if lt IE 9]>
-	  <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-	  <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-	<![endif]-->
-	<script src="{{ url_for('static', filename='js/shrunk.js') }}"></script>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">    
+    <link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/shrunk.css') }}">
+<!--     <link rel="stylesheet" href="../static/css/shrunk.css">
+ -->    <link rel="icon" type="image/ico" href="{{ url_for('static', filename='img/favicon.ico') }}">
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <script src="{{ url_for('static', filename='js/shrunk.js') }}"></script>
   </head>
   <body>
-	<nav class="navbar navbar-default navbar-fixed-top" role="navigation">
-		<div class="container">
-			<div class="navbar-header">
-				<a class="navbar-brand" href="{{ url_for('render_index') }}">
-                                  <img alt="Rutgers" src="{{ url_for('static', filename='img/RU_LOGOTYPE_REVWHITE.png') }}" width="175px">
-				</a>
-			</div>
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="{{ url_for('render_index') }}">
+                  <img alt="Rutgers" src="{{ url_for('static', filename='img/RU_LOGOTYPE_REVWHITE.png') }}" width="175px">
+            </a>
+        </div>
 
-			<form class="search-bar navbar-form">
-				<div class="form-group" style="display:inline;">
-					<div class="input-group" style="display:table;">
-						<input class="form-control" name="search" value="{{ query }}" placeholder="Search for link or paste a link to add" autocomplete="off" autofocus="autofocus" type="text">
-						<span class="input-group-addon" style="width:1%;"><span class="glyphicon glyphicon-search"></span></span>
-					</div>
-				</div>
-			</form>
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+          
+          <ul class="navbar-subtitle nav navbar-nav">
+            <li><a style="color:white">URL Shortener</a></li>
+          </ul>
+          <form class="nav navbar-nav search-bar navbar-form navbar-right" role="search">
+            <div class="form-group">
+              <input type="text" class="form-control" placeholder="Search for a link">
+            </div>
+            <button type="submit" class="btn btn-default"><span class="glyphicon glyphicon-search"></button>
+          </form>
 
-		</div>
-	</nav>
-	<div class="container">
-		<div class="tool-box col-xs-12 col-sm-2">
-			<div class="container">
-			{% if current_user.netid %}
-				<div class="netID">
-					{{ current_user.netid }}
-				</div>
+        </div><!-- /.navbar-collapse -->
+      </div><!-- /.container-fluid -->
+    </nav>
+    <div class="container">
+        <div class="tool-box col-xs-12 col-sm-2">
+            <div class="container">
+            {% if current_user.netid %}
+                <div class="netID">
+                    {{ current_user.netid }}
+                </div>
                                 <div class="add-link">
-					<a href="{{ url_for('add_link') }}">Add a Link</a>
+                    <a href="{{ url_for('add_link') }}">Add a Link</a>
                                 </div>
 				<div class="log-out">
 					<a href="{{ url_for('logout') }}">Log Out</a>
@@ -117,11 +130,17 @@
 						shRUnk
 					</a>
 					<div class="bottom-row">
-						The official Rutgers University URL shortener. Use the navigation bar above to start adding links.
+						The official Rutgers University URL shortener. Click on 'add a link' to start adding links.
 					</div>
 				</article>
 				{% endif %}
 			{% endfor %}
+
+                <article class="clearfix footer">
+                    <div class="container">
+                        © 2015 - Rutgers, The State University of New Jersey - Questions? Bugs? Contact us: oss@oss.rutgers.edu
+                    </div>
+                </article>
 		</div>
 
 	</div>
@@ -130,8 +149,6 @@
 	<!-- Include all compiled plugins (below), or include individual files as needed -->
 	<!-- Latest compiled and minified JavaScript -->
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
-	<script src="http://underscorejs.org/underscore-min.js"></script>
-	<script src="http://backbonejs.org/backbone-min.js"></script>
     <script src="{{ url_for('static', filename='shrunk.js') }}"></script>
   </body>
 </html>
