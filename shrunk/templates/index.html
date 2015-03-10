@@ -1,72 +1,80 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="links-box col-xs-12 col-sm-8 col-sm-offset-1">
-	{% if query %}
-	<div class="shrunk-messages">
-		{% if links %}
-			Showing results for: <strong>{{ query }}</strong>
-		{% else %}
-			No results found for: <strong>{{ query }}</strong>
-		{% endif %}
-	</div>
-	{% endif %}
-	{% if new_url %}
-	<div class="shrunk-messages">
-		Added successfully!
-	</div>
-	{% endif %}
-	{% for link in links %}
-		<article class="link-group clearfix">
-			<div class="link-info">
-				<a href="{{ link['url'] }}" class="title">
-					{% if link['title'] %}
-						{{ link['title'] }}
-					{% else %}
-						{{ link['_id'] }}
-					{% endif %}
-				</a>
-				<div class="short-link">
-					<a href="{{ linkserver_url }}/{{ link['_id'] }}">{{ linkserver_url }}/{{ link['_id'] }}</a>
-				</div>
+    {% if query %}
+    <div class="shrunk-messages">
+        {% if links %}
+            Showing results for: <strong>{{ query }}</strong>
+        {% else %}
+            No results found for: <strong>{{ query }}</strong>
+        {% endif %}
+    </div>
+    {% endif %}
+    {% if new_url %}
+    <div class="shrunk-messages">
+        Added successfully!
+    </div>
+    {% endif %}
+    {% for link in links %}
+        <article class="link-group clearfix">
+            <div class="link-info">
+                <a href="{{ link['url'] }}" class="title">
+                    {% if link['title'] %}
+                        {{ link['title'] }}
+                    {% else %}
+                        {{ link['_id'] }}
+                    {% endif %}
+                </a>
+                <div class="short-link">
+                    <a href="{{ linkserver_url }}/{{ link['_id'] }}">{{ linkserver_url }}/{{ link['_id'] }}</a>
+                </div>
                 {% if admin %}
                 <div class="owner" netid="{{ link['netid'] }}">
                     Owner: {{ link['netid'] }}
                 </div>
                 {% endif %}
-				<div class="date">
-					{{ formattime(link['timeCreated']) }}
-				</div>
-				<div class="bottom-row">
-					Views: {{ link['visits'] }}
-				</div>
-			</div>
-			<div class="hover-controls">
-				<a onClick="delete_link('{{ link['_id'] }}')">
-					<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
-                                        </a>
-			</div>
-		</article>
-	{% else %}
-		{% if not query %}
-		<article class="link-group clearfix">
-			<a href="#" class="title">
-				shRUnk
-			</a>
-			<div class="bottom-row">
-				The official Rutgers University URL shortener. Click on 'add a link' to start adding links.
-			</div>
-		</article>
-		{% endif %}
-	{% endfor %}
+                <div class="date">
+                    {{ formattime(link['timeCreated']) }}
+                </div>
+                <div class="bottom-row">
+                    Views: {{ link['visits'] }}
+                </div>
+            </div>
+            <div class="hover-controls">
+                <a onClick="delete_link('{{ link['_id'] }}')">
+                    <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                </a>
+            </div>
+        </article>
+    {% else %}
+        {% if not query %}
+        <!-- Don't show the info screen when an empty search result comes back -->
+        <article class="link-group clearfix">
+            <a href="#" class="title">
+                URL Shortener
+            </a>
+            <div class="bottom-row">
+                The official Rutgers University URL shortener. Click on
+                '<a href="{{ url_for('add_link') }}">add a link</a>' to start adding links.
+            </div>
+        </article>
+        {% endif %}
+    {% endfor %}
 
+{% if lastpage and lastpage > 0 %}
 <article class="pagination clearfix">
-  <nav>
+    <nav>
     <ul class="pager">
-      <li class="previous"><a href="#"><span aria-hidden="true">&larr;</span> Previous</a></li>
-      <li class="next"><a href="#">Next <span aria-hidden="true">&rarr;</span></a></li>
+        {% if page > 0 %}
+        <li class="previous"><a href="{{ url_for('render_index', p=page-1) }}"><span aria-hidden="true">&larr;</span> Previous</a></li>
+        {% endif %}
+        {% if page < lastpage %}
+        <li class="next"><a href="{{ url_for('render_index', p=page+1) }}">Next <span aria-hidden="true">&rarr;</span></a></li>
+        {% endif %}
     </ul>
-  </nav>
+    </nav>
 </article>
+{% endif %}
 
 <article class="clearfix footer">
     <div class="container">

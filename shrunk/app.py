@@ -6,8 +6,9 @@ from flask import Flask, render_template, request, redirect, g
 from flask_login import LoginManager, login_required, current_user, logout_user
 from flask_auth import Auth
 
-from shrunk.forms import LinkForm, RULoginForm, BlacklistUserForm, AddAdminForm
+from shrunk.client import ShrunkCursor
 from shrunk.forms import BlockLinksForm
+from shrunk.forms import LinkForm, RULoginForm, BlacklistUserForm, AddAdminForm
 from shrunk.user import User, get_user, admin_required
 from shrunk.util import get_db_client, set_logger, formattime
 
@@ -74,7 +75,6 @@ def render_index(**kwargs):
     matching their search query are shown.
     """
     client = get_db_client(app, g)
-    links_per_page = app.config["MAX_DISPLAY_LINKS"]
 
     # Grab the current page number
     try:
@@ -88,43 +88,39 @@ def render_index(**kwargs):
     except:
         query = ""
 
+    # Depending on the type of user, get info from the database
     is_admin = not current_user.is_anonymous() and current_user.is_admin()
-    try:
-        netid = current_user.netid
-        if is_admin:
-            if query:
-                links = client.search(query)
-            else:
-                count = client.count_links()
-                maxpages = count // links_per_page
-                page = min(max(page, 0), maxpages)
-                links = client.get_all_urls(skip=(page*links_per_page),
-                                            limit=links_per_page)
+    if not hasattr(current_user, "netid"):
+        cursor = ShrunkCursor(None)
+        app.logger.info("render index: anonymous user")
+    elif is_admin:
+        if query:
+            cursor = client.search(query)
         else:
-            if query:
-                links = client.search(query, netid=current_user.netid)
-                app.logger.info("{} searches: {}".format(current_user.netid,
-                    query))
-            else:
-                count = client.count_links(netid)
-                maxpages = count // links_per_page
-                page = min(max(page, 0), maxpages)
-                links = client.get_urls(netid, skip=(page*links_per_page),
-                                        limit=links_per_page)
-                app.logger.info("Rendering index for user {}".format(current_user))
-    except AttributeError:
-        links = []
-        netid = None
-        app.logger.info("Rendering index for anonymous user.")
+            cursor = client.get_all_urls(query)
+    else:
+        netid = current_user.netid
+        if query:
+            cursor = client.search(query, netid=netid)
+            app.logger.info("search: {}, '{}'".format(netid, query))
+        else:
+            cursor = client.get_urls(current_user.netid)
+            app.logger.info("render index: {}".format(netid))
+
+    # Perform pagination and get the results
+    count = cursor.cursor.count()
+    page, lastpage = cursor.paginate(page, app.config["MAX_DISPLAY_LINKS"])
+    links = cursor.get_results()
 
     return render_template("index.html",
                            admin=is_admin,
                            links=links,
+                           count=count,
                            linkserver_url=app.config["LINKSERVER_URL"],
                            netid=netid,
                            page=page,
+                           lastpage=lastpage,
                            query=query,
-                           total_pages=maxpages,
                            **kwargs)
 
 
