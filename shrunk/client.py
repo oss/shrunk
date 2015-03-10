@@ -14,6 +14,86 @@ class ShrunkDuplicateIdException(Exception):
     pass
 
 
+class ShrunkCursor(object):
+    """Easy-to-use wrapper for internal database cursors."""
+    def __init__(self, cursor):
+        """Represents the result of a database operation.
+
+        :Parameters:
+          - `cursor`: A MongoDB cursor
+        """
+        self.cursor = cursor
+
+    def paginate(self, page, links_per_page):
+        """Performs pagination on this cursor.
+
+        :Parameters:
+          - `page`: An integer. Only show the results that belong on this page
+          - `links_per_page`: Limit the number of results for each page
+
+        :Side Effects:
+          Calling `get_results` on this cursor will return only the results that
+          belong on the given page. (All of the other results will be lost.)
+
+        :Returns:
+          A tuple containing the current page number and the last page number.
+        """
+        if self.cursor is None:
+            return (0, 0)
+
+        # Calculate the pagination
+        count = self.cursor.count()
+        last_page = self.get_last_page(links_per_page)
+        page = min(max(page, 0), last_page)
+
+        # Apply a skip and limit to the cursor
+        self.cursor.skip(page*links_per_page).limit(links_per_page)
+
+        # Return the new page number and total count
+        return (page, last_page)
+
+    def get_results(self):
+        """Gets the results in the cursor in list form.
+
+        After calling this function, the cursor will be exhausted and no more
+        results may be drawn from it.
+
+        :Returns:
+          A list of JSON-compatible dictionaries containing the results from the
+          database.
+        """
+        if self.cursor is None:
+            return []
+        else:
+            return list(self.cursor)
+
+    def get_last_page(self, links_per_page):
+        """Calculates the total number of pages of results.
+
+        Performs some simple calculation of the total number of pages that will
+        be shown for the main application's pagination.
+
+        :Parameters:
+          - `links_per_page`: The maximum number of links per page
+
+        :Returns:
+          A nonnegative integer indicating the zero-based index number of the
+          last page. For instance, if `count` is 11 and `links_per_page` is 5,
+          then this function returns 2 (since there are three pages total).
+        """
+        if not self.cursor:
+            return 0
+
+        count = self.cursor.count()
+        if count < links_per_page:
+            return 0
+        elif count % links_per_page == 0:
+            # Special case: fills all pages exactly
+            return (count // links_per_page) - 1
+        else:
+            return count // links_per_page
+
+
 class ShrunkClient(object):
     """A class for database interactions."""
 
@@ -124,7 +204,7 @@ class ShrunkClient(object):
 
         This deletes all information associated with the short URL and wipes all
         appropriate databases.
-        
+
         :Parameters:
           - `short_url`: The shortened URL to dete.
 
@@ -156,7 +236,7 @@ class ShrunkClient(object):
 
         :Parameters:
           - `netid`: The NetID of the URLs to delete.
-        
+
         :Returns:
           A response in JSON detailing the effect of the database operations.
         """
@@ -184,10 +264,10 @@ class ShrunkClient(object):
 
     def get_long_url(self, short_url):
         """Given a short URL, returns the long URL.
-        
+
         :Parameters:
           - `short_url`: A shortened URL
-        
+
         :Returns:
           The long URL, or None if the short URL does not exist.
         """
@@ -199,7 +279,7 @@ class ShrunkClient(object):
 
     def get_visits(self, short_url):
         """Returns all visit information to the given short URL.
-        
+
         :Parameters:
           - `short_url`: A shortened URL
 
@@ -211,7 +291,7 @@ class ShrunkClient(object):
 
     def get_num_visits(self, short_url):
         """Given a short URL, return the number of visits.
-        
+
         :Parameters:
           - `short_url`: A shortened URL
 
@@ -228,7 +308,7 @@ class ShrunkClient(object):
             # There were no values to unpack
             return None
 
-    def get_all_urls(self, filter_dict=None, skip=0, limit=0):
+    def get_all_urls(self, filter_dict=None):
         """Gets all the URLs created.
 
         :Parameters:
@@ -237,39 +317,26 @@ class ShrunkClient(object):
           - `limit` (optional): The maximum number of results
 
         :Returns:
-          A list containing JSON-compatible Python dicts representing the links
-          found. If there are no links, then an empty list is returned.
+          A ShrunkCursor containing the results of the operation.
         """
         db = self._mongo.shrunk_urls
         if not filter_dict:
-            cursor = db.urls.find(skip=skip,
-                                  limit=limit,
-                                  sort=[("timeCreated", pymongo.DESCENDING)])
+            cursor = db.urls.find(sort=[("timeCreated", pymongo.DESCENDING)])
         else:
             cursor = db.urls.find(filter_dict,
-                                  skip=skip,
-                                  limit=limit,
                                   sort=[("timeCreated", pymongo.DESCENDING)])
-        if cursor is None:
-            # Internal error?
-            return []
-        else:
-            return list(cursor)
+        return ShrunkCursor(cursor)
 
-    def get_urls(self, netid, skip=0, limit=0):
+    def get_urls(self, netid):
         """Gets all the URLs created by the given NetID.
-        
+
         :Parameters:
           - `netid`: A Rutgers NetID
-          - `skip` (optional): The number of results to skip
-          - `limit` (optional): The maximum number of results
 
         :Returns:
-          A list containing JSON-compatible Python dicts representing the links
-          found. If the user has no links, then an empty list is returned.
+          A ShrunkCursor containing the results of the operation.
         """
-        return self.get_all_urls(filter_dict={'netid' : netid}, skip=skip,
-                                 limit=limit)
+        return self.get_all_urls(filter_dict={'netid' : netid})
 
     def search(self, search_string, netid=None):
         """Search for URLs containing the given search string.
@@ -282,8 +349,8 @@ class ShrunkClient(object):
           - `netid` (optional): Search for links only owned by this NetID
 
         :Returns:
-          A JSON-compatible dictionary containing links matching the query. This
-          is guaranteed to match the format of get_urls.
+          A Shrunk cursor containing the results of the search, or None if an
+          error occurred.
         """
         db = self._mongo.shrunk_urls
         match = {"$regex" : search_string, "$options" : "i"}
@@ -292,14 +359,11 @@ class ShrunkClient(object):
             query["netid"] = netid
 
         cursor = db.urls.find(query)
-        if cursor is None:
-            return []
-        else:
-            return list(cursor)
+        return ShrunkCursor(cursor)
 
     def visit(self, short_url, source_ip):
         """Visits the given URL and logs visit information.
-        
+
         On visiting a URL, this is guaranteed to perform at least the following
         side effects if the URL is valid:
           - Increment the hit counter
