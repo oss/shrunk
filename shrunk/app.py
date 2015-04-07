@@ -110,14 +110,12 @@ def render_index(**kwargs):
             app.logger.info("render index: {}".format(netid))
 
     # Perform pagination and get the results
-    count = cursor.cursor.count()
     page, lastpage = cursor.paginate(page, app.config["MAX_DISPLAY_LINKS"])
     links = cursor.get_results()
 
     return render_template("index.html",
                            admin=is_admin,
                            links=links,
-                           count=count,
                            linkserver_url=app.config["LINKSERVER_URL"],
                            netid=netid,
                            page=page,
