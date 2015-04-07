@@ -91,9 +91,11 @@ def render_index(**kwargs):
     # Depending on the type of user, get info from the database
     is_admin = not current_user.is_anonymous() and current_user.is_admin()
     if not hasattr(current_user, "netid"):
+        netid = None
         cursor = ShrunkCursor(None)
         app.logger.info("render index: anonymous user")
     elif is_admin:
+        netid = current_user.netid
         if query:
             cursor = client.search(query)
         else:
