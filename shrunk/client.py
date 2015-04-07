@@ -97,7 +97,7 @@ class ShrunkCursor(object):
 class ShrunkClient(object):
     """A class for database interactions."""
 
-    ALPHABET = string.digits + string.ascii_uppercase
+    ALPHABET = string.digits + string.ascii_lowercase
     """The alphabet used for encoding short urls."""
 
     URL_MIN = 46656
