@@ -11,10 +11,12 @@ except:
 
 setup(
     name = "shrunk",
-    version = "0.1",
+    version = "0.1.1",
     packages = ["shrunk"],
     requires = ["pymongo"],
     package_dir = {"shrunk": "shrunk"},
+    package_data = {"shrunk": ["static/css/*", "static/img/*", "static/js/*",
+                               "templates/*"]},
 
     author = "Rutgers Open System Solutions",
     author_email = "oss@oss.rutgers.edu",
@@ -22,7 +24,7 @@ setup(
     long_description = readme_text,
     keywords = "shrunk rutgers url shortener",
     classifiers = [
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python",
         "Topic :: Utilities"
