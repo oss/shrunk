@@ -1,6 +1,6 @@
 """ shRUnk - Rutgers University URL Shortener
 
-Sets up a Flask application for shRUnk.
+Sets up a Flask application for the main web server.
 """
 from flask import Flask, render_template, request, redirect, g
 from flask_login import LoginManager, login_required, current_user, logout_user
@@ -66,6 +66,34 @@ def unauthorized_admin():
 
 
 ### Views ###
+try:
+    if app.config["DUAL_SERVER"]:
+        @app.route("/<short_url>")
+        def redirect_link(short_url):
+            """Redirects to the short URL's true destination.
+
+            This looks up the short URL's destination in the database and performs a
+            redirect, logging some information at the same time. If no such link
+            exists, a not found page is shown.
+
+            :Parameters:
+              - `short_url`: A string containing a shrunk-ified URL.
+            """
+            client = get_db_client(app, g)
+            app.logger.info("{} requests {}".format(request.remote_addr, short_url))
+
+            # Perform a lookup and redirect
+            long_url = client.get_long_url(short_url.upper())
+            if long_url is None:
+                return render_template("link-404.html", short_url=short_url)
+            else:
+                client.visit(short_url, request.remote_addr)
+                return redirect(long_url)
+except KeyError:
+    # No setting in the config file
+    pass
+
+
 @app.route("/")
 def render_index(**kwargs):
     """Renders the homepage.
