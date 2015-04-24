@@ -3,6 +3,9 @@
     <div class="netID">
         {{ current_user.netid }}
     </div>
+    <div class="my-links">
+        <a href="{{ url_for('render_index') }}">My Links</a>
+    </div>
     <div class="add-link">
         <a href="{{ url_for('add_link') }}">Add a Link</a>
     </div>
