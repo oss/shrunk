@@ -26,6 +26,9 @@
                     {% endif %}
                 </a>
                 <div class="hover-controls">
+                    <a onClick="edit_link('{{ link['_id'] }}');">
+                        <span class="glyphicon glyphicon-edit" aria-hiden="true"></span>
+                    </a>
                     <a onClick="delete_link('{{ link['_id'] }}')">
                         <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
                     </a>
