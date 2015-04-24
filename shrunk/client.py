@@ -215,6 +215,21 @@ class ShrunkClient(object):
 
         return response
 
+    def modify_url(self, short_url, **kwargs):
+        """Modifies an existing URL.
+
+        Edits the values of the url `short_url` and replaces them with the
+        values specified in the keyword arguments.
+
+        :Parameters:
+          - `short_url`: The ID of the URL to edit.
+          - `kwargs`: A dictionary of keyword arguments. The URL will take on
+            all values specified.
+        """
+        db = self._mongo.shrunk_urls
+        db.urls.update({"_id" : short_url},
+                       {"$set" : kwargs})
+
     def delete_url(self, short_url):
         """Given a short URL, delete it from the database.
 
