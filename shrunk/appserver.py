@@ -174,6 +174,7 @@ def add_link():
     form = LinkForm(request.form)
     client = get_db_client(app, g)
     if request.method == "POST":
+        # Validate the form
         if form.validate():
             # TODO Handle an error on db insert
             kwargs = form.to_json()
@@ -182,17 +183,22 @@ def add_link():
                 **kwargs
             )
             if not response:
+                # Specifically, there is no response from the database
                 return render_template("add.html", errors=["Blocked Link"])
-            return render_index(new_url=response,
-                                new_target_url=kwargs["long_url"])
+            else:
+                # Success
+                return render_index(new_url=response,
+                                    new_target_url=kwargs["long_url"])
         else:
+            # WTForms detects a form validation error
             return render_template("add.html",
                                    errors=form.errors,
                                    netid=current_user.netid)
+    else: # GET request
+        if not request.form:
+            form = LinkForm()
 
-    if not request.form:
-        form = LinkForm()
-    return render_template("add.html", netid=current_user.netid)
+        return render_template("add.html", netid=current_user.netid)
 
 
 @app.route("/delete", methods=["GET", "POST"])
@@ -206,6 +212,40 @@ def delete_link():
         app.logger.info("Deleting URL: {}".format(request.form["short_url"]))
         client.delete_url(request.form["short_url"])
     return render_index(deleted_url=request.form["short_url"])
+
+
+@app.route("/edit", methods=["GET", "POST"])
+@login_required
+def edit_link():
+    """Edits a link.
+
+    On POST, this route expects a form that contains the unique short URL that
+    will be edited.
+    """
+    client = get_db_client(app, g)
+
+    form = LinkForm(request.form)
+    if request.method == "POST":
+        # Validate form before continuing
+        if form.validate():
+            # Success - make the edits in the database
+            pass
+        else:
+            # Validation error
+            return render_template("edit.html",
+                                   errors=form.errors)
+    else: # GET request
+        # Hit the database to get information
+        short_url = request.args["url"]
+        info = client.get_url_info(short_url)
+        long_url = info["url"]
+        title = info["title"]
+
+        # Render the edit template
+        return render_template("edit.html", netid=current_user.netid,
+                                            title=title,
+                                            short_url=short_url,
+                                            long_url=long_url)
 
 @app.route("/admin/")
 @app.route("/admin/<action>", methods=["GET", "POST"])
