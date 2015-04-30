@@ -281,13 +281,15 @@ class ShrunkClient(object):
     def get_long_url(self, short_url):
         """Given a short URL, returns the long URL.
 
+        Performs a case-insensitive search for the corresponding long URL.
+
         :Parameters:
           - `short_url`: A shortened URL
 
         :Returns:
           The long URL, or None if the short URL does not exist.
         """
-        result = self.get_url_info(short_url)
+        result = self.get_url_info(short_url.lower())
         if result is not None:
             return result["url"]
         else:
