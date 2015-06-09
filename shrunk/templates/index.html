@@ -26,6 +26,10 @@
                     {% endif %}
                 </a>
                 <div class="short-link">
+                    <a href="{{ link['url'] }}">{{ link['url'] }}</a>
+                </div>
+                <!-- TODO: make unique CSS class for the original url -->
+                <div class="short-link">
                     <a href="{{ linkserver_url }}/{{ link['_id'] }}">{{ linkserver_url }}/{{ link['_id'] }}</a>
                 </div>
                 {% if admin %}
