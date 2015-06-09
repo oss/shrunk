@@ -14,6 +14,11 @@ class ShrunkDuplicateIdException(Exception):
     pass
 
 
+class ShrunkForbiddenNameException(Exception):
+    """Raised when trying to use a forbidden custom short URL."""
+    pass
+
+
 class ShrunkCursor(object):
     """Easy-to-use wrapper for internal database cursors."""
     def __init__(self, cursor):
@@ -114,6 +119,9 @@ class ShrunkClient(object):
     all URLs do not exceed eight characters.
     """
 
+    RESERVED_WORDS = ["add", "login", "logout", "delete", "admin"]
+    """Reserved words that cannot be used as shortened urls."""
+
     def __init__(self, host=None, port=None):
         """Create a new client connection.
 
@@ -182,17 +190,25 @@ class ShrunkClient(object):
         if title is not None:
             document["title"] = title
 
-        # Generate a unique key and update MongoDB
         if custom_url:
+            # Attempt to insert the custom URL
+            if custom_url in ShrunkClient.RESERVED_WORDS:
+                raise ShrunkForbiddenNameException()
+
             try:
                 response = db.urls.insert(document)
             except pymongo.errors.DuplicateKeyError:
                 raise ShrunkDuplicateIdException()
         else:
+            # Generate a unique key and update MongoDB
             response = None
             while response is None:
                 try:
-                    document["_id"] = ShrunkClient._generate_unique_key()
+                    url = ShrunkClient._generate_unique_key()
+                    while url in ShrunkClient.RESERVED_WORDS:
+                        url = ShrunkClient._generate_unique_key()
+
+                    document["_id"] = url
                     response = db.urls.insert(document)
                 except pymongo.errors.DuplicateKeyError:
                         continue
@@ -265,13 +281,15 @@ class ShrunkClient(object):
     def get_long_url(self, short_url):
         """Given a short URL, returns the long URL.
 
+        Performs a case-insensitive search for the corresponding long URL.
+
         :Parameters:
           - `short_url`: A shortened URL
 
         :Returns:
           The long URL, or None if the short URL does not exist.
         """
-        result = self.get_url_info(short_url)
+        result = self.get_url_info(short_url.lower())
         if result is not None:
             return result["url"]
         else:

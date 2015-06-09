@@ -19,6 +19,11 @@ SHRUNK_URL = "http://shrunk.yourdomain.com"
 LINKSERVER_URL = "http://shru.nk"
 """The public URL for the link server."""
 
+DUAL_SERVER = False
+"""Determines whether or not the web application server doubles as the link
+server. The default setting is False, which assumes that a separate server
+handles the links."""
+
 AUTH = {
     "methods": ["ldap"],
     "ldap": {
