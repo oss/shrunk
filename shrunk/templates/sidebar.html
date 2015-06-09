@@ -3,21 +3,18 @@
     <div class="netID">
         {{ current_user.netid }}
     </div>
-    <div class="my-links">
-        <a href="{{ url_for('render_index') }}">My Links</a>
-    </div>
-    <div class="add-link">
+                    <div class="add-link">
         <a href="{{ url_for('add_link') }}">Add a Link</a>
-    </div>
-    <div class="log-out">
-        <a href="{{ url_for('logout') }}">Log Out</a>
-    </div>
+                    </div>
+	<div class="log-out">
+		<a href="{{ url_for('logout') }}">Log Out</a>
+	</div>
     {% if admin %}
         <label>Display All <input id="display-alll" type="checkbox" onclick='toggleLinks(this, "{{ netid }}");' checked></label>
     {% endif %}
 {% else %}
-    <div class="log-out">
-        <a href="{{ url_for('login') }}">Log In</a>
-    </div>
+	<div class="log-out">
+		<a href="{{ url_for('login') }}">Log In</a>
+	</div>
 {% endif %}
 </div>
