@@ -136,6 +136,7 @@ body {
 }
 
 .link-group {
+    color: #5A5A5A;
     padding: 15px;
     min-height: 100px;
     border-bottom: 1px solid rgb(211,211,211);
@@ -167,6 +168,10 @@ body {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+}
+
+.original-url {
+    color: #5A5A5A;
 }
 
 .link-group .hover-controls {

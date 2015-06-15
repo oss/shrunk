@@ -32,7 +32,7 @@
                 </div>
                 <div class="short-link">
                     <a href="{{ linkserver_url }}/{{ link['_id'] }}" target="_blank">{{ linkserver_url }}/{{ link['_id'] }}</a> 
-                    &#8594 {{ link['url'] }}
+                    <span class="original-url"> &#8594 {{ link['url'] }} </span>
                 </div>
                 {% if admin %}
                 <div class="owner" netid="{{ link['netid'] }}">
