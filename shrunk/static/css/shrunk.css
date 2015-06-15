@@ -141,10 +141,11 @@ body {
     border-bottom: 1px solid rgb(211,211,211);
     font-size: 18px;
     display: block;
+    overflow-y: hidden;
 }
 
 .link-group:hover{
-    background-color:#DADBD9;
+    background-color: #DADBD9;
     box-shadow: 0 1px 16px rgba(0,0,0,.1);
 }
 
@@ -154,11 +155,18 @@ body {
 
 .link-group .short-link {
     color: rgb(211,211,211);
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .link-group .link-info {
+    width: 100%;
     float: left;
     overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .link-group .hover-controls {

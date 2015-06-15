@@ -17,7 +17,7 @@
     {% endif %}
     {% for link in links %}
         <article class="link-group clearfix">
-            <div class="link-info">
+            <div class="link-info" style="clear: both;">
                 <a href="{{ link['url'] }}" target="_blank" class="title">
                     {% if link['title'] %}
                         {{ link['title'] }}
@@ -25,9 +25,14 @@
                         {{ link['_id'] }}
                     {% endif %}
                 </a>
+                <div class="hover-controls">
+                    <a onClick="delete_link('{{ link['_id'] }}')">
+                        <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+                    </a>
+                </div>
                 <div class="short-link">
-                    <a href="{{ linkserver_url }}/{{ link['_id'] }}"
-                        target="_blank">{{ linkserver_url }}/{{ link['_id'] }}</a> &#8594 {{ link['url'] }}
+                    <a href="{{ linkserver_url }}/{{ link['_id'] }}" target="_blank">{{ linkserver_url }}/{{ link['_id'] }}</a> 
+                    &#8594 {{ link['url'] }}
                 </div>
                 {% if admin %}
                 <div class="owner" netid="{{ link['netid'] }}">
@@ -40,11 +45,6 @@
                 <div class="bottom-row">
                     Views: {{ link['visits'] }}
                 </div>
-            </div>
-            <div class="hover-controls">
-                <a onClick="delete_link('{{ link['_id'] }}')">
-                    <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
-                </a>
             </div>
         </article>
     {% else %}
