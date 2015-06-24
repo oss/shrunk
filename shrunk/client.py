@@ -168,12 +168,12 @@ class ShrunkClient(object):
         #Check if url is blocked
         base_url = long_url[(long_url.find("://") + 3):] #Strip protocol
         base_url = base_url[: base_url.find("/")] # Strip path
-        if db.blocked_urls.find_one({"url" : { "$regex" : "%s*" % base_url }}):
+        if db.blocked_urls.find_one({"long_url" : { "$regex" : "%s*" % base_url }}):
             return False
 
         document = {
             "_id" : short_url,
-            "url" : long_url,
+            "long_url" : long_url,
             "timeCreated" : datetime.datetime.now(),
             "visits" : 0
         }
@@ -224,7 +224,7 @@ class ShrunkClient(object):
                     "_id" : short_url
                 }),
                 "visitDataResponse" : visit_db.visits.remove({
-                    "url" : short_url
+                    "short_url" : short_url
                 })
             }
 
@@ -273,7 +273,7 @@ class ShrunkClient(object):
         """
         result = self.get_url_info(short_url)
         if result is not None:
-            return result["url"]
+            return result["long_url"]
         else:
             return None
 
@@ -354,7 +354,7 @@ class ShrunkClient(object):
         """
         db = self._mongo.shrunk_urls
         match = {"$regex" : search_string, "$options" : "i"}
-        query = {"$or" : [{"url" : match}, {"title" : match}]}
+        query = {"$or" : [{"long_url" : match}, {"title" : match}]}
         if netid is not None:
             query["netid"] = netid
 
@@ -383,7 +383,7 @@ class ShrunkClient(object):
         # TODO Do we need the source ip or can we detect it?
         db = self._mongo.shrunk_visits
         db.visits.insert({
-            "url" : short_url,
+            "short_url" : short_url,
             "source_ip" : source_ip,
             "time" : datetime.datetime.now()
         })
@@ -482,7 +482,7 @@ class ShrunkClient(object):
         if not self.is_blocked(url):
             res = db.blocked_urls.insert({'url' : url, 'blocked_by' : blocked_by})
             # Find any urls that should be deleted
-            db.urls.remove({"url" : { "$regex" : url }})
+            db.urls.remove({"long_url" : { "$regex" : url }})
             return res
 
     def allow_link(self, url):
