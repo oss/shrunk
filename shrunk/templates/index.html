@@ -15,6 +15,16 @@
         Added successfully!
     </div>
     {% endif %}
+    {% if new_edit %}
+    <div class="shrunk-messages">
+        Edited successfully!
+    </div>
+    {% endif %}
+    {% if wrong_owner %}
+    <div class="shrunk-messages">
+        You are not the owner of this URL...
+    </div>
+    {% endif %}
     {% for link in links %}
         <article class="link-group clearfix">
             <div class="link-info" style="clear: both;">

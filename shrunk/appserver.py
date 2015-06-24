@@ -234,7 +234,7 @@ def edit_link():
                 request.form["short_url"],
                 **kwargs
             )
-            return render_index()
+            return render_index(new_edit=True)
         else:
             # Validation error
             short_url = request.form["short_url"]
@@ -251,6 +251,10 @@ def edit_link():
         # Hit the database to get information
         short_url = request.args["url"]
         info = client.get_url_info(short_url)
+        owner = info["netid"]
+        if owner != current_user.netid:
+            return render_index(wrong_owner=True)
+
         long_url = info["long_url"]
         title = info["title"]   
         # Render the edit template

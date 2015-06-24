@@ -228,12 +228,7 @@ class ShrunkClient(object):
         """
         db = self._mongo.shrunk_urls
         db.urls.update({"_id" : short_url},
-                       {
-                           "$set" : {
-                                "title" : kwargs['title'],
-                                "url" : kwargs['long_url']
-                           }
-                       })
+                       {"$set" : kwargs})
 
     def delete_url(self, short_url):
         """Given a short URL, delete it from the database.
