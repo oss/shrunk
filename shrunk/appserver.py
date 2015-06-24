@@ -173,6 +173,7 @@ def add_link():
     """Adds a new link for the current user."""
     form = LinkForm(request.form)
     client = get_db_client(app, g)
+
     if request.method == "POST":
         # Validate the form
         if form.validate():
@@ -223,17 +224,23 @@ def edit_link():
     will be edited.
     """
     client = get_db_client(app, g)
-
     form = LinkForm(request.form)
+
     if request.method == "POST":
         # Validate form before continuing
         if form.validate():
             # Success - make the edits in the database
-            pass
+            kwargs = form.to_json()
+            response = client.modify_url(
+                request.form["short_url"],
+                **kwargs
+            )
+            return render_index()
         else:
             # Validation error
             return render_template("edit.html",
-                                   errors=form.errors)
+                                   errors=form.errors,
+                                   netid=current_user.netid)
     else: # GET request
         # Hit the database to get information
         short_url = request.args["url"]
