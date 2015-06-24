@@ -219,7 +219,6 @@ def delete_link():
 @login_required
 def edit_link():
     """Edits a link.
-
     On POST, this route expects a form that contains the unique short URL that
     will be edited.
     """
@@ -238,16 +237,22 @@ def edit_link():
             return render_index()
         else:
             # Validation error
+            short_url = request.form["short_url"]
+            info = client.get_url_info(short_url)
+            long_url = info["url"]
+            title = info["title"]
             return render_template("edit.html",
                                    errors=form.errors,
-                                   netid=current_user.netid)
+                                   netid=current_user.netid,
+                                   title=title,
+                                   short_url=short_url,
+                                   long_url=long_url)
     else: # GET request
         # Hit the database to get information
         short_url = request.args["url"]
         info = client.get_url_info(short_url)
         long_url = info["url"]
-        title = info["title"]
-
+        title = info["title"]   
         # Render the edit template
         return render_template("edit.html", netid=current_user.netid,
                                             title=title,
