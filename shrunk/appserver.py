@@ -239,7 +239,7 @@ def edit_link():
             # Validation error
             short_url = request.form["short_url"]
             info = client.get_url_info(short_url)
-            long_url = info["url"]
+            long_url = info["long_url"]
             title = info["title"]
             return render_template("edit.html",
                                    errors=form.errors,
@@ -251,7 +251,7 @@ def edit_link():
         # Hit the database to get information
         short_url = request.args["url"]
         info = client.get_url_info(short_url)
-        long_url = info["url"]
+        long_url = info["long_url"]
         title = info["title"]   
         # Render the edit template
         return render_template("edit.html", netid=current_user.netid,
