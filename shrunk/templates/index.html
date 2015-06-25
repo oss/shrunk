@@ -37,7 +37,7 @@
                 </a>
                 <div class="hover-controls">
                     <a href="{{ url_for('edit_link', url=link['_id']) }}">
-                        <span class="glyphicon glyphicon-edit" aria-hiden="true"></span>
+                        <span title="Edit Link" class="glyphicon glyphicon-edit" aria-hiden="true"></span>
                     </a>
                     <a onClick="delete_link('{{ link['_id'] }}')">
                         <span title="Delete Link" class="glyphicon glyphicon-remove" aria-hidden="true"></span>
