@@ -28,13 +28,6 @@
     {% for link in links %}
         <article class="link-group clearfix">
             <div class="link-info" style="clear: both;">
-                <a href="{{ link['long_url'] }}" target="_blank" class="title">
-                    {% if link['title'] %}
-                        {{ link['title'] }}
-                    {% else %}
-                        {{ link['_id'] }}
-                    {% endif %}
-                </a>
                 <div class="hover-controls">
                     <a href="{{ url_for('edit_link', url=link['_id']) }}">
                         <span title="Edit Link" class="glyphicon glyphicon-edit" aria-hiden="true"></span>
@@ -43,6 +36,13 @@
                         <span title="Delete Link" class="glyphicon glyphicon-remove" aria-hidden="true"></span>
                     </a>
                 </div>
+                <a href="{{ link['long_url'] }}" target="_blank" class="title">
+                    {% if link['title'] %}
+                        {{ link['title'] }}
+                    {% else %}
+                        {{ link['_id'] }}
+                    {% endif %}
+                </a>
                 <div class="short-link">
                     <a href="{{ linkserver_url }}/{{ link['_id'] }}" target="_blank">{{ linkserver_url }}/{{ link['_id'] }}</a> 
                     <span class="original-url"> &#8594 {{ link['long_url'] }} </span>
