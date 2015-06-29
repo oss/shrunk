@@ -1,57 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-	<meta charset="utf-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-	<title>Shrunk</title>
+    <title>Shrunk</title>
 
-	<!-- Latest compiled and minified CSS -->
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">    
-	<link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
-	<link rel="stylesheet" href="{{ url_for('static', filename='css/shrunk.css') }}">
-	<link rel="icon" type="image/ico" href="{{ url_for('static', filename='img/favicon.ico') }}">
-	<!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-	<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-	<!--[if lt IE 9]>
-	  <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-	  <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-	<![endif]-->
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+    <link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/shrunk.css') }}">
+    <link rel="icon" type="image/ico" href="{{ url_for('static', filename='img/favicon.ico') }}">
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
   </head>
   <body>
-	<nav class="navbar navbar-default navbar-fixed-top" role="navigation">
-		<div class="container">
-			<div class="navbar-header">
-				<a class="navbar-brand" href="{{ url_for('render_index') }}">
-                                  <img alt="Rutgers" src="{{ url_for('static', filename='img/RU_LOGOTYPE_REVWHITE.png') }}" width="175px">
-				</a>
-			</div>
-		</div>
-	</nav>
-	<div class="container">
-
-                {% if error %}
-                    <p><b>Error:</b> {{ error }}</p>
-                {% endif %}
-		<div class="login-box col-xs-12 col-sm-4 col-sm-offset-4">
-			<div class="hero">shrunk</div>
-			<div class="login-message">
-				Hi! Please log in to continue
-			</div>
-			<form class="login-form" method="POST" action="" name="login">
-				<div class="form-group">
-					{{ form.username(class='form-control', placeholder='NetID') }}
-					<!--<input type="netid" class="form-control" id="Netid" name="Netid" placeholder="NetID">-->
-				</div>
-				<div class="form-group">
-					{{ form.password(class='form-control', placeholder='Password') }}
-					<!--<input type="password" class="form-control" id="Password" name="Password" placeholder="Password">-->
-				</div>
-				<button type="submit" class="login-button btn btn-default">Log in</button>
-			</form>
-		</div>
-	</div>  
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="{{ url_for('render_index') }}">
+                    <img alt="Rutgers" src="{{ url_for('static', filename='img/RU_LOGOTYPE_REVWHITE.png') }}" width="175px">
+                </a>
+            </div>
+        </div>
+    </nav>
+    <div class="container">
+        {% if error %}
+            <p><b>Error:</b> {{ error }}</p>
+        {% endif %}
+        <div class="login-box col-xs-12 col-sm-4 col-sm-offset-4">
+            <div class="hero">shrunk</div>
+            <div class="login-message">
+                Hi! Please log in to continue
+            </div>
+            <form class="login-form" method="POST" action="" name="login">
+                <div class="form-group">
+                    {{ form.username(class='form-control', placeholder='NetID') }}
+                    <!--<input type="netid" class="form-control" id="Netid" name="Netid" placeholder="NetID">-->
+                </div>
+                <div class="form-group">
+                    {{ form.password(class='form-control', placeholder='Password') }}
+                    <!--<input type="password" class="form-control" id="Password" name="Password" placeholder="Password">-->
+                </div>
+                <button type="submit" class="login-button btn btn-default">Log in</button>
+            </form>
+        </div>
+    </div>
 
     <div id="footer">
         <div class="box">
@@ -59,10 +58,10 @@
         </div>
     </div>
 
-	<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-	<!-- Include all compiled plugins (below), or include individual files as needed -->
-	<!-- Latest compiled and minified JavaScript -->
-	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
   </body>
 </html>

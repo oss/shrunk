@@ -1,31 +1,31 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="links-box col-xs-12 col-sm-8 col-sm-offset-1">
-	{% if errors %}
-	<div class="shrunk-messages">
-		Uh oh:
-		<ul>
-		{% for error in errors %}
-			{% for suberror in errors[error] %}
-				<li> {{ suberror }} </li>
-			{% endfor %}
-		{% endfor %}
-		</ul>
-	</div>
-	{% endif %}
-	<article class="link-group clearfix">
-		<form method="POST" action="{{ url_for('add_link') }}" name="link_form" class="add-link">
-			<div class="title">
-				<input type="title" class="form-control" id="title" name="title" placeholder="Link Title">
-			</div>
-			<div class="url">
-				<input type="url" class="form-control" id="long_url" name="long_url" placeholder="URL">
-			</div>
-			<div class="netID">
-				<input type="hidden" id="netid" name="netid" value="{{ netid }}">
-			</div>
-			<button type="submit" class="login-button btn btn-default">Add a URL</button>
-		</form>
-	</article>
+    {% if errors %}
+    <div class="shrunk-messages">
+        Uh oh:
+        <ul>
+        {% for error in errors %}
+            {% for suberror in errors[error] %}
+                <li> {{ suberror }} </li>
+            {% endfor %}
+        {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    <article class="link-group clearfix">
+        <form method="POST" action="{{ url_for('add_link') }}" name="link_form" class="add-link">
+            <div class="title">
+                <input type="title" class="form-control" id="title" name="title" placeholder="Link Title">
+            </div>
+            <div class="url">
+                <input type="url" class="form-control" id="long_url" name="long_url" placeholder="URL">
+            </div>
+            <div class="netID">
+                <input type="hidden" id="netid" name="netid" value="{{ netid }}">
+            </div>
+            <button type="submit" class="login-button btn btn-default">Add a URL</button>
+        </form>
+    </article>
 </div>
 {% endblock %}
