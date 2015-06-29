@@ -1,16 +1,17 @@
-<div class="container">
+<div class="sidebar">
 {% if current_user.netid %}
-    <div class="netID">
-        {{ current_user.netid }}
+    <div class="menu-item">
+        <h2>{{ current_user.netid }}</h2>
     </div>
-    <div class="my-links">
-        <a href="{{ url_for('render_index') }}">My Links</a>
+    <hr>
+    <div class="menu-item">
+        <a href="{{ url_for('render_index') }}">MANAGE URLS ▶</a>
     </div>
-    <div class="add-link">
-        <a href="{{ url_for('add_link') }}">Add a Link</a>
+    <div class="menu-item">
+        <a href="{{ url_for('add_link') }}">SHORTEN URL ▶</a>
     </div>
-    <div class="log-out">
-        <a href="{{ url_for('logout') }}">Log Out</a>
+    <div class="menu-item">
+        <a href="{{ url_for('logout') }}">LOG OUT ▶</a>
     </div>
     {% if admin %}
         <label>Display All <input id="display-alll" type="checkbox" onclick='toggleLinks(this, "{{ netid }}");' checked></label>
