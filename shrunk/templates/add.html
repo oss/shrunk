@@ -14,7 +14,7 @@
     </div>
     {% endif %}
     <article class="add-group clearfix">
-        <form method="POST" action="{{ url_for('add_link') }}" name="link_form" class="add-link">
+        <form method="POST" action="{{ url_for('add_link') }}" name="link_form" class="add-link" novalidate="novalidate">
             <div class="title">
                 <label for="title">Title</label>
                 <input type="title" class="form-control" id="title" name="title" placeholder="Link Title">
