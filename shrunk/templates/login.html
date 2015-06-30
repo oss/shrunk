@@ -33,22 +33,24 @@
         {% if error %}
             <p><b>Error:</b> {{ error }}</p>
         {% endif %}
-        <div class="login-box col-xs-12 col-sm-4 col-sm-offset-4">
-            <div class="hero">shrunk</div>
-            <div class="login-message">
-                Hi! Please log in to continue
+        <div class="login-box col-xs-12 col-sm-8 col-sm-offset-2">
+            <div class="hero">sh<font color="#cc0e32">ru</font>nk</div>
+            <div class="message">
+                Please login using your Rutgers NetID and Password to continue.
             </div>
             <form class="login-form" method="POST" action="" name="login">
                 <div class="form-group">
+                    <label for="netid">NetID</label>
                     {{ form.username(class='form-control', placeholder='NetID') }}
                 </div>
                 <div class="form-group">
+                    <label for="password">Password</label>
                     {{ form.password(class='form-control', placeholder='Password') }}
                 </div>
-                <button type="submit" class="login-button btn btn-default">Log in</button>
+                <button type="submit" class="login-button btn btn-default">LOGIN</button>
             </form>
         </div>
-    </div>
+    </div>  
 
     <div id="footer">
         <div class="box">

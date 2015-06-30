@@ -13,18 +13,20 @@
         </ul>
     </div>
     {% endif %}
-    <article class="link-group clearfix">
+    <article class="add-group clearfix">
         <form method="POST" action="{{ url_for('add_link') }}" name="link_form" class="add-link">
             <div class="title">
+                <label for="title">Title</label>
                 <input type="title" class="form-control" id="title" name="title" placeholder="Link Title">
             </div>
             <div class="url">
+                <label for="url">URL</label>
                 <input type="url" class="form-control" id="long_url" name="long_url" placeholder="URL">
             </div>
             <div class="netID">
                 <input type="hidden" id="netid" name="netid" value="{{ netid }}">
             </div>
-            <button type="submit" class="login-button btn btn-default">Add a URL</button>
+            <button type="submit" class="shrink-button btn btn-default">SHRINK</button>
         </form>
     </article>
 </div>
