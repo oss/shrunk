@@ -83,7 +83,7 @@ try:
             app.logger.info("{} requests {}".format(request.remote_addr, short_url))
 
             # Perform a lookup and redirect
-            long_url = client.get_long_url(short_url.upper())
+            long_url = client.get_long_url(short_url)
             if long_url is None:
                 return render_template("link-404.html", short_url=short_url)
             else:
