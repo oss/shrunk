@@ -150,6 +150,11 @@ h1 {
     line-height: 25px;
 }
 
+.tool-sub-box {
+    border-bottom: 1px solid rgb(211,211,211);
+    overflow-x: hidden;
+    padding: 10px;
+}
 
 .links-box {
     padding: 0;

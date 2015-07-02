@@ -15,8 +15,17 @@
     <div class="menu-item">
         <a href="{{ url_for('logout') }}">LOG OUT ▶</a>
     </div>
-    {% if admin %}
     <hr />
+    <div class="menu-item">
+        SORT BY ▶ <br />
+        <select name="sortby">
+            <option value="time-desc">Newest first</option>
+            <option value="time-asc">Oldest first</option>
+            <option value="alph-asc">Alphabetical order</option>
+            <option value="alph-desc">Reverse alphabetical</option>
+        </select>
+    </div>
+    {% if admin %}
     <div class="menu-item">
         <label>Display All <input id="display-alll" type="checkbox" onclick='toggleLinks(this, "{{ netid }}");' checked></label>
     </div>
