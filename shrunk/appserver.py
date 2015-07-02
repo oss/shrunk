@@ -88,7 +88,11 @@ try:
                 return render_template("link-404.html", short_url=short_url)
             else:
                 client.visit(short_url, request.remote_addr)
-                return redirect(long_url)
+                # Check if a protocol exists
+                if "://" in long_url:
+                    return redirect(long_url)
+                else:
+                    return redirect("http://{}".format(long_url))
 except KeyError:
     # No setting in the config file
     pass
