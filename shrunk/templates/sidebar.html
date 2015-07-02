@@ -2,6 +2,9 @@
 {% if current_user.netid %}
     <div class="menu-item">
         <h2>{{ current_user.netid }}</h2>
+        {% if admin %}
+            <em>Administrator</em>
+        {% endif %}
     </div>
     <hr>
     <div class="menu-item">
