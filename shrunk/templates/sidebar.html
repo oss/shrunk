@@ -6,7 +6,7 @@
             <em>Administrator</em>
         {% endif %}
     </div>
-    <hr>
+    <hr />
     <div class="menu-item">
         <a href="{{ url_for('render_index') }}">MANAGE URLS ▶</a>
     </div>
@@ -17,7 +17,10 @@
         <a href="{{ url_for('logout') }}">LOG OUT ▶</a>
     </div>
     {% if admin %}
+    <hr />
+    <div class="menu-item">
         <label>Display All <input id="display-alll" type="checkbox" onclick='toggleLinks(this, "{{ netid }}");' checked></label>
+    </div>
     {% endif %}
 {% else %}
     <div class="log-out">
