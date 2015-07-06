@@ -14,7 +14,7 @@ body {
 .navbar {
     background-color: #cc0e32;
     height: 70px;
-    color: white;
+    color: #fefefe;
 }
 
 .navbar>.container .navbar-brand, .navbar>.container-fluid .navbar-brand a {
@@ -53,7 +53,7 @@ body {
 }
 
 .search-bar .search-btn {
-    background-color: #cc0e32;
+    background-color: #b2122e;
     color: #fefefe;
     float: right;
     width: 15%;
@@ -133,7 +133,7 @@ body {
     width: 30%;
     height: 45px;
     background-color: #b2122e;
-    color: white;
+    color: #fefefe;
     border-radius: 25px;
 }
 
@@ -165,10 +165,10 @@ body {
 }
 
 .add-group .shrink-button {
-    width: 15%;
-    height: 45px;
+    width: 18%;
+    height: 36px;
     background-color: #b2122e;
-    color: white;
+    color: #fefefe;
     border-radius: 25px;
 }
 
@@ -224,28 +224,45 @@ body {
     float: right;
 }
 
-.pager {
-    margin: 0 auto;
-    width: 100%;
-}
-
-.pagination {
-    max-height: 75px;
-    padding: 0;
-    margin: 0 auto;
-    width: 100%;
-}
-
-.pagination .previous {
+.page-group {
     float: left;
+    margin: 10px auto;
+    font-size: 28px;
+    width: 78%;
 }
 
-.pagination .next {
+.page-box {
+    
+}
+
+.page-numbers {
+    display: inline-block;
+    margin: 12px auto;
+    text-align: center;
+    width: 90%;
+}
+
+.page {
+    display: inline-block;
+}
+
+.prev {
+    display: inline-block;
+    float: left;
+    width: 5%;
+    font-size: 48px;
+}
+
+.next {
+    display: inline-block;
     float: right;
+    width: 5%;
+    font-size: 48px;
 }
 
-.pagination .next a {
-    width: 99px;
+.active {
+    font-weight: bold;
+    font-size: 36px;
 }
 
 .shrunk-messages {
@@ -259,9 +276,9 @@ body {
 }
 
 #footer {
+    position:   fixed;
     width:      100%;
     height:     40px;
-    position:   fixed;
     bottom:     0;
     padding:    12px;
 

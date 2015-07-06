@@ -66,16 +66,41 @@
     {% endfor %}
 
 {% if lastpage and lastpage > 0 %}
-<article class="pagination clearfix">
-    <nav>
-    <ul class="pager">
+<article class="page-group clearfix">
+    <nav role="navigation">
+    <div class="page-box">
+        <div class="prev">
         {% if page > 0 %}
-        <li class="previous"><a href="{{ url_for('render_index', p=page-1, search=query) }}"><span aria-hidden="true">&larr;</span> Previous</a></li>
+            <span class="prev"><a href="{{ url_for('render_index', p=page-1, search=query)
+            }}"><span aria-hidden="true">&laquo;</span></a></span>
+        {% else %}
+            <span class="prev disabled"><span
+                    aria-hidden="true">&laquo;</span></a></span>
         {% endif %}
+        </div>
+
+        <div class="page-numbers">
+        {% for pg in range(lastpage + 1) %}
+            {% if pg == page %}
+                <span class="page active"><a href="{{ url_for('render_index',
+                        p=pg) }}">{{ pg }}</a></span>
+            {% else %}
+                <span class="page"><a href="{{ url_for('render_index', p=pg)
+                        }}">{{ pg }}</a></span>
+            {% endif %}
+        {% endfor %}
+        </div>
+
+        <div class="next">
         {% if page < lastpage %}
-        <li class="next"><a href="{{ url_for('render_index', p=page+1, search=query) }}">Next <span aria-hidden="true">&rarr;</span></a></li>
+            <span class="next"><a href="{{ url_for('render_index', p=page+1, search=query) }}">
+            <span aria-hidden="true">&raquo;</span></a></span>
+        {% else %}
+            <span class="next disabled"><span
+                    aria-hidden="true">&raquo;</span></a></span>
         {% endif %}
-    </ul>
+        </div>
+    </div>
     </nav>
 </article>
 {% endif %}
