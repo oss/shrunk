@@ -2,6 +2,9 @@ var shrunk = shrunk || function() {
 
 }
 
+/**
+ * Fake a form to delete a link.
+ */
 var delete_link = function(short_url) {
     /* Might have trailing whitespace */
     short_url = short_url.trim();
@@ -24,6 +27,32 @@ var delete_link = function(short_url) {
     document.body.appendChild(form);
     form.submit();
     document.body.removeChild(form);
+}
+
+/**
+ * Change the order in which links are sorted on the front page.
+ *
+ * Forces a redirect to the index.
+ */
+var sort_links = function() {
+    var sel = document.getElementById("sortby");
+}
+
+/**
+ * Changes what links to display: links owned by all users, or only the user who
+ * is currently logged in.
+ *
+ * This only has an effect on administrators.
+ */
+var display_all = function() {
+    var sel = document.getElementById("display-all");
+    var choice = sel.options[sel.selectedIndex].value;
+    if (choice === "all-users") {
+        window.location.replace("/?display_all=1");
+    }
+    else {
+        window.location.replace("/?display_all=0");
+    }
 }
 
 function toggleLinks(cb, netid) {

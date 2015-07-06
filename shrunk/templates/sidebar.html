@@ -26,8 +26,13 @@
         </select>
     </div>
     {% if admin %}
+    <br />
     <div class="menu-item">
-        <label>Display All <input id="display-alll" type="checkbox" onclick='toggleLinks(this, "{{ netid }}");' checked></label>
+        DISPLAY LINKS ▶ <br />
+        <select id="display-all" onchange="display_all();">
+            <option value="all-users">All users</option>
+            <option value="user-only">Only {{ current_user.netid }}</option>
+        </select>
     </div>
     {% endif %}
     <hr />

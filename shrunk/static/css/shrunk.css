@@ -322,6 +322,10 @@ h1 {
     text-align: right;
 }
 
+select {
+    width: 135px;
+}
+
 /* ---- 
 
 Media Queries
