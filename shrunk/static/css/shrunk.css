@@ -41,12 +41,22 @@ body {
 }
 
 */
+
+.search-bar {
+    width: 100%;
+}
+
 .search-bar .form-group .form-control {
-    border: none;
-    min-height: 48px;
-    color: #1E0208;
-    font-size: 22px;
-    width: 600px;
+    font-size: 18px;
+    width: 80%;
+    float: left;
+}
+
+.search-bar .search-btn {
+    background-color: #cc0e32;
+    color: #fefefe;
+    float: right;
+    width: 15%;
 }
 
 .search-bar input::-webkit-input-placeholder {
