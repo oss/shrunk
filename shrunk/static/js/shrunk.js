@@ -48,10 +48,10 @@ var display_all = function() {
     var sel = document.getElementById("display-all");
     var choice = sel.options[sel.selectedIndex].value;
     if (choice === "all-users") {
-        window.location.replace("/?display_all=1");
+        window.location.replace("/?all_users=1");
     }
     else {
-        window.location.replace("/?display_all=0");
+        window.location.replace("/?all_users=0");
     }
 }
 

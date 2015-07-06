@@ -2,7 +2,7 @@
 
 Sets up a Flask application for the main web server.
 """
-from flask import Flask, render_template, request, redirect, g
+from flask import Flask, render_template, make_response, request, redirect, g
 from flask_login import LoginManager, login_required, current_user, logout_user
 from flask_auth import Auth
 
@@ -123,14 +123,25 @@ def render_index(**kwargs):
     except:
         query = ""
 
+    # Display all users or just the current administrator?
+    try:
+        all_users = request.args["all_users"]
+    except:
+        if "all_users" in request.cookies:
+            all_users = request.cookies["all_users"]
+        else:
+            all_users = "1"
+
     # Depending on the type of user, get info from the database
     is_admin = not current_user.is_anonymous() and current_user.is_admin()
     if is_admin:
         netid = current_user.netid
         if query:
             cursor = client.search(query)
-        else:
+        elif all_users == "1":
             cursor = client.get_all_urls(query)
+        else:
+            cursor = client.get_urls(current_user.netid)
     else:
         netid = current_user.netid
         if query:
@@ -144,15 +155,18 @@ def render_index(**kwargs):
     page, lastpage = cursor.paginate(page, app.config["MAX_DISPLAY_LINKS"])
     links = cursor.get_results()
 
-    return render_template("index.html",
-                           admin=is_admin,
-                           links=links,
-                           linkserver_url=app.config["LINKSERVER_URL"],
-                           netid=netid,
-                           page=page,
-                           lastpage=lastpage,
-                           query=query,
-                           **kwargs)
+    response = make_response(render_template("index.html",
+                               admin=is_admin,
+                               links=links,
+                               all_users=all_users,
+                               linkserver_url=app.config["LINKSERVER_URL"],
+                               netid=netid,
+                               page=page,
+                               lastpage=lastpage,
+                               query=query,
+                               **kwargs))
+    response.set_cookie("all_users", all_users)
+    return response
 
 
 @app.route("/login", methods=['GET', 'POST'])

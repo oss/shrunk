@@ -30,8 +30,12 @@
     <div class="menu-item">
         DISPLAY LINKS ▶ <br />
         <select id="display-all" onchange="display_all();">
-            <option value="all-users">All users</option>
-            <option value="user-only">Only {{ current_user.netid }}</option>
+            <option value="all-users" {% if all_users == "1" %} selected {% endif %}>
+                All users
+            </option>
+            <option value="user-only" {% if all_users == "0" %} selected {% endif %}>
+                Only {{ current_user.netid }}
+            </option>
         </select>
     </div>
     {% endif %}
