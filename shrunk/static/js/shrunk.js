@@ -55,6 +55,11 @@ var display_all = function() {
     }
 }
 
+var sortby = function() {
+    var sel = document.getElementById("sortby");
+    window.location.replace("/?sortby=" + sel.selectedIndex)
+}
+
 function toggleLinks(cb, netid) {
     $("article.link-group").each(function() {
         if(cb.checked)
