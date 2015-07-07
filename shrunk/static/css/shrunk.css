@@ -7,6 +7,12 @@ body {
     background-color: #fefefe;
 }
 
+h1 {
+    padding-top: 10px;
+    padding-left: 10px;
+    font-size: 48px;
+}
+
 .container {
     width: 70%;
 }
@@ -172,10 +178,12 @@ body {
 
 .add-group .title {
     margin: 20px 0;
+    font-size: 24px;
 }
 
 .add-group .url {
     margin: 20px 0;
+    font-size: 24px;
 }
 
 .link-group {
