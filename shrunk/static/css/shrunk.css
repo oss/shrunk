@@ -198,8 +198,8 @@ h1 {
 }
 
 .link-group:hover{
-    background-color: #DADBD9;
-    box-shadow: 0 1px 16px rgba(0,0,0,.1);
+    background-color: #eeeeee;
+    box-shadow: 0 1px 16px rgba(0,0,0,.2);
 }
 
 .link-group .title {
@@ -228,6 +228,8 @@ h1 {
 
 .link-group .hover-controls {
     float: right;
+    color: #bbbbbb;
+    font-size: 18px;
 }
 
 .page-group {
