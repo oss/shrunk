@@ -132,6 +132,14 @@ def render_index(**kwargs):
         else:
             all_users = "1"
 
+    # Change sorting preferences
+    if "sortby" in request.args:
+        sortby = request.args["sortby"]
+    elif "sortby" in request.cookies:
+        sortby = request.cookies["sortby"]
+    else:
+        sortby = "0"
+
     # Depending on the type of user, get info from the database
     is_admin = not current_user.is_anonymous() and current_user.is_admin()
     if is_admin:
@@ -151,22 +159,26 @@ def render_index(**kwargs):
             cursor = client.get_urls(current_user.netid)
             app.logger.info("render index: {}".format(netid))
 
-    # Perform pagination and get the results
+    # Perform sorting, pagination and get the results
+    cursor.sort(sortby)
     page, lastpage = cursor.paginate(page, app.config["MAX_DISPLAY_LINKS"])
     links = cursor.get_results()
 
-    response = make_response(render_template("index.html",
-                               admin=is_admin,
-                               links=links,
-                               all_users=all_users,
-                               linkserver_url=app.config["LINKSERVER_URL"],
-                               netid=netid,
-                               page=page,
-                               lastpage=lastpage,
-                               query=query,
-                               **kwargs))
-    response.set_cookie("all_users", all_users)
-    return response
+    resp = make_response(
+            render_template("index.html",
+                            admin=is_admin,
+                            all_users=all_users,
+                            lastpage=lastpage,
+                            links=links,
+                            linkserver_url=app.config["LINKSERVER_URL"],
+                            netid=netid,
+                            page=page,
+                            query=query,
+                            sortby=sortby,
+                            **kwargs))
+    resp.set_cookie("all_users", all_users)
+    resp.set_cookie("sortby", sortby)
+    return resp
 
 
 @app.route("/login", methods=['GET', 'POST'])
