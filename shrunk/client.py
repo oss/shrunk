@@ -19,8 +19,26 @@ class ForbiddenNameException(Exception):
     pass
 
 
+class InvalidOperationException(Exception):
+    """Raised when performing an invalid operation."""
+    pass
+
+
 class ShrunkCursor(object):
     """Easy-to-use wrapper for internal database cursors."""
+    TIME_DESC = 0
+    """Sort by creation time, descending."""
+
+    TIME_ASC = 1
+    """Sort by creation time, ascending."""
+
+
+    TITLE_ASC = 2
+    """Sort by title, alphabetically."""
+
+    TITLE_DESC = 3
+    """Sort by title, reverse-alphabetically."""
+
     def __init__(self, cursor):
         """Represents the result of a database operation.
 
@@ -97,6 +115,41 @@ class ShrunkCursor(object):
             return (count // links_per_page) - 1
         else:
             return count // links_per_page
+
+    def sort(self, sortby):
+        """Sort the results in the cursor.
+
+        The cursor can be sorted only if it hasn't been used yet; that is, no
+        records have been read from it.
+
+        :Parameters:
+          - `sortby`: The direction to sort in. Should be one of TIME_ASC,
+            TIME_DESC, TITLE_ASC, or TITLE_DESC
+
+        :Raises:
+          - ValueError: if the sorting parameter is invalid
+          - InvalidOperationException: if the cursor has already been used
+            before sorting
+        """
+        try:
+            sortby = int(sortby)
+            if sortby == ShrunkCursor.TIME_ASC:
+                self.cursor.sort("timeCreated", pymongo.ASCENDING)
+            elif sortby == ShrunkCursor.TIME_DESC:
+                self.cursor.sort("timeCreated", pymongo.DESCENDING)
+            elif sortby == ShrunkCursor.TITLE_ASC:
+                self.cursor.sort([("title", pymongo.ASCENDING),
+                                  ("_id", pymongo.ASCENDING)])
+            elif sortby == ShrunkCursor.TITLE_DESC:
+                self.cursor.sort([("title", pymongo.DESCENDING),
+                                  ("_id", pymongo.DESCENDING)])
+            else:
+                raise IndexError("Invalid argument to 'sortby'")
+        except ValueError:
+            raise ValueError("'sortby' must be an integer")
+        except pymongo.errors.InvalidOperation:
+            raise InvalidOperationException(
+                    "You cannot sort a cursor after use.")
 
 
 class ShrunkClient(object):
