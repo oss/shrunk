@@ -14,20 +14,22 @@
     </div>
     {% endif %}
 
-    <article class="link-group clearfix">
-        <form method="POST" action="{{ url_for('edit_link') }}" name="link_form" class="add-link">
-            <!-- TODO : Something like "Editing XYZ link" or something -->
+    <h1>Edit URL</h1>
+    <article class="add-group clearfix">
+        <form method="POST" action="{{ url_for('edit_link') }}" name="link_form" class="add-link" novalidate="novalidate">
             <div class="title">
+                <label for="title">Title</label>
                 <input type="title" class="form-control" id="title" name="title" value="{{ title }}" placeholder="Link Title">
             </div>
             <div class="url">
+                <label for="url">URL</label>
                 <input type="url" class="form-control" id="long_url" name="long_url" value="{{ long_url }}" placeholder="URL">
             </div>
             <div class="info">
                 <input type="hidden" id="netid" name="netid" value="{{ netid }}">
                 <input type="hidden" id="short_url" name="short_url" value="{{ short_url }}">
             </div>
-            <button type="submit" class="login-button btn btn-default">Edit URL</button>
+            <button type="submit" class="shrink-button btn btn-default">EDIT</button>
         </form>
     </article>
 </div>
