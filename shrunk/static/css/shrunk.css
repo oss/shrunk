@@ -134,7 +134,6 @@ body {
     height: 45px;
     background-color: #b2122e;
     color: #fefefe;
-    border-radius: 25px;
 }
 
 .tool-box {
@@ -169,7 +168,6 @@ body {
     height: 36px;
     background-color: #b2122e;
     color: #fefefe;
-    border-radius: 25px;
 }
 
 .add-group .title {
@@ -226,7 +224,6 @@ body {
 
 .page-group {
     float: left;
-    margin: 10px auto;
     font-size: 28px;
     width: 78%;
 }
@@ -303,7 +300,7 @@ body {
     width: 20%;
     border-right: 1px solid rgb(211,211,211);
     padding-right: 30px;
-    min-height: 80%;
+    min-height: 85%;
 }
 
 .menu-item {
