@@ -9,12 +9,12 @@ import string
 import pymongo
 
 
-class ShrunkDuplicateIdException(Exception):
+class DuplicateIdException(Exception):
     """Raised when trying to add a duplicate key to the database."""
     pass
 
 
-class ShrunkForbiddenNameException(Exception):
+class ForbiddenNameException(Exception):
     """Raised when trying to use a forbidden custom short URL."""
     pass
 
@@ -169,6 +169,10 @@ class ShrunkClient(object):
 
         :Returns:
           The shortened URL.
+
+        :Raises:
+          - ForbiddenNameException: if the requested name is a reserved word
+          - DuplicateIdException: if the requested name is already taken
         """
         custom_url = short_url is not None
         db = self._mongo.shrunk_urls
@@ -193,12 +197,12 @@ class ShrunkClient(object):
         if custom_url:
             # Attempt to insert the custom URL
             if custom_url in ShrunkClient.RESERVED_WORDS:
-                raise ShrunkForbiddenNameException()
+                raise ForbiddenNameException("That name is reserved.")
 
             try:
                 response = db.urls.insert(document)
             except pymongo.errors.DuplicateKeyError:
-                raise ShrunkDuplicateIdException()
+                raise DuplicateIdException("That name already exists.")
         else:
             # Generate a unique key and update MongoDB
             response = None
