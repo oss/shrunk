@@ -107,6 +107,9 @@ def render_index(**kwargs):
     matching their search query are shown.
     """
     client = get_db_client(app, g)
+    if not hasattr(current_user, "netid"):
+        # Anonymous user
+        return redirect("/login")
 
     # Grab the current page number
     try:
@@ -122,11 +125,7 @@ def render_index(**kwargs):
 
     # Depending on the type of user, get info from the database
     is_admin = not current_user.is_anonymous() and current_user.is_admin()
-    if not hasattr(current_user, "netid"):
-        netid = None
-        cursor = ShrunkCursor(None)
-        app.logger.info("render index: anonymous user")
-    elif is_admin:
+    if is_admin:
         netid = current_user.netid
         if query:
             cursor = client.search(query)

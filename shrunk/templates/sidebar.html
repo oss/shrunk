@@ -1,5 +1,4 @@
 <div class="sidebar">
-{% if current_user.netid %}
     <div class="menu-item">
         <h2>{{ current_user.netid }}</h2>
         {% if admin %}
@@ -22,9 +21,4 @@
         <label>Display All <input id="display-alll" type="checkbox" onclick='toggleLinks(this, "{{ netid }}");' checked></label>
     </div>
     {% endif %}
-{% else %}
-    <div class="log-out">
-        <a href="{{ url_for('login') }}">Log In</a>
-    </div>
-{% endif %}
 </div>
