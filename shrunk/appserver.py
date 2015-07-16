@@ -214,22 +214,25 @@ def add_link():
             )
             if not response:
                 # Specifically, there is no response from the database
-                # TODO Do we need to also pass in administrator information?
-                return render_template("add.html", errors=["Blocked Link"])
+                return render_template("add.html",
+                                       errors=["Blocked Link"],
+                                       admin=current_user.is_admin())
             else:
                 # Success
                 return redirect("/")
         else:
             # WTForms detects a form validation error
-            # TODO Same as the case when there is no db response
             return render_template("add.html",
                                    errors=form.errors,
-                                   netid=current_user.netid)
+                                   netid=current_user.netid,
+                                   admin=current_user.is_admin())
     else: # GET request
         if not request.form:
             form = LinkForm()
 
-        return render_template("add.html", netid=current_user.netid)
+        return render_template("add.html",
+                               netid=current_user.netid,
+                               admin=current_user.is_admin())
 
 
 @app.route("/delete", methods=["GET", "POST"])
