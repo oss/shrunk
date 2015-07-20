@@ -189,13 +189,14 @@ def add_link():
             )
             if not response:
                 # Specifically, there is no response from the database
+                # TODO Do we need to also pass in administrator information?
                 return render_template("add.html", errors=["Blocked Link"])
             else:
                 # Success
-                return render_index(new_url=response,
-                                    new_target_url=kwargs["long_url"])
+                return redirect("/")
         else:
             # WTForms detects a form validation error
+            # TODO Same as the case when there is no db response
             return render_template("add.html",
                                    errors=form.errors,
                                    netid=current_user.netid)
@@ -216,13 +217,14 @@ def delete_link():
     if request.method == "POST":
         app.logger.info("Deleting URL: {}".format(request.form["short_url"]))
         client.delete_url(request.form["short_url"])
-    return render_index(deleted_url=request.form["short_url"])
+    return redirect("/")
 
 
 @app.route("/edit", methods=["GET", "POST"])
 @login_required
 def edit_link():
     """Edits a link.
+
     On POST, this route expects a form that contains the unique short URL that
     will be edited.
     """
@@ -238,7 +240,7 @@ def edit_link():
                 request.form["short_url"],
                 **kwargs
             )
-            return render_index(new_edit=True)
+            return redirect("/")
         else:
             # Validation error
             short_url = request.form["short_url"]
