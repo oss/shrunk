@@ -70,10 +70,10 @@
     <nav>
     <ul class="pager">
         {% if page > 0 %}
-        <li class="previous"><a href="{{ url_for('render_index', p=page-1) }}"><span aria-hidden="true">&larr;</span> Previous</a></li>
+        <li class="previous"><a href="{{ url_for('render_index', p=page-1, search=query) }}"><span aria-hidden="true">&larr;</span> Previous</a></li>
         {% endif %}
         {% if page < lastpage %}
-        <li class="next"><a href="{{ url_for('render_index', p=page+1) }}">Next <span aria-hidden="true">&rarr;</span></a></li>
+        <li class="next"><a href="{{ url_for('render_index', p=page+1, search=query) }}">Next <span aria-hidden="true">&rarr;</span></a></li>
         {% endif %}
     </ul>
     </nav>
