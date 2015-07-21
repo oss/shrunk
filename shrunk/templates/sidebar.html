@@ -2,7 +2,8 @@
     <div class="menu-item">
         <h2>{{ current_user.netid }}</h2>
         {% if admin %}
-            <em>Administrator</em> <br />
+            <hr />
+            <em>Administrator Controls</em> <br />
 
             {% if all_users == "1" %}
                 <a href="/?all_users=0">
@@ -13,6 +14,16 @@
                     DISPLAY ALL LINKS ▶
                 </a>
             {% endif %}
+
+            <div class="menu-item">
+                <a href="/admin/blocklink" class="title">BLOCK URLS ▶</a>
+            </div>
+            <div class="menu-item">
+                <a href="/admin/blacklist" class="title">BLACKLIST USERS ▶</a>
+            </div>
+            <div class="menu-item">
+                <a href="/admin/add" class="title">ADD ADMINISTRATORS ▶</a>
+            </div>
         {% endif %}
     </div>
     <hr />
