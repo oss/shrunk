@@ -2,7 +2,17 @@
     <div class="menu-item">
         <h2>{{ current_user.netid }}</h2>
         {% if admin %}
-            <em>Administrator</em>
+            <em>Administrator</em> <br />
+
+            {% if all_users == "1" %}
+                <a href="/?all_users=0">
+                    DISPLAY MY LINKS ▶
+                </a>
+            {% elif all_users == "0" %}
+                <a href="/?all_users=1">
+                    DISPLAY ALL LINKS ▶
+                </a>
+            {% endif %}
         {% endif %}
     </div>
     <hr />
@@ -25,21 +35,6 @@
             <option {% if sortby == "3" %} selected {% endif %}>Z-A</option>
         </select>
     </div>
-    {% if admin %}
-    <br />
-    <div class="menu-item">
-        DISPLAY LINKS ▶ <br />
-        <select id="display-all" onchange="display_all();">
-            <option value="all-users" {% if all_users == "1" %} selected {% endif %}>
-                All users
-            </option>
-            <option value="user-only" {% if all_users == "0" %} selected {% endif %}>
-                Only {{ current_user.netid }}
-            </option>
-        </select>
-    </div>
-    {% endif %}
-    <hr />
     <form class="search-bar" role="search" method="GET" action="/">
         <div class="form-group">
             <input type="text" class="form-control" id="search" name="search" placeholder="Search">
