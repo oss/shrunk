@@ -21,11 +21,6 @@
         <label>Display All <input id="display-alll" type="checkbox" onclick='toggleLinks(this, "{{ netid }}");' checked></label>
     </div>
     {% endif %}
-    {% else %}
-        <div class="log-out">
-            <a href="{{ url_for('login') }}">Log In</a>
-        </div>
-    {% endif %}
     <hr />
     <form class="search-bar" role="search" method="GET" action="/">
         <div class="form-group">
