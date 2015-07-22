@@ -289,17 +289,26 @@ def edit_link():
             )
             return redirect("/")
         else:
-            # Validation error
-            short_url = request.form["short_url"]
-            info = client.get_url_info(short_url)
-            long_url = info["long_url"]
-            title = info["title"]
-            return render_template("edit.html",
-                                   errors=form.errors,
-                                   netid=current_user.netid,
-                                   title=title,
-                                   short_url=short_url,
-                                   long_url=long_url)
+            form.long_url.data = "http://" + form.long_url.data
+            if form.validate():
+                kwargs = form.to_json()
+                response = client.modify_url(
+                    request.form["short_url"],
+                    **kwargs
+                )
+                return redirect("/")
+            else:
+                # Validation error
+                short_url = request.form["short_url"]
+                info = client.get_url_info(short_url)
+                long_url = info["long_url"]
+                title = info["title"]
+                return render_template("edit.html",
+                                    errors=form.errors,
+                                    netid=current_user.netid,
+                                    title=title,
+                                    short_url=short_url,
+                                    long_url=long_url)
     else: # GET request
         # Hit the database to get information
         short_url = request.args["url"]
