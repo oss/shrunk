@@ -205,6 +205,7 @@ def add_link():
 
     if request.method == "POST":
         # Validate the form
+
         if form.validate():
             # TODO Handle an error on db insert
             kwargs = form.to_json()
@@ -216,16 +217,34 @@ def add_link():
                 # Specifically, there is no response from the database
                 return render_template("add.html",
                                        errors=["Blocked Link"],
-                                       admin=current_user.is_admin())
+                                       admin=current_user.is_admin()
+                )
             else:
                 # Success
                 return redirect("/")
-        else:
-            # WTForms detects a form validation error
-            return render_template("add.html",
-                                   errors=form.errors,
-                                   netid=current_user.netid,
-                                   admin=current_user.is_admin())
+        else: # WTForms detects a form validation error
+            form.long_url.data = "http://" + form.long_url.data
+            
+            if form.validate():
+                kwargs = form.to_json()
+                response = client.create_short_url(
+                        netid=current_user.netid,
+                        **kwargs
+                )
+                if not response:
+                    # Specifically, there is no response from the database
+                    return render_template("add.html",
+                                        errors=["Blocked Link"],
+                                        admin=current_user.is_admin()
+                    )
+                else:
+                    # Success
+                    return redirect("/")
+            else:
+                return render_template("add.html",
+                                    errors=form.errors,
+                                    netid=current_user.netid,
+                                    admin=current_user.is_admin())
     else: # GET request
         if not request.form:
             form = LinkForm()

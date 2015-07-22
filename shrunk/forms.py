@@ -12,10 +12,12 @@ class LinkForm(Form):
     """A WTForm for creating and editing links."""
     long_url = TextField("URL", validators=[
         validators.DataRequired("You need a link to shrink!"),
+        validators.URL(require_tld=True, message="Invalid URL"),
         filters.url_reject_regex(filters.BLACKLIST)
     ])
     title = TextField("Title", validators=[
-        validators.DataRequired("You need a descriptive title for the link.")])
+        validators.DataRequired("You need a descriptive title for the link.")
+    ])
 
     def to_json(self):
         """Exports the form's fields into a JSON-compatible dictionary."""
