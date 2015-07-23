@@ -353,36 +353,46 @@ def admin_sub(action=None):
     if action == None:
         return render_template("admin.html", netid=netid)
     client = get_db_client(app, g)
-    if action == 'blacklist':
+    if action == "blacklist":
         form = BlacklistUserForm(request.form)
         if request.method == "POST" and form.validate():
-            if form.action.data == 'ban':
+            if form.action.data == "ban":
                 res = client.blacklist_user(form.netid.data, netid)
             else:
                 res = client.allow_user(form.netid.data)
-            return render_template('admin_blacklist.html', form=form,
-                                   netid=netid, msg='Success!')
-        return render_template('admin_blacklist.html', netid=netid, form=form)
+            return render_template("admin_blacklist.html", form=form,
+                                   netid=netid, msg="Success!")
+        return render_template("admin_blacklist.html", netid=netid, form=form)
 
-    elif action == 'manage':
+    elif action == "manage":
+        admins = client.get_admins()
         form = AddAdminForm(request.form)
         if request.method == "POST" and form.validate():
+            # TODO Should be a case where we catch the validation errors
             res = client.add_admin(form.netid.data, current_user.netid)
-            return render_template('admin_list.html', form=form, netid=netid,
-                                   msg='Success!')
-        return render_template('admin_list.html', form=form, netid=netid)
+            return render_template("admin_list.html",
+                                   admin=True,
+                                   form=form,
+                                   msg="New administrator successfully added.",
+                                   netid=netid)
+        else:
+            return render_template("admin_list.html", 
+                                   admin=True,
+                                   admins=admins,
+                                   form=form,
+                                   netid=netid)
 
-    elif action == 'blocklink':
+    elif action == "blocklink":
         form = BlockLinksForm(request.form)
         if request.method == "POST" and form.validate():
-            if form.action.data == 'block':
+            if form.action.data == "block":
                 res = client.block_link(form.link.data, netid)
             else:
                 res = client.allow_link(form.link.data)
-            return render_template('admin_block_links.html', form=form,
-                                   msg='Success!', netid=netid)
-        return render_template('admin_block_links.html', form=form,
+            return render_template("admin_block_links.html", form=form,
+                                   msg="Success!", netid=netid)
+        return render_template("admin_block_links.html", form=form,
                                netid=netid)
 
     else:
-        return redirect('/')
+        return redirect("/")

@@ -1,15 +1,33 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="form-box col-xs-12 col-sm-8 col-sm-offset-1">
-    <h3>Add Administrators</h3>
+<div class="links-box col-xs-12 col-sm-8 col-sm-offset-1">
+    <h1>Manage Administrators</h1>
     {% if msg %}
-        <br><p><b>Result:</b> {{ msg }}</p>
+    <div class="shrunk-messages">
+        {{ msg }}
+    </div>
     {% endif %}
-    <br>
-    <form method="post" action="" name="add_admin">
-        {{ form.netid.label }}: {{ form.netid(class_="form-control") }}
-        <br>
-        <input class='btn btn-default' type="submit" value="Submit" /><br />
-    </form>
+
+    <article class="add-group clearfix">
+        <h3>Add an Administrator</h3>
+        <form method="post" action="" name="add_admin">
+            {{ form.netid.label }}: {{ form.netid(class_="form-control") }} <br />
+            <input class='shrink-button btn btn-default' type="submit" value="ADD" /> <br />
+        </form>
+    </article>
+
+    <h3>Edit Administrators</h3>
+    {% for admin in admins %}
+    <article class="add-group clearfix">
+        <div class="link-info" style="clear: both;">
+            <div class="hover-controls">
+                [ <a href="#">Delete</a> ]
+            </div>
+            <div class="short-link">
+                {{ admin }}
+            </div>
+        </div>
+    </article>
+    {% endfor %}
 </div>
 {% endblock %}

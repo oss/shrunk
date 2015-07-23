@@ -50,7 +50,7 @@ class BlacklistUserForm(Form):
 
 class AddAdminForm(Form):
     """A WTForm for adding new administrators. Accessible by admin only"""
-    netid = TextField('Netid', validators=[validators.DataRequired()])
+    netid = TextField('NetID', validators=[validators.DataRequired()])
 
 class BlockLinksForm(Form):
     """ A WTForm for blocking unwanted urls. Accessible by admin only"""
