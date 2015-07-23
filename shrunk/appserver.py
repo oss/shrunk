@@ -325,7 +325,7 @@ def edit_link():
         short_url = request.args["url"]
         info = client.get_url_info(short_url)
         owner = info["netid"]
-        if owner != current_user.netid:
+        if owner != current_user.netid and not current_user.is_admin():
             return render_index(wrong_owner=True)
 
         long_url = info["long_url"]
