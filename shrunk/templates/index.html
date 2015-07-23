@@ -63,12 +63,12 @@
         {% endif %}
     {% endfor %}
 
-{% if lastpage and lastpage > 0 %}
+{% if lastpage and lastpage > 1 %}
 <article class="page-group clearfix">
     <nav role="navigation">
     <div class="page-box">
         <div class="prev">
-        {% if page > 0 %}
+        {% if page > 1 %}
             <span class="prev"><a href="{{ url_for('render_index', p=page-1, search=query)
             }}"><span aria-hidden="true">&laquo;</span></a></span>
         {% else %}
@@ -78,13 +78,11 @@
         </div>
 
         <div class="page-numbers">
-        {% for pg in range(lastpage + 1) %}
+        {% for pg in range(1, lastpage + 1) %}
             {% if pg == page %}
-                <span class="page active"><a href="{{ url_for('render_index',
-                        p=pg) }}">{{ pg }}</a></span>
+                <span class="page active"><a href="{{ url_for('render_index', p=pg) }}">{{ pg }}</a></span>
             {% else %}
-                <span class="page"><a href="{{ url_for('render_index', p=pg)
-                        }}">{{ pg }}</a></span>
+                <span class="page"><a href="{{ url_for('render_index', p=pg) }}">{{ pg }}</a></span>
             {% endif %}
         {% endfor %}
         </div>
