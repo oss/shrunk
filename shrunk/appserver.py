@@ -345,7 +345,7 @@ def admin_sub(action=None):
     :Parameters:
       - `action`: Which action to take. This can be one of the following:
         1. blacklist - Go to blacklist panel used for blacklisting users
-        2. add - Go to add panel used for adding additional admins
+        2. manage - Add and remove administrators
         3. blocklink - Go to block link panel, used for blacklisting long urls
     """
 
@@ -364,13 +364,13 @@ def admin_sub(action=None):
                                    netid=netid, msg='Success!')
         return render_template('admin_blacklist.html', netid=netid, form=form)
 
-    elif action == 'add':
+    elif action == 'manage':
         form = AddAdminForm(request.form)
         if request.method == "POST" and form.validate():
             res = client.add_admin(form.netid.data, current_user.netid)
-            return render_template('admin_add.html', form=form, netid=netid,
+            return render_template('admin_list.html', form=form, netid=netid,
                                    msg='Success!')
-        return render_template('admin_add.html', form=form, netid=netid)
+        return render_template('admin_list.html', form=form, netid=netid)
 
     elif action == 'blocklink':
         form = BlockLinksForm(request.form)
