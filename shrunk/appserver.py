@@ -206,6 +206,12 @@ def add_link():
     if request.method == "POST":
         # Validate the form
 
+        # long url may not be the linkserver
+        if form.long_url.data.startswith(app.config['LINKSERVER_URL']) or form.long_url.data.startswith(app.config['LINKSERVER_URL'][:7]):
+            return render_template("add.html",
+                                    errors=["Blocked Link"],
+                                    admin=current_user.is_admin()
+            )
         if form.validate():
             # TODO Handle an error on db insert
             kwargs = form.to_json()
@@ -280,6 +286,11 @@ def edit_link():
 
     if request.method == "POST":
         # Validate form before continuing
+        if form.long_url.data.startswith(app.config['LINKSERVER_URL']) or form.long_url.data.startswith(app.config['LINKSERVER_URL'][:7]):
+            return render_template("add.html",
+                                    errors=["Blocked Link"],
+                                    admin=current_user.is_admin()
+            )
         if form.validate():
             # Success - make the edits in the database
             kwargs = form.to_json()
