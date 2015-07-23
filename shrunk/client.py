@@ -50,6 +50,11 @@ class ShrunkCursor(object):
     def paginate(self, page, links_per_page):
         """Performs pagination on this cursor.
 
+        This pagination assumes that pages are one-indexed; that is, the first
+        page starts numbering as page 1. Specifying a page number of zero or
+        less gives the first page; specifying a page number after the last gives
+        the last page.
+
         :Parameters:
           - `page`: An integer. Only show the results that belong on this page
           - `links_per_page`: Limit the number of results for each page
@@ -62,15 +67,15 @@ class ShrunkCursor(object):
           A tuple containing the current page number and the last page number.
         """
         if self.cursor is None:
-            return (0, 0)
+            return (1, 1)
 
         # Calculate the pagination
         count = self.cursor.count()
         last_page = self.get_last_page(links_per_page)
-        page = min(max(page, 0), last_page)
+        page = min(max(page, 1), last_page)
 
         # Apply a skip and limit to the cursor
-        self.cursor.skip(page*links_per_page).limit(links_per_page)
+        self.cursor.skip((page-1)*links_per_page).limit(links_per_page)
 
         # Return the new page number and total count
         return (page, last_page)
@@ -100,21 +105,21 @@ class ShrunkCursor(object):
           - `links_per_page`: The maximum number of links per page
 
         :Returns:
-          A nonnegative integer indicating the zero-based index number of the
+          A nonnegative integer indicating the one-based index number of the
           last page. For instance, if `count` is 11 and `links_per_page` is 5,
-          then this function returns 2 (since there are three pages total).
+          then this function returns 3.
         """
         if not self.cursor:
-            return 0
+            return 1
 
         count = self.cursor.count()
         if count < links_per_page:
-            return 0
+            return 1
         elif count % links_per_page == 0:
             # Special case: fills all pages exactly
-            return (count // links_per_page) - 1
-        else:
             return count // links_per_page
+        else:
+            return (count // links_per_page) + 1
 
     def sort(self, sortby):
         """Sort the results in the cursor.
