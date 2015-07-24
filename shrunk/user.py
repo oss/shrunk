@@ -2,9 +2,12 @@
 
 User object used for authentication.
 """
+from functools import wraps
+
 from flask_login import UserMixin, current_user
 from flask_auth import LoginForm
 from wtforms import TextField, PasswordField, validators
+
 from shrunk.client import ShrunkClient
 
 
@@ -38,24 +41,31 @@ def get_user(fields):
     """
     return User(fields['username'])
 
+
 def admin_required(unauthorized):
-    """ If you decorate a view with this, it will require a user to be
+    """Decorator for administrator-only actions.
+
+    If you decorate a view with this, it will require a user to be
     authenticated, active, and an administrator before calling the actual view.
-    For example::
+
+    For example ::
+
         @app.route('/admin')
         @admin_required
         def admin():
+            # Do work...
             pass
 
+    Note that the Flask route decoration must always be the outermost.
+
     :Parameters:
-      - `func`: The function to wrap.
-      - `unauthorized`: The function to call if the user is not authorized.
+      - `unauthorized`: The function to call if the user is not authorized
 
     :Returns:
-      The decorated function requiring admin privs to execute.
+      The decorated function requiring admin privileges to execute.
     """
-
     def decorator_wrapper(func):
+        @wraps(func)
         def decorated_view(*args, **kwargs):
             if not current_user.is_authenticated() or not current_user.is_admin():
                 return unauthorized()
