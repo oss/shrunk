@@ -556,17 +556,10 @@ class ShrunkClient(object):
         """Retrieves the list of administrators.
 
         :Returns:
-          A list of strings, each corresponding to the NetID of an
-          administrator.
+          A list of dicts containing information about each administrator.
         """
         db = self._mongo.shrunk_users
-        result = []
-        admins = db.administrators.find()
-        for admin in admins:
-            if admin["netid"]:
-                result.append(admin["netid"])
-
-        return result
+        return list(db.administrators.find())
 
     def is_blocked(self, url):
         """ Finds if a url is blocked by checking the blocked_urls collection.
