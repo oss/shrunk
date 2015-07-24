@@ -6,7 +6,6 @@ from flask import Flask, render_template, make_response, request, redirect, g
 from flask_login import LoginManager, login_required, current_user, logout_user
 from flask_auth import Auth
 
-from shrunk.client import ShrunkCursor
 from shrunk.forms import BlockLinksForm
 from shrunk.forms import LinkForm, RULoginForm, BlacklistUserForm, AddAdminForm
 from shrunk.user import User, get_user, admin_required
@@ -301,6 +300,7 @@ def edit_link():
             return redirect("/")
         else:
             form.long_url.data = "http://" + form.long_url.data
+            # TODO Can we do anything with the database response?
             if form.validate():
                 kwargs = form.to_json()
                 response = client.modify_url(
@@ -336,63 +336,88 @@ def edit_link():
                                             short_url=short_url,
                                             long_url=long_url)
 
-@app.route("/admin/")
-@app.route("/admin/<action>", methods=["GET", "POST"])
+
+@app.route("/admin/blacklist", methods=["GET", "POST"])
 @login_required
 @admin_required(unauthorized_admin)
-def admin_sub(action=None):
-    """Renders the admin interface.
-    :Parameters:
-      - `action`: Which action to take. This can be one of the following:
-        1. blacklist - Go to blacklist panel used for blacklisting users
-        2. manage - Add and remove administrators
-        3. blocklink - Go to block link panel, used for blacklisting long urls
+def admin_blacklist():
+    """Renders the administrator blacklist.
+
+    Allows admins to blacklist users to prevent them from accessing the web
+    interface.
     """
-
-    netid = current_user.netid
-    if action == None:
-        return render_template("admin.html", netid=netid)
     client = get_db_client(app, g)
-    if action == "blacklist":
-        form = BlacklistUserForm(request.form)
-        if request.method == "POST" and form.validate():
-            if form.action.data == "ban":
-                res = client.blacklist_user(form.netid.data, netid)
-            else:
-                res = client.allow_user(form.netid.data)
-            return render_template("admin_blacklist.html", form=form,
-                                   netid=netid, msg="Success!")
-        return render_template("admin_blacklist.html", netid=netid, form=form)
-
-    elif action == "manage":
-        admins = client.get_admins()
-        form = AddAdminForm(request.form)
-        if request.method == "POST" and form.validate():
-            # TODO Should be a case where we catch the validation errors
-            res = client.add_admin(form.netid.data, current_user.netid)
-            return render_template("admin_list.html",
-                                   admin=True,
-                                   form=form,
-                                   msg="New administrator successfully added.",
-                                   netid=netid)
+    form = BlacklistUserForm(request.form)
+    netid = current_user.netid
+    if request.method == "POST" and form.validate():
+        if form.action.data == "ban":
+            res = client.blacklist_user(form.netid.data, netid)
         else:
-            return render_template("admin_list.html", 
-                                   admin=True,
-                                   admins=admins,
-                                   form=form,
-                                   netid=netid)
+            res = client.allow_user(form.netid.data)
+        return render_template("admin_blacklist.html", form=form,
+                               netid=netid, msg="Success!")
+    return render_template("admin_blacklist.html", netid=netid, form=form)
 
-    elif action == "blocklink":
-        form = BlockLinksForm(request.form)
-        if request.method == "POST" and form.validate():
-            if form.action.data == "block":
-                res = client.block_link(form.link.data, netid)
-            else:
-                res = client.allow_link(form.link.data)
-            return render_template("admin_block_links.html", form=form,
-                                   msg="Success!", netid=netid)
-        return render_template("admin_block_links.html", form=form,
+
+@app.route("/admin/manage", methods=["GET", "POST"])
+@login_required
+@admin_required(unauthorized_admin)
+def admin_manage():
+    """Renders a list of administrators.
+
+    Allows an admin to add and remove NetIDs from the list of official
+    administrators.
+    """
+    client = get_db_client(app, g)
+    admins = client.get_admins()
+    form = AddAdminForm(request.form)
+    netid = current_user.netid
+    if request.method == "POST" and form.validate():
+        # TODO Should be a case where we catch the validation errors
+        res = client.add_admin(form.netid.data, current_user.netid)
+        return render_template("admin_list.html",
+                               admin=True,
+                               form=form,
+                               msg="New administrator successfully added.",
+                               netid=netid)
+    else:
+        return render_template("admin_list.html", 
+                               admin=True,
+                               admins=admins,
+                               form=form,
                                netid=netid)
 
-    else:
-        return redirect("/")
+
+@app.route("/admin/links", methods=["GET", "POST"])
+@login_required
+@admin_required(unauthorized_admin)
+def admin_links():
+    """Renders the administrator link banlist.
+
+    Allows admins to block (and unblock) particular URLs from being shrunk.
+    """
+    client = get_db_client(app, g)
+    netid = current_user.netid
+    form = BlockLinksForm(request.form)
+    # TODO Inspect the database response
+    if request.method == "POST" and form.validate():
+        if form.action.data == "block":
+            res = client.block_link(form.link.data, netid)
+        else:
+            res = client.allow_link(form.link.data)
+        return render_template("admin_block_links.html", form=form,
+                               msg="Success!", netid=netid)
+    return render_template("admin_block_links.html", form=form,
+                           netid=netid)
+
+
+@app.route("/admin/")
+@login_required
+@admin_required(unauthorized_admin)
+def admin_panel():
+    """Renders the administrator panel.
+    
+    This displays an administrator panel with navigation links to the admin
+    controls.
+    """
+    return render_template("admin.html", netid=current_user.netid)
