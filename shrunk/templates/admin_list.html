@@ -18,14 +18,19 @@
 
     <h3>Edit Administrators</h3>
     {% for admin in admins %}
-    <article class="add-group clearfix">
+    <article class="link-group clearfix">
         <div class="link-info" style="clear: both;">
             <div class="hover-controls">
                 [ <a href="#">Delete</a> ]
             </div>
-            <div class="short-link">
-                {{ admin }}
+            <div class="title">
+                {{ admin['netid'] }}
             </div>
+            {% if admin['added_by'] %}
+                <div class="bottom-row">
+                    Added by: {{ admin['added_by'] }}
+                </div>
+            {% endif %}
         </div>
     </article>
     {% endfor %}
