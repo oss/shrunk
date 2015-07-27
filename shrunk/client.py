@@ -584,8 +584,18 @@ class ShrunkClient(object):
             return False
         return True
 
+    def get_blocked_links(self):
+        """Retrieves the list of blocked links.
+
+        :Returns:
+          A list of dicts containing information about each blocked link.
+        """
+        db = self._mongo.shrunk_urls
+        return list(db.blocked_urls.find())
+
     def block_link(self, url, blocked_by):
         """Adds a link to the blocked_urls collection.
+
         :Parameters:
             - `url`: The url to block.
             - `blocked_by`: A Rutgers NetID of the administrators that is doing
@@ -600,6 +610,7 @@ class ShrunkClient(object):
 
     def allow_link(self, url):
         """Removes a link from the blocked_urls collection.
+
         :Parameters:
             - `url`: The url to allow.
         """
