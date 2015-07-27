@@ -552,6 +552,15 @@ class ShrunkClient(object):
             return db.administrators.insert({"netid" : netid, "added_by" :
                 added_by})
 
+    def delete_admin(self, netid):
+        """Revokes a user's administrator privileges.
+
+        :Parameters:
+          - `netid`: They NetID of the administrator to remove
+        """
+        db = self._mongo.shrunk_users
+        return db.administrators.remove({"netid" : netid})
+
     def get_admins(self):
         """Retrieves the list of administrators.
 
