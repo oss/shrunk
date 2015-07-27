@@ -20,7 +20,9 @@ do
 done
 rm -rf dump.$(($MAX_BACKUPS+1))
 
-mongodump -o dump.0
+mongodump -o dump.0 -db=shrunk_users
+mongodump -o dump.0 -db=shrunk_visits
+mongodump -o dump.0 -db=shrunk_urls
 
 # rotate configs 
 cd $BACKUP_CONFIG_DIR
