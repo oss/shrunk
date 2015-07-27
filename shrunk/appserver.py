@@ -405,6 +405,40 @@ def admin_delete():
     return redirect("/admin/manage")
 
 
+@app.route("/admin/links/block", methods=["GET", "POST"])
+@login_required
+@admin_required(unauthorized_admin)
+def admin_block_link():
+    """Block a link from being shrunk.
+
+    Allows an administrator to block a link pattern from being shrunk by the
+    web application. URLs matching the given regular expression will be
+    prohibited.
+    """
+    client = get_db_client(app, g)
+    form = BlockLinksForm(request.form)
+    if request.method == "POST":
+        if form.validate():
+            client.block_link(form.link.data, current_user.netid)
+        else:
+            # TODO catch validation errors
+            pass
+
+    return redirect("/admin/links")
+
+
+@app.route("/admin/links/unblock", methods=["GET", "POST"])
+@login_required
+@admin_required(unauthorized_admin)
+def admin_unblock_link():
+    """Remove a link from the banned links list."""
+    client = get_db_client(app, g)
+    if request.method == "POST":
+        client.allow_link(request.form["url"])
+
+    return redirect("/admin/links")
+
+
 @app.route("/admin/links", methods=["GET", "POST"])
 @login_required
 @admin_required(unauthorized_admin)
@@ -414,18 +448,11 @@ def admin_links():
     Allows admins to block (and unblock) particular URLs from being shrunk.
     """
     client = get_db_client(app, g)
-    netid = current_user.netid
-    form = BlockLinksForm(request.form)
-    # TODO Inspect the database response
-    if request.method == "POST" and form.validate():
-        if form.action.data == "block":
-            res = client.block_link(form.link.data, netid)
-        else:
-            res = client.allow_link(form.link.data)
-        return render_template("admin_block_links.html", form=form,
-                               msg="Success!", netid=netid)
-    return render_template("admin_block_links.html", form=form,
-                           netid=netid)
+    return render_template("admin_block_links.html",
+                           admin=True,
+                           banlist=client.get_blocked_links(),
+                           form=BlockLinksForm(request.form),
+                           netid=current_user.netid)
 
 
 @app.route("/admin/")
