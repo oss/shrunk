@@ -229,7 +229,7 @@ def add_link():
                 return redirect("/")
         else: # WTForms detects a form validation error
             form.long_url.data = "http://" + form.long_url.data
-            
+
             if form.validate():
                 kwargs = form.to_json()
                 response = client.create_short_url(
@@ -329,7 +329,7 @@ def edit_link():
             return render_index(wrong_owner=True)
 
         long_url = info["long_url"]
-        title = info["title"]   
+        title = info["title"]
         # Render the edit template
         return render_template("edit.html", netid=current_user.netid,
                                             title=title,
@@ -359,7 +359,7 @@ def admin_blacklist():
     return render_template("admin_blacklist.html", netid=netid, form=form)
 
 
-@app.route("/admin/manage", methods=["GET", "POST"])
+@app.route("/admin/manage")
 @login_required
 @admin_required(unauthorized_admin)
 def admin_manage():
@@ -369,23 +369,40 @@ def admin_manage():
     administrators.
     """
     client = get_db_client(app, g)
-    admins = client.get_admins()
+    return render_template("admin_list.html",
+                           admin=True,
+                           admins=client.get_admins(),
+                           form=AddAdminForm(request.form),
+                           netid=current_user.netid)
+
+
+@app.route("/admin/manage/add", methods=["GET", "POST"])
+@login_required
+@admin_required(unauthorized_admin)
+def admin_add():
+    """Add a new administrator."""
+    client = get_db_client(app, g)
     form = AddAdminForm(request.form)
-    netid = current_user.netid
-    if request.method == "POST" and form.validate():
-        # TODO Should be a case where we catch the validation errors
-        res = client.add_admin(form.netid.data, current_user.netid)
-        return render_template("admin_list.html",
-                               admin=True,
-                               form=form,
-                               msg="New administrator successfully added.",
-                               netid=netid)
-    else:
-        return render_template("admin_list.html", 
-                               admin=True,
-                               admins=admins,
-                               form=form,
-                               netid=netid)
+    if request.method == "POST":
+        if form.validate():
+            client.add_admin(form.netid.data, current_user.netid)
+        else:
+            # TODO catch validation errors
+            pass
+
+    return redirect("/admin/manage")
+
+
+@app.route("/admin/manage/delete", methods=["GET", "POST"])
+@login_required
+@admin_required(unauthorized_admin)
+def admin_delete():
+    """Delete an existing administrator."""
+    client = get_db_client(app, g)
+    if request.method == "POST":
+        client.delete_admin(request.form["netid"])
+
+    return redirect("/admin/manage")
 
 
 @app.route("/admin/links", methods=["GET", "POST"])
@@ -416,7 +433,7 @@ def admin_links():
 @admin_required(unauthorized_admin)
 def admin_panel():
     """Renders the administrator panel.
-    
+
     This displays an administrator panel with navigation links to the admin
     controls.
     """

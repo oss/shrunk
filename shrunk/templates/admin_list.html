@@ -10,8 +10,11 @@
 
     <article class="add-group clearfix">
         <h3>Add an Administrator</h3>
-        <form method="post" action="" name="add_admin">
+        <form class="search" method="POST" action="{{ url_for('admin_add') }}" name="add_admin">
+            <!--
             {{ form.netid.label }}: {{ form.netid(class_="form-control") }} <br />
+            -->
+            <input name="netid" type="text" class="form-control"/> <br />
             <input class='shrink-button btn btn-default' type="submit" value="ADD" /> <br />
         </form>
     </article>
@@ -21,7 +24,10 @@
     <article class="link-group clearfix">
         <div class="link-info" style="clear: both;">
             <div class="hover-controls">
-                [ <a href="#">Delete</a> ]
+                <form method="POST" action="{{ url_for('admin_delete') }}">
+                    <input type="hidden" id="netid" name="netid" value="{{ admin['netid'] }}" />
+                    <input class="shrink-button btn btn-default" type="submit" value="DELETE" />
+                </form>
             </div>
             <div class="title">
                 {{ admin['netid'] }}
