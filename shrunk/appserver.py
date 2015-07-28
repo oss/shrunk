@@ -6,10 +6,10 @@ from flask import Flask, render_template, make_response, request, redirect, g
 from flask_login import LoginManager, login_required, current_user, logout_user
 from flask_auth import Auth
 
-from shrunk.forms import BlockLinksForm
-from shrunk.forms import LinkForm, RULoginForm, BlacklistUserForm, AddAdminForm
+from shrunk.forms import BlockLinksForm, LinkForm, RULoginForm, BlacklistUserForm, AddAdminForm
 from shrunk.user import User, get_user, admin_required
 from shrunk.util import get_db_client, set_logger, formattime
+from shrunk.filters import strip_protocol, ensure_protocol
 
 
 # Create application
@@ -199,61 +199,36 @@ def logout():
 @login_required
 def add_link():
     """Adds a new link for the current user."""
-    form = LinkForm(request.form)
+    form = LinkForm(request.form,
+                    banlist=[strip_protocol(app.config["LINKSERVER_URL"])])
     client = get_db_client(app, g)
 
     if request.method == "POST":
         # Validate the form
-
-        # long url may not be the linkserver
-        if form.long_url.data.startswith(app.config['LINKSERVER_URL']) or form.long_url.data.startswith(app.config['LINKSERVER_URL'][:7]):
-            return render_template("add.html",
-                                    errors=["Blocked Link"],
-                                    admin=current_user.is_admin()
-            )
+        form.long_url.data = ensure_protocol(form.long_url.data)
         if form.validate():
-            # TODO Handle an error on db insert
+            # TODO Decide whether we want to do something with the response
             kwargs = form.to_json()
-            response = client.create_short_url(
-                netid=current_user.netid,
-                **kwargs
-            )
-            if not response:
-                # Specifically, there is no response from the database
-                return render_template("add.html",
-                                       errors=["Blocked Link"],
-                                       admin=current_user.is_admin()
+            try:
+                client.create_short_url(
+                    netid=current_user.netid,
+                    **kwargs
                 )
-            else:
-                # Success
                 return redirect("/")
-        else: # WTForms detects a form validation error
-            form.long_url.data = "http://" + form.long_url.data
-
-            if form.validate():
-                kwargs = form.to_json()
-                response = client.create_short_url(
-                        netid=current_user.netid,
-                        **kwargs
-                )
-                if not response:
-                    # Specifically, there is no response from the database
-                    return render_template("add.html",
-                                        errors=["Blocked Link"],
-                                        admin=current_user.is_admin()
-                    )
-                else:
-                    # Success
-                    return redirect("/")
-            else:
+            except Exception as e:
                 return render_template("add.html",
-                                    errors=form.errors,
-                                    netid=current_user.netid,
-                                    admin=current_user.is_admin())
-    else: # GET request
-        if not request.form:
-            form = LinkForm()
+                                       errors=[e.message],
+                                       netid=current_user.netid,
+                                       admin=current_user.is_admin())
 
+        else:
+            # WTForms detects a form validation error
+            return render_template("add.html",
+                                   errors=form.errors,
+                                   netid=current_user.netid,
+                                   admin=current_user.is_admin())
+    else:
+        # GET request
         return render_template("add.html",
                                netid=current_user.netid,
                                admin=current_user.is_admin())
