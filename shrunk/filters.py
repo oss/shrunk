@@ -57,3 +57,32 @@ def url_restrict_regex(regexes):
         else:
             raise StopValidation("That URL is not allowed.")
     return _restrict
+
+
+def ensure_protocol(url):
+    """Fixes missing URL protocols.
+
+    Adds an appropriate HTTP protocol to the given URL if it is missing.
+
+    :Parameters:
+      - `url`: The URL to fix
+
+    :Returns:
+      The fixed URL. If the protocol exists, it returns the original URL.
+    """
+    if not url.startswith("http://") and not url.startswith("https://"):
+        return "http://{}".format(url)
+    else:
+        return url
+
+
+def strip_protocol(url):
+    """Strips the protocol from a URL.
+
+    :Parameters:
+      - `url`: The URL to modify
+
+    :Returns:
+      The URL without a protocol. If none exists, it returns the original URL.
+    """
+    return url.replace("http://", "", 1).replace("https://", "", 1)
