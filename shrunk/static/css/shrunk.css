@@ -131,7 +131,16 @@ h1 {
 
 .login-box .login-form {
     border: 1px solid rgb(211,211,211);
-    padding: 40px;
+    padding: 15px 40px;
+}
+
+.login-box .login-form .error {
+    color: red; 
+    font-size: 16px;
+}
+
+.login-box .login-form .form-group {
+    padding-top: 10px;
 }
 
 .login-box .login-button {

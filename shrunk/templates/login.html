@@ -30,15 +30,15 @@
         </div>
     </nav>
     <div class="container">
-        {% if error %}
-            <p><b>Error:</b> {{ error }}</p>
-        {% endif %}
         <div class="login-box col-xs-12 col-sm-8 col-sm-offset-2">
             <div class="hero">sh<font color="#cc0e32">ru</font>nk</div>
             <div class="message">
                 Please login using your Rutgers NetID and Password to continue.
             </div>
             <form class="login-form" method="POST" action="" name="login">
+                {% if error %}
+                <span class="error">{{ error }}</span>
+                {% endif %}
                 <div class="form-group">
                     <label for="netid">NetID</label>
                     {{ form.username(class='form-control', placeholder='NetID') }}
