@@ -229,7 +229,8 @@ class ShrunkClient(object):
           The shortened URL.
 
         :Raises:
-          - ForbiddenNameException: if the requested name is a reserved word
+          - ForbiddenNameException: if the requested name is a reserved word or
+            has been banned by an administrator
           - DuplicateIdException: if the requested name is already taken
         """
         custom_url = short_url is not None
@@ -239,7 +240,7 @@ class ShrunkClient(object):
         base_url = long_url[(long_url.find("://") + 3):] #Strip protocol
         base_url = base_url[: base_url.find("/")] # Strip path
         if db.blocked_urls.find_one({"long_url" : { "$regex" : "%s*" % base_url }}):
-            return False
+            raise ForbiddenNameException("That URL is not allowed.")
 
         document = {
             "_id" : short_url,
