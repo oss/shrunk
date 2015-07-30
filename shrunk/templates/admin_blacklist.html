@@ -15,5 +15,30 @@
         {% endfor %}
         <input class='btn btn-default' type="submit" value="Submit" /><br />
     </form>
+
+    <h3>Blacklist</h3>
+    {% for user in banlist %}
+        <article class="link-group clearfix">
+            <div class="link-info" style="clear: both;">
+                <div class="hover-controls">
+                    <!-- TODO Update route -->
+                    <form method="POST" action="#">
+                        <input type="hidden" id="netid" name="netid" value="{{ user['netid'] }}" />
+                        <input class="shrunk-button btn btn-default" type="submit" value="DELETE" />
+                    </form>
+                </div>
+                <div class="title">
+                    {{ user['netid'] }}
+                </div>
+                <div class="bottom-row">
+                    Blocked by: {{ ','.join(user['banned_by'] }}
+                </div>
+            </div>
+        </article>
+    {% else %}
+        <p>
+            There are currently no blacklisted users.
+        </p>
+    {% endfor %}
 </div>
 {% endblock %}
