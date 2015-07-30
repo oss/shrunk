@@ -14,8 +14,7 @@ class LinkForm(Form):
     """A WTForm for creating and editing links."""
     long_url = TextField("URL", validators=[
         validators.DataRequired("You need a link to shrink!"),
-        validators.URL(require_tld=True, message="Please enter a valid URL."),
-        filters.url_reject_regex(filters.BLACKLIST)
+        validators.URL(require_tld=True, message="Please enter a valid URL.")
     ])
     title = TextField("Title", validators=[
         validators.DataRequired("Please enter a title.")
