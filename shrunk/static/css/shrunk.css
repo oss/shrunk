@@ -9,8 +9,17 @@ body {
 
 h1 {
     padding-top: 10px;
-    padding-left: 10px;
     font-size: 48px;
+}
+
+ul {
+    list-style: none;
+    padding-top: 10px;
+    padding-left: 0px;
+}
+
+label {
+    margin: 0;
 }
 
 .container {
@@ -83,6 +92,12 @@ h1 {
 
 .navbar-form {
     /*width: 100%;*/
+}
+
+.error {
+    font-style: bold;
+    font-size: 18px;
+    color: red;
 }
 
 .form-box,
@@ -178,7 +193,6 @@ h1 {
 }
 
 .add-group {
-    padding: 10px;
     width: 80%;
     display: block;
 }
@@ -191,13 +205,20 @@ h1 {
 }
 
 .add-group .title {
-    margin: 20px 0;
+    margin-top: 15px;
     font-size: 24px;
 }
 
 .add-group .url {
     margin: 20px 0;
     font-size: 24px;
+}
+
+.add-group .error {
+    color: red;
+    font-size: 16px;
+    float: right;
+    padding-top: 8px;
 }
 
 .link-group {
@@ -284,12 +305,6 @@ h1 {
 .active {
     font-weight: bold;
     font-size: 36px;
-}
-
-.shrunk-messages {
-    background-color: rgb(255, 255, 211);
-    padding-left: 10px;
-    padding-top: 5px;
 }
 
 .footer {

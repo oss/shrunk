@@ -1,28 +1,34 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="links-box col-xs-12 col-sm-8 col-sm-offset-1">
+    <h1>Edit URL</h1>
     {% if errors %}
-    <div class="shrunk-messages">
-        Uh oh:
-        <ul>
-        {% for error in errors %}
-            {% for suberror in errors[error] %}
-                <li> {{ suberror }} </li>
-            {% endfor %}
-        {% endfor %}
-        </ul>
+    <div class="error">
+        Please fix the errors and resubmit!
     </div>
     {% endif %}
-
-    <h1>Edit URL</h1>
     <article class="add-group clearfix">
         <form method="POST" action="{{ url_for('edit_link') }}" name="link_form" class="add-link" novalidate="novalidate">
             <div class="title">
                 <label for="title">Title</label>
+                {% if errors %}
+                    {% if errors["title"] %}
+                        {% for suberror in errors["title"] %}
+                        <span class="error">{{ suberror }}</span>
+                        {% endfor %}
+                    {% endif %}
+                {% endif %}
                 <input type="title" class="form-control" id="title" name="title" value="{{ title }}" placeholder="Link Title">
             </div>
             <div class="url">
                 <label for="url">URL</label>
+                {% if errors %}
+                    {% if errors["long_url"] %}
+                        {% for suberror in errors["long_url"] %}
+                        <span class="error">{{ suberror }}</span>
+                        {% endfor %}
+                    {% endif %}
+                {% endif %}
                 <input type="url" class="form-control" id="long_url" name="long_url" value="{{ long_url }}" placeholder="URL">
             </div>
             <div class="info">
