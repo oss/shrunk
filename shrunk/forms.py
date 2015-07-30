@@ -12,6 +12,15 @@ import shrunk.filters
 
 class LinkForm(Form):
     """A WTForm for creating and editing links."""
+    long_url = TextField("URL", validators=[
+        validators.DataRequired("You need a link to shrink!"),
+        validators.URL(require_tld=True, message="That URL is not valid.")
+    ])
+    title = TextField("Title", validators=[
+        validators.DataRequired("The link requires a descriptive title.")
+    ])
+    rejected_regexes = []
+
     def __init__(self, form, banlist=None):
         """Initializes the form.
 
@@ -21,14 +30,14 @@ class LinkForm(Form):
             the default ones
         """
         super().__init__(form)
-        self.long_url = TextField("URL", validators=[
-            validators.DataRequired("You need a link to shrink!"),
-            validators.URL(require_tld=True, message="That URL isn't valid."),
-            shrunk.filters.url_reject_regex([re.compile(x) for x in banlist])
-        ])
-        self.title = TextField("Title", validators=[
-            validators.DataRequired("The link requires a descriptive title.")
-        ])
+        if banlist:
+            for r in banlist:
+                LinkForm.rejected_regexes.append(re.compile(r))
+
+    def validate_long_url(form, field):
+        for regex in LinkForm.rejected_regexes:
+            if regex.search(field.data):
+                raise ValidationError("That URL is not allowed.")
 
     def to_json(self):
         """Exports the form"s fields into a JSON-compatible dictionary."""
