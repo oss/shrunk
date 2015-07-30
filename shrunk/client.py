@@ -237,9 +237,9 @@ class ShrunkClient(object):
         db = self._mongo.shrunk_urls
 
         #Check if url is blocked
-        base_url = long_url[(long_url.find("://") + 3):] #Strip protocol
+        base_url = long_url[(long_url.find("://") + 3):] # Strip any protocol
         base_url = base_url[: base_url.find("/")] # Strip path
-        if db.blocked_urls.find_one({"long_url" : { "$regex" : "%s*" % base_url }}):
+        if db.blocked_urls.find_one({"url" : { "$regex" : "%s*" % base_url }}):
             raise ForbiddenNameException("That URL is not allowed.")
 
         document = {
