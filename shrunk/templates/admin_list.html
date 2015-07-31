@@ -11,11 +11,8 @@
     <article class="add-group clearfix">
         <h3>Add an Administrator</h3>
         <form class="search" method="POST" action="{{ url_for('admin_add') }}" name="add_admin">
-            <!--
-            {{ form.netid.label }}: {{ form.netid(class_="form-control") }} <br />
-            -->
             <input name="netid" type="text" class="form-control"/> <br />
-            <input class='shrink-button btn btn-default' type="submit" value="ADD" /> <br />
+            <input class="shrink-button btn btn-default" type="submit" value="ADD" /> <br />
         </form>
     </article>
 
@@ -39,6 +36,10 @@
             {% endif %}
         </div>
     </article>
+    {% else %}
+        <p>
+            There are currently no administrators in the database.
+        </p>
     {% endfor %}
 </div>
 {% endblock %}
