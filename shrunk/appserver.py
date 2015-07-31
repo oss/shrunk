@@ -423,7 +423,7 @@ def admin_links():
     Allows admins to block (and unblock) particular URLs from being shrunk.
     """
     client = get_db_client(app, g)
-    return render_template("admin_block_links.html",
+    return render_template("admin_links.html",
                            admin=True,
                            banlist=client.get_blocked_links(),
                            form=BlockLinksForm(request.form),
