@@ -497,12 +497,13 @@ class ShrunkClient(object):
             return False
         return True
 
-    def blacklist_user(self, netid, banned_by):
+    def ban_user(self, netid, banned_by):
         """Adds a user to the blacklist collection.
+
         :Parameters:
-            - `netid`: A Rutgers NetID.
+            - `netid`: A Rutgers NetID
             - `banned_by`: The NetID of the administrator that banned this
-              person.
+              person
         """
         db = self._mongo.shrunk_users
         if not self.is_blacklisted(netid):
@@ -515,8 +516,9 @@ class ShrunkClient(object):
             return db.blacklist.update({'netid' : netid}, update, upsert=False,
                     multi=False)
 
-    def allow_user(self, netid):
+    def unban_user(self, netid):
         """Removes a user from the blacklist collection.
+
         :Parameters:
             - `netid`: A Rutgers NetID.
         """
@@ -524,7 +526,8 @@ class ShrunkClient(object):
         if self.is_blacklisted:
             db.blacklist.remove({'netid' : netid})
             return True
-        return False
+        else:
+            return False
 
     def is_admin(self, netid):
         """ Finds if a user is an administrator by checking the administrators
@@ -625,7 +628,7 @@ class ShrunkClient(object):
           A list of dicts containing information about each blacklisted NetID.
         """
         db = self._mongo.shrunk_users
-        return list(db.blocked_urls.find())
+        return list(db.blacklist.find())
 
     @staticmethod
     def _generate_unique_key():

@@ -217,7 +217,7 @@ def add_link():
                 return redirect("/")
             except Exception as e:
                 return render_template("add.html",
-                                       errors=[e.message],
+                                       errors=["{}".format(e)],
                                        netid=current_user.netid,
                                        admin=current_user.is_admin())
 
@@ -310,28 +310,6 @@ def edit_link():
                                             title=title,
                                             short_url=short_url,
                                             long_url=long_url)
-
-
-@app.route("/admin/blacklist", methods=["GET", "POST"])
-@login_required
-@admin_required(unauthorized_admin)
-def admin_blacklist():
-    """Renders the administrator blacklist.
-
-    Allows admins to blacklist users to prevent them from accessing the web
-    interface.
-    """
-    client = get_db_client(app, g)
-    form = BlacklistUserForm(request.form)
-    netid = current_user.netid
-    if request.method == "POST" and form.validate():
-        if form.action.data == "ban":
-            res = client.blacklist_user(form.netid.data, netid)
-        else:
-            res = client.allow_user(form.netid.data)
-        return render_template("admin_blacklist.html", form=form,
-                               netid=netid, msg="Success!")
-    return render_template("admin_blacklist.html", netid=netid, form=form)
 
 
 @app.route("/admin/manage")
@@ -440,3 +418,54 @@ def admin_panel():
     controls.
     """
     return render_template("admin.html", netid=current_user.netid)
+
+
+@app.route("/admin/blacklist", methods=["GET", "POST"])
+@login_required
+@admin_required(unauthorized_admin)
+def admin_blacklist():
+    """Renders the administrator blacklist.
+
+    Allows admins to blacklist users to prevent them from accessing the web
+    interface.
+    """
+    client = get_db_client(app, g)
+    return render_template("admin_blacklist.html",
+                           admin=True,
+                           blacklist=client.get_blacklisted_users(),
+                           netid=current_user.netid)
+
+
+@app.route("/admin/blacklist/ban", methods=["GET", "POST"])
+@login_required
+@admin_required(unauthorized_admin)
+def admin_ban_user():
+    """Ban a user from using the web application.
+
+    Adds a user to the blacklist.
+    """
+    client = get_db_client(app, g)
+    form = BlacklistUserForm(request.form)
+    if request.method == "POST":
+        if form.validate():
+            client.ban_user(form.netid.data, current_user.netid)
+        else:
+            # TODO Catch validation errors
+            pass
+
+    return redirect("/admin/blacklist")
+
+
+@app.route("/admin/blacklist/unban", methods=["GET", "POST"])
+@login_required
+@admin_required(unauthorized_admin)
+def admin_unban_user():
+    """Unban a user from the blacklist.
+
+    Removes a user from the blacklist, restoring their previous privileges.
+    """
+    client = get_db_client(app, g)
+    if request.method == "POST":
+        client.unban_user(request.form["netid"])
+
+    return redirect("/admin/blacklist")

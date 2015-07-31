@@ -56,10 +56,7 @@ class RULoginForm(LoginForm):
 
 class BlacklistUserForm(Form):
     """A WTForm for banning users. Accessible by admin only"""
-    netid = TextField("Netid", validators=[validators.DataRequired()])
-    action = RadioField("Action", choices=[("ban", "Ban User"), ("allow",
-            "Unban User")], validators=[validators.DataRequired()],
-            default="ban")
+    netid = TextField("NetID", validators=[validators.DataRequired()])
 
     def to_json(self):
         """Exports the form's fields into a JSON-compatible dictionary."""

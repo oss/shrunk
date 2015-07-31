@@ -1,28 +1,27 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="form-box col-xs-12 col-sm-8 col-sm-offset-1">
-    <h3>BlackList Users</h3>
+    <h1>User Blacklist</h1>
     {% if msg %}
-        <br><p><b>Result:</b> {{ msg }}</p>
+    <div class="shrunk-messages">
+        {{ msg }}
+    </div>
     {% endif %}
-    <br>
-    <form method="post" action="" name="blacklist">
-        {{ form.netid.label }}: {{ form.netid(class_="form-control") }}
-        <br>
-        {% for subfield in form.action %}
-            {{ subfield }} {{ subfield.label }}
-            <br>
-        {% endfor %}
-        <input class='btn btn-default' type="submit" value="Submit" /><br />
-    </form>
 
-    <h3>Blacklist</h3>
-    {% for user in banlist %}
+    <article class="add-group clearfix">
+        <h3>Ban a User</h3>
+        <form method="POST" action="{{ url_for('admin_ban_user') }}" name="blacklist">
+            <input name="netid" type="text" class="form-control" /> <br />
+            <input class="shrink-button btn btn-default" type="submit" value="BAN" /> <br />
+        </form>
+    </article>
+
+    <h3>Edit Blacklist</h3>
+    {% for user in blacklist %}
         <article class="link-group clearfix">
             <div class="link-info" style="clear: both;">
                 <div class="hover-controls">
-                    <!-- TODO Update route -->
-                    <form method="POST" action="#">
+                    <form method="POST" action="{{ url_for('admin_unban_user') }}">
                         <input type="hidden" id="netid" name="netid" value="{{ user['netid'] }}" />
                         <input class="shrunk-button btn btn-default" type="submit" value="DELETE" />
                     </form>
@@ -31,7 +30,7 @@
                     {{ user['netid'] }}
                 </div>
                 <div class="bottom-row">
-                    Blocked by: {{ ','.join(user['banned_by'] }}
+                    Blocked by: {{ ','.join(user['banned_by']) }}
                 </div>
             </div>
         </article>
