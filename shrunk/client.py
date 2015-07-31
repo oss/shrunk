@@ -618,6 +618,14 @@ class ShrunkClient(object):
         db = self._mongo.shrunk_urls
         return db.blocked_urls.remove({'url' : { '$regex' : url }})
 
+    def get_blacklisted_users(self):
+        """Retrieves the list of banned users.
+
+        :Returns:
+          A list of dicts containing information about each blacklisted NetID.
+        """
+        db = self._mongo.shrunk_users
+        return list(db.blocked_urls.find())
 
     @staticmethod
     def _generate_unique_key():
