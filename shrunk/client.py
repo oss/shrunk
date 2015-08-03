@@ -232,7 +232,6 @@ class ShrunkClient(object):
             has been banned by an administrator
           - DuplicateIdException: if the requested name is already taken
         """
-        custom_url = short_url is not None
         db = self._mongo.shrunk_urls
 
         #Check if url is blocked
@@ -252,9 +251,9 @@ class ShrunkClient(object):
         if title is not None:
             document["title"] = title
 
-        if custom_url:
+        if short_url is not None:
             # Attempt to insert the custom URL
-            if custom_url in ShrunkClient.RESERVED_WORDS:
+            if short_url in ShrunkClient.RESERVED_WORDS:
                 raise ForbiddenNameException("That name is reserved.")
 
             try:
@@ -277,7 +276,7 @@ class ShrunkClient(object):
 
         return response
 
-    def modify_url(self, short_url, **kwargs):
+    def modify_url(self, old_short_url, short_url=None, **kwargs):
         """Modifies an existing URL.
 
         Edits the values of the url `short_url` and replaces them with the
@@ -289,8 +288,30 @@ class ShrunkClient(object):
             all values specified.
         """
         db = self._mongo.shrunk_urls
-        db.urls.update({"_id" : short_url},
-                       {"$set" : kwargs})
+        document = db.urls.find_one({"_id": old_short_url})
+
+        if short_url is not None:
+            if short_url in ShrunkClient.RESERVED_WORDS:
+                raise ForbiddenNameException("That name is reserved.")
+            else:
+                document["_id"] = short_url
+
+            if old_short_url != short_url:
+                try:
+                    response = db.urls.insert(document)
+                except pymongo.errors.DuplicateKeyError:
+                    raise DuplicateIdException("That name already exists.")
+                db.urls.remove({"_id": old_short_url})
+                db.urls.update({"_id" : short_url},
+                            {"$set" : kwargs})
+            else:
+                response = db.urls.update({"_id" : old_short_url},
+                                          {"$set" : kwargs})
+        else:
+            response = db.urls.update({"_id" : old_short_url},
+                           {"$set" : kwargs})
+
+        return response
 
     def delete_url(self, short_url):
         """Given a short URL, delete it from the database.

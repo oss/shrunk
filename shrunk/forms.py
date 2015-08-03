@@ -59,7 +59,7 @@ class LinkForm(Form):
             "long_url": self.long_url.data,
             "title": self.title.data,
         }
-        if self.short_url.data != "":
+        if self.short_url.data:
             data["short_url"] = self.short_url.data
         return data
 
