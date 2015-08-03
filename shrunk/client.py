@@ -273,7 +273,7 @@ class ShrunkClient(object):
                     document["_id"] = url
                     response = db.urls.insert(document)
                 except pymongo.errors.DuplicateKeyError:
-                        continue
+                    continue
 
         return response
 
@@ -366,7 +366,7 @@ class ShrunkClient(object):
         :Returns:
           The long URL, or None if the short URL does not exist.
         """
-        result = self.get_url_info(short_url.lower())
+        result = self.get_url_info(short_url)
         if result is not None:
             return result["long_url"]
         else:

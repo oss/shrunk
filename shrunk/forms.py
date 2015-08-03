@@ -4,11 +4,14 @@
 
 import re
 
-from wtforms import Form, TextField, PasswordField, RadioField, validators
+from wtforms import Form, TextField, PasswordField, RadioField, validators, ValidationError
 from flask_auth import LoginForm
 
 import shrunk.filters
 
+def alphanumeric_check(form, field):
+    if not field.data.isalnum():
+        raise ValidationError('Custom alias must be alphanumeric')
 
 class LinkForm(Form):
     """A WTForm for creating and editing links.
@@ -24,6 +27,11 @@ class LinkForm(Form):
     title = TextField("Title", validators=[
         validators.DataRequired("Please enter a title.")
     ])
+    short_url = TextField("Custom Alias", validators=[
+        validators.Optional(strip_whitespace=True),
+        validators.Length(min=5, max=16, message="Custom alias length must be between %(min)d and %(max)d"),
+        alphanumeric_check
+        ])
     rejected_regexes = []
 
     def __init__(self, form, banlist=None):
@@ -47,10 +55,13 @@ class LinkForm(Form):
 
     def to_json(self):
         """Exports the form"s fields into a JSON-compatible dictionary."""
-        return {
+        data = {
             "long_url": self.long_url.data,
-            "title": self.title.data
+            "title": self.title.data,
         }
+        if self.short_url.data != "":
+            data["short_url"] = self.short_url.data
+        return data
 
 
 class RULoginForm(LoginForm):
