@@ -1,7 +1,7 @@
-""" shRUnk - Rutgers University URL Shortener
+# shrunk - Rutgers University URL Shortener
 
-User object used for authentication.
-"""
+"""User objects for authentication."""
+
 from functools import wraps
 
 from flask_login import UserMixin, current_user
@@ -19,9 +19,11 @@ class User(UserMixin):
         self.client = ShrunkClient()
 
     def is_active(self):
+        """Determines whether or not a user is active."""
         return not self.client.is_blacklisted(self.netid)
 
     def is_admin(self):
+        """Determines whether or not this user is an administrator."""
         return self.client.is_admin(self.netid)
 
     def __str__(self):

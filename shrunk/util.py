@@ -1,7 +1,7 @@
-""" shRUnk - Rutgers University URL Shortener
+# shrunk - Rutgers University URL Shortener
 
-Utility functions for shrunk.
-"""
+"""Utility functions for shrunk."""
+
 import logging
 
 from shrunk.client import ShrunkClient

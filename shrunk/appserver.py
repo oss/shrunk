@@ -1,4 +1,4 @@
-""" shRUnk - Rutgers University URL Shortener
+""" shrunk - Rutgers University URL Shortener
 
 Sets up a Flask application for the main web server.
 """

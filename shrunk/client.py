@@ -1,7 +1,6 @@
-""" shrunk - Rutgers University URL Shortener
+# shrunk - Rutgers University URL Shortener
 
-Implements database-level interactions for the shrunk application.
-"""
+"""Database-level interactions for shrunk. """
 import datetime
 import random
 import string
@@ -462,6 +461,7 @@ class ShrunkClient(object):
 
         On visiting a URL, this is guaranteed to perform at least the following
         side effects if the URL is valid:
+
           - Increment the hit counter
           - Log the visitor
 
@@ -485,12 +485,13 @@ class ShrunkClient(object):
         })
 
     def is_blacklisted(self, netid):
-        """Finds if a user is blacklisted by checking the blacklist collection.
+        """Determines if a user has been blacklisted.
+
         :Parameters:
           - `netid` A Rutgers NetID
 
         :Returns
-          True if the user is in the blacklist collection, false otherwise.
+          True if the user is in the blacklist collection; False otherwise.
         """
         db = self._mongo.shrunk_users
         if db.blacklist.find_one({"netid" : netid}) is None:
@@ -501,9 +502,8 @@ class ShrunkClient(object):
         """Adds a user to the blacklist collection.
 
         :Parameters:
-            - `netid`: A Rutgers NetID
-            - `banned_by`: The NetID of the administrator that banned this
-              person
+          - `netid`: A Rutgers NetID
+          - `banned_by`: The NetID of the administrator that banned this person
         """
         db = self._mongo.shrunk_users
         if not self.is_blacklisted(netid):
@@ -520,7 +520,7 @@ class ShrunkClient(object):
         """Removes a user from the blacklist collection.
 
         :Parameters:
-            - `netid`: A Rutgers NetID.
+          - `netid`: A Rutgers NetID
         """
         db = self._mongo.shrunk_users
         if self.is_blacklisted:
@@ -530,8 +530,8 @@ class ShrunkClient(object):
             return False
 
     def is_admin(self, netid):
-        """ Finds if a user is an administrator by checking the administrators
-        collection.
+        """Determine if a user is an administrator.
+
         :Parameters:
           - `netid`: A Rutgers NetID.
 
@@ -546,10 +546,10 @@ class ShrunkClient(object):
 
     def add_admin(self, netid, added_by):
         """Adds a user to the administrators collection.
+
         :Parameters:
-            - `netid`: A Rutgers NetID.
-            - `added_by`: The NetID of the administrator that added this
-              person.
+          - `netid`: A Rutgers NetID
+          - `added_by`: The NetID of the administrator that added this person
         """
         db = self._mongo.shrunk_users
         if not self.is_admin(netid):
@@ -575,13 +575,13 @@ class ShrunkClient(object):
         return list(db.administrators.find())
 
     def is_blocked(self, url):
-        """ Finds if a url is blocked by checking the blocked_urls collection.
+        """Determines if a URL has been banned.
+
         :Parameters:
-          - `url`: The url to check.
+          - `url`: The url to check
 
         :Returns:
-          True if the url is in the blocked_urls collection, False
-          otherwise.
+          True if the url is in the blocked_urls collection; False otherwise.
         """
         db = self._mongo.shrunk_urls
         if db.blocked_urls.find_one({'url' : url}) is None:
@@ -601,9 +601,8 @@ class ShrunkClient(object):
         """Adds a link to the blocked_urls collection.
 
         :Parameters:
-            - `url`: The url to block.
-            - `blocked_by`: A Rutgers NetID of the administrators that is doing
-              the blocking.
+          - `url`: The url to block
+          - `blocked_by`: The NetIDs of the administrators blocking the URL
         """
         db = self._mongo.shrunk_urls
         if not self.is_blocked(url):
@@ -616,7 +615,7 @@ class ShrunkClient(object):
         """Removes a link from the blocked_urls collection.
 
         :Parameters:
-            - `url`: The url to allow.
+          - `url`: The url to allow
         """
         db = self._mongo.shrunk_urls
         return db.blocked_urls.remove({'url' : { '$regex' : url }})

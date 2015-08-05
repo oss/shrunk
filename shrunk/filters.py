@@ -1,7 +1,7 @@
-""" shRUnk - Rutgers University URL Shortener
+# shrunk - Rutgers University URL Shortener
 
-Filters used for validation and the like.
-"""
+"""Filters for data validation."""
+
 import re
 
 from wtforms.validators import StopValidation

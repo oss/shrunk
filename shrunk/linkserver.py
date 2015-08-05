@@ -1,7 +1,7 @@
-""" shRUnk - Rutgers University URL Shortener
+# shrunk - Rutgers University URL Shortener
 
-Sets up a Flask application for the link server.
-"""
+"""Flask application for the link server."""
+
 from flask import Flask, render_template, request, redirect, g
 
 import shrunk.client
