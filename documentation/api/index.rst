@@ -8,10 +8,8 @@
 .. toctree::
    :maxdepth: 1
 
-   appserver
    client
    filters
    forms
-   linkserver
    user
    util
