@@ -2,7 +2,8 @@ Installing / Upgrading
 ======================
 .. highlight:: bash
 
-**Shrunk** is in the `Python Package Index <http://pypi.python.org/pypi/>`_.
+**Shrunk** is in the `Python Package Index
+<http://pypi.python.org/pypi/shrunk>`_.
 
 Installing with pip
 -------------------
