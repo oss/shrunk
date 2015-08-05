@@ -1,8 +1,3 @@
-.. shrunk documentation master file, created by
-   sphinx-quickstart on Thu Jul 30 12:32:27 2015.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Shrunk |release| Documentation
 ==============================
 
@@ -20,8 +15,8 @@ Shrunk is written by Rutgers `Open System Solutions <http://oss.rutgers.edu>`_.
 :doc:`tutorial`
   Quickly learn to shrink URLs and access link data.
 
-:doc:`faq`
-  Frequently asked questions about shrunk.
+:doc:`API <api/index>`
+  Browse the official Shrunk API.
 
 Issues
 ------
@@ -41,4 +36,8 @@ Indices and tables
 * :ref:`search`
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
+
+   installation
+   tutorial
+   API <api/index>
