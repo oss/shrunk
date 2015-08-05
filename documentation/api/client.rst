@@ -1,4 +1,4 @@
-:mod:`client` -- Database client for Shrunk
+:mod:`client.py` -- Database client for Shrunk
 ===========================================
 
 .. automodule:: shrunk.client
