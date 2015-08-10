@@ -71,9 +71,10 @@ class RULoginForm(LoginForm):
       - `username`: Text field for the user's NetID
       - `password`: Password field for a NetID password
     """
-    username = TextField("Netid", validators=[validators.DataRequired()])
-    password = PasswordField("Password",
-            validators=[validators.DataRequired()])
+    username = TextField("Netid", validators=[
+        validators.DataRequired(message="Please provide your NetID.")])
+    password = PasswordField("Password", validators=[
+        validators.DataRequired(message="Please provide a password.")])
 
 
 class BlacklistUserForm(Form):
