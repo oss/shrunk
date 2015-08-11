@@ -193,6 +193,10 @@ class ShrunkClient(object):
         """
         self._mongo = pymongo.MongoClient(host, port)
 
+    def clone_cursor(self, cursor):
+        """Clones an already existing ShrunkCursor object."""
+        return ShrunkCursor(cursor.cursor.clone())
+
     def count_links(self, netid=None):
         """Counts the number of created links.
 

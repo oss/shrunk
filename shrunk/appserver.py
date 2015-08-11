@@ -163,6 +163,17 @@ def render_index(**kwargs):
     page, lastpage = cursor.paginate(page, app.config["MAX_DISPLAY_LINKS"])
     links = cursor.get_results()
 
+    # If links are requested alphabetically, run more specific cursor operations
+    if sortby in [2, 3]:
+        page_cursor = client.clone_cursor(cursor)
+        page, lastpage = page_cursor.paginate(page, app.config["MAX_DISPLAY_LINKS"])
+        links = sorted(cursor.get_results(), key=lambda x: str.lower(x['title']))
+        link_offset = (page-1)*app.config["MAX_DISPLAY_LINKS"]
+        links = links[link_offset:link_offset+8]
+        if sortby in [3]: links = reversed(links)
+
+        #print("Pages: "+str(page)+" "+str(lastpage)+"\n-\nOffset: "+str(link_offset))
+
     resp = make_response(
             render_template("index.html",
                             admin=is_admin,
