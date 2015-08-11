@@ -204,13 +204,9 @@ label {
     color: #fefefe;
 }
 
-.add-group .title {
-    margin-top: 15px;
-    font-size: 24px;
-}
-
-.add-group .url {
+.add-group .item {
     margin: 20px 0;
+    padding: 10px 0;
     font-size: 24px;
 }
 
