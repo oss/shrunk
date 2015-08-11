@@ -126,6 +126,10 @@ class ShrunkCursor(object):
         The cursor can be sorted only if it hasn't been used yet; that is, no
         records have been read from it.
 
+        Note: MongoDB does not sort in case-insensitive alphabetical order, so
+        it sorts by A-Z, then a-z. Address this by filtering list output on
+        view controller.
+
         :Parameters:
           - `sortby`: The direction to sort in. Should be one of TIME_ASC,
             TIME_DESC, TITLE_ASC, or TITLE_DESC
@@ -194,7 +198,14 @@ class ShrunkClient(object):
         self._mongo = pymongo.MongoClient(host, port)
 
     def clone_cursor(self, cursor):
-        """Clones an already existing ShrunkCursor object."""
+        """Clones an already existing ShrunkCursor object.
+
+        :Parameters:
+        - `cursor`: An already existing ShrunkCursor object.
+
+        :Returns:
+          Another ShrunkCursor object. A clone.
+        """
         return ShrunkCursor(cursor.cursor.clone())
 
     def count_links(self, netid=None):
