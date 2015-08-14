@@ -9,10 +9,6 @@ from flask_auth import LoginForm
 
 import shrunk.filters
 
-def alphanumeric_check(form, field):
-    if not field.data.isalnum():
-        raise ValidationError('Custom alias must be alphanumeric')
-
 class LinkForm(Form):
     """A WTForm for creating and editing links.
 
@@ -28,10 +24,11 @@ class LinkForm(Form):
         validators.DataRequired("Please enter a title.")
     ])
     short_url = TextField("Custom Alias", validators=[
-        validators.Optional(strip_whitespace=True),
-        validators.Length(min=5, max=16, message="Custom alias length must be between %(min)d and %(max)d"),
-        alphanumeric_check
+        validators.Length(min=5, max=16, message="""Custom alias length must be
+            between %(min)d and %(max)d characters."""),
+        validators.Optional(strip_whitespace=False)
         ])
+
     rejected_regexes = []
 
     def __init__(self, form, banlist=None):
@@ -52,6 +49,11 @@ class LinkForm(Form):
         for regex in LinkForm.rejected_regexes:
             if regex.search(field.data):
                 raise ValidationError("That URL is not allowed.")
+
+    def validate_short_url(form, field):
+        """Performs validation on the short_url field."""
+        if not field.data.isalnum():
+            raise ValidationError('Custom alias must be alphanumeric.')
 
     def to_json(self):
         """Exports the form"s fields into a JSON-compatible dictionary."""
