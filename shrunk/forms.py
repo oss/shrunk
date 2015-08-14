@@ -27,7 +27,7 @@ class LinkForm(Form):
         validators.Length(min=5, max=16, message="""Custom alias length must be
             between %(min)d and %(max)d characters."""),
         validators.Optional(strip_whitespace=False)
-        ])
+    ])
 
     rejected_regexes = []
 

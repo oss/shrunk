@@ -294,7 +294,10 @@ def edit_link():
                                        old_short_url=request.form["old_short_url"],
                                        long_url=request.form["long_url"])
         else:
-            form.long_url.data = "http://" + form.long_url.data
+            # yikes - we might want to refactor this stuff into forms.py
+            if not form.long_url.data.startswith("http://"):
+                form.long_url.data = "http://" + form.long_url.data
+
             if form.validate():
                 kwargs = form.to_json()
                 try:
