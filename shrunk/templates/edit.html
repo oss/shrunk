@@ -22,6 +22,7 @@
                 {% endif %}
                 <input type="url" class="form-control" id="long_url" name="long_url" value="{{ long_url }}" placeholder="URL">
             </div>
+            {% if admin %}
             <div class="item">
                 <label for="short_url">Optional Alias</label>
                 {% if errors %}
@@ -31,6 +32,7 @@
                 {% endif %}
                 <input type="text" class="form-control" id="short_url" name="short_url" value="{{ old_short_url }}" placeholder="Custom URL Name">
             </div>
+            {% endif %}
             <div class="info">
                 <input type="hidden" id="netid" name="netid" value="{{ netid }}">
                 <input type="hidden" id="old_short_url" name="old_short_url" value="{{ old_short_url }}">

@@ -282,6 +282,7 @@ def edit_link():
             try:
                 response = client.modify_url(
                     old_short_url = request.form["old_short_url"],
+                    admin=current_user.is_admin(),
                     **kwargs
                 )
                 return redirect("/")
@@ -302,6 +303,7 @@ def edit_link():
                 kwargs = form.to_json()
                 try:
                     response = client.modify_url(
+                        admin=current_user.is_admin(),
                         **kwargs
                     )
                     return redirect("/")
