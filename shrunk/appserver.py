@@ -322,6 +322,7 @@ def edit_link():
                 return render_template("edit.html",
                                     errors=form.errors,
                                     netid=current_user.netid,
+                                    admin=current_user.is_admin(),
                                     title=title,
                                     old_short_url=old_short_url,
                                     long_url=long_url)
@@ -337,6 +338,7 @@ def edit_link():
         title = info["title"]
         # Render the edit template
         return render_template("edit.html", netid=current_user.netid,
+                                            admin=current_user.is_admin(),
                                             title=title,
                                             old_short_url=old_short_url,
                                             long_url=long_url)
