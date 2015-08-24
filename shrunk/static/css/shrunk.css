@@ -36,8 +36,17 @@ label {
     color: white;
 }
 
+.container-fluid {
+	padding-left: 0px;
+	padding-right: 0px;
+}
+
 .navbar-collapse {
     background-color: #d21034;
+}
+
+.navbar-header {
+	padding-left: 15px;
 }
 
 .navbar-subtitle {
