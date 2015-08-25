@@ -5,31 +5,43 @@ BACKUP_DIR=/var/shrunk
 BACKUP_CONFIG_DIR=$BACKUP_DIR/config
 BACKUP_DUMP_DIR=$BACKUP_DIR/dumps
 
-mkdir -p $BACKUP_CONFIG_DIR $BACKUP_DUMP_DIR
+/usr/bin/mkdir -p $BACKUP_CONFIG_DIR $BACKUP_DUMP_DIR
 
 CONFIG=/etc/shrunk/config.py
 
-# how many backups should be kept?
+# highest backup index?
 MAX_BACKUPS=4
 
 # rotate dumps
+echo "Rotating dumps..."
 cd $BACKUP_DUMP_DIR
 for n in $(seq $MAX_BACKUPS -1 0)
 do
-    mv -f dump.$n dump.$(($n+1))
+    if [ -d $BACKUP_DUMP_DIR/dump.$n ]
+    then
+        /usr/bin/mv -f dump.$n dump.$(($n+1))
+    fi
 done
-rm -rf dump.$(($MAX_BACKUPS+1))
+/usr/bin/rm -rf dump.$(($MAX_BACKUPS+1))
 
-mongodump -o dump.0 -db=shrunk_users
-mongodump -o dump.0 -db=shrunk_visits
-mongodump -o dump.0 -db=shrunk_urls
+echo "Creating database dump..."
+/usr/bin/mongodump --quiet -o $BACKUP_DUMP_DIR/dump.0 -db=shrunk_users
+/usr/bin/mongodump --quiet -o $BACKUP_DUMP_DIR/dump.0 -db=shrunk_visits
+/usr/bin/mongodump --quiet -o $BACKUP_DUMP_DIR/dump.0 -db=shrunk_urls
 
 # rotate configs 
+echo "Rotating configs..."
 cd $BACKUP_CONFIG_DIR
 for n in $(seq $MAX_BACKUPS -1 0)
 do
-    mv -f config.py.$n config.py.$(($n+1))
+    if [ -f $BACKUP_CONFIG_DIR/config.py.$n ]
+    then
+        /usr/bin/mv -f config.py.$n config.py.$(($n+1))
+    fi
 done
-rm -f config.py.$(($MAX_BACKUPS+1))
+/usr/bin/rm -f config.py.$(($MAX_BACKUPS+1))
 
-cp $CONFIG $BACKUP_CONFIG_DIR/config.py.0
+echo "Backing up configuration file..."
+/usr/bin/cp $CONFIG $BACKUP_CONFIG_DIR/config.py.0
+
+echo "Complete!"

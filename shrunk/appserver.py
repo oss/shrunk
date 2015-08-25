@@ -282,6 +282,7 @@ def edit_link():
             try:
                 response = client.modify_url(
                     old_short_url = request.form["old_short_url"],
+                    admin=current_user.is_admin(),
                     **kwargs
                 )
                 return redirect("/")
@@ -294,11 +295,15 @@ def edit_link():
                                        old_short_url=request.form["old_short_url"],
                                        long_url=request.form["long_url"])
         else:
-            form.long_url.data = "http://" + form.long_url.data
+            # yikes - we might want to refactor this stuff into forms.py
+            if not form.long_url.data.startswith("http://"):
+                form.long_url.data = "http://" + form.long_url.data
+
             if form.validate():
                 kwargs = form.to_json()
                 try:
                     response = client.modify_url(
+                        admin=current_user.is_admin(),
                         **kwargs
                     )
                     return redirect("/")
@@ -319,6 +324,7 @@ def edit_link():
                 return render_template("edit.html",
                                     errors=form.errors,
                                     netid=current_user.netid,
+                                    admin=current_user.is_admin(),
                                     title=title,
                                     old_short_url=old_short_url,
                                     long_url=long_url)
@@ -334,6 +340,7 @@ def edit_link():
         title = info["title"]
         # Render the edit template
         return render_template("edit.html", netid=current_user.netid,
+                                            admin=current_user.is_admin(),
                                             title=title,
                                             old_short_url=old_short_url,
                                             long_url=long_url)
