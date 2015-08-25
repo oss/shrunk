@@ -171,7 +171,7 @@ def render_index(**kwargs):
         # Clone the cursor, and paginate the clone. Sort all links from old cursor.
         page_cursor = client.clone_cursor(cursor)
         page, lastpage = page_cursor.paginate(page, app.config["MAX_DISPLAY_LINKS"])
-        links = sorted(cursor.get_results(), key=lambda x: str.lower(x['title']))
+        links = sorted(cursor.get_results(), key=lambda x: str.lower(str(x['title'])))
         if int(sortby) in [3]: links = reversed(links)
 
         # Skip and limit on the old cursor's links.
