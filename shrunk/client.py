@@ -421,7 +421,7 @@ class ShrunkClient(object):
           - A JSON-compatible Python dict containing the database response.
         """
         db = self._mongo.shrunk_visits
-        return db.visits.find({"short_url" : short_url})
+        return ShrunkCursor(db.visits.find({"short_url" : short_url}))
 
     def get_num_visits(self, short_url):
         """Given a short URL, return the number of visits.
@@ -511,17 +511,17 @@ class ShrunkClient(object):
           was found in the database.
         """
         db = self._mongo.shrunk_urls
-        # TODO return type and validation that the URL exists
         db.urls.update({"_id" : short_url},
                        {"$inc" : {"visits" : 1}})
 
-        # TODO Do we need the source ip or can we detect it?
+        # TODO Scan source IP against Rutgers subnets.
         db = self._mongo.shrunk_visits
         db.visits.insert({
             "short_url" : short_url,
             "source_ip" : source_ip,
             "time" : datetime.datetime.now()
         })
+
 
     def is_blacklisted(self, netid):
         """Determines if a user has been blacklisted.

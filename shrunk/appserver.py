@@ -178,6 +178,33 @@ def render_index(**kwargs):
         link_offset = (page-1)*app.config["MAX_DISPLAY_LINKS"]
         links = list(links)[link_offset:link_offset+8]
 
+    # Add views from inside RU for every link in links.
+    for link in links:
+        link['ru_visits'] = len( # Number of RU IP visitors for all link dicts
+            list(filter(
+                 # Filter the IPs that are from Rutgers only
+                 lambda x: any(x.startswith(rutgers_ip)
+                 for rutgers_ip in app.config["RUTGERS_IP_LIST"]),
+                 list(map(
+                    # List of IPs that have accessed the short URL
+                    lambda x: x['source_ip'],
+                    client.get_visits(link["_id"]).get_results()
+                 ))
+            ))
+        )
+
+    # Extract source_ip column of the cursor's contents for the visit collection
+    #visit_cursor = client.get_visits(link["_id"])
+    #ip_list = list(map(lambda x: x['source_ip'], visit_cursor.get_results()))
+
+    # Get list of IP addresses from Rutgers by filtering ip_list against config.py
+    #ru_ip_list = list(filter(
+    #    lambda x: any(x.startswith(rutgers_ip)
+    #        for rutgers_ip in app.config["RUTGERS_IP_LIST"]), ip_list))
+
+    #ru_visits = len(ru_ip_list)
+    #link['ru_visits'] = ru_visits
+
     resp = make_response(
             render_template("index.html",
                             admin=is_admin,
@@ -193,6 +220,21 @@ def render_index(**kwargs):
     resp.set_cookie("all_users", all_users)
     resp.set_cookie("sortby", sortby)
     return resp
+
+
+@app.route("/stats/<short_url_id>", methods=["GET"])
+@login_required
+def stats(short_url_id):
+    """Display statistics about a short URL.
+    """
+    client = get_db_client(app, g)
+    visit_cursor = client.get_visits(short_url_id)
+
+    #LOOK AT THAT COMPREHENSION
+    ip_list = list(map(lambda x: x['source_ip'], visit_cursor.get_results()))
+    ru_ip_list = list(filter(lambda x: any(x.startswith(rutgers_ip) for rutgers_ip in app.config["RUTGERS_IP_LIST"]), ip_list))
+
+    return str(len(ru_ip_list)) + ":" + str(len(ip_list)-len(ru_ip_list))
 
 
 @app.route("/login", methods=['GET', 'POST'])

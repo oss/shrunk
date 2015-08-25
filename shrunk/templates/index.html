@@ -44,7 +44,12 @@
                     {{ formattime(link['timeCreated']) }}
                 </div>
                 <div class="bottom-row">
-                    Views: {{ link['visits'] }}
+                    <div style="float:left">
+                        Views: {{ link['visits'] }}
+                    </div>
+                    <div style="float:right">
+                        RU Views: {{ link['ru_visits'] }}
+                    </div>
                 </div>
             </div>
         </article>
