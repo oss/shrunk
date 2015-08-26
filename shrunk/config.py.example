@@ -24,6 +24,9 @@ DUAL_SERVER = False
 server. The default setting is False, which assumes that a separate server
 handles the links."""
 
+"""List of IP addresses owned by Rutgers University"""
+RUTGERS_IP_LIST = ["127.0.0.1"]
+
 AUTH = {
     "methods": ["ldap"],
     "ldap": {
