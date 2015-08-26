@@ -233,7 +233,7 @@ label {
 
 .link-group {
     color: #191917;
-    width: 80%;
+    width: 100%;
     padding: 15px;
     min-height: 100px;
     border-bottom: 1px solid rgb(211,211,211);
@@ -249,6 +249,10 @@ label {
 
 .link-group .title {
     font-size: 24px;
+    float: left;
+    width: 80%;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .link-group .short-link {
@@ -275,12 +279,13 @@ label {
     float: right;
     color: #bbbbbb;
     font-size: 18px;
+    width: 20%;
 }
 
 .page-group {
     float: left;
     font-size: 28px;
-    width: 78%;
+    width: 98%;
 }
 
 .page-box {
