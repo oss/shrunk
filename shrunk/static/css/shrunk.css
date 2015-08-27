@@ -37,8 +37,8 @@ label {
 }
 
 .container-fluid {
-	padding-left: 0px;
-	padding-right: 0px;
+    padding-left: 0px;
+    padding-right: 0px;
 }
 
 .navbar-collapse {
@@ -46,7 +46,7 @@ label {
 }
 
 .navbar-header {
-	padding-left: 15px;
+    padding-left: 15px;
 }
 
 .navbar-subtitle {
@@ -115,7 +115,7 @@ label {
 .login-box,
 .not-found-box {
     float: left;
-    margin-top: 15px;
+    margin-top: 50px;
     margin-bottom: 60px;
     min-height: 1px;
     -webkit-border-radius: 3px;
@@ -123,9 +123,10 @@ label {
 }
 
 .not-found-box .hero {
-    font-size: 40px;
+    font-size: 5em;
     text-align: center;
 }
+
 .not-found-box .message {
     text-align: center;
     font-size: 20px;
@@ -366,7 +367,7 @@ Media Queries
 
 ---- */
 
-@media (min-width: 768px) and (max-width: 1024px) {
+@media screen and (min-width: 768px) and (max-width: 1024px) {
     .search-bar .form-group .form-control {
         border: none;
         min-height: 48px;
@@ -376,7 +377,7 @@ Media Queries
     }
 }
 
-@media (max-width: 768px) {
+@media screen and (max-width: 768px) {
 
     .tool-box .footer {
         display: none;

@@ -11,6 +11,8 @@ from shrunk.user import User, get_user, admin_required
 from shrunk.util import get_db_client, set_logger, formattime
 from shrunk.filters import strip_protocol, ensure_protocol
 
+from geoip import geolite2
+
 
 # Create application
 app = Flask(__name__)
@@ -233,6 +235,8 @@ def stats(short_url_id):
     #LOOK AT THAT COMPREHENSION
     ip_list = list(map(lambda x: x['source_ip'], visit_cursor.get_results()))
     ru_ip_list = list(filter(lambda x: any(x.startswith(rutgers_ip) for rutgers_ip in app.config["RUTGERS_IP_LIST"]), ip_list))
+
+    #print(geolite2.lookup(<ip_here>))
 
     return str(len(ru_ip_list)) + ":" + str(len(ip_list)-len(ru_ip_list))
 

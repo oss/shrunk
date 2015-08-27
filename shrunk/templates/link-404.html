@@ -20,24 +20,16 @@
     <![endif]-->
   </head>
   <body>
-    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
-        <div class="container">
-            <div class="navbar-header">
-                <a class="navbar-brand" href="{{ url_for('render_index') }}">
-                    <img alt="Rutgers" src="{{ url_for('static', filename='img/RU_LOGOTYPE_REVWHITE.png') }}" width="175px">
-                </a>
-            </div>
-        </div>
-    </nav>
+    {% include "header.html" %}
     <div class="container">
 
         <div class="not-found-box col-xs-12 col-sm-6 col-sm-offset-3">
             <div class="hero">Not Found</div>
             <div class="message">
-                Sorry, this link does not exist. Want to change that?
+                Sorry, we couldn't find this link. Want to change that?
             </div>
             <div class="message">
-                <a href="{{ url_for('render_index') }}">Log in to Rutgers Shrunk</a> and shrink some URLs.
+                <a href="{{ url_for('render_index') }}">Log in to Go</a> and shrink some URLs.
             </div>
         </div>
     </div>
