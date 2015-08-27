@@ -11,8 +11,7 @@ from shrunk.user import User, get_user, admin_required
 from shrunk.util import get_db_client, set_logger, formattime
 from shrunk.filters import strip_protocol, ensure_protocol
 
-from geoip import geolite2
-
+import pygeoip
 
 # Create application
 app = Flask(__name__)
@@ -195,18 +194,6 @@ def render_index(**kwargs):
             ))
         )
 
-    # Extract source_ip column of the cursor's contents for the visit collection
-    #visit_cursor = client.get_visits(link["_id"])
-    #ip_list = list(map(lambda x: x['source_ip'], visit_cursor.get_results()))
-
-    # Get list of IP addresses from Rutgers by filtering ip_list against config.py
-    #ru_ip_list = list(filter(
-    #    lambda x: any(x.startswith(rutgers_ip)
-    #        for rutgers_ip in app.config["RUTGERS_IP_LIST"]), ip_list))
-
-    #ru_visits = len(ru_ip_list)
-    #link['ru_visits'] = ru_visits
-
     resp = make_response(
             render_template("index.html",
                             admin=is_admin,
@@ -229,14 +216,21 @@ def render_index(**kwargs):
 def stats(short_url_id):
     """Display statistics about a short URL.
     """
+    # Create database client and cursor for visit collection
     client = get_db_client(app, g)
     visit_cursor = client.get_visits(short_url_id)
 
-    #LOOK AT THAT COMPREHENSION
-    ip_list = list(map(lambda x: x['source_ip'], visit_cursor.get_results()))
-    ru_ip_list = list(filter(lambda x: any(x.startswith(rutgers_ip) for rutgers_ip in app.config["RUTGERS_IP_LIST"]), ip_list))
+    # Connect to MaxMind GeoIP database. Covers over 99.9999% of active IPs
+    gi = pygeoip.GeoIP(app.config["GEO_IP_PATH"])
 
-    #print(geolite2.lookup(<ip_here>))
+    # Get list of IPs and then filter them by the config-list for Rutgers IPs
+    ip_list = list(map(lambda x: x['source_ip'], visit_cursor.get_results()))
+    ru_ip_list = list(filter(lambda x: any(x.startswith(rutgers_ip)
+        for rutgers_ip in app.config["RUTGERS_IP_LIST"]), ip_list))
+
+    # Print the full records for every IP that has accessed that URL
+    for ip in ip_list:
+        print(gi.record_by_addr(ip))
 
     return str(len(ru_ip_list)) + ":" + str(len(ip_list)-len(ru_ip_list))
 
