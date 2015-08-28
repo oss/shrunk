@@ -4,8 +4,23 @@
 import datetime
 import random
 import string
+import time
 
 import pymongo
+
+def safe_mongocall(call):
+    """Decorator to safely handle MongoDB calls"""
+    def _safe_mongocall(*args, **kwargs):
+        for x in xrange(5): # Try to execute instruction 5 times
+            try:
+                return call(*args, **kwargs)
+            except (pymongo.errors.AutoReconnect, e):
+                # Should I log args and kwargs??
+                app.logger.info("reconnecting.. {}".format(str(e)))
+                time.sleep(x * (1+5**0.5)/2) # Scaling golden ratio
+        # Log error: Could not connect to MongoDB
+        return None
+    return _safe_mongocall
 
 
 class DuplicateIdException(Exception):
@@ -23,6 +38,11 @@ class InvalidOperationException(Exception):
     pass
 
 
+class ConnectionFailureException(Exception):
+    """Raised when performing an invalid operation."""
+    pass
+
+
 class ShrunkCursor(object):
     """Easy-to-use wrapper for internal database cursors."""
     TIME_DESC = 0
@@ -30,7 +50,6 @@ class ShrunkCursor(object):
 
     TIME_ASC = 1
     """Sort by creation time, ascending."""
-
 
     TITLE_ASC = 2
     """Sort by title, alphabetically."""
@@ -160,6 +179,72 @@ class ShrunkCursor(object):
                     "You cannot sort a cursor after use.")
 
 
+class ShrunkExecutable:
+    """A class to encapsulate MongoDB methods and handle AutoReconnect
+    exceptions transparently with a predefined decorator.
+    """
+    def __init__(self, method):
+        """Initializes self with a given method
+
+        :Parameters:
+          - `method`: function to attribute to this ShrunkExecutable instance
+        """
+        self.method = method
+
+    @safe_mongocall
+    def __call__(self, *args, **kwargs):
+        """Executes the function with the safe_mongocall decorator.
+
+        Overrides the default __call__ which is called when an instance of
+        the class is called.
+        """
+        return self.method(*args, **kwargs)
+
+
+class MongoProxy:
+    """Proxy for MongoDB connection.
+    Methods that are executable, like find and insert, are wrapped up into
+    the ShrunkExecutable class which handles AutoReconnect-exceptions transparently.
+    """
+
+    EXECUTABLE_MONGO_METHODS = set([typ for typ in dir(pymongo.collection.Collection) if not typ.startswith('_')])
+    EXECUTABLE_MONGO_METHODS.update(set([typ for typ in dir(pymongo.Connection) if not typ.startswith('_')]))
+    EXECUTABLE_MONGO_METHODS.update(set([typ for typ in dir(pymongo) if not typ.startswith('_')]))
+    """Define which MongoDB methods should be wrapped by the MongoProxy class.
+    Wrap all methods in pymongo, pymongo.Connection and pymongo.collection.Collection that don't start with '_'."""
+
+    def __init__(self, conn):
+        """Initializes self with a given MongoDB connection.
+
+        :Parameters:
+          - `conn`: ordinary MongoDB-connection.
+        """
+        self.conn = conn
+
+    def __getitem__(self, key):
+        """Create and return proxy around the method in the connection named "key"
+        """
+        return MongoProxy(getattr(self.conn, key))
+
+    def __getattr__(self, key):
+        """If key is the name of an executable method in the MongoDB connection,
+        like find or insert, wrap this method in the ShrunkExecutable class.
+        Else call __getitem__(key)
+        """
+        if key in EXECUTABLE_MONGO_METHODS:
+            return ShrunkExecutable(getattr(self.conn, key))
+        return self[key]
+
+    def __call__(self, *args, **kwargs):
+        return self.conn(*args, **kwargs)
+
+    def __dir__(self):
+        return dir(self.conn)
+
+    def __repr__(self):
+        return self.conn.__repr__()
+
+
 class ShrunkClient(object):
     """A class for database interactions."""
 
@@ -196,6 +281,8 @@ class ShrunkClient(object):
             the database default if not present
         """
         self._mongo = pymongo.MongoClient(host, port)
+        self._mongo = MongoProxy(pymongo.ReplicaSetConnection(replicaSet='shrunk'))
+
 
     def clone_cursor(self, cursor):
         """Clones an already existing ShrunkCursor object.

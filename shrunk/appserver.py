@@ -106,10 +106,14 @@ def render_index(**kwargs):
     the links owned by them. If a search has been made, then only the links
     matching their search query are shown.
     """
-    client = get_db_client(app, g)
     if not hasattr(current_user, "netid"):
         # Anonymous user
         return redirect("/login")
+
+    # If database client is broken, redirect error.
+    client = get_db_client(app, g)
+    if client is None:
+        return redirect("/error.html")
 
     # Grab the current page number
     try:
@@ -232,7 +236,7 @@ def stats(short_url_id):
     for ip in ip_list:
         print(gi.record_by_addr(ip))
 
-    return str(len(ru_ip_list)) + ":" + str(len(ip_list)-len(ru_ip_list))
+    return str(len(ru_ip_list)) + ":" + str(len(ip_list)-len(ru_ip_list)) 
 
 
 @app.route("/login", methods=['GET', 'POST'])
