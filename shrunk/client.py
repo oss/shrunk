@@ -8,18 +8,25 @@ import time
 
 import pymongo
 
+
+EXECUTABLE_MONGO_METHODS = set([typ for typ in dir(pymongo.collection.Collection) if not typ.startswith('_')])
+EXECUTABLE_MONGO_METHODS.update(set([typ for typ in dir(pymongo.Connection) if not typ.startswith('_')]))
+EXECUTABLE_MONGO_METHODS.update(set([typ for typ in dir(pymongo) if not typ.startswith('_')]))
+"""Define which MongoDB methods should be wrapped by the MongoProxy class.
+Wrap all methods in pymongo, pymongo.Connection and pymongo.collection.Collection that don't start with '_'."""
+
+
 def safe_mongocall(call):
     """Decorator to safely handle MongoDB calls"""
     def _safe_mongocall(*args, **kwargs):
-        for x in xrange(5): # Try to execute instruction 5 times
+        for x in range(5): # Try to execute instruction 5 times
             try:
                 return call(*args, **kwargs)
-            except (pymongo.errors.AutoReconnect, e):
+            except (pymongo.errors.ConnectionFailure, pymongo.errors.AutoReconnect) as e:
                 # Should I log args and kwargs??
-                app.logger.info("reconnecting.. {}".format(str(e)))
-                time.sleep(x * (1+5**0.5)/2) # Scaling golden ratio
+                print(str(e))
+                time.sleep(x*(1+5**0.5)/2) # Scaling golden ratio
         # Log error: Could not connect to MongoDB
-        return None
     return _safe_mongocall
 
 
@@ -207,13 +214,7 @@ class MongoProxy:
     the ShrunkExecutable class which handles AutoReconnect-exceptions transparently.
     """
 
-    EXECUTABLE_MONGO_METHODS = set([typ for typ in dir(pymongo.collection.Collection) if not typ.startswith('_')])
-    EXECUTABLE_MONGO_METHODS.update(set([typ for typ in dir(pymongo.Connection) if not typ.startswith('_')]))
-    EXECUTABLE_MONGO_METHODS.update(set([typ for typ in dir(pymongo) if not typ.startswith('_')]))
-    """Define which MongoDB methods should be wrapped by the MongoProxy class.
-    Wrap all methods in pymongo, pymongo.Connection and pymongo.collection.Collection that don't start with '_'."""
-
-    def __init__(self, conn):
+    def __init__(self, conn=None):
         """Initializes self with a given MongoDB connection.
 
         :Parameters:
@@ -224,24 +225,32 @@ class MongoProxy:
     def __getitem__(self, key):
         """Create and return proxy around the method in the connection named "key"
         """
-        return MongoProxy(getattr(self.conn, key))
+        return MongoProxy(getattr(self.conn, key)) if self.conn is not None else None
 
     def __getattr__(self, key):
         """If key is the name of an executable method in the MongoDB connection,
         like find or insert, wrap this method in the ShrunkExecutable class.
         Else call __getitem__(key)
         """
+        if self.conn is None:
+            return None
         if key in EXECUTABLE_MONGO_METHODS:
             return ShrunkExecutable(getattr(self.conn, key))
         return self[key]
 
     def __call__(self, *args, **kwargs):
+        if self.conn is None:
+            return None
         return self.conn(*args, **kwargs)
 
     def __dir__(self):
+        if self.conn is None:
+            return None
         return dir(self.conn)
 
     def __repr__(self):
+        if self.conn is None:
+            return None
         return self.conn.__repr__()
 
 
@@ -280,8 +289,17 @@ class ShrunkClient(object):
           - `port` (optional): the port to connect to on the server; defaults to
             the database default if not present
         """
-        self._mongo = pymongo.MongoClient(host, port)
-        self._mongo = MongoProxy(pymongo.ReplicaSetConnection(replicaSet='shrunk'))
+
+        for x in range(3):
+            try:
+                self._mongo = MongoProxy(pymongo.MongoClient(host, port))
+                self.conn = "on"
+                return
+            except (pymongo.errors.ConnectionFailure, pymongo.errors.AutoReconnect):
+                time.sleep(x*(1+5**0.5)/2) # Scaling golden ratio
+
+        self._mongo = MongoProxy() # Log something
+        self.conn = "off"
 
 
     def clone_cursor(self, cursor):
@@ -314,6 +332,7 @@ class ShrunkClient(object):
         else:
             return db.urls.count()
 
+    @safe_mongocall
     def create_short_url(self, long_url, short_url=None, netid=None, title=None):
         """Given a long URL, create a new short URL.
 
@@ -336,7 +355,7 @@ class ShrunkClient(object):
         """
         db = self._mongo.shrunk_urls
 
-        #Check if url is blocked
+        # Check if url is blocked
         base_url = long_url[(long_url.find("://") + 3):] # Strip any protocol
         base_url = base_url[: base_url.find("/")] # Strip path
         if db.blocked_urls.find_one({"url" : { "$regex" : "%s*" % base_url }}):

@@ -80,6 +80,9 @@ try:
               - `short_url`: A string containing a shrunk-ified URL.
             """
             client = get_db_client(app, g)
+            if client is None:
+                return render_template("/error.html")
+
             app.logger.info("{} requests {}".format(request.remote_addr, short_url))
 
             # Perform a lookup and redirect
@@ -113,7 +116,7 @@ def render_index(**kwargs):
     # If database client is broken, redirect error.
     client = get_db_client(app, g)
     if client is None:
-        return redirect("/error.html")
+        return render_template("/error.html")
 
     # Grab the current page number
     try:
@@ -242,6 +245,9 @@ def stats(short_url_id):
 @app.route("/login", methods=['GET', 'POST'])
 def login():
     """Handles authentication."""
+    # If database client is broken, redirect error.
+    if get_db_client(app, g) is None:
+        return render_template("/error.html")
     a = Auth(app.config['AUTH'], get_user)
     return a.login(request, RULoginForm, render_login, login_success)
 
@@ -260,7 +266,10 @@ def add_link():
     """Adds a new link for the current user."""
     form = LinkForm(request.form,
                     banlist=[strip_protocol(app.config["LINKSERVER_URL"])])
+
     client = get_db_client(app, g)
+    if client is None:
+        return render_template("/error.html")
 
     if request.method == "POST":
         # Validate the form
@@ -298,6 +307,8 @@ def add_link():
 def delete_link():
     """Deletes a link."""
     client = get_db_client(app, g)
+    if client is None:
+        return render_template("/error.html")
 
     # TODO Handle the response intelligently, or put that logic somewhere else
     if request.method == "POST":
@@ -315,6 +326,9 @@ def edit_link():
     will be edited.
     """
     client = get_db_client(app, g)
+    if client is None:
+        return render_template("/error.html")
+
     form = LinkForm(request.form,
                     banlist=[strip_protocol(app.config["LINKSERVER_URL"])])
 
@@ -400,6 +414,9 @@ def admin_manage():
     administrators.
     """
     client = get_db_client(app, g)
+    if client is None:
+        return render_template("/error.html")
+
     return render_template("admin_list.html",
                            admin=True,
                            admins=client.get_admins(),
@@ -412,7 +429,11 @@ def admin_manage():
 @admin_required(unauthorized_admin)
 def admin_add():
     """Add a new administrator."""
+
     client = get_db_client(app, g)
+    if client is None:
+        return render_template("/error.html")
+
     form = AddAdminForm(request.form)
     if request.method == "POST":
         if form.validate():
@@ -429,7 +450,11 @@ def admin_add():
 @admin_required(unauthorized_admin)
 def admin_delete():
     """Delete an existing administrator."""
+
     client = get_db_client(app, g)
+    if client is None:
+        return render_template("/error.html")
+
     if request.method == "POST":
         client.delete_admin(request.form["netid"])
 
@@ -446,7 +471,11 @@ def admin_block_link():
     web application. URLs matching the given regular expression will be
     prohibited.
     """
+
     client = get_db_client(app, g)
+    if client is None:
+        return render_template("/error.html")
+
     form = BlockLinksForm(request.form)
     if request.method == "POST":
         if form.validate():
@@ -463,7 +492,11 @@ def admin_block_link():
 @admin_required(unauthorized_admin)
 def admin_unblock_link():
     """Remove a link from the banned links list."""
+
     client = get_db_client(app, g)
+    if client is None:
+        return render_template("/error.html")
+
     if request.method == "POST":
         client.allow_link(request.form["url"])
 
@@ -479,6 +512,9 @@ def admin_links():
     Allows admins to block (and unblock) particular URLs from being shrunk.
     """
     client = get_db_client(app, g)
+    if client is None:
+        return render_template("/error.html")
+
     return render_template("admin_links.html",
                            admin=True,
                            banlist=client.get_blocked_links(),
@@ -508,6 +544,9 @@ def admin_blacklist():
     interface.
     """
     client = get_db_client(app, g)
+    if client is None:
+        return render_template("/error.html")
+
     return render_template("admin_blacklist.html",
                            admin=True,
                            blacklist=client.get_blacklisted_users(),
@@ -523,6 +562,9 @@ def admin_ban_user():
     Adds a user to the blacklist.
     """
     client = get_db_client(app, g)
+    if client is None:
+        return render_template("/error.html")
+
     form = BlacklistUserForm(request.form)
     if request.method == "POST":
         if form.validate():
@@ -543,6 +585,9 @@ def admin_unban_user():
     Removes a user from the blacklist, restoring their previous privileges.
     """
     client = get_db_client(app, g)
+    if client is None:
+        return render_template("/error.html")
+
     if request.method == "POST":
         client.unban_user(request.form["netid"])
 

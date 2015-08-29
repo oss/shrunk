@@ -20,6 +20,9 @@ def get_db_client(app, g):
     if not hasattr(g, "client"):
         g.client = ShrunkClient(app.config["DB_HOST"], app.config["DB_PORT"])
 
+    if g.client.conn == "off":
+        return None
+
     return g.client
 
 

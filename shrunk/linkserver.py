@@ -32,6 +32,9 @@ def redirect_link(short_url):
       - `short_url`: A string containing a shrunk-ified URL.
     """
     client = shrunk.util.get_db_client(app, g)
+    if client is None:
+        return redirect("/error.html")
+
     app.logger.info("{} requests {}".format(request.remote_addr, short_url))
 
     # Perform a lookup and redirect
