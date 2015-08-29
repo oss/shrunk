@@ -34,7 +34,7 @@ def set_logger(app):
     """
     handler = logging.FileHandler(app.config["LOG_FILENAME"])
     handler.setLevel(logging.INFO)
-    handler.setFormatter(app.config["LOG_FORMAT"])
+    handler.setFormatter(logging.Formatter(app.config["LOG_FORMAT"]))
     app.logger.addHandler(handler)
 
 

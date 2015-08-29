@@ -58,6 +58,7 @@ def login_success(user):
     :Parameters:
       - `user`: The user that has logged in.
     """
+    app.logger.info("{}: login".format(user.netid))
     return redirect('/')
 
 
@@ -72,18 +73,21 @@ try:
         def redirect_link(short_url):
             """Redirects to the short URL's true destination.
 
-            This looks up the short URL's destination in the database and performs a
-            redirect, logging some information at the same time. If no such link
-            exists, a not found page is shown.
+            This looks up the short URL's destination in the database and
+            performs a redirect, logging some information at the same time. 
+            If no such link exists, a not found page is shown.
 
             :Parameters:
               - `short_url`: A string containing a shrunk-ified URL.
             """
             client = get_db_client(app, g)
             if client is None:
+                app.logger.critical("{}: database connection failure".format(
+                    current_user.netid))
                 return render_template("/error.html")
 
-            app.logger.info("{} requests {}".format(request.remote_addr, short_url))
+            app.logger.info("{} short_url request '{}'".format(
+                request.remote_addr, short_url))
 
             # Perform a lookup and redirect
             long_url = client.get_long_url(short_url)
@@ -91,6 +95,8 @@ try:
                 return render_template("link-404.html", short_url=short_url)
             else:
                 client.visit(short_url, request.remote_addr)
+                app.logger.info("{} short_url visit '{}'".format(
+                    request.remote_addr, short_url))
                 # Check if a protocol exists
                 if "://" in long_url:
                     return redirect(long_url)
@@ -109,6 +115,7 @@ def render_index(**kwargs):
     the links owned by them. If a search has been made, then only the links
     matching their search query are shown.
     """
+
     if not hasattr(current_user, "netid"):
         # Anonymous user
         return redirect("/login")
@@ -116,6 +123,8 @@ def render_index(**kwargs):
     # If database client is broken, redirect error.
     client = get_db_client(app, g)
     if client is None:
+        app.logger.critical("{}: database connection failure".format(
+            current_user.netid))
         return render_template("/error.html")
 
     # Grab the current page number
@@ -161,10 +170,10 @@ def render_index(**kwargs):
         netid = current_user.netid
         if query:
             cursor = client.search(query, netid=netid)
-            app.logger.info("search: {}, '{}'".format(netid, query))
+            app.logger.info("{}: search for '{}'".format(netid, query))
         else:
             cursor = client.get_urls(current_user.netid)
-            app.logger.info("render index: {}".format(netid))
+            app.logger.info("{}: render index".format(netid))
 
     # Perform sorting, pagination and get the results
     cursor.sort(sortby)
@@ -225,6 +234,10 @@ def stats(short_url_id):
     """
     # Create database client and cursor for visit collection
     client = get_db_client(app, g)
+    if client is None:
+        app.logger.critical("{}: database connection failure".format(
+            current_user.netid))
+        return render_template("/error.html")
     visit_cursor = client.get_visits(short_url_id)
 
     # Connect to MaxMind GeoIP database. Covers over 99.9999% of active IPs
@@ -239,7 +252,9 @@ def stats(short_url_id):
     for ip in ip_list:
         print(gi.record_by_addr(ip))
 
-    return str(len(ru_ip_list)) + ":" + str(len(ip_list)-len(ru_ip_list)) 
+    app.logger.info("{}: render stats short_url '{}'".format(
+        current_user.netid, short_url_id))
+    return str(len(ru_ip_list)) + ":" + str(len(ip_list)-len(ru_ip_list))
 
 
 @app.route("/login", methods=['GET', 'POST'])
@@ -247,6 +262,7 @@ def login():
     """Handles authentication."""
     # If database client is broken, redirect error.
     if get_db_client(app, g) is None:
+        app.logger.critical("login: database connection failure")
         return render_template("/error.html")
     a = Auth(app.config['AUTH'], get_user)
     return a.login(request, RULoginForm, render_login, login_success)
@@ -256,6 +272,7 @@ def login():
 @login_required
 def logout():
     """Handles logging out."""
+    app.logger.info("{}: logout".format(current_user.netid))
     logout_user()
     return redirect('/')
 
@@ -269,6 +286,8 @@ def add_link():
 
     client = get_db_client(app, g)
     if client is None:
+        app.logger.critical("{}: database connection failure".format(
+            current_user.netid))
         return render_template("/error.html")
 
     if request.method == "POST":
@@ -278,12 +297,16 @@ def add_link():
             # TODO Decide whether we want to do something with the response
             kwargs = form.to_json()
             try:
-                client.create_short_url(
-                    netid=current_user.netid,
-                    **kwargs
-                )
+                response = client.create_short_url(
+                                netid=current_user.netid,
+                                **kwargs
+                            )
+                app.logger.info("{}: short_url add '{}'".
+                        format(current_user.netid, response))
                 return redirect("/")
             except Exception as e:
+                app.logger.warning("{}: exception in add '{}'".format(
+                    current_user.netid, str(e)))
                 return render_template("add.html",
                                        errors={'short_url' : [str(e)]},
                                        netid=current_user.netid,
@@ -297,6 +320,7 @@ def add_link():
                                    admin=current_user.is_admin())
     else:
         # GET request
+        app.logger.info("{}: render add".format(current_user.netid))
         return render_template("add.html",
                                netid=current_user.netid,
                                admin=current_user.is_admin())
@@ -308,12 +332,15 @@ def delete_link():
     """Deletes a link."""
     client = get_db_client(app, g)
     if client is None:
+        app.logger.critical("{}: database connection failure".format(
+            current_user.netid))
         return render_template("/error.html")
 
     # TODO Handle the response intelligently, or put that logic somewhere else
     if request.method == "POST":
-        app.logger.info("Deleting URL: {}".format(request.form["short_url"]))
         client.delete_url(request.form["short_url"])
+        app.logger.info("{}: short_url delete: '{}'".format(
+            current_user.netid, request.form["short_url"]))
     return redirect("/")
 
 
@@ -327,6 +354,8 @@ def edit_link():
     """
     client = get_db_client(app, g)
     if client is None:
+        app.logger.critical("{}: database connection failure".format(
+            current_user.netid))
         return render_template("/error.html")
 
     form = LinkForm(request.form,
@@ -343,8 +372,12 @@ def edit_link():
                     admin=current_user.is_admin(),
                     **kwargs
                 )
+                app.logger.info("{}: short_url edit '{}'".format(
+                    current_user.netid, request.form["old_short_url"], response))
                 return redirect("/")
             except Exception as e:
+                app.logger.warning("{}: exception in edit short_url '{}' - '{}'".format(
+                    current_user.netid, request.form["old_short_url"], str(e)))
                 return render_template("edit.html",
                                        errors={'short_url' : [str(e)]},
                                        netid=current_user.netid,
@@ -364,8 +397,12 @@ def edit_link():
                         admin=current_user.is_admin(),
                         **kwargs
                     )
+                    app.logger.info("{}: long_url edit '{}'".format(
+                        current_user.netid, form.long_url.data))
                     return redirect("/")
                 except Exception as e:
+                    app.logger.warning("{}: exception in edit long_url '{}' - '{}'".format(
+                        current_user.netid, str(e)))
                     return render_template("edit.html",
                                            errors={'short_url' : [str(e)]},
                                            netid=current_user.netid,
@@ -397,6 +434,7 @@ def edit_link():
         long_url = info["long_url"]
         title = info["title"]
         # Render the edit template
+        app.logger.info("{}: render edit".format(current_user.netid))
         return render_template("edit.html", netid=current_user.netid,
                                             admin=current_user.is_admin(),
                                             title=title,
@@ -415,6 +453,8 @@ def admin_manage():
     """
     client = get_db_client(app, g)
     if client is None:
+        app.logger.critical("{}: database connection failure".format(
+            current_user.netid))
         return render_template("/error.html")
 
     return render_template("admin_list.html",
@@ -432,12 +472,16 @@ def admin_add():
 
     client = get_db_client(app, g)
     if client is None:
+        app.logger.critical("{}: database connection failure".format(
+            current_user.netid))
         return render_template("/error.html")
 
     form = AddAdminForm(request.form)
     if request.method == "POST":
         if form.validate():
             client.add_admin(form.netid.data, current_user.netid)
+            app.logger.info("{}: admin add '{}'".format(
+                current_user.netid, form.netid.data))
         else:
             # TODO catch validation errors
             pass
@@ -453,10 +497,14 @@ def admin_delete():
 
     client = get_db_client(app, g)
     if client is None:
+        app.logger.critical("{}: database connection failure".format(
+            current_user.netid))
         return render_template("/error.html")
 
     if request.method == "POST":
         client.delete_admin(request.form["netid"])
+        app.logger.info("{}: admin delete '{}'".format(
+            current_user.netid, form.netid.data))
 
     return redirect("/admin/manage")
 
@@ -474,12 +522,16 @@ def admin_block_link():
 
     client = get_db_client(app, g)
     if client is None:
+        app.logger.critical("{}: database connection failure".format(
+            current_user.netid))
         return render_template("/error.html")
 
     form = BlockLinksForm(request.form)
     if request.method == "POST":
         if form.validate():
             client.block_link(form.link.data, current_user.netid)
+            app.logger.info("{}: admin block_link '{}'".format(
+                current_user.netid, form.link.data))
         else:
             # TODO catch validation errors
             pass
@@ -495,10 +547,14 @@ def admin_unblock_link():
 
     client = get_db_client(app, g)
     if client is None:
+        app.logger.critical("{}: database connection failure".format(
+            current_user.netid))
         return render_template("/error.html")
 
     if request.method == "POST":
         client.allow_link(request.form["url"])
+        app.logger.info("{}: admin unblock_link '{}'".format(
+            current_user.netid, form.link.data))
 
     return redirect("/admin/links")
 
@@ -513,8 +569,11 @@ def admin_links():
     """
     client = get_db_client(app, g)
     if client is None:
+        app.logger.critical("{}: database connection failure".format(
+            current_user.netid))
         return render_template("/error.html")
 
+    app.logger.info("{}: render admin_links".format(current_user.netid))
     return render_template("admin_links.html",
                            admin=True,
                            banlist=client.get_blocked_links(),
@@ -531,6 +590,7 @@ def admin_panel():
     This displays an administrator panel with navigation links to the admin
     controls.
     """
+    app.logger.info("{}: render admin_panel".format(current_user.netid))
     return render_template("admin.html", netid=current_user.netid)
 
 
@@ -545,8 +605,11 @@ def admin_blacklist():
     """
     client = get_db_client(app, g)
     if client is None:
+        app.logger.critical("{}: database connection failure".format(
+            current_user.netid))
         return render_template("/error.html")
 
+    app.logger.info("{}: render admin_blacklist".format(current_user.netid))
     return render_template("admin_blacklist.html",
                            admin=True,
                            blacklist=client.get_blacklisted_users(),
@@ -563,12 +626,16 @@ def admin_ban_user():
     """
     client = get_db_client(app, g)
     if client is None:
+        app.logger.critical("{}: database connection failure".format(
+            current_user.netid))
         return render_template("/error.html")
 
     form = BlacklistUserForm(request.form)
     if request.method == "POST":
         if form.validate():
             client.ban_user(form.netid.data, current_user.netid)
+            app.logger.info("{}: banned user '{}'".format(
+                current_user.netid, form.netid.data))
         else:
             # TODO Catch validation errors
             pass
@@ -586,9 +653,13 @@ def admin_unban_user():
     """
     client = get_db_client(app, g)
     if client is None:
+        app.logger.critical("{}: database connection failure".format(
+            current_user.netid))
         return render_template("/error.html")
 
     if request.method == "POST":
         client.unban_user(request.form["netid"])
+        app.logger.info("{}: unbanned user '{}'".format(
+            current_user.netid, form.netid.data))
 
     return redirect("/admin/blacklist")

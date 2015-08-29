@@ -8,7 +8,6 @@ import time
 
 import pymongo
 
-
 EXECUTABLE_MONGO_METHODS = set([typ for typ in dir(pymongo.collection.Collection) if not typ.startswith('_')])
 EXECUTABLE_MONGO_METHODS.update(set([typ for typ in dir(pymongo.Connection) if not typ.startswith('_')]))
 EXECUTABLE_MONGO_METHODS.update(set([typ for typ in dir(pymongo) if not typ.startswith('_')]))
