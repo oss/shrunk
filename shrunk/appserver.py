@@ -11,8 +11,6 @@ from shrunk.user import User, get_user, admin_required
 from shrunk.util import get_db_client, set_logger, formattime
 from shrunk.filters import strip_protocol, ensure_protocol
 
-import pygeoip
-
 # Create application
 app = Flask(__name__)
 
