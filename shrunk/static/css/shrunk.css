@@ -80,7 +80,8 @@ label {
     background-color: #b2122e;
     color: #fefefe;
     float: right;
-    width: 15%;
+    /* width: 15%; */
+    width: 40px;
 }
 
 .search-bar input::-webkit-input-placeholder {
@@ -280,7 +281,7 @@ label {
     float: right;
     color: #bbbbbb;
     font-size: 18px;
-    width: 20%;
+    width: 15%;
 }
 
 .page-group {
@@ -352,7 +353,8 @@ label {
 
 .sidebar {
     position: fixed;
-    width: 20%;
+    /* width: 20%; */
+    width: 15%;
     border-right: 1px solid rgb(211,211,211);
     padding-right: 30px;
     min-height: 85%;
