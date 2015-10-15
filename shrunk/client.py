@@ -673,6 +673,50 @@ class ShrunkClient(object):
         else:
             return False
 
+    def is_vanity(self, netid):
+        """Determine if a user has permissions for creating vanity URLs.
+
+        :Parameters:
+          - `netid`: A Rutgers NetID
+
+        :Returns:
+          True if the user is in the vanity user collection, False otherwise.
+        """
+        db = self._mongo.shrunk_users
+        if db.user_vanity.find_one({'netid' : netid}) is None:
+            return False
+        return True
+
+    def add_vanity(self, netid, added_by):
+        """Adds a user to the vanity user collection.
+
+        :Parameters:
+          - `netid`: A Rutgers NetID
+          - `added_by`: The NetID of the administrator that added this person
+        """
+        db = self._mongo.shrunk_users
+        if not self.is_vanity(netid):
+            return db.user_vanity.insert({"netid" : netid, "added_by" :
+                added_by})
+
+    def delete_vanity(self, netid):
+        """Revokes a user's vanity URL privileges.
+
+        :Parameters:
+          - `netid`: They NetID of the vanity user to remove
+        """
+        db = self._mongo.shrunk_users
+        return db.user_vanity.remove({"netid" : netid})
+
+    def get_vanity(self):
+        """Retrieves the list of vanity users.
+
+        :Returns:
+          A list of dicts containing information about each vanity user.
+        """
+        db = self._mongo.shrunk_users
+        return list(db.user_vanity.find())
+
     def is_admin(self, netid):
         """Determine if a user is an administrator.
 

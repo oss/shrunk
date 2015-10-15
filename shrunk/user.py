@@ -26,6 +26,9 @@ class User(UserMixin):
         """Determines whether or not this user is an administrator."""
         return self.client.is_admin(self.netid)
 
+    def is_vanity(self):
+        return self.client.is_admin(self.netid)
+
     def __str__(self):
       """Returns the NetID of this user."""
       return self.netid
@@ -70,6 +73,28 @@ def admin_required(unauthorized):
         @wraps(func)
         def decorated_view(*args, **kwargs):
             if not current_user.is_authenticated() or not current_user.is_admin():
+                return unauthorized()
+            return func(*args, **kwargs)
+        return decorated_view
+    return decorator_wrapper
+
+def vanity_required(unauthorized):
+    """Decorator for vanity-userclass-only actions.
+
+    If you decorate a view with this, it will require a user to be
+    authenticated, active, and an a vanity userclass before calling the actual
+    view.
+
+    :Parameters:
+        - `unauthorized`: The function to call if the user is not authorized
+
+    :Returns:
+        The decorated function requiring vanity privileges to execute.
+    """
+    def decorator_wrapper(func):
+        @wraps(func)
+        def decorated_view(*args, **kwargs):
+            if not current_user.is_authenticated() or not current_user.is_vanity():
                 return unauthorized()
             return func(*args, **kwargs)
         return decorated_view
