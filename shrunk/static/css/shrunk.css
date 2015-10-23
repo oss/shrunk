@@ -209,12 +209,22 @@ label {
 }
 
 .add-group {
-    width: 80%;
+    width: 100%;
     display: block;
 }
 
+.add-group #netid {
+    width: 50%;
+    margin-bottom: -10px;
+}
+
+.add-group .flag {
+    margin: 0 5px;
+}
+
 .add-group .shrink-button {
-    width: 18%;
+    margin-top: 5px;
+    width: 120px;
     height: 36px;
     background-color: #b2122e;
     color: #fefefe;

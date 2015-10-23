@@ -1,22 +1,38 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="links-box col-xs-12 col-sm-8 col-sm-offset-1">
-    <h1>Manage Administrators</h1>
+<div class="links-box col-xs-12 col-sm-8">
+    <h1>Manage Users</h1>
     {% if msg %}
     <div class="shrunk-messages">
         {{ msg }}
     </div>
     {% endif %}
 
+    <p>
+        shrunk's userclasses are managed by a <b>flag system</b>. Users can have
+        any combination of flags assigned to them and each flag will allow
+        specific permissions for the user.
+    </p>
+    <p>
+        For example, the flag "A" will give administrator privileges while flag "V"
+        will allow the user to create vanity URLs. If a user is assigned "A"
+        but not "V", then they will not be able to create vanity URLs depsite
+        having admin privileges.
+    </p>
+
+    <hr />
     <article class="add-group clearfix">
-        <h3>Add an Administrator</h3>
+        <h2>Add User</h2>
         <form class="search" method="POST" action="{{ url_for('admin_add') }}" name="add_admin">
-            <input name="netid" type="text" class="form-control"/> <br />
-            <input class="shrink-button btn btn-default" type="submit" value="ADD" /> <br />
+            <input id="netid" name="netid" type="text" class="form-control"/> <br />
+            <input class="flag" type="checkbox" name="flag" value="admin">A
+            <input class="flag" type="checkbox" name="flag" value="vanity">V <br />
+            <input class="shrink-button btn btn-default" type="submit" value="ADD USER" /> <br />
         </form>
     </article>
 
-    <h3>Edit Administrators</h3>
+    <hr />
+    <h2>Edit Users</h2>
     {% for admin in admins %}
     <article class="link-group clearfix">
         <div class="link-info" style="clear: both;">
