@@ -680,42 +680,12 @@ class ShrunkClient(object):
           - `netid`: A Rutgers NetID
 
         :Returns:
-          True if the user is in the vanity user collection, False otherwise.
+          True if the user has the vanity flag, False otherwise.
         """
         db = self._mongo.shrunk_users
-        if db.user_vanity.find_one({'netid' : netid}) is None:
-            return False
-        return True
-
-    def add_vanity(self, netid, added_by):
-        """Adds a user to the vanity user collection.
-
-        :Parameters:
-          - `netid`: A Rutgers NetID
-          - `added_by`: The NetID of the administrator that added this person
-        """
-        db = self._mongo.shrunk_users
-        if not self.is_vanity(netid):
-            return db.user_vanity.insert({"netid" : netid, "added_by" :
-                added_by})
-
-    def delete_vanity(self, netid):
-        """Revokes a user's vanity URL privileges.
-
-        :Parameters:
-          - `netid`: They NetID of the vanity user to remove
-        """
-        db = self._mongo.shrunk_users
-        return db.user_vanity.remove({"netid" : netid})
-
-    def get_vanity(self):
-        """Retrieves the list of vanity users.
-
-        :Returns:
-          A list of dicts containing information about each vanity user.
-        """
-        db = self._mongo.shrunk_users
-        return list(db.user_vanity.find())
+        user = db.users.find_one({'netid' : netid})
+        print(user["flags"]["V"])
+        return user["flags"]["V"]
 
     def is_admin(self, netid):
         """Determine if a user is an administrator.
@@ -724,43 +694,24 @@ class ShrunkClient(object):
           - `netid`: A Rutgers NetID.
 
         :Returns:
-          True if the user is in the administrators collection, False
-          otherwise.
+          True if the user has the administrators flag, False otherwise.
         """
         db = self._mongo.shrunk_users
-        if db.administrators.find_one({'netid' : netid}) is None:
-            return False
-        return True
+        user = db.users.find_one({'netid' : netid})
+        print(user["flags"]["A"])
+        return user["flags"]["A"]
 
-    def add_admin(self, netid, added_by):
-        """Adds a user to the administrators collection.
+    def set_flags(self, netid, flags):
+        """TODO"""
 
-        :Parameters:
-          - `netid`: A Rutgers NetID
-          - `added_by`: The NetID of the administrator that added this person
-        """
-        db = self._mongo.shrunk_users
-        if not self.is_admin(netid):
-            return db.administrators.insert({"netid" : netid, "added_by" :
-                added_by})
-
-    def delete_admin(self, netid):
-        """Revokes a user's administrator privileges.
-
-        :Parameters:
-          - `netid`: They NetID of the administrator to remove
-        """
-        db = self._mongo.shrunk_users
-        return db.administrators.remove({"netid" : netid})
-
-    def get_admins(self):
+    def get_users(self):
         """Retrieves the list of administrators.
 
         :Returns:
           A list of dicts containing information about each administrator.
         """
         db = self._mongo.shrunk_users
-        return list(db.administrators.find())
+        return list(db.users.find())
 
     def is_blocked(self, url):
         """Determines if a URL has been banned.

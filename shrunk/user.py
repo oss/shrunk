@@ -27,7 +27,7 @@ class User(UserMixin):
         return self.client.is_admin(self.netid)
 
     def is_vanity(self):
-        return self.client.is_admin(self.netid)
+        return self.client.is_vanity(self.netid)
 
     def __str__(self):
       """Returns the NetID of this user."""

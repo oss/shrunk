@@ -457,7 +457,7 @@ def admin_manage():
 
     return render_template("admin_list.html",
                            admin=True,
-                           admins=client.get_admins(),
+                           users=client.get_users(),
                            form=AddAdminForm(request.form),
                            netid=current_user.netid)
 

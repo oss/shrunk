@@ -33,17 +33,17 @@
 
     <hr />
     <h2>Edit Users</h2>
-    {% for admin in admins %}
+    {% for user in users %}
     <article class="link-group clearfix">
         <div class="link-info" style="clear: both;">
             <div class="hover-controls">
                 <form method="POST" action="{{ url_for('admin_delete') }}">
-                    <input type="hidden" id="netid" name="netid" value="{{ admin['netid'] }}" />
+                    <input type="hidden" id="netid" name="netid" value="{{ user['netid'] }}" />
                     <input class="shrink-button btn btn-default" type="submit" value="DELETE" />
                 </form>
             </div>
             <div class="title">
-                {{ admin['netid'] }}
+                {{ user['netid'] }}
             </div>
             {% if admin['added_by'] %}
                 <div class="bottom-row">
