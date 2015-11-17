@@ -294,6 +294,10 @@ label {
     width: 15%;
 }
 
+.link-group .flags {
+    display: inline;
+}
+
 .page-group {
     float: left;
     font-size: 28px;

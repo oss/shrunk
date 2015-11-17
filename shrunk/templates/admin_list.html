@@ -39,6 +39,18 @@
             <div class="hover-controls">
                 <form method="POST" action="{{ url_for('admin_delete') }}">
                     <input type="hidden" id="netid" name="netid" value="{{ user['netid'] }}" />
+                    <div class="flags">
+                        {% if user['flags']['A'] %}
+                            <input class="flag" type="checkbox" id="admin" name="admin" checked>A
+                        {% else %}
+                            <input class="flag" type="checkbox" id="admin" name="admin">A
+                        {% endif %}
+                        {% if user['flags']['V'] %}
+                            <input class="flag" type="checkbox" id="vanity" name="vanity" checked>A
+                        {% else %}
+                            <input class="flag" type="checkbox" id="vanity" name="vanity">V
+                        {% endif %}
+                    </div>
                     <input class="shrink-button btn btn-default" type="submit" value="DELETE" />
                 </form>
             </div>

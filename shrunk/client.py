@@ -708,7 +708,7 @@ class ShrunkClient(object):
         """Retrieves the list of administrators.
 
         :Returns:
-          A list of dicts containing information about each administrator.
+          A list of dicts containing information about each user.
         """
         db = self._mongo.shrunk_users
         return list(db.users.find())
