@@ -23,10 +23,10 @@
     <hr />
     <article class="add-group clearfix">
         <h2>Add User</h2>
-        <form class="search" method="POST" action="{{ url_for('admin_add') }}" name="add_admin">
+        <form class="search" method="POST" action="{{ url_for('user_add') }}" name="add_admin">
             <input id="netid" name="netid" type="text" class="form-control"/> <br />
-            <input class="flag" type="checkbox" name="flag" value="admin">A
-            <input class="flag" type="checkbox" name="flag" value="vanity">V <br />
+            <input class="flag" type="checkbox" name="admin" value="admin">A
+            <input class="flag" type="checkbox" name="vanity" value="vanity">V <br />
             <input class="shrink-button btn btn-default" type="submit" value="ADD USER" /> <br />
         </form>
     </article>
@@ -37,7 +37,7 @@
     <article class="link-group clearfix">
         <div class="link-info" style="clear: both;">
             <div class="hover-controls">
-                <form method="POST" action="{{ url_for('admin_delete') }}">
+                <form method="POST" action="{{ url_for('user_edit') }}">
                     <input type="hidden" id="netid" name="netid" value="{{ user['netid'] }}" />
                     <div class="flags">
                         {% if user['flags']['A'] %}
@@ -51,15 +51,20 @@
                             <input class="flag" type="checkbox" id="vanity" name="vanity">V
                         {% endif %}
                     </div>
+                    <input class="shrink-button btn btn-default" type="submit"
+                    value="EDIT" />
+                </form>
+                <form method="POST" action="{{ url_for('user_delete') }}">
+                    <input type="hidden" id="netid" name="netid" value="{{ user['netid'] }}" />
                     <input class="shrink-button btn btn-default" type="submit" value="DELETE" />
                 </form>
             </div>
             <div class="title">
                 {{ user['netid'] }}
             </div>
-            {% if admin['added_by'] %}
+            {% if user['added_by'] %}
                 <div class="bottom-row">
-                    Added by: {{ admin['added_by'] }}
+                    Added by: {{ user['added_by'] }}
                 </div>
             {% endif %}
         </div>

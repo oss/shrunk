@@ -4,7 +4,7 @@
 
 import re
 
-from wtforms import Form, TextField, PasswordField, RadioField, validators, ValidationError
+from wtforms import Form, TextField, BooleanField, PasswordField, RadioField, validators, ValidationError
 from flask_auth import LoginForm
 
 import shrunk.filters
@@ -97,8 +97,8 @@ class BlacklistUserForm(Form):
         }
 
 
-class AddAdminForm(Form):
-    """A WTForm for adding new administrators.
+class UserForm(Form):
+    """A WTForm for adding new users.
     
     This form is accessible by administrators only.
 
@@ -106,6 +106,18 @@ class AddAdminForm(Form):
       - `netid`: Text field corresponding to a NetID
     """
     netid = TextField("NetID", validators=[validators.DataRequired()])
+    admin = BooleanField("Admin")
+    vanity = BooleanField("Vanity")
+
+    def to_json(self):
+        """Exports the form's fields into a JSON-compatible dictionary."""
+        return {
+            "netid": self.netid.data,
+            "flags": {
+                "A": self.admin.data,
+                "V": self.vanity.data
+            }
+        }
 
 
 class BlockLinksForm(Form):

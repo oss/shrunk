@@ -687,6 +687,28 @@ class ShrunkClient(object):
         print(user["flags"]["V"])
         return user["flags"]["V"]
 
+    def add_user(self, netid, admin, vanity, added_by):
+        """Adds a user to the user collection.
+
+        :Parameters:
+          - `netid`: A Rutgers NetID
+          - `added_by`: The NetID of the administrator that added this person
+        """
+        db = self._mongo.shrunk_users
+        if not self.is_user(netid):
+            return db.users.insert({"netid" : netid,
+                                    "added_by" : added_by,
+                                    "flags" : {
+                                        "A": admin,
+                                        "V": vanity
+                                    }
+                                })
+
+    def is_user(self, netid):
+        db = self._mongo.shrunk_users
+        user = db.users.find_one({'netid': netid})
+        return user
+
     def is_admin(self, netid):
         """Determine if a user is an administrator.
 
@@ -698,11 +720,22 @@ class ShrunkClient(object):
         """
         db = self._mongo.shrunk_users
         user = db.users.find_one({'netid' : netid})
-        print(user["flags"]["A"])
         return user["flags"]["A"]
 
     def set_flags(self, netid, flags):
         """TODO"""
+
+    def delete_user(self, netid):
+        """Removes a user from the collection, stripping them of any privileges
+        granted by flags.
+
+        :Parameters:
+          - `netid`: A Rutgers NetID.
+        """
+
+        db = self._mongo.shrunk_users
+        return db.users.remove({"netid" : netid})
+
 
     def get_users(self):
         """Retrieves the list of administrators.

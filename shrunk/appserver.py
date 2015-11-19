@@ -6,7 +6,7 @@ from flask import Flask, render_template, make_response, request, redirect, g
 from flask_login import LoginManager, login_required, current_user, logout_user
 from flask_auth import Auth
 
-from shrunk.forms import BlockLinksForm, LinkForm, RULoginForm, BlacklistUserForm, AddAdminForm
+from shrunk.forms import BlockLinksForm, LinkForm, RULoginForm, BlacklistUserForm, UserForm
 from shrunk.user import User, get_user, admin_required
 from shrunk.util import get_db_client, set_logger, formattime
 from shrunk.filters import strip_protocol, ensure_protocol
@@ -458,15 +458,15 @@ def admin_manage():
     return render_template("admin_list.html",
                            admin=True,
                            users=client.get_users(),
-                           form=AddAdminForm(request.form),
+                           form=UserForm(request.form),
                            netid=current_user.netid)
 
 
 @app.route("/admin/manage/add", methods=["GET", "POST"])
 @login_required
 @admin_required(unauthorized_admin)
-def admin_add():
-    """Add a new administrator."""
+def user_add():
+    """Add a new user."""
 
     client = get_db_client(app, g)
     if client is None:
@@ -474,24 +474,32 @@ def admin_add():
             current_user.netid))
         return render_template("/error.html")
 
-    form = AddAdminForm(request.form)
+    form = UserForm(request.form)
     if request.method == "POST":
         if form.validate():
-            client.add_admin(form.netid.data, current_user.netid)
-            app.logger.info("{}: admin add '{}'".format(
+            client.add_user(form.netid.data, form.admin.data,
+                    form.vanity.data, current_user.netid)
+            app.logger.info("{}: user add '{}'".format(
                 current_user.netid, form.netid.data))
         else:
             # TODO catch validation errors
             pass
 
     return redirect("/admin/manage")
+    
+
+@app.route("/admin/manage/edit", methods=["GET", "POST"])
+@login_required
+@admin_required(unauthorized_admin)
+def user_edit():
+    return redirect("/admin/manage")
 
 
 @app.route("/admin/manage/delete", methods=["GET", "POST"])
 @login_required
 @admin_required(unauthorized_admin)
-def admin_delete():
-    """Delete an existing administrator."""
+def user_delete():
+    """Delete a user."""
 
     client = get_db_client(app, g)
     if client is None:
@@ -500,8 +508,8 @@ def admin_delete():
         return render_template("/error.html")
 
     if request.method == "POST":
-        client.delete_admin(request.form["netid"])
-        app.logger.info("{}: admin delete '{}'".format(
+        client.delete_user(request.form["netid"])
+        app.logger.info("{}: user delete '{}'".format(
             current_user.netid, form.netid.data))
 
     return redirect("/admin/manage")
