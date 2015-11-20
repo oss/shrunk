@@ -492,6 +492,25 @@ def user_add():
 @login_required
 @admin_required(unauthorized_admin)
 def user_edit():
+    """Edit a preexisting user."""
+    
+    client = get_db_client(app, g)
+    if client is None:
+        app.logger.critical("{}: database connection failure".format(
+            current_user.netid))
+        return render_template("/error.html")
+
+    form = UserForm(request.form)
+    if request.method == "POST":
+        if form.validate():
+            client.edit_flags(form.netid.data, form.admin.data,
+                    form.vanity.data)
+            app.logger.info("{}: user edit '{}'".format(
+                current_user.netid, form.netid.data))
+        else:
+            # TODO catch validation errors
+            pass
+
     return redirect("/admin/manage")
 
 

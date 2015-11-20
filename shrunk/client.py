@@ -9,7 +9,6 @@ import time
 import pymongo
 
 EXECUTABLE_MONGO_METHODS = set([typ for typ in dir(pymongo.collection.Collection) if not typ.startswith('_')])
-EXECUTABLE_MONGO_METHODS.update(set([typ for typ in dir(pymongo.Connection) if not typ.startswith('_')]))
 EXECUTABLE_MONGO_METHODS.update(set([typ for typ in dir(pymongo) if not typ.startswith('_')]))
 """Define which MongoDB methods should be wrapped by the MongoProxy class.
 Wrap all methods in pymongo, pymongo.Connection and pymongo.collection.Collection that don't start with '_'."""
@@ -722,8 +721,24 @@ class ShrunkClient(object):
         user = db.users.find_one({'netid' : netid})
         return user["flags"]["A"]
 
-    def set_flags(self, netid, flags):
-        """TODO"""
+    def edit_flags(self, netid, admin, vanity):
+        """Edits a user's permissions.
+
+        :Parameters:
+          - `netid`: A Rutgers NetID.
+          - `admin`: Whether the user has the admin flag.
+          - `vanity`: Whether the user has the vanity flag.
+        """
+        db = self._mongo.shrunk_users
+        return db.users.update_one({"netid" : netid},
+                                    { 
+                                        "$set": {
+                                            "flags" : {
+                                                "A": admin,
+                                                "V": vanity
+                                            }
+                                        }
+                                    })
 
     def delete_user(self, netid):
         """Removes a user from the collection, stripping them of any privileges

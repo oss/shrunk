@@ -34,23 +34,21 @@
     <hr />
     <h2>Edit Users</h2>
     {% for user in users %}
-    <article class="link-group clearfix">
-        <div class="link-info" style="clear: both;">
+    <article class="user-group clearfix">
+        <div class="user-info">
             <div class="hover-controls">
                 <form method="POST" action="{{ url_for('user_edit') }}">
                     <input type="hidden" id="netid" name="netid" value="{{ user['netid'] }}" />
-                    <div class="flags">
-                        {% if user['flags']['A'] %}
-                            <input class="flag" type="checkbox" id="admin" name="admin" checked>A
-                        {% else %}
-                            <input class="flag" type="checkbox" id="admin" name="admin">A
-                        {% endif %}
-                        {% if user['flags']['V'] %}
-                            <input class="flag" type="checkbox" id="vanity" name="vanity" checked>A
-                        {% else %}
-                            <input class="flag" type="checkbox" id="vanity" name="vanity">V
-                        {% endif %}
-                    </div>
+                    {% if user['flags']['A'] %}
+                        <input class="flag" type="checkbox" id="admin" name="admin" checked>A
+                    {% else %}
+                        <input class="flag" type="checkbox" id="admin" name="admin">A
+                    {% endif %}
+                    {% if user['flags']['V'] %}
+                        <input class="flag" type="checkbox" id="vanity" name="vanity" checked>V
+                    {% else %}
+                        <input class="flag" type="checkbox" id="vanity" name="vanity">V
+                    {% endif %}
                     <input class="shrink-button btn btn-default" type="submit"
                     value="EDIT" />
                 </form>
@@ -63,7 +61,7 @@
                 {{ user['netid'] }}
             </div>
             {% if user['added_by'] %}
-                <div class="bottom-row">
+                <div class="added-by">
                     Added by: {{ user['added_by'] }}
                 </div>
             {% endif %}
