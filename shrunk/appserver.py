@@ -508,9 +508,10 @@ def user_delete():
         return render_template("/error.html")
 
     if request.method == "POST":
-        client.delete_user(request.form["netid"])
+        netid = request.form["netid"]
+        client.delete_user(netid)
         app.logger.info("{}: user delete '{}'".format(
-            current_user.netid, form.netid.data))
+            current_user.netid, netid))
 
     return redirect("/admin/manage")
 
