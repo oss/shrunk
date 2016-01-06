@@ -79,7 +79,7 @@ def admin_required(unauthorized):
     return decorator_wrapper
 
 def vanity_required(unauthorized):
-    """Decorator for vanity-userclass-only actions.
+    """Decorator for actions authorized by the vanity userclass.
 
     If you decorate a view with this, it will require a user to be
     authenticated, active, and an a vanity userclass before calling the actual
@@ -99,3 +99,4 @@ def vanity_required(unauthorized):
             return func(*args, **kwargs)
         return decorated_view
     return decorator_wrapper
+

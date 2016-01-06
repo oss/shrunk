@@ -395,7 +395,7 @@ class ShrunkClient(object):
 
         return response
 
-    def modify_url(self, old_short_url, admin, short_url=None, **kwargs):
+    def modify_url(self, old_short_url, vanity, short_url=None, **kwargs):
         """Modifies an existing URL.
 
         Edits the values of the url `short_url` and replaces them with the
@@ -409,7 +409,7 @@ class ShrunkClient(object):
         db = self._mongo.shrunk_urls
         document = db.urls.find_one({"_id": old_short_url})
 
-        if not admin:
+        if not vanity:
             short_url=None
 
         if short_url is not None:
@@ -683,7 +683,6 @@ class ShrunkClient(object):
         """
         db = self._mongo.shrunk_users
         user = db.users.find_one({'netid' : netid})
-        print(user["flags"]["V"])
         return user["flags"]["V"]
 
     def add_user(self, netid, admin, vanity, added_by):
