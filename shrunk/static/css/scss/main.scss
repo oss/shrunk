@@ -48,6 +48,7 @@ label {
 
 .navbar-header {
     padding-left: 15px;
+    padding-right: 15px;
 }
 
 .navbar-subtitle {
@@ -393,8 +394,18 @@ Media Queries
         }
     }
 
-    .navbar-subtitle li + li {
-        display: inline !important;
+    .navbar-subtitle {
+        & li:hover {
+            background-color: inherit;
+        } 
+
+        & li + li {
+            display: inline !important;
+        }
+    }
+
+    .navbar-toggle {
+        margin-top: 20px;
     }
 
     .sidebar {
