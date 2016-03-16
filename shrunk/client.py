@@ -9,7 +9,6 @@ import time
 import pymongo
 
 EXECUTABLE_MONGO_METHODS = set([typ for typ in dir(pymongo.collection.Collection) if not typ.startswith('_')])
-EXECUTABLE_MONGO_METHODS.update(set([typ for typ in dir(pymongo.Connection) if not typ.startswith('_')]))
 EXECUTABLE_MONGO_METHODS.update(set([typ for typ in dir(pymongo) if not typ.startswith('_')]))
 """Define which MongoDB methods should be wrapped by the MongoProxy class.
 Wrap all methods in pymongo, pymongo.Connection and pymongo.collection.Collection that don't start with '_'."""

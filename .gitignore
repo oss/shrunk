@@ -17,3 +17,8 @@ virtualenv/
 
 # Flask logs
 *.log
+
+# Misc files
+data/
+python3-flask-auth/
+node_modules/

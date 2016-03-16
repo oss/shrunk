@@ -32,7 +32,8 @@ label {
     color: #fefefe;
 }
 
-.navbar>.container .navbar-brand, .navbar>.container-fluid .navbar-brand a {
+.navbar>.container .navbar-brand, 
+.navbar>.container-fluid .navbar-brand a {
     color: white;
 }
 
@@ -119,8 +120,8 @@ label {
     }
 
     .message {
-        font-size: 72px;
-        padding: 10px;
+        font-size: 22px;
+        padding-bottom: 25px;
     }
 
     .form-control {
@@ -242,6 +243,10 @@ label {
         color: #bbbbbb;
         font-size: 18px;
         width: 15%;
+
+        a {
+            cursor: pointer;
+        }
     }
 
     &:hover {
