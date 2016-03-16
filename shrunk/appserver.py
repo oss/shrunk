@@ -72,7 +72,7 @@ try:
             """Redirects to the short URL's true destination.
 
             This looks up the short URL's destination in the database and
-            performs a redirect, logging some information at the same time. 
+            performs a redirect, logging some information at the same time.
             If no such link exists, a not found page is shown.
 
             :Parameters:
@@ -425,10 +425,12 @@ def edit_link():
         # Hit the database to get information
         old_short_url = request.args["url"]
         info = client.get_url_info(old_short_url)
+
+        if not info:
+            return render_template("link-404.html")
         owner = info["netid"]
         if owner != current_user.netid and not current_user.is_admin():
             return render_index(wrong_owner=True)
-
         long_url = info["long_url"]
         title = info["title"]
         # Render the edit template

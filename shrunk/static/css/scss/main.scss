@@ -54,6 +54,21 @@ label {
     color: white;
     margin-top: 10px;
     font-size: 18px;
+    
+    li {
+
+
+        &:hover {
+            background-color: #B2122E;
+        }
+
+
+        & + li { /* Hide all <li> that come after another <li> i.e., all but the first */
+            display: none;
+
+        }
+
+    }
 }
 
 .search-bar {
@@ -70,6 +85,10 @@ label {
         color: #fefefe;
         float: right;
         width: 40px;
+
+        &:hover {
+            background-color: #D21034;
+        }
     }
 
     input::-webkit-input-placeholder, 
@@ -372,6 +391,14 @@ Media Queries
         .navbar-subtitle {
             text-align: center;
         }
+    }
+
+    .navbar-subtitle li + li {
+        display: inline !important;
+    }
+
+    .sidebar {
+        display: none;
     }
 
     .search-bar .form-group .form-control {
