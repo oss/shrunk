@@ -8,7 +8,7 @@ from flask_auth import Auth
 
 from shrunk.forms import BlockLinksForm, LinkForm, RULoginForm, BlacklistUserForm, AddAdminForm
 from shrunk.user import User, get_user, admin_required
-from shrunk.util import get_db_client, set_logger, formattime
+from shrunk.util import get_db_client, set_logger, formattime, get_domain
 from shrunk.filters import strip_protocol, ensure_protocol
 
 # Create application
@@ -65,6 +65,7 @@ def unauthorized_admin():
 
 
 ### Views ###
+# NOTE: Requests to application are recorded here if DUAL_SERVER is set
 try:
     if app.config["DUAL_SERVER"]:
         @app.route("/<short_url>")
@@ -92,7 +93,11 @@ try:
             if long_url is None:
                 return render_template("link-404.html", short_url=short_url)
             else:
-                client.visit(short_url, request.remote_addr)
+                client.visit(short_url, 
+                             source_ip = request.remote_addr,
+                             platform = request.user_agent.platform,
+                             browser = request.user_agent.browser,
+                             referrer = get_domain(request.referrer))
                 app.logger.info("{} short_url visit '{}'".format(
                     request.remote_addr, short_url))
                 # Check if a protocol exists
@@ -225,6 +230,7 @@ def render_index(**kwargs):
     return resp
 
 
+# TODO: Make this return information from the shrunk_visits.visits collection
 @app.route("/stats/<short_url_id>", methods=["GET"])
 @login_required
 def stats(short_url_id):

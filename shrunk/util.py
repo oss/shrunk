@@ -5,6 +5,7 @@
 import logging
 
 from shrunk.client import ShrunkClient
+from urllib.parse import urlsplit
 
 
 def get_db_client(app, g):
@@ -44,3 +45,23 @@ def formattime(datetime):
     This formats datetimes to look like "Nov 19 2015".
     """
     return datetime.strftime("%b %d %Y")
+
+
+def get_domain(uri):
+    """Utility function to grab domain from URL.
+
+    Used in application to extract referrer names from requests.
+    """
+    if uri is None:
+        return "unknown"
+    try:
+        parsed_uri = urlsplit(uri)
+        domain = '{0.netloc}'.format(parsed_uri)
+        split = domain.split('.')
+        if len(split) >= 2:
+            domain = split[-2]
+        else:
+            domain = "unknown"
+        return domain
+    except:
+        return "unknown"

@@ -599,7 +599,7 @@ class ShrunkClient(object):
         cursor = db.urls.find(query)
         return ShrunkCursor(cursor)
 
-    def visit(self, short_url, source_ip):
+    def visit(self, short_url, source_ip, platform, browser, referrer):
         """Visits the given URL and logs visit information.
 
         On visiting a URL, this is guaranteed to perform at least the following
@@ -618,11 +618,13 @@ class ShrunkClient(object):
         db.urls.update({"_id" : short_url},
                        {"$inc" : {"visits" : 1}})
 
-        # TODO Scan source IP against Rutgers subnets.
         db = self._mongo.shrunk_visits
         db.visits.insert({
             "short_url" : short_url,
             "source_ip" : source_ip,
+            "platform" : platform,
+            "referrer" : referrer,
+            "browser" : browser,
             "time" : datetime.datetime.now()
         })
 

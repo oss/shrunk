@@ -42,7 +42,11 @@ def redirect_link(short_url):
     if long_url is None:
         return render_template("link-404.html", short_url=short_url)
     else:
-        client.visit(short_url, request.remote_addr)
+        client.visit(short_url = short_url, 
+                     source_ip = request.remote_addr,
+                     platform = request.user_agent.platform,
+                     browser = request.user_agent.browser,
+                     referrer = shrunk.util.get_domain(request.referrer))
 
         # Check if a protocol exists
         if "://" in long_url:
