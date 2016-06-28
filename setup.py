@@ -11,7 +11,7 @@ except:
 
 setup(
     name = "shrunk",
-    version = "0.2.0",
+    version = "0.4.2",
     packages = ["shrunk"],
     requires = ["pymongo", "wtforms", "flask"],
     package_dir = {"shrunk": "shrunk"},
