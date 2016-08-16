@@ -6,7 +6,6 @@ from functools import wraps
 
 from flask_login import UserMixin, current_user
 from flask_auth import LoginForm
-from wtforms import TextField, PasswordField, validators
 
 from shrunk.client import ShrunkClient
 
