@@ -672,19 +672,6 @@ class ShrunkClient(object):
         else:
             return False
 
-    def is_vanity(self, netid):
-        """Determine if a user has permissions for creating vanity URLs.
-
-        :Parameters:
-          - `netid`: A Rutgers NetID
-
-        :Returns:
-          True if the user has the vanity flag, False otherwise.
-        """
-        db = self._mongo.shrunk_users
-        user = db.users.find_one({'netid' : netid})
-        return user["flags"]["V"]
-
     def add_user(self, netid, admin, vanity, added_by):
         """Adds a user to the user collection.
 
@@ -719,6 +706,19 @@ class ShrunkClient(object):
         db = self._mongo.shrunk_users
         user = db.users.find_one({'netid' : netid})
         return user["flags"]["A"]
+
+    def is_vanity(self, netid):
+        """Determine if a user has permissions for creating vanity URLs.
+
+        :Parameters:
+          - `netid`: A Rutgers NetID
+
+        :Returns:
+          True if the user has the vanity flag, False otherwise.
+        """
+        db = self._mongo.shrunk_users
+        user = db.users.find_one({'netid' : netid})
+        return user["flags"]["V"]
 
     def edit_flags(self, netid, admin, vanity):
         """Edits a user's permissions.
