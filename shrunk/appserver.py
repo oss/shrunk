@@ -501,14 +501,11 @@ def user_edit():
 
     form = UserForm(request.form)
     if request.method == "POST":
-        print("netid: " + form.netid.data)
-        print("type: " + str(form.type.data))
         if form.validate():
             client.edit_user_type(form.netid.data, form.type.data)
             app.logger.info("{}: user edit '{}'".format(
                 current_user.netid, form.netid.data))
         else:
-            print(form.errors)
             # TODO catch validation errors
             pass
 
