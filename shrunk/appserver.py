@@ -7,7 +7,7 @@ from flask_login import LoginManager, login_required, current_user, logout_user
 from flask_auth import Auth
 
 from shrunk.forms import BlockLinksForm, LinkForm, RULoginForm, BlacklistUserForm, UserForm
-from shrunk.user import User, get_user, admin_required, vanity_required
+from shrunk.user import User, get_user, admin_required, elevated_required
 from shrunk.util import get_db_client, set_logger, formattime
 from shrunk.filters import strip_protocol, ensure_protocol
 
@@ -308,20 +308,20 @@ def add_link():
                 return render_template("add.html",
                                        errors={'short_url' : [str(e)]},
                                        netid=current_user.netid,
-                                       vanity=current_user.is_vanity())
+                                       elevated=current_user.is_elevated())
 
         else:
             # WTForms detects a form validation error
             return render_template("add.html",
                                    errors=form.errors,
                                    netid=current_user.netid,
-                                   vanity=current_user.is_vanity())
+                                   elevated=current_user.is_elevated())
     else:
         # GET request
         app.logger.info("{}: render add".format(current_user.netid))
         return render_template("add.html",
                                netid=current_user.netid,
-                               vanity=current_user.is_vanity())
+                               elevated=current_user.is_elevated())
 
 
 @app.route("/delete", methods=["GET", "POST"])
@@ -367,7 +367,7 @@ def edit_link():
             try:
                 response = client.modify_url(
                     old_short_url = request.form["old_short_url"],
-                    vanity=current_user.is_vanity(),
+                    elevated=current_user.is_elevated(),
                     **kwargs
                 )
                 app.logger.info("{}: short_url edit '{}'".format(
@@ -379,7 +379,7 @@ def edit_link():
                 return render_template("edit.html",
                                        errors={'short_url' : [str(e)]},
                                        netid=current_user.netid,
-                                       vanity=current_user.is_vanity(),
+                                       elevated=current_user.is_elevated(),
                                        title=request.form["title"],
                                        old_short_url=request.form["old_short_url"],
                                        long_url=request.form["long_url"])
@@ -392,7 +392,7 @@ def edit_link():
                 kwargs = form.to_json()
                 try:
                     response = client.modify_url(
-                        vanity=current_user.is_vanity(),
+                        elevated=current_user.is_elevated(),
                         **kwargs
                     )
                     app.logger.info("{}: long_url edit '{}'".format(
@@ -404,7 +404,7 @@ def edit_link():
                     return render_template("edit.html",
                                            errors={'short_url' : [str(e)]},
                                            netid=current_user.netid,
-                                           vanity=current_user.is_vanity(),
+                                           elevated=current_user.is_elevated(),
                                            title=request.form["title"],
                                            old_short_url=request.form["old_short_url"],
                                            long_url=request.form["long_url"])
@@ -417,7 +417,7 @@ def edit_link():
                 return render_template("edit.html",
                                     errors=form.errors,
                                     netid=current_user.netid,
-                                    vanity=current_user.is_vanity(),
+                                    elevated=current_user.is_elevated(),
                                     title=title,
                                     old_short_url=old_short_url,
                                     long_url=long_url)
@@ -434,7 +434,7 @@ def edit_link():
         # Render the edit template
         app.logger.info("{}: render edit".format(current_user.netid))
         return render_template("edit.html", netid=current_user.netid,
-                                            vanity=current_user.is_vanity(),
+                                            elevated=current_user.is_elevated(),
                                             title=title,
                                             old_short_url=old_short_url,
                                             long_url=long_url)
@@ -477,8 +477,7 @@ def user_add():
     form = UserForm(request.form)
     if request.method == "POST":
         if form.validate():
-            client.add_user(form.netid.data, form.admin.data,
-                    form.vanity.data, current_user.netid)
+            client.add_user(form.netid.data, form.type.data, current_user.netid)
             app.logger.info("{}: user add '{}'".format(
                 current_user.netid, form.netid.data))
         else:
@@ -502,12 +501,14 @@ def user_edit():
 
     form = UserForm(request.form)
     if request.method == "POST":
+        print("netid: " + form.netid.data)
+        print("type: " + str(form.type.data))
         if form.validate():
-            client.edit_flags(form.netid.data, form.admin.data,
-                    form.vanity.data)
+            client.edit_user_type(form.netid.data, form.type.data)
             app.logger.info("{}: user edit '{}'".format(
                 current_user.netid, form.netid.data))
         else:
+            print(form.errors)
             # TODO catch validation errors
             pass
 

@@ -9,6 +9,18 @@ from flask_auth import LoginForm
 
 from shrunk.client import ShrunkClient
 
+''' 
+    Standard user: Can log in, create links, delete their own links
+    Elevated user: Standard user plus can create vanity URLs
+    Administrator: Elevated user plus can view, edit, and delete links globally,
+                   can ban domains, can ban and elevate or de-elevate other 
+                   users
+'''
+USER_TYPES = {
+    "standard": 0,
+    "elevated": 10,
+    "admin": 20
+}
 
 class User(UserMixin):
     """A User object used for logging in."""
@@ -23,10 +35,10 @@ class User(UserMixin):
 
     def is_admin(self):
         """Determines whether or not this user is an administrator."""
-        return self.client.is_admin(self.netid)
+        return self.client.get_user_type(self.netid) == USER_TYPES['admin']
 
-    def is_vanity(self):
-        return self.client.is_vanity(self.netid)
+    def is_elevated(self):
+        return self.client.get_user_type(self.netid) >= USER_TYPES['elevated']
 
     def __str__(self):
       """Returns the NetID of this user."""
@@ -77,23 +89,23 @@ def admin_required(unauthorized):
         return decorated_view
     return decorator_wrapper
 
-def vanity_required(unauthorized):
-    """Decorator for actions authorized by the vanity userclass.
+def elevated_required(unauthorized):
+    """Decorator for actions authorized by elevated users.
 
     If you decorate a view with this, it will require a user to be
-    authenticated, active, and an a vanity userclass before calling the actual
-    view.
+    authenticated, active, and be an elevated user or higher before calling the 
+    actual view.
 
     :Parameters:
         - `unauthorized`: The function to call if the user is not authorized
 
     :Returns:
-        The decorated function requiring vanity privileges to execute.
+        The decorated function requiring elevated privileges to execute.
     """
     def decorator_wrapper(func):
         @wraps(func)
         def decorated_view(*args, **kwargs):
-            if not current_user.is_authenticated() or not current_user.is_vanity():
+            if not current_user.is_authenticated() or not current_user.is_elevated():
                 return unauthorized()
             return func(*args, **kwargs)
         return decorated_view

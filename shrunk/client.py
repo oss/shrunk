@@ -672,7 +672,7 @@ class ShrunkClient(object):
         else:
             return False
 
-    def add_user(self, netid, admin, vanity, added_by):
+    def add_user(self, netid, type, added_by):
         """Adds a user to the user collection.
 
         :Parameters:
@@ -683,59 +683,39 @@ class ShrunkClient(object):
         if not self.is_user(netid):
             return db.users.insert({"netid" : netid,
                                     "added_by" : added_by,
-                                    "flags" : {
-                                        "A": admin,
-                                        "V": vanity
-                                    }
-                                })
+                                    "type": int(type)
+                                  })
 
     def is_user(self, netid):
         db = self._mongo.shrunk_users
         user = db.users.find_one({'netid': netid})
         return user
 
-    def is_admin(self, netid):
-        """Determine if a user is an administrator.
-
-        :Parameters:
-          - `netid`: A Rutgers NetID.
-
-        :Returns:
-          True if the user has the administrators flag, False otherwise.
-        """
-        db = self._mongo.shrunk_users
-        user = db.users.find_one({'netid' : netid})
-        return user["flags"]["A"]
-
-    def is_vanity(self, netid):
-        """Determine if a user has permissions for creating vanity URLs.
+    def get_user_type(self, netid):
+        """ Returns the user's numerical user type as defined in shrunk.user.
 
         :Parameters:
           - `netid`: A Rutgers NetID
 
         :Returns:
-          True if the user has the vanity flag, False otherwise.
+          int
         """
         db = self._mongo.shrunk_users
         user = db.users.find_one({'netid' : netid})
-        return user["flags"]["V"]
+        return int(user['type'])
 
-    def edit_flags(self, netid, admin, vanity):
+    def edit_user_type(self, netid, type):
         """Edits a user's permissions.
 
         :Parameters:
           - `netid`: A Rutgers NetID.
-          - `admin`: Whether the user has the admin flag.
-          - `vanity`: Whether the user has the vanity flag.
+          - `type`: The user's numerical user type
         """
         db = self._mongo.shrunk_users
         return db.users.update_one({"netid" : netid},
                                     { 
                                         "$set": {
-                                            "flags" : {
-                                                "A": admin,
-                                                "V": vanity
-                                            }
+                                            "type" : int(type)
                                         }
                                     })
 
@@ -758,7 +738,10 @@ class ShrunkClient(object):
           A list of dicts containing information about each user.
         """
         db = self._mongo.shrunk_users
-        return list(db.users.find())
+        users = list(db.users.find())
+        for user in users:
+            user['type'] = int(user['type'])
+        return users
 
     def is_blocked(self, url):
         """Determines if a URL has been banned.

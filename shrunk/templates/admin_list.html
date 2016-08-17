@@ -25,8 +25,11 @@
         <h2>Add User</h2>
         <form class="search" method="POST" action="{{ url_for('user_add') }}" name="add_admin">
             <input id="netid" name="netid" type="text" class="form-control"/> <br />
-            <input class="flag" type="checkbox" name="admin" value="admin">A
-            <input class="flag" type="checkbox" name="vanity" value="vanity">V <br />
+            <select id="type" name="type">
+                {% for (val, label) in form.type.choices %}
+                <option value="{{val}}">{{label}}</option>
+                {% endfor %}
+            </select>
             <input class="shrink-button btn btn-default" type="submit" value="ADD USER" /> <br />
         </form>
     </article>
@@ -39,18 +42,12 @@
             <div class="hover-controls">
                 <form method="POST" action="{{ url_for('user_edit') }}">
                     <input type="hidden" id="netid" name="netid" value="{{ user['netid'] }}" />
-                    {% if user['flags']['A'] %}
-                        <input class="flag" type="checkbox" id="admin" name="admin" checked>A
-                    {% else %}
-                        <input class="flag" type="checkbox" id="admin" name="admin">A
-                    {% endif %}
-                    {% if user['flags']['V'] %}
-                        <input class="flag" type="checkbox" id="vanity" name="vanity" checked>V
-                    {% else %}
-                        <input class="flag" type="checkbox" id="vanity" name="vanity">V
-                    {% endif %}
-                    <input class="shrink-button btn btn-default" type="submit"
-                    value="EDIT" />
+                    <select id="type" name="type">
+                        {% for (val, label) in form.type.choices %}
+                        <option value="{{val}}" {%if val==user.type%}selected{%endif%}>{{label}}</option>
+                        {% endfor %}
+                    </select>
+                    <input class="shrink-button btn btn-default" type="submit" value="EDIT" />
                 </form>
                 <form method="POST" action="{{ url_for('user_delete') }}">
                     <input type="hidden" id="netid" name="netid" value="{{ user['netid'] }}" />

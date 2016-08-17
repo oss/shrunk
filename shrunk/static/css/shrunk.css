@@ -326,7 +326,7 @@ label {
     float: right;
     color: #bbbbbb;
     font-size: 18px;
-    width: 15%;
+    /* width: 15%; */
 }
 
 .page-group {

@@ -4,8 +4,9 @@
 
 import re
 
-from wtforms import Form, TextField, BooleanField, PasswordField, RadioField, validators, ValidationError
+from wtforms import Form, TextField, BooleanField, PasswordField, RadioField, SelectField, validators, ValidationError
 from flask_auth import LoginForm
+from shrunk.user import USER_TYPES
 
 import shrunk.filters
 
@@ -106,8 +107,11 @@ class UserForm(Form):
       - `netid`: Text field corresponding to a NetID
     """
     netid = TextField("NetID", validators=[validators.DataRequired()])
-    admin = BooleanField("Admin")
-    vanity = BooleanField("Vanity")
+    type = SelectField("User type", coerce=int, choices=[
+                           (USER_TYPES['standard'], "Standard user"), 
+                           (USER_TYPES['elevated'], "Elevated user"),
+                           (USER_TYPES['admin'], "Administrator")
+                       ])
 
     def to_json(self):
         """Exports the form's fields into a JSON-compatible dictionary."""
