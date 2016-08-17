@@ -9,16 +9,16 @@
     {% endif %}
 
     <p>
-        shrunk's userclasses are managed by a <b>flag system</b>. Users can have
-        any combination of flags assigned to them and each flag will allow
-        specific permissions for the user.
+        Every user has a <b>type</b> which specifies what actions they can or
+        cannot take:
     </p>
-    <p>
-        For example, the flag "A" will give administrator privileges while flag "V"
-        will allow the user to create vanity URLs. If a user is assigned "A"
-        but not "V", then they will not be able to create vanity URLs depsite
-        having admin privileges.
-    </p>
+    <ul>
+        <li><b>Standard user:</b> Can create links, but not vanity URLs.</li>
+        <li><b>Elevated user:</b> Can create vanity URLs.</li>
+        <li><b>Administrator:</b> Unrestricted &mdash; can create, delete, and
+        ban users, can change other users' types, can create vanity URLs, and 
+        can block URLs.</li>
+    </ul>
 
     <hr />
     <article class="add-group clearfix">
