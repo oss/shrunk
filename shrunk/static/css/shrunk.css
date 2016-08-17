@@ -209,12 +209,22 @@ label {
 }
 
 .add-group {
-    width: 80%;
+    width: 100%;
     display: block;
 }
 
+.add-group #netid {
+    width: 50%;
+    margin-bottom: -10px;
+}
+
+.add-group .flag {
+    margin: 0 5px;
+}
+
 .add-group .shrink-button {
-    width: 18%;
+    margin-top: 5px;
+    width: 120px;
     height: 36px;
     background-color: #b2122e;
     color: #fefefe;
@@ -282,6 +292,41 @@ label {
     color: #bbbbbb;
     font-size: 18px;
     width: 15%;
+}
+
+.user-group {
+    color: #191917;
+    width: 100%;
+    padding: 15px;
+    min-height: 100px;
+    border-bottom: 1px solid rgb(211,211,211);
+    font-size: 18px;
+    display: block;
+    overflow-y: hidden;
+}
+
+.user-group .user-info {
+    width: 100%;
+    float: left;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    clear: both;
+}
+
+.user-group .flags {
+    display: inline;
+}
+
+.user-group .added-by {
+    float: left;
+}
+
+.user-group .hover-controls {
+    float: right;
+    color: #bbbbbb;
+    font-size: 18px;
+    /* width: 15%; */
 }
 
 .page-group {

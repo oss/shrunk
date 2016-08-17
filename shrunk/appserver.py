@@ -6,8 +6,8 @@ from flask import Flask, render_template, make_response, request, redirect, g
 from flask_login import LoginManager, login_required, current_user, logout_user
 from flask_auth import Auth
 
-from shrunk.forms import BlockLinksForm, LinkForm, RULoginForm, BlacklistUserForm, AddAdminForm
-from shrunk.user import User, get_user, admin_required
+from shrunk.forms import BlockLinksForm, LinkForm, RULoginForm, BlacklistUserForm, UserForm
+from shrunk.user import User, get_user, admin_required, elevated_required
 from shrunk.util import get_db_client, set_logger, formattime
 from shrunk.filters import strip_protocol, ensure_protocol
 
@@ -308,20 +308,20 @@ def add_link():
                 return render_template("add.html",
                                        errors={'short_url' : [str(e)]},
                                        netid=current_user.netid,
-                                       admin=current_user.is_admin())
+                                       elevated=current_user.is_elevated())
 
         else:
             # WTForms detects a form validation error
             return render_template("add.html",
                                    errors=form.errors,
                                    netid=current_user.netid,
-                                   admin=current_user.is_admin())
+                                   elevated=current_user.is_elevated())
     else:
         # GET request
         app.logger.info("{}: render add".format(current_user.netid))
         return render_template("add.html",
                                netid=current_user.netid,
-                               admin=current_user.is_admin())
+                               elevated=current_user.is_elevated())
 
 
 @app.route("/delete", methods=["GET", "POST"])
@@ -367,7 +367,7 @@ def edit_link():
             try:
                 response = client.modify_url(
                     old_short_url = request.form["old_short_url"],
-                    admin=current_user.is_admin(),
+                    elevated=current_user.is_elevated(),
                     **kwargs
                 )
                 app.logger.info("{}: short_url edit '{}'".format(
@@ -379,7 +379,7 @@ def edit_link():
                 return render_template("edit.html",
                                        errors={'short_url' : [str(e)]},
                                        netid=current_user.netid,
-                                       admin=current_user.is_admin(),
+                                       elevated=current_user.is_elevated(),
                                        title=request.form["title"],
                                        old_short_url=request.form["old_short_url"],
                                        long_url=request.form["long_url"])
@@ -392,7 +392,7 @@ def edit_link():
                 kwargs = form.to_json()
                 try:
                     response = client.modify_url(
-                        admin=current_user.is_admin(),
+                        elevated=current_user.is_elevated(),
                         **kwargs
                     )
                     app.logger.info("{}: long_url edit '{}'".format(
@@ -404,7 +404,7 @@ def edit_link():
                     return render_template("edit.html",
                                            errors={'short_url' : [str(e)]},
                                            netid=current_user.netid,
-                                           admin=current_user.is_admin(),
+                                           elevated=current_user.is_elevated(),
                                            title=request.form["title"],
                                            old_short_url=request.form["old_short_url"],
                                            long_url=request.form["long_url"])
@@ -417,7 +417,7 @@ def edit_link():
                 return render_template("edit.html",
                                     errors=form.errors,
                                     netid=current_user.netid,
-                                    admin=current_user.is_admin(),
+                                    elevated=current_user.is_elevated(),
                                     title=title,
                                     old_short_url=old_short_url,
                                     long_url=long_url)
@@ -434,7 +434,7 @@ def edit_link():
         # Render the edit template
         app.logger.info("{}: render edit".format(current_user.netid))
         return render_template("edit.html", netid=current_user.netid,
-                                            admin=current_user.is_admin(),
+                                            elevated=current_user.is_elevated(),
                                             title=title,
                                             old_short_url=old_short_url,
                                             long_url=long_url)
@@ -457,16 +457,16 @@ def admin_manage():
 
     return render_template("admin_list.html",
                            admin=True,
-                           admins=client.get_admins(),
-                           form=AddAdminForm(request.form),
+                           users=client.get_users(),
+                           form=UserForm(request.form),
                            netid=current_user.netid)
 
 
 @app.route("/admin/manage/add", methods=["GET", "POST"])
 @login_required
 @admin_required(unauthorized_admin)
-def admin_add():
-    """Add a new administrator."""
+def user_add():
+    """Add a new user."""
 
     client = get_db_client(app, g)
     if client is None:
@@ -474,11 +474,36 @@ def admin_add():
             current_user.netid))
         return render_template("/error.html")
 
-    form = AddAdminForm(request.form)
+    form = UserForm(request.form)
     if request.method == "POST":
         if form.validate():
-            client.add_admin(form.netid.data, current_user.netid)
-            app.logger.info("{}: admin add '{}'".format(
+            client.add_user(form.netid.data, form.type.data, current_user.netid)
+            app.logger.info("{}: user add '{}'".format(
+                current_user.netid, form.netid.data))
+        else:
+            # TODO catch validation errors
+            pass
+
+    return redirect("/admin/manage")
+    
+
+@app.route("/admin/manage/edit", methods=["GET", "POST"])
+@login_required
+@admin_required(unauthorized_admin)
+def user_edit():
+    """Edit a preexisting user."""
+    
+    client = get_db_client(app, g)
+    if client is None:
+        app.logger.critical("{}: database connection failure".format(
+            current_user.netid))
+        return render_template("/error.html")
+
+    form = UserForm(request.form)
+    if request.method == "POST":
+        if form.validate():
+            client.edit_user_type(form.netid.data, form.type.data)
+            app.logger.info("{}: user edit '{}'".format(
                 current_user.netid, form.netid.data))
         else:
             # TODO catch validation errors
@@ -490,8 +515,8 @@ def admin_add():
 @app.route("/admin/manage/delete", methods=["GET", "POST"])
 @login_required
 @admin_required(unauthorized_admin)
-def admin_delete():
-    """Delete an existing administrator."""
+def user_delete():
+    """Delete a user."""
 
     client = get_db_client(app, g)
     if client is None:
@@ -500,9 +525,10 @@ def admin_delete():
         return render_template("/error.html")
 
     if request.method == "POST":
-        client.delete_admin(request.form["netid"])
-        app.logger.info("{}: admin delete '{}'".format(
-            current_user.netid, form.netid.data))
+        netid = request.form["netid"]
+        client.delete_user(netid)
+        app.logger.info("{}: user delete '{}'".format(
+            current_user.netid, netid))
 
     return redirect("/admin/manage")
 

@@ -9,7 +9,6 @@ import time
 import pymongo
 
 EXECUTABLE_MONGO_METHODS = set([typ for typ in dir(pymongo.collection.Collection) if not typ.startswith('_')])
-EXECUTABLE_MONGO_METHODS.update(set([typ for typ in dir(pymongo.Connection) if not typ.startswith('_')]))
 EXECUTABLE_MONGO_METHODS.update(set([typ for typ in dir(pymongo) if not typ.startswith('_')]))
 """Define which MongoDB methods should be wrapped by the MongoProxy class.
 Wrap all methods in pymongo, pymongo.Connection and pymongo.collection.Collection that don't start with '_'."""
@@ -396,7 +395,7 @@ class ShrunkClient(object):
 
         return response
 
-    def modify_url(self, old_short_url, admin, short_url=None, **kwargs):
+    def modify_url(self, old_short_url, vanity, short_url=None, **kwargs):
         """Modifies an existing URL.
 
         Edits the values of the url `short_url` and replaces them with the
@@ -410,7 +409,7 @@ class ShrunkClient(object):
         db = self._mongo.shrunk_urls
         document = db.urls.find_one({"_id": old_short_url})
 
-        if not admin:
+        if not vanity:
             short_url=None
 
         if short_url is not None:
@@ -673,50 +672,76 @@ class ShrunkClient(object):
         else:
             return False
 
-    def is_admin(self, netid):
-        """Determine if a user is an administrator.
-
-        :Parameters:
-          - `netid`: A Rutgers NetID.
-
-        :Returns:
-          True if the user is in the administrators collection, False
-          otherwise.
-        """
-        db = self._mongo.shrunk_users
-        if db.administrators.find_one({'netid' : netid}) is None:
-            return False
-        return True
-
-    def add_admin(self, netid, added_by):
-        """Adds a user to the administrators collection.
+    def add_user(self, netid, type, added_by):
+        """Adds a user to the user collection.
 
         :Parameters:
           - `netid`: A Rutgers NetID
           - `added_by`: The NetID of the administrator that added this person
         """
         db = self._mongo.shrunk_users
-        if not self.is_admin(netid):
-            return db.administrators.insert({"netid" : netid, "added_by" :
-                added_by})
+        if not self.is_user(netid):
+            return db.users.insert({"netid" : netid,
+                                    "added_by" : added_by,
+                                    "type": int(type)
+                                  })
 
-    def delete_admin(self, netid):
-        """Revokes a user's administrator privileges.
+    def is_user(self, netid):
+        db = self._mongo.shrunk_users
+        user = db.users.find_one({'netid': netid})
+        return user
+
+    def get_user_type(self, netid):
+        """ Returns the user's numerical user type as defined in shrunk.user.
 
         :Parameters:
-          - `netid`: They NetID of the administrator to remove
+          - `netid`: A Rutgers NetID
+
+        :Returns:
+          int
         """
         db = self._mongo.shrunk_users
-        return db.administrators.remove({"netid" : netid})
+        user = db.users.find_one({'netid' : netid})
+        return int(user['type'])
 
-    def get_admins(self):
+    def edit_user_type(self, netid, type):
+        """Edits a user's permissions.
+
+        :Parameters:
+          - `netid`: A Rutgers NetID.
+          - `type`: The user's numerical user type
+        """
+        db = self._mongo.shrunk_users
+        return db.users.update_one({"netid" : netid},
+                                    { 
+                                        "$set": {
+                                            "type" : int(type)
+                                        }
+                                    })
+
+    def delete_user(self, netid):
+        """Removes a user from the collection, stripping them of any privileges
+        granted by flags.
+
+        :Parameters:
+          - `netid`: A Rutgers NetID.
+        """
+
+        db = self._mongo.shrunk_users
+        return db.users.remove({"netid" : netid})
+
+
+    def get_users(self):
         """Retrieves the list of administrators.
 
         :Returns:
-          A list of dicts containing information about each administrator.
+          A list of dicts containing information about each user.
         """
         db = self._mongo.shrunk_users
-        return list(db.administrators.find())
+        users = list(db.users.find())
+        for user in users:
+            user['type'] = int(user['type'])
+        return users
 
     def is_blocked(self, url):
         """Determines if a URL has been banned.
