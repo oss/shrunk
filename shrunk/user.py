@@ -9,6 +9,7 @@ from flask_auth import LoginForm
 from wtforms import TextField, PasswordField, validators
 
 from shrunk.client import ShrunkClient
+import shrunk.appserver
 
 
 class User(UserMixin):
@@ -16,7 +17,11 @@ class User(UserMixin):
     def __init__(self, netid):
         self.netid = netid
         self.id = netid
-        self.client = ShrunkClient()
+        app = shrunk.appserver.app
+        if app.config["DB_REPL"] != "":
+          self.client = ShrunkClient(None, None, app.config["DB_REPL"])
+        else:
+          self.client = ShrunkClient(app.config["DB_HOST"], app.config["DB_PORT"])
 
     def is_active(self):
         """Determines whether or not a user is active."""

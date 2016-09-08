@@ -276,7 +276,7 @@ class ShrunkClient(object):
     RESERVED_WORDS = ["add", "login", "logout", "delete", "admin"]
     """Reserved words that cannot be used as shortened urls."""
 
-    def __init__(self, host=None, port=None):
+    def __init__(self, host=None, port=None, repl=None):
         """Create a new client connection.
 
         This client uses MongoDB. No network traffic occurs until a data method
@@ -287,11 +287,16 @@ class ShrunkClient(object):
             "localhost"
           - `port` (optional): the port to connect to on the server; defaults to
             the database default if not present
+          - `repl  (optional): a string to give mongoclient is running a
+            replica set
         """
 
         for x in range(3):
             try:
-                self._mongo = MongoProxy(pymongo.MongoClient(host, port))
+                if repl == None:
+                  self._mongo = MongoProxy(pymongo.MongoClient(host, port))
+                else:
+                  self._mongo = MongoProxy(pymongo.MongoClient(repl))
                 self.conn = "on"
                 return
             except (pymongo.errors.ConnectionFailure, pymongo.errors.AutoReconnect):

@@ -3,6 +3,12 @@
 Configuration options for shrunk. This is an example file; modify this and save
 it as config.py.
 """
+'''
+DB_REPL = "mongodb://host1:27017,host2:27017,host3:27017/?replicaSet=foo"
+"""The replica set"""
+'''
+
+DB_REPL = ""
 
 DB_HOST = "localhost"
 """The host machine for the database."""
