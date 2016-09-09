@@ -12,6 +12,7 @@ from shrunk.util import get_db_client, set_logger, formattime
 from shrunk.filters import strip_protocol, ensure_protocol
 
 # Create application
+global app
 app = Flask(__name__)
 
 # Import settings in config.py
