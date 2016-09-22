@@ -18,7 +18,7 @@ def get_db_client(app, g):
       - A reference to a singleton ShrunkClient.
     """
     if not hasattr(g, "client"):
-        g.client = ShrunkClient(app.config["DB_HOST"], app.config["DB_PORT"])
+        g.client = ShrunkClient(app.config["DB_HOST"], app.config["DB_PORT"], app.config["GEOIP_DB_PATH"])
 
     if g.client.conn == "off":
         return None

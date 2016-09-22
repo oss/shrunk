@@ -11,9 +11,18 @@ __pycache__
 *.pyc
 dist/
 shrunk.egg-info/
+data/
 
 # Virtual environment
 virtualenv/
 
 # Flask logs
 *.log
+
+# GeoIP DB
+*.mmdb
+
+# Misc
+startapp.py
+startlinks.py
+startdb.sh
