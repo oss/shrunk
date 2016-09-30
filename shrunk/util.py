@@ -19,9 +19,9 @@ def get_db_client(app, g):
     """
     if not hasattr(g, "client"):
       if app.config["DB_REPL"] != "":
-        g.client = ShrunkClient(None, None, app.config["DB_REPL"])
+        g.client = ShrunkClient(None, None, app.config["DB_REPL"], app.config["GEO_DB_PATH"])
       else:
-        g.client = ShrunkClient(app.config["DB_HOST"], app.config["DB_PORT"])
+        g.client = ShrunkClient(app.config["DB_HOST"], app.config["DB_PORT"], None, app.config["GEO_DB_PATH"])
 
     if g.client.conn == "off":
         return None

@@ -55,3 +55,5 @@ LOG_FILENAME = "shrunk.log"
 
 MAX_DISPLAY_LINKS = 50
 """The maximum number of links to display per page."""
+
+GEOIP_DB_PATH = "/path/to/database/GeoLite2-City.mmdb"

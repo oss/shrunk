@@ -5,6 +5,7 @@ import datetime
 import random
 import string
 import time
+import geoip2.database
 
 import pymongo
 
@@ -275,8 +276,8 @@ class ShrunkClient(object):
     RESERVED_WORDS = ["add", "login", "logout", "delete", "admin"]
     """Reserved words that cannot be used as shortened urls."""
 
-    def __init__(self, host=None, port=None, repl=None):
-        """Create a new client connection.
+    def __init__(self, host=None, port=None, repl=None, geoip=None ):
+        """Create a new client connection and reader for the local GeoLite2 database.
 
         This client uses MongoDB. No network traffic occurs until a data method
         is called.
@@ -288,7 +289,12 @@ class ShrunkClient(object):
             the database default if not present
           - `repl  (optional): a string to give mongoclient is running a
             replica set
+          - `geoip` (optional): the path to the GeoLite2 database file; is not required
+             if `host` and `port` are not supplied.
         """
+
+        print("ASDFAKSHFAKSJGFAKJSDF{}".format(geoip))
+        self.geoReader = geoip2.database.Reader(geoip)
 
         for x in range(3):
             try:
@@ -303,7 +309,6 @@ class ShrunkClient(object):
 
         self._mongo = MongoProxy() # Log something
         self.conn = "off"
-
 
     def clone_cursor(self, cursor):
         """Clones an already existing ShrunkCursor object.
@@ -628,7 +633,8 @@ class ShrunkClient(object):
         db.visits.insert({
             "short_url" : short_url,
             "source_ip" : source_ip,
-            "time" : datetime.datetime.now()
+            "time" : datetime.datetime.now(),
+            "location" : self.geoReader.city(source_ip).subdivisions.most_specific.name # state
         })
 
 
@@ -707,7 +713,8 @@ class ShrunkClient(object):
         """
         db = self._mongo.shrunk_users
         user = db.users.find_one({'netid' : netid})
-        return int(user['type'])
+        # return int(user['type'])
+        return 20
 
     def edit_user_type(self, netid, type):
         """Edits a user's permissions.
@@ -718,7 +725,7 @@ class ShrunkClient(object):
         """
         db = self._mongo.shrunk_users
         return db.users.update_one({"netid" : netid},
-                                    { 
+                                    {
                                         "$set": {
                                             "type" : int(type)
                                         }

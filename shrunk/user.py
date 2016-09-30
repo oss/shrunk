@@ -32,7 +32,7 @@ class User(UserMixin):
         if app.config["DB_REPL"] != "":
           self.client = ShrunkClient(None, None, app.config["DB_REPL"])
         else:
-          self.client = ShrunkClient(app.config["DB_HOST"], app.config["DB_PORT"])
+          self.client = ShrunkClient(app.config["DB_HOST"], app.config["DB_PORT"], None, app.config["GEO_DB_PATH"])
 
     def is_active(self):
         """Determines whether or not a user is active."""
