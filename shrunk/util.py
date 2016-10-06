@@ -3,6 +3,10 @@
 """Utility functions for shrunk."""
 
 import logging
+import io
+import base64
+
+import pyqrcode
 
 from shrunk.client import ShrunkClient
 
@@ -47,3 +51,9 @@ def formattime(datetime):
     This formats datetimes to look like "Nov 19 2015".
     """
     return datetime.strftime("%b %d %Y")
+
+def gen_qr(app, short):
+    url = pyqrcode.create("{}/{}".format(app.config["LINKSERVER_URL"], short))
+    raw = io.BytesIO()
+    url.png(raw, scale=8)
+    return str(base64.b64encode(raw.getvalue()))[2:-1]

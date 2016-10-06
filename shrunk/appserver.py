@@ -8,7 +8,7 @@ from flask_auth import Auth
 
 from shrunk.forms import BlockLinksForm, LinkForm, RULoginForm, BlacklistUserForm, UserForm
 from shrunk.user import User, get_user, admin_required, elevated_required
-from shrunk.util import get_db_client, set_logger, formattime
+from shrunk.util import get_db_client, set_logger, formattime, gen_qr
 from shrunk.filters import strip_protocol, ensure_protocol
 
 # Create application
@@ -208,6 +208,7 @@ def render_index(**kwargs):
                  ))
             ))
         )
+        link['qr_code'] = gen_qr(app, link['_id'])
 
     resp = make_response(
             render_template("index.html",
@@ -688,3 +689,4 @@ def admin_unban_user():
             current_user.netid, form.netid.data))
 
     return redirect("/admin/blacklist")
+

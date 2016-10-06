@@ -9,3 +9,4 @@ pyasn1==0.1.7
 pymongo==3.1.1
 python3-ldap>=0.9.7
 geoip2==2.4.0
+pyqrcode
