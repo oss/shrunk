@@ -293,7 +293,6 @@ class ShrunkClient(object):
              if `host` and `port` are not supplied.
         """
 
-        print("ASDFAKSHFAKSJGFAKJSDF{}".format(geoip))
         self.geoReader = geoip2.database.Reader(geoip)
 
         for x in range(3):
@@ -713,8 +712,7 @@ class ShrunkClient(object):
         """
         db = self._mongo.shrunk_users
         user = db.users.find_one({'netid' : netid})
-        # return int(user['type'])
-        return 20
+        return int(user['type'])
 
     def edit_user_type(self, netid, type):
         """Edits a user's permissions.
