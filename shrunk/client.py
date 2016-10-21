@@ -5,6 +5,7 @@ import datetime
 import random
 import string
 import time
+import re
 import geoip2.database
 
 import pymongo
@@ -256,8 +257,8 @@ class MongoProxy:
 class ShrunkClient(object):
     """A class for database interactions."""
 
-    ALPHABET = string.digits + string.ascii_lowercase
-    """The alphabet used for encoding short urls."""
+    ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijkmnpqrstuvxyz1234567890"
+    """The alphabet used for encoding short urls; "l" and "o" omitted to avoid confusing them with "1" and "0", respectively."""
 
     URL_MIN = 46656
     """The shortest allowable URL.
