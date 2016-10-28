@@ -257,17 +257,17 @@ class MongoProxy:
 class ShrunkClient(object):
     """A class for database interactions."""
 
-    ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijkmnpqrstuvxyz1234567890"
-    """The alphabet used for encoding short urls; "l" and "o" omitted to avoid confusing them with "1" and "0", respectively."""
+    ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvxyz1234567890"
+    """The alphabet used for encoding short urls; several characters omitted to avoid confusion."""
 
-    URL_MIN = 46656
+    URL_MIN = len(ALPHABET) ** 3
     """The shortest allowable URL.
 
     This is the value of '1000' in the URL base encoding. Guarantees that all
     URLs are at least four characters long.
     """
 
-    URL_MAX = 2821109907455
+    URL_MAX = len(ALPHABET) ** 8
     """The longest allowable URL.
 
     This is the value of 'zzzzzzzz' in the URL base encoding. Guarantees that
