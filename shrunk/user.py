@@ -30,7 +30,7 @@ class User(UserMixin):
         self.id = netid
         app = shrunk.appserver.app
         if app.config["DB_REPL"] != "":
-          self.client = ShrunkClient(None, None, app.config["DB_REPL"])
+          self.client = ShrunkClient(None, None, app.config["DB_REPL"], app.config["GEO_DB_PATH"])
         else:
           self.client = ShrunkClient(app.config["DB_HOST"], app.config["DB_PORT"], None, app.config["GEO_DB_PATH"])
 
