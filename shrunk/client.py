@@ -688,6 +688,7 @@ class ShrunkClient(object):
 
         :Parameters:
           - `netid`: A Rutgers NetID
+          - `type`: User type. See: user.py/USER_TYPES
           - `added_by`: The NetID of the administrator that added this person
         """
         db = self._mongo.shrunk_users
