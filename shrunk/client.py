@@ -294,7 +294,10 @@ class ShrunkClient(object):
              if `host` and `port` are not supplied.
         """
 
-        self.geoReader = geoip2.database.Reader(geoip)
+        try:
+            self.geoReader = geoip2.database.Reader(geoip)
+        except FileNotFoundError:
+            self.geoReader = None
 
         for x in range(3):
             try:
@@ -629,12 +632,19 @@ class ShrunkClient(object):
                        {"$inc" : {"visits" : 1}})
 
         # TODO Scan source IP against Rutgers subnets.
+        if self.geoReader is not None:
+            location = self.geoReader.city(source_ip).subdivisions.most_specific.name  # state
+        else:
+            location = None
+
         db = self._mongo.shrunk_visits
         db.visits.insert({
             "short_url" : short_url,
             "source_ip" : source_ip,
             "time" : datetime.datetime.now(),
-            "location" : self.geoReader.city(source_ip).subdivisions.most_specific.name # state
+            "optional" : {
+                "location" : location,
+            } 
         })
 
 
