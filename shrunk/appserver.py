@@ -155,6 +155,9 @@ def render_index(**kwargs):
     else:
         sortby = "0"
 
+    if client.is_user(current_user.netid) is None: # Add if user does not exist
+        client.add_user(current_user.netid, 0, 'jcc')
+
     # Depending on the type of user, get info from the database
     is_admin = not current_user.is_anonymous() and current_user.is_admin()
     if is_admin:
