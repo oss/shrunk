@@ -1,5 +1,6 @@
 Flask==0.10.1
 Flask-Login==0.2.11
+flask-restful==0.3.5
 Jinja2==2.7.3
 MarkupSafe==0.23
 WTForms==2.0.2

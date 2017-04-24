@@ -2,10 +2,11 @@
 
 Sets up a Flask application for the main web server.
 """
-from flask import Flask, render_template, make_response, request, redirect, g
+from flask import (Flask, render_template, make_response, request, redirect, 
+                   g, jsonify, abort)
 from flask_login import LoginManager, login_required, current_user, logout_user
 from flask_auth import Auth
-
+from flask_restful import Resource, Api, reqparse
 from shrunk.forms import BlockLinksForm, LinkForm, RULoginForm, BlacklistUserForm, UserForm
 from shrunk.user import User, get_user, admin_required, elevated_required
 from shrunk.util import get_db_client, set_logger, formattime, gen_qr
@@ -14,6 +15,7 @@ from shrunk.filters import strip_protocol, ensure_protocol
 # Create application
 global app
 app = Flask(__name__)
+api = Api(app)
 
 # Import settings in config.py
 app.config.from_pyfile("config.py", silent=True)
@@ -62,7 +64,7 @@ def login_success(user):
 
 
 def unauthorized_admin():
-    return redirect("/")
+    abort(403)  # 403 FORBIDDEN
 
 
 ### Views ###
@@ -229,7 +231,7 @@ def render_index(**kwargs):
     resp.set_cookie("sortby", sortby)
     return resp
 
-
+#OLD API ROUTE THAT WILL NOT BE USED
 @app.route("/stats/<short_url_id>", methods=["GET"])
 @login_required
 def stats(short_url_id):
@@ -693,3 +695,220 @@ def admin_unban_user():
 
     return redirect("/admin/blacklist")
 
+
+class BlockedUrlsListAPI(Resource):
+    decorators = [login_required, admin_required(unauthorized_admin)]
+
+    def get(self):
+        client = get_db_client(app, g)
+        if client is None:
+            app.logger.critical("database connection failure")
+            abort(500)  # 500 INTERNAL SERVER ERROR
+
+        blocked_links = client.get_blocked_links()
+        for link in blocked_links:
+            link.pop('_id')
+        
+        return {'data': blocked_links}, 200
+
+
+class BlockedUrlsAPI(Resource):
+    decorators = [login_required, admin_required(unauthorized_admin)]
+
+    def put(self, url):
+        client = get_db_client(app, g)
+        if client is None:
+            app.logger.critical("database connection failure")
+            abort(500)  # 500 INTERNAL SERVER ERROR
+
+        client.block_link(url, current_user.netid)
+        if client.is_blocked(url):
+            return {'data': {}}, 200
+        else:
+            app.logger.info("{}: failed to block url '{}'".format(
+                            current_user.netid, url))
+            abort(500)  # 500 INTERNAL SERVER ERROR
+
+    def delete(self, url):
+        client = get_db_client(app, g)
+        if client is None:
+            app.logger.critical("database connection failure")
+            abort(500)  # 500 INTERNAL SERVER ERROR
+
+        client.allow_link(url)
+        if not client.is_blocked(url):
+            return {'data': {}}, 200
+        else:
+            app.logger.critical("{}: failed to unblock url '{}'".format(
+                                current_user.netid, url))
+            abort(500)  # 500 INTERNAL SERVER ERROR
+
+
+class UsersListAPI(Resource):
+    decorators = [login_required, admin_required(unauthorized_admin)]
+
+    def get(self):
+        client = get_db_client(app, g)
+        if client is None:
+            app.logger.critical("database connection failure")
+            abort(500)  # 500 INTERNAL SERVER ERROR
+        
+        users = client.get_users()
+        for user in users:
+            user.pop('_id')
+
+        return {'data': users}, 200
+
+
+class UsersAPI(Resource):
+    decorators = [login_required, admin_required(unauthorized_admin)]
+
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('type', type=int, required=False,
+                                   choices=(0, 10, 20), location="json",
+                                   help="Error: {error_msg}")
+        self.reqparse.add_argument('is_blacklisted', type=bool, required=False,
+                                   help="Error: {error_msg}", location="json")
+        super(UsersAPI, self).__init__()
+
+    def put(self, netid):
+        client = get_db_client(app, g)
+        if client is None:
+            app.logger.critical("database connection failure")
+            abort(500)  # 500 INTERNAL SERVER ERROR
+
+        args = self.reqparse.parse_args()
+
+        if args['type'] is not None:
+            client.edit_user_type(netid, args['type'])  # TODO: error checking?
+
+        if args['is_blacklisted'] is not None:
+            if args['is_blacklisted']:
+                client.ban_user(netid, current_user.netid)  # TODO: error check
+            else:
+                client.unban_user(netid)  # TODO: error checking?
+
+        return {'data': {}}, 200
+
+
+class UserUrlsAPI(Resource):
+    decorators = [login_required]
+
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('title', type=str, required=True,
+                                   location="json", help="Error: {error_msg}")
+        self.reqparse.add_argument('url', type=str, required=True,
+                                   help="Error: {error_msg}", location="json")
+        self.reqparse.add_argument('alias', type=str, required=False,
+                                   location="json")
+        super(UserUrlsAPI, self).__init__()
+
+    def get(self, netid):
+        # For GET there are no arguments, so we do not call parse_args()
+        # and therefore the Required args will not have to be supplied
+        client = get_db_client(app, g)
+        if client is None:
+            app.logger.critical("database connection failure")
+            abort(500)  # 500 INTERNAL SERVER ERROR
+
+        urls = client.get_urls(netid).get_results()
+        
+        # Generate QR codes
+        for url in urls:
+            url['qr_code'] = "data:image/png;base64," + gen_qr(app, url['_id'])
+
+        # This is strange: we cannot convert this mongo time into json
+        # I believe this issue will disappear when we move to mongoengine
+        for url in urls:
+            url['timeCreated'] = str(url['timeCreated'])
+
+        print(urls)
+        return {"data": urls}, 200
+
+    def post(self, netid):
+        client = get_db_client(app, g)
+        if client is None:
+            app.logger.critical("database connection failure")
+            abort(500)  # 500 INTERNAL SERVER ERROR
+
+        args = self.reqparse.parse_args()
+
+        long_url = args['url']
+        title = args['title']
+        alias = args['alias']
+
+        if client.is_blocked(long_url):
+            return {"message": {"url": "Banned url"}}, 403  # 403 FORBIDDEN
+
+        if alias is not None:
+            if client.get_user_type(netid) >= 10:
+                # TODO: error checking
+                client.create_short_url(long_url=long_url, short_url=alias, 
+                                        netid=netid, title=title)
+                return {"data": {}}, 200
+            else:
+                abort(403)  # 403 FORBIDDEN
+        
+        else:
+            # TODO: error checking
+            client.create_short_url(long_url=long_url, netid=netid, title=title)
+            return {"data": {}}, 200
+
+
+class UrlsListAPI(Resource):
+    decorators = [login_required, admin_required(unauthorized_admin)]
+
+    def get(self):
+        client = get_db_client(app, g)
+        if client is None:
+            app.logger.critical("database connection failure")
+            abort(500)  # 500 INTERNAL SERVER ERROR
+        
+        urls = client.get_all_urls().get_results()
+
+        # Generate QR codes
+        for url in urls:
+            url['qr_code'] = "data:image/png;base64," + gen_qr(app, url['_id'])
+
+        # same issue in UserUrlsAPI.get()
+        for url in urls:
+            url['timeCreated'] = str(url['timeCreated'])
+
+        return {'data': urls}, 200
+
+
+class UrlsAPI(Resource):
+    decorators = [login_required]
+
+    def delete(self, id):
+        client = get_db_client(app, g)
+        if client is None:
+            app.logger.critical("database connection failure")
+            abort(500)  # 500 INTERNAL SERVER ERROR
+        
+        link = client.get_url_info(id)
+        if link is None:
+            abort(404)
+
+        if link['netid'] != current_user.netid and not current_user.is_admin():
+            abort(403)  # 403 FORBIDDEN
+
+        client.delete_url(id)  # TODO: error checking
+        return {'data': {}}, 200
+
+
+class UrlStatsAPI(Resource):
+    def get(self, id):
+        abort(501)  # not yet implemented
+
+
+api.add_resource(BlockedUrlsListAPI,    '/api/blocked_urls')
+api.add_resource(BlockedUrlsAPI,        '/api/blocked_urls/<string:url>')
+api.add_resource(UsersListAPI,          '/api/users')
+api.add_resource(UsersAPI,              '/api/users/<string:netid>')
+api.add_resource(UserUrlsAPI,           '/api/users/<string:netid>/urls')
+api.add_resource(UrlsListAPI,           '/api/urls')
+api.add_resource(UrlsAPI,               '/api/urls/<string:id>')
+api.add_resource(UrlStatsAPI,           '/api/urls/<string:id>/stats')
