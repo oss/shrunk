@@ -6,9 +6,9 @@ from functools import wraps
 
 from flask_login import UserMixin, current_user
 from flask_auth import LoginForm
-
-from shrunk.client import ShrunkClient
 import shrunk.appserver
+import shrunk.models as models
+from mongoengine import DoesNotExist
 
 ''' 
     Standard user: Can log in, create links, delete their own links
@@ -23,27 +23,22 @@ USER_TYPES = {
     "admin": 20
 }
 
+
 class User(UserMixin):
     """A User object used for logging in."""
     def __init__(self, netid):
         self.netid = netid
         self.id = netid
-        app = shrunk.appserver.app
-        if app.config["DB_REPL"] != "":
-          self.client = ShrunkClient(None, None, app.config["DB_REPL"], app.config["GEO_DB_PATH"])
-        else:
-          self.client = ShrunkClient(app.config["DB_HOST"], app.config["DB_PORT"], None, app.config["GEO_DB_PATH"])
-
-    def is_active(self):
-        """Determines whether or not a user is active."""
-        return not self.client.is_blacklisted(self.netid)
 
     def is_admin(self):
         """Determines whether or not this user is an administrator."""
-        return self.client.get_user_type(self.netid) == USER_TYPES['admin']
+        return models.User.objects.get(netid=self.netid).type == \
+               USER_TYPES['admin']
 
     def is_elevated(self):
-        return self.client.get_user_type(self.netid) >= USER_TYPES['elevated']
+        """Determines whether or not this user is elevated or admin"""
+        return models.User.objects.get(netid=self.netid).type >= \
+               USER_TYPES['elevated']
 
     def __str__(self):
       """Returns the NetID of this user."""

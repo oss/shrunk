@@ -3,9 +3,10 @@
 """Flask application for the link server."""
 
 from flask import Flask, render_template, request, redirect, g
-
-import shrunk.client
 import shrunk.util
+from shrunk.models import Url
+from shrunk.client import visit
+from mongoengine import connect, DoesNotExist
 
 
 # Create application
@@ -17,6 +18,14 @@ app.secret_key = app.config['SECRET_KEY']
 
 # Initialize logging
 shrunk.util.set_logger(app)
+
+# Connect to mongo
+if app.config["DB_REPL"] != "":
+    connect(app.config["DB_DATABASE"], host=app.config["DB_HOST"], 
+            port=app.config["DB_PORT"], replicaset=app.config["DB_REPL"])
+else:
+    connect(app.config["DB_DATABASE"], host=app.config["DB_HOST"], 
+            port=app.config["DB_PORT"])
 
 
 ### Views ###
@@ -31,24 +40,21 @@ def redirect_link(short_url):
     :Parameters:
       - `short_url`: A string containing a shrunk-ified URL.
     """
-    client = shrunk.util.get_db_client(app, g)
-    if client is None:
-        return redirect("/error.html")
-
     app.logger.info("{} requests {}".format(request.remote_addr, short_url))
 
     # Perform a lookup and redirect
-    long_url = client.get_long_url(short_url)
-    if long_url is None:
+    try:
+        url = Url.objects.get(short_url=short_url)
+    except DoesNotExist:
         return render_template("link-404.html", short_url=short_url)
-    else:
-        client.visit(short_url, request.remote_addr)
+    
+    visit(url, request.remote_addr)
 
-        # Check if a protocol exists
-        if "://" in long_url:
-            return redirect(long_url)
-        else:
-            return redirect("http://{}".format(long_url))
+    # Check if a protocol exists
+    if "://" in url.long_url:
+        return redirect(url.long_url)
+    else:
+        return redirect("http://{}".format(url.long_url))
 
 
 @app.route("/")
