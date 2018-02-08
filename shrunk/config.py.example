@@ -24,19 +24,8 @@ DUAL_SERVER = False
 server. The default setting is False, which assumes that a separate server
 handles the links."""
 
-AUTH = {
-    "methods": ["ldap"],
-    "ldap": {
-        "host": "ldap.yourdomain.com",
-        "port": 123,
-        "uid": "",
-        "encryption": "",
-        "base_dn": "",
-        "bind_dn": "",
-        "bind_pass": ""
-    }
-}
-"""Authentication options for login."""
+VALID_EMPLOYEE_TYPES = ["FACULTY", "STAFF"]
+USER_WHITELIST = ["anp120"]
 
 LOG_FORMAT = "%(levelname)s %(asctime)s: %(message)s [in %(pathname)s:%(lineno)d]"
 """The format for the logger."""

@@ -40,8 +40,9 @@ app.jinja_env.globals.update(formattime=formattime)
 # Shibboleth handler
 @ext.login_handler
 def login(user_info):
+    if user_info.get("employeeType") not in app.config["VALID_EMPLOYEE_TYPES"] and user_info.get("netid") not in app.config["USER_WHITELIST"]:
+        return redirect('/unauthorized')
     session['user'] = user_info
-    app.logger.info("Got login info")
     return redirect('/')
 
 @app.route('/logout')
@@ -57,6 +58,10 @@ def render_login(**kwargs):
     """
     resp = make_response(render_template('login.html', shib_login="/login", **kwargs))
     return resp
+
+@app.route('/unauthorized')
+def unauthorized():
+    return make_response(render_template('unauthorized.html'))
 
 ### Views ###
 try:
