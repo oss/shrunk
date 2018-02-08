@@ -4,8 +4,7 @@
 
 import re
 
-from wtforms import Form, TextField, PasswordField, RadioField, validators, ValidationError
-from flask_auth import LoginForm
+from wtforms import Form, TextField, RadioField, validators, ValidationError
 
 import shrunk.filters
 
@@ -64,19 +63,6 @@ class LinkForm(Form):
         if self.short_url.data:
             data["short_url"] = self.short_url.data
         return data
-
-
-class RULoginForm(LoginForm):
-    """A WTForm representing the login form.
-
-    :Fields:
-      - `username`: Text field for the user's NetID
-      - `password`: Password field for a NetID password
-    """
-    username = TextField("Netid", validators=[
-        validators.DataRequired(message="Please provide your NetID.")])
-    password = PasswordField("Password", validators=[
-        validators.DataRequired(message="Please provide a password.")])
 
 
 class BlacklistUserForm(Form):

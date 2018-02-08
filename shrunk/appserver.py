@@ -2,15 +2,12 @@
 
 Sets up a Flask application for the main web server.
 """
-from flask import Flask, render_template, make_response, request, redirect, g
-from flask_login import LoginManager, login_required, current_user, logout_user
-from flask_auth import Auth
+from flask import Flask, render_template, make_response, request, redirect, g, session
+from flask_sso import SSO
 
-from shrunk.forms import BlockLinksForm, LinkForm, RULoginForm, BlacklistUserForm, AddAdminForm
-from shrunk.user import User, get_user, admin_required
+from shrunk.forms import BlockLinksForm, LinkForm, BlacklistUserForm, AddAdminForm
 from shrunk.util import get_db_client, set_logger, formattime
 from shrunk.filters import strip_protocol, ensure_protocol
-
 
 # Create application
 app = Flask(__name__)
@@ -22,47 +19,44 @@ app.secret_key = app.config['SECRET_KEY']
 # Initialize logging
 set_logger(app)
 
-# Initialize login manager
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = '/login'
+# Map SSO attributes to session keys under session['user']
+SSO_ATTRIBUTE_MAP = {
+    "SHIB_UID_1": (True, "netid"),
+    #"SHIB_UID_2": (True, "uid2"),
+    "SHIB_UID_3": (True, "employeeType"),
+}
+app.config.setdefault('SSO_ATTRIBUTE_MAP', SSO_ATTRIBUTE_MAP)
+app.config.setdefault('SSO_LOGIN_URL', '/login')
+
+# This attaches the *flask_sso* login handler to the SSO_LOGIN_URL,
+# which essentially maps the SSO attributes to a dictionary and
+# calls *our* login_handler, passing the attribute dictionary
+ext = SSO(app=app)
 
 # Allows us to use the function in our templates
 app.jinja_env.globals.update(formattime=formattime)
 
 
-@login_manager.user_loader
-def load_user(userid):
-    """Loads user object for login.
+# Shibboleth handler
+@ext.login_handler
+def login(user_info):
+    session['user'] = user_info
+    app.logger.info("Got login info")
+    return redirect('/')
 
-    :Parameters:
-      - `userid`: An id for the user (typically a NetID).
-    """
-    return User(userid)
+@app.route('/logout')
+def logout():
+    session.pop('user')
+    return redirect('/shibboleth/Logout')
 
-
+@app.route('/shrunk-login')
 def render_login(**kwargs):
     """Renders the login template.
 
     Takes a WTForm in the keyword arguments.
     """
-    return render_template('login.html', **kwargs)
-
-
-def login_success(user):
-    """Function executed on successful login.
-
-    Redirects the user to the homepage.
-
-    :Parameters:
-      - `user`: The user that has logged in.
-    """
-    return redirect('/')
-
-
-def unauthorized_admin():
-    return redirect("/")
-
+    resp = make_response(render_template('login.html', shib_login="/login", **kwargs))
+    return resp
 
 ### Views ###
 try:
@@ -105,10 +99,11 @@ def render_index(**kwargs):
     the links owned by them. If a search has been made, then only the links
     matching their search query are shown.
     """
-    client = get_db_client(app, g)
-    if not hasattr(current_user, "netid"):
+    if not 'user' in session:
         # Anonymous user
-        return redirect("/login")
+        return redirect("/shrunk-login")
+    netid = session['user'].get('netid')
+    client = get_db_client(app, g)
 
     # Grab the current page number
     try:
@@ -140,22 +135,20 @@ def render_index(**kwargs):
         sortby = "0"
 
     # Depending on the type of user, get info from the database
-    is_admin = not current_user.is_anonymous() and current_user.is_admin()
+    is_admin = client.is_admin(netid)
     if is_admin:
-        netid = current_user.netid
         if query:
             cursor = client.search(query)
         elif all_users == "1":
             cursor = client.get_all_urls(query)
         else:
-            cursor = client.get_urls(current_user.netid)
+            cursor = client.get_urls(netid)
     else:
-        netid = current_user.netid
         if query:
             cursor = client.search(query, netid=netid)
             app.logger.info("search: {}, '{}'".format(netid, query))
         else:
-            cursor = client.get_urls(current_user.netid)
+            cursor = client.get_urls(netid)
             app.logger.info("render index: {}".format(netid))
 
     # Perform sorting, pagination and get the results
@@ -194,26 +187,13 @@ def render_index(**kwargs):
     resp.set_cookie("sortby", sortby)
     return resp
 
-
-@app.route("/login", methods=['GET', 'POST'])
-def login():
-    """Handles authentication."""
-    a = Auth(app.config['AUTH'], get_user)
-    return a.login(request, RULoginForm, render_login, login_success)
-
-
-@app.route("/logout")
-@login_required
-def logout():
-    """Handles logging out."""
-    logout_user()
-    return redirect('/')
-
-
 @app.route("/add", methods=["GET", "POST"])
-@login_required
 def add_link():
     """Adds a new link for the current user."""
+    if not 'user' in session:
+        # Anonymous user
+        return redirect("/shrunk-login")
+    netid = session['user'].get('netid')
     form = LinkForm(request.form,
                     banlist=[strip_protocol(app.config["LINKSERVER_URL"])])
     client = get_db_client(app, g)
@@ -226,33 +206,35 @@ def add_link():
             kwargs = form.to_json()
             try:
                 client.create_short_url(
-                    netid=current_user.netid,
+                    netid=netid,
                     **kwargs
                 )
                 return redirect("/")
             except Exception as e:
                 return render_template("add.html",
                                        errors={'short_url' : [str(e)]},
-                                       netid=current_user.netid,
-                                       admin=current_user.is_admin())
+                                       netid=netid,
+                                       admin=client.is_admin(netid))
 
         else:
             # WTForms detects a form validation error
             return render_template("add.html",
                                    errors=form.errors,
-                                   netid=current_user.netid,
-                                   admin=current_user.is_admin())
+                                   netid=netid,
+                                   admin=client.is_admin(netid))
     else:
         # GET request
         return render_template("add.html",
-                               netid=current_user.netid,
-                               admin=current_user.is_admin())
+                               netid=netid,
+                               admin=client.is_admin(netid))
 
 
 @app.route("/delete", methods=["GET", "POST"])
-@login_required
 def delete_link():
     """Deletes a link."""
+    if not 'user' in session:
+        # Anonymous user
+        return redirect("/shrunk-login")
     client = get_db_client(app, g)
 
     # TODO Handle the response intelligently, or put that logic somewhere else
@@ -263,13 +245,16 @@ def delete_link():
 
 
 @app.route("/edit", methods=["GET", "POST"])
-@login_required
 def edit_link():
     """Edits a link.
 
     On POST, this route expects a form that contains the unique short URL that
     will be edited.
     """
+    if not 'user' in session:
+        # Anonymous user
+        return redirect("/shrunk-login")
+    netid = session['user'].get('netid')
     client = get_db_client(app, g)
     form = LinkForm(request.form,
                     banlist=[strip_protocol(app.config["LINKSERVER_URL"])])
@@ -282,15 +267,15 @@ def edit_link():
             try:
                 response = client.modify_url(
                     old_short_url = request.form["old_short_url"],
-                    admin=current_user.is_admin(),
+                    admin=client.is_admin(netid),
                     **kwargs
                 )
                 return redirect("/")
             except Exception as e:
                 return render_template("edit.html",
                                        errors={'short_url' : [str(e)]},
-                                       netid=current_user.netid,
-                                       admin=current_user.is_admin(),
+                                       netid=netid,
+                                       admin=client.is_admin(netid),
                                        title=request.form["title"],
                                        old_short_url=request.form["old_short_url"],
                                        long_url=request.form["long_url"])
@@ -303,15 +288,15 @@ def edit_link():
                 kwargs = form.to_json()
                 try:
                     response = client.modify_url(
-                        admin=current_user.is_admin(),
+                        admin=client.is_admin(netid),
                         **kwargs
                     )
                     return redirect("/")
                 except Exception as e:
                     return render_template("edit.html",
                                            errors={'short_url' : [str(e)]},
-                                           netid=current_user.netid,
-                                           admin=current_user.is_admin(),
+                                           netid=netid,
+                                           admin=client.is_admin(netid),
                                            title=request.form["title"],
                                            old_short_url=request.form["old_short_url"],
                                            long_url=request.form["long_url"])
@@ -323,8 +308,8 @@ def edit_link():
                 title = info["title"]
                 return render_template("edit.html",
                                     errors=form.errors,
-                                    netid=current_user.netid,
-                                    admin=current_user.is_admin(),
+                                    netid=netid,
+                                    admin=client.is_admin(netid),
                                     title=title,
                                     old_short_url=old_short_url,
                                     long_url=long_url)
@@ -333,46 +318,56 @@ def edit_link():
         old_short_url = request.args["url"]
         info = client.get_url_info(old_short_url)
         owner = info["netid"]
-        if owner != current_user.netid and not current_user.is_admin():
+        if owner != netid and not client.is_admin(netid):
             return render_index(wrong_owner=True)
 
         long_url = info["long_url"]
         title = info["title"]
         # Render the edit template
-        return render_template("edit.html", netid=current_user.netid,
-                                            admin=current_user.is_admin(),
+        return render_template("edit.html", netid=netid,
+                                            admin=client.is_admin(netid),
                                             title=title,
                                             old_short_url=old_short_url,
                                             long_url=long_url)
 
 
 @app.route("/admin/manage")
-@login_required
-@admin_required(unauthorized_admin)
 def admin_manage():
     """Renders a list of administrators.
 
     Allows an admin to add and remove NetIDs from the list of official
     administrators.
     """
+    if not 'user' in session:
+        # Anonymous user
+        return redirect("/shrunk-login")
     client = get_db_client(app, g)
+    netid = session['user'].get('netid')
+    if not client.is_admin(netid):
+        # Not an admin
+        return redirect("/")
     return render_template("admin_list.html",
                            admin=True,
                            admins=client.get_admins(),
                            form=AddAdminForm(request.form),
-                           netid=current_user.netid)
+                           netid=netid)
 
 
 @app.route("/admin/manage/add", methods=["GET", "POST"])
-@login_required
-@admin_required(unauthorized_admin)
 def admin_add():
     """Add a new administrator."""
+    if not 'user' in session:
+        # Anonymous user
+        return redirect("/shrunk-login")
     client = get_db_client(app, g)
+    netid = session['user'].get('netid')
+    if not client.is_admin(netid):
+        # Not an admin
+        return redirect("/")
     form = AddAdminForm(request.form)
     if request.method == "POST":
         if form.validate():
-            client.add_admin(form.netid.data, current_user.netid)
+            client.add_admin(form.netid.data, netid)
         else:
             # TODO catch validation errors
             pass
@@ -381,11 +376,16 @@ def admin_add():
 
 
 @app.route("/admin/manage/delete", methods=["GET", "POST"])
-@login_required
-@admin_required(unauthorized_admin)
 def admin_delete():
     """Delete an existing administrator."""
+    if not 'user' in session:
+        # Anonymous user
+        return redirect("/shrunk-login")
     client = get_db_client(app, g)
+    netid = session['user'].get('netid')
+    if not client.is_admin(netid):
+        # Not an admin
+        return redirect("/")
     if request.method == "POST":
         client.delete_admin(request.form["netid"])
 
@@ -393,8 +393,6 @@ def admin_delete():
 
 
 @app.route("/admin/links/block", methods=["GET", "POST"])
-@login_required
-@admin_required(unauthorized_admin)
 def admin_block_link():
     """Block a link from being shrunk.
 
@@ -402,11 +400,18 @@ def admin_block_link():
     web application. URLs matching the given regular expression will be
     prohibited.
     """
+    if not 'user' in session:
+        # Anonymous user
+        return redirect("/shrunk-login")
     client = get_db_client(app, g)
+    netid = session['user'].get('netid')
+    if not client.is_admin(netid):
+        # Not an admin
+        return redirect("/")
     form = BlockLinksForm(request.form)
     if request.method == "POST":
         if form.validate():
-            client.block_link(form.link.data, current_user.netid)
+            client.block_link(form.link.data, netid)
         else:
             # TODO catch validation errors
             pass
@@ -415,11 +420,16 @@ def admin_block_link():
 
 
 @app.route("/admin/links/unblock", methods=["GET", "POST"])
-@login_required
-@admin_required(unauthorized_admin)
 def admin_unblock_link():
     """Remove a link from the banned links list."""
+    if not 'user' in session:
+        # Anonymous user
+        return redirect("/shrunk-login")
     client = get_db_client(app, g)
+    netid = session['user'].get('netid')
+    if not client.is_admin(netid):
+        # Not an admin
+        return redirect("/")
     if request.method == "POST":
         client.allow_link(request.form["url"])
 
@@ -427,62 +437,82 @@ def admin_unblock_link():
 
 
 @app.route("/admin/links", methods=["GET", "POST"])
-@login_required
-@admin_required(unauthorized_admin)
 def admin_links():
     """Renders the administrator link banlist.
 
     Allows admins to block (and unblock) particular URLs from being shrunk.
     """
+    if not 'user' in session:
+        # Anonymous user
+        return redirect("/shrunk-login")
     client = get_db_client(app, g)
+    netid = session['user'].get('netid')
+    if not client.is_admin(netid):
+        # Not an admin
+        return redirect("/")
     return render_template("admin_links.html",
                            admin=True,
                            banlist=client.get_blocked_links(),
                            form=BlockLinksForm(request.form),
-                           netid=current_user.netid)
+                           netid=netid)
 
 
 @app.route("/admin/")
-@login_required
-@admin_required(unauthorized_admin)
 def admin_panel():
     """Renders the administrator panel.
 
     This displays an administrator panel with navigation links to the admin
     controls.
     """
-    return render_template("admin.html", netid=current_user.netid)
+    if not 'user' in session:
+        # Anonymous user
+        return redirect("/shrunk-login")
+    netid = session['user'].get('netid')
+    if not client.is_admin(netid):
+        # Not an admin
+        return redirect("/")
+    return render_template("admin.html", netid=netid)
 
 
 @app.route("/admin/blacklist", methods=["GET", "POST"])
-@login_required
-@admin_required(unauthorized_admin)
 def admin_blacklist():
     """Renders the administrator blacklist.
 
     Allows admins to blacklist users to prevent them from accessing the web
     interface.
     """
+    if not 'user' in session:
+        # Anonymous user
+        return redirect("/shrunk-login")
     client = get_db_client(app, g)
+    netid = session['user'].get('netid')
+    if not client.is_admin(netid):
+        # Not an admin
+        return redirect("/")
     return render_template("admin_blacklist.html",
                            admin=True,
                            blacklist=client.get_blacklisted_users(),
-                           netid=current_user.netid)
+                           netid=netid)
 
 
 @app.route("/admin/blacklist/ban", methods=["GET", "POST"])
-@login_required
-@admin_required(unauthorized_admin)
 def admin_ban_user():
     """Ban a user from using the web application.
 
     Adds a user to the blacklist.
     """
+    if not 'user' in session:
+        # Anonymous user
+        return redirect("/shrunk-login")
     client = get_db_client(app, g)
+    netid = session['user'].get('netid')
+    if not client.is_admin(netid):
+        # Not an admin
+        return redirect("/")
     form = BlacklistUserForm(request.form)
     if request.method == "POST":
         if form.validate():
-            client.ban_user(form.netid.data, current_user.netid)
+            client.ban_user(form.netid.data, netid)
         else:
             # TODO Catch validation errors
             pass
@@ -491,14 +521,19 @@ def admin_ban_user():
 
 
 @app.route("/admin/blacklist/unban", methods=["GET", "POST"])
-@login_required
-@admin_required(unauthorized_admin)
 def admin_unban_user():
     """Unban a user from the blacklist.
 
     Removes a user from the blacklist, restoring their previous privileges.
     """
+    if not 'user' in session:
+        # Anonymous user
+        return redirect("/shrunk-login")
     client = get_db_client(app, g)
+    netid = session['user'].get('netid')
+    if not client.is_admin(netid):
+        # Not an admin
+        return redirect("/")
     if request.method == "POST":
         client.unban_user(request.form["netid"])
 
