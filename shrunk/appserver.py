@@ -19,15 +19,6 @@ app.secret_key = app.config['SECRET_KEY']
 # Initialize logging
 set_logger(app)
 
-# Map SSO attributes to session keys under session['user']
-SSO_ATTRIBUTE_MAP = {
-    "SHIB_UID_1": (True, "netid"),
-    #"SHIB_UID_2": (True, "uid2"),
-    "SHIB_UID_3": (True, "employeeType"),
-}
-app.config.setdefault('SSO_ATTRIBUTE_MAP', SSO_ATTRIBUTE_MAP)
-app.config.setdefault('SSO_LOGIN_URL', '/login')
-
 # This attaches the *flask_sso* login handler to the SSO_LOGIN_URL,
 # which essentially maps the SSO attributes to a dictionary and
 # calls *our* login_handler, passing the attribute dictionary

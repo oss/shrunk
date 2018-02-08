@@ -25,7 +25,18 @@ server. The default setting is False, which assumes that a separate server
 handles the links."""
 
 VALID_EMPLOYEE_TYPES = ["FACULTY", "STAFF"]
+
 USER_WHITELIST = ["anp120"]
+
+SSO_ATTRIBUTE_MAP = {
+    "SHIB_UID_1": (True, "netid"),
+    #"SHIB_UID_2": (True, "uid2"),
+    "SHIB_UID_3": (True, "employeeType"),
+}
+"""Map SSO attributes to session keys"""
+
+SSO_LOGIN_URL = '/login'
+"""URL for local shibboleth login"""
 
 LOG_FORMAT = "%(levelname)s %(asctime)s: %(message)s [in %(pathname)s:%(lineno)d]"
 """The format for the logger."""
