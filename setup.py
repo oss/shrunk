@@ -25,7 +25,7 @@ setup(
     name = "shrunk",
     version = "0.4.5",
     packages = ["shrunk"],
-    requires = require,
+    install_requires = require,
     package_dir = {"shrunk": "shrunk"},
     package_data = {"shrunk": ["static/css/*", "static/img/*", "static/js/*",
                                "templates/*"]},
