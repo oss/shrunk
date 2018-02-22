@@ -9,11 +9,23 @@ try:
 except:
     readme_text = ""
 
+require = [
+    'Flask>=0.10.1',
+    'Flask-SSO>=0.4.0',
+    'Jinja2>=2.7.3',
+    'MarkupSafe>=0.23',
+    'WTForms>=2.0.1',
+    'Werkzeug>=0.9.6',
+    'itsdangerous>=0.24',
+    'pyasn1>=0.1.7',
+    'pymongo>=2.7.2',
+]
+
 setup(
     name = "shrunk",
-    version = "0.2.0",
+    version = "0.4.5",
     packages = ["shrunk"],
-    requires = ["pymongo", "wtforms", "flask"],
+    requires = require
     package_dir = {"shrunk": "shrunk"},
     package_data = {"shrunk": ["static/css/*", "static/img/*", "static/js/*",
                                "templates/*"]},
