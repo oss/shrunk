@@ -47,8 +47,29 @@ def render_login(**kwargs):
 
     Takes a WTForm in the keyword arguments.
     """
-    resp = make_response(render_template('login.html', shib_login="/login", **kwargs))
-    return resp
+    if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
+        resp = make_response(render_template('dev_login.html', shib_login='/login', dev_user_login='/dev-user-login', dev_admin_login='/dev-admin-login', **kwargs))
+        return resp
+    else:
+        resp = make_response(render_template('login.html', shib_login='/login', **kwargs))
+        return resp
+
+if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
+    @app.route('/dev-user-login')
+    def dev_user_login():
+        app.logger.info('user dev login valid')
+        session['user']={'netid':'DEV_USER'}
+        return redirect('/')
+    @app.route('/dev-admin-login')
+    def dev_admin_login():
+        app.logger.info('admin dev login valid')
+        session['user']={'netid':'DEV_ADMIN'}
+        client=get_db_client(app, g)
+        if not client.is_admin('DEV_ADMIN'):
+            client.add_admin('DEV_ADMIN', 'Justice League')
+        
+        return redirect('/')
+        
 
 @app.route('/unauthorized')
 def unauthorized():
