@@ -38,7 +38,10 @@ def login(user_info):
 
 @app.route('/logout')
 def logout():
-    session.pop('user')
+    user=session.pop('user')
+    if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
+        if(user['netid']=="DEV_ADMIN" or user['netid']=="DEV_USER"):
+            return redirect('/')
     return redirect('/shibboleth/Logout')
 
 @app.route('/shrunk-login')
