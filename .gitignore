@@ -17,3 +17,6 @@ virtualenv/
 
 # Flask logs
 *.log
+
+# Big files
+*GeoLite2-City.mmdb
