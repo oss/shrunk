@@ -57,7 +57,7 @@ def render_login(**kwargs):
         resp = make_response(render_template('login.html', shib_login='/login', **kwargs))
         return resp
 
-# add devlogins if necissary
+# add devlogins if necessary
 if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
     @app.route('/dev-user-login')
     def dev_user_login():
