@@ -488,6 +488,7 @@ def admin_panel():
     if not 'user' in session:
         # Anonymous user
         return redirect("/shrunk-login")
+    client = get_db_client(app, g)
     netid = session['user'].get('netid')
     if not client.is_admin(netid):
         # Not an admin
