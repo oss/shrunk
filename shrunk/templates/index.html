@@ -78,7 +78,7 @@
         </div>
 
         <div class="page-numbers">
-        {% for pg in range(1, lastpage + 1) %}
+        {% for pg in range(begin_pages, end_pages +1) %}
             {% if pg == page %}
                 <span class="page active"><a href="{{ url_for('render_index', p=pg) }}">{{ pg }}</a></span>
             {% else %}
@@ -99,6 +99,11 @@
     </div>
     </nav>
 </article>
+<br><br><br>
+<div>
+    <p>Number of pages: {{lastpage}}</p>
+</div>
+
 {% endif %}
 
 </div>

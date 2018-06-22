@@ -192,10 +192,31 @@ def render_index(**kwargs):
         link_offset = (page-1)*app.config["MAX_DISPLAY_LINKS"]
         links = list(links)[link_offset:link_offset+8]
 
+
+    
+    #choose 9 pages to display so there's not like 200 page links
+    begin_pages = -1
+    end_pages = -1
+    if lastpage < 10:
+        begin_pages = 1
+        end_pages = lastpage
+    else:
+        if page < 5:
+            begin_pages=1
+            end_pages=9
+        elif page > lastpage-4:
+            begin_pages = lastpage-8
+            end_pages = lastpage
+        else:
+            begin_pages = page-4
+            end_pages = page+4
+
     resp = make_response(
             render_template("index.html",
                             admin=is_admin,
                             all_users=all_users,
+                            begin_pages=begin_pages,
+                            end_pages=end_pages,
                             lastpage=lastpage,
                             links=links,
                             linkserver_url=app.config["LINKSERVER_URL"],
