@@ -57,8 +57,27 @@ var display_all = function() {
 
 var sortby = function() {
     var sel = document.getElementById("sortby");
-    window.location.replace("/?sortby=" + sel.selectedIndex)
+    var url = new URL(window.location.href);
+    
+    var query = url.searchParams.get("search");
+    if(query === null){
+         window.location.replace("/?sortby=" + sel.selectedIndex);
+    }else{
+        window.location.replace("/?sortby=" + sel.selectedIndex + "&search=" + query);
+    }
 }
+
+var clear_search = function(){
+    var url = new URL(window.location.href);
+
+    var sortBy = url.searchParams.get("sortby");
+    if(sortBy === null){
+        window.location.replace("/?sortby=" + 0);
+    }else{
+        window.location.replace("/?sortby=" + sortBy);
+    }
+}
+
 
 function toggleLinks(cb, netid) {
     $("article.link-group").each(function() {
@@ -71,3 +90,4 @@ function toggleLinks(cb, netid) {
         }
     });
 }
+
