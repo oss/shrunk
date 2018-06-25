@@ -13,10 +13,12 @@ dist/
 shrunk.egg-info/
 
 # Virtual environment
-virtualenv/
+venv/
 
 # Flask logs
 *.log
 
 # Big files
 *GeoLite2-City.mmdb
+
+runappserver.py

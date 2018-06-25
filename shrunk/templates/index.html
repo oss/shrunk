@@ -80,9 +80,9 @@
         <div class="page-numbers">
         {% for pg in range(begin_pages, end_pages +1) %}
             {% if pg == page %}
-                <span class="page active"><a href="{{ url_for('render_index', p=pg) }}">{{ pg }}</a></span>
+                <span class="page active"><a href="{{ url_for('render_index', p=pg, search=query) }}">{{ pg }}</a></span>
             {% else %}
-                <span class="page"><a href="{{ url_for('render_index', p=pg) }}">{{ pg }}</a></span>
+                <span class="page"><a href="{{ url_for('render_index', p=pg, search=query) }}">{{ pg }}</a></span>
             {% endif %}
         {% endfor %}
         </div>
