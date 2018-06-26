@@ -158,11 +158,17 @@ def render_index(**kwargs):
     # Depending on the type of user, get info from the database
     is_admin = client.is_admin(netid)
     if is_admin:
-        if query:
+        if query and all_users == "0":
+            #search my links
+            cursor = client.search(query, netid=netid)
+        elif query and all_users == "1":
+            #search all links
             cursor = client.search(query)
         elif all_users == "1":
-            cursor = client.get_all_urls(query)
+            #show all links but no query
+            cursor=client.get_all_urls()
         else:
+            #show all of my links but no query
             cursor = client.get_urls(netid)
     else:
         if query:
