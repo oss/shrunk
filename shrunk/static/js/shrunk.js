@@ -38,44 +38,35 @@ var sort_links = function() {
     var sel = document.getElementById("sortby");
 }
 
-/**
- * Changes what links to display: links owned by all users, or only the user who
- * is currently logged in.
- *
- * This only has an effect on administrators.
- */
-var display_all = function() {
-    var sel = document.getElementById("display-all");
-    var choice = sel.options[sel.selectedIndex].value;
-    if (choice === "all-users") {
-        window.location.replace("/?all_users=1");
-    }
-    else {
-        window.location.replace("/?all_users=0");
-    }
-}
 
 var sortby = function() {
     var sel = document.getElementById("sortby");
     var url = new URL(window.location.href);
-    
+    var all_users = url.searchParams.get("all_users")
     var query = url.searchParams.get("search");
+
     if(query === null){
-         window.location.replace("/?sortby=" + sel.selectedIndex);
-    }else{
-        window.location.replace("/?sortby=" + sel.selectedIndex + "&search=" + query);
+        query = "";
     }
+    if(all_users === null){
+        all_users = 1;
+    }
+    window.location.replace("/?all_users=" + all_users + "&search=" + query + "&sortby=" + sel.selectedIndex);
 }
 
 var clear_search = function(){
     var url = new URL(window.location.href);
 
     var sortBy = url.searchParams.get("sortby");
+    var all_users = url.searchParams.get("all_users");
     if(sortBy === null){
-        window.location.replace("/?sortby=" + 0);
-    }else{
-        window.location.replace("/?sortby=" + sortBy);
+        sortBy = "0"
     }
+    if(all_users === null){
+        all_users = 1;
+    }
+
+    window.location.replace("/?all_users=" + all_users + "&search=&sortby=" + sortBy);
 }
 
 

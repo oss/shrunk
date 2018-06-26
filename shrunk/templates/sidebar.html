@@ -6,11 +6,11 @@
             <em>Administrator Controls</em> <br />
 
             {% if all_users == "1" %}
-                <a href="/?all_users=0">
+                <a href="/?all_users=0&search={{ query }}&sortby={{ sortby }}">
                     DISPLAY MY LINKS ▶
                 </a>
             {% elif all_users == "0" %}
-                <a href="/?all_users=1">
+                <a href="/?all_users=1&search={{ query }}&sortby={{ sortby }}">
                     DISPLAY ALL LINKS ▶
                 </a>
             {% endif %}
@@ -48,8 +48,8 @@
     </div>
     <form class="search-bar" role="search" method="GET" action="/">
         <div class="form-group">
+            <input type="hidden" name="all_users" value={{all_users}}>       
             <input type="text" class="form-control" id="search" name="search" placeholder="Search">
-            <input type="hidden" name="all_users" value={{all_users}}>
             <input type="hidden" name="sortby" value={{sortby}}>
         </div>
         <button type="submit" class="search-btn btn"><span class="glyphicon glyphicon-search"></button>
