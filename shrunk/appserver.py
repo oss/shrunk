@@ -242,8 +242,11 @@ def add_link():
         # Anonymous user
         return redirect("/shrunk-login")
     netid = session['user'].get('netid')
-    form = LinkForm(request.form,
-                    [strip_protocol(app.config["LINKSERVER_URL"])])
+    # default is no .xxx links
+    banned_regexes=["\.xxx"]
+    if "BANNED_REGEXES" in app.config:
+        banned_regexes=app.config["BANNED_REGEXES"]
+    form = LinkForm(request.form,banned_regexes)
     client = get_db_client(app, g)
 
     if request.method == "POST":
