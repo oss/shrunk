@@ -41,7 +41,7 @@ class LinkForm(Form):
         super().__init__(form)
         if banned_regexes:
             for regex in banned_regexes:
-                LinkForm.rejected_regexes.append(re.compile(regex))
+                LinkForm.rejected_regexes.append(re.compile(regex, re.IGNORECASE))
 
     def validate_long_url(form, field):
         """Performs validation on the long_url field."""
