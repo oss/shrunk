@@ -243,7 +243,7 @@ def add_link():
         return redirect("/shrunk-login")
     netid = session['user'].get('netid')
     form = LinkForm(request.form,
-                    banlist=[strip_protocol(app.config["LINKSERVER_URL"])])
+                    [strip_protocol(app.config["LINKSERVER_URL"])])
     client = get_db_client(app, g)
 
     if request.method == "POST":
@@ -305,7 +305,7 @@ def edit_link():
     netid = session['user'].get('netid')
     client = get_db_client(app, g)
     form = LinkForm(request.form,
-                    banlist=[strip_protocol(app.config["LINKSERVER_URL"])])
+                    [strip_protocol(app.config["LINKSERVER_URL"])])
 
     if request.method == "POST":
         # Validate form before continuing
