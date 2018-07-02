@@ -30,7 +30,7 @@ class LinkForm(Form):
 
     rejected_regexes = []
 
-    def __init__(self, form, banlist=None):
+    def __init__(self, form, banned_regexes):
         """Initializes the form.
 
         :Parameters:
@@ -39,9 +39,9 @@ class LinkForm(Form):
             the default ones
         """
         super().__init__(form)
-        if banlist:
-            for r in banlist:
-                LinkForm.rejected_regexes.append(re.compile(r))
+        if banned_regexes:
+            for regex in banned_regexes:
+                LinkForm.rejected_regexes.append(re.compile(regex, re.IGNORECASE))
 
     def validate_long_url(form, field):
         """Performs validation on the long_url field."""
@@ -102,4 +102,7 @@ class BlockLinksForm(Form):
     :Fields:
       - `link`: Text field corresponding to a long URL to block
     """
-    link = TextField("Link", validators=[validators.DataRequired()])
+    link = TextField("Link", validators=[
+        validators.DataRequired(),
+        validators.URL(require_tld=True, message="Please enter a valid URL.")
+    ])
