@@ -256,7 +256,9 @@ class ShrunkClient(object):
         # this regex gets rid of any subdomains
         # memes.facebook.com matches facebook.com
         # 1nfo3-384ldnf.doo544-f8.cme-02k4.tk matches cme-02k4.tk
-        top_domain = re.search("([a-z\-0-9]+\.[a-z\-0-9]+)$", domain).group()
+        match = re.search("([a-z\-0-9]+\.[a-z\-0-9]+)$", domain, re.IGNORECASE)
+        #search for domain if we can't match for a top domain
+        top_domain = match.group().lower() if match else domain
         
         if db.blocked_urls.find_one({"url" : { "$regex" : "%s*" % top_domain }}):
             raise ForbiddenNameException("That URL is not allowed.")
