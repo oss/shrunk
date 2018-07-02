@@ -49,7 +49,7 @@ var sortby = function() {
         query = "";
     }
     if(all_users === null){
-        all_users = 1;
+        all_users = 0;
     }
     window.location.replace("/?all_users=" + all_users + "&search=" + query + "&sortby=" + sel.selectedIndex);
 }

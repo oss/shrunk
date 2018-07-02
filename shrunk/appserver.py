@@ -63,11 +63,15 @@ if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
     def dev_user_login():
         app.logger.info('user dev login valid')
         session['user']={'netid':'DEV_USER'}
+        session["all_users"] = "0"
+        session["sortby"] = "0"
         return redirect('/')
     @app.route('/dev-admin-login')
     def dev_admin_login():
         app.logger.info('admin dev login valid')
         session['user']={'netid':'DEV_ADMIN'}
+        session["all_users"] = "0"
+        session["sortby"] = "0"
         client=get_db_client(app, g)
         if not client.is_admin('DEV_ADMIN'):
             client.add_admin('DEV_ADMIN', 'Justice League')
@@ -138,20 +142,29 @@ def render_index(**kwargs):
     except:
         query = ""
 
+    
+
     # Display all users or just the current administrator?
-    try:
-        all_users = request.args["all_users"]
-    except:
-        if "all_users" in request.cookies:
-            all_users = request.cookies["all_users"]
-        else:
-            all_users = "1"
+    # this question is only a concern if user is admin. 
+    if client.is_admin(netid) == False:
+        print("client is not admin")
+        all_users = "0"
+    else:     
+        try:
+            all_users = request.args["all_users"]
+        except:
+            if "all_users" in session:
+                all_users = session["all_users"]
+                print("case 1")
+            else:                       #default is to print only "my links"
+                all_users = "0"
+                print("case 3")
 
     # Change sorting preferences
     if "sortby" in request.args:
         sortby = request.args["sortby"]
-    elif "sortby" in request.cookies:
-        sortby = request.cookies["sortby"]
+    elif "sortby" in session:
+        sortby = session["sortby"]
     else:
         sortby = "0"
 
@@ -201,21 +214,22 @@ def render_index(**kwargs):
 
     
     #choose 9 pages to display so there's not like 200 page links
+    #is 9 the optimal number?
+        
     begin_pages = -1
     end_pages = -1
-    if lastpage < 10:
+    if lastpage < 10:     #9 or fewer pages
         begin_pages = 1
         end_pages = lastpage
-    else:
-        if page < 5:
-            begin_pages=1
-            end_pages=9
-        elif page > lastpage-4:
-            begin_pages = lastpage-8
-            end_pages = lastpage
-        else:
-            begin_pages = page-4
-            end_pages = page+4
+    elif page < 5:         #display first 9 pages
+        begin_pages=1
+        end_pages=9
+    elif page > lastpage-4:     #display last 9 pages
+        begin_pages = lastpage-8
+        end_pages = lastpage
+    else:                       #display current page +- 4 adjacent pages
+        begin_pages = page-4
+        end_pages = page+4
 
     resp = make_response(
             render_template("index.html",
@@ -231,8 +245,10 @@ def render_index(**kwargs):
                             query=query,
                             sortby=sortby,
                             **kwargs))
-    resp.set_cookie("all_users", all_users)
-    resp.set_cookie("sortby", sortby)
+    #resp.set_cookie("all_users", all_users)
+    #resp.set_cookie("sortby", sortby)
+    session["all_users"] = all_users
+    session["sortby"] = sortby
     return resp
 
 @app.route("/add", methods=["GET", "POST"])
