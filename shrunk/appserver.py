@@ -9,6 +9,8 @@ from shrunk.forms import BlockLinksForm, LinkForm, BlacklistUserForm, AddAdminFo
 from shrunk.util import get_db_client, set_logger, formattime
 from shrunk.filters import strip_protocol, ensure_protocol
 
+from functools import wraps
+
 # Create application
 app = Flask(__name__)
 
@@ -35,6 +37,26 @@ def login(user_info):
         return redirect('/unauthorized')
     session['user'] = user_info
     return redirect('/')
+
+#decorator to check if user is logged in
+def require_login(func): 
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if not 'user' in session:
+            return redirect("/shrunk-login")
+        return func(*args, **kwargs)
+    return wrapper
+
+def require_admin(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        client = get_db_client(app, g)
+        netid = session["user"].get("netid")
+        if not client.is_admin(netid):
+            return redirect("/")
+        return func(*args, **kwargs)
+    return wrapper
+    
 
 @app.route('/logout')
 def logout():
@@ -116,7 +138,9 @@ except KeyError:
     pass
 
 
+
 @app.route("/")
+@require_login
 def render_index(**kwargs):
     """Renders the homepage.
 
@@ -124,9 +148,7 @@ def render_index(**kwargs):
     the links owned by them. If a search has been made, then only the links
     matching their search query are shown.
     """
-    if not 'user' in session:
-        # Anonymous user
-        return redirect("/shrunk-login")
+
     netid = session['user'].get('netid')
     client = get_db_client(app, g)
 
@@ -143,7 +165,6 @@ def render_index(**kwargs):
         query = ""
 
     
-
     # Display all users or just the current administrator?
     # this question is only a concern if user is admin. 
     if client.is_admin(netid) == False:
@@ -252,11 +273,10 @@ def render_index(**kwargs):
     return resp
 
 @app.route("/add", methods=["GET", "POST"])
+@require_login
 def add_link():
     """Adds a new link for the current user."""
-    if not 'user' in session:
-        # Anonymous user
-        return redirect("/shrunk-login")
+    
     netid = session['user'].get('netid')
     # default is no .xxx links
     banned_regexes=["\.xxx"]
@@ -297,11 +317,10 @@ def add_link():
 
 
 @app.route("/delete", methods=["GET", "POST"])
+@require_login
 def delete_link():
     """Deletes a link."""
-    if not 'user' in session:
-        # Anonymous user
-        return redirect("/shrunk-login")
+
     client = get_db_client(app, g)
 
     # TODO Handle the response intelligently, or put that logic somewhere else
@@ -399,20 +418,18 @@ def edit_link():
 
 
 @app.route("/admin/manage")
+@require_login
+@require_admin
 def admin_manage():
     """Renders a list of administrators.
 
     Allows an admin to add and remove NetIDs from the list of official
     administrators.
     """
-    if not 'user' in session:
-        # Anonymous user
-        return redirect("/shrunk-login")
+    
     client = get_db_client(app, g)
     netid = session['user'].get('netid')
-    if not client.is_admin(netid):
-        # Not an admin
-        return redirect("/")
+
     return render_template("admin_list.html",
                            admin=True,
                            admins=client.get_admins(),
@@ -421,16 +438,14 @@ def admin_manage():
 
 
 @app.route("/admin/manage/add", methods=["GET", "POST"])
+@require_login
+@require_admin
 def admin_add():
     """Add a new administrator."""
-    if not 'user' in session:
-        # Anonymous user
-        return redirect("/shrunk-login")
+ 
     client = get_db_client(app, g)
     netid = session['user'].get('netid')
-    if not client.is_admin(netid):
-        # Not an admin
-        return redirect("/")
+    
     form = AddAdminForm(request.form)
     if request.method == "POST":
         if form.validate():
@@ -443,16 +458,14 @@ def admin_add():
 
 
 @app.route("/admin/manage/delete", methods=["GET", "POST"])
+@require_login
+@require_admin
 def admin_delete():
     """Delete an existing administrator."""
-    if not 'user' in session:
-        # Anonymous user
-        return redirect("/shrunk-login")
+
     client = get_db_client(app, g)
     netid = session['user'].get('netid')
-    if not client.is_admin(netid):
-        # Not an admin
-        return redirect("/")
+
     if request.method == "POST":
         client.delete_admin(request.form["netid"])
 
@@ -460,6 +473,8 @@ def admin_delete():
 
 
 @app.route("/admin/links/block", methods=["GET", "POST"])
+@require_login
+@require_admin
 def admin_block_link():
     """Block a link from being shrunk.
 
@@ -467,14 +482,10 @@ def admin_block_link():
     web application. URLs matching the given regular expression will be
     prohibited.
     """
-    if not 'user' in session:
-        # Anonymous user
-        return redirect("/shrunk-login")
+    
     client = get_db_client(app, g)
     netid = session['user'].get('netid')
-    if not client.is_admin(netid):
-        # Not an admin
-        return redirect("/")
+
     form = BlockLinksForm(request.form)
     if request.method == "POST":
         if form.validate():
@@ -487,16 +498,14 @@ def admin_block_link():
 
 
 @app.route("/admin/links/unblock", methods=["GET", "POST"])
+@require_login
+@require_admin
 def admin_unblock_link():
     """Remove a link from the banned links list."""
-    if not 'user' in session:
-        # Anonymous user
-        return redirect("/shrunk-login")
+
     client = get_db_client(app, g)
     netid = session['user'].get('netid')
-    if not client.is_admin(netid):
-        # Not an admin
-        return redirect("/")
+
     if request.method == "POST":
         client.allow_link(request.form["url"])
 
@@ -504,19 +513,17 @@ def admin_unblock_link():
 
 
 @app.route("/admin/links", methods=["GET", "POST"])
+@require_login
+@require_admin
 def admin_links():
     """Renders the administrator link banlist.
 
     Allows admins to block (and unblock) particular URLs from being shrunk.
     """
-    if not 'user' in session:
-        # Anonymous user
-        return redirect("/shrunk-login")
+    
     client = get_db_client(app, g)
     netid = session['user'].get('netid')
-    if not client.is_admin(netid):
-        # Not an admin
-        return redirect("/")
+
     return render_template("admin_links.html",
                            admin=True,
                            banlist=client.get_blocked_links(),
@@ -525,38 +532,34 @@ def admin_links():
 
 
 @app.route("/admin/")
+@require_login
+@require_admin
 def admin_panel():
     """Renders the administrator panel.
 
     This displays an administrator panel with navigation links to the admin
     controls.
     """
-    if not 'user' in session:
-        # Anonymous user
-        return redirect("/shrunk-login")
+
     client = get_db_client(app, g)
     netid = session['user'].get('netid')
-    if not client.is_admin(netid):
-        # Not an admin
-        return redirect("/")
+
     return render_template("admin.html", netid=netid)
 
 
 @app.route("/admin/blacklist", methods=["GET", "POST"])
+@require_login
+@require_admin
 def admin_blacklist():
     """Renders the administrator blacklist.
 
     Allows admins to blacklist users to prevent them from accessing the web
     interface.
     """
-    if not 'user' in session:
-        # Anonymous user
-        return redirect("/shrunk-login")
+
     client = get_db_client(app, g)
     netid = session['user'].get('netid')
-    if not client.is_admin(netid):
-        # Not an admin
-        return redirect("/")
+
     return render_template("admin_blacklist.html",
                            admin=True,
                            blacklist=client.get_blacklisted_users(),
@@ -564,19 +567,17 @@ def admin_blacklist():
 
 
 @app.route("/admin/blacklist/ban", methods=["GET", "POST"])
+@require_login
+@require_admin
 def admin_ban_user():
     """Ban a user from using the web application.
 
     Adds a user to the blacklist.
     """
-    if not 'user' in session:
-        # Anonymous user
-        return redirect("/shrunk-login")
+
     client = get_db_client(app, g)
     netid = session['user'].get('netid')
-    if not client.is_admin(netid):
-        # Not an admin
-        return redirect("/")
+
     form = BlacklistUserForm(request.form)
     if request.method == "POST":
         if form.validate():
@@ -589,19 +590,17 @@ def admin_ban_user():
 
 
 @app.route("/admin/blacklist/unban", methods=["GET", "POST"])
+@require_login
+@require_admin
 def admin_unban_user():
     """Unban a user from the blacklist.
 
     Removes a user from the blacklist, restoring their previous privileges.
     """
-    if not 'user' in session:
-        # Anonymous user
-        return redirect("/shrunk-login")
+
     client = get_db_client(app, g)
     netid = session['user'].get('netid')
-    if not client.is_admin(netid):
-        # Not an admin
-        return redirect("/")
+
     if request.method == "POST":
         client.unban_user(request.form["netid"])
 
