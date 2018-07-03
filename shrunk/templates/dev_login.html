@@ -35,11 +35,17 @@
         <form action="{{ shib_login }}" method="get">
             <button type="submit" class="login-button btn btn-default">Login with CAS</button>
         </form>
-	<form action="{{ dev_user_login }}" method="get">
+
+	    <form action="{{ dev_user_login }}" method="get">
             <button type="submit" class="login-button btn btn-default">DevUser Login</button>
         </form>
-	<form action="{{ dev_admin_login }}" method="get">
+
+	    <form action="{{ dev_admin_login }}" method="get">
             <button type="submit" class="login-button btn btn-default">DevAdmin Login</button>
+        </form>
+
+        <form action="{{ dev_power_login }}" method="get">
+            <button type="submit" class="login-button btn btn-default">DevPowerUser Login</button>
         </form>
     </div>
     
