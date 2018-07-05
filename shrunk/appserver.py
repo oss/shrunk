@@ -181,6 +181,10 @@ def render_index(**kwargs):
                 all_users = "0"
                 print("case 3")
 
+    #just in case I forgot to account for something
+    if all_users == "":
+        all_users = "0"
+
     # Change sorting preferences
     if "sortby" in request.args:
         sortby = request.args["sortby"]
@@ -188,6 +192,11 @@ def render_index(**kwargs):
         sortby = session["sortby"]
     else:
         sortby = "0"
+
+    #just in case
+    if sortby == "":
+        sortby = "0"
+
 
     # Depending on the type of user, get info from the database
     is_admin = client.is_admin(netid)
@@ -285,6 +294,7 @@ def add_link():
     form = LinkForm(request.form,banned_regexes)
     client = get_db_client(app, g)
 
+
     if request.method == "POST":
         # Validate the form
         form.long_url.data = ensure_protocol(form.long_url.data)
@@ -301,19 +311,25 @@ def add_link():
                 return render_template("add.html",
                                        errors={'short_url' : [str(e)]},
                                        netid=netid,
-                                       admin=client.is_admin(netid))
+                                       admin=client.is_admin(netid),
+                                        sortby= "0",
+                                        all_users="0")
 
         else:
             # WTForms detects a form validation error
             return render_template("add.html",
                                    errors=form.errors,
                                    netid=netid,
-                                   admin=client.is_admin(netid))
+                                   admin=client.is_admin(netid),
+                                    sortby="0",
+                                    all_users="0")
     else:
         # GET request
         return render_template("add.html",
                                netid=netid,
-                               admin=client.is_admin(netid))
+                               admin=client.is_admin(netid),
+                                sortby="0",
+                                all_users="0")
 
 
 @app.route("/delete", methods=["GET", "POST"])
