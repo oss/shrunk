@@ -57,7 +57,7 @@ def require_admin(func):
             return redirect("/")
         return func(*args, **kwargs)
     return wrapper
-    
+   
 
 @app.route('/logout')
 def logout():
@@ -202,8 +202,10 @@ def render_index(**kwargs):
         sortby = request.args["sortby"]
     elif "sortby" in session:
         sortby = session["sortby"]
-    else:
-        sortby = "0"
+
+    #crappy workaround
+    if sortby == "":
+        sortby = 0
 
     # Depending on the type of user, get info from the database
     is_admin = client.is_admin(netid)
@@ -301,6 +303,9 @@ def add_link():
     form = LinkForm(request.form,banned_regexes)
     client = get_db_client(app, g)
 
+    sortby = "0"
+    all_users = "0"
+
     if request.method == "POST":
         # Validate the form
         form.long_url.data = ensure_protocol(form.long_url.data)
@@ -318,7 +323,9 @@ def add_link():
                                        errors={'short_url' : [str(e)]},
                                        netid=netid,
                                        admin=client.is_admin(netid),
-                                        power_user=client.is_power_user(netid))
+                                        power_user=client.is_power_user(netid),
+                                        sortby = sortby,
+                                        all_users = all_users)
 
         else:
             # WTForms detects a form validation error
@@ -326,13 +333,17 @@ def add_link():
                                    errors=form.errors,
                                    netid=netid,
                                    admin=client.is_admin(netid),
-                                    power_user=client.is_power_user(netid))
+                                    power_user=client.is_power_user(netid),
+                                    sortby = sortby,
+                                    all_users = all_users)
     else:
         # GET request
         return render_template("add.html",
                                netid=netid,
                                admin=client.is_admin(netid),
-                                power_user=client.is_power_user(netid))
+                                power_user=client.is_power_user(netid),
+                                sortby = sortby,
+                                all_users = all_users)
 
 
 @app.route("/delete", methods=["GET", "POST"])

@@ -4,7 +4,7 @@
 
 import re
 
-from wtforms import Form, TextField, RadioField, SelectField, validators, ValidationError
+from wtforms import Form, TextField, RadioField, validators, ValidationError
 
 import shrunk.filters
 
@@ -94,9 +94,6 @@ class AddAdminForm(Form):
 
     netid = TextField("NetID", validators=[validators.DataRequired()])
 
-class AddPowerUserForm(Form):
-     #this is actually exactly the same as the previous form, so we might not even need it.
-    netid = TextField("NetID", validators=[validators.DataRequired()])
 
 class BlockLinksForm(Form):
     """A WTForm for blocking unwanted URLs.
