@@ -184,18 +184,13 @@ def render_index(**kwargs):
     #just in case I forgot to account for something
     if all_users == "":
         all_users = "0"
-
+        
+    sortby = "0" #default
     # Change sorting preferences
     if "sortby" in request.args:
         sortby = request.args["sortby"]
     elif "sortby" in session:
         sortby = session["sortby"]
-    else:
-        sortby = "0"
-
-    #just in case
-    if sortby == "":
-        sortby = "0"
 
 
     # Depending on the type of user, get info from the database
