@@ -47,6 +47,7 @@ def require_login(func):
         return func(*args, **kwargs)
     return wrapper
 
+#decorator to check if user is an admin
 def require_admin(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -56,13 +57,13 @@ def require_admin(func):
             return redirect("/")
         return func(*args, **kwargs)
     return wrapper
-    
+   
 
 @app.route('/logout')
 def logout():
     user=session.pop('user')
     if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
-        if(user['netid']=="DEV_ADMIN" or user['netid']=="DEV_USER"):
+        if(user['netid']=="DEV_ADMIN" or user['netid']=="DEV_USER" or user['netid']=="DEV_PWR_USER"):
             return redirect('/')
     return redirect('/shibboleth/Logout')
 
@@ -73,7 +74,12 @@ def render_login(**kwargs):
     Takes a WTForm in the keyword arguments.
     """
     if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
-        resp = make_response(render_template('dev_login.html', shib_login='/login', dev_user_login='/dev-user-login', dev_admin_login='/dev-admin-login', **kwargs))
+        resp = make_response(render_template('dev_login.html', 
+                            shib_login='/login', 
+                            dev_user_login='/dev-user-login', 
+                            dev_admin_login='/dev-admin-login',
+                            dev_power_login='/dev-power-login',
+                             **kwargs))
         return resp
     else:
         resp = make_response(render_template('login.html', shib_login='/login', **kwargs))
@@ -88,6 +94,7 @@ if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
         session["all_users"] = "0"
         session["sortby"] = "0"
         return redirect('/')
+
     @app.route('/dev-admin-login')
     def dev_admin_login():
         app.logger.info('admin dev login valid')
@@ -96,9 +103,18 @@ if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
         session["sortby"] = "0"
         client=get_db_client(app, g)
         if not client.is_admin('DEV_ADMIN'):
-            client.add_admin('DEV_ADMIN', 'Justice League')
-        
+            client.add_admin('DEV_ADMIN', 'Justice League') 
         return redirect('/')
+
+    @app.route('/dev-power-login')
+    def def_power_login():
+        session['user']={'netid': 'DEV_PWR_USER'}
+        session["all_users"] = "0"
+        session["sortby"] = "0"
+        client = get_db_client(app, g)
+        if not client.is_power_user("DEV_PWR_USER"):
+            client.add_power_user("DEV_PWR_USER", "Admin McAdminface")
+        return redirect("/")
         
 
 @app.route('/unauthorized')
@@ -181,6 +197,7 @@ def render_index(**kwargs):
                 all_users = "0"
                 print("case 3")
 
+
     #just in case I forgot to account for something
     if all_users == "":
         all_users = "0"
@@ -192,6 +209,9 @@ def render_index(**kwargs):
     elif "sortby" in session:
         sortby = session["sortby"]
 
+    #crappy workaround
+    if sortby == "":
+        sortby = 0
 
     # Depending on the type of user, get info from the database
     is_admin = client.is_admin(netid)
@@ -289,6 +309,8 @@ def add_link():
     form = LinkForm(request.form,banned_regexes)
     client = get_db_client(app, g)
 
+    sortby = "0"
+    all_users = "0"
 
     if request.method == "POST":
         # Validate the form
@@ -307,8 +329,9 @@ def add_link():
                                        errors={'short_url' : [str(e)]},
                                        netid=netid,
                                        admin=client.is_admin(netid),
-                                        sortby= "0",
-                                        all_users="0")
+                                        power_user=client.is_power_user(netid),
+                                        sortby = sortby,
+                                        all_users = all_users)
 
         else:
             # WTForms detects a form validation error
@@ -316,15 +339,17 @@ def add_link():
                                    errors=form.errors,
                                    netid=netid,
                                    admin=client.is_admin(netid),
-                                    sortby="0",
-                                    all_users="0")
+                                    power_user=client.is_power_user(netid),
+                                    sortby = sortby,
+                                    all_users = all_users)
     else:
         # GET request
         return render_template("add.html",
                                netid=netid,
                                admin=client.is_admin(netid),
-                                sortby="0",
-                                all_users="0")
+                                power_user=client.is_power_user(netid),
+                                sortby = sortby,
+                                all_users = all_users)
 
 
 @app.route("/delete", methods=["GET", "POST"])
@@ -428,7 +453,7 @@ def edit_link():
                                             long_url=long_url)
 
 
-@app.route("/admin/manage")
+@app.route("/admin/manage-admin")
 @require_login
 @require_admin
 def admin_manage():
@@ -448,11 +473,11 @@ def admin_manage():
                            netid=netid)
 
 
-@app.route("/admin/manage/add", methods=["GET", "POST"])
+@app.route("/admin/manage-admin/add", methods=["GET", "POST"])
 @require_login
 @require_admin
 def admin_add():
-    """Add a new administrator."""
+    """Add a new administrator"""
  
     client = get_db_client(app, g)
     netid = session['user'].get('netid')
@@ -465,10 +490,9 @@ def admin_add():
             # TODO catch validation errors
             pass
 
-    return redirect("/admin/manage")
+    return redirect("/admin/manage-admin")
 
-
-@app.route("/admin/manage/delete", methods=["GET", "POST"])
+@app.route("/admin/manage-admin/delete", methods=["GET", "POST"])
 @require_login
 @require_admin
 def admin_delete():
@@ -480,7 +504,62 @@ def admin_delete():
     if request.method == "POST":
         client.delete_admin(request.form["netid"])
 
-    return redirect("/admin/manage")
+    return redirect("/admin/manage-admin")
+
+
+@app.route("/admin/manage-power-user")
+@require_login
+@require_admin
+def power_user_manage():
+    """Renders a list of Power Users.
+
+    Allows an admin to add and remove NetIDs from the list of official
+    power users.
+    """
+    
+    client = get_db_client(app, g)
+    netid = session['user'].get('netid')
+
+    return render_template("power_user_list.html",
+                           admin=True,
+                           pusers=client.get_power_users(),
+                           form=AddAdminForm(request.form),
+                           netid=netid)
+
+
+@app.route("/admin/manage-power-user/add", methods=["GET", "POST"])
+@require_login
+@require_admin
+def power_user_add():
+    """Add new power user"""
+
+    client= get_db_client(app, g)
+    netid = session['user'].get('netid')
+
+    form = AddAdminForm(request.form)
+    if request.method == "POST":
+        if form.validate():
+            client.add_power_user(form.netid.data, netid)
+        else:
+            pass
+
+    return redirect("/admin/manage-power-user")
+
+@app.route("/admin/manage-power-user/delete", methods=["GET", "POST"])
+@require_login
+@require_admin
+def power_user_delete():
+    """Delete an existing power user."""
+
+    client = get_db_client(app, g)
+    netid = session['user'].get('netid')
+
+    if request.method == "POST":
+        client.delete_power_user(request.form["netid"])
+
+    return redirect("/admin/manage-power-user")
+
+
 
 
 @app.route("/admin/links/block", methods=["GET", "POST"])

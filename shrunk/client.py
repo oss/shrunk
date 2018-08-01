@@ -577,6 +577,52 @@ class ShrunkClient(object):
         else:
             return False
 
+    def is_power_user(self, netid):
+        """ Determines if user is power user.
+            Power users can create vanity URLS, but do not have admin privileges
+
+        :Parameters:
+         - `netid`: A Rutgers NetID
+
+        :Returns:
+          True if the user is in the power_users collection, False otherwise.
+        """
+
+        db = self._mongo.shrunk_users
+        if db.power_users.find_one({'netid' : netid}) is None:
+            return False
+        return True
+
+    def add_power_user(self, netid, added_by):
+        """Admins can add users to the power_users collection
+        :Parameters:
+          - `netid`: A Rutgers NetID
+          -`added_by`: The NetID of the administrator that added this person
+
+        """
+        print("adding power user") 
+        db = self._mongo.shrunk_users
+        if not self.is_power_user(netid):
+            return db.power_users.insert({"netid" : netid, "added_by" : added_by})
+
+    def get_power_users(self):
+        """Retrieves the list of power users.
+
+        :Returns:
+          A list of dicts containing information about each power user.
+        """
+        db = self._mongo.shrunk_users
+        return list(db.power_users.find())
+
+    def delete_power_user(self, netid):
+        """Revokes a user's power user privileges.
+
+        :Parameters:
+          - `netid`: They NetID of the power user to remove
+        """
+        db = self._mongo.shrunk_users
+        return db.power_users.remove({"netid" : netid})
+
     def is_admin(self, netid):
         """Determine if a user is an administrator.
 
@@ -599,6 +645,7 @@ class ShrunkClient(object):
           - `netid`: A Rutgers NetID
           - `added_by`: The NetID of the administrator that added this person
         """
+        print("adding admin")
         db = self._mongo.shrunk_users
         if not self.is_admin(netid):
             return db.administrators.insert({"netid" : netid, "added_by" :
