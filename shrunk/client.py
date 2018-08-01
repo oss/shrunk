@@ -359,11 +359,12 @@ class ShrunkClient(object):
                 "visitDataResponse" : {"nRemoved" : 0}
             }
         else:
+            print(dir(url_db.urls))
             return {
-                "urlDataResponse" : url_db.urls.remove({
+                "urlDataResponse" : url_db.urls.delete_one({
                     "_id" : short_url
                 }),
-                "visitDataResponse" : visit_db.visits.remove({
+                "visitDataResponse" : visit_db.visits.delete_one({
                     "short_url" : short_url
                 })
             }
