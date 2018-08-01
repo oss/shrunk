@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="links-box col-xs-12 col-sm-8 col-sm-offset-1">
+    <h1>Manage Power Users</h1>
+    {% if msg %}
+    <div class="shrunk-messages">
+        {{ msg }}
+    </div>
+    {% endif %}
+
+    <article class="add-group clearfix">
+        <h3>Add a Power User</h3>
+        <form class="search" method="POST" action="{{ url_for('power_user_add') }}" name="add_admin">
+            <input name="netid" type="text" class="form-control"/> <br />
+            <input class="shrink-button btn btn-default" type="submit" value="ADD" /> <br />
+        </form>
+    </article>
+
+    <h3>Edit Power Users</h3>
+    {% for pUser in pusers %}
+    <article class="link-group clearfix">
+        <div class="link-info" style="clear: both;">
+            <div class="hover-controls">
+                <form method="POST" action="{{ url_for('power_user_delete') }}">
+                    <input type="hidden" id="netid" name="netid" value="{{ pUser['netid'] }}" />
+                    <input class="shrink-button btn btn-default" type="submit" value="DELETE" />
+                </form>
+            </div>
+            <div class="title">
+                {{ pUser['netid'] }}
+            </div>
+            {% if pUser['added_by'] %}
+                <div class="bottom-row">
+                    Added by: {{ pUser['added_by'] }}
+                </div>
+            {% endif %}
+        </div>
+    </article>
+    {% else %}
+        <p>
+            There are currently no administrators in the database.
+        </p>
+    {% endfor %}
+</div>
+{% endblock %}

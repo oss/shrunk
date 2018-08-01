@@ -91,6 +91,7 @@ class AddAdminForm(Form):
     :Fields:
       - `netid`: Text field corresponding to a NetID
     """
+
     netid = TextField("NetID", validators=[validators.DataRequired()])
 
 
