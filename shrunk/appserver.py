@@ -358,11 +358,12 @@ def delete_link():
     """Deletes a link."""
 
     client = get_db_client(app, g)
+    netid = session["user"].get("netid")
 
     # TODO Handle the response intelligently, or put that logic somewhere else
     if request.method == "POST":
         app.logger.info("Deleting URL: {}".format(request.form["short_url"]))
-        client.delete_url(request.form["short_url"])
+        client.delete_url(request.form["short_url"], netid)
     return redirect("/")
 
 

@@ -339,7 +339,7 @@ class ShrunkClient(object):
 
         return response
 
-    def delete_url(self, short_url):
+    def delete_url(self, short_url, request_netid):
         """Given a short URL, delete it from the database.
 
         This deletes all information associated with the short URL and wipes all
@@ -347,18 +347,18 @@ class ShrunkClient(object):
 
         :Parameters:
           - `short_url`: The shortened URL to dete.
+          - `request_netid`: The netid of the user requesting to delete a link
 
         :Returns:
           A response in JSON detailing the effect of the database operations.
         """
         url_db = self._mongo.shrunk_urls
         visit_db = self._mongo.shrunk_visits
-        if short_url is None:
-            return {
-                "urlDataResponse" : {"nRemoved" : 0},
-                "visitDataResponse" : {"nRemoved" : 0}
-            }
-        else:
+        url_owner=url_db.urls.find_one({"_id":short_url},project={"netid"})["netid"]
+        requester_is_owner=url_owner==request_netid
+        admin=self.is_admin(request_netid)
+
+        if short_url is not None and (admin or requester_is_owner):
             print(dir(url_db.urls))
             return {
                 "urlDataResponse" : url_db.urls.delete_one({
@@ -367,6 +367,11 @@ class ShrunkClient(object):
                 "visitDataResponse" : visit_db.visits.delete_one({
                     "short_url" : short_url
                 })
+            }
+        else:
+            return {
+                "urlDataResponse" : {"nRemoved" : 0},
+                "visitDataResponse" : {"nRemoved" : 0}
             }
 
     def delete_user_urls(self, netid):
