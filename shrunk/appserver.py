@@ -11,6 +11,8 @@ from shrunk.filters import strip_protocol, ensure_protocol
 
 from functools import wraps
 
+import json
+
 # Create application
 app = Flask(__name__)
 
@@ -350,6 +352,43 @@ def add_link():
                                 power_user=client.is_power_user(netid),
                                 sortby = sortby,
                                 all_users = all_users)
+
+@app.route("/stats", methods=["GET"])
+@require_login
+def get_stats():
+    #should we require owner or admin to view?
+    template_data={"url_info": {}, 
+                   "missing_url": False,
+                   "monthy_visits": []}
+
+    if "url" in request.args:
+        url=request.args["url"]
+        client=get_db_client(app, g)
+        template_data["url_info"]=client.get_url_info(url)
+        template_data["monthly_visits"]=client.get_monthly_visits(url)["result"]
+        print(template_data["monthly_visits"])
+    else:
+        template_data["missing_url"]=True
+
+    return render_template("stats.html", **template_data)
+
+@app.route("/monthly_visits", methods=["GET"])
+@require_login
+def monthly_visits():
+    url=request.args["url"]
+    client=get_db_client(app, g)
+    netid=session["user"].get("netid")
+
+    if "url" not in request.args:
+        return '{"error":"request must have url"}', 400
+
+    elif not client.is_owner_or_admin(url, netid):
+        return '{"error":"not authorized"}', 401
+
+    else:
+        visits=client.get_monthly_visits(url)
+        return json.dumps(visits["result"])
+
 
 
 @app.route("/delete", methods=["GET", "POST"])
