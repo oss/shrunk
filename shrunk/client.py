@@ -6,7 +6,7 @@ import random
 import string
 import re
 import pymongo
-
+from shrunk.aggregations import match_short_url, monthly_visits_aggregation
 
 class DuplicateIdException(Exception):
     """Raised when trying to add a duplicate key to the database."""
@@ -180,7 +180,7 @@ class ShrunkClient(object):
     all URLs do not exceed eight characters.
     """
 
-    RESERVED_WORDS = ["add", "login", "logout", "delete", "admin"]
+    RESERVED_WORDS = ["add", "login", "logout", "delete", "admin", "stats"]
     """Reserved words that cannot be used as shortened urls."""
 
     def __init__(self, host=None, port=None):
@@ -339,6 +339,14 @@ class ShrunkClient(object):
 
         return response
 
+    def is_owner_or_admin(self, short_url, request_netid):
+        url_db = self._mongo.shrunk_urls
+        url_owner=url_db.urls.find_one({"_id":short_url},project={"netid"})["netid"]
+        requester_is_owner=url_owner==request_netid
+        admin=self.is_admin(request_netid)
+
+        return requester_is_owner or admin
+
     def delete_url(self, short_url, request_netid):
         """Given a short URL, delete it from the database.
 
@@ -354,12 +362,8 @@ class ShrunkClient(object):
         """
         url_db = self._mongo.shrunk_urls
         visit_db = self._mongo.shrunk_visits
-        url_owner=url_db.urls.find_one({"_id":short_url},project={"netid"})["netid"]
-        requester_is_owner=url_owner==request_netid
-        admin=self.is_admin(request_netid)
-
-        if short_url is not None and (admin or requester_is_owner):
-            print(dir(url_db.urls))
+        
+        if short_url is not None and is_owner_or_admin(short_url, request_netid):
             return {
                 "urlDataResponse" : url_db.urls.delete_one({
                     "_id" : short_url
@@ -407,6 +411,22 @@ class ShrunkClient(object):
         """
         db = self._mongo.shrunk_urls
         return db.urls.find_one({"_id" : short_url})
+    
+    def get_monthly_visits(self, short_url):
+        """Given a short URL, return how many visits and new unique visiters it gets
+        per month
+        this returns an array where each element the data for a month
+          - _id : a dict with keys for month and year
+          - first_time_visits : new visits by users who haven't seen the link yet
+          - all_visits : the total visits per that month
+        :Parameters:
+          - `short_url`: A shortened URL
+        
+        """
+        db = self._mongo.shrunk_visits
+        aggregation=[match_short_url(short_url)] + monthly_visits_aggregation
+        return db.visits.aggregate(aggregation)
+        
 
     def get_long_url(self, short_url):
         """Given a short URL, returns the long URL.
