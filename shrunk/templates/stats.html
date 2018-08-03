@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="links-box col-xs-12 col-sm-8 col-sm-offset-1">
+  <h1>URL stats</h1>
+  <article class="add-group clearfix">
+    {% if missing_url %}
+    <h3> URL not found :( </h3>
+    {% else %}
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <h3><a href="{{ url_info['long_url'] }}">
+	{{ url_info["title"] }}
+    </a></h3>
+    {{ url_info }}
+    <ul>
+      <li>Visits: {{ url_info["visits"] }}</li>
+      <li>First Time Visits: <span id="first_time_visits">Loading...</span></li>
+    </ul>
+    <svg width="400" height="300"></svg>
+    <script src="{{ url_for('static', filename='js/stats.js') }}"></script>
+    {% endif %}
+  </article>
+</div>
+{% endblock %}
