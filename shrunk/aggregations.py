@@ -1,4 +1,4 @@
-
+from collections import OrderedDict
 def match_short_url(url):
     return {"$match": {"short_url":url}}
 
@@ -40,10 +40,10 @@ make_sortable={"$project": {
     "first_time_visits": 1,
     "all_visits": 1
 }}
-chronological_sort={ "$sort": {
-    "year" : 1,
-    "month": 1
-}}
+chronological_sort={ "$sort": OrderedDict([
+    ("year" , 1),
+    ("month", 1)
+])}
 clean_results={"$project": {
     "first_time_visits": 1,
     "all_visits": 1
