@@ -34,7 +34,11 @@
                 </div>
                 <a href="{{ link['long_url'] }}" target="_blank" class="title">
                     {% if link['title'] %}
+		      {% if link['title'] | length > 32 %}
+		        {{ link['title'][:32]+'...' }}
+		      {% else %}
                         {{ link['title'] }}
+		      {% endif %}
                     {% else %}
                         {{ link['_id'] }}
                     {% endif %}
