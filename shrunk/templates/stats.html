@@ -10,12 +10,22 @@
     <h3><a href="{{ url_info['long_url'] }}">
 	{{ url_info["title"] }}
     </a></h3>
-    {{ url_info }}
     <ul>
       <li>Visits: {{ url_info["visits"] }}</li>
       <li>First Time Visits: <span id="first_time_visits">Loading...</span></li>
     </ul>
-    <svg width="400" height="300"></svg>
+    <div>
+      key:
+      <span style="color:steelblue">monthly total visits</span>
+      <span style="color:orange">monthly first time visits</span>
+    </div>
+    <div id="nodata"></div>
+    <svg height="0"></svg>
+    <div>
+     <select id="start"></select>
+     <select id="end"></select>
+     <span id="error"></span>
+    </div>
     <script src="{{ url_for('static', filename='js/stats.js') }}"></script>
     {% endif %}
   </article>

@@ -393,3 +393,8 @@ Media Queries
         width: 100%;
     }
 }
+
+#error{
+    color: #cc0e32;
+    font_size: 20px;
+}
