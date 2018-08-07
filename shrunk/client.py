@@ -180,7 +180,7 @@ class ShrunkClient(object):
     all URLs do not exceed eight characters.
     """
 
-    RESERVED_WORDS = ["add", "login", "logout", "delete", "admin", "stats"]
+    RESERVED_WORDS = ["add", "login", "logout", "delete", "admin", "stats", "qr"]
     """Reserved words that cannot be used as shortened urls."""
 
     def __init__(self, host=None, port=None):
