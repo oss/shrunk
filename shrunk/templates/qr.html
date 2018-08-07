@@ -1,0 +1,27 @@
+{% if print %}
+<html>
+  <body>
+    <div id="qr"></div>
+    <script src="{{ url_for('static', filename='js/qrcode.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/shrunkqr.js') }}"></script>
+    </body>
+</html>
+{% else %}
+{% extends "base.html" %}
+{% block content %}
+<div class="links-box col-xs-12 col-sm-8 col-sm-offset-1">
+  <h1>QR Code</h1>
+  <article class="add-group clearfix">
+    {% if missing_url %}
+    <h3> URL not found :( </h3>
+    {% else %}
+    <div id="qr"></div>
+    <button id="print" class="btn btn-default shrink-button">print</button>
+    <button id="download" class="btn btn-default shrink-button">download</button>
+    <script src="{{ url_for('static', filename='js/qrcode.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/shrunkqr.js') }}"></script>
+    {% endif %}
+  </article>
+</div>
+{% endblock %}
+{% endif %}
