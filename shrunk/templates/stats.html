@@ -22,8 +22,10 @@
     <div id="nodata"></div>
     <svg height="0"></svg>
     <div>
-     <select id="start"></select>
-     <select id="end"></select>
+     <form class="form-inline">
+       <select class="form-control" id="start"></select>
+       <select class="form-control" id="end"></select>
+     </form>
      <span id="error"></span>
     </div>
     <script src="{{ url_for('static', filename='js/stats.js') }}"></script>
