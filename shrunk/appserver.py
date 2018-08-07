@@ -388,6 +388,12 @@ def monthly_visits():
         visits=client.get_monthly_visits(url)
         return json.dumps(visits["result"])
 
+@app.route("/qr", methods=["GET"])
+@require_login
+def qr():
+    kwargs={"print": "print" in request.args}
+    return render_template("qr.html", **kwargs)
+
 
 
 @app.route("/delete", methods=["GET", "POST"])
