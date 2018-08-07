@@ -8,14 +8,19 @@ import re
 import pymongo
 from shrunk.aggregations import match_short_url, monthly_visits_aggregation
 
-class DuplicateIdException(Exception):
+class BadShortURLException(Exception):
+    """Raised when the there is an error with the requested short url"""
+
+class DuplicateIdException(BadShortURLException):
     """Raised when trying to add a duplicate key to the database."""
     pass
 
-
-class ForbiddenNameException(Exception):
+class ForbiddenNameException(BadShortURLException):
     """Raised when trying to use a forbidden custom short URL."""
     pass
+
+class ForbiddenDomainException(Exception):
+    """Raised when trying to make a link to a forbidden domain"""
 
 
 class InvalidOperationException(Exception):
@@ -261,7 +266,7 @@ class ShrunkClient(object):
         top_domain = match.group().lower() if match else domain
         
         if db.blocked_urls.find_one({"url" : { "$regex" : "%s*" % top_domain }}):
-            raise ForbiddenNameException("That URL is not allowed.")
+            raise ForbiddenDomainException("That URL is not allowed.")
 
         document = {
             "_id" : short_url,

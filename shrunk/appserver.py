@@ -9,6 +9,8 @@ from shrunk.forms import BlockLinksForm, LinkForm, BlacklistUserForm, AddAdminFo
 from shrunk.util import get_db_client, set_logger, formattime
 from shrunk.filters import strip_protocol, ensure_protocol
 
+from shrunk.client import BadShortURLException, ForbiddenDomainException
+
 from functools import wraps
 
 import json
@@ -292,66 +294,65 @@ def render_index(**kwargs):
                             query=query,
                             sortby=sortby,
                             **kwargs))
+    #TODO since we're not setting we probably dont need make_response
     #resp.set_cookie("all_users", all_users)
     #resp.set_cookie("sortby", sortby)
     session["all_users"] = all_users
     session["sortby"] = sortby
     return resp
 
-@app.route("/add", methods=["GET", "POST"])
+@app.route("/add", methods=["POST"])
 @require_login
 def add_link():
-    """Adds a new link for the current user."""
-    
-    netid = session['user'].get('netid')
+    """Adds a new link for the current user. and handles errors"""
     # default is no .xxx links
-    banned_regexes=["\.xxx"]
+    banned_regexes = ["\.xxx"]
     if "BANNED_REGEXES" in app.config:
-        banned_regexes=app.config["BANNED_REGEXES"]
-    form = LinkForm(request.form,banned_regexes)
+        banned_regexes = app.config["BANNED_REGEXES"]
+    form = LinkForm(request.form, banned_regexes)
+    netid = session['user'].get('netid')
     client = get_db_client(app, g)
 
-    sortby = "0"
-    all_users = "0"
+    template={
+        'netid': netid,
+        'sortby': "0",
+        'all_users': "0",
+        'admin': client.is_admin(netid),
+        'power_user': client.is_power_user(netid)
+    }
+    def add_url_template(**kwargs):
+        kwargs.update(template)
+        return render_template("add.html", **kwargs)
+    
+    form.long_url.data = ensure_protocol(form.long_url.data)
+    if form.validate():
+        # TODO Decide whether we want to do something with the response
+        kwargs = form.to_json()
+        kwargs['netid'] = netid
+        try:
+            client.create_short_url(**kwargs)
+            return redirect("/")
+        except BadShortURLException as e:
+            return add_url_template(errors = {'short_url': [str(e)]})
+        except ForbiddenDomainException as e:
+            return add_url_template(errors = {'long_url': [str(e)]})
+    else: # WTForms detects a form validation error:
+        return add_url_template(errors = form.errors)
 
-    if request.method == "POST":
-        # Validate the form
-        form.long_url.data = ensure_protocol(form.long_url.data)
-        if form.validate():
-            # TODO Decide whether we want to do something with the response
-            kwargs = form.to_json()
-            try:
-                client.create_short_url(
-                    netid=netid,
-                    **kwargs
-                )
-                return redirect("/")
-            except Exception as e:
-                return render_template("add.html",
-                                       errors={'short_url' : [str(e)]},
-                                       netid=netid,
-                                       admin=client.is_admin(netid),
-                                        power_user=client.is_power_user(netid),
-                                        sortby = sortby,
-                                        all_users = all_users)
-
-        else:
-            # WTForms detects a form validation error
-            return render_template("add.html",
-                                   errors=form.errors,
-                                   netid=netid,
-                                   admin=client.is_admin(netid),
-                                    power_user=client.is_power_user(netid),
-                                    sortby = sortby,
-                                    all_users = all_users)
-    else:
-        # GET request
-        return render_template("add.html",
-                               netid=netid,
-                               admin=client.is_admin(netid),
-                                power_user=client.is_power_user(netid),
-                                sortby = sortby,
-                                all_users = all_users)
+@app.route("/add", methods=["GET"])
+@require_login
+def add_link_form():
+    """Displays link form"""
+    client = get_db_client(app, g)
+    netid = session['user'].get('netid')
+    template = {
+        'netid': netid,
+        'admin': client.is_admin(netid),
+        'power_user': client.is_power_user(netid),
+        'sortby': "0",
+        'all_users': "0"
+    }
+    return render_template("add.html", **template)
 
 @app.route("/stats", methods=["GET"])
 @require_login
