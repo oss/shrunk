@@ -188,7 +188,6 @@ def render_index(**kwargs):
     # Display all users or just the current administrator?
     # this question is only a concern if user is admin. 
     if client.is_admin(netid) == False:
-        print("client is not admin")
         all_users = "0"
     else:     
         try:
@@ -196,10 +195,8 @@ def render_index(**kwargs):
         except:
             if "all_users" in session:
                 all_users = session["all_users"]
-                print("case 1")
             else:                       #default is to print only "my links"
                 all_users = "0"
-                print("case 3")
 
 
     #just in case I forgot to account for something
@@ -321,8 +318,8 @@ def add_link():
         'power_user': client.is_power_user(netid)
     }
     def add_url_template(**kwargs):
-        kwargs.update(template)
-        return render_template("add.html", **kwargs)
+        template.update(kwargs)
+        return render_template("add.html", **template)
     
     form.long_url.data = ensure_protocol(form.long_url.data)
     if form.validate():
@@ -412,91 +409,72 @@ def delete_link():
     return redirect("/")
 
 
-@app.route("/edit", methods=["GET", "POST"])
+@app.route("/edit", methods=["POST"])
+@require_login
 def edit_link():
     """Edits a link.
 
     On POST, this route expects a form that contains the unique short URL that
     will be edited.
     """
-    if not 'user' in session:
-        # Anonymous user
-        return redirect("/shrunk-login")
+    netid = session['user'].get('netid')
+    client = get_db_client(app, g)
+
+    # default is no .xxx links
+    banned_regexes = ["\.xxx"]
+    if "BANNED_REGEXES" in app.config:
+        banned_regexes = app.config["BANNED_REGEXES"]
+        
+    form = LinkForm(request.form, banned_regexes)
+    form.long_url.data = ensure_protocol(form.long_url.data)
+
+    template = {
+        "netid": netid,
+        "show_short_url": client.is_admin(netid) or client.is_power_user(netid),
+        "title": request.form["title"],
+        "old_short_url": request.form["old_short_url"],
+        "long_url": request.form["long_url"]
+    }
+    def edit_url_template(**kwargs):
+        template.update(kwargs)
+        return render_template("edit.html", **template)
+    
+    # Validate form before continuing
+    if form.validate():
+        # Success - make the edits in the database
+        kwargs = form.to_json()
+        kwargs['admin'] = client.is_admin(netid)
+        kwargs['power_user'] = client.is_power_user(netid)
+        kwargs['old_short_url'] = request.form['old_short_url']
+        try:
+            response = client.modify_url(**kwargs)
+            return redirect("/")
+        except BadShortURLException as e:
+            return edit_url_template(errors={'short_url' : [str(e)]})
+        except ForbiddenDomainException as e:
+            return edit_url_template(errors={'long_url' : [str(e)]})
+    else:
+        info = client.get_url_info(template['old_short_url'])
+        return edit_url_template(errors=form.errors, **info)
+
+@app.route("/edit", methods=["GET"])
+@require_login
+def edit_link_form():
     netid = session['user'].get('netid')
     client = get_db_client(app, g)
     form = LinkForm(request.form,
                     [strip_protocol(app.config["LINKSERVER_URL"])])
+    # Hit the database to get information
+    old_short_url = request.args["url"]
+    info = client.get_url_info(old_short_url)
+    owner = info["netid"]
+    if owner != netid and not client.is_admin(netid):
+        return render_index(wrong_owner=True)
 
-    if request.method == "POST":
-        # Validate form before continuing
-        if form.validate():
-            # Success - make the edits in the database
-            kwargs = form.to_json()
-            try:
-                response = client.modify_url(
-                    old_short_url = request.form["old_short_url"],
-                    admin=client.is_admin(netid),
-                    **kwargs
-                )
-                return redirect("/")
-            except Exception as e:
-                return render_template("edit.html",
-                                       errors={'short_url' : [str(e)]},
-                                       netid=netid,
-                                       admin=client.is_admin(netid),
-                                       title=request.form["title"],
-                                       old_short_url=request.form["old_short_url"],
-                                       long_url=request.form["long_url"])
-        else:
-            # yikes - we might want to refactor this stuff into forms.py
-            if not form.long_url.data.startswith("http://"):
-                form.long_url.data = "http://" + form.long_url.data
-
-            if form.validate():
-                kwargs = form.to_json()
-                try:
-                    response = client.modify_url(
-                        admin=client.is_admin(netid),
-                        **kwargs
-                    )
-                    return redirect("/")
-                except Exception as e:
-                    return render_template("edit.html",
-                                           errors={'short_url' : [str(e)]},
-                                           netid=netid,
-                                           admin=client.is_admin(netid),
-                                           title=request.form["title"],
-                                           old_short_url=request.form["old_short_url"],
-                                           long_url=request.form["long_url"])
-            else:
-                # Validation error
-                old_short_url = request.form["old_short_url"]
-                info = client.get_url_info(old_short_url)
-                long_url = info["long_url"]
-                title = info["title"]
-                return render_template("edit.html",
-                                    errors=form.errors,
-                                    netid=netid,
-                                    admin=client.is_admin(netid),
-                                    title=title,
-                                    old_short_url=old_short_url,
-                                    long_url=long_url)
-    else: # GET request
-        # Hit the database to get information
-        old_short_url = request.args["url"]
-        info = client.get_url_info(old_short_url)
-        owner = info["netid"]
-        if owner != netid and not client.is_admin(netid):
-            return render_index(wrong_owner=True)
-
-        long_url = info["long_url"]
-        title = info["title"]
-        # Render the edit template
-        return render_template("edit.html", netid=netid,
-                                            admin=client.is_admin(netid),
-                                            title=title,
-                                            old_short_url=old_short_url,
-                                            long_url=long_url)
+    info['old_short_url']=old_short_url
+    info['show_short_url']=client.is_admin(netid) or client.is_power_user(netid)
+    # Render the edit template
+    return render_template("edit.html", **info)
 
 
 @app.route("/admin/manage-admin")
