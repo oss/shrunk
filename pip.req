@@ -6,4 +6,4 @@ WTForms==2.0.1
 Werkzeug==0.9.6
 itsdangerous==0.24
 pyasn1==0.1.7
-pymongo==2.9
+pymongo==3.6.1

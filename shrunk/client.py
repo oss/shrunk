@@ -188,7 +188,7 @@ class ShrunkClient(object):
     RESERVED_WORDS = ["add", "login", "logout", "delete", "admin", "stats", "qr"]
     """Reserved words that cannot be used as shortened urls."""
 
-    def __init__(self, host=None, port=None):
+    def __init__(self, host=None, port=None, test_client=None):
         """Create a new client connection.
 
         This client uses MongoDB. No network traffic occurs until a data method
@@ -198,8 +198,10 @@ class ShrunkClient(object):
           - `host` (optional): the hostname to connect to; defaults to
             "localhost"
           - `port` (optional): the port to connect to on the server; defaults to
+          - `test_client` (optional): a mock client to use for testing
             the database default if not present
         """
+        
         self._mongo = pymongo.MongoClient(host, port)
 
     def clone_cursor(self, cursor):
@@ -356,7 +358,7 @@ class ShrunkClient(object):
 
     def is_owner_or_admin(self, short_url, request_netid):
         url_db = self._mongo.shrunk_urls
-        url_owner=url_db.urls.find_one({"_id":short_url},project={"netid"})["netid"]
+        url_owner=url_db.urls.find_one({"_id":short_url},projection={"netid"})["netid"]
         requester_is_owner=url_owner==request_netid
         admin=self.is_admin(request_netid)
 
