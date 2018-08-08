@@ -232,6 +232,22 @@ class ShrunkClient(object):
         else:
             return db.urls.count()
 
+    def is_banned_link(self, long_url):
+        db = self._mongo.shrunk_urls
+
+        base_url = long_url[(long_url.find("://") + 3):] # Strip any protocol
+        domain = base_url[: base_url.find("/")] # Strip path
+        # url can contain a-z a hyphen or 0-9 and is seprated by dots.
+        # this regex gets rid of any subdomains
+        # memes.facebook.com matches facebook.com
+        # 1nfo3-384ldnf.doo544-f8.cme-02k4.tk matches cme-02k4.tk
+        match = re.search("([a-z\-0-9]+\.[a-z\-0-9]+)$", domain, re.IGNORECASE)
+        #search for domain if we can't match for a top domain
+        top_domain = match.group().lower() if match else domain
+        
+        return db.blocked_urls.find_one({"url" : { "$regex" : "%s*" % top_domain }})
+            
+
     def create_short_url(self, long_url, short_url=None, netid=None, title=None):
         """Given a long URL, create a new short URL.
 
@@ -254,18 +270,7 @@ class ShrunkClient(object):
         """
         db = self._mongo.shrunk_urls
 
-        #Check if url is blocked
-        base_url = long_url[(long_url.find("://") + 3):] # Strip any protocol
-        domain = base_url[: base_url.find("/")] # Strip path
-        # url can contain a-z a hyphen or 0-9 and is seprated by dots.
-        # this regex gets rid of any subdomains
-        # memes.facebook.com matches facebook.com
-        # 1nfo3-384ldnf.doo544-f8.cme-02k4.tk matches cme-02k4.tk
-        match = re.search("([a-z\-0-9]+\.[a-z\-0-9]+)$", domain, re.IGNORECASE)
-        #search for domain if we can't match for a top domain
-        top_domain = match.group().lower() if match else domain
-        
-        if db.blocked_urls.find_one({"url" : { "$regex" : "%s*" % top_domain }}):
+        if self.is_banned_link(long_url):
             raise ForbiddenDomainException("That URL is not allowed.")
 
         document = {
@@ -304,7 +309,8 @@ class ShrunkClient(object):
 
         return response
 
-    def modify_url(self, old_short_url, admin, short_url=None, **kwargs):
+    def modify_url(self, old_short_url=None, admin=False, power_user=False, short_url=None, **new_doc):
+        print(old_short_url, admin, power_user, short_url, new_doc)
         """Modifies an existing URL.
 
         Edits the values of the url `short_url` and replaces them with the
@@ -316,9 +322,13 @@ class ShrunkClient(object):
             all values specified.
         """
         db = self._mongo.shrunk_urls
+
+        if self.is_banned_link( new_doc["long_url"]):
+            raise ForbiddenDomainException("That URL is not allowed.")
+
         document = db.urls.find_one({"_id": old_short_url})
 
-        if not admin:
+        if not admin and not power_user:
             short_url=None
 
         if short_url is not None:
@@ -334,13 +344,13 @@ class ShrunkClient(object):
                     raise DuplicateIdException("That name already exists.")
                 db.urls.remove({"_id": old_short_url})
                 db.urls.update({"_id" : short_url},
-                            {"$set" : kwargs})
+                               {"$set" : new_doc})
             else:
                 response = db.urls.update({"_id" : old_short_url},
-                                          {"$set" : kwargs})
+                                          {"$set" : new_doc})
         else:
             response = db.urls.update({"_id" : old_short_url},
-                           {"$set" : kwargs})
+                                      {"$set" : new_doc})
 
         return response
 
@@ -368,7 +378,7 @@ class ShrunkClient(object):
         url_db = self._mongo.shrunk_urls
         visit_db = self._mongo.shrunk_visits
         
-        if short_url is not None and is_owner_or_admin(short_url, request_netid):
+        if short_url is not None and self.is_owner_or_admin(short_url, request_netid):
             return {
                 "urlDataResponse" : url_db.urls.delete_one({
                     "_id" : short_url
