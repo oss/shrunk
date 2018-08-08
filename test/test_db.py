@@ -7,7 +7,7 @@ from shrunk import ShrunkClient
 
 
 def get_shrunk_connection():
-    return ShrunkClient("localhost")
+    return ShrunkClient("db")
 
 
 def setup():
@@ -55,5 +55,5 @@ def test_deletion():
     short_url = shrunk.create_short_url(long_url, netid="shrunk_test")
     assert short_url is not None
 
-    shrunk.delete_url(short_url)
+    shrunk.delete_url(short_url, "shrunk_test")
     assert shrunk.get_long_url(short_url) is None
