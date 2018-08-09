@@ -22,3 +22,6 @@ venv/
 *GeoLite2-City.mmdb
 
 runappserver.py
+
+# pytest
+*pytest_cache*
