@@ -25,6 +25,9 @@ def teardown_module():
 def insert_urls(long_urls, netid):
     return [client.create_short_url(url, netid = netid) for url in long_urls]
 
+#TODO add more testing in the case of blocked urls, already take ones, reserved words, banned user
+#TODO test custom short_urls
+#TODO test for can't have shorturl if not admin or power user
 def test_urls():
     """Puts and retrieves URLs from the database."""
     long_urls = ["foo.com", "bar.net", "báz7.edu.fr"]
@@ -98,6 +101,7 @@ def test_blocking():
     
 def test_get_domain():
     """testing to get the domain from a url"""
+    assert client.get_domain("test.com") == "test.com"
     assert client.get_domain("https://test.com") == "test.com"
     assert client.get_domain("https://test.com/test.php") == "test.com"
     assert client.get_domain("https://sub.test.com/test.php") == "test.com"
@@ -107,3 +111,9 @@ def test_get_domain():
 def test_modify():
     """make sure modifing the url sets the new info properly"""
     pass
+    client.block_link("microsoft.com", "ltorvalds")
+    #can't edit to blocked urls
+    #can't edit to a reserved word
+    #can't edit to an already taken short url
+    #can't have custom url if not admin or power user
+    #all new information should be set
