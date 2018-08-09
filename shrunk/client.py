@@ -238,8 +238,11 @@ class ShrunkClient(object):
 
     def get_domain(self, long_url):
         db = self._mongo.shrunk_urls
+        protocol_location = long_url.find("://")
+        base_url = long_url[(protocol_location + 3):] # Strip any protocol
+        if protocol_location < 0:
+            base_url = long_url
 
-        base_url = long_url[(long_url.find("://") + 3):] # Strip any protocol
         slash = base_url.find("/")
         domain = base_url[: base_url.find("/")] # Strip path
         if slash < 0:
