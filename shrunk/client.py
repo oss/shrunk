@@ -328,9 +328,11 @@ class ShrunkClient(object):
         values specified in the keyword arguments.
 
         :Parameters:
-          - `short_url`: The ID of the URL to edit.
-          - `kwargs`: A dictionary of keyword arguments. The URL will take on
-            all values specified.
+          - `old_short_url`: The ID of the URL to edit.
+          - `admin`: If the requester is an admin
+          - `power_user`: If the requester is an power user
+          - `short_url`: The new short url (for custom urls)
+          - `new_doc`: All the feilds to $set in the document
         """
         db = self._mongo.shrunk_urls
 
