@@ -201,8 +201,10 @@ class ShrunkClient(object):
           - `test_client` (optional): a mock client to use for testing
             the database default if not present
         """
-        
-        self._mongo = pymongo.MongoClient(host, port)
+        if test_client:
+            self._mongo = test_client
+        else:
+            self._mongo = pymongo.MongoClient(host, port)
 
     def clone_cursor(self, cursor):
         """Clones an already existing ShrunkCursor object.
@@ -234,7 +236,7 @@ class ShrunkClient(object):
         else:
             return db.urls.count()
 
-    def is_banned_link(self, long_url):
+    def is_blocked(self, long_url):
         db = self._mongo.shrunk_urls
 
         base_url = long_url[(long_url.find("://") + 3):] # Strip any protocol
@@ -272,7 +274,7 @@ class ShrunkClient(object):
         """
         db = self._mongo.shrunk_urls
 
-        if self.is_banned_link(long_url):
+        if self.is_blocked(long_url):
             raise ForbiddenDomainException("That URL is not allowed.")
 
         document = {
@@ -325,7 +327,7 @@ class ShrunkClient(object):
         """
         db = self._mongo.shrunk_urls
 
-        if self.is_banned_link( new_doc["long_url"]):
+        if self.is_blocked( new_doc["long_url"]):
             raise ForbiddenDomainException("That URL is not allowed.")
 
         document = db.urls.find_one({"_id": old_short_url})
@@ -710,20 +712,6 @@ class ShrunkClient(object):
         """
         db = self._mongo.shrunk_users
         return list(db.administrators.find())
-
-    def is_blocked(self, url):
-        """Determines if a URL has been banned.
-
-        :Parameters:
-          - `url`: The url to check
-
-        :Returns:
-          True if the url is in the blocked_urls collection; False otherwise.
-        """
-        db = self._mongo.shrunk_urls
-        if db.blocked_urls.find_one({'url' : url}) is None:
-            return False
-        return True
 
     def get_blocked_links(self):
         """Retrieves the list of blocked links.
