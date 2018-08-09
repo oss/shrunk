@@ -236,20 +236,27 @@ class ShrunkClient(object):
         else:
             return db.urls.count()
 
-    def is_blocked(self, long_url):
+    def get_domain(self, long_url):
         db = self._mongo.shrunk_urls
 
         base_url = long_url[(long_url.find("://") + 3):] # Strip any protocol
+        slash = base_url.find("/")
         domain = base_url[: base_url.find("/")] # Strip path
+        if slash < 0:
+            domain = base_url
         # url can contain a-z a hyphen or 0-9 and is seprated by dots.
         # this regex gets rid of any subdomains
         # memes.facebook.com matches facebook.com
         # 1nfo3-384ldnf.doo544-f8.cme-02k4.tk matches cme-02k4.tk
         match = re.search("([a-z\-0-9]+\.[a-z\-0-9]+)$", domain, re.IGNORECASE)
         #search for domain if we can't match for a top domain
-        top_domain = match.group().lower() if match else domain
         
-        return db.blocked_urls.find_one({"url" : { "$regex" : "%s*" % top_domain }})
+        return  match.group().lower() if match else domain
+        
+
+    def is_blocked(self, long_url):
+        db = self._mongo.shrunk_urls
+        return bool(db.blocked_urls.find_one({"url": {"$regex": "%s*" % self.get_domain(long_url)}}))
             
 
     def create_short_url(self, long_url, short_url=None, netid=None, title=None):
@@ -731,9 +738,9 @@ class ShrunkClient(object):
         """
         db = self._mongo.shrunk_urls
         if not self.is_blocked(url):
-            res = db.blocked_urls.insert({'url' : url, 'blocked_by' : blocked_by})
+            res = db.blocked_urls.insert({'url': self.get_domain(url), 'blocked_by': blocked_by})
             # Find any urls that should be deleted
-            db.urls.remove({"long_url" : { "$regex" : url }})
+            db.urls.remove({"long_url": {"$regex": "%s*" % self.get_domain(url)}})
             return res
 
     def allow_link(self, url):
