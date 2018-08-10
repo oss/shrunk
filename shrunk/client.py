@@ -395,17 +395,21 @@ class ShrunkClient(object):
         
         if short_url is not None and self.is_owner_or_admin(short_url, request_netid):
             return {
-                "urlDataResponse" : url_db.urls.delete_one({
-                    "_id" : short_url
-                }),
-                "visitDataResponse" : visit_db.visits.delete_one({
-                    "short_url" : short_url
-                })
+                "urlDataResponse": {
+                    "nRemoved": url_db.urls.delete_one({
+                        "_id" : short_url
+                    }).deleted_count
+                },
+                "visitDataResponse": {
+                    "nRemoved": visit_db.visits.delete_one({
+                        "short_url": short_url
+                    }).deleted_count
+                }
             }
         else:
             return {
-                "urlDataResponse" : {"nRemoved" : 0},
-                "visitDataResponse" : {"nRemoved" : 0}
+                "urlDataResponse": {"nRemoved": 0},
+                "visitDataResponse": {"nRemoved": 0}
             }
 
     def delete_user_urls(self, netid):
