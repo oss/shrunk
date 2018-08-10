@@ -52,16 +52,6 @@ def test_visit():
         
     assert client.get_num_visits(short_url) is hits
 
-def test_deletion():
-    """Tests a deletion from the database."""
-    long_url = "foo.com"
-    short_url = client.create_short_url(long_url, netid = "shrunk_test")
-    assert short_url is not None
-    
-    client.delete_url(short_url, "shrunk_test")
-    assert client.get_long_url(short_url) is None
-
-
 def test_count():
     "Test to see if links are counted correctly"
 
@@ -167,3 +157,95 @@ def test_modify():
     new_url = get_url(url)
     assert new_url["title"] == "new-title"
     assert new_url["long_url"] == "https://linux.org/other-page.html"
+
+def test_is_owner_or_admin():
+    """test utility function to see if somone can modify a url"""
+    
+    url = client.create_short_url("https://linux.org", netid = "dude")
+    client._mongo.shrunk_users.administrators.insert({"netid": "dnolen", "added_by": "rhickey"})
+    
+    assert client.is_owner_or_admin(url, "dude") is True
+    assert client.is_owner_or_admin(url, "dnolen") is True
+    assert client.is_owner_or_admin(url, "bgates") is False
+    
+    #nonexistent url
+    assert client.is_owner_or_admin("hogwash", "dnolen") is True
+    assert client.is_owner_or_admin("hogwash", "dude") is False
+
+def test_delete_and_visit():
+    """test utility function to see if somone can modify a url"""
+    
+    url = client.create_short_url("https://linux.org", netid = "dude")
+    url2 = client.create_short_url("https://linux.org/other", netid = "dude")
+    client._mongo.shrunk_users.administrators.insert({"netid": "dnolen", "added_by": "rhickey"})
+    client._mongo.shrunk_users.power_users.insert({"netid": "power_user", "added_by": "Justice League"})
+
+    num_visits = 3
+    num_visits2 = 4
+    
+    for _ in range(num_visits):
+        client.visit(url, "127.0.0.1")
+
+    for _ in range(num_visits2):
+        client.visit(url2, "127.0.0.1")
+
+    
+    #confirm visit works
+    visits = list(client._mongo.shrunk_visits.visits.find({"short_url": url}))
+    assert len(list(client.get_visits(url))) is num_visits
+    assert get_url(url)["visits"] is num_visits
+    assert len(visits) is num_visits
+
+    visits2 = list(client._mongo.shrunk_visits.visits.find({"short_url": url2}))
+    assert len(list(client.get_visits(url2))) is num_visits2
+    assert get_url(url2)["visits"] is num_visits2
+    assert len(visits2) is num_visits2
+
+    #only owner or admin can delete not power_user or user
+    #user
+    deletion1 = client.delete_url(url, "user")
+    assert deletion1["urlDataResponse"]["nRemoved"] is 0
+    assert deletion1["visitDataResponse"]["nRemoved"] is 0
+    assert get_url(url)["visits"] is num_visits
+    #power
+    deletion2 = client.delete_url(url, "power_user")
+    assert deletion2["urlDataResponse"]["nRemoved"] is 0
+    assert deletion2["visitDataResponse"]["nRemoved"] is 0
+    assert get_url(url)["visits"] is num_visits
+
+    #cant delete nonexistant link
+    deletion3 = client.delete_url("reasons-to-use-windows", "dnolen")
+    assert deletion3["urlDataResponse"]["nRemoved"] is 0
+    assert deletion3["visitDataResponse"]["nRemoved"] is 0
+    
+    #admin
+    list(client.get_visits(url2))
+    deletion4 = client.delete_url(url, "dnolen")
+    assert deletion4["urlDataResponse"]["nRemoved"] is 1
+    assert deletion4["visitDataResponse"]["nRemoved"] is num_visits
+
+    #deleting a url will remove it from urls
+    assert get_url(url) is None
+
+    #deleting a url should remove its visits
+    visits3 = list(client._mongo.shrunk_visits.visits.find({"short_url": url}))
+    assert len(list(client.get_visits(url))) is 0
+    assert get_url(url) is None
+    assert len(visits3) is 0
+    
+    #deleting one url shouldn't affect the visits of another
+    visits4 = list(client._mongo.shrunk_visits.visits.find({"short_url": url2}))
+    assert len(list(client.get_visits(url2))) is num_visits2
+    assert get_url(url2)["visits"] is num_visits2
+    assert len(visits4) is num_visits2
+
+    #owner can delete their own link
+    deletion5 = client.delete_url(url2, "dude")
+    assert deletion5["urlDataResponse"]["nRemoved"] is 1
+    assert deletion5["visitDataResponse"]["nRemoved"] is num_visits2
+    assert get_url(url2) is None
+
+    visits5 = list(client._mongo.shrunk_visits.visits.find({"short_url": url2}))
+    assert len(list(client.get_visits(url2))) is 0
+    assert get_url(url2) is None
+    assert len(visits5) is 0
