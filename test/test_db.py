@@ -192,12 +192,10 @@ def test_delete_and_visit():
     
     #confirm visit works
     visits = list(client._mongo.shrunk_visits.visits.find({"short_url": url}))
-    assert len(list(client.get_visits(url))) is num_visits
     assert get_url(url)["visits"] is num_visits
     assert len(visits) is num_visits
 
     visits2 = list(client._mongo.shrunk_visits.visits.find({"short_url": url2}))
-    assert len(list(client.get_visits(url2))) is num_visits2
     assert get_url(url2)["visits"] is num_visits2
     assert len(visits2) is num_visits2
 
@@ -219,7 +217,6 @@ def test_delete_and_visit():
     assert deletion3["visitDataResponse"]["nRemoved"] is 0
     
     #admin
-    list(client.get_visits(url2))
     deletion4 = client.delete_url(url, "dnolen")
     assert deletion4["urlDataResponse"]["nRemoved"] is 1
     assert deletion4["visitDataResponse"]["nRemoved"] is num_visits
@@ -229,13 +226,11 @@ def test_delete_and_visit():
 
     #deleting a url should remove its visits
     visits3 = list(client._mongo.shrunk_visits.visits.find({"short_url": url}))
-    assert len(list(client.get_visits(url))) is 0
     assert get_url(url) is None
     assert len(visits3) is 0
     
     #deleting one url shouldn't affect the visits of another
     visits4 = list(client._mongo.shrunk_visits.visits.find({"short_url": url2}))
-    assert len(list(client.get_visits(url2))) is num_visits2
     assert get_url(url2)["visits"] is num_visits2
     assert len(visits4) is num_visits2
 
@@ -246,7 +241,6 @@ def test_delete_and_visit():
     assert get_url(url2) is None
 
     visits5 = list(client._mongo.shrunk_visits.visits.find({"short_url": url2}))
-    assert len(list(client.get_visits(url2))) is 0
     assert get_url(url2) is None
     assert len(visits5) is 0
 
@@ -280,6 +274,73 @@ def test_get_url_info():
     #nonexistant is none
     url_info2 = client.get_url_info("hogwash")
     assert url_info2 is None
+
+#todo test get_monthly_visits
+    
+def test_get_long_url():
+    url = client.create_short_url("https://linux.org", netid = "dude")
+    
+    #gives long url
+    assert client.get_long_url(url) == "https://linux.org"
+
+    #nonexistent is none
+    assert client.get_long_url("hogwash") is None
+
+def test_get_visits():
+    url = client.create_short_url("https://linux.org", netid = "dude")
+    url2 = client.create_short_url("https://linux.org/other", netid = "dude")
+    url3 = client.create_short_url("https://linux.org/third", netid = "dude")
+
+    num_visits = 3
+    num_visits2 = 4
+    
+    for _ in range(num_visits):
+        client.visit(url, "127.0.0.1")
+
+    for _ in range(num_visits2):
+        client.visit(url2, "127.0.0.1")
+        
+    expected_visits = set([visit["_id"] for visit 
+                  in client._mongo.shrunk_visits.visits.find({"short_url": url})])
+    expected_visits2 = set([visit["_id"] for visit
+                   in client._mongo.shrunk_visits.visits.find({"short_url": url2})])
+    
+    actual_visits = set([visit["_id"] for visit in client.get_visits(url)])
+    actual_visits2 = set([visit["_id"] for visit in client.get_visits(url2)])
+    
+    assert expected_visits == actual_visits
+    assert expected_visits2 == actual_visits2
+    
+    #no visits should give empty list
+    assert client.get_visits(url3) is None
+        
+    #nonexistent should be None
+    assert client.get_visits("hogwash") is None
     
     
+def test_get_num_visits():
+    url = client.create_short_url("https://linux.org", netid = "dude")
+    url2 = client.create_short_url("https://linux.org/other", netid = "dude")
+    url3 = client.create_short_url("https://linux.org/third", netid = "dude")
+
+    num_visits = 3
+    num_visits2 = 4
     
+    for _ in range(num_visits):
+        client.visit(url, "127.0.0.1")
+
+    for _ in range(num_visits2):
+        client.visit(url2, "127.0.0.1")
+    
+    assert client.get_num_visits(url) is num_visits
+    assert client.get_num_visits(url2) is num_visits2
+
+    #if the url exists but no one has visited it should give 0
+    assert client.get_num_visits(url3) is 0
+    
+    #nonexistent should be None
+    assert client.get_num_visits("hogwash") is None
+
+    
+#TODO refactor to remove code duplication?
+#use decorator to auto setup some tests?
