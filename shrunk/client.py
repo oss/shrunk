@@ -395,8 +395,11 @@ class ShrunkClient(object):
         """
         url_db = self._mongo.shrunk_urls
         visit_db = self._mongo.shrunk_visits
-        
-        if short_url is not None and self.is_owner_or_admin(short_url, request_netid):
+
+        can_edit = self.is_owner_or_admin(short_url, request_netid)
+        url_exists = self.get_url_info(short_url) is not None
+
+        if short_url is not None and can_edit and url_exists:
             return {
                 "urlDataResponse": {
                     "nRemoved": url_db.urls.delete_one({
@@ -404,7 +407,7 @@ class ShrunkClient(object):
                     }).deleted_count
                 },
                 "visitDataResponse": {
-                    "nRemoved": visit_db.visits.delete_one({
+                    "nRemoved": visit_db.visits.delete_many({
                         "short_url": short_url
                     }).deleted_count
                 }
