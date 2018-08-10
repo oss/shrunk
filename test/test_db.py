@@ -249,3 +249,37 @@ def test_delete_and_visit():
     assert len(list(client.get_visits(url2))) is 0
     assert get_url(url2) is None
     assert len(visits5) is 0
+
+def test_delete_user_urls():
+    other_url = client.create_short_url("https://linux.org", netid = "dude")
+    long_urls = ["https://microsoft.com", 
+                 "http://microsoft.com", 
+                 "https://microsoft.com/page.aspx"]
+    short_urls = insert_urls(long_urls, "bgates")
+    client.delete_user_urls("bgates")
+    
+    #should remove all of a user's urls
+    for url in short_urls:
+        assert get_url(url) is None
+
+    #should not remove other users urls
+    assert get_url(other_url) is not None
+
+def test_get_url_info():
+    url = client.create_short_url("https://linux.org", netid = "dude", title = "my link")
+
+    #returns info with keys
+    url_info = client.get_url_info(url)
+    assert url_info["timeCreated"] is not None
+    assert url_info["title"] is not None
+    assert url_info["long_url"] is not None
+    assert url_info["netid"] is not None
+    assert url_info["visits"] is not None
+    assert url_info["_id"] is not None
+
+    #nonexistant is none
+    url_info2 = client.get_url_info("hogwash")
+    assert url_info2 is None
+    
+    
+    
