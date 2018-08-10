@@ -508,13 +508,8 @@ class ShrunkClient(object):
           visited, or None if the URL does not exist in the database.
         """
         db = self._mongo.shrunk_urls
-        try:
-            # Can be at most one document
-            [document] = [doc for doc in db.urls.find({"_id" : short_url})]
-            return document["visits"]
-        except ValueError:
-            # There were no values to unpack
-            return None
+        document = db.urls.find_one({"_id" : short_url})
+        return document["visits"] if document else None
 
     def get_all_urls(self, filter_dict=None):
         """Gets all the URLs created.
