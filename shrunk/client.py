@@ -324,7 +324,6 @@ class ShrunkClient(object):
         return response
 
     def modify_url(self, old_short_url=None, admin=False, power_user=False, short_url=None, **new_doc):
-        print(old_short_url, admin, power_user, short_url, new_doc)
         """Modifies an existing URL.
 
         Edits the values of the url `short_url` and replaces them with the
@@ -339,9 +338,9 @@ class ShrunkClient(object):
         """
         db = self._mongo.shrunk_urls
 
-        if self.is_blocked( new_doc["long_url"]):
+        if self.is_blocked(new_doc["long_url"]):
             raise ForbiddenDomainException("That URL is not allowed.")
-
+        
         document = db.urls.find_one({"_id": old_short_url})
 
         if not admin and not power_user:
