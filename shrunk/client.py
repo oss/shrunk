@@ -440,7 +440,7 @@ class ShrunkClient(object):
         """Given a short URL, return information about it.
 
         This returns a dictionary containing the following fields:
-          - url : The original unshrunk URL
+          - long_url : The original unshrunk URL
           - timeCreated: The time the URL was created, expressed as an ISODate
             instance
           - netid : If it exists, the creator of the shortened URL
