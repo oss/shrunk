@@ -4,7 +4,9 @@ Unit tests for the database.
 """
 
 from shrunk import ShrunkClient
+import shrunk
 from mongobox import MongoBox
+from pytest import raises
 
 box=MongoBox()
 client=ShrunkClient(test_client=box.client())
@@ -24,6 +26,9 @@ def teardown_module():
 
 def insert_urls(long_urls, netid):
     return [client.create_short_url(url, netid = netid) for url in long_urls]
+
+def get_url(url):
+    return client._mongo.shrunk_urls.urls.find_one({"_id": url})
 
 #TODO add more testing in the case of blocked urls, already take ones, reserved words, banned user
 #TODO test custom short_urls
@@ -110,10 +115,55 @@ def test_get_domain():
 
 def test_modify():
     """make sure modifing the url sets the new info properly"""
-    pass
     client.block_link("microsoft.com", "ltorvalds")
+    url = client.create_short_url("https://linux.org", netid = "dude", title = "title")
+    custom_url = client.create_short_url("https://linux.org/custom", 
+                                         netid = "dude", short_url = "custom-link")
+    def modify(**newargs):
+        args={
+            "old_short_url": url, 
+            "long_url": "https://linux.org"
+        }
+        args.update(newargs)
+        return client.modify_url(**args)
+
+    def modify_admin(**newargs):
+        args={"admin": True}
+        args.update(newargs)
+        return modify(**args)
+
     #can't edit to blocked urls
+    with raises(shrunk.client.ForbiddenDomainException):
+        modify(long_url = "https://microsoft.com")
+
+    with raises(shrunk.client.ForbiddenDomainException):
+        modify(long_url = "https://ComL3te-MeSs.mIcroSoft.cOm/of-AllofTh3m/4.aspx")
+
     #can't edit to a reserved word
+    with raises(shrunk.client.ForbiddenNameException):
+        modify_admin(short_url = "logout")
+
     #can't edit to an already taken short url
+    with raises(shrunk.client.DuplicateIdException):
+        modify_admin(short_url = "custom-link")
+    
     #can't have custom url if not admin or power user
+    modify_admin(short_url = "new-custom")
+    new_custom1 = get_url("new-custom")
+    assert new_custom1["long_url"] == "https://linux.org"
+
+    modify(power_user = True, short_url = url, old_short_url = "new-custom")
+    new_custom2 = get_url(url)
+    assert new_custom2["long_url"] == "https://linux.org"
+
+    modify(short_url = "fail")
+    new_custom3 = get_url("fail")
+    assert new_custom3 is None
+    
+
     #all new information should be set
+    
+    modify(title = "new-title", long_url = "https://linux.org/other-page.html")
+    new_url = get_url(url)
+    assert new_url["title"] == "new-title"
+    assert new_url["long_url"] == "https://linux.org/other-page.html"
