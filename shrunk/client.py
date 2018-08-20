@@ -99,6 +99,18 @@ class ShrunkCursor(object):
         else:
             return list(self.cursor)
 
+    def __iter__(self):
+        """Gets the results in the cursor in list form.
+
+        After calling this function, the cursor will be exhausted and no more
+        results may be drawn from it.
+
+        :Returns:
+          A list of JSON-compatible dictionaries containing the results from the
+          database.
+        """
+        return self.cursor
+
     def get_last_page(self, links_per_page):
         """Calculates the total number of pages of results.
 
