@@ -199,11 +199,13 @@ def test_delete_and_visit():
     assert get_url(url2)["visits"] is num_visits2
     assert len(visits2) is num_visits2
 
+    def assert_delete(deletion, url, visit):
+        assert deletion["urlDataResponse"]["nRemoved"] is url
+        assert deletion["visitDataResponse"]["nRemoved"] is visit
+
     #only owner or admin can delete not power_user or user
     #user
-    deletion1 = client.delete_url(url, "user")
-    assert deletion1["urlDataResponse"]["nRemoved"] is 0
-    assert deletion1["visitDataResponse"]["nRemoved"] is 0
+    assert_delete(client.delete_url(url, "user"), url=0, visit=0)
     assert get_url(url)["visits"] is num_visits
     #power
     deletion2 = client.delete_url(url, "power_user")
@@ -311,11 +313,11 @@ def test_get_visits():
     assert expected_visits == actual_visits
     assert expected_visits2 == actual_visits2
     
-    #no visits should give empty list
-    assert client.get_visits(url3) is None
+    print(dir(client.get_visits(url3)))
+    assert client.get_visits(url3).count() is 0
         
     #nonexistent should be None
-    assert client.get_visits("hogwash") is None
+    assert client.get_visits("hogwash").count() is 0
     
     
 def test_get_num_visits():
