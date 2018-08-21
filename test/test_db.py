@@ -7,11 +7,12 @@ from shrunk import ShrunkClient
 import shrunk
 from mongobox import MongoBox
 from pytest import raises
+from datetime import datetime
 
 box=MongoBox()
 client=ShrunkClient(test_client=box.client())
 mongoclient=box.client()
-        
+
 def teardown_function():
     mongoclient.drop_database("shrunk_urls")
     mongoclient.drop_database("shrunk_visits")
@@ -78,14 +79,14 @@ def test_blocking():
     urls = insert_urls(long_urls,"bgates")
     for long_url in long_urls:
         assert client.is_blocked(long_url) is False
-    
+        
     # blocking first time should succeed
     assert client.block_link("https://microsoft.com", blocked_by = "ltorvalds") is not None
 
     #links the urls we gave should be blocked
     for long_url in long_urls:
         assert client.is_blocked(long_url) is True
-    
+        
     # the urls also should no longer be in the database after being blocked
     urls_after_block = [client._mongo.shrunk_urls.blocked_urls.find_one(url) for url in urls]
     for url_after_block in urls_after_block:
@@ -136,7 +137,7 @@ def test_modify():
     #can't edit to an already taken short url
     with raises(shrunk.client.DuplicateIdException):
         modify_admin(short_url = "custom-link")
-    
+        
     #can't have custom url if not admin or power user
     modify_admin(short_url = "new-custom")
     new_custom1 = get_url("new-custom")
@@ -180,7 +181,7 @@ def make_urls(num_visits, num_visits2):
 
     for _ in range(num_visits2):
         client.visit(url2, "127.0.0.1")
-    return url, url2
+        return url, url2
 
 def test_visit():
     num_visits = 3
@@ -206,7 +207,7 @@ def test_delete_and_visit():
     def assert_delete(deletion, url, visit):
         assert deletion["urlDataResponse"]["nRemoved"] is url
         assert deletion["visitDataResponse"]["nRemoved"] is visit
-    assert_no_delete = lambda delete: assert_delete(delete, 0, 0)
+        assert_no_delete = lambda delete: assert_delete(delete, 0, 0)
 
     #only owner or admin can delete not power_user or user
     #user
@@ -276,7 +277,7 @@ def test_get_url_info():
     assert url_info2 is None
 
 #todo test get_monthly_visits
-    
+
 def test_get_long_url():
     url = client.create_short_url("https://linux.org", netid = "dude")
     
@@ -291,11 +292,11 @@ def test_get_visits():
     num_visits2 = 4
     url, url2 = make_urls(num_visits, num_visits2)
     url3 = client.create_short_url("https://linux.org/third", netid = "dude")
-        
+    
     expected_visits = set([visit["_id"] for visit 
-                  in client._mongo.shrunk_visits.visits.find({"short_url": url})])
+                           in client._mongo.shrunk_visits.visits.find({"short_url": url})])
     expected_visits2 = set([visit["_id"] for visit
-                   in client._mongo.shrunk_visits.visits.find({"short_url": url2})])
+                            in client._mongo.shrunk_visits.visits.find({"short_url": url2})])
     
     actual_visits = set([visit["_id"] for visit in client.get_visits(url)])
     actual_visits2 = set([visit["_id"] for visit in client.get_visits(url2)])
@@ -305,7 +306,7 @@ def test_get_visits():
     
     print(dir(client.get_visits(url3)))
     assert client.get_visits(url3).count() is 0
-        
+    
     #nonexistent should be None
     assert client.get_visits("hogwash").count() is 0
     
@@ -335,6 +336,43 @@ def test_get_all_urls():
 
     for url in long_urls:
         assert url in all_urls
+        
+def test_get_monthly_visits():
+    num_visits = 3
+    num_visits2 = 4
+    url, url2 = make_urls(num_visits, num_visits2)
+
+    url3 = client.create_short_url("https://linux.org/third", netid = "dude")
+
+    url5 = client.create_short_url("https://linux.org/fifth", netid = "dude")
+    def visit(*args,source_ip="127.0.0.1",**kwargs):
+        return {
+            "short_url" : url5,
+            "source_ip" : source_ip,
+            "time" : datetime.datetime(*args, **kwargs)
+        }
+        
+    client._mongo.shrunk_visits.visits.insert_many([
+        visit(2018,3,3), #same month different year should be different
+        visit(2018,3,3),
+        visit(2018,3,3, source_ip="127.0.0.2"),
+        visit(2015,3,3),
+    ])
     
-#TODO refactor to remove code duplication?
-#use decorator to auto setup some tests?
+    
+    visits = client.get_monthly_visits(url)
+    visits2 = client.get_monthly_visits(url2)
+    #exists but no visits
+    visits3 = client.get_monthly_visits(url3)
+    #does not exist
+    visits4 = cleint.get_monthly_visits("hogwash")
+    
+    visits5 = client.get_monthly_visits(url5)
+    
+    assert len(visits) is 1 # only one months worth of visits
+    assert len(visits2) is 1
+    assert len(visits3) is 0 # no months
+    assert len(visits4) is 0
+    assert len(visits5) is 2
+    
+    assert False
