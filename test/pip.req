@@ -1,3 +1,2 @@
 ipython==2.3.1
 pytest==3.7.1
-mongobox==0.1.6
