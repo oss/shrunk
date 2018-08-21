@@ -477,7 +477,7 @@ class ShrunkClient(object):
         """
         db = self._mongo.shrunk_visits
         aggregation=[match_short_url(short_url)] + monthly_visits_aggregation
-        return db.visits.aggregate(aggregation)
+        return list(db.visits.aggregate(aggregation))
         
 
     def get_long_url(self, short_url):

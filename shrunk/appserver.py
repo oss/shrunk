@@ -384,7 +384,7 @@ def monthly_visits():
 
     else:
         visits=client.get_monthly_visits(url)
-        return json.dumps(visits["result"])
+        return json.dumps(visits)
 
 @app.route("/qr", methods=["GET"])
 @require_login
