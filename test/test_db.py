@@ -5,25 +5,16 @@ Unit tests for the database.
 
 from shrunk import ShrunkClient
 import shrunk
-from mongobox import MongoBox
 from pytest import raises
 from datetime import datetime
 
-box=MongoBox()
-client=ShrunkClient(test_client=box.client())
-mongoclient=box.client()
+client=ShrunkClient(host="unit_db")
+mongoclient=client._mongo
 
 def teardown_function():
     mongoclient.drop_database("shrunk_urls")
     mongoclient.drop_database("shrunk_visits")
     mongoclient.drop_database("shrunk_users")
-
-def setup_module():
-    box.start()
-
-
-def teardown_module():
-    box.stop()
 
 def insert_urls(long_urls, netid):
     return [client.create_short_url(url, netid = netid) for url in long_urls]
@@ -181,7 +172,7 @@ def make_urls(num_visits, num_visits2):
 
     for _ in range(num_visits2):
         client.visit(url2, "127.0.0.1")
-        return url, url2
+    return url, url2
 
 def test_visit():
     num_visits = 3
@@ -207,7 +198,7 @@ def test_delete_and_visit():
     def assert_delete(deletion, url, visit):
         assert deletion["urlDataResponse"]["nRemoved"] is url
         assert deletion["visitDataResponse"]["nRemoved"] is visit
-        assert_no_delete = lambda delete: assert_delete(delete, 0, 0)
+    assert_no_delete = lambda delete: assert_delete(delete, 0, 0)
 
     #only owner or admin can delete not power_user or user
     #user
