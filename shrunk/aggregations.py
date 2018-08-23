@@ -8,30 +8,63 @@ def match_id(id):
 #monthly visits aggregations phases
 group_ips={"$group": {
     "_id": "$source_ip",
-    "times": {
-        "$addToSet": "$time"
-    },
-    "count": { 
-        "$sum": 1
+    "visits": {
+        "$addToSet": "$$ROOT"
     }
 }}
-take_first_visit={"$project": {
-    "time": {
-        "$arrayElemAt": ["$times",0]
-    },
-    "count": 1
+
+
+find_first={"$project": {
+    "visits": {
+        "$reduce": {
+            #input is with visits[1:] beacuse first starts as visits[0]
+            #not removing 0 from input would double include
+            "input": {"$slice": ["$visits", 1, {"$size": "$visits"}]},
+            "initialValue": {"first": {"$arrayElemAt":["$visits", 0]}, "rest": []},
+            "in": {
+                "$cond": {
+                    "if": {"$lt": ["$$this.time", "$$value.first.time"]},
+                    "then": {
+                        "first": "$$this",
+                        "rest": {"$concatArrays": [["$$value.first"], "$$value.rest"]}     
+                    },
+                    "else": {
+                        "first": "$$value.first",
+                        "rest": {"$concatArrays": [["$$this"], "$$value.rest"]}     
+                    }
+                }
+            }
+        }
+    }
 }}
+mark_unqiue={"$project": {
+    "visits": {
+        "$let": {
+            "vars": {
+                "first": {"$mergeObjects": ["$visits.first", 
+                                            {"first_time": 1}]},
+                "rest": {"$map": {
+                    "input": "$visits.rest",
+                    "as": "visit",
+                    "in": {"$mergeObjects": ["$$visit", {"first_time": 0}]}
+                }}
+            },
+            "in": {"$concatArrays": [["$$first"], "$$rest"]}
+        }
+    }
+}}
+unwind_ips={"$unwind": "$visits"}
 #this monthly sort can probably get abstracted and reused
 group_months={"$group": {
     "_id": {
-        "month": {"$month": "$time"},
-        "year" : {"$year" : "$time"}
+        "month": {"$month": "$visits.time"},
+        "year" : {"$year" : "$visits.time"}
     },
     "first_time_visits": {
-        "$sum": 1
+        "$sum": "$visits.first_time"
     },
     "all_visits": {
-        "$sum": "$count"
+        "$sum": 1
     }
 }}
 make_sortable={"$project": {
@@ -48,5 +81,9 @@ clean_results={"$project": {
     "first_time_visits": 1,
     "all_visits": 1
 }}
-monthly_visits_aggregation=[group_ips, take_first_visit, group_months, #process data
+#TODO picks random first one use reduce to separate first from rest
+monthly_visits_aggregation=[group_ips, find_first, mark_unqiue, unwind_ips, #mark the first_time_visits
+                            group_months, #break into months
                             make_sortable, chronological_sort, clean_results] #sort
+#omonthly_visits_aggregation=[group_ips, take_first_visit, group_months, #process data
+#                            make_sortable, chronological_sort, clean_results] #sort
