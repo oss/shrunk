@@ -328,42 +328,56 @@ def test_get_all_urls():
     for url in long_urls:
         assert url in all_urls
         
+def assert_visit(visit, all_visits, first_time, month=None, year=None):
+    """util for testing monthly aggregation"""
+    assert visit["all_visits"] is all_visits
+    assert visit["first_time_visits"] is first_time
+    if month:
+        assert visit["_id"]["month"] is month
+    if year: 
+        assert visit["_id"]["year"] == year
+
 def test_get_monthly_visits():
     num_visits = 3
     num_visits2 = 4
     url, url2 = make_urls(num_visits, num_visits2)
 
     url3 = client.create_short_url("https://linux.org/third", netid = "dude")
-
     url5 = client.create_short_url("https://linux.org/fifth", netid = "dude")
-    def visit(*args,source_ip="127.0.0.1",**kwargs):
-        return {
-            "short_url" : url5,
-            "source_ip" : source_ip,
-            "time" : datetime.datetime(*args, **kwargs)
-        }
-        
-    client._mongo.shrunk_visits.visits.insert_many([
-        visit(2018,3,3), #same month different year should be different
-        visit(2018,3,3),
-        visit(2018,3,3, source_ip="127.0.0.2"),
-        visit(2015,3,3),
-    ])
-    
     
     visits = client.get_monthly_visits(url)
     visits2 = client.get_monthly_visits(url2)
     #exists but no visits
     visits3 = client.get_monthly_visits(url3)
     #does not exist
-    visits4 = cleint.get_monthly_visits("hogwash")
-    
-    visits5 = client.get_monthly_visits(url5)
-    
+    visits4 = client.get_monthly_visits("hogwash")
+
     assert len(visits) is 1 # only one months worth of visits
     assert len(visits2) is 1
     assert len(visits3) is 0 # no months
     assert len(visits4) is 0
-    assert len(visits5) is 2
     
-    assert False
+    assert_visit(visits[0], num_visits, first_time = 1)
+    assert_visit(visits2[0], num_visits2, first_time = 1)
+
+def test_monthly_visits_hard():
+    url5 = client.create_short_url("https://linux.org/fifth", netid = "dude")
+    def visit(year, month, day, source_ip="127.0.0.1"):
+        return {
+            "short_url" : url5,
+            "source_ip" : source_ip,
+            "time" : datetime(year=year, month=month, day=day)
+        }
+        
+    client._mongo.shrunk_visits.visits.insert_many([
+        visit(2018,3,3), #same month different year should be different
+        visit(2018,3,3),
+        visit(2018,3,3, source_ip="127.0.0.2"),
+        visit(2018,4,4),
+        visit(2015,3,3)
+    ])
+    visits5 = client.get_monthly_visits(url5)
+    
+    assert_visit(visits5[0], 1, first_time = 1, month = 3, year = 2015)
+    assert_visit(visits5[1], 3, first_time = 1, month = 3, year = 2018)
+    assert_visit(visits5[2], 1, first_time = 0, month = 4, year = 2018)
