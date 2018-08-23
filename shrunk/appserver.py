@@ -363,7 +363,6 @@ def get_stats():
         url=request.args["url"]
         client=get_db_client(app, g)
         template_data["url_info"]=client.get_url_info(url)
-        template_data["monthly_visits"]=client.get_monthly_visits(url)["result"]
     else:
         template_data["missing_url"]=True
 
