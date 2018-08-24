@@ -81,9 +81,7 @@ clean_results={"$project": {
     "first_time_visits": 1,
     "all_visits": 1
 }}
-#TODO picks random first one use reduce to separate first from rest
+
 monthly_visits_aggregation=[group_ips, find_first, mark_unqiue, unwind_ips, #mark the first_time_visits
-                            group_months, #break into months
-                            make_sortable, chronological_sort, clean_results] #sort
-#omonthly_visits_aggregation=[group_ips, take_first_visit, group_months, #process data
-#                            make_sortable, chronological_sort, clean_results] #sort
+    group_months, #break into months
+    make_sortable, chronological_sort, clean_results] #sort
