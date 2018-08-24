@@ -444,7 +444,7 @@ class ShrunkClient(object):
         """
         db = self._mongo.shrunk_urls
         if netid is None:
-            return {"nRemoved" : 0}
+            return {"ok": 0, "n" : 0}
         else:
             return db.urls.remove({"netid" : netid})
 
@@ -478,7 +478,6 @@ class ShrunkClient(object):
         db = self._mongo.shrunk_visits
         aggregation=[match_short_url(short_url)] + monthly_visits_aggregation
         return list(db.visits.aggregate(aggregation))
-        
 
     def get_long_url(self, short_url):
         """Given a short URL, returns the long URL.
@@ -551,7 +550,7 @@ class ShrunkClient(object):
         :Returns:
           A ShrunkCursor containing the results of the operation.
         """
-        return self.get_all_urls(filter_dict={'netid' : netid})
+        return self.get_all_urls({"netid": netid})
 
     def search(self, search_string, netid=None):
         """Search for URLs containing the given search string.
