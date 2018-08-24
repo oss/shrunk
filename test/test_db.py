@@ -242,7 +242,10 @@ def test_delete_user_urls():
                  "http://microsoft.com", 
                  "https://microsoft.com/page.aspx"]
     short_urls = insert_urls(long_urls, "bgates")
-    client.delete_user_urls("bgates")
+    deletion = client.delete_user_urls("bgates")
+    print(deletion)
+    assert deletion["n"] is len(long_urls)
+    assert deletion["ok"]
     
     #should remove all of a user's urls
     for url in short_urls:
@@ -250,6 +253,16 @@ def test_delete_user_urls():
 
     #should not remove other users urls
     assert get_url(other_url) is not None
+
+    #not giving a netid shouldn't delete anything
+    deletion2 = client.delete_user_urls(None)
+    assert deletion2["n"] is 0
+    assert not deletion2["ok"] 
+
+    #deleting form a user with no urls shouldn't delete anything
+    deletion2 = client.delete_user_urls("bgates")
+    assert deletion2["n"] is 0
+    assert deletion2["ok"]
 
 def test_get_url_info():
     url = client.create_short_url("https://linux.org", netid = "dude", title = "my link")
@@ -267,7 +280,6 @@ def test_get_url_info():
     url_info2 = client.get_url_info("hogwash")
     assert url_info2 is None
 
-#todo test get_monthly_visits
 
 def test_get_long_url():
     url = client.create_short_url("https://linux.org", netid = "dude")
@@ -377,7 +389,93 @@ def test_monthly_visits_hard():
         visit(2015,3,3)
     ])
     visits5 = client.get_monthly_visits(url5)
-    
+
     assert_visit(visits5[0], 1, first_time = 1, month = 3, year = 2015)
     assert_visit(visits5[1], 3, first_time = 1, month = 3, year = 2018)
     assert_visit(visits5[2], 1, first_time = 0, month = 4, year = 2018)
+
+def test_get_urls():
+    #calling list on get_urls or iterating over it will consume it and
+    #you won't be able to list() it or iterate on it again
+    #<rolls eyes>
+    long_urls = ["https://microsoft.com", 
+                 "http://microsoft.com", 
+                 "https://microsoft.com/page.aspx"]
+    uname="bgates"
+    short_urls = insert_urls(long_urls, uname)
+     
+    user_urls = client.get_urls(uname)
+    user_short_urls = {url["_id"] for url in user_urls}
+    
+    for user_url in user_urls:
+        assert user_url["netid"] is uname
+
+    for url in short_urls:
+        assert url in user_short_urls
+
+def test_search():
+    def shortURL(url, title):
+        return client.create_short_url(url, netid = "shrunk_test", title=title)
+    url = shortURL("https://linux.org", "one") 
+    url2 = shortURL("https://thing.org", "other") 
+    url3 = shortURL("https://thing.com", "another") 
+    
+    def assert_title(title, search_result):
+        assert title in {link["title"] for link in search_result}
+
+    def assert_id(_id, search_result):
+        assert _id in {link["_id"] for link in client.search("LiNuX")}
+
+    #match url or title
+    assert_id(url, client.search("linux"))
+    assert_title("one", client.search("one"))
+
+    #case insensitive
+    assert_title("one", client.search("oNe"))
+    assert_title("one", client.search("ONE"))
+    assert_id(url, client.search("LiNuX"))
+    assert_id(url, client.search("LINUX"))
+
+    #mutliple in a result
+    result = {link["_id"] for link in client.search("org")}
+    assert url in result
+    assert url2 in result
+
+    #mutliple in title
+    result2 = {link["title"] for link in client.search("otHer")}
+    assert "other" in result2
+    assert "another" in result2
+
+    #search by netid
+    result3 = {link["_id"] for link in client.search("shrunk_test")}
+    assert url in result3
+    assert url2 in result3
+    assert url3 in result3
+
+def test_search_netid():
+    url = client.create_short_url("https://test.com", netid = "Billie Jean", title = "title")
+    url2 = client.create_short_url("https://test.com", netid = "Knott MyLova", title = "title")
+
+    def assert_len(length, keyword, netid=None):
+        assert len(list(client.search(keyword, netid))) is length
+
+    def assert_search(keyword, netid, url):
+        assert list(client.search(keyword, netid))[0]["_id"] == url
+
+    #searches with netid should screen search results withought that netid
+    assert_len(1, "test", "Billie Jean")
+    assert_len(1, "test", "Knott MyLova")
+
+    assert_len(1, "title", "Billie Jean")
+    assert_len(1, "title", "Knott MyLova")
+
+    #searches without netid should have both
+    assert_len(2, "test")
+    assert_len(2, "title")
+    
+    #users should get their own links
+    assert_search("test", "Billie Jean", url)
+    assert_search("title", "Billie Jean", url)
+
+    assert_search("test", "Knott MyLova", url2)
+    assert_search("title", "Knott MyLova", url2)
