@@ -479,3 +479,5 @@ def test_search_netid():
 
     assert_search("test", "Knott MyLova", url2)
     assert_search("title", "Knott MyLova", url2)
+
+
