@@ -37,17 +37,23 @@ app.jinja_env.globals.update(formattime=formattime)
 # Shibboleth handler
 @ext.login_handler
 def login(user_info):
-    if user_info.get("employeeType") not in app.config["VALID_EMPLOYEE_TYPES"] and user_info.get("netid") not in app.config["USER_WHITELIST"]:
-        return redirect('/unauthorized')
-    session['user'] = user_info
-    return redirect('/')
+    client = get_client(app, g)
+    if user_info.get("employeeType") not in app.config["VALID_EMPLOYEE_TYPES"] \
+    and user_info.get("netid") not in app.config["USER_WHITELIST"] \
+    and client.is_blacklisted(user_info.get("netid")):
+        return redirect("/unauthorized")
+    session["user"] = user_info
+    return redirect("/")
 
 #decorator to check if user is logged in
 def require_login(func): 
+    client = get_client(app, g)
     @wraps(func)
     def wrapper(*args, **kwargs):
         if not 'user' in session:
             return redirect("/shrunk-login")
+        if client.is_blacklisted(session["user"].get("netid")):
+            return redirect("/unauthorized")
         return func(*args, **kwargs)
     return wrapper
 
@@ -57,6 +63,8 @@ def require_admin(func):
     def wrapper(*args, **kwargs):
         client = get_db_client(app, g)
         netid = session["user"].get("netid")
+        if client.is_blacklisted(netid):
+            return redirect("/unauthorized")
         if not client.is_admin(netid):
             return redirect("/")
         return func(*args, **kwargs)

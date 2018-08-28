@@ -617,7 +617,7 @@ class ShrunkClient(object):
             return False
         return True
 
-    def ban_user(self, netid, banned_by):
+    def blacklist_user(self, netid, banned_by):
         """Adds a user to the blacklist collection.
 
         :Parameters:
@@ -635,7 +635,7 @@ class ShrunkClient(object):
             return db.blacklist.update({'netid' : netid}, update, upsert=False,
                     multi=False)
 
-    def unban_user(self, netid):
+    def unblacklist_user(self, netid):
         """Removes a user from the blacklist collection.
 
         :Parameters:
