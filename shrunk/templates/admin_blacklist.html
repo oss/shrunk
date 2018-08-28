@@ -9,10 +9,10 @@
     {% endif %}
 
     <article class="add-group clearfix">
-        <h3>Ban a User</h3>
-        <form method="POST" action="{{ url_for('admin_ban_user') }}" name="blacklist">
+        <h3>Blacklist a User</h3>
+        <form method="POST" action="{{ url_for('admin_blacklist_user') }}" name="blacklist">
             <input name="netid" type="text" class="form-control" /> <br />
-            <input class="shrink-button btn btn-default" type="submit" value="BAN" /> <br />
+            <input class="shrink-button btn btn-default" type="submit" value="BLACKLIST" /> <br />
         </form>
     </article>
 
@@ -21,7 +21,7 @@
         <article class="link-group clearfix">
             <div class="link-info" style="clear: both;">
                 <div class="hover-controls">
-                    <form method="POST" action="{{ url_for('admin_unban_user') }}">
+                    <form method="POST" action="{{ url_for('admin_unblacklist_user') }}">
                         <input type="hidden" id="netid" name="netid" value="{{ user['netid'] }}" />
                         <input class="shrunk-button btn btn-default" type="submit" value="DELETE" />
                     </form>
@@ -30,7 +30,7 @@
                     {{ user['netid'] }}
                 </div>
                 <div class="bottom-row">
-                    Blocked by: {{ ','.join(user['banned_by']) }}
+                    Blacklisted by: {{ ','.join(user['banned_by']) }}
                 </div>
             </div>
         </article>
