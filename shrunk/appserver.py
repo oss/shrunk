@@ -37,7 +37,7 @@ app.jinja_env.globals.update(formattime=formattime)
 # Shibboleth handler
 @ext.login_handler
 def login(user_info):
-    client = get_client(app, g)
+    client = get_db_client(app, g)
     if user_info.get("employeeType") not in app.config["VALID_EMPLOYEE_TYPES"] \
     and user_info.get("netid") not in app.config["USER_WHITELIST"] \
     and client.is_blacklisted(user_info.get("netid")):
@@ -47,9 +47,9 @@ def login(user_info):
 
 #decorator to check if user is logged in
 def require_login(func): 
-    client = get_client(app, g)
     @wraps(func)
     def wrapper(*args, **kwargs):
+        client = get_db_client(app, g)
         if not 'user' in session:
             return redirect("/shrunk-login")
         if client.is_blacklisted(session["user"].get("netid")):
@@ -690,7 +690,7 @@ def admin_blacklist():
 @app.route("/admin/blacklist/ban", methods=["GET", "POST"])
 @require_login
 @require_admin
-def admin_ban_user():
+def admin_blacklist_user():
     """Ban a user from using the web application.
 
     Adds a user to the blacklist.
@@ -702,7 +702,7 @@ def admin_ban_user():
     form = BlacklistUserForm(request.form)
     if request.method == "POST":
         if form.validate():
-            client.ban_user(form.netid.data, netid)
+            client.blacklist_user(form.netid.data, netid)
         else:
             # TODO Catch validation errors
             pass
@@ -710,10 +710,10 @@ def admin_ban_user():
     return redirect("/admin/blacklist")
 
 
-@app.route("/admin/blacklist/unban", methods=["GET", "POST"])
+@app.route("/admin/blacklist/unblacklist", methods=["GET", "POST"])
 @require_login
 @require_admin
-def admin_unban_user():
+def admin_unblacklist_user():
     """Unban a user from the blacklist.
 
     Removes a user from the blacklist, restoring their previous privileges.
@@ -723,6 +723,6 @@ def admin_unban_user():
     netid = session['user'].get('netid')
 
     if request.method == "POST":
-        client.unban_user(request.form["netid"])
+        client.unblacklist_user(request.form["netid"])
 
     return redirect("/admin/blacklist")
