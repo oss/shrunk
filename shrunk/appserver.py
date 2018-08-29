@@ -39,21 +39,7 @@ app.jinja_env.globals.update(formattime=formattime)
 #setup handlers and stuff for admin control panel type objects
 #adds routes for /roles/admin /roles/blacklisted /roles/power-user and /roles/blocked-urls
 roles.init(app)
-roles.new("test", lambda netid: "DEV" in netid)
-is_admin=partial(roles.check, "admin")
-roles.new("admin", is_admin)
-roles.new("blocked_url", is_admin, validators.url, custom_text = {
-    "title": "Blocked urls",
-    "invalid": "bad url",
-    "grant_title": "Block a url:",
-    "grant_button": "BLOCK",
-    "revoke_title": "Unblock a url",
-    "revoke_button": "UNBLOCK",
-    "empty": "there are currently no blocked urls", 
-    "granted_by": "blocked by"
-})
-
-
+print(roles.qualified_for)
 
 # Shibboleth handler
 @ext.login_handler
@@ -109,6 +95,8 @@ if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
         session["all_users"] = "0"
         session["sortby"] = "0"
         client=get_db_client(app, g)
+        if not roles.check("admin", "DEV_ADMIN"):
+            roles.grant("admin", "Justice League", "DEV_ADMIN", force=True)
         if not client.is_admin('DEV_ADMIN'):
             client.add_admin('DEV_ADMIN', 'Justice League') 
         return redirect('/')
@@ -119,6 +107,8 @@ if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
         session["all_users"] = "0"
         session["sortby"] = "0"
         client = get_db_client(app, g)
+        if not roles.check("power_user", "DEV_PWR_USER"):
+            roles.grant("power_user", "Admin McAdminface", "DEV_PWR_USER", force=True)
         if not client.is_power_user("DEV_PWR_USER"):
             client.add_power_user("DEV_PWR_USER", "Admin McAdminface")
         return redirect("/")
