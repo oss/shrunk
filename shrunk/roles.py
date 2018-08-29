@@ -1,14 +1,15 @@
 from pymongo import MongoClient
 from shrunk.util import require_login
-from functools import wraps
+from functools import wraps, partial
 from flask import session, redirect, render_template, url_for, request
+import validators
 
 #hash of qualifier functions to see if user is allowed to give new entities that role
 qualified_for = {}
 valid_entity_for = {}
 form_text = {}
 #mongo coll to persist the roles data
-roles=None
+grants=None
 
 class NotQualified(Exception):
     pass
@@ -45,27 +46,27 @@ def new(role, qualifier_func, validator_func = lambda e: e!="", custom_text={}):
     
 
 
-def grant(role, grantor, grantee):
-    if not qualified_for[role](grantor):
+def grant(role, grantor, grantee, force=False):
+    if not qualified_for[role](grantor) and not force:
         raise NotQualified()
     if not valid_entity_for[role](grantee):
         raise InvalidEntity()
-    roles.insert({"role": role, "entity": grantee, "granted_by": grantor})
+    grants.insert({"role": role, "entity": grantee, "granted_by": grantor})
         
 def check(role, entity):
-    if roles.find({"role": role, "entity": entity}):
+    if grants.find_one({"role": role, "entity": entity}):
         return True
     return False
 
 def list_all(role, lister):
     if not qualified_for[role](lister):
         raise NotQualified()
-    return list(roles.find({"role": role}))
+    return list(grants.find({"role": role}))
 
 def revoke(role, revoker, revokee):
     if not qualified_for[role](revoker):
         raise NotQualified()
-    roles.remove({"role": role, "entity": revokee})
+    grants.remove({"role": role, "entity": revokee})
 
 def require_qualified(func):
     @wraps(func)
@@ -76,9 +77,28 @@ def require_qualified(func):
             new_args=[role]+list(args)
             return func(*new_args, **kwargs)
         else:
-            print("not qualified", session["user"])
             return redirect("/")
     return wrapper
+
+def require(role):
+    """
+    force a somone to have a role to see an enpoint
+    @app.route("/my/secret/route")
+    @roles.require("cool_person")
+    def secret_route():
+       return "top secret stuff"
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if role not in qualified_for:
+                return redirect("/")
+            if qualified_for[role](session["user"]["netid"]):
+                return func(*args, **kwargs)
+            else:
+                return redirect("/")
+        return wrapper
+    return decotrator
         
 
 
@@ -89,8 +109,8 @@ def init(app, mongo_client = None):
         #the server. idk why it behaves like this but if you remove the next like the
         #server does not respond. pymongo3.6 aug 2018
         mongo_client.admin.command("ismaster")
-    global roles
-    roles = mongo_client.shrunk_roles.roles
+    global grants
+    grants = mongo_client.shrunk_roles.grants
     
     #handlers
     @app.route("/roles/<role>/", methods=["POST"])
@@ -115,14 +135,38 @@ def init(app, mongo_client = None):
         netid = session["user"]["netid"]
         entity = request.form["entity"]
         revoke(role, netid, entity)
-        print(entity)
         return redirect("/roles/"+role)
 
     @app.route("/roles/<role>/", methods=["GET"])
     @require_login(app)
     @require_qualified
     def role_list(role):
-        print(form_text)
         return render_template("role.html", role = role,
                                grants = list_all(role, session["user"]["netid"]),
                                **form_text[role])
+
+    #setup roles
+    is_admin=partial(check, "admin")
+    new("admin", is_admin, custom_text = {"title": "Admins"})
+    new("power_user", is_admin, custom_text = {"title": "Power Users"})
+    new("blacklisted", is_admin, custom_text = {
+        "title": "Blacklisted Users",
+        "grant_title": "Blacklist a user:",
+        "grant_button": "BLACKLIST",
+        "revoke_title": "Unblacklist a user",
+        "revoke_button": "UNBLACKLIST",
+        "empty": "there are currently no blacklisted users", 
+        "granted_by": "blacklisted by"
+        
+    })
+    new("blocked_url", is_admin, validators.url, custom_text = {
+        "title": "Blocked urls",
+        "invalid": "bad url",
+        "grant_title": "Block a url:",
+        "grant_button": "BLOCK",
+        "revoke_title": "Unblock a url",
+        "revoke_button": "UNBLOCK",
+        "empty": "there are currently no blocked urls", 
+        "granted_by": "blocked by"
+    })
+
