@@ -6,14 +6,17 @@ from flask import Flask, render_template, make_response, request, redirect, g, s
 from flask_sso import SSO
 
 from shrunk.forms import BlockLinksForm, LinkForm, BlacklistUserForm, AddAdminForm
-from shrunk.util import get_db_client, set_logger, formattime
+from shrunk.util import get_db_client, set_logger, formattime, require_login, require_admin
 from shrunk.filters import strip_protocol, ensure_protocol
+import validators
 
 from shrunk.client import BadShortURLException, ForbiddenDomainException
+import shrunk.roles as roles
 
-from functools import wraps
+from functools import wraps, partial
 
 import json
+
 
 # Create application
 app = Flask(__name__)
@@ -33,6 +36,24 @@ ext = SSO(app=app)
 # Allows us to use the function in our templates
 app.jinja_env.globals.update(formattime=formattime)
 
+#setup handlers and stuff for admin control panel type objects
+#adds routes for /roles/admin /roles/blacklisted /roles/power-user and /roles/blocked-urls
+roles.init(app)
+roles.new("test", lambda netid: "DEV" in netid)
+is_admin=partial(roles.check, "admin")
+roles.new("admin", is_admin)
+roles.new("blocked_url", is_admin, validators.url, custom_text = {
+    "title": "Blocked urls",
+    "invalid": "bad url",
+    "grant_title": "Block a url:",
+    "grant_button": "BLOCK",
+    "revoke_title": "Unblock a url",
+    "revoke_button": "UNBLOCK",
+    "empty": "there are currently no blocked urls", 
+    "granted_by": "blocked by"
+})
+
+
 
 # Shibboleth handler
 @ext.login_handler
@@ -43,33 +64,7 @@ def login(user_info):
     and client.is_blacklisted(user_info.get("netid")):
         return redirect("/unauthorized")
     session["user"] = user_info
-    return redirect("/")
-
-#decorator to check if user is logged in
-def require_login(func): 
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        client = get_db_client(app, g)
-        if not 'user' in session:
-            return redirect("/shrunk-login")
-        if client.is_blacklisted(session["user"].get("netid")):
-            return redirect("/unauthorized")
-        return func(*args, **kwargs)
-    return wrapper
-
-#decorator to check if user is an admin
-def require_admin(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        client = get_db_client(app, g)
-        netid = session["user"].get("netid")
-        if client.is_blacklisted(netid):
-            return redirect("/unauthorized")
-        if not client.is_admin(netid):
-            return redirect("/")
-        return func(*args, **kwargs)
-    return wrapper
-   
+    return redirect("/")   
 
 @app.route('/logout')
 def logout():
@@ -168,7 +163,7 @@ except KeyError:
 
 
 @app.route("/")
-@require_login
+@require_login(app)
 def render_index(**kwargs):
     """Renders the homepage.
 
@@ -307,7 +302,7 @@ def render_index(**kwargs):
     return resp
 
 @app.route("/add", methods=["POST"])
-@require_login
+@require_login(app)
 def add_link():
     """Adds a new link for the current user. and handles errors"""
     # default is no .xxx links
@@ -345,7 +340,7 @@ def add_link():
         return add_url_template(errors = form.errors)
 
 @app.route("/add", methods=["GET"])
-@require_login
+@require_login(app)
 def add_link_form():
     """Displays link form"""
     client = get_db_client(app, g)
@@ -360,7 +355,7 @@ def add_link_form():
     return render_template("add.html", **template)
 
 @app.route("/stats", methods=["GET"])
-@require_login
+@require_login(app)
 def get_stats():
     #should we require owner or admin to view?
     template_data={"url_info": {}, 
@@ -377,7 +372,7 @@ def get_stats():
     return render_template("stats.html", **template_data)
 
 @app.route("/monthly_visits", methods=["GET"])
-@require_login
+@require_login(app)
 def monthly_visits():
     url=request.args["url"]
     client=get_db_client(app, g)
@@ -394,7 +389,7 @@ def monthly_visits():
         return json.dumps(visits)
 
 @app.route("/qr", methods=["GET"])
-@require_login
+@require_login(app)
 def qr():
     kwargs={"print": "print" in request.args}
     return render_template("qr.html", **kwargs)
@@ -402,7 +397,7 @@ def qr():
 
 
 @app.route("/delete", methods=["GET", "POST"])
-@require_login
+@require_login(app)
 def delete_link():
     """Deletes a link."""
 
@@ -417,7 +412,7 @@ def delete_link():
 
 
 @app.route("/edit", methods=["POST"])
-@require_login
+@require_login(app)
 def edit_link():
     """Edits a link.
 
@@ -465,7 +460,7 @@ def edit_link():
         return edit_url_template(errors=form.errors, **info)
 
 @app.route("/edit", methods=["GET"])
-@require_login
+@require_login(app)
 def edit_link_form():
     netid = session['user'].get('netid')
     client = get_db_client(app, g)
@@ -485,8 +480,8 @@ def edit_link_form():
 
 
 @app.route("/admin/manage-admin")
-@require_login
-@require_admin
+@require_login(app)
+@require_admin(app)
 def admin_manage():
     """Renders a list of administrators.
 
@@ -505,8 +500,8 @@ def admin_manage():
 
 
 @app.route("/admin/manage-admin/add", methods=["GET", "POST"])
-@require_login
-@require_admin
+@require_login(app)
+@require_admin(app)
 def admin_add():
     """Add a new administrator"""
  
@@ -524,8 +519,8 @@ def admin_add():
     return redirect("/admin/manage-admin")
 
 @app.route("/admin/manage-admin/delete", methods=["GET", "POST"])
-@require_login
-@require_admin
+@require_login(app)
+@require_admin(app)
 def admin_delete():
     """Delete an existing administrator."""
 
@@ -539,8 +534,8 @@ def admin_delete():
 
 
 @app.route("/admin/manage-power-user")
-@require_login
-@require_admin
+@require_login(app)
+@require_admin(app)
 def power_user_manage():
     """Renders a list of Power Users.
 
@@ -559,8 +554,8 @@ def power_user_manage():
 
 
 @app.route("/admin/manage-power-user/add", methods=["GET", "POST"])
-@require_login
-@require_admin
+@require_login(app)
+@require_admin(app)
 def power_user_add():
     """Add new power user"""
 
@@ -577,8 +572,8 @@ def power_user_add():
     return redirect("/admin/manage-power-user")
 
 @app.route("/admin/manage-power-user/delete", methods=["GET", "POST"])
-@require_login
-@require_admin
+@require_login(app)
+@require_admin(app)
 def power_user_delete():
     """Delete an existing power user."""
 
@@ -594,8 +589,8 @@ def power_user_delete():
 
 
 @app.route("/admin/links/block", methods=["GET", "POST"])
-@require_login
-@require_admin
+@require_login(app)
+@require_admin(app)
 def admin_block_link():
     """Block a link from being shrunk.
 
@@ -619,8 +614,8 @@ def admin_block_link():
 
 
 @app.route("/admin/links/unblock", methods=["GET", "POST"])
-@require_login
-@require_admin
+@require_login(app)
+@require_admin(app)
 def admin_unblock_link():
     """Remove a link from the banned links list."""
 
@@ -634,8 +629,8 @@ def admin_unblock_link():
 
 
 @app.route("/admin/links", methods=["GET", "POST"])
-@require_login
-@require_admin
+@require_login(app)
+@require_admin(app)
 def admin_links():
     """Renders the administrator link banlist.
 
@@ -653,8 +648,8 @@ def admin_links():
 
 
 @app.route("/admin/")
-@require_login
-@require_admin
+@require_login(app)
+@require_admin(app)
 def admin_panel():
     """Renders the administrator panel.
 
@@ -669,8 +664,8 @@ def admin_panel():
 
 
 @app.route("/admin/blacklist", methods=["GET", "POST"])
-@require_login
-@require_admin
+@require_login(app)
+@require_admin(app)
 def admin_blacklist():
     """Renders the administrator blacklist.
 
@@ -688,8 +683,8 @@ def admin_blacklist():
 
 
 @app.route("/admin/blacklist/ban", methods=["GET", "POST"])
-@require_login
-@require_admin
+@require_login(app)
+@require_admin(app)
 def admin_blacklist_user():
     """Ban a user from using the web application.
 
@@ -711,8 +706,8 @@ def admin_blacklist_user():
 
 
 @app.route("/admin/blacklist/unblacklist", methods=["GET", "POST"])
-@require_login
-@require_admin
+@require_login(app)
+@require_admin(app)
 def admin_unblacklist_user():
     """Unban a user from the blacklist.
 
