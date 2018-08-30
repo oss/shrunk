@@ -6,6 +6,8 @@ import random
 import string
 import re
 import pymongo
+import shrunk.roles as roles
+from shrunk.stringutil import get_domain
 from shrunk.aggregations import match_short_url, monthly_visits_aggregation
 
 class BadShortURLException(Exception):
@@ -247,32 +249,6 @@ class ShrunkClient(object):
             return db.urls.find({"netid": netid}).count()
         else:
             return db.urls.count()
-
-    def get_domain(self, long_url):
-        db = self._mongo.shrunk_urls
-        protocol_location = long_url.find("://")
-        base_url = long_url[(protocol_location + 3):] # Strip any protocol
-        if protocol_location < 0:
-            base_url = long_url
-
-        slash = base_url.find("/")
-        domain = base_url[: base_url.find("/")] # Strip path
-        if slash < 0:
-            domain = base_url
-        # url can contain a-z a hyphen or 0-9 and is seprated by dots.
-        # this regex gets rid of any subdomains
-        # memes.facebook.com matches facebook.com
-        # 1nfo3-384ldnf.doo544-f8.cme-02k4.tk matches cme-02k4.tk
-        match = re.search("([a-z\-0-9]+\.[a-z\-0-9]+)$", domain, re.IGNORECASE)
-        #search for domain if we can't match for a top domain
-        
-        return  match.group().lower() if match else domain
-        
-
-    def is_blocked(self, long_url):
-        db = self._mongo.shrunk_urls
-        return bool(db.blocked_urls.find_one({"url": {"$regex": "%s*" % self.get_domain(long_url)}}))
-            
 
     def create_short_url(self, long_url, short_url=None, netid=None, title=None):
         """Given a long URL, create a new short URL.
@@ -648,6 +624,15 @@ class ShrunkClient(object):
         else:
             return False
 
+    def get_blacklisted_users(self):
+        """Retrieves the list of banned users.
+
+        :Returns:
+          A list of dicts containing information about each blacklisted NetID.
+        """
+        db = self._mongo.shrunk_users
+        return list(db.blacklist.find())
+
     def is_power_user(self, netid):
         """ Determines if user is power user.
             Power users can create vanity URLS, but do not have admin privileges
@@ -740,14 +725,10 @@ class ShrunkClient(object):
         db = self._mongo.shrunk_users
         return list(db.administrators.find())
 
-    def get_blocked_links(self):
-        """Retrieves the list of blocked links.
-
-        :Returns:
-          A list of dicts containing information about each blocked link.
-        """
+    def is_blocked(self, long_url):
         db = self._mongo.shrunk_urls
-        return list(db.blocked_urls.find())
+        return bool(db.blocked_urls.find_one({"url": {"$regex": "%s*" % get_domain(long_url)}}))
+
 
     def block_link(self, url, blocked_by):
         """Adds a link to the blocked_urls collection.
@@ -758,9 +739,9 @@ class ShrunkClient(object):
         """
         db = self._mongo.shrunk_urls
         if not self.is_blocked(url):
-            res = db.blocked_urls.insert({'url': self.get_domain(url), 'blocked_by': blocked_by})
+            res = db.blocked_urls.insert({'url': get_domain(url), 'blocked_by': blocked_by})
             # Find any urls that should be deleted
-            db.urls.remove({"long_url": {"$regex": "%s*" % self.get_domain(url)}})
+            db.urls.remove({"long_url": {"$regex": "%s*" % get_domain(url)}})
             return res
 
     def allow_link(self, url):
@@ -772,14 +753,15 @@ class ShrunkClient(object):
         db = self._mongo.shrunk_urls
         return db.blocked_urls.remove({'url' : { '$regex' : url }})
 
-    def get_blacklisted_users(self):
-        """Retrieves the list of banned users.
+    def get_blocked_links(self):
+        """Retrieves the list of blocked links.
 
         :Returns:
-          A list of dicts containing information about each blacklisted NetID.
+          A list of dicts containing information about each blocked link.
         """
-        db = self._mongo.shrunk_users
-        return list(db.blacklist.find())
+        db = self._mongo.shrunk_urls
+        return list(db.blocked_urls.find())
+
 
     @staticmethod
     def _generate_unique_key():
@@ -807,3 +789,13 @@ class ShrunkClient(object):
             integer //= length
 
         return "".join(reversed(result))
+
+def add_shrunk_client(app):
+    """Monkey Paches a method to get the singleton shrunk client instance"""
+    def get_shrunk():
+        if not hasattr(app, "_shrunk_client"):
+            app._shrunk_client = ShrunkClient(app.config["DB_HOST"], 
+                                               app.config["DB_PORT"])
+        return app._shrunk_client
+    app.get_shrunk=get_shrunk
+    
