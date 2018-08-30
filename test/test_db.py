@@ -148,7 +148,7 @@ def test_is_owner_or_admin():
     """test utility function to see if somone can modify a url"""
     
     url = client.create_short_url("https://linux.org", netid = "dude")
-    client._mongo.shrunk_users.administrators.insert({"netid": "dnolen", "added_by": "rhickey"})
+    roles.grants.insert({"role": "admin", "entity": "dnolen", "granted_by": "rhickey"})
     
     assert client.is_owner_or_admin(url, "dude") is True
     assert client.is_owner_or_admin(url, "dnolen") is True
@@ -183,8 +183,9 @@ def test_visit():
 
 def test_delete_and_visit():
     """test utility function to see if somone can modify a url"""
-    client._mongo.shrunk_users.administrators.insert({"netid": "dnolen", "added_by": "rhickey"})
-    client._mongo.shrunk_users.power_users.insert({"netid": "power_user", "added_by": "Justice League"})
+    roles.grants.insert({"role": "admin", "entity": "dnolen", "granted_by": "rhickey"})
+    #roles.grants.insert({"role": "power_user","netid": "power_user", "added_by": "Justice League"})
+    mongoclient.shrunk_users.power_users.insert({"role": "power_user","netid": "power_user", "added_by": "Justice League"})
     num_visits = 3
     num_visits2 = 4
     url, url2 = make_urls(num_visits, num_visits2)
