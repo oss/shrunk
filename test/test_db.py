@@ -79,21 +79,12 @@ def test_blocking():
         assert client.is_blocked(long_url) is True
         
     # the urls also should no longer be in the database after being blocked
-    urls_after_block = [client._mongo.shrunk_urls.blocked_urls.find_one(url) for url in urls]
+    urls_after_block = [client._mongo.shrunk_urls.urls.find_one({"url":url}) for url in urls]
     for url_after_block in urls_after_block:
         assert url_after_block is None
 
     # blocking the link twice should be none to show the block is unsuccesful
     assert client.block_link("microsoft.com", blocked_by = "ltorvalds") is None
-    
-def test_get_domain():
-    """testing to get the domain from a url"""
-    assert client.get_domain("test.com") == "test.com"
-    assert client.get_domain("https://test.com") == "test.com"
-    assert client.get_domain("https://test.com/test.php") == "test.com"
-    assert client.get_domain("https://sub.test.com/test.php") == "test.com"
-    assert client.get_domain("http://sub-sub.anotha.one.TeSt.cOm/test.php") == "test.com"
-    assert client.get_domain("http://sfe9fwlmfwe-f9w0f.fw9e0-i.fJe-FJwef-09.org/shady.cgi") == "fje-fjwef-09.org"
 
 def test_modify():
     """make sure modifing the url sets the new info properly"""
