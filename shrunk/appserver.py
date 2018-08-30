@@ -52,7 +52,7 @@ add_roles_routes(app)
 # Shibboleth handler
 @ext.login_handler
 def login(user_info):
-    client = get_db_client(app, g)
+    client = app.get_shrunk()
     if user_info.get("employeeType") not in app.config["VALID_EMPLOYEE_TYPES"] \
     and user_info.get("netid") not in app.config["USER_WHITELIST"] \
     and client.is_blacklisted(user_info.get("netid")):
@@ -102,9 +102,9 @@ if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
         session['user']={'netid':'DEV_ADMIN'}
         session["all_users"] = "0"
         session["sortby"] = "0"
-        client=get_db_client(app, g)
+        client=app.get_shrunk()
         if not roles.check("admin", "DEV_ADMIN"):
-            roles.grant("admin", "Justice League", "DEV_ADMIN", force=True)
+            roles.grant("admin", "Justice Leage", "DEV_ADMIN")
         if not client.is_admin('DEV_ADMIN'):
             client.add_admin('DEV_ADMIN', 'Justice League') 
         return redirect('/')
@@ -114,9 +114,9 @@ if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
         session['user']={'netid': 'DEV_PWR_USER'}
         session["all_users"] = "0"
         session["sortby"] = "0"
-        client = get_db_client(app, g)
-        if not roles.check("power_user", "DEV_PWR_USER"):
-            roles.grant("power_user", "Admin McAdminface", "DEV_PWR_USER", force=True)
+        client = app.get_shrunk()
+        if not roles.check("power_user","Admin McAdminface", "DEV_PWR_USER"):
+            roles.grant("power_user", "DEV_PWR_USER")
         if not client.is_power_user("DEV_PWR_USER"):
             client.add_power_user("DEV_PWR_USER", "Admin McAdminface")
         return redirect("/")
@@ -140,7 +140,7 @@ try:
             :Parameters:
               - `short_url`: A string containing a shrunk-ified URL.
             """
-            client = get_db_client(app, g)
+            client = app.get_shrunk()
             app.logger.info("{} requests {}".format(request.remote_addr, short_url))
 
             # Perform a lookup and redirect
@@ -171,7 +171,7 @@ def render_index(**kwargs):
     """
 
     netid = session['user'].get('netid')
-    client = get_db_client(app, g)
+    client = app.get_shrunk()
 
     # Grab the current page number
     try:
@@ -309,7 +309,7 @@ def add_link():
         banned_regexes = app.config["BANNED_REGEXES"]
     form = LinkForm(request.form, banned_regexes)
     netid = session['user'].get('netid')
-    client = get_db_client(app, g)
+    client = app.get_shrunk()
 
     template={
         'netid': netid,
@@ -341,7 +341,7 @@ def add_link():
 @app.require_login
 def add_link_form():
     """Displays link form"""
-    client = get_db_client(app, g)
+    client = app.get_shrunk()
     netid = session['user'].get('netid')
     template = {
         'netid': netid,
@@ -362,7 +362,7 @@ def get_stats():
 
     if "url" in request.args:
         url=request.args["url"]
-        client=get_db_client(app, g)
+        client=app.get_shrunk()
         template_data["url_info"]=client.get_url_info(url)
     else:
         template_data["missing_url"]=True
@@ -373,7 +373,7 @@ def get_stats():
 @app.require_login
 def monthly_visits():
     url=request.args["url"]
-    client=get_db_client(app, g)
+    client=app.get_shrunk()
     netid=session["user"].get("netid")
 
     if "url" not in request.args:
@@ -399,7 +399,7 @@ def qr():
 def delete_link():
     """Deletes a link."""
 
-    client = get_db_client(app, g)
+    client = app.get_shrunk()
     netid = session["user"].get("netid")
 
     # TODO Handle the response intelligently, or put that logic somewhere else
@@ -418,7 +418,7 @@ def edit_link():
     will be edited.
     """
     netid = session['user'].get('netid')
-    client = get_db_client(app, g)
+    client = app.get_shrunk()
 
     # default is no .xxx links
     banned_regexes = ["\.xxx"]
@@ -461,7 +461,7 @@ def edit_link():
 @app.require_login
 def edit_link_form():
     netid = session['user'].get('netid')
-    client = get_db_client(app, g)
+    client = app.get_shrunk()
     form = LinkForm(request.form,
                     [strip_protocol(app.config["LINKSERVER_URL"])])
     # Hit the database to get information
@@ -479,7 +479,7 @@ def edit_link_form():
 
 @app.route("/admin/manage-admin")
 @app.require_login
-@app.require_login
+@app.require_admin
 def admin_manage():
     """Renders a list of administrators.
 
@@ -487,7 +487,7 @@ def admin_manage():
     administrators.
     """
     
-    client = get_db_client(app, g)
+    client = app.get_shrunk()
     netid = session['user'].get('netid')
 
     return render_template("admin_list.html",
@@ -499,11 +499,11 @@ def admin_manage():
 
 @app.route("/admin/manage-admin/add", methods=["GET", "POST"])
 @app.require_login
-@app.require_login
+@app.require_admin
 def admin_add():
     """Add a new administrator"""
  
-    client = get_db_client(app, g)
+    client = app.get_shrunk()
     netid = session['user'].get('netid')
     
     form = AddAdminForm(request.form)
@@ -518,11 +518,11 @@ def admin_add():
 
 @app.route("/admin/manage-admin/delete", methods=["GET", "POST"])
 @app.require_login
-@app.require_login
+@app.require_admin
 def admin_delete():
     """Delete an existing administrator."""
 
-    client = get_db_client(app, g)
+    client = app.get_shrunk()
     netid = session['user'].get('netid')
 
     if request.method == "POST":
@@ -533,7 +533,7 @@ def admin_delete():
 
 @app.route("/admin/manage-power-user")
 @app.require_login
-@app.require_login
+@app.require_admin
 def power_user_manage():
     """Renders a list of Power Users.
 
@@ -541,7 +541,7 @@ def power_user_manage():
     power users.
     """
     
-    client = get_db_client(app, g)
+    client = app.get_shrunk()
     netid = session['user'].get('netid')
 
     return render_template("power_user_list.html",
@@ -553,11 +553,11 @@ def power_user_manage():
 
 @app.route("/admin/manage-power-user/add", methods=["GET", "POST"])
 @app.require_login
-@app.require_login
+@app.require_admin
 def power_user_add():
     """Add new power user"""
 
-    client= get_db_client(app, g)
+    client= app.get_shrunk()
     netid = session['user'].get('netid')
 
     form = AddAdminForm(request.form)
@@ -571,11 +571,11 @@ def power_user_add():
 
 @app.route("/admin/manage-power-user/delete", methods=["GET", "POST"])
 @app.require_login
-@app.require_login
+@app.require_admin
 def power_user_delete():
     """Delete an existing power user."""
 
-    client = get_db_client(app, g)
+    client = app.get_shrunk()
     netid = session['user'].get('netid')
 
     if request.method == "POST":
@@ -583,71 +583,9 @@ def power_user_delete():
 
     return redirect("/admin/manage-power-user")
 
-
-
-
-@app.route("/admin/links/block", methods=["GET", "POST"])
-@app.require_login
-@app.require_login
-def admin_block_link():
-    """Block a link from being shrunk.
-
-    Allows an administrator to block a link pattern from being shrunk by the
-    web application. URLs matching the given regular expression will be
-    prohibited.
-    """
-    
-    client = get_db_client(app, g)
-    netid = session['user'].get('netid')
-
-    form = BlockLinksForm(request.form)
-    if request.method == "POST":
-        if form.validate():
-            client.block_link(form.link.data, netid)
-        else:
-            # TODO catch validation errors
-            pass
-
-    return redirect("/admin/links")
-
-
-@app.route("/admin/links/unblock", methods=["GET", "POST"])
-@app.require_login
-@app.require_login
-def admin_unblock_link():
-    """Remove a link from the banned links list."""
-
-    client = get_db_client(app, g)
-    netid = session['user'].get('netid')
-
-    if request.method == "POST":
-        client.allow_link(request.form["url"])
-
-    return redirect("/admin/links")
-
-
-@app.route("/admin/links", methods=["GET", "POST"])
-@app.require_login
-@app.require_login
-def admin_links():
-    """Renders the administrator link banlist.
-
-    Allows admins to block (and unblock) particular URLs from being shrunk.
-    """
-    
-    client = get_db_client(app, g)
-    netid = session['user'].get('netid')
-
-    return render_template("admin_links.html",
-                           admin=True,
-                           banlist=client.get_blocked_links(),
-                           form=BlockLinksForm(request.form),
-                           netid=netid)
-
-
 @app.route("/admin/")
 @app.require_login
-@app.require_login
+@app.require_admin
 def admin_panel():
     """Renders the administrator panel.
 
@@ -655,7 +593,7 @@ def admin_panel():
     controls.
     """
 
-    client = get_db_client(app, g)
+    client = app.get_shrunk()
     netid = session['user'].get('netid')
 
     return render_template("admin.html", netid=netid)
@@ -663,7 +601,7 @@ def admin_panel():
 
 @app.route("/admin/blacklist", methods=["GET", "POST"])
 @app.require_login
-@app.require_login
+@app.require_admin
 def admin_blacklist():
     """Renders the administrator blacklist.
 
@@ -671,7 +609,7 @@ def admin_blacklist():
     interface.
     """
 
-    client = get_db_client(app, g)
+    client = app.get_shrunk()
     netid = session['user'].get('netid')
 
     return render_template("admin_blacklist.html",
@@ -682,14 +620,14 @@ def admin_blacklist():
 
 @app.route("/admin/blacklist/ban", methods=["GET", "POST"])
 @app.require_login
-@app.require_login
+@app.require_admin
 def admin_blacklist_user():
     """Ban a user from using the web application.
 
     Adds a user to the blacklist.
     """
 
-    client = get_db_client(app, g)
+    client = app.get_shrunk()
     netid = session['user'].get('netid')
 
     form = BlacklistUserForm(request.form)
@@ -705,14 +643,14 @@ def admin_blacklist_user():
 
 @app.route("/admin/blacklist/unblacklist", methods=["GET", "POST"])
 @app.require_login
-@app.require_login
+@app.require_admin
 def admin_unblacklist_user():
     """Unban a user from the blacklist.
 
     Removes a user from the blacklist, restoring their previous privileges.
     """
 
-    client = get_db_client(app, g)
+    client = app.get_shrunk()
     netid = session['user'].get('netid')
 
     if request.method == "POST":
