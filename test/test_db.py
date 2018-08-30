@@ -7,6 +7,7 @@ from shrunk import ShrunkClient
 import shrunk
 from pytest import raises
 from datetime import datetime
+import shrunk.roles as roles
 
 client=ShrunkClient(host="unit_db")
 mongoclient=client._mongo
@@ -15,6 +16,11 @@ def teardown_function():
     mongoclient.drop_database("shrunk_urls")
     mongoclient.drop_database("shrunk_visits")
     mongoclient.drop_database("shrunk_users")
+    mongoclient.drop_database("shrunk_roles")
+
+def setup_module():
+    roles.init(None, mongo_client = mongoclient)
+    
 
 def insert_urls(long_urls, netid):
     return [client.create_short_url(url, netid = netid) for url in long_urls]
@@ -72,7 +78,7 @@ def test_blocking():
         assert client.is_blocked(long_url) is False
         
     # blocking first time should succeed
-    assert client.block_link("https://microsoft.com", blocked_by = "ltorvalds") is not None
+    client.block_link("https://microsoft.com", blocked_by = "ltorvalds")
 
     #links the urls we gave should be blocked
     for long_url in long_urls:
@@ -82,9 +88,6 @@ def test_blocking():
     urls_after_block = [client._mongo.shrunk_urls.urls.find_one({"url":url}) for url in urls]
     for url_after_block in urls_after_block:
         assert url_after_block is None
-
-    # blocking the link twice should be none to show the block is unsuccesful
-    assert client.block_link("microsoft.com", blocked_by = "ltorvalds") is None
 
 def test_modify():
     """make sure modifing the url sets the new info properly"""
@@ -444,6 +447,7 @@ def test_search():
     assert url3 in result3
 
 def test_search_netid():
+    print(list(roles.grants.find()))
     url = client.create_short_url("https://test.com", netid = "Billie Jean", title = "title")
     url2 = client.create_short_url("https://test.com", netid = "Knott MyLova", title = "title")
 
