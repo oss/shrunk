@@ -93,17 +93,3 @@ class AddAdminForm(Form):
     """
 
     netid = TextField("NetID", validators=[validators.DataRequired()])
-
-
-class BlockLinksForm(Form):
-    """A WTForm for blocking unwanted URLs.
-
-    This form is accessible by administrators only.
-
-    :Fields:
-      - `link`: Text field corresponding to a long URL to block
-    """
-    link = TextField("Link", validators=[
-        validators.DataRequired(),
-        validators.URL(require_tld=True, message="Please enter a valid URL.")
-    ])
