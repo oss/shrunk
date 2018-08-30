@@ -69,7 +69,7 @@ def add_decorators(app):
     app.require_qualified = require_qualified
     app.require_role = require_role
     app.require_login = require_login(app)
-    app.require_admin = require_admin
+    app.require_admin = require_admin(app)
 
 def add_roles_routes(app):
     
@@ -92,7 +92,7 @@ def add_roles_routes(app):
     def role_revoke(role):
         netid = session["user"]["netid"]
         entity = request.form["entity"]
-        roles.revoke(role, netid, entity)
+        roles.revoke(role, entity)
         return redirect("/roles/"+role)
 
     @app.route("/roles/<role>/", methods=["GET"])
