@@ -81,15 +81,3 @@ class BlacklistUserForm(Form):
             "netid": self.netid.data,
             "action": self.action.data
         }
-
-
-class AddAdminForm(Form):
-    """A WTForm for adding new administrators.
-    
-    This form is accessible by administrators only.
-
-    :Fields:
-      - `netid`: Text field corresponding to a NetID
-    """
-
-    netid = TextField("NetID", validators=[validators.DataRequired()])

@@ -6,7 +6,7 @@ from flask import Flask, render_template, make_response, request, redirect, g, s
 from flask_sso import SSO
 from shrunk.app_decorate import add_decorators, add_roles_routes
 
-from shrunk.forms import BlockLinksForm, LinkForm, BlacklistUserForm, AddAdminForm
+from shrunk.forms import LinkForm, BlacklistUserForm
 from shrunk.util import get_db_client, set_logger
 from shrunk.stringutil import formattime
 from shrunk.filters import strip_protocol, ensure_protocol
@@ -475,60 +475,6 @@ def edit_link_form():
     info['show_short_url']=client.is_admin(netid) or client.is_power_user(netid)
     # Render the edit template
     return render_template("edit.html", **info)
-
-
-@app.route("/admin/manage-admin")
-@app.require_login
-@app.require_admin
-def admin_manage():
-    """Renders a list of administrators.
-
-    Allows an admin to add and remove NetIDs from the list of official
-    administrators.
-    """
-    
-    client = app.get_shrunk()
-    netid = session['user'].get('netid')
-
-    return render_template("admin_list.html",
-                           admin=True,
-                           admins=client.get_admins(),
-                           form=AddAdminForm(request.form),
-                           netid=netid)
-
-
-@app.route("/admin/manage-admin/add", methods=["GET", "POST"])
-@app.require_login
-@app.require_admin
-def admin_add():
-    """Add a new administrator"""
- 
-    client = app.get_shrunk()
-    netid = session['user'].get('netid')
-    
-    form = AddAdminForm(request.form)
-    if request.method == "POST":
-        if form.validate():
-            client.add_admin(form.netid.data, netid)
-        else:
-            # TODO catch validation errors
-            pass
-
-    return redirect("/admin/manage-admin")
-
-@app.route("/admin/manage-admin/delete", methods=["GET", "POST"])
-@app.require_login
-@app.require_admin
-def admin_delete():
-    """Delete an existing administrator."""
-
-    client = app.get_shrunk()
-    netid = session['user'].get('netid')
-
-    if request.method == "POST":
-        client.delete_admin(request.form["netid"])
-
-    return redirect("/admin/manage-admin")
 
 
 @app.route("/admin/manage-power-user")

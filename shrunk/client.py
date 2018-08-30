@@ -680,50 +680,15 @@ class ShrunkClient(object):
         return db.power_users.remove({"netid" : netid})
 
     def is_admin(self, netid):
-        """Determine if a user is an administrator.
-
-        :Parameters:
-          - `netid`: A Rutgers NetID.
-
-        :Returns:
-          True if the user is in the administrators collection, False
-          otherwise.
-        """
-        db = self._mongo.shrunk_users
-        if db.administrators.find_one({'netid' : netid}) is None:
-            return False
-        return True
+        return roles.check("admin", netid)
 
     def add_admin(self, netid, added_by):
-        """Adds a user to the administrators collection.
-
-        :Parameters:
-          - `netid`: A Rutgers NetID
-          - `added_by`: The NetID of the administrator that added this person
-        """
-        print("adding admin")
-        db = self._mongo.shrunk_users
-        if not self.is_admin(netid):
-            return db.administrators.insert({"netid" : netid, "added_by" :
-                added_by})
-
+        roles.grant("admin", added_by, netid)
     def delete_admin(self, netid):
-        """Revokes a user's administrator privileges.
-
-        :Parameters:
-          - `netid`: They NetID of the administrator to remove
-        """
-        db = self._mongo.shrunk_users
-        return db.administrators.remove({"netid" : netid})
+        roles.revoke("admin", netid)
 
     def get_admins(self):
-        """Retrieves the list of administrators.
-
-        :Returns:
-          A list of dicts containing information about each administrator.
-        """
-        db = self._mongo.shrunk_users
-        return list(db.administrators.find())
+        return roles.list_all("admin")
 
     def is_blocked(self, long_url):
         return bool(roles.grants.find_one({
