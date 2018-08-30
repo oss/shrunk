@@ -47,12 +47,7 @@ def new(role, qualifier_func, validator_func = lambda e: e!="",
     
 
 
-def grant(role, grantor, grantee, force=False):
-    if not qualified_for[role](grantor) and not force:
-        raise NotQualified()
-    if not valid_entity_for[role](grantee):
-        raise InvalidEntity()
-    
+def grant(role, grantor, grantee):
     grants.insert({"role": role, "entity": grantee, "granted_by": grantor})
         
 def check(role, entity):
@@ -63,10 +58,8 @@ def check(role, entity):
 def list_all(role):
     return list(grants.find({"role": role}))
 
-def revoke(role, revoker, revokee):
-    if not qualified_for[role](revoker):
-        raise NotQualified()
-    grants.remove({"role": role, "entity": revokee})
+def revoke(role, entity):
+    grants.remove({"role": role, "entity": entity})
 
 def template_data(role, invalid=False):
     data = {
