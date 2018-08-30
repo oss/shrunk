@@ -726,41 +726,20 @@ class ShrunkClient(object):
         return list(db.administrators.find())
 
     def is_blocked(self, long_url):
-        db = self._mongo.shrunk_urls
-        return bool(db.blocked_urls.find_one({"url": {"$regex": "%s*" % get_domain(long_url)}}))
+        return bool(roles.grants.find_one({
+            "role": "blocked_url",
+            "entity": {"$regex": "%s*" % get_domain(long_url)}
+        }))
 
 
     def block_link(self, url, blocked_by):
-        """Adds a link to the blocked_urls collection.
-
-        :Parameters:
-          - `url`: The url to block
-          - `blocked_by`: The NetIDs of the administrators blocking the URL
-        """
-        db = self._mongo.shrunk_urls
-        if not self.is_blocked(url):
-            res = db.blocked_urls.insert({'url': get_domain(url), 'blocked_by': blocked_by})
-            # Find any urls that should be deleted
-            db.urls.remove({"long_url": {"$regex": "%s*" % get_domain(url)}})
-            return res
+        roles.grant("blocked_url", blocked_by, url)
 
     def allow_link(self, url):
-        """Removes a link from the blocked_urls collection.
-
-        :Parameters:
-          - `url`: The url to allow
-        """
-        db = self._mongo.shrunk_urls
-        return db.blocked_urls.remove({'url' : { '$regex' : url }})
+        roles.revoke("blocked_url", url)
 
     def get_blocked_links(self):
-        """Retrieves the list of blocked links.
-
-        :Returns:
-          A list of dicts containing information about each blocked link.
-        """
-        db = self._mongo.shrunk_urls
-        return list(db.blocked_urls.find())
+        return roles.list_all("blocked_url")
 
 
     @staticmethod
