@@ -91,7 +91,7 @@ def test_blocking():
 
 def test_modify():
     """make sure modifing the url sets the new info properly"""
-    client.block_link("microsoft.com", "ltorvalds")
+    client.block_link("https://microsoft.com", "ltorvalds")
     url = client.create_short_url("https://linux.org", netid = "dude", title = "title")
     custom_url = client.create_short_url("https://linux.org/custom", 
                                          netid = "dude", short_url = "custom-link")
