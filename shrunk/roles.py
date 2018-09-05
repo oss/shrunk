@@ -48,8 +48,12 @@ def new(role, qualifier_func, validator_func = lambda e: e!="",
 
 
 def grant(role, grantor, grantee):
-    if not check(role, grantee):
-        grants.insert({"role": role, "entity": grantee, "granted_by": grantor})
+    if exists(role) and valid_entity_for[role](grantee):
+        #guard against double insertions
+        if not check(role, grantee):
+            grants.insert({"role": role, "entity": grantee, "granted_by": grantor})
+    else:
+        raise InvalidEntity()
         
 def check(role, entity):
     if grants.find_one({"role": role, "entity": entity}):
