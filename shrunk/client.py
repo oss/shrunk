@@ -580,58 +580,16 @@ class ShrunkClient(object):
         })
 
     def is_blacklisted(self, netid):
-        """Determines if a user has been blacklisted.
-
-        :Parameters:
-          - `netid` A Rutgers NetID
-
-        :Returns
-          True if the user is in the blacklist collection; False otherwise.
-        """
-        db = self._mongo.shrunk_users
-        if db.blacklist.find_one({"netid" : netid}) is None:
-            return False
-        return True
+        roles.check("blacklisted", netid)
 
     def blacklist_user(self, netid, banned_by):
-        """Adds a user to the blacklist collection.
-
-        :Parameters:
-          - `netid`: A Rutgers NetID
-          - `banned_by`: The NetID of the administrator that banned this person
-        """
-        db = self._mongo.shrunk_users
-        if not self.is_blacklisted(netid):
-            return db.blacklist.insert({
-                'netid' : netid,
-                'banned_by' : [ banned_by ]
-            })
-        else:
-            update = {'$addToSet' : {'banned_by' : banned_by}}
-            return db.blacklist.update({'netid' : netid}, update, upsert=False,
-                    multi=False)
+        roles.grant("blacklisted", banned_by, netid)
 
     def unblacklist_user(self, netid):
-        """Removes a user from the blacklist collection.
-
-        :Parameters:
-          - `netid`: A Rutgers NetID
-        """
-        db = self._mongo.shrunk_users
-        if self.is_blacklisted:
-            db.blacklist.remove({'netid' : netid})
-            return True
-        else:
-            return False
+        roles.revoke("blacklisted", netid)
 
     def get_blacklisted_users(self):
-        """Retrieves the list of banned users.
-
-        :Returns:
-          A list of dicts containing information about each blacklisted NetID.
-        """
-        db = self._mongo.shrunk_users
-        return list(db.blacklist.find())
+        return roles.list_all("blacklisted")
 
     def is_power_user(self, netid):
         """ Determines if user is power user.
