@@ -64,34 +64,9 @@ def test_isolated():
     """Sanity check to make sure the db is reset between tests"""
     assert client.count_links() is 0
 
-def test_blocking():
-    """make sure block_link and is_blocked work"""
-    long_urls = ["https://microsoft.com", 
-                 "http://microsoft.com", #should block other protocols
-                 "https://microsoft.com/should-block-paths.aspx",
-                 "https://should-block-subdomains.microsoft.com",
-                 "https://ComL3te-MeSs.mIcroSoft.cOm/of-AllofTh3m/4.aspx"]
-
-    # make sure they start as unblocked
-    urls = insert_urls(long_urls,"bgates")
-    for long_url in long_urls:
-        assert client.is_blocked(long_url) is False
-        
-    # blocking first time should succeed
-    client.block_link("https://microsoft.com", blocked_by = "ltorvalds")
-
-    #links the urls we gave should be blocked
-    for long_url in long_urls:
-        assert client.is_blocked(long_url) is True
-        
-    # the urls also should no longer be in the database after being blocked
-    urls_after_block = [client._mongo.shrunk_urls.urls.find_one({"url":url}) for url in urls]
-    for url_after_block in urls_after_block:
-        assert url_after_block is None
-
 def test_modify():
     """make sure modifing the url sets the new info properly"""
-    client.block_link("https://microsoft.com", "ltorvalds")
+    roles.grant("blocked_url", "ltorvalds", "https://microsoft.com")
     url = client.create_short_url("https://linux.org", netid = "dude", title = "title")
     custom_url = client.create_short_url("https://linux.org/custom", 
                                          netid = "dude", short_url = "custom-link")
