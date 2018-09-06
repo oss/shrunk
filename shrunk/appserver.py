@@ -115,8 +115,8 @@ if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
         session["all_users"] = "0"
         session["sortby"] = "0"
         client = app.get_shrunk()
-        if not roles.check("power_user","Admin McAdminface", "DEV_PWR_USER"):
-            roles.grant("power_user", "DEV_PWR_USER")
+        if not roles.check("power_user", "DEV_PWR_USER"):
+            roles.grant("power_user", "Admin McAdminface", "DEV_PWR_USER")
         if not client.is_power_user("DEV_PWR_USER"):
             client.add_power_user("DEV_PWR_USER", "Admin McAdminface")
         return redirect("/")
@@ -475,59 +475,6 @@ def edit_link_form():
     info['show_short_url']=client.is_admin(netid) or client.is_power_user(netid)
     # Render the edit template
     return render_template("edit.html", **info)
-
-
-@app.route("/admin/manage-power-user")
-@app.require_login
-@app.require_admin
-def power_user_manage():
-    """Renders a list of Power Users.
-
-    Allows an admin to add and remove NetIDs from the list of official
-    power users.
-    """
-    
-    client = app.get_shrunk()
-    netid = session['user'].get('netid')
-
-    return render_template("power_user_list.html",
-                           admin=True,
-                           pusers=client.get_power_users(),
-                           form=AddAdminForm(request.form),
-                           netid=netid)
-
-
-@app.route("/admin/manage-power-user/add", methods=["GET", "POST"])
-@app.require_login
-@app.require_admin
-def power_user_add():
-    """Add new power user"""
-
-    client= app.get_shrunk()
-    netid = session['user'].get('netid')
-
-    form = AddAdminForm(request.form)
-    if request.method == "POST":
-        if form.validate():
-            client.add_power_user(form.netid.data, netid)
-        else:
-            pass
-
-    return redirect("/admin/manage-power-user")
-
-@app.route("/admin/manage-power-user/delete", methods=["GET", "POST"])
-@app.require_login
-@app.require_admin
-def power_user_delete():
-    """Delete an existing power user."""
-
-    client = app.get_shrunk()
-    netid = session['user'].get('netid')
-
-    if request.method == "POST":
-        client.delete_power_user(request.form["netid"])
-
-    return redirect("/admin/manage-power-user")
 
 @app.route("/admin/")
 @app.require_login
