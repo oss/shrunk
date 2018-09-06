@@ -579,15 +579,6 @@ class ShrunkClient(object):
             "time" : datetime.datetime.now()
         })
 
-    def blacklist_user(self, netid, banned_by):
-        roles.grant("blacklisted", banned_by, netid)
-
-    def unblacklist_user(self, netid):
-        roles.revoke("blacklisted", netid)
-
-    def get_blacklisted_users(self):
-        return roles.list_all("blacklisted")
-
     def is_power_user(self, netid):
         return roles.check("power_user", netid)
 
