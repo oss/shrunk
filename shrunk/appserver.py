@@ -117,8 +117,6 @@ if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
         client = app.get_shrunk()
         if not roles.check("power_user", "DEV_PWR_USER"):
             roles.grant("power_user", "Admin McAdminface", "DEV_PWR_USER")
-        if not client.is_power_user("DEV_PWR_USER"):
-            client.add_power_user("DEV_PWR_USER", "Admin McAdminface")
         return redirect("/")
         
 
@@ -316,7 +314,7 @@ def add_link():
         'sortby': "0",
         'all_users': "0",
         'admin': client.is_admin(netid),
-        'power_user': client.is_power_user(netid)
+        'power_user': roles.check("power_user", netid)
     }
     def add_url_template(**kwargs):
         template.update(kwargs)
@@ -346,7 +344,7 @@ def add_link_form():
     template = {
         'netid': netid,
         'admin': client.is_admin(netid),
-        'power_user': client.is_power_user(netid),
+        'power_user': roles.check("power_user", netid),
         'sortby': "0",
         'all_users': "0"
     }
@@ -430,7 +428,7 @@ def edit_link():
 
     template = {
         "netid": netid,
-        "show_short_url": client.is_admin(netid) or client.is_power_user(netid),
+        "show_short_url": client.is_admin(netid) or roles.check("power_user", netid),
         "title": request.form["title"],
         "old_short_url": request.form["old_short_url"],
         "long_url": request.form["long_url"]
@@ -444,7 +442,7 @@ def edit_link():
         # Success - make the edits in the database
         kwargs = form.to_json()
         kwargs['admin'] = client.is_admin(netid)
-        kwargs['power_user'] = client.is_power_user(netid)
+        kwargs['power_user'] = roles.check("power_user", netid)
         kwargs['old_short_url'] = request.form['old_short_url']
         try:
             response = client.modify_url(**kwargs)
@@ -472,7 +470,7 @@ def edit_link_form():
         return render_index(wrong_owner=True)
 
     info['old_short_url']=old_short_url
-    info['show_short_url']=client.is_admin(netid) or client.is_power_user(netid)
+    info['show_short_url']=client.is_admin(netid) or roles.check("power_user", netid)
     # Render the edit template
     return render_template("edit.html", **info)
 

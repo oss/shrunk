@@ -579,9 +579,6 @@ class ShrunkClient(object):
             "time" : datetime.datetime.now()
         })
 
-    def is_power_user(self, netid):
-        return roles.check("power_user", netid)
-
     def add_power_user(self, netid, added_by):
         roles.grant("power_user", added_by, netid)
 
