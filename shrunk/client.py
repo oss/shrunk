@@ -579,42 +579,17 @@ class ShrunkClient(object):
             "time" : datetime.datetime.now()
         })
 
-    def add_power_user(self, netid, added_by):
-        roles.grant("power_user", added_by, netid)
-
-    def get_power_users(self):
-        return roles.list_all("power_user")
-
-    def delete_power_user(self, netid):
-        roles.revoke("power_user", netid)
-
     def is_admin(self, netid):
         return roles.check("admin", netid)
 
     def add_admin(self, netid, added_by):
         roles.grant("admin", added_by, netid)
-    def delete_admin(self, netid):
-        roles.revoke("admin", netid)
-
-    def get_admins(self):
-        return roles.list_all("admin")
 
     def is_blocked(self, long_url):
         return bool(roles.grants.find_one({
             "role": "blocked_url",
             "entity": {"$regex": "%s*" % get_domain(long_url)}
         }))
-
-
-    def block_link(self, url, blocked_by):
-        roles.grant("blocked_url", blocked_by, url)
-
-    def allow_link(self, url):
-        roles.revoke("blocked_url", url)
-
-    def get_blocked_links(self):
-        return roles.list_all("blocked_url")
-
 
     @staticmethod
     def _generate_unique_key():
