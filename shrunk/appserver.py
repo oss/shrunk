@@ -55,7 +55,7 @@ def login(user_info):
     client = app.get_shrunk()
     if (user_info.get("employeeType") not in app.config["VALID_EMPLOYEE_TYPES"] \
     and user_info.get("netid") not in app.config["USER_WHITELIST"]) \
-    or client.is_blacklisted(user_info.get("netid")):
+    or roles.check("blacklisted", user_info.get("netid")):
         return redirect("/unauthorized")
     session["user"] = user_info
     return redirect("/")   

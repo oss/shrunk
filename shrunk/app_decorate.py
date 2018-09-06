@@ -43,7 +43,7 @@ def require_login(app):
         def wrapper(*args, **kwargs):
             if not 'user' in session:
                 return redirect("/shrunk-login")
-            if app.get_shrunk().is_blacklisted(session["user"].get("netid")):
+            if roles.check("blacklisted", session["user"].get("netid")):
                 return redirect("/unauthorized")
             return func(*args, **kwargs)
         return wrapper
@@ -57,9 +57,9 @@ def require_admin(app):
         def wrapper(*args, **kwargs):
             client = app.get_shrunk()
             netid = session["user"].get("netid")
-            if client.is_blacklisted(netid):
+            if roles.check("blacklisted", netid):
                 return redirect("/unauthorized")
-            if not client.is_admin(netid):
+            if not roles.check("admin", netid):
                 return redirect("/")
             return func(*args, **kwargs)
         return wrapper
