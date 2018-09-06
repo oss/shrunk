@@ -105,8 +105,6 @@ if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
         client=app.get_shrunk()
         if not roles.check("admin", "DEV_ADMIN"):
             roles.grant("admin", "Justice Leage", "DEV_ADMIN")
-        if not client.is_admin('DEV_ADMIN'):
-            client.add_admin('DEV_ADMIN', 'Justice League') 
         return redirect('/')
 
     @app.route('/dev-power-login')
@@ -186,7 +184,7 @@ def render_index(**kwargs):
     
     # Display all users or just the current administrator?
     # this question is only a concern if user is admin. 
-    if client.is_admin(netid) == False:
+    if roles.check("admin", netid) == False:
         all_users = "0"
     else:     
         try:
@@ -214,7 +212,7 @@ def render_index(**kwargs):
         sortby = 0
 
     # Depending on the type of user, get info from the database
-    is_admin = client.is_admin(netid)
+    is_admin = roles.check("admin", netid)
     if is_admin:
         if query and all_users == "0":
             #search my links
@@ -313,7 +311,7 @@ def add_link():
         'netid': netid,
         'sortby': "0",
         'all_users': "0",
-        'admin': client.is_admin(netid),
+        'admin': roles.check("admin", netid),
         'power_user': roles.check("power_user", netid)
     }
     def add_url_template(**kwargs):
@@ -343,7 +341,7 @@ def add_link_form():
     netid = session['user'].get('netid')
     template = {
         'netid': netid,
-        'admin': client.is_admin(netid),
+        'admin': roles.check("admin", netid),
         'power_user': roles.check("power_user", netid),
         'sortby': "0",
         'all_users': "0"
@@ -428,7 +426,7 @@ def edit_link():
 
     template = {
         "netid": netid,
-        "show_short_url": client.is_admin(netid) or roles.check("power_user", netid),
+        "show_short_url": roles.has_one_of(["admin", "power_user"], netid),
         "title": request.form["title"],
         "old_short_url": request.form["old_short_url"],
         "long_url": request.form["long_url"]
@@ -441,7 +439,7 @@ def edit_link():
     if form.validate():
         # Success - make the edits in the database
         kwargs = form.to_json()
-        kwargs['admin'] = client.is_admin(netid)
+        kwargs['admin'] = roles.check("admin", netid)
         kwargs['power_user'] = roles.check("power_user", netid)
         kwargs['old_short_url'] = request.form['old_short_url']
         try:
@@ -465,12 +463,11 @@ def edit_link_form():
     # Hit the database to get information
     old_short_url = request.args["url"]
     info = client.get_url_info(old_short_url)
-    owner = info["netid"]
-    if owner != netid and not client.is_admin(netid):
+    if not client.is_owner_or_admin(old_short_url, netid):
         return render_index(wrong_owner=True)
 
     info['old_short_url']=old_short_url
-    info['show_short_url']=client.is_admin(netid) or roles.check("power_user", netid)
+    info['show_short_url']=roles.has_one_of(["admin", "power_user"], netid)
     # Render the edit template
     return render_template("edit.html", **info)
 
