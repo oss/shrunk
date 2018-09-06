@@ -60,6 +60,17 @@ def check(role, entity):
         return True
     return False
 
+def has_one_of(roles, entity):
+    for role in roles:
+        if grants.find_one({"role": role, "entity": entity}):
+            return True
+    return False
+
+def get(entity):
+    """gives list of strings for all roles an entity has"""
+    grants = grants.find({"entity": entity})
+    return [grant["role"] for grant in grants]
+
 def list_all(role):
     return list(grants.find({"role": role}))
 
