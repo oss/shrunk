@@ -361,11 +361,11 @@ class ShrunkClient(object):
         url_db = self._mongo.shrunk_urls
         url=url_db.urls.find_one({"_id":short_url},projection={"netid"})
         if not url:
-            return self.is_admin(request_netid)
+            return roles.check("admin", request_netid)
 
         url_owner=url["netid"]
         requester_is_owner=url_owner==request_netid
-        admin=self.is_admin(request_netid)
+        admin=roles.check("admin", request_netid)
         return requester_is_owner or admin
 
     def delete_url(self, short_url, request_netid):
@@ -578,12 +578,6 @@ class ShrunkClient(object):
             "source_ip" : source_ip,
             "time" : datetime.datetime.now()
         })
-
-    def is_admin(self, netid):
-        return roles.check("admin", netid)
-
-    def add_admin(self, netid, added_by):
-        roles.grant("admin", added_by, netid)
 
     def is_blocked(self, long_url):
         return bool(roles.grants.find_one({
