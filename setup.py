@@ -18,12 +18,12 @@ require = [
     'Werkzeug>=0.9.6',
     'itsdangerous>=0.24',
     'pyasn1>=0.1.7',
-    'pymongo>=2.7.2',
+    'pymongo>=3.6.1',
 ]
 
 setup(
     name = "shrunk",
-    version = "0.4.10",
+    version = "0.5.3",
     packages = ["shrunk"],
     install_requires = require,
     package_dir = {"shrunk": "shrunk"},
