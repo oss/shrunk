@@ -1,6 +1,6 @@
 from functools import wraps, partial
 from flask import session, redirect, render_template, url_for, request
-import validators
+from shrunk.stringutil import validate_url
 import shrunk.roles as roles
 
 def require_qualified(func):
@@ -117,7 +117,7 @@ def add_roles_routes(app):
     })
     def onblock(url):
         mongo_client.urls.remove({"long_url": {"$regex": "%s*" % util.get_domain(url)}})
-    roles.new("blocked_url", is_admin, validators.url, custom_text = {
+    roles.new("blocked_url", is_admin, validate_url, custom_text = {
         "title": "Blocked urls",
         "invalid": "bad url",
         "grant_title": "Block a url:",
