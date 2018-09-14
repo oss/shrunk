@@ -10,7 +10,6 @@ from shrunk.forms import LinkForm, BlacklistUserForm
 from shrunk.util import get_db_client, set_logger
 from shrunk.stringutil import formattime
 from shrunk.filters import strip_protocol, ensure_protocol
-import validators
 
 from shrunk.client import BadShortURLException, ForbiddenDomainException, add_shrunk_client
 import shrunk.roles as roles
