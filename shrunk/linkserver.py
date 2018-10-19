@@ -6,17 +6,11 @@ from flask import Flask, render_template, request, redirect, g
 
 import shrunk.client
 import shrunk.util
+from shrunk.app_decorate import ShrunkFlaskMini
 
 
 # Create application
-app = Flask(__name__)
-
-# Import settings in config.py
-app.config.from_pyfile("config.py", silent=True)
-app.secret_key = app.config['SECRET_KEY']
-
-# Initialize logging
-shrunk.util.set_logger(app)
+app = ShrunkFlaskMini(__name__)
 
 
 ### Views ###
