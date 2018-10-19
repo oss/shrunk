@@ -2,8 +2,6 @@
 
 """Utility functions for shrunk."""
 
-import logging
-
 #client=None
 def get_db_client(app, g = None):
     """Gets a reference to a ShrunkClient for database operations.
@@ -27,15 +25,3 @@ def get_db_client(app, g = None):
     #        
     #    return g.client
     return app.get_shrunk()
-
-
-def set_logger(app):
-    """Sets a logger with standard settings.
-
-    :Parameters:
-      - `app`: A Flask application object.
-    """
-    handler = logging.FileHandler(app.config["LOG_FILENAME"])
-    handler.setLevel(logging.INFO)
-    handler.setFormatter(logging.Formatter(app.config["LOG_FORMAT"]))
-    app.logger.addHandler(handler)
