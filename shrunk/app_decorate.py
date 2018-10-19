@@ -1,44 +1,87 @@
 from functools import wraps, partial
-from flask import session, redirect, render_template, url_for, request
+import logging
+from flask import Flask, session, redirect, render_template, url_for, request
 from shrunk.stringutil import validate_url
 import shrunk.roles as roles
+from shrunk.client import ShrunkClient
+from shrunk.stringutil import get_domain
 
-def require_qualified(func):
-    @wraps(func)
-    def wrapper(role, *args, **kwargs):
-        if not roles.exists(role):
-            return redirect("/")
-        if roles.qualified_for[role](session["user"]["netid"]):
-            new_args=[role]+list(args)
-            return func(*new_args, **kwargs)
-        else:
-            return redirect("/unauthorized")
-    return wrapper
+class ShrunkFlaskMini(Flask):
+    """set up and configs our basic shrunk aplication"""
+    def __init__(self, name):
+        super(ShrunkFlaskMini, self).__init__(name)
+        # Import settings in config.py
+        self.config.from_pyfile("config.py", silent = True)
+        self.secret_key = self.config['SECRET_KEY']
 
-def require_role(role):
-    """
-    force a somone to have a role to see an enpoint
-    @app.route("/my/secret/route")
-    @roles.require("cool_person")
-    def secret_route():
-       return "top secret stuff"
-    """
-    def decorator(func):
+        # Initialize logging
+        self.set_logger()
+        self.logger.info("logging started")
+
+        self._shrunk_client = ShrunkClient(self.config["DB_HOST"], 
+                                           self.config["DB_PORT"])
+        self.logger.info("ShrunkCLient initialized %s:%s" 
+                         % (self.config["DB_HOST"],
+                            self.config["DB_PORT"]))
+
+    def set_logger(self):
+        """Sets a logger with standard settings.
+
+        :Parameters:
+          - `app`: A Flask application object.
+        """
+        handler = logging.FileHandler(self.config["LOG_FILENAME"])
+        handler.setLevel(logging.INFO)
+        handler.setFormatter(logging.Formatter(self.config["LOG_FORMAT"]))
+        self.logger.addHandler(handler)
+
+    def get_shrunk(self):
+        return self._shrunk_client
+
+class ShrunkFlask(ShrunkFlaskMini):
+    """also sets up roles system for administration panel"""
+    def __init__(self, name):
+        super(ShrunkFlask, self).__init__(name)
+        roles.init(self)
+        self.logger.info("roles initialized")
+
+        self.add_roles_routes()
+        self.setup_roles()
+        self.logger.info("done with setup")
+
+    def require_qualified(self, func):
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(role, *args, **kwargs):
             if not roles.exists(role):
                 return redirect("/")
             if roles.qualified_for[role](session["user"]["netid"]):
-                return func(*args, **kwargs)
+                new_args=[role]+list(args)
+                return func(*new_args, **kwargs)
             else:
                 return redirect("/unauthorized")
         return wrapper
-    return decorator
 
-#decorator to check if user is logged in
-#it looks like its double wrapped but thats so it can be a decorator that takes in params
-def require_login(app):
-    def decorate(func):
+    def require_role(self, role):
+        """force a somone to have a role to see an enpoint
+        @app.route("/my/secret/route")
+        @roles.require("cool_person")
+        def secret_route():
+           return "top secret stuff"
+        """
+        def decorator(func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                if not roles.exists(role):
+                    return redirect("/")
+                if roles.qualified_for[role](session["user"]["netid"]):
+                    return func(*args, **kwargs)
+                else:
+                    return redirect("/unauthorized")
+            return wrapper
+        return decorator
+
+    def require_login(self, func):
+        """decorator to check if user is logged in"""
         @wraps(func)
         def wrapper(*args, **kwargs):
             if not 'user' in session:
@@ -47,15 +90,12 @@ def require_login(app):
                 return redirect("/unauthorized")
             return func(*args, **kwargs)
         return wrapper
-    return decorate
 
-#decorator to check if user is an admin
-#it looks like its double wrapped but thats so it can be a decorator that takes in params
-def require_admin(app):
-    def decorate(func):
+    def require_admin(self, func):
+        """decorator to check if user is an admin"""
         @wraps(func)
         def wrapper(*args, **kwargs):
-            client = app.get_shrunk()
+            client = self.get_shrunk()
             netid = session["user"].get("netid")
             if roles.check("blacklisted", netid):
                 return redirect("/unauthorized")
@@ -63,67 +103,61 @@ def require_admin(app):
                 return redirect("/")
             return func(*args, **kwargs)
         return wrapper
-    return decorate
 
-def add_decorators(app):
-    app.require_qualified = require_qualified
-    app.require_role = require_role
-    app.require_login = require_login(app)
-    app.require_admin = require_admin(app)
+    def add_roles_routes(self):
+        """adds dynamic roles routes"""
+        @self.route("/roles/<role>/", methods=["POST"])
+        @self.require_login
+        @self.require_qualified
+        def role_grant(role):
+            try:
+                netid = session["user"]["netid"]
+                entity = request.form["entity"]
+                roles.grant(role, netid, entity)
+                return redirect("/roles/"+role)
+            except roles.InvalidEntity:
+                return render_template("role.html", **roles.template_data(role, invalid=True))
 
-def add_roles_routes(app):
-    
-    #handlers
-    @app.route("/roles/<role>/", methods=["POST"])
-    @require_login(app)
-    @require_qualified
-    def role_grant(role):
-        try:
+        @self.route("/roles/<role>/revoke", methods=["POST"])
+        @self.require_login
+        @self.require_qualified
+        def role_revoke(role):
             netid = session["user"]["netid"]
             entity = request.form["entity"]
-            roles.grant(role, netid, entity)
+            roles.revoke(role, entity)
             return redirect("/roles/"+role)
-        except roles.InvalidEntity:
-            return render_template("role.html", **roles.template_data(role, invalid=True))
 
-    @app.route("/roles/<role>/revoke", methods=["POST"])
-    @require_login(app)
-    @require_qualified
-    def role_revoke(role):
-        netid = session["user"]["netid"]
-        entity = request.form["entity"]
-        roles.revoke(role, entity)
-        return redirect("/roles/"+role)
+        @self.route("/roles/<role>/", methods=["GET"])
+        @self.require_login
+        @self.require_qualified
+        def role_list(role):
+            return render_template("role.html", **roles.template_data(role))
 
-    @app.route("/roles/<role>/", methods=["GET"])
-    @require_login(app)
-    @require_qualified
-    def role_list(role):
-        return render_template("role.html", **roles.template_data(role))
+    def setup_roles(self):
+        is_admin=partial(roles.check, "admin")
+        roles.new("admin", is_admin, custom_text = {"title": "Admins"})
+        roles.new("power_user", is_admin, custom_text = {"title": "Power Users"})
+        roles.new("blacklisted", is_admin, custom_text = {
+            "title": "Blacklisted Users",
+            "grant_title": "Blacklist a user:",
+            "grant_button": "BLACKLIST",
+            "revoke_title": "Unblacklist a user",
+            "revoke_button": "UNBLACKLIST",
+            "empty": "there are currently no blacklisted users", 
+            "granted_by": "blacklisted by"
 
-    #setup roles
-    is_admin=partial(roles.check, "admin")
-    roles.new("admin", is_admin, custom_text = {"title": "Admins"})
-    roles.new("power_user", is_admin, custom_text = {"title": "Power Users"})
-    roles.new("blacklisted", is_admin, custom_text = {
-        "title": "Blacklisted Users",
-        "grant_title": "Blacklist a user:",
-        "grant_button": "BLACKLIST",
-        "revoke_title": "Unblacklist a user",
-        "revoke_button": "UNBLACKLIST",
-        "empty": "there are currently no blacklisted users", 
-        "granted_by": "blacklisted by"
-        
-    })
-    def onblock(url):
-        mongo_client.urls.remove({"long_url": {"$regex": "%s*" % util.get_domain(url)}})
-    roles.new("blocked_url", is_admin, validate_url, custom_text = {
-        "title": "Blocked urls",
-        "invalid": "bad url",
-        "grant_title": "Block a url:",
-        "grant_button": "BLOCK",
-        "revoke_title": "Unblock a url",
-        "revoke_button": "UNBLOCK",
-        "empty": "there are currently no blocked urls", 
-        "granted_by": "blocked by"
-    }, oncreate = onblock)
+        })
+        def onblock(url):
+            self.get_shrunk()._mongo.remove({"long_url": {
+                "$regex": "%s*" % get_domain(url)
+            }})
+        roles.new("blocked_url", is_admin, validate_url, custom_text = {
+            "title": "Blocked urls",
+            "invalid": "bad url",
+            "grant_title": "Block a url:",
+            "grant_button": "BLOCK",
+            "revoke_title": "Unblock a url",
+            "revoke_button": "UNBLOCK",
+            "empty": "there are currently no blocked urls", 
+            "granted_by": "blocked by"
+        }, oncreate = onblock)
