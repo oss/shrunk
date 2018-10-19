@@ -4,14 +4,14 @@ Sets up a Flask application for the main web server.
 """
 from flask import Flask, render_template, make_response, request, redirect, g, session
 from flask_sso import SSO
-from shrunk.app_decorate import add_decorators, add_roles_routes
+from shrunk.app_decorate import ShrunkFlask
 
 from shrunk.forms import LinkForm, BlacklistUserForm
-from shrunk.util import get_db_client, set_logger
+from shrunk.util import get_db_client
 from shrunk.stringutil import formattime
 from shrunk.filters import strip_protocol, ensure_protocol
 
-from shrunk.client import BadShortURLException, ForbiddenDomainException, add_shrunk_client
+from shrunk.client import BadShortURLException, ForbiddenDomainException
 import shrunk.roles as roles
 
 from functools import wraps, partial
@@ -20,14 +20,8 @@ import json
 
 
 # Create application
-app = Flask(__name__)
-
-# Import settings in config.py
-app.config.from_pyfile("config.py", silent=True)
-app.secret_key = app.config['SECRET_KEY']
-
-# Initialize logging
-set_logger(app)
+# ShrunkFlask extends flask and adds decorators and configs itself
+app = ShrunkFlask(__name__)
 
 # This attaches the *flask_sso* login handler to the SSO_LOGIN_URL,
 # which essentially maps the SSO attributes to a dictionary and
@@ -36,17 +30,6 @@ ext = SSO(app=app)
 
 # Allows us to use the function in our templates
 app.jinja_env.globals.update(formattime=formattime)
-
-#add client instance to app
-add_shrunk_client(app)
-
-#init db client for roles
-roles.init(app)
-
-#setup handlers and stuff for admin control panel type objects
-#adds routes for /roles/admin /roles/blacklisted /roles/power-user and /roles/blocked-urls
-add_decorators(app)
-add_roles_routes(app)
 
 # Shibboleth handler
 @ext.login_handler
