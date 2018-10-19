@@ -610,14 +610,4 @@ class ShrunkClient(object):
             result.append(ShrunkClient.ALPHABET[integer % length])
             integer //= length
 
-        return "".join(reversed(result))
-
-def add_shrunk_client(app):
-    """Monkey Paches a method to get the singleton shrunk client instance"""
-    def get_shrunk():
-        if not hasattr(app, "_shrunk_client"):
-            app._shrunk_client = ShrunkClient(app.config["DB_HOST"], 
-                                               app.config["DB_PORT"])
-        return app._shrunk_client
-    app.get_shrunk=get_shrunk
-    
+        return "".join(reversed(result))    
