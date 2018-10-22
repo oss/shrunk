@@ -34,6 +34,7 @@ class ShrunkFlaskMini(Flask):
         handler.setLevel(logging.INFO)
         handler.setFormatter(logging.Formatter(self.config["LOG_FORMAT"]))
         self.logger.addHandler(handler)
+        self.logger.setLevel(logging.INFO)
 
     def get_shrunk(self):
         return self._shrunk_client
