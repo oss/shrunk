@@ -63,21 +63,3 @@ class LinkForm(Form):
         if self.short_url.data:
             data["short_url"] = self.short_url.data
         return data
-
-
-class BlacklistUserForm(Form):
-    """A WTForm for banning users.
-
-    This form is accessible by administrators only.
-
-    :Fields:
-      - `netid`: Text field corresponding to the banned user's NetID
-    """
-    netid = TextField("NetID", validators=[validators.DataRequired()])
-
-    def to_json(self):
-        """Exports the form's fields into a JSON-compatible dictionary."""
-        return {
-            "netid": self.netid.data,
-            "action": self.action.data
-        }

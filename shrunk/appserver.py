@@ -6,7 +6,7 @@ from flask import Flask, render_template, make_response, request, redirect, g, s
 from flask_sso import SSO
 from shrunk.app_decorate import ShrunkFlask
 
-from shrunk.forms import LinkForm, BlacklistUserForm
+from shrunk.forms import LinkForm
 from shrunk.util import get_db_client
 from shrunk.stringutil import formattime
 from shrunk.filters import strip_protocol, ensure_protocol
