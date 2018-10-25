@@ -38,18 +38,18 @@ class LinkForm(Form):
           - `banlist` (optional): A list of strings to restrict, in addition to
             the default ones
         """
-        super().__init__(form)
+        super(LinkForm).__init__(form)
         if banned_regexes:
             for regex in banned_regexes:
                 LinkForm.rejected_regexes.append(re.compile(regex, re.IGNORECASE))
 
-    def validate_long_url(form, field):
+    def validate_long_url(self, field):
         """Performs validation on the long_url field."""
         for regex in LinkForm.rejected_regexes:
             if regex.search(field.data):
                 raise ValidationError("That URL is not allowed.")
 
-    def validate_short_url(form, field):
+    def validate_short_url(self, field):
         """Performs validation on the short_url field."""
         if not field.data.isalnum():
             raise ValidationError('Custom alias must be alphanumeric.')
