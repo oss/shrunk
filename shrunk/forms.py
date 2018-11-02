@@ -38,7 +38,7 @@ class LinkForm(Form):
           - `banlist` (optional): A list of strings to restrict, in addition to
             the default ones
         """
-        super(LinkForm).__init__(form)
+        super(LinkForm, self).__init__(form)
         if banned_regexes:
             for regex in banned_regexes:
                 LinkForm.rejected_regexes.append(re.compile(regex, re.IGNORECASE))
