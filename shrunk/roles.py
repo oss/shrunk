@@ -52,6 +52,8 @@ def grant(role, grantor, grantee):
         #guard against double insertions
         if not check(role, grantee):
             grants.insert({"role": role, "entity": grantee, "granted_by": grantor})
+            if role in oncreate_for:
+                oncreate_for[role](grantee)
     else:
         raise InvalidEntity()
         
