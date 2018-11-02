@@ -149,9 +149,27 @@ class ShrunkFlask(ShrunkFlaskMini):
 
         })
         def onblock(url):
-            self.get_shrunk()._mongo.remove({"long_url": {
-                "$regex": "%s*" % get_domain(url)
-            }})
+            domain = get_domain(url)
+            self.logger.info(url+" is blocked! "+
+                             "removing all urls with domain "+domain)
+            urls = self.get_shrunk()._mongo.shrunk_urls.urls
+            contains_domain = list(urls.find({"long_url": {
+                # . needs to be escaped in the domain because it is regex wildcard
+                "$regex": "%s*" % domain.replace(".", "\.")
+            }}))
+
+            matches_domain = [link for link in contains_domain
+                          if get_domain(link["long_url"]) == domain]
+            # print 3 to a line
+            logmessage = "FOUND:\n"
+            for link in matches_domain:
+                logmessage += str(link["long_url"].encode("utf-8")) + "\n"
+            self.logger.info(logmessage)
+
+            result = urls.delete_many({
+                "_id": {"$in": [doc["_id"] for doc in matches_domain]}
+            })
+            self.logger.info("block "+url+" result: "+str(result.raw_result))
         roles.new("blocked_url", is_admin, validate_url, custom_text = {
             "title": "Blocked urls",
             "invalid": "bad url",
