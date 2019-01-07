@@ -117,10 +117,15 @@ label {
     font-size: 40px;
     text-align: center;
 }
+
 .not-found-box .message {
     text-align: center;
     font-size: 20px;
     line-height: 40px;
+}
+
+#go-url {
+    padding-bottom: 0;
 }
 
 .login-box {
@@ -320,6 +325,11 @@ label {
     padding:    12px;
 
     background: #363636;
+}
+
+#footer a {
+    color: #fefefe;
+    text-decoration: underline;
 }
 
 .box {

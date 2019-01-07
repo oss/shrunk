@@ -14,6 +14,8 @@ shrunk.egg-info/
 
 # Virtual environment
 venv/
+virtualenv/
+build/
 
 # Flask logs
 *.log
