@@ -6,6 +6,7 @@ import random
 import string
 import re
 import pymongo
+from pymongo.collection import ReturnDocument
 import shrunk.roles as roles
 from shrunk.stringutil import get_domain
 from shrunk.aggregations import match_short_url, monthly_visits_aggregation
@@ -586,6 +587,13 @@ class ShrunkClient(object):
             "role": "blocked_url",
             "entity": {"$regex": "%s*" % get_domain(long_url)}
         }))
+
+    def get_visitor_id(self, ipaddr):
+        ipaddr = str(ipaddr)
+        db = self._mongo.shrunk_visitors
+        res = db.visitors.find_one_and_update({'ip': ipaddr}, {'$setOnInsert': {'ip': ipaddr}},
+                                              upsert=True, return_document=ReturnDocument.AFTER)
+        return str(res['_id'])
 
     @staticmethod
     def _generate_unique_key():

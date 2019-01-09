@@ -350,14 +350,15 @@ def get_stats():
 
 def make_csv_for_links(client, links):
     def visit_to_csv(visit):
-        return '{}, {}, {}'.format(visit['short_url'], visit['source_ip'], visit['time'])
+        visitor_id = client.get_visitor_id(visit['source_ip'])
+        return '{}, {}, {}'.format(visit['short_url'], visitor_id, visit['time'])
 
     all_visits = []
     for link in links:
         visits = client.get_visits(link)
         all_visits += map(visit_to_csv, visits)
 
-    header = '# short url, requester IP, time\n'
+    header = '# short url, visitor id, time\n'
     if not all_visits:
         return header + '# no visits found\n'
     else:
