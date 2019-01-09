@@ -357,6 +357,9 @@ class ShrunkClient(object):
 
         return response
 
+    def is_admin(self, request_netid):
+        return roles.check('admin', request_netid)
+
     def is_owner_or_admin(self, short_url, request_netid):
         url_db = self._mongo.shrunk_urls
         url=url_db.urls.find_one({"_id":short_url},projection={"netid"})
@@ -365,8 +368,7 @@ class ShrunkClient(object):
 
         url_owner=url["netid"]
         requester_is_owner=url_owner==request_netid
-        admin=roles.check("admin", request_netid)
-        return requester_is_owner or admin
+        return requester_is_owner or self.is_admin(request_netid)
 
     def delete_url(self, short_url, request_netid):
         """Given a short URL, delete it from the database.

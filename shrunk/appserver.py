@@ -345,7 +345,67 @@ def get_stats():
     else:
         template_data["missing_url"]=True
 
-    return render_template("stats.html", **template_data)
+    return render_template("stats.html", short_url=request.args.get('url', ''), **template_data)
+
+
+def make_csv_for_links(client, links):
+    def visit_to_csv(visit):
+        return '{}, {}, {}'.format(visit['short_url'], visit['source_ip'], visit['time'])
+
+    all_visits = []
+    for link in links:
+        visits = client.get_visits(link)
+        all_visits += map(visit_to_csv, visits)
+
+    header = '# short url, requester IP, time\n'
+    if not all_visits:
+        return header + '# no visits found\n'
+    else:
+        return header + '\n'.join(all_visits)
+
+
+def make_csv_response(csv):
+    return make_response((csv, 200, {'Content-Type': 'text/plain'}))
+
+
+@app.route("/link_visits_csv", methods=["GET"])
+@app.require_login
+def get_link_visits_csv():
+    client = app.get_shrunk()
+    netid = session['user'].get('netid')
+    if 'link' not in request.args:
+        return 'error: request must have link', 400
+    link = request.args['link']
+    if not client.is_owner_or_admin(link, netid):
+            return 'error: not authorized', 401
+    csv = make_csv_for_links(client, [link])
+    return make_csv_response(csv)
+
+
+@app.route("/search_visits_csv", methods=["GET"])
+@app.require_login
+def get_search_visits_csv():
+    client = app.get_shrunk()
+    netid = session['user'].get('netid')
+    all_users = request.args.get('all_users', '0') == '1' or session.get('all_users', '0') == '1'
+    if all_users and not client.is_admin(netid):
+        return 'error: not authorized', 401
+
+    if 'search' not in request.args:
+        if all_users:  # show all links for all users
+            links = client.get_all_urls()
+        else:  # show all links for current user
+            links = client.get_urls(netid)
+    else:
+        search = request.args['search']
+        if all_users:  # show links matching `search` for all users
+            links = client.search(search)
+        else:  # show links matching `search` for current user
+            links = client.search(search, netid=netid)
+
+    csv = make_csv_for_links(client, map(lambda l: l['_id'], links))
+    return make_csv_response(csv)
+
 
 @app.route("/monthly_visits", methods=["GET"])
 @app.require_login
