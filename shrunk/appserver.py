@@ -350,15 +350,17 @@ def get_stats():
 
 def make_csv_for_links(client, links):
     def visit_to_csv(visit):
-        visitor_id = client.get_visitor_id(visit['source_ip'])
-        return '{}, {}, {}'.format(visit['short_url'], visitor_id, visit['time'])
+        ipaddr = visit['source_ip']
+        visitor_id = client.get_visitor_id(ipaddr)
+        location = client.get_geoip_location(ipaddr)
+        return '{}, {}, {}, {}'.format(visit['short_url'], visitor_id, location, visit['time'])
 
     all_visits = []
     for link in links:
         visits = client.get_visits(link)
         all_visits += map(visit_to_csv, visits)
 
-    header = '# short url, visitor id, time\n'
+    header = '# short url, visitor id, location, time\n'
     if not all_visits:
         return header + '# no visits found\n'
     else:
@@ -366,7 +368,7 @@ def make_csv_for_links(client, links):
 
 
 def make_csv_response(csv):
-    return make_response((csv, 200, {'Content-Type': 'text/plain'}))
+    return make_response((csv, 200, {'Content-Type': 'text/plain; charset=utf-8'}))
 
 
 @app.route("/link_visits_csv", methods=["GET"])

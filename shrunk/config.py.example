@@ -10,6 +10,9 @@ DB_HOST = "localhost"
 DB_PORT = 27017
 """The database's port on the host machine."""
 
+GEOLITE_PATH = "./GeoLite2-City.mmdb"
+"""The path to the geolite geoip database."""
+
 SECRET_KEY = "something_secret"
 """A secret key for Flask."""
 

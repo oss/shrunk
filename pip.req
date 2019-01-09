@@ -7,3 +7,4 @@ Werkzeug==0.9.6
 itsdangerous==0.24
 pyasn1==0.1.7
 pymongo==3.6.1
+geoip2==2.9.0

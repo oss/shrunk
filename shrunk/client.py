@@ -7,6 +7,7 @@ import string
 import re
 import pymongo
 from pymongo.collection import ReturnDocument
+import geoip2.database
 import shrunk.roles as roles
 from shrunk.stringutil import get_domain
 from shrunk.aggregations import match_short_url, monthly_visits_aggregation
@@ -203,7 +204,7 @@ class ShrunkClient(object):
     RESERVED_WORDS = ["add", "login", "logout", "delete", "admin", "stats", "qr"]
     """Reserved words that cannot be used as shortened urls."""
 
-    def __init__(self, host=None, port=None, test_client=None):
+    def __init__(self, host=None, port=None, test_client=None, geolite_path=None):
         """Create a new client connection.
 
         This client uses MongoDB. No network traffic occurs until a data method
@@ -220,6 +221,11 @@ class ShrunkClient(object):
             self._mongo = test_client
         else:
             self._mongo = pymongo.MongoClient(host, port)
+
+        if geolite_path:
+            self._geoip = geoip2.database.Reader(geolite_path)
+        else:
+            self._geoip = None
 
     def clone_cursor(self, cursor):
         """Clones an already existing ShrunkCursor object.
@@ -594,6 +600,31 @@ class ShrunkClient(object):
         res = db.visitors.find_one_and_update({'ip': ipaddr}, {'$setOnInsert': {'ip': ipaddr}},
                                               upsert=True, return_document=ReturnDocument.AFTER)
         return str(res['_id'])
+
+    def get_geoip_location(self, ipaddr):
+        unk = '"unknown location"'
+
+        if not self._geoip:
+            return unk
+
+        try:
+            resp = self._geoip.city(ipaddr)
+            city = resp.city.name
+            state = None
+            try:
+                state = resp.subdivisions.most_specific.name
+            except:
+                pass
+            country = resp.country.name
+
+            components = [x for x in [city, state, country] if x]
+
+            if not components:
+                return unk
+
+            return '"{}"'.format(', '.join(components))
+        except:  # geoip2.errors.AddressNotFoundError:
+            return unk
 
     @staticmethod
     def _generate_unique_key():
