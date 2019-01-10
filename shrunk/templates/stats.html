@@ -8,6 +8,7 @@
     <h3> URL not found :( </h3>
     {% else %}
     <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-1.5.0.min.js"></script>
     <h3><a href="{{ url_info['long_url'] }}">
 	{{ url_info["title"] }}
     </a></h3>
@@ -29,6 +30,7 @@
      </form>
      <span id="error"></span>
     </div>
+    <div id="map"></div>
     <script src="{{ url_for('static', filename='js/stats.js') }}"></script>
     {% endif %}
   </article>

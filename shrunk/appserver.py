@@ -20,6 +20,7 @@ import json
 
 import io
 import csv
+import collections
 
 
 # Create application
@@ -415,6 +416,27 @@ def get_search_visits_csv():
         return 'error: too many visits to create CSV', 500
 
     csv = make_csv_for_links(client, map(lambda l: l['_id'], links))
+    return make_csv_response(csv)
+
+
+@app.route("/geoip_csv", methods=["GET"])
+@app.require_login
+def get_geoip_csv():
+    client = app.get_shrunk()
+    netid = session['user'].get('netid')
+    if 'link' not in request.args:
+        return 'error: request must have link', 400
+    link = request.args['link']
+    if not client.is_owner_or_admin(link, netid):
+        return 'error: not authorized', 401
+
+    country_counts = collections.defaultdict(int)
+    for visit in client.get_visits(link):
+        ipaddr = visit['source_ip']
+        country = client.get_country_code(ipaddr)
+        country_counts[country] += 1
+
+    csv = 'country,visits\n' + '\n'.join(map(lambda x: '{},{}'.format(*x), country_counts.items()))
     return make_csv_response(csv)
 
 

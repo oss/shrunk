@@ -204,4 +204,35 @@
 	.then(add_visits_chart)
 	.then(add_ranges)
 	.catch(console.log);
-}())
+}());
+
+let url=new URL(document.location);
+const link=url.searchParams.get("url");
+const csv_url="/geoip_csv?link=" + link;
+Plotly.d3.csv(csv_url,
+	      function(err, rows) {
+		  function unpack(rows, key) {
+		      return rows.map(function(row) { return row[key]; });
+		  }
+
+		  var data = [{
+		      type: 'choropleth',
+		      locationmode: 'country names',
+		      locations: unpack(rows, 'country'),
+		      z: unpack(rows, 'visits'),
+		      text: unpack(rows, 'country'),
+		      autocolorscale: true
+		  }];
+
+		  var layout = {
+		      title: 'Visits per country',
+		      geo: {
+			  projection: {
+			      type: 'robinson'
+			  }
+		      }
+		  };
+
+		  div = document.getElementById("map");
+		  Plotly.plot(div, data, layout, {showLink: false});
+	      });

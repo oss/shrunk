@@ -628,6 +628,16 @@ class ShrunkClient(object):
         except:  # geoip2.errors.AddressNotFoundError:
             return unk
 
+    def get_country_code(self, ipaddr):
+        unk = 'unknown'
+        if not self._geoip:
+            return unk
+        try:
+            resp = self._geoip.city(ipaddr)
+            return resp.country.name or unk
+        except:
+            return unk
+
     @staticmethod
     def _generate_unique_key():
         """Generates a unique key."""
