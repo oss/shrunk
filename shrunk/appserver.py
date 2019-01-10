@@ -408,6 +408,12 @@ def get_search_visits_csv():
         else:  # show links matching `search` for current user
             links = client.search(search, netid=netid)
 
+    links = list(links)
+    total_visits = sum(map(lambda l: l['visits'], links))
+    max_visits = app.config.get('MAX_VISITS_FOR_CSV', 6000)  # default 6000
+    if total_visits >= max_visits:
+        return 'error: too many visits to create CSV', 500
+
     csv = make_csv_for_links(client, map(lambda l: l['_id'], links))
     return make_csv_response(csv)
 

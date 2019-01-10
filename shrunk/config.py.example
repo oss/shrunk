@@ -49,3 +49,8 @@ LOG_FILENAME = "shrunk.log"
 
 MAX_DISPLAY_LINKS = 50
 """The maximum number of links to display per page."""
+
+MAX_VISITS_FOR_CSV = 6000
+"""The maximum number of visits to allow when generating a CSV file from search
+   results. If a CSV would have more than this number of visits, an error is returned.
+   This restriction does not apply to CSV files generated from a single short URL."""
