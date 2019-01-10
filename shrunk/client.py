@@ -596,19 +596,21 @@ class ShrunkClient(object):
 
     def get_visitor_id(self, ipaddr):
         ipaddr = str(ipaddr)
-        db = self._mongo.shrunk_visitors
+        db = self._mongo.shrunk_visits
         res = db.visitors.find_one_and_update({'ip': ipaddr}, {'$setOnInsert': {'ip': ipaddr}},
                                               upsert=True, return_document=ReturnDocument.AFTER)
         return str(res['_id'])
 
     def get_geoip_location(self, ipaddr):
-        unk = '"unknown location"'
+        unk = 'unknown location'
 
         if not self._geoip:
             return unk
 
         try:
             resp = self._geoip.city(ipaddr)
+
+            # some of city,state,country may be None; those will be filtered out below
             city = resp.city.name
             state = None
             try:
@@ -622,7 +624,7 @@ class ShrunkClient(object):
             if not components:
                 return unk
 
-            return '"{}"'.format(', '.join(components))
+            return ', '.join(components)
         except:  # geoip2.errors.AddressNotFoundError:
             return unk
 

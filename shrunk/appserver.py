@@ -18,6 +18,9 @@ from functools import wraps, partial
 
 import json
 
+import io
+import csv
+
 
 # Create application
 # ShrunkFlask extends flask and adds decorators and configs itself
@@ -349,22 +352,21 @@ def get_stats():
 
 
 def make_csv_for_links(client, links):
-    def visit_to_csv(visit):
-        ipaddr = visit['source_ip']
-        visitor_id = client.get_visitor_id(ipaddr)
-        location = client.get_geoip_location(ipaddr)
-        return '{}, {}, {}, {}'.format(visit['short_url'], visitor_id, location, visit['time'])
+    f = io.StringIO()
+    writer = csv.writer(f)
 
-    all_visits = []
+    header = ['short url', 'visitor id', 'location', 'time']
+    writer.writerow(header)
+
     for link in links:
         visits = client.get_visits(link)
-        all_visits += map(visit_to_csv, visits)
+        for visit in visits:
+            ipaddr = visit['source_ip']
+            visitor_id = client.get_visitor_id(ipaddr)
+            location = client.get_geoip_location(ipaddr)
+            writer.writerow([visit['short_url'], visitor_id, location, visit['time']])
 
-    header = '# short url, visitor id, location, time\n'
-    if not all_visits:
-        return header + '# no visits found\n'
-    else:
-        return header + '\n'.join(all_visits)
+    return f.getvalue()
 
 
 def make_csv_response(csv):
