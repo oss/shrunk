@@ -17,6 +17,10 @@ h1 {
     padding-right: 15pt;
 }
 
+#map-toggle {
+    padding-top: 20px;
+}
+
 ul {
     list-style: none;
     padding-top: 10px;
