@@ -206,10 +206,11 @@
 	.catch(console.log);
 }());
 
-let url=new URL(document.location);
-const link=url.searchParams.get("url");
-const csv_url="/geoip_csv?link=" + link;
-Plotly.d3.csv(csv_url,
+const us_map_div = document.getElementById('us-map');
+const world_map_div = document.getElementById('world-map');
+
+function add_map(locationmode, layout, div, csvurl) {
+    Plotly.d3.csv(csvurl,
 	      function(err, rows) {
 		  function unpack(rows, key) {
 		      return rows.map(function(row) { return row[key]; });
@@ -217,22 +218,53 @@ Plotly.d3.csv(csv_url,
 
 		  var data = [{
 		      type: 'choropleth',
-		      locationmode: 'country names',
-		      locations: unpack(rows, 'country'),
+		      locationmode: locationmode,
+		      locations: unpack(rows, 'location'),
 		      z: unpack(rows, 'visits'),
-		      text: unpack(rows, 'country'),
+		      text: unpack(rows, 'location'),
 		      autocolorscale: true
 		  }];
 
-		  var layout = {
-		      title: 'Visits per country',
-		      geo: {
-			  projection: {
-			      type: 'robinson'
-			  }
-		      }
-		  };
-
-		  div = document.getElementById("map");
 		  Plotly.plot(div, data, layout, {showLink: false});
 	      });
+}
+
+let url = new URL(document.location);
+const short_link = url.searchParams.get("url");
+
+const states_csv_url = "/geoip_csv?resolution=state&link=" + short_link;
+const states_layout = {
+    title: 'Visits per state',
+    geo: {
+	scope: 'usa',
+	projection: {
+	    type: 'albers usa'
+	}
+    }
+};
+
+add_map('USA-states', states_layout, us_map_div, states_csv_url);
+
+const country_csv_url = "/geoip_csv?resolution=country&link=" + short_link;
+const country_layout = {
+    title: 'Visits per country',
+    geo: {
+	projection: {
+	    type: 'robinson'
+	}
+    }
+};
+
+add_map('country names', country_layout, world_map_div, country_csv_url);
+
+function show_us_map() {
+    us_map_div.style.display = '';
+    world_map_div.style.display = 'none';
+}
+
+function show_world_map() {
+    us_map_div.style.display = 'none';
+    world_map_div.style.display = '';
+}
+
+show_us_map();

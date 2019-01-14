@@ -16,6 +16,9 @@
       <li>Visits: {{ url_info["visits"] }}</li>
       <li>First Time Visits: <span id="first_time_visits">Loading...</span></li>
     </ul>
+
+    <hr>
+
     <div>
       key:
       <span style="color:steelblue">monthly total visits</span>
@@ -30,7 +33,19 @@
      </form>
      <span id="error"></span>
     </div>
-    <div id="map"></div>
+
+    <hr>
+
+    <div id="map-toggle" class="btn-group">
+      <button class="btn btn-default" type="button" onmouseup="show_us_map()">US</button>
+      <button class="btn btn-default" type="button" onmouseup="show_world_map()">World</button>
+    </div>
+
+    <div id="maps-div">
+      <div id="us-map"></div>
+      <div id="world-map"></div>
+    </div>
+
     <script src="{{ url_for('static', filename='js/stats.js') }}"></script>
     {% endif %}
   </article>

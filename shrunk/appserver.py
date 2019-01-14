@@ -419,24 +419,43 @@ def get_search_visits_csv():
     return make_csv_response(csv)
 
 
+def make_geoip_csv(client, get_location, link):
+    location_counts = collections.defaultdict(int)
+    for visit in client.get_visits(link):
+        ipaddr = visit['source_ip']
+        location = get_location(client, ipaddr)
+        # location = client.get_country_code(ipaddr)
+        location_counts[location] += 1
+
+    csv = 'location,visits\n' + '\n'.join(map(lambda x: '{},{}'.format(*x), location_counts.items()))
+    return csv
+
+
 @app.route("/geoip_csv", methods=["GET"])
 @app.require_login
 def get_geoip_csv():
     client = app.get_shrunk()
     netid = session['user'].get('netid')
+
     if 'link' not in request.args:
         return 'error: request must have link', 400
     link = request.args['link']
+
+    if 'resolution' not in request.args:
+        return 'error: request must have resolution', 400
+    resolution = request.args['resolution']
+    if resolution not in ['country', 'state']:
+        return 'error: invalid resolution', 400
+
     if not client.is_owner_or_admin(link, netid):
         return 'error: not authorized', 401
 
-    country_counts = collections.defaultdict(int)
-    for visit in client.get_visits(link):
-        ipaddr = visit['source_ip']
-        country = client.get_country_code(ipaddr)
-        country_counts[country] += 1
+    if resolution == 'country':
+        get_location = lambda cl, ip: cl.get_country_code(ip)
+    else:  # resolution == 'state'
+        get_location = lambda cl, ip: cl.get_state_code(ip)
 
-    csv = 'country,visits\n' + '\n'.join(map(lambda x: '{},{}'.format(*x), country_counts.items()))
+    csv = make_geoip_csv(client, get_location, link)
     return make_csv_response(csv)
 
 
