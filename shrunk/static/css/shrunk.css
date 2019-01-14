@@ -12,6 +12,11 @@ h1 {
     font-size: 48px;
 }
 
+.links-header {
+    display: inline-block;
+    padding-right: 15pt;
+}
+
 ul {
     list-style: none;
     padding-top: 10px;

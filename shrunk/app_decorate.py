@@ -19,8 +19,9 @@ class ShrunkFlaskMini(Flask):
         self.logger.info("logging started")
 
         self._shrunk_client = ShrunkClient(self.config["DB_HOST"], 
-                                           self.config["DB_PORT"])
-        self.logger.info("ShrunkCLient initialized %s:%s" 
+                                           self.config["DB_PORT"],
+                                           geolite_path=self.config.get("GEOLITE_PATH"))
+        self.logger.info("ShrunkClient initialized %s:%s"
                          % (self.config["DB_HOST"],
                             self.config["DB_PORT"]))
 
