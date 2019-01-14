@@ -68,6 +68,7 @@ label {
 
 .search-bar {
     width: 100%;
+    padding-top: 10px;
 }
 
 .search-bar .form-group .form-control {
@@ -416,4 +417,20 @@ Media Queries
 #error{
     color: #cc0e32;
     font_size: 20px;
+}
+
+#search {
+    width: 275px;
+}
+
+#clear-search {
+    position: absolute;
+    right: 10px;
+    top: 0;
+    bottom: 0;
+    height: 14px;
+    margin: auto;
+    font-size: 14px;
+    cursor: pointer;
+    color: #ccc;
 }
