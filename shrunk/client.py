@@ -234,7 +234,7 @@ class ShrunkClient(object):
         """Clones an already existing ShrunkCursor object.
 
         :Parameters:
-        - `cursor`: An already existing ShrunkCursor object.
+          - `cursor`: An already existing ShrunkCursor object.
 
         :Returns:
           Another ShrunkCursor object. A clone.
@@ -453,15 +453,17 @@ class ShrunkClient(object):
         return db.urls.find_one({"_id" : short_url})
     
     def get_monthly_visits(self, short_url):
-        """Given a short URL, return how many visits and new unique visiters it gets
-        per month
-        this returns an array where each element the data for a month
-          - _id : a dict with keys for month and year
-          - first_time_visits : new visits by users who haven't seen the link yet
-          - all_visits : the total visits per that month
+        """Given a short URL, return how many visits and new unique visiters it gets per month.
+
         :Parameters:
           - `short_url`: A shortened URL
         
+        :Returns:
+         An array, each of whose elements is a dict containing the data for one month.
+         The fields of each dict are:
+          - `_id`: a dict with keys for month and year.
+          - `first_time_visits`: new visits by users who haven't seen the link yet.
+          - `all_visits`: the total visits per that month.
         """
         db = self._mongo.shrunk_visits
         aggregation=[match_short_url(short_url)] + monthly_visits_aggregation
@@ -599,6 +601,14 @@ class ShrunkClient(object):
         }))
 
     def get_visitor_id(self, ipaddr):
+        """Gets a unique, opaque identifier for an IP address.
+
+           :Parameters:
+             - `ipaddr`: a string containing an IPv4 address.
+
+           :Returns:
+             A hexadecimal string which uniquely identifies the given IP address.
+        """
         ipaddr = str(ipaddr)
         db = self._mongo.shrunk_visits
         res = db.visitors.find_one_and_update({'ip': ipaddr}, {'$setOnInsert': {'ip': ipaddr}},
@@ -606,6 +616,17 @@ class ShrunkClient(object):
         return str(res['_id'])
 
     def get_geoip_location(self, ipaddr):
+        """Gets a human-readable UTF-8 string describing the location of the given IP address.
+
+           :Parameters:
+             - `ipaddr`: a string containing an IPv4 address.
+
+           :Returns:
+             A string describing the geographic location location of the IP address,
+             or the string ``"unknown location"`` if the location of the IP address cannot
+             be determined.
+        """
+
         unk = 'unknown location'
 
         if not self._geoip:
@@ -633,6 +654,16 @@ class ShrunkClient(object):
             return unk
 
     def get_country_code(self, ipaddr):
+        """Gets the name of the country in which the given IPv4 address is located.
+
+           :Parameters:
+             - `ipaddr`: a string containing an IPv4 address.
+
+           :Returns:
+             A string containing the full name of the country in which the address is located
+             (e.g. ``"United States"``), or the string ``"unknown"`` if the country cannot be determined.
+        """
+
         unk = 'unknown'
         if not self._geoip:
             return unk
@@ -643,6 +674,17 @@ class ShrunkClient(object):
             return unk
 
     def get_state_code(self, ipaddr):
+        """Gets a string describing the state or province in which the given IPv4 address is located.
+
+           :Parameters:
+             - `ipaddr`: a string containing an IPv4 address.
+
+           :Returns:
+             A string containing the ISO code of the state or province in which the address is located
+             (e.g. ``"NY"``, ``"NJ"``, ``"VA"``) or the string ``"unknown"`` if the location cannot
+             be determined.
+        """
+
         unk = 'unknown'
         if not self._geoip:
             return unk

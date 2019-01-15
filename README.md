@@ -1,6 +1,7 @@
 shrunk
 ======
-A URL shortener for Rutgers University.
+A URL shortener for Rutgers University. For more information, contact [Rutgers
+Open System Solutions](https://oss.rutgers.edu).
 
 Uses MongoDB. Python code targets _Python 3.3_.
 
@@ -12,6 +13,12 @@ virtual environment with the following:
     $ virtualenv --no-site-packages --python="python3" virtualenv
     $ source virtualenv/bin/activate
     $ pip install -r pip.req
+
+Documentation
+-------------
+After setting up the virtual environment, you can generate HTML documentation
+by running `./build_docs.sh` from the root of the project. The documentation will
+be placed in `./docs_out`.
 
 Features
 --------

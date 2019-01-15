@@ -34,11 +34,6 @@ this explicitly::
 
     >>> client = ShrunkClient("db.example.org", 3306)
 
-.. seealso::
-
-    The :doc:`reference page <reference>` for more information on database
-    schemata for Shrunk.
-
 Examining Shrunk Data
 ---------------------
 The client provides access to information regarding shortened links, users and
