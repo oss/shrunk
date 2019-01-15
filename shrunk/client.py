@@ -207,8 +207,7 @@ class ShrunkClient(object):
     def __init__(self, host=None, port=None, test_client=None, geolite_path=None):
         """Create a new client connection.
 
-        This client uses MongoDB. No network traffic occurs until a data method
-        is called.
+        This client uses MongoDB.
 
         :Parameters:
           - `host` (optional): the hostname to connect to; defaults to
@@ -221,6 +220,10 @@ class ShrunkClient(object):
             self._mongo = test_client
         else:
             self._mongo = pymongo.MongoClient(host, port)
+
+            db = self._mongo.shrunk_visits
+            db.visits.create_index([('short_url', pymongo.ASCENDING)])
+            db.visitors.create_index([('ip', pymongo.ASCENDING)])
 
         if geolite_path:
             self._geoip = geoip2.database.Reader(geolite_path)
