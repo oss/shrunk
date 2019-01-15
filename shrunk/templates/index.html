@@ -93,13 +93,21 @@
         </div>
 
         <div class="page-numbers">
-        {% for pg in range(begin_pages, end_pages +1) %}
+            {% if begin_pages != 1 %}
+	    <span class="page"><a href="{{ url_for('render_index', p=1, search=query) }}">{{ 1 }}</a></span> ...
+	    {% endif %}
+
+            {% for pg in range(begin_pages, end_pages +1) %}
             {% if pg == page %}
-                <span class="page active"><a href="{{ url_for('render_index', p=pg, search=query) }}">{{ pg }}</a></span>
+            <span class="page active"><a href="{{ url_for('render_index', p=pg, search=query) }}">{{ pg }}</a></span>
             {% else %}
-                <span class="page"><a href="{{ url_for('render_index', p=pg, search=query) }}">{{ pg }}</a></span>
+            <span class="page"><a href="{{ url_for('render_index', p=pg, search=query) }}">{{ pg }}</a></span>
             {% endif %}
-        {% endfor %}
+            {% endfor %}
+
+	    {% if end_pages != lastpage %}
+	    ... <span class="page"><a href="{{ url_for('render_index', p=lastpage, search=query) }}">{{ lastpage }}</a></span>
+	    {% endif %}
         </div>
 
         <div class="next">
@@ -115,9 +123,6 @@
     </nav>
 </article>
 <br><br><br>
-<div>
-    <p>Number of pages: {{lastpage}}</p>
-</div>
 
 {% endif %}
 
