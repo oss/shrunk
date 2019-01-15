@@ -1,9 +1,9 @@
 shrunk
 ======
 A URL shortener for Rutgers University. For more information, contact [Rutgers
-Open System Solutions](https://oss.rutgers.edu).
+Open System Solutions](http://oss.rutgers.edu).
 
-Uses MongoDB. Python code targets _Python 3.3_.
+Uses MongoDB. Python code targets **Python 3.3**.
 
 Virtual Environment
 -------------------
