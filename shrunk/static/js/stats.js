@@ -268,3 +268,46 @@ function show_world_map() {
 }
 
 show_us_map();
+
+function add_pie_chart(divname, title, raw_data) {
+    const layout = {
+	title: title,
+	height: 400,
+	width: 500
+    };
+
+    let data = [{
+	values: [],
+	labels: [],
+	type: 'pie'
+    }];
+
+    for (var key in raw_data) {
+	if (raw_data.hasOwnProperty(key)) {
+	    data[0].labels.push(key);
+	    data[0].values.push(raw_data[key])
+	}
+    }
+
+    Plotly.newPlot(divname, data, layout);
+}
+
+if (document.getElementById('pies-div') != null) {
+    const useragent_stats_url = "/useragent_stats?link=" + short_link;
+    Plotly.d3.json(useragent_stats_url, function(err, json) {
+	console.log('the json is: ');
+	console.log(json);
+
+	if (json.hasOwnProperty('browser')) {
+	    add_pie_chart('browser-pie', 'Browsers', json['browser']);
+	}
+
+	if (json.hasOwnProperty('platform')) {
+	    add_pie_chart('platform-pie', 'Platforms', json['platform']);
+	}
+
+	if (json.hasOwnProperty('language')) {
+	    add_pie_chart('language-pie', 'Languages', json['language']);
+	}
+    });
+}

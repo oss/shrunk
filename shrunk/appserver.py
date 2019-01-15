@@ -21,6 +21,7 @@ import json
 import io
 import csv
 import collections
+import werkzeug.useragents
 
 
 # Create application
@@ -349,7 +350,9 @@ def get_stats():
     else:
         template_data["missing_url"]=True
 
-    return render_template("stats.html", short_url=request.args.get('url', ''), **template_data)
+    return render_template("stats.html", short_url=request.args.get('url', ''),
+                           show_useragent_stats=app.config.get('SHOW_USERAGENT_STATS'),
+                           **template_data)
 
 
 def make_csv_for_links(client, links):
@@ -370,7 +373,7 @@ def make_csv_for_links(client, links):
     return f.getvalue()
 
 
-def make_csv_response(csv):
+def make_plaintext_response(csv):
     return make_response((csv, 200, {'Content-Type': 'text/plain; charset=utf-8'}))
 
 
@@ -385,7 +388,7 @@ def get_link_visits_csv():
     if not client.is_owner_or_admin(link, netid):
             return 'error: not authorized', 401
     csv = make_csv_for_links(client, [link])
-    return make_csv_response(csv)
+    return make_plaintext_response(csv)
 
 
 @app.route("/search_visits_csv", methods=["GET"])
@@ -416,7 +419,7 @@ def get_search_visits_csv():
         return 'error: too many visits to create CSV', 500
 
     csv = make_csv_for_links(client, map(lambda l: l['_id'], links))
-    return make_csv_response(csv)
+    return make_plaintext_response(csv)
 
 
 def make_geoip_csv(client, get_location, link):
@@ -456,7 +459,36 @@ def get_geoip_csv():
         get_location = lambda cl, ip: cl.get_state_code(ip)
 
     csv = make_geoip_csv(client, get_location, link)
-    return make_csv_response(csv)
+    return make_plaintext_response(csv)
+
+
+if app.config.get('SHOW_USERAGENT_STATS'):
+    @app.route("/useragent_stats", methods=["GET"])
+    def get_useragent_stats():
+        client = app.get_shrunk()
+        netid = session['user'].get('netid')
+
+        if 'link' not in request.args:
+            return 'error: request must have link', 400
+        link = request.args['link']
+
+        if not client.is_owner_or_admin(link, netid):
+            return 'error: not authorized', 401
+
+        stats = collections.defaultdict(lambda: collections.defaultdict(int))
+        for visit in client.get_visits(link):
+            if 'user_agent' not in visit:
+                continue
+            ua = werkzeug.useragents.UserAgent(visit['user_agent'])
+            if ua.platform:
+                stats['platform'][ua.platform] += 1
+            if ua.browser:
+                stats['browser'][ua.browser] += 1
+            if ua.language:
+                stats['language'][ua.language] += 1
+
+        stats_json = json.dumps(stats)
+        return make_plaintext_response(stats_json)
 
 
 @app.route("/monthly_visits", methods=["GET"])

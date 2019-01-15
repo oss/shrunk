@@ -563,7 +563,7 @@ class ShrunkClient(object):
         cursor = db.urls.find(query)
         return ShrunkCursor(cursor)
 
-    def visit(self, short_url, source_ip):
+    def visit(self, short_url, source_ip, user_agent):
         """Visits the given URL and logs visit information.
 
         On visiting a URL, this is guaranteed to perform at least the following
@@ -588,7 +588,8 @@ class ShrunkClient(object):
         db.visits.insert({
             "short_url" : short_url,
             "source_ip" : source_ip,
-            "time" : datetime.datetime.now()
+            "time" : datetime.datetime.now(),
+            "user_agent": user_agent
         })
 
     def is_blocked(self, long_url):

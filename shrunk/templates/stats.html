@@ -46,6 +46,16 @@
       <div id="world-map"></div>
     </div>
 
+    {% if show_useragent_stats %}
+    <hr>
+
+    <div id="pies-div">
+	<div id="browser-pie" />
+	<div id="platform-pie" />
+	<div id="language-pie" />
+    </div>
+    {% endif %}
+
     <script src="{{ url_for('static', filename='js/stats.js') }}"></script>
     {% endif %}
   </article>
