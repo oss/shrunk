@@ -33,7 +33,9 @@ def redirect_link(short_url):
     if long_url is None:
         return render_template("link-404.html", short_url=short_url)
     else:
-        client.visit(short_url, request.remote_addr, request.headers.get('User-Agent'))
+        client.visit(short_url, request.remote_addr,
+                     request.headers.get('User-Agent'),
+                     request.headers.get('Referer'))
 
         # Check if a protocol exists
         if "://" in long_url:
