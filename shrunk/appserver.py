@@ -279,6 +279,7 @@ def render_index(**kwargs):
     #resp.set_cookie("all_users", all_users)
     #resp.set_cookie("sortby", sortby)
     session["all_users"] = all_users
+    session["query"] = query
     session["sortby"] = sortby
     return resp
 
@@ -341,7 +342,8 @@ def get_stats():
     #should we require owner or admin to view?
     template_data={"url_info": {}, 
                    "missing_url": False,
-                   "monthy_visits": []}
+                   "monthy_visits": [],
+                   "query": session.get("query")}
 
     if "url" in request.args:
         url=request.args["url"]
@@ -537,12 +539,12 @@ def monthly_visits():
         visits=client.get_monthly_visits(url)
         return json.dumps(visits)
 
+
 @app.route("/qr", methods=["GET"])
 @app.require_login
 def qr():
-    kwargs={"print": "print" in request.args}
+    kwargs={"print": "print" in request.args, "query": session.get("query")}
     return render_template("qr.html", **kwargs)
-
 
 
 @app.route("/delete", methods=["GET", "POST"])
@@ -623,6 +625,7 @@ def edit_link_form():
 
     info['old_short_url']=old_short_url
     info['show_short_url']=roles.has_one_of(["admin", "power_user"], netid)
+    info['query'] = session.get('query')
     # Render the edit template
     return render_template("edit.html", **info)
 
