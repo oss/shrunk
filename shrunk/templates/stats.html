@@ -9,6 +9,8 @@
     {% else %}
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-1.5.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.bundle.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/emn178/chartjs-plugin-labels/src/chartjs-plugin-labels.js"></script>
     <h3><a href="{{ url_info['long_url'] }}">
 	{{ url_info["title"] }}
     </a></h3>
@@ -50,9 +52,16 @@
     <hr>
 
     <div id="pies-div">
-	<div id="browser-pie" />
-	<div id="platform-pie" />
-	<div id="language-pie" />
+	<canvas id="browser-pie"></canvas>
+	<canvas id="platform-pie"></canvas>
+	<canvas id="language-pie"></canvas>
+    </div>
+    {% endif %}
+
+    {% if show_referer_stats %}
+    <div id="referer-div">
+      <hr>
+      <canvas id="referer-pie-chart"></canvas>
     </div>
     {% endif %}
 

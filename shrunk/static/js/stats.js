@@ -206,108 +206,212 @@
 	.catch(console.log);
 }());
 
-const us_map_div = document.getElementById('us-map');
-const world_map_div = document.getElementById('world-map');
 
-function add_map(locationmode, layout, div, csvurl) {
-    Plotly.d3.csv(csvurl,
-	      function(err, rows) {
-		  function unpack(rows, key) {
-		      return rows.map(function(row) { return row[key]; });
-		  }
+/* ===== choropleths of visitor locations ===== */
 
-		  var data = [{
-		      type: 'choropleth',
-		      locationmode: locationmode,
-		      locations: unpack(rows, 'location'),
-		      z: unpack(rows, 'visits'),
-		      text: unpack(rows, 'location'),
-		      autocolorscale: true
-		  }];
+function add_map(div_id, csv_url, locationmode, layout) {
+    Plotly.d3.csv(csv_url,
+		  function(err, rows) {
+		      function unpack(rows, key) {
+			  return rows.map(function(row) { return row[key]; });
+		      }
 
-		  Plotly.plot(div, data, layout, {showLink: false});
-	      });
+		      var data = [{
+			  type: 'choropleth',
+			  locationmode: locationmode,
+			  locations: unpack(rows, 'location'),
+			  z: unpack(rows, 'visits'),
+			  text: unpack(rows, 'location'),
+			  autocolorscale: true
+		      }];
+
+		      var div = document.getElementById(div_id);
+		      Plotly.plot(div, data, layout, {showLink: false});
+		  });
 }
 
-let url = new URL(document.location);
-const short_link = url.searchParams.get("url");
-
-const states_csv_url = "/geoip_csv?resolution=state&link=" + short_link;
-const states_layout = {
-    title: 'Visits per state',
-    geo: {
-	scope: 'usa',
-	projection: {
-	    type: 'albers usa'
-	}
-    }
-};
-
-add_map('USA-states', states_layout, us_map_div, states_csv_url);
-
-const country_csv_url = "/geoip_csv?resolution=country&link=" + short_link;
-const country_layout = {
-    title: 'Visits per country',
-    geo: {
-	projection: {
-	    type: 'robinson'
-	}
-    }
-};
-
-add_map('country names', country_layout, world_map_div, country_csv_url);
-
 function show_us_map() {
-    us_map_div.style.display = '';
-    world_map_div.style.display = 'none';
+    document.getElementById('us-map').style.display = '';
+    document.getElementById('world-map').style.display = 'none';
 }
 
 function show_world_map() {
-    us_map_div.style.display = 'none';
-    world_map_div.style.display = '';
+    document.getElementById('us-map').style.display = 'none';
+    document.getElementById('world-map').style.display = '';
 }
 
-show_us_map();
+if (document.getElementById('maps-div') != null) {
+    const short_link = (new URL(document.location)).searchParams.get('url');
 
-function add_pie_chart(divname, title, raw_data) {
-    const layout = {
-	title: title,
-	height: 400,
-	width: 500
+    /* render state-level map */
+    const state_csv_url = '/geoip_csv?resolution=state&link=' + short_link;
+    const state_layout = {
+	title: 'Visits per state',
+	geo: {
+	    scope: 'usa',
+	    projection: { type: 'albers usa' }
+	}
+    };
+    add_map('us-map', state_csv_url, 'USA-states', state_layout);
+
+    /* render world map */
+    const country_csv_url = "/geoip_csv?resolution=country&link=" + short_link;
+    const country_layout = {
+	title: 'Visits per country',
+	geo: {
+	    projection: { type: 'robinson' }
+	}
+    };
+    add_map('world-map', country_csv_url, 'country names', country_layout);
+
+    /* default to displaying US map */
+    show_us_map();
+}
+
+
+/* ===== pie/doughnut charts of various statistics ===== */
+
+/* --- data --- */
+
+/* todo: safari, IE/edge, opera, etc? */
+const browser_colors = {
+    'Firefox': { background: 'rgba(244,199,133,0.2)', border: 'rgba(244,199,133,1)' },
+    'Chrome': { background: 'rgba(200,240,97,0.2)', border: 'rgba(200,240,97,1)' }
+};
+
+const browser_images = {
+    'Firefox': { src: '/static/img/small-firefox-icon.png', width: 22, height: 22 },
+    'Chrome': { src: '/static/img/small-chrome-icon.png', width: 22, height: 22 }
+};
+
+const platform_names = {
+    'Macos': 'MacOS'
+};
+
+/* todo: android, iOS, *BSD, etc? */
+/* todo: come up with a color for linux */
+const platform_colors = {
+    'Windows': { background: 'rgba(129,238,208,0.2)', border: 'rgba(129,238,208,1)' },
+    'Macos': { background: 'rgba(201,201,201,0.2)', border: 'rgba(201,201,201,1)' }
+};
+
+const platform_images = {
+    'Linux': { src: '/static/img/small-tux-icon.png', width: 22, height: 22},
+    'Windows': { src: '/static/img/small-windows-icon.png', width: 22, height: 22},
+    'Macos': { src: '/static/img/small-mac-icon.png', width: 22, height: 22}
+};
+
+const referer_colors = {
+    'Facebook': { background: 'rgba(0,75,150,0.2)', border: 'rgba(0,75,150,1)' },
+    'Twitter': { background: 'rgba(147,191,241,0.2)', border: 'rgba(147,191,241,1)' },
+    'Instagram': { background: 'rgba(193,131,212,0.2)', border: 'rgba(193,131,212,1)' },
+    'Reddit': { background: 'rgba(241,155,123,0.2)', border: 'rgba(241,155,123,1)' }
+};
+
+const referer_images = {
+    'Facebook': { src: '/static/img/small-facebook-icon.png', width: 22, height: 22 },
+    'Twitter': { src: '/static/img/small-twitter-icon.png', width: 22, height: 22 },
+    'Instagram': { src: '/static/img/small-instagram-icon.png', width: 22, height: 22 },
+    'Reddit': { src: '/static/img/small-reddit-icon.png', width: 22, height: 22 }
+};
+
+/* --- code --- */
+
+function add_pie_chart(canvas_id, title, raw_data, human_readable_names, colors, images) {
+    let data = {
+	labels: [],
+	datasets: [{
+	    label: title,
+	    data: [],
+	    backgroundColor: [],
+	    borderColor: [],
+	    borderWidth: 1
+	}]
     };
 
-    let data = [{
-	values: [],
-	labels: [],
-	type: 'pie'
-    }];
+    var options = {};
+    if (images != null) {
+	options = {
+	    plugins: {
+		labels: {
+		    render: 'image',
+		    images: []
+		}
+	    }
+	};
+    }
 
+    /* add each data item to the `data` and `options` objects */
     for (var key in raw_data) {
-	if (raw_data.hasOwnProperty(key)) {
-	    data[0].labels.push(key);
-	    data[0].values.push(raw_data[key])
+	if (!raw_data.hasOwnProperty(key)) {
+	    continue;
+	}
+
+	let human_readable_name = key;
+	if (human_readable_names != null && human_readable_names.hasOwnProperty(key)) {
+	    human_readable_name = human_readable_names[key];
+	}
+
+	if (colors != null && colors.hasOwnProperty(key)) {
+	    var background_color = colors[key].background;
+	    var border_color = colors[key].border;
+	} else {
+	    /* randomly generate a color */
+	    const r = Math.floor(Math.random() * 255);
+	    const g = Math.floor(Math.random() * 255);
+	    const b = Math.floor(Math.random() * 255);
+	    var background_color = 'rgba(' + r + ',' + g + ',' + b + ',' + '0.2)';
+	    var border_color = 'rgba(' + r + ',' + g + ',' + b + ',' + '1)';
+	}
+
+	data.labels.push(human_readable_name);
+	data.datasets[0].data.push(raw_data[key]);
+	data.datasets[0].backgroundColor.push(background_color);
+	data.datasets[0].borderColor.push(border_color);
+
+	if (images != null && images.hasOwnProperty(key)) {
+	    options.plugins.labels.images.push(images[key]);
 	}
     }
 
-    Plotly.newPlot(divname, data, layout);
+    let ctx = document.getElementById(canvas_id).getContext('2d');
+    new Chart(ctx, {
+	type: 'doughnut',
+	data: data,
+	options: options
+    });
 }
 
+/* render stats based on useragent data */
 if (document.getElementById('pies-div') != null) {
-    const useragent_stats_url = "/useragent_stats?link=" + short_link;
+    const short_link = (new URL(document.location)).searchParams.get('url');
+    const useragent_stats_url = '/useragent_stats?link=' + short_link;
+
+    function try_render(json, canvas_id, json_field, title, names, colors, images) {
+	if (json.hasOwnProperty(json_field)) {
+	    add_pie_chart(canvas_id, title, json[json_field], names, colors, images)
+	} else {
+	    document.getElementById(canvas_id).style.display = 'none';
+	}
+    }
+
     Plotly.d3.json(useragent_stats_url, function(err, json) {
-	console.log('the json is: ');
-	console.log(json);
+	try_render(json, 'browser-pie', 'browser', 'Browsers', null, browser_colors, browser_images);
+	try_render(json, 'platform-pie', 'platform', 'Platforms',
+		   platform_names, platform_colors, platform_images);
+	try_render(json, 'language-pie', 'language', 'Languages', null, null, null);
+    });
+}
 
-	if (json.hasOwnProperty('browser')) {
-	    add_pie_chart('browser-pie', 'Browsers', json['browser']);
-	}
-
-	if (json.hasOwnProperty('platform')) {
-	    add_pie_chart('platform-pie', 'Platforms', json['platform']);
-	}
-
-	if (json.hasOwnProperty('language')) {
-	    add_pie_chart('language-pie', 'Languages', json['language']);
+/* render stats based on referer data */
+if (document.getElementById('referer-div') != null) {
+    const short_link = (new URL(document.location)).searchParams.get('url');
+    const referer_stats_url = '/referer_stats?link=' + short_link;
+    Plotly.d3.json(referer_stats_url, function(err, json) {
+	if (Object.keys(json).length != 0) {
+	    add_pie_chart('referer-pie-chart', 'Referrers', json, null, referer_colors, referer_images);
+	} else {
+	    document.getElementById('referer-div').style.display = 'none';
 	}
     });
 }

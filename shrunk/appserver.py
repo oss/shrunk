@@ -352,6 +352,7 @@ def get_stats():
 
     return render_template("stats.html", short_url=request.args.get('url', ''),
                            show_useragent_stats=app.config.get('SHOW_USERAGENT_STATS'),
+                           show_referer_stats=app.config.get('SHOW_REFERER_STATS'),
                            **template_data)
 
 
@@ -486,6 +487,34 @@ if app.config.get('SHOW_USERAGENT_STATS'):
                 stats['browser'][ua.browser.title()] += 1
             if ua.language:
                 stats['language'][ua.language.title()] += 1
+
+        stats_json = json.dumps(stats)
+        return make_plaintext_response(stats_json)
+
+
+if app.config.get('SHOW_REFERER_STATS'):
+    @app.route("/referer_stats", methods=["GET"])
+    def get_referer_stats():
+        client = app.get_shrunk()
+        netid = session['user'].get('netid')
+
+        if 'link' not in request.args:
+            return 'error: request must have link', 400
+        link = request.args['link']
+
+        if not client.is_owner_or_admin(link, netid):
+            return 'error: not authorized', 401
+
+        keywords = app.config.get('REFERER_KEYWORDS', [])
+        stats = collections.defaultdict(int)
+        for visit in client.get_visits(link):
+            ref = visit.get('referer')
+            if not ref:
+                continue
+            ref = ref.lower()
+            for kw in keywords:
+                if kw in ref:
+                    stats[kw.title()] += 1
 
         stats_json = json.dumps(stats)
         return make_plaintext_response(stats_json)

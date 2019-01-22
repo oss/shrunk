@@ -58,3 +58,8 @@ MAX_VISITS_FOR_CSV = 6000
 SHOW_USERAGENT_STATS = False
 """Whether to show useragent statistics on the stats page and to create the
    /useragent_stats?link=<shortlink> API endpoint."""
+
+SHOW_REFERER_STATS = False
+"""Whether to show statistics based on the referer header of visitors."""
+
+REFERER_KEYWORDS = ['facebook', 'twitter', 'instagram', 'reddit', 'localhost']
