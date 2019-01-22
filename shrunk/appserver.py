@@ -481,11 +481,11 @@ if app.config.get('SHOW_USERAGENT_STATS'):
                 continue
             ua = werkzeug.useragents.UserAgent(visit['user_agent'])
             if ua.platform:
-                stats['platform'][ua.platform] += 1
+                stats['platform'][ua.platform.title()] += 1
             if ua.browser:
-                stats['browser'][ua.browser] += 1
+                stats['browser'][ua.browser.title()] += 1
             if ua.language:
-                stats['language'][ua.language] += 1
+                stats['language'][ua.language.title()] += 1
 
         stats_json = json.dumps(stats)
         return make_plaintext_response(stats_json)
