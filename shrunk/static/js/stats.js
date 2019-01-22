@@ -273,19 +273,29 @@ if (document.getElementById('maps-div') != null) {
 
 /* --- data --- */
 
-/* todo: safari, IE/edge, opera, etc? */
+const browser_names = {
+    'Msie': 'Microsoft Edge'
+};
+
 const browser_colors = {
     'Firefox': { background: 'rgba(244,199,133,0.2)', border: 'rgba(244,199,133,1)' },
-    'Chrome': { background: 'rgba(200,240,97,0.2)', border: 'rgba(200,240,97,1)' }
+    'Chrome': { background: 'rgba(200,240,97,0.2)', border: 'rgba(200,240,97,1)' },
+    'Safari': { background: 'rgba(155,186,238,0.2)', border: 'rgba(155,186,238,1)' },
+    'Msie': { background: 'rgba(136,198,247,0.2)', border: 'rgba(136,198,247,1)' },
+    'Opera': { background: 'rgba(238,120,124,0.2)', border: 'rgba(238,120,124,1)' }
 };
 
 const browser_images = {
     'Firefox': { src: '/static/img/small-firefox-icon.png', width: 22, height: 22 },
-    'Chrome': { src: '/static/img/small-chrome-icon.png', width: 22, height: 22 }
+    'Chrome': { src: '/static/img/small-chrome-icon.png', width: 22, height: 22 },
+    'Safari': { src: '/static/img/small-safari-icon.png', width: 22, height: 22 },
+    'Msie': { src: '/static/img/small-edge-icon.png', width: 22, height: 22 },
+    'Opera': { src: '/static/img/small-opera-icon.png', width: 22, height: 22 }
 };
 
 const platform_names = {
-    'Macos': 'MacOS'
+    'Macos': 'MacOS',
+    'Iphone': 'iPhone'
 };
 
 /* todo: android, iOS, *BSD, etc? */
@@ -369,8 +379,12 @@ function add_pie_chart(canvas_id, title, raw_data, human_readable_names, colors,
 	data.datasets[0].backgroundColor.push(background_color);
 	data.datasets[0].borderColor.push(border_color);
 
-	if (images != null && images.hasOwnProperty(key)) {
-	    options.plugins.labels.images.push(images[key]);
+	if (images != null) {
+	    let image = { src: '/static/img/empty.png', width: 1, height: 1 };
+	    if (images.hasOwnProperty(key)) {
+		image = images[key];
+	    }
+	    options.plugins.labels.images.push(image);
 	}
     }
 
@@ -396,7 +410,7 @@ if (document.getElementById('pies-div') != null) {
     }
 
     Plotly.d3.json(useragent_stats_url, function(err, json) {
-	try_render(json, 'browser-pie', 'browser', 'Browsers', null, browser_colors, browser_images);
+	try_render(json, 'browser-pie', 'browser', 'Browsers', browser_names, browser_colors, browser_images);
 	try_render(json, 'platform-pie', 'platform', 'Platforms',
 		   platform_names, platform_colors, platform_images);
 	try_render(json, 'language-pie', 'language', 'Languages', null, null, null);
