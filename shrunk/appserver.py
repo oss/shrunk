@@ -356,11 +356,21 @@ def get_stats():
     return render_template("stats.html", short_url=request.args.get('url', ''), **template_data)
 
 
+def get_referer_domain(visit):
+    if 'referer' not in visit:
+        return None
+    try:
+        p = urllib.parse.urlparse(visit['referer']).netloc
+        return p.lower()
+    except:
+        return None
+
+
 def make_csv_for_links(client, links):
     f = io.StringIO()
     writer = csv.writer(f)
 
-    header = ['short url', 'visitor id', 'location', 'time']
+    header = ['short url', 'visitor id', 'location', 'referrer', 'time']
     writer.writerow(header)
 
     for link in links:
@@ -369,7 +379,8 @@ def make_csv_for_links(client, links):
             ipaddr = visit['source_ip']
             visitor_id = client.get_visitor_id(ipaddr)
             location = client.get_geoip_location(ipaddr)
-            writer.writerow([visit['short_url'], visitor_id, location, visit['time']])
+            referer = get_referer_domain(visit) or 'unknown'
+            writer.writerow([visit['short_url'], visitor_id, location, referer, visit['time']])
 
     return f.getvalue()
 
@@ -506,15 +517,9 @@ def get_referer_stats():
 
     stats = collections.defaultdict(int)
     for visit in client.get_visits(link):
-        ref = visit.get('referer')
-        if not ref:
-            continue
-        try:
-            netloc = urllib.parse.urlparse(ref).netloc
-        except:
-            continue
-        if netloc:
-            stats[netloc.lower()] += 1
+        domain = get_referer_domain(visit)
+        if domain:
+            stats[domain] += 1
 
     stats_json = json.dumps(stats)
     return make_plaintext_response(stats_json)

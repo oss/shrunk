@@ -624,11 +624,11 @@ class ShrunkClient(object):
 
            :Returns:
              A string describing the geographic location location of the IP address,
-             or the string ``"unknown location"`` if the location of the IP address cannot
+             or the string ``"unknown"`` if the location of the IP address cannot
              be determined.
         """
 
-        unk = 'unknown location'
+        unk = 'unknown'
 
         if not self._geoip:
             return unk
