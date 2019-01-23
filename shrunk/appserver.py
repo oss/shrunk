@@ -276,6 +276,7 @@ def render_index(**kwargs):
                             query=query,
                             sortby=sortby,
                             **kwargs))
+
     #TODO since we're not setting we probably dont need make_response
     #resp.set_cookie("all_users", all_users)
     #resp.set_cookie("sortby", sortby)

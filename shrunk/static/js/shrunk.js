@@ -28,13 +28,6 @@ var delete_link = function(short_url) {
     form.submit();
     document.body.removeChild(form);
 }
-/**
- * shows the link in the stats viewer
- */
-
-var view_stats = function(short_url){
-    window.location.replace("/stats?url="+short_url)
-}
 
 /**
  * Change the order in which links are sorted on the front page.
