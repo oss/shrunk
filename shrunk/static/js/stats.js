@@ -402,7 +402,7 @@ function add_pie_chart(canvas_id, title, raw_data, human_readable_names, colors,
 	data.datasets[0].borderColor.push(border_color);
 
 	if (images != null) {
-	    let image = { src: '/static/img/empty.png', width: 1, height: 1 };
+	    let image = {};
 	    if (images.hasOwnProperty(key)) {
 		image = images[key];
 	    }
