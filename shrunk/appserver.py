@@ -370,7 +370,7 @@ def make_csv_for_links(client, links):
     f = io.StringIO()
     writer = csv.writer(f)
 
-    header = ['short url', 'visitor id', 'location', 'referrer', 'time']
+    header = ['short url', 'visitor id', 'location', 'referrer domain', 'user agent', 'time']
     writer.writerow(header)
 
     for link in links:
@@ -380,7 +380,8 @@ def make_csv_for_links(client, links):
             visitor_id = client.get_visitor_id(ipaddr)
             location = client.get_geoip_location(ipaddr)
             referer = get_referer_domain(visit) or 'unknown'
-            writer.writerow([visit['short_url'], visitor_id, location, referer, visit['time']])
+            ua = visit.get('user_agent', 'unknown')
+            writer.writerow([visit['short_url'], visitor_id, location, referer, ua, visit['time']])
 
     return f.getvalue()
 
