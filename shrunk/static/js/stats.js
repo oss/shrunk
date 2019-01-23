@@ -316,18 +316,25 @@ const platform_images = {
     'Android': { src: '/static/img/small-android-icon.png', width: 22, height: 22}
 };
 
+const referer_names = {
+    'facebook.com': 'Facebook',
+    'twitter.com': 'Twitter',
+    'instagram.com': 'Instagram',
+    'reddit.com': 'Reddit'
+};
+
 const referer_colors = {
-    'Facebook': { background: 'rgba(0,75,150,0.2)', border: 'rgba(0,75,150,1)' },
-    'Twitter': { background: 'rgba(147,191,241,0.2)', border: 'rgba(147,191,241,1)' },
-    'Instagram': { background: 'rgba(193,131,212,0.2)', border: 'rgba(193,131,212,1)' },
-    'Reddit': { background: 'rgba(241,155,123,0.2)', border: 'rgba(241,155,123,1)' }
+    'facebook.com': { background: 'rgba(0,75,150,0.2)', border: 'rgba(0,75,150,1)' },
+    'twitter.com': { background: 'rgba(147,191,241,0.2)', border: 'rgba(147,191,241,1)' },
+    'instagram.com': { background: 'rgba(193,131,212,0.2)', border: 'rgba(193,131,212,1)' },
+    'reddit.com': { background: 'rgba(241,155,123,0.2)', border: 'rgba(241,155,123,1)' }
 };
 
 const referer_images = {
-    'Facebook': { src: '/static/img/small-facebook-icon.png', width: 22, height: 22 },
-    'Twitter': { src: '/static/img/small-twitter-icon.png', width: 22, height: 22 },
-    'Instagram': { src: '/static/img/small-instagram-icon.png', width: 22, height: 22 },
-    'Reddit': { src: '/static/img/small-reddit-icon.png', width: 22, height: 22 }
+    'facebook.com': { src: '/static/img/small-facebook-icon.png', width: 22, height: 22 },
+    'twitter.com': { src: '/static/img/small-twitter-icon.png', width: 22, height: 22 },
+    'instagram.com': { src: '/static/img/small-instagram-icon.png', width: 22, height: 22 },
+    'reddit.com': { src: '/static/img/small-reddit-icon.png', width: 22, height: 22 }
 };
 
 /* --- code --- */
@@ -434,7 +441,7 @@ function add_pie_chart(canvas_id, title, raw_data, human_readable_names, colors,
 
     Plotly.d3.json(referer_stats_url, function(err, json) {
 	if (Object.keys(json).length != 0) {
-	    add_pie_chart('referer-canvas', 'Referrers', json, null, referer_colors, referer_images);
+	    add_pie_chart('referer-canvas', 'Referrers', json, referer_names, referer_colors, referer_images);
 	} else {
 	    document.getElementById('referer-stats').style.display = 'none';
 	}

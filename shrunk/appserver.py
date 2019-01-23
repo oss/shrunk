@@ -22,6 +22,7 @@ import io
 import csv
 import collections
 import werkzeug.useragents
+import urllib.parse
 
 
 # Create application
@@ -503,16 +504,17 @@ def get_referer_stats():
     if not client.is_owner_or_admin(link, netid):
         return 'error: not authorized', 401
 
-    keywords = app.config.get('REFERER_KEYWORDS', [])
     stats = collections.defaultdict(int)
     for visit in client.get_visits(link):
         ref = visit.get('referer')
         if not ref:
             continue
-        ref = ref.lower()
-        for kw in keywords:
-            if kw in ref:
-                stats[kw.title()] += 1
+        try:
+            netloc = urllib.parse.urlparse(ref).netloc
+        except:
+            continue
+        if netloc:
+            stats[netloc.lower()] += 1
 
     stats_json = json.dumps(stats)
     return make_plaintext_response(stats_json)
