@@ -486,7 +486,10 @@ if app.config.get('SHOW_USERAGENT_STATS'):
             if ua.platform:
                 stats['platform'][ua.platform.title()] += 1
             if ua.browser:
-                stats['browser'][ua.browser.title()] += 1
+                if 'Edge' in visit['user_agent']:
+                    stats['browser']['Edge'] += 1
+                else:
+                    stats['browser'][ua.browser.title()] += 1
             if ua.language:
                 stats['language'][ua.language.title()] += 1
 

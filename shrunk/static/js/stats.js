@@ -282,6 +282,7 @@ const browser_colors = {
     'Chrome': { background: 'rgba(200,240,97,0.2)', border: 'rgba(200,240,97,1)' },
     'Safari': { background: 'rgba(155,186,238,0.2)', border: 'rgba(155,186,238,1)' },
     'Msie': { background: 'rgba(136,198,247,0.2)', border: 'rgba(136,198,247,1)' },
+    'Edge': { background: 'rgba(136,198,247,0.2)', border: 'rgba(136,198,247,1)' },
     'Opera': { background: 'rgba(238,120,124,0.2)', border: 'rgba(238,120,124,1)' }
 };
 
@@ -290,6 +291,7 @@ const browser_images = {
     'Chrome': { src: '/static/img/small-chrome-icon.png', width: 22, height: 22 },
     'Safari': { src: '/static/img/small-safari-icon.png', width: 22, height: 22 },
     'Msie': { src: '/static/img/small-edge-icon.png', width: 22, height: 22 },
+    'Edge': { src: '/static/img/small-edge-icon.png', width: 22, height: 22 },
     'Opera': { src: '/static/img/small-opera-icon.png', width: 22, height: 22 }
 };
 
@@ -298,17 +300,19 @@ const platform_names = {
     'Iphone': 'iPhone'
 };
 
-/* todo: android, iOS, *BSD, etc? */
-/* todo: come up with a color for linux */
+/* todo: iOS, *BSD, etc? */
 const platform_colors = {
+    'Linux': { background: 'rgba(251,230,143,0.2)', border: 'rgba(251,230,143,1)' },
     'Windows': { background: 'rgba(129,238,208,0.2)', border: 'rgba(129,238,208,1)' },
-    'Macos': { background: 'rgba(201,201,201,0.2)', border: 'rgba(201,201,201,1)' }
+    'Macos': { background: 'rgba(201,201,201,0.2)', border: 'rgba(201,201,201,1)' },
+    'Android': { background: 'rgba(200,227,120,0.2)', border: 'rgba(200,227,120,1)' }
 };
 
 const platform_images = {
     'Linux': { src: '/static/img/small-tux-icon.png', width: 22, height: 22},
     'Windows': { src: '/static/img/small-windows-icon.png', width: 22, height: 22},
-    'Macos': { src: '/static/img/small-mac-icon.png', width: 22, height: 22}
+    'Macos': { src: '/static/img/small-mac-icon.png', width: 22, height: 22},
+    'Android': { src: '/static/img/small-android-icon.png', width: 22, height: 22}
 };
 
 const referer_colors = {
