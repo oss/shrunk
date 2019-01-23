@@ -48,22 +48,20 @@
       <div id="world-map"></div>
     </div>
 
-    {% if show_useragent_stats %}
-    <hr>
-
-    <div id="pies-div">
-	<canvas id="browser-pie"></canvas>
-	<canvas id="platform-pie"></canvas>
-	<canvas id="language-pie"></canvas>
-    </div>
-    {% endif %}
-
-    {% if show_referer_stats %}
-    <div id="referer-div">
+    <div id="browser-stats">
       <hr>
-      <canvas id="referer-pie-chart"></canvas>
+      <canvas id="browser-canvas"></canvas>
     </div>
-    {% endif %}
+
+    <div id="platform-stats">
+      <hr>
+      <canvas id="platform-canvas"></canvas>
+    </div>
+
+    <div id="referer-stats">
+      <hr>
+      <canvas id="referer-canvas"></canvas>
+    </div>
 
     <script src="{{ url_for('static', filename='js/stats.js') }}"></script>
     {% endif %}

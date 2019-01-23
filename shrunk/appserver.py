@@ -352,10 +352,7 @@ def get_stats():
     else:
         template_data["missing_url"]=True
 
-    return render_template("stats.html", short_url=request.args.get('url', ''),
-                           show_useragent_stats=app.config.get('SHOW_USERAGENT_STATS'),
-                           show_referer_stats=app.config.get('SHOW_REFERER_STATS'),
-                           **template_data)
+    return render_template("stats.html", short_url=request.args.get('url', ''), **template_data)
 
 
 def make_csv_for_links(client, links):
@@ -465,64 +462,60 @@ def get_geoip_csv():
     return make_plaintext_response(csv)
 
 
-if app.config.get('SHOW_USERAGENT_STATS'):
-    @app.route("/useragent_stats", methods=["GET"])
-    def get_useragent_stats():
-        client = app.get_shrunk()
-        netid = session['user'].get('netid')
+@app.route("/useragent_stats", methods=["GET"])
+def get_useragent_stats():
+    client = app.get_shrunk()
+    netid = session['user'].get('netid')
 
-        if 'link' not in request.args:
-            return 'error: request must have link', 400
-        link = request.args['link']
+    if 'link' not in request.args:
+        return 'error: request must have link', 400
+    link = request.args['link']
 
-        if not client.is_owner_or_admin(link, netid):
-            return 'error: not authorized', 401
+    if not client.is_owner_or_admin(link, netid):
+        return 'error: not authorized', 401
 
-        stats = collections.defaultdict(lambda: collections.defaultdict(int))
-        for visit in client.get_visits(link):
-            if 'user_agent' not in visit:
-                continue
-            ua = werkzeug.useragents.UserAgent(visit['user_agent'])
-            if ua.platform:
-                stats['platform'][ua.platform.title()] += 1
-            if ua.browser:
-                if 'Edge' in visit['user_agent']:
-                    stats['browser']['Edge'] += 1
-                else:
-                    stats['browser'][ua.browser.title()] += 1
-            if ua.language:
-                stats['language'][ua.language.title()] += 1
+    stats = collections.defaultdict(lambda: collections.defaultdict(int))
+    for visit in client.get_visits(link):
+        if 'user_agent' not in visit:
+            continue
+        ua = werkzeug.useragents.UserAgent(visit['user_agent'])
+        if ua.platform:
+            stats['platform'][ua.platform.title()] += 1
+        if ua.browser:
+            if 'Edge' in visit['user_agent']:
+                stats['browser']['Edge'] += 1
+            else:
+                stats['browser'][ua.browser.title()] += 1
 
-        stats_json = json.dumps(stats)
-        return make_plaintext_response(stats_json)
+    stats_json = json.dumps(stats)
+    return make_plaintext_response(stats_json)
 
 
-if app.config.get('SHOW_REFERER_STATS'):
-    @app.route("/referer_stats", methods=["GET"])
-    def get_referer_stats():
-        client = app.get_shrunk()
-        netid = session['user'].get('netid')
+@app.route("/referer_stats", methods=["GET"])
+def get_referer_stats():
+    client = app.get_shrunk()
+    netid = session['user'].get('netid')
 
-        if 'link' not in request.args:
-            return 'error: request must have link', 400
-        link = request.args['link']
+    if 'link' not in request.args:
+        return 'error: request must have link', 400
+    link = request.args['link']
 
-        if not client.is_owner_or_admin(link, netid):
-            return 'error: not authorized', 401
+    if not client.is_owner_or_admin(link, netid):
+        return 'error: not authorized', 401
 
-        keywords = app.config.get('REFERER_KEYWORDS', [])
-        stats = collections.defaultdict(int)
-        for visit in client.get_visits(link):
-            ref = visit.get('referer')
-            if not ref:
-                continue
-            ref = ref.lower()
-            for kw in keywords:
-                if kw in ref:
-                    stats[kw.title()] += 1
+    keywords = app.config.get('REFERER_KEYWORDS', [])
+    stats = collections.defaultdict(int)
+    for visit in client.get_visits(link):
+        ref = visit.get('referer')
+        if not ref:
+            continue
+        ref = ref.lower()
+        for kw in keywords:
+            if kw in ref:
+                stats[kw.title()] += 1
 
-        stats_json = json.dumps(stats)
-        return make_plaintext_response(stats_json)
+    stats_json = json.dumps(stats)
+    return make_plaintext_response(stats_json)
 
 
 @app.route("/monthly_visits", methods=["GET"])

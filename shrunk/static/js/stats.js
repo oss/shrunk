@@ -240,7 +240,8 @@ function show_world_map() {
     document.getElementById('world-map').style.display = '';
 }
 
-if (document.getElementById('maps-div') != null) {
+/* render maps */
+(function(){
     const short_link = (new URL(document.location)).searchParams.get('url');
 
     /* render state-level map */
@@ -266,7 +267,7 @@ if (document.getElementById('maps-div') != null) {
 
     /* default to displaying US map */
     show_us_map();
-}
+}());
 
 
 /* ===== pie/doughnut charts of various statistics ===== */
@@ -343,14 +344,24 @@ function add_pie_chart(canvas_id, title, raw_data, human_readable_names, colors,
 	}]
     };
 
-    var options = {};
+    var options = {
+	legend: {
+	    position: 'left'
+	},
+
+	title: {
+	    display: true,
+	    text: title,
+	    fontStyle: '',
+	    fontSize: 13
+	}
+    };
+
     if (images != null) {
-	options = {
-	    plugins: {
-		labels: {
-		    render: 'image',
-		    images: []
-		}
+	options.plugins = {
+	    labels: {
+		render: 'image',
+		images: []
 	    }
 	};
     }
@@ -400,36 +411,32 @@ function add_pie_chart(canvas_id, title, raw_data, human_readable_names, colors,
     });
 }
 
-/* render stats based on useragent data */
-if (document.getElementById('pies-div') != null) {
-    const short_link = (new URL(document.location)).searchParams.get('url');
-    const useragent_stats_url = '/useragent_stats?link=' + short_link;
-
-    function try_render(json, canvas_id, json_field, title, names, colors, images) {
-	if (json.hasOwnProperty(json_field)) {
-	    add_pie_chart(canvas_id, title, json[json_field], names, colors, images)
+/* render stats based on useragent and referer data */
+(function(){
+    function try_render(json, name, title, names, colors, images) {
+	let canvas_id = name + '-canvas';
+	let div_id = name + '-stats';
+	if (json.hasOwnProperty(name)) {
+	    add_pie_chart(canvas_id, title, json[name], names, colors, images)
 	} else {
-	    document.getElementById(canvas_id).style.display = 'none';
+	    document.getElementById(div_id).style.display = 'none';
 	}
     }
 
-    Plotly.d3.json(useragent_stats_url, function(err, json) {
-	try_render(json, 'browser-pie', 'browser', 'Browsers', browser_names, browser_colors, browser_images);
-	try_render(json, 'platform-pie', 'platform', 'Platforms',
-		   platform_names, platform_colors, platform_images);
-	try_render(json, 'language-pie', 'language', 'Languages', null, null, null);
-    });
-}
-
-/* render stats based on referer data */
-if (document.getElementById('referer-div') != null) {
     const short_link = (new URL(document.location)).searchParams.get('url');
+    const useragent_stats_url = '/useragent_stats?link=' + short_link;
     const referer_stats_url = '/referer_stats?link=' + short_link;
+
+    Plotly.d3.json(useragent_stats_url, function(err, json) {
+	try_render(json, 'browser', 'Browsers', browser_names, browser_colors, browser_images);
+	try_render(json, 'platform', 'Platforms', platform_names, platform_colors, platform_images);
+    });
+
     Plotly.d3.json(referer_stats_url, function(err, json) {
 	if (Object.keys(json).length != 0) {
-	    add_pie_chart('referer-pie-chart', 'Referrers', json, null, referer_colors, referer_images);
+	    add_pie_chart('referer-canvas', 'Referrers', json, null, referer_colors, referer_images);
 	} else {
-	    document.getElementById('referer-div').style.display = 'none';
+	    document.getElementById('referer-stats').style.display = 'none';
 	}
     });
-}
+}());
