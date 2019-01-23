@@ -398,9 +398,9 @@ def make_plaintext_response(csv):
 def get_link_visits_csv():
     client = app.get_shrunk()
     netid = session['user'].get('netid')
-    if 'link' not in request.args:
-        return 'error: request must have link', 400
-    link = request.args['link']
+    if 'url' not in request.args:
+        return 'error: request must have url', 400
+    link = request.args['url']
     if not client.is_owner_or_admin(link, netid):
             return 'error: not authorized', 401
     csv = make_csv_for_links(client, [link])
@@ -456,9 +456,9 @@ def get_geoip_csv():
     client = app.get_shrunk()
     netid = session['user'].get('netid')
 
-    if 'link' not in request.args:
-        return 'error: request must have link', 400
-    link = request.args['link']
+    if 'url' not in request.args:
+        return 'error: request must have url', 400
+    link = request.args['url']
 
     if 'resolution' not in request.args:
         return 'error: request must have resolution', 400
@@ -483,9 +483,9 @@ def get_useragent_stats():
     client = app.get_shrunk()
     netid = session['user'].get('netid')
 
-    if 'link' not in request.args:
-        return 'error: request must have link', 400
-    link = request.args['link']
+    if 'url' not in request.args:
+        return 'error: request must have url', 400
+    link = request.args['url']
 
     if not client.is_owner_or_admin(link, netid):
         return 'error: not authorized', 401
@@ -512,9 +512,9 @@ def get_referer_stats():
     client = app.get_shrunk()
     netid = session['user'].get('netid')
 
-    if 'link' not in request.args:
-        return 'error: request must have link', 400
-    link = request.args['link']
+    if 'url' not in request.args:
+        return 'error: request must have url', 400
+    link = request.args['url']
 
     if not client.is_owner_or_admin(link, netid):
         return 'error: not authorized', 401
