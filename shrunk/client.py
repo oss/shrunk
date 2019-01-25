@@ -558,7 +558,9 @@ class ShrunkClient(object):
         """
         db = self._mongo.shrunk_urls
         match = {"$regex" : search_string, "$options" : "i"}
-        query = {"$or" : [{"long_url" : match}, {"title" : match}, {"netid" : match}]}
+
+        # '_id' is the short url
+        query = {"$or" : [{"long_url" : match}, {"_id" : match}, {"title" : match}, {"netid" : match}]}
         if netid is not None:
             query["netid"] = netid
 
