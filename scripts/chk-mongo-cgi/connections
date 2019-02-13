@@ -1,0 +1,4 @@
+#!/bin/bash
+source /var/www/base.sh
+echo
+echo $(check_mongodb connections -w 13 -c 15 -t)
