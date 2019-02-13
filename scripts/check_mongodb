@@ -13,87 +13,106 @@ secret="9000000001"
 check() { # value, message
     if [ $warning -eq 9000000000 ] || [ $critical -eq 9000000000 ] 
     then
-	echo "UNKNOWN - warning or critical value not provided"
+        echo "UNKNOWN - warning or critical value not provided"
+        #exit 3
 	exit 0
     fi
     if [ $1 -ge $critical ]
     then
-	echo "CRITICAL - " $2
+        echo "CRITICAL - " $2
+        #exit 2
     elif [ $1 -ge $warning ] 
     then
-	echo "WARNING - " $2
+        echo "WARNING - " $2
+        #exit 1
     else
-	echo "OK - " $2
+        echo "OK - " $2
+        return 0
     fi
 }
 auth=""
 setAuth(){
     if [ $secret != "9000000001" ] && [ $username != "9000000001" ] 
     then 
-	success=$(mongo --eval "db.isMaster()" --host $host --port $port -u $username -p $secret --quiet 2>&1 | grep "exception")
-	if [ -n "$success" ]
-	then 
-	    echo "UNKNOWN - Connection error: $success"
-	    exit 0
-	fi
-	auth="-p $secret -u $username"
+  success=$(mongo --eval "db.isMaster()" --host $host --port $port -u $username -p $secret --quiet 2>&1 | grep "exception")
+  if [ -n "$success" ]
+  then 
+      echo "UNKNOWN - Connection error: $success"
+      exit 0
+  fi
+  auth="-p $secret -u $username"
     elif [ $secret = "9000000001" ] && [ $username = "9000000001" ] 
     then
-	auth=""
+  auth=""
     elif [ $username = "9000000001" ] || [ $secret = "9000000001" ]
     then
-	echo "UNKNOWN - Connection error: Username provided without password"
-	exit 0
+  echo "UNKNOWN - Connection error: Username provided without password"
+  exit 0
     else
-	auth="-u $username -p $secret"
-    fi	
+  auth="-u $username -p $secret"
+    fi  
 }
 while getopts ":h:p:c:w:u:s:t" arg; do
     case $arg in
- 	h) # host to connect to (localhost)
-	    host=${OPTARG};;
-	p) # port to connect to (27017)
-	    port=${OPTARG};;
-	c) # critical
-	    critical=${OPTARG};;
-	w) # warning
-	    warning=${OPTARG};;
-	u) # username
-	    username=${OPTARG};;
-	s) # secret (password)
-	    secret=${OPTARG};;
-	t) # use total instead of percent
-	    total="yes";;
-	*)
-	    ussage;;
+        h) # host to connect to (localhost)
+            host=${OPTARG};;
+        p) # port to connect to (27017)
+            port=${OPTARG};;
+        c) # critical
+            critical=${OPTARG};;
+        w) # warning
+            warning=${OPTARG};;
+        u) # username
+            username=${OPTARG};;
+        s) # secret (password)
+            secret=${OPTARG};;
+        t) # use total instead of percent
+            total="yes";;
+        *)
+            ussage;;
     esac
 done
 connect="--host $host --port $port"
 case $command in
     alive) # make sure mongodb is running
-	# if you try to connect to mongo with http it gives you a nice message
-	response=$(curl -s "$host:$port")
-	goodResponse="It looks like you are trying to access MongoDB over HTTP on the native driver port."
-	if [ "$response" == "$goodResponse" ]
-	then
-	    echo "OK - MongoDB is Alive"
-	    exit 0
-	else
-	    echo "CRITICAL - Failed to connect to MongoDB on $host:$port"
-	fi;;
+  # if you try to connect to mongo with http it gives you a nice message
+  response=$(curl -s "$host:$port")
+  goodResponse=$(printf "It looks like you are trying to access MongoDB over HTTP on the native driver port.\r\n")
+  if [ "$response" == "$goodResponse" ]
+  then
+      echo "OK - MongoDB is Alive"
+      exit 0
+  else
+      echo "CRITICAL - Failed to connect to MongoDB on $host:$port"
+  fi;;
     connections) # stats for current/available connections.
-	setAuth
-	current=$(eval "mongo --eval 'db.serverStatus().connections.current' $auth --quiet $connect")
-	available=$(eval "mongo --eval 'db.serverStatus().connections.available' $auth --quiet $connect")
-	percent=$(mongo --eval "Math.floor($current/$available*100)" --quiet)
-	value=$percent
-	if [ $total = "yes" ] ; then value=$current ; fi
-	check $value "$current conections open. $available available. $percent%";;
+  setAuth
+  current=$(eval "mongo --eval 'db.serverStatus().connections.current' $auth --quiet $connect")
+
+  if [ $? -ne 0 ]
+  then
+      echo "UNKNOWN - could not connect to database"
+      exit 3
+  fi
+
+  available=$(eval "mongo --eval 'db.serverStatus().connections.available' $auth --quiet $connect")
+  percent=$(mongo --eval "Math.floor($current/$available*100)" --quiet)
+  value=$percent
+  if [ $total = "yes" ] ; then value=$current ; fi
+  check $value "$current conections open. $available available. $percent%";;
     memory) # stats for memory usage. (in Mb)
-	# mongo gives it in Mb so thats what were working with
-	setAuth
-	current=$(eval "mongo --eval  'db.serverStatus().mem.virtual' $auth --quiet $connect")
-	check $current "server is using $current Mb";;
+  # mongo gives it in Mb so thats what were working with
+  setAuth
+  current=$(eval "mongo --eval  'db.serverStatus().mem.virtual' $auth --quiet $connect")
+
+   if [ $? -ne 0 ]
+   then
+      echo "UNKNOWN - could not connect to database"
+      #exit 3
+      exit 0
+  fi
+
+  check $current "server is using $current Mb";;
     *)
-	usage;;
+  usage;;
 esac
