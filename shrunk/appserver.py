@@ -373,7 +373,7 @@ def make_csv_for_links(client, links):
     f = io.StringIO()
     writer = csv.writer(f)
 
-    header = ['short url', 'visitor id', 'location', 'referrer domain', 'user agent', 'time']
+    header = ['short url', 'visitor id', 'location', 'referrer domain', 'user agent', 'time (eastern time)']
     writer.writerow(header)
 
     for link in links:

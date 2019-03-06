@@ -635,6 +635,16 @@ class ShrunkClient(object):
         if not self._geoip:
             return unk
 
+        if ipaddr.startswith('172.31'):  # RUWireless (NB)
+            return 'Rutgers New Brunswick, New Jersey, United States'
+        elif ipaddr.startswith('172.27'):  # RUWireless (NWK)
+            return 'Rutgers Newark, New Jersey, United States'
+        # elif ipaddr.startswith('172.19'):  # CCF, but which campus?
+        elif ipaddr.startswith('172.24'):  # "Camden Computing Services"
+            return 'Rutgers Camden, New Jersey, United States'
+        elif ipaddr.startswith('172.'):
+            return 'New Jersey, United States'
+
         try:
             resp = self._geoip.city(ipaddr)
 
@@ -670,6 +680,8 @@ class ShrunkClient(object):
         unk = 'unknown'
         if not self._geoip:
             return unk
+        if ipaddr.startswith('172.'):
+            return 'US'
         try:
             resp = self._geoip.city(ipaddr)
             return resp.country.name or unk
@@ -691,6 +703,8 @@ class ShrunkClient(object):
         unk = 'unknown'
         if not self._geoip:
             return unk
+        if ipaddr.startswith('172.'):
+            return 'NJ'
         try:
             resp = self._geoip.city(ipaddr)
             return resp.subdivisions.most_specific.iso_code or unk
