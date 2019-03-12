@@ -390,7 +390,9 @@ def make_csv_for_links(client, links):
 
 
 def make_plaintext_response(csv):
-    return make_response((csv, 200, {'Content-Type': 'text/plain; charset=utf-8'}))
+    headers = {'Content-Type': 'text/plain; charset=utf-8',
+               'Content-Disposition': 'attachment; filename=visits.csv;'}
+    return make_response((csv, 200, headers))
 
 
 @app.route("/link_visits_csv", methods=["GET"])
