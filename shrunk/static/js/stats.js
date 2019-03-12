@@ -275,7 +275,7 @@ function show_world_map() {
 /* --- data --- */
 
 const browser_names = {
-    'Msie': 'Microsoft Edge'
+    'Msie': 'Microsoft Edge/IE'
 };
 
 const browser_colors = {

@@ -499,7 +499,7 @@ def get_useragent_stats():
             stats['platform'][ua.platform.title()] += 1
         if ua.browser:
             if 'Edge' in visit['user_agent']:
-                stats['browser']['Edge'] += 1
+                stats['browser']['Msie'] += 1
             else:
                 stats['browser'][ua.browser.title()] += 1
 
