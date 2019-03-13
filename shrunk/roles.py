@@ -70,8 +70,8 @@ def has_one_of(roles, entity):
 
 def get(entity):
     """gives list of strings for all roles an entity has"""
-    grants = grants.find({"entity": entity})
-    return [grant["role"] for grant in grants]
+    entity_grants = grants.find({"entity": entity})
+    return [grant["role"] for grant in entity_grants]
 
 def list_all(role):
     return list(grants.find({"role": role}))
