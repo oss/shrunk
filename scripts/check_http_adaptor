@@ -1,0 +1,70 @@
+#!/bin/bash
+SECRET_BASE="/usr/local/lib64/nagios/plugins/rutgers/etc/shrunk"
+
+HOST=""
+CHECK=""
+PROTO="https"
+INSECURE=""
+VERBOSE=""
+
+usage() {
+    echo "incorrect options: -H (host) and -c (check) required."
+    echo "-p (protocol) -v (verbose) -i (insecure) optional"
+    echo "does something like curl <https|proto>://<host>/<check>"
+    exit 1;
+}
+
+while getopts "H:c:p:vi" OPTION; do
+    case $OPTION in
+	H)
+	    HOST=$OPTARG
+	    ;;
+	c)
+	    CHECK=$OPTARG
+	    ;;
+	p)
+	    PROTO=$OPTARG
+	    ;;
+	v)
+	    VERBOSE="-v"
+	    ;;
+	i)
+	    INSECURE="--insecure"
+	    ;;
+	*)
+	    ussage
+	    ;;
+    esac
+done
+
+if [ -z $HOST ] || [ -z $CHECK ]; then
+    ussage
+fi
+
+URL="$PROTO://$HOST/$CHECK"
+SECRET=$(cat "$SECRET_BASE/$HOST")
+if [ $VERBOSE ]; then
+    echo "url: $URL"
+    echo "secret: $SECRET"
+    echo "host: $HOST"
+fi
+
+RESPONSE=$(curl $INSECURE -s $VERBOSE -X POST --data $SECRET $URL)
+
+
+#curl failed and server is down
+if [[ $? -ne 0 ]]; then
+    echo $RESPONSE
+    exit 2
+fi
+
+echo $RESPONSE
+
+if [[ $RESPONSE == *"OK"* ]]; then
+    exit 0
+elif [[ $RESPONSE == *"WARNING"* ]]; then
+    exit 1
+elif [[ $RESPONSE == *"CRITICAL"* ]]; then
+    exit 2
+fi
+exit 3
