@@ -46,7 +46,7 @@ def test_visit():
     
     hits = 4
     for _ in range(0, hits):
-        client.visit(short_url, "127.0.0.1")
+        client.visit(short_url, "127.0.0.1", "tester", "https://test.com")
         
     assert client.get_num_visits(short_url) is hits
 
@@ -137,13 +137,13 @@ def make_urls(num_visits, num_visits2):
     url = client.create_short_url("https://linux.org", netid = "dude")
     url2 = client.create_short_url("https://linux.org/other", netid = "dude")
     for _ in range(num_visits):
-        client.visit(url, "127.0.0.1")
+        client.visit(url, "127.0.0.1", "tester", "https://test.com")
 
     for _ in range(num_visits2):
-        client.visit(url2, "127.0.0.1")
+        client.visit(url2, "127.0.0.1", "tester", "https://test.com")
     return url, url2
 
-def test_visit():
+def test_visit2():
     num_visits = 3
     num_visits2 = 4
     url, url2 = make_urls(num_visits, num_visits2)
