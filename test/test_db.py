@@ -64,6 +64,25 @@ def test_isolated():
     """Sanity check to make sure the db is reset between tests"""
     assert client.count_links() is 0
 
+def test_create():
+    roles.grant("blocked_url", "ltorvalds", "https://microsoft.com")
+    url = client.create_short_url("https://linux.org", netid = "dude", title = "title",
+                                  short_url = "custom-link")
+
+    # can't create a link that is blocked
+    with raises(shrunk.client.ForbiddenDomainException):
+        client.create_short_url("https://microsoft.com/custom", 
+                                netid = "dude", short_url = "custom-link2")
+
+    # can't use somone else's link
+    with raises(shrunk.client.DuplicateIdException):
+        client.create_short_url("https://lmao.com/custom", 
+                                netid = "dude", short_url = "custom-link")
+
+    with raises(shrunk.client.ForbiddenNameException):
+        client.create_short_url("https://lmao.com/custom", 
+                                netid = "dude", short_url = "shrunk-login")
+
 def test_modify():
     """make sure modifing the url sets the new info properly"""
     roles.grant("blocked_url", "ltorvalds", "https://microsoft.com")
