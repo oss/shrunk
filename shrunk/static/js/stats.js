@@ -193,7 +193,7 @@
     start_options.on("input", update_range);
     end_options.on("input", update_range);
 
-    fetch("/monthly_visits?url="+short_url, {
+    fetch("/monthly-visits?url="+short_url, {
 	credentials: "include"
     })
 	.then(log)
@@ -245,7 +245,7 @@ function show_world_map() {
     const short_link = (new URL(document.location)).searchParams.get('url');
 
     /* render state-level map */
-    const state_csv_url = '/geoip_csv?resolution=state&url=' + short_link;
+    const state_csv_url = '/geoip-csv?resolution=state&url=' + short_link;
     const state_layout = {
 	title: 'Visits per state',
 	geo: {
@@ -256,7 +256,7 @@ function show_world_map() {
     add_map('us-map', state_csv_url, 'USA-states', state_layout);
 
     /* render world map */
-    const country_csv_url = "/geoip_csv?resolution=country&url=" + short_link;
+    const country_csv_url = "/geoip-csv?resolution=country&url=" + short_link;
     const country_layout = {
 	title: 'Visits per country',
 	geo: {
@@ -431,8 +431,8 @@ function add_pie_chart(canvas_id, title, raw_data, human_readable_names, colors,
     }
 
     const short_link = (new URL(document.location)).searchParams.get('url');
-    const useragent_stats_url = '/useragent_stats?url=' + short_link;
-    const referer_stats_url = '/referer_stats?url=' + short_link;
+    const useragent_stats_url = '/useragent-stats?url=' + short_link;
+    const referer_stats_url = '/referer-stats?url=' + short_link;
 
     Plotly.d3.json(useragent_stats_url, function(err, json) {
 	try_render(json, 'browser', 'Browsers', browser_names, browser_colors, browser_images);

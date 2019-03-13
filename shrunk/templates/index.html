@@ -20,10 +20,10 @@
 
     {% if all_users == "0" %}
         <h3 class="links-header">My links</h3>
-        <a href="/search_visits_csv?search={{ query }}">Export visit data as CSV</a>
+        <a href="/search-visits-csv?search={{ query }}">Export visit data as CSV</a>
     {% else %}
         <h3 class="links-header">All links</h3>
-        <a href="/search_visits_csv?all_users=1&search={{ query }}">Export visit data as CSV</a>
+        <a href="/search-visits-csv?all_users=1&search={{ query }}">Export visit data as CSV</a>
     {%endif%}
 
     {% for link in links %}

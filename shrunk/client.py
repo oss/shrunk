@@ -201,7 +201,7 @@ class ShrunkClient(object):
     all URLs do not exceed eight characters.
     """
 
-    RESERVED_WORDS = ["add", "login", "logout", "delete", "admin", "stats", "qr"]
+    RESERVED_WORDS = ["add", "login", "logout", "delete", "admin", "stats", "qr", "shrunk-login", "roles", "dev-user-login", "dev-admin-login", "dev-power-login", "unauthorized", "link-visits-csv", "search-visits-csv", "useragent-stats", "referer-stats", "monthly-visits", "edit"]
     """Reserved words that cannot be used as shortened urls."""
 
     def __init__(self, host=None, port=None, test_client=None, geolite_path=None):

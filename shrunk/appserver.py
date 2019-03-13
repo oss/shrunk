@@ -395,7 +395,7 @@ def make_plaintext_response(csv):
     return make_response((csv, 200, headers))
 
 
-@app.route("/link_visits_csv", methods=["GET"])
+@app.route("/link-visits-csv", methods=["GET"])
 @app.require_login
 def get_link_visits_csv():
     client = app.get_shrunk()
@@ -409,7 +409,7 @@ def get_link_visits_csv():
     return make_plaintext_response(csv)
 
 
-@app.route("/search_visits_csv", methods=["GET"])
+@app.route("/search-visits-csv", methods=["GET"])
 @app.require_login
 def get_search_visits_csv():
     client = app.get_shrunk()
@@ -452,7 +452,7 @@ def make_geoip_csv(client, get_location, link):
     return csv
 
 
-@app.route("/geoip_csv", methods=["GET"])
+@app.route("/geoip-csv", methods=["GET"])
 @app.require_login
 def get_geoip_csv():
     client = app.get_shrunk()
@@ -480,7 +480,7 @@ def get_geoip_csv():
     return make_plaintext_response(csv)
 
 
-@app.route("/useragent_stats", methods=["GET"])
+@app.route("/useragent-stats", methods=["GET"])
 def get_useragent_stats():
     client = app.get_shrunk()
     netid = session['user'].get('netid')
@@ -509,7 +509,7 @@ def get_useragent_stats():
     return make_plaintext_response(stats_json)
 
 
-@app.route("/referer_stats", methods=["GET"])
+@app.route("/referer-stats", methods=["GET"])
 def get_referer_stats():
     client = app.get_shrunk()
     netid = session['user'].get('netid')
@@ -531,7 +531,7 @@ def get_referer_stats():
     return make_plaintext_response(stats_json)
 
 
-@app.route("/monthly_visits", methods=["GET"])
+@app.route("/monthly-visits", methods=["GET"])
 @app.require_login
 def monthly_visits():
     url=request.args["url"]
