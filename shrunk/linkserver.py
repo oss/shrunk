@@ -2,9 +2,7 @@
 
 """Flask application for the link server."""
 
-from flask import Flask, render_template, request, redirect
-
-import shrunk.client
+from flask import render_template, request, redirect
 from shrunk.app_decorate import ShrunkFlaskMini
 
 

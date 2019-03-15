@@ -4,7 +4,6 @@
 import datetime
 import random
 import string
-import re
 import pymongo
 from pymongo.collection import ReturnDocument
 import geoip2.database
@@ -17,20 +16,15 @@ class BadShortURLException(Exception):
 
 class DuplicateIdException(BadShortURLException):
     """Raised when trying to add a duplicate key to the database."""
-    pass
 
 class ForbiddenNameException(BadShortURLException):
     """Raised when trying to use a forbidden custom short URL."""
-    pass
 
 class ForbiddenDomainException(Exception):
     """Raised when trying to make a link to a forbidden domain"""
 
-
 class InvalidOperationException(Exception):
     """Raised when performing an invalid operation."""
-    pass
-
 
 class ShrunkCursor(object):
     """Easy-to-use wrapper for internal database cursors."""
@@ -81,7 +75,6 @@ class ShrunkCursor(object):
             return (1, 1)
 
         # Calculate the pagination
-        count = self.cursor.count()
         last_page = self.get_last_page(links_per_page)
         page = min(max(page, 1), last_page)
 

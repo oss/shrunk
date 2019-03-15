@@ -4,9 +4,7 @@
 
 import re
 
-from wtforms import Form, TextField, RadioField, validators, ValidationError
-
-import shrunk.filters
+from wtforms import Form, TextField, validators, ValidationError
 
 class LinkForm(Form):
     """A WTForm for creating and editing links.

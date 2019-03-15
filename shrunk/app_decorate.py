@@ -1,6 +1,6 @@
 from functools import wraps, partial
 import logging
-from flask import Flask, session, redirect, render_template, url_for, request
+from flask import Flask, session, redirect, render_template, request
 from shrunk.stringutil import validate_url
 import shrunk.roles as roles
 from shrunk.client import ShrunkClient
@@ -97,7 +97,6 @@ class ShrunkFlask(ShrunkFlaskMini):
         """decorator to check if user is an admin"""
         @wraps(func)
         def wrapper(*args, **kwargs):
-            client = self.get_shrunk()
             netid = session["user"].get("netid")
             if roles.check("blacklisted", netid):
                 return redirect("/unauthorized")
@@ -124,7 +123,6 @@ class ShrunkFlask(ShrunkFlaskMini):
         @self.require_login
         @self.require_qualified
         def role_revoke(role):
-            netid = session["user"]["netid"]
             entity = request.form["entity"]
             roles.revoke(role, entity)
             return redirect("/roles/"+role)

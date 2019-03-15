@@ -2,7 +2,7 @@
 
 Sets up a Flask application for the main web server.
 """
-from flask import Flask, render_template, make_response, request, redirect, g, session
+from flask import render_template, make_response, request, redirect, session
 from flask_sso import SSO
 from shrunk.app_decorate import ShrunkFlask
 
@@ -12,8 +12,6 @@ from shrunk.filters import strip_protocol, ensure_protocol
 
 from shrunk.client import BadShortURLException, ForbiddenDomainException
 import shrunk.roles as roles
-
-from functools import wraps, partial
 
 import json
 
@@ -39,7 +37,6 @@ app.jinja_env.globals.update(formattime=formattime)
 # Shibboleth handler
 @ext.login_handler
 def login(user_info):
-    client = app.get_shrunk()
     if (user_info.get("employeeType") not in app.config["VALID_EMPLOYEE_TYPES"] \
     and user_info.get("netid") not in app.config["USER_WHITELIST"]) \
     or roles.check("blacklisted", user_info.get("netid")):
@@ -89,7 +86,6 @@ if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
         session['user']={'netid':'DEV_ADMIN'}
         session["all_users"] = "0"
         session["sortby"] = "0"
-        client=app.get_shrunk()
         if not roles.check("admin", "DEV_ADMIN"):
             roles.grant("admin", "Justice Leage", "DEV_ADMIN")
         return redirect('/')
@@ -99,7 +95,6 @@ if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
         session['user']={'netid': 'DEV_PWR_USER'}
         session["all_users"] = "0"
         session["sortby"] = "0"
-        client = app.get_shrunk()
         if not roles.check("power_user", "DEV_PWR_USER"):
             roles.grant("power_user", "Admin McAdminface", "DEV_PWR_USER")
         return redirect("/")
@@ -328,7 +323,6 @@ def add_link():
 @app.require_login
 def add_link_form():
     """Displays link form"""
-    client = app.get_shrunk()
     netid = session['user'].get('netid')
     template = {
         'netid': netid,
@@ -388,10 +382,10 @@ def make_csv_for_links(client, links):
     return f.getvalue()
 
 
-def make_plaintext_response(csv):
+def make_plaintext_response(csv_output):
     headers = {'Content-Type': 'text/plain; charset=utf-8',
                'Content-Disposition': 'attachment; filename=visits.csv;'}
-    return make_response((csv, 200, headers))
+    return make_response((csv_output, 200, headers))
 
 
 @app.route("/link-visits-csv", methods=["GET"])
@@ -403,9 +397,9 @@ def get_link_visits_csv():
         return 'error: request must have url', 400
     link = request.args['url']
     if not client.is_owner_or_admin(link, netid):
-            return 'error: not authorized', 401
-    csv = make_csv_for_links(client, [link])
-    return make_plaintext_response(csv)
+        return 'error: not authorized', 401
+    csv_output = make_csv_for_links(client, [link])
+    return make_plaintext_response(csv_output)
 
 
 @app.route("/search-visits-csv", methods=["GET"])
@@ -435,10 +429,10 @@ def get_search_visits_csv():
     if total_visits >= max_visits:
         return 'error: too many visits to create CSV', 500
 
-    csv = make_csv_for_links(client, map(lambda l: l['_id'], links))
-    return make_plaintext_response(csv)
+    csv_output = make_csv_for_links(client, map(lambda l: l['_id'], links))
+    return make_plaintext_response(csv_output)
 
-
+# TODO this is not a handler should this be in a util module?
 def make_geoip_csv(client, get_location, link):
     location_counts = collections.defaultdict(int)
     for visit in client.get_visits(link):
@@ -447,8 +441,9 @@ def make_geoip_csv(client, get_location, link):
         # location = client.get_country_code(ipaddr)
         location_counts[location] += 1
 
-    csv = 'location,visits\n' + '\n'.join(map(lambda x: '{},{}'.format(*x), location_counts.items()))
-    return csv
+    csv_output = 'location,visits\n' + '\n'.join(map(lambda x: '{},{}'.format(*x),
+                                                     location_counts.items()))
+    return csv_output
 
 
 @app.route("/geoip-csv", methods=["GET"])
@@ -475,8 +470,8 @@ def get_geoip_csv():
     else:  # resolution == 'state'
         get_location = lambda cl, ip: cl.get_state_code(ip)
 
-    csv = make_geoip_csv(client, get_location, link)
-    return make_plaintext_response(csv)
+    csv_output_geoip_csv(client, get_location, link)
+    return make_plaintext_response(csv_output)
 
 
 @app.route("/useragent-stats", methods=["GET"])
@@ -608,7 +603,7 @@ def edit_link():
         kwargs['power_user'] = roles.check("power_user", netid)
         kwargs['old_short_url'] = request.form['old_short_url']
         try:
-            response = client.modify_url(**kwargs)
+            client.modify_url(**kwargs)
             return redirect("/")
         except BadShortURLException as e:
             return edit_url_template(errors={'short_url' : [str(e)]})
@@ -623,8 +618,9 @@ def edit_link():
 def edit_link_form():
     netid = session['user'].get('netid')
     client = app.get_shrunk()
-    form = LinkForm(request.form,
-                    [strip_protocol(app.config["LINKSERVER_URL"])])
+    # TODO ok to delete?
+    #form = LinkForm(request.form,
+    #                [strip_protocol(app.config["LINKSERVER_URL"])])
     # Hit the database to get information
     old_short_url = request.args["url"]
     info = client.get_url_info(old_short_url)
@@ -646,8 +642,6 @@ def admin_panel():
     This displays an administrator panel with navigation links to the admin
     controls.
     """
-
-    client = app.get_shrunk()
     netid = session['user'].get('netid')
 
     return render_template("admin.html", netid=netid)
