@@ -89,6 +89,8 @@ def test_modify():
     url = client.create_short_url("https://linux.org", netid = "dude", title = "title")
     custom_url = client.create_short_url("https://linux.org/custom", 
                                          netid = "dude", short_url = "custom-link")
+    custom_url4 = client.create_short_url("https://linux.org/custom4", 
+                                          netid = "dude", short_url = "custom-link4")
     def modify(**newargs):
         args={
             "old_short_url": url, 
@@ -101,6 +103,7 @@ def test_modify():
         args={"admin": True}
         args.update(newargs)
         return modify(**args)
+    #TODO modify_power_user
 
     #can't edit to blocked urls
     with raises(shrunk.client.ForbiddenDomainException):
@@ -129,6 +132,14 @@ def test_modify():
     modify(short_url = "fail")
     new_custom3 = get_url("fail")
     assert new_custom3 is None
+
+    # cover client.py:362
+    modify_admin(short_url = custom_url4, old_short_url=custom_url4, 
+                 long_url="https://mongodb.org", title="title2")
+    new_custom4 = get_url(custom_url4)
+    assert new_custom4 is not None
+    assert new_custom4["long_url"] == "https://mongodb.org"
+    assert new_custom4["title"] == "title2"
     
 
     #all new information should be set
@@ -393,11 +404,12 @@ def test_get_urls():
     uname="bgates"
     short_urls = insert_urls(long_urls, uname)
      
-    user_urls = client.get_urls(uname)
+    user_urls = client.get_urls(uname).get_results()
+    assert len(user_urls) == len(long_urls)
     user_short_urls = {url["_id"] for url in user_urls}
     
     for user_url in user_urls:
-        assert user_url["netid"] is uname
+        assert user_url["netid"] == uname
 
     for url in short_urls:
         assert url in user_short_urls
