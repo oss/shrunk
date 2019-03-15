@@ -2,10 +2,9 @@
 
 """Flask application for the link server."""
 
-from flask import Flask, render_template, request, redirect, g
+from flask import Flask, render_template, request, redirect
 
 import shrunk.client
-import shrunk.util
 from shrunk.app_decorate import ShrunkFlaskMini
 
 
@@ -25,7 +24,7 @@ def redirect_link(short_url):
     :Parameters:
       - `short_url`: A string containing a shrunk-ified URL.
     """
-    client = shrunk.util.get_db_client(app, g)
+    client = app.get_shrunk()
     app.logger.info("{} requests {}".format(request.remote_addr, short_url))
 
     # Perform a lookup and redirect
