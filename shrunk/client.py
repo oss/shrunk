@@ -54,6 +54,9 @@ class ShrunkCursor(object):
           - `cursor`: A MongoDB cursor
         """
         self.cursor = cursor
+    
+    def __len__(self):
+        return self.cursor.count()
 
     def paginate(self, page, links_per_page):
         """Performs pagination on this cursor.
