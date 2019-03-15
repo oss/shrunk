@@ -470,7 +470,7 @@ def get_geoip_csv():
     else:  # resolution == 'state'
         get_location = lambda cl, ip: cl.get_state_code(ip)
 
-    csv_output_geoip_csv(client, get_location, link)
+    csv_output = make_geoip_csv(client, get_location, link)
     return make_plaintext_response(csv_output)
 
 
