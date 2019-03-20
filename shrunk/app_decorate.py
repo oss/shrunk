@@ -12,7 +12,7 @@ class ShrunkFlaskMini(Flask):
         super(ShrunkFlaskMini, self).__init__(name)
         # Import settings in config.py
         self.config.from_pyfile("config.py", silent=True)
-        self.secret_key = self.config['SECRET_KEY']
+        self.secret_key = self.config["SECRET_KEY"]
 
         # Initialize logging
         self.set_logger()
@@ -46,8 +46,8 @@ class ShrunkFlaskMini(Flask):
                 return render_template("link-404.html", short_url=short_url)
             else:
                 client.visit(short_url, request.remote_addr,
-                             request.headers.get('User-Agent'),
-                             request.headers.get('Referer'))
+                             request.headers.get("User-Agent"),
+                             request.headers.get("Referer"))
                 # Check if a protocol exists
                 if "://" in long_url:
                     return redirect(long_url)
@@ -120,7 +120,7 @@ class ShrunkFlask(ShrunkFlaskMini):
         """decorator to check if user is logged in"""
         @wraps(func)
         def wrapper(*args, **kwargs):
-            if 'user' not in session:
+            if "user" not in session:
                 return redirect("/shrunk-login")
             if roles.check("blacklisted", session["user"].get("netid")):
                 return redirect("/unauthorized")
