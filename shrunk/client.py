@@ -48,7 +48,7 @@ class ShrunkCursor(object):
           - `cursor`: A MongoDB cursor
         """
         self.cursor = cursor
-    
+
     def __len__(self):
         return self.cursor.count()
 
@@ -173,8 +173,7 @@ class ShrunkCursor(object):
         except ValueError:
             raise ValueError("'sortby' must be an integer")
         except pymongo.errors.InvalidOperation:
-            raise InvalidOperationException(
-                    "You cannot sort a cursor after use.")
+            raise InvalidOperationException("You cannot sort a cursor after use.")
 
 
 class ShrunkClient(object):
@@ -197,7 +196,11 @@ class ShrunkClient(object):
     all URLs do not exceed eight characters.
     """
 
-    RESERVED_WORDS = ["add", "login", "logout", "delete", "admin", "stats", "qr", "shrunk-login", "roles", "dev-user-login", "dev-admin-login", "dev-power-login", "unauthorized", "link-visits-csv", "search-visits-csv", "useragent-stats", "referer-stats", "monthly-visits", "edit"]
+    RESERVED_WORDS = ["add", "login", "logout", "delete", "admin", "stats", "qr",
+                      "shrunk-login", "roles", "dev-user-login", "dev-admin-login",
+                      "dev-power-login", "unauthorized", "link-visits-csv",
+                      "search-visits-csv", "useragent-stats", "referer-stats",
+                      "monthly-visits", "edit"]
     """Reserved words that cannot be used as shortened urls."""
 
     def __init__(self, host=None, port=None, test_client=None, geolite_path=None):
@@ -317,7 +320,8 @@ class ShrunkClient(object):
 
         return response
 
-    def modify_url(self, old_short_url=None, admin=False, power_user=False, short_url=None, **new_doc):
+    def modify_url(self, old_short_url=None, admin=False, power_user=False,
+                   short_url=None, **new_doc):
         """Modifies an existing URL.
 
         Edits the values of the url `short_url` and replaces them with the
@@ -334,11 +338,11 @@ class ShrunkClient(object):
 
         if self.is_blocked(new_doc["long_url"]):
             raise ForbiddenDomainException("That URL is not allowed.")
-        
+
         document = db.urls.find_one({"_id": old_short_url})
 
         if not admin and not power_user:
-            short_url=None
+            short_url = None
 
         if short_url is not None:
             if short_url in ShrunkClient.RESERVED_WORDS:
@@ -364,16 +368,18 @@ class ShrunkClient(object):
         return response
 
     def is_admin(self, request_netid):
+        """checks if netid is an admin"""
         return roles.check('admin', request_netid)
 
     def is_owner_or_admin(self, short_url, request_netid):
+        "checks if the url is owned by the user or if the user is an admin"
         url_db = self._mongo.shrunk_urls
-        url=url_db.urls.find_one({"_id":short_url},projection={"netid"})
+        url = url_db.urls.find_one({"_id":short_url}, projection={"netid"})
         if not url:
             return roles.check("admin", request_netid)
 
-        url_owner=url["netid"]
-        requester_is_owner=url_owner==request_netid
+        url_owner = url["netid"]
+        requester_is_owner = url_owner == request_netid
         return requester_is_owner or self.is_admin(request_netid)
 
     def delete_url(self, short_url, request_netid):
@@ -447,13 +453,13 @@ class ShrunkClient(object):
         """
         db = self._mongo.shrunk_urls
         return db.urls.find_one({"_id" : short_url})
-    
+
     def get_monthly_visits(self, short_url):
         """Given a short URL, return how many visits and new unique visiters it gets per month.
 
         :Parameters:
           - `short_url`: A shortened URL
-        
+
         :Returns:
          An array, each of whose elements is a dict containing the data for one month.
          The fields of each dict are:
@@ -462,7 +468,7 @@ class ShrunkClient(object):
           - `all_visits`: the total visits per that month.
         """
         db = self._mongo.shrunk_visits
-        aggregation=[match_short_url(short_url)] + monthly_visits_aggregation
+        aggregation = [match_short_url(short_url)] + monthly_visits_aggregation
         return list(db.visits.aggregate(aggregation))
 
     def get_long_url(self, short_url):
@@ -556,7 +562,10 @@ class ShrunkClient(object):
         match = {"$regex" : search_string, "$options" : "i"}
 
         # '_id' is the short url
-        query = {"$or" : [{"long_url" : match}, {"_id" : match}, {"title" : match}, {"netid" : match}]}
+        query = {"$or" : [{"long_url" : match},
+                          {"_id" : match},
+                          {"title" : match},
+                          {"netid" : match}]}
         if netid is not None:
             query["netid"] = netid
 
@@ -594,6 +603,7 @@ class ShrunkClient(object):
         })
 
     def is_blocked(self, long_url):
+        """checks if a url is blocked"""
         return bool(roles.grants.find_one({
             "role": "blocked_url",
             "entity": {"$regex": "%s*" % get_domain(long_url)}
@@ -669,8 +679,9 @@ class ShrunkClient(object):
              - `ipaddr`: a string containing an IPv4 address.
 
            :Returns:
-             A string containing the full name of the country in which the address is located
-             (e.g. ``"United States"``), or the string ``"unknown"`` if the country cannot be determined.
+             A string containing the full name of the country in which the address 
+             is located (e.g. ``"United States"``), or the string ``"unknown"``
+             if the country cannot be determined.
         """
 
         unk = 'unknown'
@@ -685,14 +696,16 @@ class ShrunkClient(object):
             return unk
 
     def get_state_code(self, ipaddr):
-        """Gets a string describing the state or province in which the given IPv4 address is located.
+        """Gets a string describing the state or province in which the given
+           IPv4 address is located.
 
            :Parameters:
              - `ipaddr`: a string containing an IPv4 address.
 
            :Returns:
-             A string containing the ISO code of the state or province in which the address is located
-             (e.g. ``"NY"``, ``"NJ"``, ``"VA"``) or the string ``"unknown"`` if the location cannot
+             A string containing the ISO code of the state or province in which
+             the address is located (e.g. ``"NY"``, ``"NJ"``, ``"VA"``) or the string
+             ``"unknown"`` if the location cannot
              be determined.
         """
 
@@ -710,8 +723,8 @@ class ShrunkClient(object):
     @staticmethod
     def _generate_unique_key():
         """Generates a unique key."""
-        return ShrunkClient._base_encode(
-                random.randint(ShrunkClient.URL_MIN, ShrunkClient.URL_MAX))
+        return ShrunkClient._base_encode(random.randint(ShrunkClient.URL_MIN,
+                                                        ShrunkClient.URL_MAX))
 
     @staticmethod
     def _base_encode(integer):
@@ -732,4 +745,4 @@ class ShrunkClient(object):
             result.append(ShrunkClient.ALPHABET[integer % length])
             integer //= length
 
-        return "".join(reversed(result))    
+        return "".join(reversed(result))

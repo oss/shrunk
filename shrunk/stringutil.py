@@ -1,10 +1,14 @@
 import re
 def get_domain(long_url):
+    """
+    takes in a url and gets the top level domain
+    eg https://lmao-d.f.foo.rutgers.edu/lmao.php?thing=true becomes rutgers.edu
+    """
     protocol_location = long_url.find("://")
     base_url = long_url[(protocol_location + 3):] # Strip any protocol
     if protocol_location < 0:
         base_url = long_url
-        
+
     slash = base_url.find("/")
     domain = base_url[: base_url.find("/")] # Strip path
     if slash < 0:
@@ -15,7 +19,7 @@ def get_domain(long_url):
     # 1nfo3-384ldnf.doo544-f8.cme-02k4.tk matches cme-02k4.tk
     match = re.search("([a-z\-0-9]+\.[a-z\-0-9]+)$", domain, re.IGNORECASE)
     #search for domain if we can't match for a top domain
-    
+
     return  match.group().lower() if match else domain
 
 

@@ -42,13 +42,15 @@ def login(user_info):
     or roles.check("blacklisted", user_info.get("netid")):
         return redirect("/unauthorized")
     session["user"] = user_info
-    return redirect("/")   
+    return redirect("/")
 
 @app.route('/logout')
 def logout():
-    user=session.pop('user')
+    user = session.pop('user')
     if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
-        if(user['netid']=="DEV_ADMIN" or user['netid']=="DEV_USER" or user['netid']=="DEV_PWR_USER"):
+        if(user['netid'] == "DEV_ADMIN" or
+           user['netid'] == "DEV_USER" or
+           user['netid'] == "DEV_PWR_USER"):
             return redirect('/')
     return redirect('/shibboleth/Logout')
 
@@ -59,12 +61,12 @@ def render_login(**kwargs):
     Takes a WTForm in the keyword arguments.
     """
     if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
-        resp = make_response(render_template('dev_login.html', 
-                            shib_login='/login', 
-                            dev_user_login='/dev-user-login', 
-                            dev_admin_login='/dev-admin-login',
-                            dev_power_login='/dev-power-login',
-                             **kwargs))
+        resp = make_response(render_template('dev_login.html',
+                                             shib_login='/login',
+                                             dev_user_login='/dev-user-login',
+                                             dev_admin_login='/dev-admin-login',
+                                             dev_power_login='/dev-power-login',
+                                             **kwargs))
         return resp
     else:
         resp = make_response(render_template('login.html', shib_login='/login', **kwargs))
@@ -75,7 +77,7 @@ if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
     @app.route('/dev-user-login')
     def dev_user_login():
         app.logger.info('user dev login valid')
-        session['user']={'netid':'DEV_USER'}
+        session['user'] = {'netid':'DEV_USER'}
         session["all_users"] = "0"
         session["sortby"] = "0"
         return redirect('/')
@@ -83,7 +85,7 @@ if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
     @app.route('/dev-admin-login')
     def dev_admin_login():
         app.logger.info('admin dev login valid')
-        session['user']={'netid':'DEV_ADMIN'}
+        session['user'] = {'netid': 'DEV_ADMIN'}
         session["all_users"] = "0"
         session["sortby"] = "0"
         if not roles.check("admin", "DEV_ADMIN"):
@@ -92,13 +94,13 @@ if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
 
     @app.route('/dev-power-login')
     def def_power_login():
-        session['user']={'netid': 'DEV_PWR_USER'}
+        session['user'] = {'netid': 'DEV_PWR_USER'}
         session["all_users"] = "0"
         session["sortby"] = "0"
         if not roles.check("power_user", "DEV_PWR_USER"):
             roles.grant("power_user", "Admin McAdminface", "DEV_PWR_USER")
         return redirect("/")
-        
+
 
 @app.route('/unauthorized')
 def unauthorized():
@@ -132,12 +134,12 @@ def render_index(**kwargs):
     except:
         query = ""
 
-    
+
     # Display all users or just the current administrator?
-    # this question is only a concern if user is admin. 
-    if roles.check("admin", netid) == False:
+    # this question is only a concern if user is admin.
+    if not roles.check("admin", netid):
         all_users = "0"
-    else:     
+    else:
         try:
             all_users = request.args["all_users"]
         except:
@@ -150,7 +152,7 @@ def render_index(**kwargs):
     #just in case I forgot to account for something
     if all_users == "":
         all_users = "0"
-        
+
     sortby = "0" #default
     # Change sorting preferences
     if "sortby" in request.args:
@@ -173,7 +175,7 @@ def render_index(**kwargs):
             cursor = client.search(query)
         elif all_users == "1":
             #show all links but no query
-            cursor=client.get_all_urls()
+            cursor = client.get_all_urls()
         else:
             #show all of my links but no query
             cursor = client.get_urls(netid)
@@ -199,46 +201,47 @@ def render_index(**kwargs):
         page_cursor = client.clone_cursor(cursor)
         page, lastpage = page_cursor.paginate(page, app.config["MAX_DISPLAY_LINKS"])
         links = sorted(cursor.get_results(), key=lambda x: str.lower(x['title']))
-        if int(sortby) in [3]: links = reversed(links)
+        if int(sortby) in [3]:
+            links = reversed(links)
 
         # Skip and limit on the old cursor's links.
         link_offset = (page-1)*app.config["MAX_DISPLAY_LINKS"]
         links = list(links)[link_offset:link_offset+8]
 
 
-    
+
     #choose 9 pages to display so there's not like 200 page links
     #is 9 the optimal number?
-        
+
     begin_pages = -1
     end_pages = -1
     if lastpage < 10:     #9 or fewer pages
         begin_pages = 1
         end_pages = lastpage
     elif page < 5:         #display first 9 pages
-        begin_pages=1
-        end_pages=9
-    elif page > lastpage-4:     #display last 9 pages
-        begin_pages = lastpage-8
+        begin_pages = 1
+        end_pages = 9
+    elif page > lastpage - 4:     #display last 9 pages
+        begin_pages = lastpage - 8
         end_pages = lastpage
     else:                       #display current page +- 4 adjacent pages
-        begin_pages = page-4
-        end_pages = page+4
+        begin_pages = page - 4
+        end_pages = page + 4
 
     resp = make_response(
-            render_template("index.html",
-                            admin=is_admin,
-                            all_users=all_users,
-                            begin_pages=begin_pages,
-                            end_pages=end_pages,
-                            lastpage=lastpage,
-                            links=links,
-                            linkserver_url=app.config["LINKSERVER_URL"],
-                            netid=netid,
-                            page=page,
-                            query=query,
-                            sortby=sortby,
-                            **kwargs))
+        render_template("index.html",
+                        admin=is_admin,
+                        all_users=all_users,
+                        begin_pages=begin_pages,
+                        end_pages=end_pages,
+                        lastpage=lastpage,
+                        links=links,
+                        linkserver_url=app.config["LINKSERVER_URL"],
+                        netid=netid,
+                        page=page,
+                        query=query,
+                        sortby=sortby,
+                        **kwargs))
 
     #TODO since we're not setting we probably dont need make_response
     #resp.set_cookie("all_users", all_users)
@@ -260,7 +263,7 @@ def add_link():
     netid = session['user'].get('netid')
     client = app.get_shrunk()
 
-    template={
+    template = {
         'netid': netid,
         'sortby': "0",
         'all_users': "0",
@@ -270,7 +273,7 @@ def add_link():
     def add_url_template(**kwargs):
         template.update(kwargs)
         return render_template("add.html", **template)
-    
+
     form.long_url.data = ensure_protocol(form.long_url.data)
     if form.validate():
         # TODO Decide whether we want to do something with the response
@@ -280,11 +283,11 @@ def add_link():
             client.create_short_url(**kwargs)
             return redirect("/")
         except BadShortURLException as e:
-            return add_url_template(errors = {'short_url': [str(e)]})
+            return add_url_template(errors={'short_url': [str(e)]})
         except ForbiddenDomainException as e:
-            return add_url_template(errors = {'long_url': [str(e)]})
+            return add_url_template(errors={'long_url': [str(e)]})
     else: # WTForms detects a form validation error:
-        return add_url_template(errors = form.errors)
+        return add_url_template(errors=form.errors)
 
 @app.route("/add", methods=["GET"])
 @app.require_login
@@ -304,21 +307,24 @@ def add_link_form():
 @app.require_login
 def get_stats():
     #should we require owner or admin to view?
-    template_data={"url_info": {}, 
-                   "missing_url": False,
-                   "monthy_visits": [],
-                   "query": session.get("query")}
+    template_data = {
+        "url_info": {},
+        "missing_url": False,
+        "monthy_visits": [],
+        "query": session.get("query")
+    }
 
     if "url" in request.args:
-        url=request.args["url"]
-        client=app.get_shrunk()
-        template_data["url_info"]=client.get_url_info(url)
+        url = request.args["url"]
+        client = app.get_shrunk()
+        template_data["url_info"] = client.get_url_info(url)
     else:
-        template_data["missing_url"]=True
+        template_data["missing_url"] = True
 
     return render_template("stats.html", short_url=request.args.get('url', ''), **template_data)
 
-
+# TODO use already existing get_domain function instead?
+# maybe get doamin should use this implementation
 def get_referer_domain(visit):
     if 'referer' not in visit:
         return None
@@ -333,7 +339,8 @@ def make_csv_for_links(client, links):
     f = io.StringIO()
     writer = csv.writer(f)
 
-    header = ['short url', 'visitor id', 'location', 'referrer domain', 'user agent', 'time (eastern time)']
+    header = ['short url', 'visitor id', 'location',
+              'referrer domain', 'user agent', 'time (eastern time)']
     writer.writerow(header)
 
     for link in links:
@@ -495,9 +502,9 @@ def get_referer_stats():
 @app.route("/monthly-visits", methods=["GET"])
 @app.require_login
 def monthly_visits():
-    url=request.args["url"]
-    client=app.get_shrunk()
-    netid=session["user"].get("netid")
+    url = request.args["url"]
+    client = app.get_shrunk()
+    netid = session["user"].get("netid")
 
     if "url" not in request.args:
         return '{"error":"request must have url"}', 400
@@ -506,14 +513,14 @@ def monthly_visits():
         return '{"error":"not authorized"}', 401
 
     else:
-        visits=client.get_monthly_visits(url)
+        visits = client.get_monthly_visits(url)
         return json.dumps(visits)
 
 
 @app.route("/qr", methods=["GET"])
 @app.require_login
 def qr():
-    kwargs={"print": "print" in request.args, "query": session.get("query")}
+    kwargs = {"print": "print" in request.args, "query": session.get("query")}
     return render_template("qr.html", **kwargs)
 
 
@@ -547,7 +554,7 @@ def edit_link():
     banned_regexes = ["\.xxx"]
     if "BANNED_REGEXES" in app.config:
         banned_regexes = app.config["BANNED_REGEXES"]
-        
+
     form = LinkForm(request.form, banned_regexes)
     form.long_url.data = ensure_protocol(form.long_url.data)
 
@@ -561,7 +568,7 @@ def edit_link():
     def edit_url_template(**kwargs):
         template.update(kwargs)
         return render_template("edit.html", **template)
-    
+
     # Validate form before continuing
     if form.validate():
         # Success - make the edits in the database
@@ -594,8 +601,8 @@ def edit_link_form():
     if not client.is_owner_or_admin(old_short_url, netid):
         return render_index(wrong_owner=True)
 
-    info['old_short_url']=old_short_url
-    info['show_short_url']=roles.has_one_of(["admin", "power_user"], netid)
+    info['old_short_url'] = old_short_url
+    info['show_short_url'] = roles.has_one_of(["admin", "power_user"], netid)
     info['query'] = session.get('query')
     # Render the edit template
     return render_template("edit.html", **info)

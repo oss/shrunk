@@ -11,14 +11,14 @@ class ShrunkFlaskMini(Flask):
     def __init__(self, name):
         super(ShrunkFlaskMini, self).__init__(name)
         # Import settings in config.py
-        self.config.from_pyfile("config.py", silent = True)
+        self.config.from_pyfile("config.py", silent=True)
         self.secret_key = self.config['SECRET_KEY']
 
         # Initialize logging
         self.set_logger()
         self.logger.info("logging started")
 
-        self._shrunk_client = ShrunkClient(self.config["DB_HOST"], 
+        self._shrunk_client = ShrunkClient(self.config["DB_HOST"],
                                            self.config["DB_PORT"],
                                            geolite_path=self.config.get("GEOLITE_PATH"))
         self.logger.info("ShrunkClient initialized %s:%s"
@@ -67,6 +67,7 @@ class ShrunkFlaskMini(Flask):
         self.logger.setLevel(logging.INFO)
 
     def get_shrunk(self):
+        """returns the shrunk client attached to this server"""
         return self._shrunk_client
 
 class ShrunkFlask(ShrunkFlaskMini):
@@ -81,12 +82,16 @@ class ShrunkFlask(ShrunkFlaskMini):
         self.logger.info("done with setup")
 
     def require_qualified(self, func):
+        """
+        if user is not qualified to add an entity to a role then
+        redirect to unauthorized
+        """
         @wraps(func)
         def wrapper(role, *args, **kwargs):
             if not roles.exists(role):
                 return redirect("/")
             if roles.qualified_for[role](session["user"]["netid"]):
-                new_args=[role]+list(args)
+                new_args = [role] + list(args)
                 return func(*new_args, **kwargs)
             else:
                 return redirect("/unauthorized")
@@ -115,7 +120,7 @@ class ShrunkFlask(ShrunkFlaskMini):
         """decorator to check if user is logged in"""
         @wraps(func)
         def wrapper(*args, **kwargs):
-            if not 'user' in session:
+            if 'user' not in session:
                 return redirect("/shrunk-login")
             if roles.check("blacklisted", session["user"].get("netid")):
                 return redirect("/unauthorized")
@@ -163,19 +168,25 @@ class ShrunkFlask(ShrunkFlaskMini):
             return render_template("role.html", **roles.template_data(role))
 
     def setup_roles(self):
-        is_admin=partial(roles.check, "admin")
-        roles.new("admin", is_admin, custom_text = {"title": "Admins"})
-        roles.new("power_user", is_admin, custom_text = {"title": "Power Users"})
-        roles.new("blacklisted", is_admin, custom_text = {
+        """
+        initialize the admin, power_user, blocked, and blacklisted roles
+        the difference between blacklisted and blocked is that blacklisted
+        refers to users where blocked refers to links
+        """
+        is_admin = partial(roles.check, "admin")
+        roles.new("admin", is_admin, custom_text={"title": "Admins"})
+        roles.new("power_user", is_admin, custom_text={"title": "Power Users"})
+        roles.new("blacklisted", is_admin, custom_text={
             "title": "Blacklisted Users",
             "grant_title": "Blacklist a user:",
             "grant_button": "BLACKLIST",
             "revoke_title": "Unblacklist a user",
             "revoke_button": "UNBLACKLIST",
-            "empty": "there are currently no blacklisted users", 
+            "empty": "there are currently no blacklisted users",
             "granted_by": "blacklisted by"
 
         })
+
         def onblock(url):
             domain = get_domain(url)
             self.logger.info(url+" is blocked! "+
@@ -187,7 +198,7 @@ class ShrunkFlask(ShrunkFlaskMini):
             }}))
 
             matches_domain = [link for link in contains_domain
-                          if get_domain(link["long_url"]) == domain]
+                              if get_domain(link["long_url"]) == domain]
             # print 3 to a line
             logmessage = "FOUND:\n"
             for link in matches_domain:
@@ -198,13 +209,14 @@ class ShrunkFlask(ShrunkFlaskMini):
                 "_id": {"$in": [doc["_id"] for doc in matches_domain]}
             })
             self.logger.info("block "+url+" result: "+str(result.raw_result))
-        roles.new("blocked_url", is_admin, validate_url, custom_text = {
+
+        roles.new("blocked_url", is_admin, validate_url, custom_text={
             "title": "Blocked urls",
             "invalid": "bad url",
             "grant_title": "Block a url:",
             "grant_button": "BLOCK",
             "revoke_title": "Unblock a url",
             "revoke_button": "UNBLOCK",
-            "empty": "there are currently no blocked urls", 
+            "empty": "there are currently no blocked urls",
             "granted_by": "blocked by"
-        }, oncreate = onblock)
+        }, oncreate=onblock)

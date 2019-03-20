@@ -3,7 +3,7 @@ def match_short_url(url):
     return {"$match": {"short_url":url}}
 
 #monthly visits aggregations phases
-group_ips={"$group": {
+group_ips = {"$group": {
     "_id": "$source_ip",
     "visits": {
         "$addToSet": "$$ROOT"
@@ -11,7 +11,7 @@ group_ips={"$group": {
 }}
 
 
-find_first={"$project": {
+find_first = {"$project": {
     "visits": {
         "$reduce": {
             #input is with visits[1:] beacuse first starts as visits[0]
@@ -23,22 +23,22 @@ find_first={"$project": {
                     "if": {"$lt": ["$$this.time", "$$value.first.time"]},
                     "then": {
                         "first": "$$this",
-                        "rest": {"$concatArrays": [["$$value.first"], "$$value.rest"]}     
+                        "rest": {"$concatArrays": [["$$value.first"], "$$value.rest"]}
                     },
                     "else": {
                         "first": "$$value.first",
-                        "rest": {"$concatArrays": [["$$this"], "$$value.rest"]}     
+                        "rest": {"$concatArrays": [["$$this"], "$$value.rest"]}
                     }
                 }
             }
         }
     }
 }}
-mark_unqiue={"$project": {
+mark_unqiue = {"$project": {
     "visits": {
         "$let": {
             "vars": {
-                "first": {"$mergeObjects": ["$visits.first", 
+                "first": {"$mergeObjects": ["$visits.first",
                                             {"first_time": 1}]},
                 "rest": {"$map": {
                     "input": "$visits.rest",
@@ -50,9 +50,9 @@ mark_unqiue={"$project": {
         }
     }
 }}
-unwind_ips={"$unwind": "$visits"}
+unwind_ips = {"$unwind": "$visits"}
 #this monthly sort can probably get abstracted and reused
-group_months={"$group": {
+group_months = {"$group": {
     "_id": {
         "month": {"$month": "$visits.time"},
         "year" : {"$year" : "$visits.time"}
@@ -64,21 +64,21 @@ group_months={"$group": {
         "$sum": 1
     }
 }}
-make_sortable={"$project": {
+make_sortable = {"$project": {
     "month": "$_id.month",
     "year" : "$_id.year",
     "first_time_visits": 1,
     "all_visits": 1
 }}
-chronological_sort={ "$sort": OrderedDict([
-    ("year" , 1),
+chronological_sort = {"$sort": OrderedDict([
+    ("year", 1),
     ("month", 1)
 ])}
-clean_results={"$project": {
+clean_results = {"$project": {
     "first_time_visits": 1,
     "all_visits": 1
 }}
 
-monthly_visits_aggregation=[group_ips, find_first, mark_unqiue, unwind_ips, #mark the first_time_visits
-    group_months, #break into months
-    make_sortable, chronological_sort, clean_results] #sort
+monthly_visits_aggregation = [group_ips, find_first, mark_unqiue, unwind_ips, #mark the first_time_visits
+                              group_months, #break into months
+                              make_sortable, chronological_sort, clean_results] #sort
