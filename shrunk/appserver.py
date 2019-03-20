@@ -45,6 +45,8 @@ def login(user_info):
 
 @app.route('/logout')
 def logout():
+    if "user" not in session:
+        return redirect('/')
     user = session.pop('user')
     if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
         if(user['netid'] == "DEV_ADMIN" or
@@ -395,8 +397,10 @@ def get_geoip_csv():
 
 
 @app.route("/useragent-stats", methods=["GET"])
+@app.require_login
 def get_useragent_stats():
     client = app.get_shrunk()
+    print(session)
     netid = session['user'].get('netid')
 
     if 'url' not in request.args:
@@ -424,6 +428,7 @@ def get_useragent_stats():
 
 
 @app.route("/referer-stats", methods=["GET"])
+@app.require_login
 def get_referer_stats():
     client = app.get_shrunk()
     netid = session['user'].get('netid')
