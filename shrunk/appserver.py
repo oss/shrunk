@@ -2,24 +2,23 @@
 
 Sets up a Flask application for the main web server.
 """
+
+import json
+import werkzeug.useragents
+import urllib.parse
+import collections
+
 from flask import render_template, make_response, request, redirect, session
 from flask_sso import SSO
+
 from shrunk.app_decorate import ShrunkFlask
-
-from shrunk.forms import LinkForm
-from shrunk.stringutil import formattime
-from shrunk.filters import strip_protocol, ensure_protocol
-
 from shrunk.client import BadShortURLException, ForbiddenDomainException
 import shrunk.roles as roles
 
-import json
-
-import io
-import csv
-import collections
-import werkzeug.useragents
-import urllib.parse
+from shrunk.forms import LinkForm
+from shrunk.filters import strip_protocol, ensure_protocol
+from shrunk.stringutil import formattime
+from shrunk.statutil import get_referer_domain, make_csv_for_links, make_plaintext_response, make_geoip_csv
 
 
 # Create application
@@ -323,45 +322,6 @@ def get_stats():
 
     return render_template("stats.html", short_url=request.args.get('url', ''), **template_data)
 
-# TODO use already existing get_domain function instead?
-# maybe get doamin should use this implementation
-def get_referer_domain(visit):
-    if 'referer' not in visit:
-        return None
-    try:
-        p = urllib.parse.urlparse(visit['referer']).netloc
-        return p.lower()
-    except:
-        return None
-
-
-def make_csv_for_links(client, links):
-    f = io.StringIO()
-    writer = csv.writer(f)
-
-    header = ['short url', 'visitor id', 'location',
-              'referrer domain', 'user agent', 'time (eastern time)']
-    writer.writerow(header)
-
-    for link in links:
-        visits = client.get_visits(link)
-        for visit in visits:
-            ipaddr = visit['source_ip']
-            visitor_id = client.get_visitor_id(ipaddr)
-            location = client.get_geoip_location(ipaddr)
-            referer = get_referer_domain(visit) or 'unknown'
-            ua = visit.get('user_agent', 'unknown')
-            writer.writerow([visit['short_url'], visitor_id, location, referer, ua, visit['time']])
-
-    return f.getvalue()
-
-
-def make_plaintext_response(csv_output):
-    headers = {'Content-Type': 'text/plain; charset=utf-8',
-               'Content-Disposition': 'attachment; filename=visits.csv;'}
-    return make_response((csv_output, 200, headers))
-
-
 @app.route("/link-visits-csv", methods=["GET"])
 @app.require_login
 def get_link_visits_csv():
@@ -405,20 +365,6 @@ def get_search_visits_csv():
 
     csv_output = make_csv_for_links(client, map(lambda l: l['_id'], links))
     return make_plaintext_response(csv_output)
-
-# TODO this is not a handler should this be in a util module?
-def make_geoip_csv(client, get_location, link):
-    location_counts = collections.defaultdict(int)
-    for visit in client.get_visits(link):
-        ipaddr = visit['source_ip']
-        location = get_location(client, ipaddr)
-        # location = client.get_country_code(ipaddr)
-        location_counts[location] += 1
-
-    csv_output = 'location,visits\n' + '\n'.join(map(lambda x: '{},{}'.format(*x),
-                                                     location_counts.items()))
-    return csv_output
-
 
 @app.route("/geoip-csv", methods=["GET"])
 @app.require_login
@@ -607,6 +553,7 @@ def edit_link_form():
     # Render the edit template
     return render_template("edit.html", **info)
 
+# TODO not referenced in ui
 @app.route("/admin/")
 @app.require_login
 @app.require_admin
