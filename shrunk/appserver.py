@@ -18,7 +18,7 @@ import shrunk.roles as roles
 from shrunk.forms import LinkForm
 from shrunk.filters import strip_protocol, ensure_protocol
 from shrunk.stringutil import formattime
-from shrunk.statutil import get_referer_domain, make_csv_for_links, make_plaintext_response, make_geoip_csv
+from shrunk.statutil import *
 
 
 # Create application
@@ -61,6 +61,8 @@ def render_login(**kwargs):
 
     Takes a WTForm in the keyword arguments.
     """
+    if "user" in session:
+        return redirect('/')
     if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
         resp = make_response(render_template('dev_login.html',
                                              shib_login='/login',
@@ -122,7 +124,7 @@ def render_index(**kwargs):
 
     netid = session['user'].get('netid')
     client = app.get_shrunk()
-
+    # TODO init default dict and dict.update(request.args) instead of this long thing
     # Grab the current page number
     try:
         page = int(request.args["p"])
@@ -486,6 +488,8 @@ def delete_link():
     # TODO Handle the response intelligently, or put that logic somewhere else
     if request.method == "POST":
         app.logger.info("Deleting URL: {}".format(request.form["short_url"]))
+        # TODO give error page if url does not belong to this user
+        # currently it does not delete it and returns index
         client.delete_url(request.form["short_url"], netid)
     return redirect("/")
 
