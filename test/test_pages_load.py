@@ -1,39 +1,8 @@
-from shrunk.appserver import app
-from flask import session
-from functools import wraps
-
-client = app.test_client()
-
-def login(role):
-    return client.get("/dev-" + role + "-login")
-
-def logout():
-    return client.get("/logout")
-
-def get(url):
-    return client.get(url)
-
-def post(url):
-    return client.post(url)
-
-def loginw(role):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            print("func",func)
-            print("role",role)
-            login(role)
-            func(*args, **kwargs)
-        return wrapper
-    return decorator
-
-def assert_redirect(response, to):
-    assert response.status_code == 302
-    assert to in response.headers["Location"]
+from views import *
 
 def teardown_function():
     logout()
-    
+
 def test_index():
     assert_redirect(get("/"), "shrunk-login")
     login("user")
@@ -63,3 +32,14 @@ def test_auth_no_500():
         login("user")
         assert get(route).status_code < 500
         logout()
+
+def test_unauthorized():
+    assert get("/unauthorized").status_code < 500
+    login("user")
+    assert get("/unauthorized").status_code < 500
+    logout()
+
+def test_normal_login():
+    assert get("/shrunk-login").status_code < 500
+    login("user")
+    assert_redirect(get("/shrunk-login"), "/")
