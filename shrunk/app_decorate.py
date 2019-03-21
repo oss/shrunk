@@ -81,6 +81,12 @@ class ShrunkFlask(ShrunkFlaskMini):
         self.setup_roles()
         self.logger.info("done with setup")
 
+    def switch_db(self, host, port=27017):
+        self._shrunk_client = ShrunkClient(host,
+                                           port,
+                                           geolite_path=self.config.get("GEOLITE_PATH"))
+        roles.init(self)
+
     def require_qualified(self, func):
         """
         if user is not qualified to add an entity to a role then
