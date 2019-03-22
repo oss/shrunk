@@ -9,9 +9,8 @@
 {% else %}
 {% extends "base.html" %}
 {% block content %}
-<div class="links-box col-xs-12 col-sm-8 col-sm-offset-1">
   <h1>QR Code</h1>
-  <article class="add-group clearfix">
+  <article class="add-group clearfix qr-col">
     {% if missing_url %}
     <h3> URL not found :( </h3>
     {% else %}
@@ -22,6 +21,5 @@
     <script src="{{ url_for('static', filename='js/shrunkqr.js') }}"></script>
     {% endif %}
   </article>
-</div>
 {% endblock %}
 {% endif %}

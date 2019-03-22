@@ -1,9 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="links-box col-xs-12 col-sm-8 col-sm-offset-1">
     <h1>Shorten URL</h1>
     <article class="add-group clearfix">
-        <form method="POST" action="{{ url_for('add_link') }}" name="link_form" class="add-link" novalidate="novalidate">
+        <form method="POST" action="{{ url_for('add_link') }}" name="link_form" class="container" novalidate="novalidate">
             <div class="item">
                 <label for="title">Title</label>
                 {% if errors %}
@@ -39,5 +38,4 @@
             <button type="submit" class="shrink-button btn btn-default">SHRINK</button>
         </form>
     </article>
-</div>
 {% endblock %}

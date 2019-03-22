@@ -1,46 +1,44 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="links-box col-xs-12 col-sm-8 col-sm-offset-1">
-    <h1>{{ title }}</h1>
-    {% if msg %}
-    <div class="shrunk-messages">
-        {{ msg }}
-    </div>
-    {% endif %}
-
-    <article class="add-group clearfix">
-        <h3>{{ grant_title }}</h3>
-        <form method="POST" action="/roles/{{role}}/" name="blacklist">
-            <input name="entity" type="text" class="form-control" /> <br />
-            <input class="shrink-button btn btn-default" type="submit" 
-		   value="{{ grant_button }}" /> <br />
-        </form>
-    </article>
-
-    <h3>{{ revoke_title }}</h3>
-    {% for grant in grants %}
-        <article class="link-group clearfix">
-            <div class="link-info" style="clear: both;">
-                <div class="hover-controls">
-                    <form method="POST" action="/roles/{{role}}/revoke">
-                        <input type="hidden" id="entity" 
-			       name="entity" value="{{ grant['entity'] }}" />
-                        <input class="shrunk-button btn btn-default" type="submit" 
-			       value="{{ revoke_button }}" />
-                    </form>
-                </div>
-                <div class="title">
-                    {{ grant["entity"] }}
-                </div>
-                <div class="bottom-row">
-                    {{ granted_by }}: {{ grant["granted_by"] }}
-                </div>
-            </div>
-        </article>
-    {% else %}
-        <p>
-            {{ empty }}.
-        </p>
-    {% endfor %}
+<h1>{{ title }}</h1>
+{% if msg %}
+<div class="shrunk-messages">
+  {{ msg }}
 </div>
+{% endif %}
+
+<article class="add-group clearfix">
+  <h3>{{ grant_title }}</h3>
+  <form method="POST" action="/roles/{{role}}/" name="blacklist">
+    <input name="entity" type="text" class="form-control" /> <br />
+    <input class="shrink-button btn btn-default" type="submit" 
+	   value="{{ grant_button }}" /> <br />
+  </form>
+</article>
+
+<h3>{{ revoke_title }}</h3>
+{% for grant in grants %}
+<article class="link-group clearfix">
+  <div class="link-info" style="clear: both;">
+    <div class="hover-controls">
+      <form method="POST" action="/roles/{{role}}/revoke">
+        <input type="hidden" id="entity" 
+	       name="entity" value="{{ grant['entity'] }}" />
+        <input class="shrunk-button btn btn-default" type="submit" 
+	       value="{{ revoke_button }}" />
+      </form>
+    </div>
+    <div class="title">
+      {{ grant["entity"] }}
+    </div>
+    <div class="bottom-row">
+      {{ granted_by }}: {{ grant["granted_by"] }}
+    </div>
+  </div>
+</article>
+{% else %}
+<p>
+  {{ empty }}.
+</p>
+{% endfor %}	
 {% endblock %}

@@ -8,9 +8,9 @@
     <title>Go - Rutgers University URL Shortener</title>
 
     <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/shrunk.css') }}">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">    
     <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/shrunk.css') }}">
     <link rel="icon" type="image/ico" href="{{ url_for('static', filename='img/favicon.ico') }}">
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -20,18 +20,18 @@
     <![endif]-->
   </head>
   <body>
-    
-    {% include "header.html" %}
+    {% block header scoped %}
+        {% include "header.html" %}
+    {% endblock %}
 
     <div class="container">
-        <div class="tool-box col-xs-12 col-sm-3">
+        {#<!--<div class="tool-box col-xs-12 col-sm-3">
             {% include "sidebar.html" %}
-        </div>
+        </div>-->
 
-        <div id="wrapper">
-            {% block content %}
-            {% endblock %}
-        </div>
+        <!--<div >id="wrapper--> #}
+        {% block content %}
+        {% endblock %}
     </div>
 
     <div id="footer">

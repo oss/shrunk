@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="links-box col-xs-12 col-sm-8 col-sm-offset-1">
   <h1>URL stats</h1>
   <a href="/link-visits-csv?url={{ short_url }}">Export visit data as CSV</a>
   <article class="add-group clearfix">
@@ -66,5 +65,4 @@
     <script src="{{ url_for('static', filename='js/stats.js') }}"></script>
     {% endif %}
   </article>
-</div>
 {% endblock %}

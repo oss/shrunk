@@ -1,66 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <title>Go - Login</title>
-
-    <!-- Latest compiled and minified CSS -->
-
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
-    <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/shrunk.css') }}">
-    <link rel="icon" type="image/ico" href="{{ url_for('static', filename='img/favicon.ico') }}">
-    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-    <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-    <![endif]-->
-  </head>
-  <body>
-    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
-        <div class="container">
-            <div class="navbar-header">
-                <a class="navbar-brand" href="{{ url_for('render_index') }}">
-                    <img alt="Rutgers" src="{{ url_for('static', filename='img/RU_LOGOTYPE_REVWHITE.png') }}" width="175px">
-                </a>
-            </div>
-        </div>
-    </nav>
-
-    <div class="login-box col-xs-12 col-sm-8 col-sm-offset-2">
-        <form action="{{ shib_login }}" method="get">
-            <button type="submit" class="login-button btn btn-default">Login with CAS</button>
-        </form>
-
-	    <form action="{{ dev_user_login }}" method="get">
-            <button type="submit" class="login-button btn btn-default">DevUser Login</button>
-        </form>
-
-	    <form action="{{ dev_admin_login }}" method="get">
-            <button type="submit" class="login-button btn btn-default">DevAdmin Login</button>
-        </form>
-
-        <form action="{{ dev_power_login }}" method="get">
-            <button type="submit" class="login-button btn btn-default">DevPowerUser Login</button>
-        </form>
-    </div>
+{% extends "base.html" %}
+{% block header %}
+<style> .show-login {display: none;}</style>
+{{ super() }}
+{% endblock %}
+{% block content %}
+<div class="login-box col-xs-12 col-sm-8 col-sm-offset-2">
+  <div class="dev-login-box">
+    <form class="dev-login-btn" action="{{ shib_login }}" method="get">
+      <button type="submit" class="login-button btn btn-default">Login with CAS</button>
+    </form>
     
-
-    <div id="footer">
-        <div class="box">
-          © 2019 &mdash; Rutgers, The State University of New Jersey &mdash; Questions? Bugs? Contact us:
-	  <a href="mailto:oss@oss.rutgers.edu">oss@oss.rutgers.edu</a>
-        </div>
-    </div>
-
-    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-    <!-- Include all compiled plugins (below), or include individual files as needed -->
-    <!-- Latest compiled and minified JavaScript -->
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
-  </body>
-</html>
+    <form class="dev-login-btn" action="{{ dev_user_login }}" method="get">
+      <button type="submit" class="login-button btn btn-default">DevUser Login</button>
+    </form>
+    
+    <form class="dev-login-btn" action="{{ dev_admin_login }}" method="get">
+      <button type="submit" class="login-button btn btn-default">DevAdmin Login</button>
+    </form>
+    
+    <form class="dev-login-btn" action="{{ dev_power_login }}" method="get">
+      <button type="submit" class="login-button btn btn-default">DevPowerUser Login</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

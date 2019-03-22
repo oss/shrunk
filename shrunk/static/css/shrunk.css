@@ -17,6 +17,12 @@ h1 {
     padding-right: 15pt;
 }
 
+#shrunk-links {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 #map-toggle {
     padding-top: 20px;
 }
@@ -35,14 +41,31 @@ label {
     width: 70%;
 }
 
-.navbar {
+#shrunk-nav {
     background-color: #cc0e32;
-    height: 70px;
-    color: #fefefe;
+    height: 90px;
+    color: white;
+    padding: 0px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.navbar-header {
+    background-color: #cc0e32;
 }
 
 .navbar>.container .navbar-brand, .navbar>.container-fluid .navbar-brand a {
     color: white;
+}
+#rutgers-logo {
+    padding: 5px;
+}
+.nav>li>a {
+     color: white; 
+}
+
+.nav>li>a:hover {
+     color: #337ab7;
 }
 
 .navbar-collapse {
@@ -55,11 +78,21 @@ label {
     font-size: 18px;
 }
 
-/*
-.search-bar .form-group {
+#search-bar {
     display: inline;
 }
-
+#shrunk-toolbar-netid {
+    font-size: 24pt;
+    margin-right: 10px;
+}
+.shrunk-toolbar {
+    display: flex;
+    align-items: center;
+}
+.shrunk-toolbar-item {
+    margin-right: 5px !important;
+}
+/*
 .search-bar .input-group {
     display: table;
 }
@@ -73,7 +106,6 @@ label {
 
 .search-bar .form-group .form-control {
     font-size: 18px;
-    width: 80%;
     float: left;
 }
 
@@ -137,12 +169,20 @@ label {
 #go-url {
     padding-bottom: 0;
 }
+.dev-login-box {
+    display: flex;
+    flex-direction: column;
+}
 
+.dev-login-box>*>.login-button {
+	width: 100%;
+}
 .login-box {
     font-size: 24px;
     margin-top: 80px;
     padding: 30px;
     text-align: center;
+    
 }
 
 .login-box .hero {
@@ -180,9 +220,8 @@ label {
 
 .login-box .login-button {
     margin: 20px 0;
-    width: 120px;
     height: 45px;
-    background-color: #b2122e;
+    background-color: #d21034;
     color: #fefefe;
 }
 
@@ -213,14 +252,13 @@ label {
 }
 
 .add-group {
-    width: 80%;
     display: block;
 }
 
 .add-group .shrink-button {
     width: 18%;
     height: 36px;
-    background-color: #b2122e;
+    background-color: #d21034;
     color: #fefefe;
 }
 
@@ -239,7 +277,6 @@ label {
 
 .link-group {
     color: #191917;
-    width: 80%;
     padding: 15px;
     min-height: 100px;
     border-bottom: 1px solid rgb(211,211,211);
@@ -398,7 +435,15 @@ Media Queries
     }
 
     .navbar-collapse {
-        margin-top: 20px;
+       /* margin-top: 20px;*/
+    }
+    
+    #shrunk-toggle {
+	border-color: white;
+	border-width: 1px;
+    }
+    #shrunk-toggle>span {
+	background-color: white;
     }
 
     .navbar-collapse .navbar-subtitle {
@@ -414,6 +459,46 @@ Media Queries
     }
 }
 
+@media (max-width: 720px) {
+    #shrunk-toolbar {
+	flex-direction: column;
+    }
+}
+
+/* admin toolbar collapse */
+.admin-links-collapse {
+    display: none;
+}
+
+@media (max-width: 1360px) {
+    .admin-links-collapse {
+	display: inherit;
+    }
+    .admin-links {
+	display: none;
+    }
+}
+
+/* end admin toolbar */
+@media (max-width: 840px) {
+    .shrunk-toolbar {
+	flex-direction: column;
+	align-items: flex-start;
+    }
+}
+/* vert toolbar */
+/* end vert toolbar */
+.qr-col {
+    display: flex;
+    width: 256px;
+    flex-direction: column;
+}
+#print {
+    width: 100%;
+}
+#download {
+    width: 100%;
+}
 #error{
     color: #cc0e32;
     font_size: 20px;

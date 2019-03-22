@@ -39,10 +39,10 @@ var sort_links = function() {
 }
 
 
-var sortby = function() {
-    var sel = document.getElementById("sortby");
+var requery = function() {
+    var sortby = document.getElementById("sortby").selectedIndex;
     var url = new URL(window.location.href);
-    var all_users = url.searchParams.get("all_users")
+    var all_users = document.getElementById("all-users").selectedIndex;
     var query = url.searchParams.get("search");
 
     if(query === null){
@@ -51,7 +51,7 @@ var sortby = function() {
     if(all_users === null){
         all_users = 0;
     }
-    window.location.replace("/?all_users=" + all_users + "&search=" + query + "&sortby=" + sel.selectedIndex);
+    window.location.replace("/?all_users=" + all_users + "&search=" + query + "&sortby=" + sortby);
 }
 
 var clear_search = function(){
