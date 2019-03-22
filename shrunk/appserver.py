@@ -63,17 +63,15 @@ def render_login(**kwargs):
     """
     if "user" in session:
         return redirect('/')
-    if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
-        resp = make_response(render_template('dev_login.html',
-                                             shib_login='/login',
-                                             dev_user_login='/dev-user-login',
-                                             dev_admin_login='/dev-admin-login',
-                                             dev_power_login='/dev-power-login',
-                                             **kwargs))
-        return resp
-    else:
-        resp = make_response(render_template('login.html', shib_login='/login', **kwargs))
-        return resp
+    enable_dev = 'DEV_LOGINS' in app.config and app.config['DEV_LOGINS']
+    resp = make_response(render_template('login.html',
+                                         shib_login='/login',
+                                         dev=enable_dev,
+                                         dev_user_login='/dev-user-login',
+                                         dev_admin_login='/dev-admin-login',
+                                         dev_power_login='/dev-power-login',
+                                         **kwargs))
+    return resp
 
 # add devlogins if necessary
 if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
