@@ -12,15 +12,14 @@ h1 {
     font-size: 48px;
 }
 
+/* not responsive */
+select {
+    width: 135px;
+}
+
 .links-header {
     display: inline-block;
     padding-right: 15pt;
-}
-
-#shrunk-links {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
 }
 
 #map-toggle {
@@ -37,29 +36,14 @@ label {
     margin: 0;
 }
 
-.container {
-    width: 70%;
-}
-
-#shrunk-nav {
-    background-color: #cc0e32;
-    height: 90px;
-    color: white;
-    padding: 0px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
 .navbar-header {
     background-color: #cc0e32;
 }
 
-.navbar>.container .navbar-brand, .navbar>.container-fluid .navbar-brand a {
-    color: white;
-}
 #rutgers-logo {
     padding: 5px;
 }
+
 .nav>li>a {
      color: white; 
 }
@@ -78,62 +62,18 @@ label {
     font-size: 18px;
 }
 
-#search-bar {
-    display: inline;
-}
 #shrunk-toolbar-netid {
     font-size: 24pt;
     margin-right: 10px;
 }
+
 .shrunk-toolbar {
     display: flex;
     align-items: center;
 }
+
 .shrunk-toolbar-item {
     margin-right: 5px !important;
-}
-/*
-.search-bar .input-group {
-    display: table;
-}
-
-*/
-
-.search-bar {
-    width: 100%;
-    padding-top: 10px;
-}
-
-.search-bar .form-group .form-control {
-    font-size: 18px;
-    float: left;
-}
-
-.search-bar .search-btn {
-    background-color: #b2122e;
-    color: #fefefe;
-    float: right;
-    width: 15%;
-}
-
-.search-bar input::-webkit-input-placeholder {
-    color: #DADBD9;
-}
-.search-bar input:-moz-placeholder {
-    /* FF 4-18 */
-    color: #DADBD9;
-}
-.search-bar input::-moz-placeholder {
-    /* FF 19+ */
-    color: #DADBD9;
-}
-.search-bar input:-ms-input-placeholder {
-    /* IE 10+ */
-    color: #DADBD9;
-}
-
-.navbar-form {
-    /*width: 100%;*/
 }
 
 .error {
@@ -141,12 +81,8 @@ label {
     font-size: 18px;
     color: red;
 }
-
-.form-box,
-.tool-box,
-.links-box,
-.login-box,
-.not-found-box {
+/* login box might be no longer realy used/relevant */
+.login-box {
     float: left;
     margin-top: 15px;
     margin-bottom: 60px;
@@ -154,7 +90,7 @@ label {
     -webkit-border-radius: 3px;
     display: block;
 }
-
+/* not-found box might be no longer realy used/relevant */
 .not-found-box .hero {
     font-size: 40px;
     text-align: center;
@@ -169,6 +105,7 @@ label {
 #go-url {
     padding-bottom: 0;
 }
+
 .dev-login-box {
     display: flex;
     flex-direction: column;
@@ -224,33 +161,7 @@ label {
     background-color: #d21034;
     color: #fefefe;
 }
-
-.tool-box {
-    padding: 15px;
-}
-
-.tool-box div {
-    line-height: 25px;
-}
-
-.tool-sub-box {
-    border-bottom: 1px solid rgb(211,211,211);
-    overflow-x: hidden;
-    padding: 10px;
-}
-
-.links-box {
-    padding: 0;
-}
-
-.form-box {
-    padding-bottom: 15px;
-}
-
-.tool-box {
-
-}
-
+/* is add group being over used ?*/
 .add-group {
     display: block;
 }
@@ -274,7 +185,7 @@ label {
     float: right;
     padding-top: 8px;
 }
-
+/* is link group being over used ?*/
 .link-group {
     color: #191917;
     padding: 15px;
@@ -323,11 +234,8 @@ label {
 .page-group {
     float: left;
     font-size: 28px;
-    width: 78%;
-}
-
-.page-box {
-    
+    width: 100%;
+    margin-bottom: 50px;
 }
 
 .page-numbers {
@@ -360,18 +268,15 @@ label {
     font-size: 36px;
 }
 
-.footer {
-    background-color: #F0F2EF;
-}
-
 #footer {
     position:   fixed;
     width:      100%;
     height:     40px;
     bottom:     0;
     padding:    12px;
-
     background: #363636;
+    color: #F0F0F0;
+    text-align: center;
 }
 
 #footer a {
@@ -379,34 +284,33 @@ label {
     text-decoration: underline;
 }
 
-.box {
-    color: #F0F0F0;
-    width:  800px;
-    margin: 0 auto;
-
-    text-align: center;
+.qr-col {
+    display: flex;
+    width: 256px;
+    flex-direction: column;
 }
 
-#wrapper {
-    min-height: 100%;
-    position:   relative; 
+.qr-col>* {
+    width: 100% !important;
 }
 
-.sidebar {
-    position: fixed;
-    width: 20%;
-    border-right: 1px solid rgb(211,211,211);
-    padding-right: 30px;
-    min-height: 85%;
+#error{
+    color: #cc0e32;
+    font_size: 20px;
 }
 
-.menu-item {
-    text-align: right;
+#clear-search {
+    position: absolute;
+    right: 10px;
+    top: 0;
+    bottom: 0;
+    height: 14px;
+    margin: auto;
+    font-size: 14px;
+    cursor: pointer;
+    color: #ccc;
 }
 
-select {
-    width: 135px;
-}
 
 /* ---- 
 
@@ -414,29 +318,7 @@ Media Queries
 
 ---- */
 
-@media (min-width: 768px) and (max-width: 1024px) {
-    .search-bar .form-group .form-control {
-        border: none;
-        min-height: 48px;
-        color: #1E0208;
-        font-size: 20px;
-        width: 320px;
-    }
-}
-
 @media (max-width: 768px) {
-
-    .tool-box .footer {
-        display: none;
-    }
-
-    .links-box .footer {
-        display: auto;
-    }
-
-    .navbar-collapse {
-       /* margin-top: 20px;*/
-    }
     
     #shrunk-toggle {
 	border-color: white;
@@ -448,14 +330,6 @@ Media Queries
 
     .navbar-collapse .navbar-subtitle {
         text-align: center;
-    }
-
-    .search-bar .form-group .form-control {
-        border: none;
-        min-height: 48px;
-        color: #1E0208;
-        font-size: 20px;
-        width: 100%;
     }
 }
 
@@ -480,42 +354,12 @@ Media Queries
 }
 
 /* end admin toolbar */
+
+/* vert toolbar */
 @media (max-width: 840px) {
     .shrunk-toolbar {
 	flex-direction: column;
 	align-items: flex-start;
     }
 }
-/* vert toolbar */
 /* end vert toolbar */
-.qr-col {
-    display: flex;
-    width: 256px;
-    flex-direction: column;
-}
-#print {
-    width: 100%;
-}
-#download {
-    width: 100%;
-}
-#error{
-    color: #cc0e32;
-    font_size: 20px;
-}
-
-#search {
-    width: 275px;
-}
-
-#clear-search {
-    position: absolute;
-    right: 10px;
-    top: 0;
-    bottom: 0;
-    height: 14px;
-    margin: auto;
-    font-size: 14px;
-    cursor: pointer;
-    color: #ccc;
-}

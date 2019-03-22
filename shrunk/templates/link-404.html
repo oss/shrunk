@@ -4,13 +4,11 @@
 {{ super() }}
 {% endblock %}
 {% block content %}
-<div class="not-found-box col-xs-12 col-sm-6 col-sm-offset-3">
-    <div class="hero">Not Found</div>
-    <div class="message">
-        Sorry, this link does not exist. Want to change that?
-    </div>
-    <div class="message">
-        <a href="{{ url_for('render_index') }}">Log in to Rutgers Shrunk</a> and shrink some URLs.
-    </div>
+<div class="hero">Not Found</div>
+<div class="message">
+    Sorry, this link does not exist. Want to change that?
+</div>
+<div class="message">
+    <a href="{{ url_for('render_index') }}">Log in to Rutgers Shrunk</a> and shrink some URLs.
 </div>
 {% endblock %}

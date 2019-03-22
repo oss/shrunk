@@ -1,4 +1,4 @@
-<div id="shruk-nav" class="navbar navbar-fixed-top">
+<div class="navbar navbar-fixed-top">
     <!-- Brand and toggle get grouped for better mobile display -->
     <div class="navbar-header">
         <button id="shrunk-toggle" type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
@@ -35,7 +35,7 @@
         {% endif %}
     </div><!-- /.navbar-collapse -->
 </div>
-<div class="show-login shrunk-toolbar container-fluid form-group">
+<div class="show-login shrunk-toolbar container-fluid">
     <b id="shrunk-toolbar-netid">{{netid}}</b>
     <div>
         <select id="sortby" class="shrunk-toolbar-item" onchange="requery()">
@@ -51,7 +51,7 @@
         </select>
         {% endif %}
     </div>
-    <form id="search-bar" class="shrunk-toolbar-item">
+    <form class="shrunk-toolbar-item">
         <input type="hidden" name="all_users" value={{all_users}}>
         <input type="hidden" name="sortby" value={{sortby}}>
         <div class="btn-group">
