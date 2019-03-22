@@ -1,131 +1,144 @@
 {% extends "base.html" %}
 {% block content%}
-    {% if query %}
-    <div class="shrunk-messages">
-        {% if links %}
-            Showing results for: <strong>{{ query }}</strong>
-        {% else %}
-            No results found for: <strong>{{ query }}</strong>
-        {% endif %}
-    </div>
-    {% endif %}
-    {% if wrong_owner %}
-    <div class="shrunk-messages">
-        You are not the owner of this URL...
-    </div>
-    {% endif %}
-
-    <h1>Manage URLs</h1>
-
-    {% if all_users == "0" %}
-        <h3 class="links-header">My links</h3>
-        <a href="/search-visits-csv?search={{ query }}">Export visit data as CSV</a>
+{% if query %}
+<div class="shrunk-messages">
+    {% if links %}
+    Showing results for: <strong>{{ query }}</strong>
     {% else %}
-        <h3 class="links-header">All links</h3>
-        <a href="/search-visits-csv?all_users=1&search={{ query }}">Export visit data as CSV</a>
-    {%endif%}
+    No results found for: <strong>{{ query }}</strong>
+    {% endif %}
+</div>
+{% endif %}
+{% if wrong_owner %}
+<div class="shrunk-messages">
+    You are not the owner of this URL...
+</div>
+{% endif %}
 
-    <div class="container"><!--id="shrunk-links">-->
+<h1>Manage URLs</h1>
+
+{% if all_users == "0" %}
+<h3 class="links-header">My links</h3>
+<a href="/search-visits-csv?search={{ query }}">Export visit data as CSV</a>
+{% else %}
+<h3 class="links-header">All links</h3>
+<a href="/search-visits-csv?all_users=1&search={{ query }}">Export visit data as CSV</a>
+{%endif%}
+
+<div class="container"><!--id="shrunk-links">-->
     {% for link in links %}
-        <article class="link-group clearfix">
-            <div class="link-info" style="clear: both;">
-                <div class="hover-controls">
-                    [ <a href="{{ url_for('edit_link', url=link['_id'])}}">Edit</a> ]
-                    [ <a onClick="delete_link('{{ link['_id'] }}')">Delete</a> ]
-		    [ <a href="{{ url_for('get_stats', url=link['_id']) }}">Stats</a> ]
-		    [ <a href="{{url_for('qr', url=link['_id'])}}">QR Code</a> ]
-                </div>
-                <a href="{{ link['long_url'] }}" target="_blank" class="title">
-                    {% if link['title'] %}
-		      {% if link['title'] | length > 32 %}
-		        {{ link['title'][:32]+'...' }}
-		      {% else %}
-                        {{ link['title'] }}
-		      {% endif %}
+    <article class="link-group clearfix">
+        <div class="link-info" style="clear: both;">
+            <div class="hover-controls">
+                [ <a href="{{ url_for('edit_link', url=link['_id'])}}">Edit</a> ]
+                [ <a onClick="delete_link('{{ link['_id'] }}')">Delete</a> ]
+                [ <a href="{{ url_for('get_stats', url=link['_id']) }}">Stats</a> ]
+                [ <a href="{{url_for('qr', url=link['_id'])}}">QR Code</a> ]
+            </div>
+            <a href="{{ link['long_url'] }}" target="_blank" class="title">
+                {% if link['title'] %}
+                    {% if link['title'] | length > 32 %}
+                        {{ link['title'][:32]+'...' }}
                     {% else %}
-                        {{ link['_id'] }}
+                        {{ link['title'] }}
                     {% endif %}
-                </a>
-                <div class="short-link">
-                    <a href="{{ linkserver_url }}/{{ link['_id'] }}" target="_blank">{{ linkserver_url }}/{{ link['_id'] }}</a> 
-                    <span class="original-url"> &#8594 {{ link['long_url'] }} </span>
-                </div>
-                {% if admin %}
-                <div class="owner" netid="{{ link['netid'] }}">
-                    Owner: {{ link['netid'] }}
-                </div>
+                {% else %}
+                    {{ link['_id'] }}
                 {% endif %}
-                <div class="date">
-                    {{ formattime(link['timeCreated']) }}
-                </div>
-                <div class="bottom-row">
-                    Views: {{ link['visits'] }}
-                </div>
-            </div>
-        </article>
-    {% else %}
-        {% if not query %}
-        <!-- Don't show the info screen when an empty search result comes back -->
-        <article class="link-group clearfix">
-            <a href="#" class="title">
-                URL Shortener
             </a>
-            <div class="bottom-row">
-                The official Rutgers University URL shortener. Click on
-                '<a href="{{ url_for('add_link') }}">add a link</a>' to start adding links.
+            <div class="short-link">
+                <a href="{{ linkserver_url }}/{{ link['_id'] }}" target="_blank">{{ linkserver_url }}/{{ link['_id'] }}</a>
+                <span class="original-url"> &#8594 {{ link['long_url'] }} </span>
             </div>
-        </article>
-        {% endif %}
+            {% if admin %}
+            <div class="owner" netid="{{ link['netid'] }}">
+                Owner: {{ link['netid'] }}
+            </div>
+            {% endif %}
+            <div class="date">
+                {{ formattime(link['timeCreated']) }}
+            </div>
+            <div class="bottom-row">
+                Views: {{ link['visits'] }}
+            </div>
+        </div>
+    </article>
+    {% else %}
+    {% if not query %}
+    <!-- Don't show the info screen when an empty search result comes back -->
+    <article class="link-group clearfix">
+        <a href="#" class="title">
+            URL Shortener
+        </a>
+        <div class="bottom-row">
+            The official Rutgers University URL shortener. Click on
+            '<a href="{{ url_for('add_link') }}">add a link</a>' to start adding links.
+        </div>
+    </article>
+    {% endif %}
     {% endfor %}
-    </div>
+</div>
 
 {% if lastpage and lastpage > 1 %}
 <article class="page-group clearfix">
     <nav role="navigation">
-    <div class="page-box">
-        <div class="prev">
-        {% if page > 1 %}
-            <span class="prev"><a href="{{ url_for('render_index', p=page-1, search=query)
-            }}"><span aria-hidden="true">&laquo;</span></a></span>
-        {% else %}
-            <span class="prev disabled"><span
-                    aria-hidden="true">&laquo;</span></a></span>
-        {% endif %}
+        <div class="page-box">
+            <div class="prev">
+                {% if page > 1 %}
+                <span class="prev">
+                    <a href="{{ url_for('render_index', p=page-1, search=query)}}">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </span>
+                {% else %}
+                <span class="prev disabled">
+                    <a>
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </span>
+                {% endif %}
+            </div>
+
+            <div class="page-numbers">
+                {% if begin_pages != 1 %}
+                <span class="page">
+                    <a href="{{ url_for('render_index', p=1, search=query) }}">{{ 1 }}</a>
+                </span> ...
+                {% endif %}
+                {% for pg in range(begin_pages, end_pages +1) %}
+                    {% if pg == page %}
+                    <span class="page active">
+                        <a href="{{ url_for('render_index', p=pg, search=query) }}">{{ pg }}</a>
+                    </span>
+                    {% else %}
+                    <span class="page">
+                        <a href="{{ url_for('render_index', p=pg, search=query) }}">{{ pg }}</a>
+                    </span>
+                    {% endif %}
+                {% endfor %}
+
+                {% if end_pages != lastpage %}
+                ... <span class="page">
+                        <a href="{{ url_for('render_index', p=lastpage, search=query) }}">
+                            {{ lastpage }}
+                        </a>
+                    </span>
+                {% endif %}
+            </div>
+
+            <div class="next">
+                {% if page < lastpage %}
+                    <span class="next">
+                        <a href="{{ url_for('render_index', p=page+1, search=query) }}">
+                            <span aria-hidden="true">&raquo;</span></a></span>
+                {% else %}
+                    <span class="next disabled">
+                        <a><span aria-hidden="true">&raquo;</span></a>
+                    </span>
+                {% endif %}
+            </div>
         </div>
-
-        <div class="page-numbers">
-            {% if begin_pages != 1 %}
-	    <span class="page"><a href="{{ url_for('render_index', p=1, search=query) }}">{{ 1 }}</a></span> ...
-	    {% endif %}
-
-            {% for pg in range(begin_pages, end_pages +1) %}
-            {% if pg == page %}
-            <span class="page active"><a href="{{ url_for('render_index', p=pg, search=query) }}">{{ pg }}</a></span>
-            {% else %}
-            <span class="page"><a href="{{ url_for('render_index', p=pg, search=query) }}">{{ pg }}</a></span>
-            {% endif %}
-            {% endfor %}
-
-	    {% if end_pages != lastpage %}
-	    ... <span class="page"><a href="{{ url_for('render_index', p=lastpage, search=query) }}">{{ lastpage }}</a></span>
-	    {% endif %}
-        </div>
-
-        <div class="next">
-        {% if page < lastpage %}
-            <span class="next"><a href="{{ url_for('render_index', p=page+1, search=query) }}">
-            <span aria-hidden="true">&raquo;</span></a></span>
-        {% else %}
-            <span class="next disabled"><span
-                    aria-hidden="true">&raquo;</span></a></span>
-        {% endif %}
-        </div>
-    </div>
     </nav>
 </article>
-<br><br><br>
-
 {% endif %}
-
-
 {% endblock %}

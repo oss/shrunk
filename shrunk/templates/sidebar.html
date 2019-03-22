@@ -2,30 +2,30 @@
     <div class="menu-item">
         <h2>{{ netid }}</h2>
         {% if admin %}
-            <hr />
-            <em>Administrator Controls</em> <br />
+        <hr />
+        <em>Administrator Controls</em> <br />
 
-            {% if all_users == "1" %}
-                <a href="/?all_users=0&search={{ query }}&sortby={{ sortby }}">
-                    DISPLAY MY LINKS ▶
-                </a>
-            {% elif all_users == "0" %}
-                <a href="/?all_users=1&search={{ query }}&sortby={{ sortby }}">
-                    DISPLAY ALL LINKS ▶
-                </a>
-            {% endif %}
-	    <div class="menu-item">
-                <a href="/roles/blocked_url" class="title">BLOCK URLS ▶</a>
-            </div>
-            <div class="menu-item">
-                <a href="/roles/blacklisted" class="title">BLACKLIST USERS ▶</a>
-            </div>
-            <div class="menu-item">
-                <a href="/roles/admin" class="title">MANAGE ADMINISTRATORS ▶</a>
-            </div>
-            <div class="menu-item">
-                <a href="/roles/power_user" class="title">MANAGE POWER USERS ▶</a>
-            </div>
+        {% if all_users == "1" %}
+        <a href="/?all_users=0&search={{ query }}&sortby={{ sortby }}">
+            DISPLAY MY LINKS ▶
+        </a>
+        {% elif all_users == "0" %}
+        <a href="/?all_users=1&search={{ query }}&sortby={{ sortby }}">
+            DISPLAY ALL LINKS ▶
+        </a>
+        {% endif %}
+        <div class="menu-item">
+            <a href="/roles/blocked_url" class="title">BLOCK URLS ▶</a>
+        </div>
+        <div class="menu-item">
+            <a href="/roles/blacklisted" class="title">BLACKLIST USERS ▶</a>
+        </div>
+        <div class="menu-item">
+            <a href="/roles/admin" class="title">MANAGE ADMINISTRATORS ▶</a>
+        </div>
+        <div class="menu-item">
+            <a href="/roles/power_user" class="title">MANAGE POWER USERS ▶</a>
+        </div>
         {% endif %}
     </div>
     <hr />
@@ -40,12 +40,12 @@
     </div>
     <form class="search-bar" role="search" method="GET" action="/">
         <div class="form-group">
-            <input type="hidden" name="all_users" value={{all_users}}>       
+            <input type="hidden" name="all_users" value={{all_users}}>
             <input type="hidden" name="sortby" value={{sortby}}>
             <div class="btn-group">
-		<input type="text" class="form-control" id="search" name="search" placeholder="Search" value={{ query }}>
-		<span id="clear-search" class="glyphicon glyphicon-remove-circle" onclick="clear_search()"></span>
-	    </div>
+                <input type="text" class="form-control" id="search" name="search" placeholder="Search" value={{ query }}>
+                <span id="clear-search" class="glyphicon glyphicon-remove-circle" onclick="clear_search()"></span>
+            </div>
             <button type="submit" id="submit-search" class="search-btn btn"><span class="glyphicon glyphicon-search"></button>
         </div>
     </form>

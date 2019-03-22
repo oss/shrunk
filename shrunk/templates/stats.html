@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
-  <h1>URL stats</h1>
-  <a href="/link-visits-csv?url={{ short_url }}">Export visit data as CSV</a>
-  <article class="add-group clearfix">
+<h1>URL stats</h1>
+<a href="/link-visits-csv?url={{ short_url }}">Export visit data as CSV</a>
+<article class="add-group clearfix">
     {% if missing_url %}
     <h3> URL not found :( </h3>
     {% else %}
@@ -11,58 +11,58 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.bundle.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/emn178/chartjs-plugin-labels/src/chartjs-plugin-labels.js"></script>
     <h3><a href="{{ url_info['long_url'] }}">
-	{{ url_info["title"] }}
+	    {{ url_info["title"] }}
     </a></h3>
     <ul>
-      <li>Visits: {{ url_info["visits"] }}</li>
-      <li>First Time Visits: <span id="first_time_visits">Loading...</span></li>
+	<li>Visits: {{ url_info["visits"] }}</li>
+	<li>First Time Visits: <span id="first_time_visits">Loading...</span></li>
     </ul>
 
     <hr>
 
     <div>
-      key:
-      <span style="color:steelblue">monthly total visits</span>
-      <span style="color:orange">monthly first time visits</span>
+	key:
+	<span style="color:steelblue">monthly total visits</span>
+	<span style="color:orange">monthly first time visits</span>
     </div>
     <div id="nodata"></div>
     <svg height="0"></svg>
     <div>
-     <form class="form-inline">
-       <select class="form-control" id="start"></select>
-       <select class="form-control" id="end"></select>
-     </form>
-     <span id="error"></span>
+	<form class="form-inline">
+	    <select class="form-control" id="start"></select>
+	    <select class="form-control" id="end"></select>
+	</form>
+	<span id="error"></span>
     </div>
 
     <hr>
 
     <div id="map-toggle" class="btn-group">
-      <button class="btn btn-default" type="button" onmouseup="show_us_map()">US</button>
-      <button class="btn btn-default" type="button" onmouseup="show_world_map()">World</button>
+	<button class="btn btn-default" type="button" onmouseup="show_us_map()">US</button>
+	<button class="btn btn-default" type="button" onmouseup="show_world_map()">World</button>
     </div>
 
     <div id="maps-div">
-      <div id="us-map"></div>
-      <div id="world-map"></div>
+	<div id="us-map"></div>
+	<div id="world-map"></div>
     </div>
 
     <div id="browser-stats">
-      <hr>
-      <canvas id="browser-canvas"></canvas>
+	<hr>
+	<canvas id="browser-canvas"></canvas>
     </div>
 
     <div id="platform-stats">
-      <hr>
-      <canvas id="platform-canvas"></canvas>
+	<hr>
+	<canvas id="platform-canvas"></canvas>
     </div>
 
     <div id="referer-stats">
-      <hr>
-      <canvas id="referer-canvas"></canvas>
+	<hr>
+	<canvas id="referer-canvas"></canvas>
     </div>
 
     <script src="{{ url_for('static', filename='js/stats.js') }}"></script>
     {% endif %}
-  </article>
+</article>
 {% endblock %}

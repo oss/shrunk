@@ -1,67 +1,67 @@
 <div id="shruk-nav" class="navbar navbar-fixed-top">
     <!-- Brand and toggle get grouped for better mobile display -->
     <div class="navbar-header">
-      <button id="shrunk-toggle" type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-        <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-      <a id="rutgers-logo" class="navbar-brand" href="{{ url_for('render_index') }}">
-              <img alt="Rutgers" src="{{ url_for('static', filename='img/RU_LOGOTYPE_REVWHITE.png') }}" width="175px">
+        <button id="shrunk-toggle" type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <a id="rutgers-logo" class="navbar-brand" href="{{ url_for('render_index') }}">
+            <img alt="Rutgers" src="{{ url_for('static', filename='img/RU_LOGOTYPE_REVWHITE.png') }}" width="175px">
         </a>
     </div>
 
     <!-- Collect the nav links, forms, and other content for toggling -->
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-    <ul class="navbar-subtitle nav navbar-nav">
-        <li><a href="{{ url_for('render_index') }}">URL Shortener</a></li>
-    </ul>
-    <ul class="show-login navbar-subtitle nav navbar-nav">
-        <li><a href="{{ url_for('render_index') }}">My URLs</a></li>
-        <li><a href="/add">Shorten A URL</a></li>
-        <li><a href="{{ url_for('logout') }}">Log Out</a></li>
-    </ul>
-    {% if admin %}
-    <ul class="admin-links show-login navbar-subtitle nav navbar-nav">
-        <li><a href="/roles/blocked_url" class="title">Block URLs</a></li>
-        <li><a href="/roles/blacklisted" class="title">Blacklist Users</a></li>
-        <li><a href="/roles/admin" class="title">Manage Administrators</a></li>
-        <li><a href="/roles/power_user" class="title">Manage Power Users</a></li>
-    </ul>
-    <ul class="admin-links-collapse show-login navbar-subtitle nav navbar-nav">
-      <li><a href="/admin/" class="title">Admin</a></li>
-    </ul>
-    {% endif %}
+        <ul class="navbar-subtitle nav navbar-nav">
+            <li><a href="{{ url_for('render_index') }}">URL Shortener</a></li>
+        </ul>
+        <ul class="show-login navbar-subtitle nav navbar-nav">
+            <li><a href="{{ url_for('render_index') }}">My URLs</a></li>
+            <li><a href="/add">Shorten A URL</a></li>
+            <li><a href="{{ url_for('logout') }}">Log Out</a></li>
+        </ul>
+        {% if admin %}
+        <ul class="admin-links show-login navbar-subtitle nav navbar-nav">
+            <li><a href="/roles/blocked_url" class="title">Block URLs</a></li>
+            <li><a href="/roles/blacklisted" class="title">Blacklist Users</a></li>
+            <li><a href="/roles/admin" class="title">Manage Administrators</a></li>
+            <li><a href="/roles/power_user" class="title">Manage Power Users</a></li>
+        </ul>
+        <ul class="admin-links-collapse show-login navbar-subtitle nav navbar-nav">
+            <li><a href="/admin/" class="title">Admin</a></li>
+        </ul>
+        {% endif %}
     </div><!-- /.navbar-collapse -->
 </div>
 <div class="show-login shrunk-toolbar container-fluid form-group">
-  <b id="shrunk-toolbar-netid">{{netid}}</b>
-  <div>
-    <select id="sortby" class="shrunk-toolbar-item" onchange="requery()">
-      <option {% if sortby == "0" %} selected {% endif %}>Newest first</option>
-      <option {% if sortby == "1" %} selected {% endif %}>Oldest first</option>
-      <option {% if sortby == "2" %} selected {% endif %}>A-Z</option>
-      <option {% if sortby == "3" %} selected {% endif %}>Z-A</option>
-    </select>
-    {% if admin %}
-    <select id="all-users" class="shrunk-toolbar-item" onchange="requery()">
-      <option {% if all_users == "0" %} selected {% endif %}>My Links</option>
-      <option {% if all_users == "1" %} selected {% endif %}>All Links</option>
-    </select>
-    {% endif %}
-  </div>
-  <form id="search-bar" class="shrunk-toolbar-item">
-    <input type="hidden" name="all_users" value={{all_users}}>
-    <input type="hidden" name="sortby" value={{sortby}}>
-    <div class="btn-group">
-      <input type="text" class="shrunk-toolbar-item form-control"
-             id="search" name="search" placeholder="Search" value={{ query }}>
-      <span id="clear-search" class="glyphicon glyphicon-remove-circle"
-            onclick="clear_search()"></span>
+    <b id="shrunk-toolbar-netid">{{netid}}</b>
+    <div>
+        <select id="sortby" class="shrunk-toolbar-item" onchange="requery()">
+            <option {% if sortby == "0" %} selected {% endif %}>Newest first</option>
+            <option {% if sortby == "1" %} selected {% endif %}>Oldest first</option>
+            <option {% if sortby == "2" %} selected {% endif %}>A-Z</option>
+            <option {% if sortby == "3" %} selected {% endif %}>Z-A</option>
+        </select>
+        {% if admin %}
+        <select id="all-users" class="shrunk-toolbar-item" onchange="requery()">
+            <option {% if all_users == "0" %} selected {% endif %}>My Links</option>
+            <option {% if all_users == "1" %} selected {% endif %}>All Links</option>
+        </select>
+        {% endif %}
     </div>
-    <button type="submit" id="submit-search" class="search-btn btn">
-      <span class="glyphicon glyphicon-search"></span>
-    </button>
-  </form>
+    <form id="search-bar" class="shrunk-toolbar-item">
+        <input type="hidden" name="all_users" value={{all_users}}>
+        <input type="hidden" name="sortby" value={{sortby}}>
+        <div class="btn-group">
+            <input type="text" class="shrunk-toolbar-item form-control"
+                   id="search" name="search" placeholder="Search" value={{ query }}>
+            <span id="clear-search" class="glyphicon glyphicon-remove-circle"
+                  onclick="clear_search()"></span>
+        </div>
+        <button type="submit" id="submit-search" class="search-btn btn">
+            <span class="glyphicon glyphicon-search"></span>
+        </button>
+    </form>
 </div>
