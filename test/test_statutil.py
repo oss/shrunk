@@ -11,7 +11,11 @@ client = ShrunkClient(host='unit_db', geolite_path='/opt/shrunk/GeoLite2-City.mm
 mongoclient = client._mongo
 
 def test_get_referer_domain():
-    pass
+    def get(url):
+        return get_referer_domain({'referer': url})
+    assert get('https://google.com') == 'google.com'
+    assert get('https://sld.google.com') == 'sld.google.com'
+    assert get('https://my.si.te:80') == 'my.si.te'
 
 def test_make_csv_for_links():
     def shorten(long_url):
