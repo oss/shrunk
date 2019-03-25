@@ -9,7 +9,7 @@ from pytest import raises
 from datetime import datetime
 import shrunk.roles as roles
 
-client=ShrunkClient(host="unit_db")
+client=ShrunkClient(host="unit_db", geolite_path='/opt/shrunk/GeoLite2-City.mmdb')
 mongoclient=client._mongo
 
 def teardown_function():
@@ -482,4 +482,38 @@ def test_search_netid():
     assert_search("test", "Knott MyLova", url2)
     assert_search("title", "Knott MyLova", url2)
 
+def test_state_code():
+    assert client.get_state_code('165.230.224.67') == 'NJ'
+    assert client.get_state_code('34.201.163.243') == 'VA'
+    assert client.get_state_code('35.168.234.184') == 'VA'
+    assert client.get_state_code('107.77.70.130') == 'NY'
 
+def test_country_name():
+    assert client.get_country_name('165.230.224.67') == 'United States'
+    assert client.get_country_name('34.201.163.243') == 'United States'
+    assert client.get_country_name('35.168.234.184') == 'United States'
+    assert client.get_country_name('107.77.70.130') == 'United States'
+    assert client.get_country_name('136.243.154.93') == 'Germany'
+    assert client.get_country_name('94.130.167.121') == 'Germany'
+
+def test_geoip_location():
+    # Different versions of the geoip database can give significantly different
+    # results for the same IPs, so it is difficult to test get_geoip_location.
+    
+    # assert client.get_geoip_location('165.230.224.67') == 'Piscataway, New Jersey, United States'
+    # assert client.get_geoip_location('34.201.163.243') == 'Ashburn, Virginia, United States'
+    # assert client.get_geoip_location('35.168.234.184') == 'Ashburn, Virginia, United States'
+    # assert client.get_geoip_location('107.77.70.130') == 'New York, New York, United States'
+    # assert client.get_geoip_location('136.243.154.93') == 'Gummersbach, North Rhine-Westphalia, Germany'
+    # assert client.get_geoip_location('94.130.167.121') == 'Germany' 
+    pass
+
+def test_get_visitor_id():
+    def test_id(ip):
+        id1 = client.get_visitor_id(ip)
+        id2 = client.get_visitor_id(ip)
+        assert id1 == id2
+
+    ips = ['165.230.224.67', '127.0.0.1', '8.8.8.8']
+    for ip in ips:
+        test_id(ip)

@@ -1,17 +1,16 @@
 import io
 import csv
 import collections
+import urllib.parse
 
 from flask import make_response
 
 # TODO use already existing get_domain function instead?
 # maybe get doamin should use this implementation
 def get_referer_domain(visit):
-    if 'referer' not in visit:
-        return None
     try:
         p = urllib.parse.urlparse(visit['referer']).netloc
-        return p.lower()
+        return p.lower() if p else None
     except:
         return None
 
