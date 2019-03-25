@@ -672,7 +672,7 @@ class ShrunkClient(object):
         except:  # geoip2.errors.AddressNotFoundError:
             return unk
 
-    def get_country_code(self, ipaddr):
+    def get_country_name(self, ipaddr):
         """Gets the name of the country in which the given IPv4 address is located.
 
            :Parameters:
@@ -688,7 +688,7 @@ class ShrunkClient(object):
         if not self._geoip:
             return unk
         if ipaddr.startswith('172.'):
-            return 'US'
+            return 'United States'
         try:
             resp = self._geoip.city(ipaddr)
             return resp.country.name or unk

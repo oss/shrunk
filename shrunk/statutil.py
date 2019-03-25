@@ -40,12 +40,17 @@ def make_plaintext_response(csv_output):
                'Content-Disposition': 'attachment; filename=visits.csv;'}
     return make_response((csv_output, 200, headers))
 
+def get_location_state(client, ip):
+    return client.get_state_code(ip)
+
+def get_location_country(client, ip):
+    return client.get_country_name(ip)
+
 def make_geoip_csv(client, get_location, link):
     location_counts = collections.defaultdict(int)
     for visit in client.get_visits(link):
         ipaddr = visit['source_ip']
         location = get_location(client, ipaddr)
-        # location = client.get_country_code(ipaddr)
         location_counts[location] += 1
 
     csv_output = 'location,visits\n' + '\n'.join(map(lambda x: '{},{}'.format(*x),

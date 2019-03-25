@@ -388,9 +388,9 @@ def get_geoip_csv():
         return 'error: not authorized', 401
 
     if resolution == 'country':
-        get_location = lambda cl, ip: cl.get_country_code(ip)
+        get_location = get_location_country
     else:  # resolution == 'state'
-        get_location = lambda cl, ip: cl.get_state_code(ip)
+        get_location = get_location_state
 
     csv_output = make_geoip_csv(client, get_location, link)
     return make_plaintext_response(csv_output)
