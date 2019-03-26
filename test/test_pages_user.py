@@ -335,3 +335,27 @@ def test_visits_no_perm():
     short = sclient.create_short_url('google.com', netid='shrunk_test')
     response = get('/link-visits-csv?url=' + short)
     assert response.status_code == 401
+
+@loginw("admin")
+def test_geoip_csv():
+    short = sclient.create_short_url('google.com', netid='shrunk_test')
+    ips = ['165.230.224.67', '34.201.163.243', '35.168.234.184',
+           '107.77.70.130', '136.243.154.93', '94.130.167.121']
+    for ip in ips:
+        sclient.visit(short, ip, 'user agent', 'referer')
+
+    # test state-level csv
+    response = get('/geoip-csv?resolution=state&url=' + short)
+    assert response.status_code == 200
+    csv = str(response.get_data(), 'utf8').split('\n')
+    assert csv[0] == 'location,visits'
+    expected = ['NJ,1', 'NY,1', 'VA,2', 'RP,1', 'unknown,1']
+    assert sorted(csv[1:]) == sorted(expected)
+
+    # test country-level csv
+    response = get('/geoip-csv?resolution=country&url=' + short)
+    assert response.status_code == 200
+    csv = str(response.get_data(), 'utf8').split('\n')
+    assert csv[0] == 'location,visits'
+    expected = ['United States,4', 'Germany,2']
+    assert sorted(csv[1:]) == sorted(expected)
