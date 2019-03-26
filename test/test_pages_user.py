@@ -257,7 +257,7 @@ def test_index_search():
     find("DEV", "No results found for", base="/?all_users=0&search=")
 
 def test_index_admin():
-    """make sure admin options dont appear for users"""
+    """make sure admin options don't appear for users"""
     mclient.shrunk_urls.urls.insert({
         "_id": "id1", "title": "lmao1",
         "long_url": "https://google.com",
@@ -289,3 +289,15 @@ def test_index_admin():
     assert "Admin" in text
 
     assert "lmao1" in text
+
+@loginw("user")
+def test_stats():
+    short = sclient.create_short_url('google.com')
+    sclient.visit(short, '127.0.0.1', 'user agent', 'ref')
+
+    response = get('/stats?url=' + short)
+    assert response.status_code == 200
+    assert 'Export visit data as CSV' in str(response.get_data())
+
+    response = get('/stats?url=invalid')
+    assert 'URL not found :(' in str(response.get_data())
