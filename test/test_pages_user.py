@@ -359,3 +359,21 @@ def test_geoip_csv():
     assert csv[0] == 'location,visits'
     expected = ['United States,4', 'Germany,2']
     assert sorted(csv[1:]) == sorted(expected)
+
+    response = get('/geoip-csv')
+    assert response.status_code == 400
+    assert 'error: request must have url' in str(response.get_data())
+
+    response = get('/geoip-csv?url=' + short)
+    assert response.status_code == 400
+    assert 'error: request must have resolution' in str(response.get_data())
+
+    response = get('/geoip-csv?resolution=world&url=' + short)
+    assert response.status_code == 400
+    assert 'error: invalid resolution' in str(response.get_data())
+
+@loginw("user")
+def test_geoip_no_perm():
+    short = sclient.create_short_url('google.com', netid='shrunk_test')
+    response = get('/geoip-csv?resolution=state&url=' + short)
+    assert response.status_code == 401
