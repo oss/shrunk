@@ -227,7 +227,7 @@ def test_index_options():
 
 @loginw("user")
 def test_index_search():
-    """make sure search checks all feilds"""
+    """make sure search checks all fields"""
     mclient.shrunk_urls.urls.insert({
         "_id": "id1", "title": "lmao1",
         "long_url": "https://google.com",
@@ -253,6 +253,8 @@ def test_index_search():
     login("admin")
     #search by netid
     find("DEV", "Showing results for", base="/?all_users=1&search=")
+    #this assumes that the DEV_ADMIN user does not have any links in the test db...
+    find("DEV", "No results found for", base="/?all_users=0&search=")
 
 def test_index_admin():
     """make sure admin options dont appear for users"""
