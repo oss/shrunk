@@ -301,3 +301,25 @@ def test_stats():
 
     response = get('/stats?url=invalid')
     assert 'URL not found :(' in str(response.get_data())
+
+@loginw("admin")
+def test_visits_csv():
+    short = sclient.create_short_url('google.com', netid='shrunk_test')
+    sclient.visit(short, '127.0.0.1', 'Mozzarella Foxfire', 'https://referor.com')
+    sclient.visit(short, '196.168.1.1', 'Goggle Chrom', 'https://refuror.org')
+
+    response = get('/link-visits-csv?url=' + short)
+    assert response.status_code == 200
+    lines = str(response.get_data(), 'utf8').split('\r\n')
+    assert len(lines) == 4
+    assert lines[-1] == ''
+
+    [a, b] = lines[1], lines[2]
+    if 'Chrom' in a:
+        a, b = b, a
+
+    assert 'Mozzarella Foxfire' in a
+    assert 'referor.com' in a
+
+    assert 'Goggle Chrom' in b
+    assert 'refuror.org' in b
