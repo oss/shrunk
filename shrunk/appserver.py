@@ -316,12 +316,14 @@ def get_stats():
         "query": session.get("query")
     }
 
-    if "url" in request.args:
-        url = request.args["url"]
-        client = app.get_shrunk()
-        template_data["url_info"] = client.get_url_info(url)
+    client = app.get_shrunk()
+    if 'url' in request.args:
+        url = request.args['url']
+        url_info = client.get_url_info(url)
+    if 'url' not in request.args or not url_info:
+        template_data['missing_url'] = True
     else:
-        template_data["missing_url"] = True
+        template_data['url_info'] = url_info
 
     return render_template("stats.html", short_url=request.args.get('url', ''), **template_data)
 
