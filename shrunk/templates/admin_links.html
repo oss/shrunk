@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="links-box col-xs-12 col-sm-8 col-sm-offset-1">
+    <h1>Manage Blocked Links</h1>
+    {% if msg %}
+    <div class="shrunk-messages">
+        {{ msg }}
+    </div>
+    {% endif %}
+
+    <article class="add-group clearfix">
+    <h3>Block a Link</h3>
+        <form method="POST" action="{{ url_for('admin_block_link') }}" name="block-link">
+            <input name="link" type="text" class="form-control" /> <br />
+            <input class="shrink-button btn btn-default" type="submit" value="BLOCK" /> <br />
+        </form>
+    </article>
+
+    <h3>Forbidden Links</h3>
+    {% for item in banlist %}
+    <article class="link-group clearfix">
+        <div class="link-info" style="clear: both;">
+            <div class="hover-controls">
+                <form method="POST" action="{{ url_for('admin_unblock_link') }}">
+                    <input type="hidden" id="url" name="url" value="{{ item['url'] }}" />
+                    <input class="shrunk-button btn btn-default" type="submit" value="DELETE" />
+                </form>
+            </div>
+            <div class="title">
+                {{ item['url'] }}
+            </div>
+            <div class="bottom-row">
+                Blocked by: {{ item['blocked_by'] }}
+            </div>
+        </div>
+    </article>
+    {% else %}
+        <p>
+            There are currently no blocked links.
+        </p>
+    {% endfor %}
+</div>
+{% endblock %}

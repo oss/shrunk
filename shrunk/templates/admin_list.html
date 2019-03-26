@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="links-box col-xs-12 col-sm-8">
+    <h1>Manage Users</h1>
+    {% if msg %}
+    <div class="shrunk-messages">
+        {{ msg }}
+    </div>
+    {% endif %}
+
+    <p>
+        Every user has a <b>type</b> which specifies what actions they can or
+        cannot take:
+    </p>
+    <ul>
+        <li><b>Standard user:</b> Can create links, but not vanity URLs.</li>
+        <li><b>Elevated user:</b> Can create vanity URLs.</li>
+        <li><b>Administrator:</b> Unrestricted &mdash; can create, delete, and
+        ban users, can change other users' types, can create vanity URLs, and 
+        can block URLs.</li>
+    </ul>
+
+    <hr />
+    <article class="add-group clearfix">
+        <h2>Add User</h2>
+        <form class="search" method="POST" action="{{ url_for('user_add') }}" name="add_admin">
+            <input id="netid" name="netid" type="text" class="form-control"/> <br />
+            <select id="type" name="type">
+                {% for (val, label) in form.type.choices %}
+                <option value="{{val}}">{{label}}</option>
+                {% endfor %}
+            </select>
+            <input class="shrink-button btn btn-default" type="submit" value="ADD USER" /> <br />
+        </form>
+    </article>
+
+    <hr />
+    <h2>Edit Users</h2>
+    {% for user in users %}
+    <article class="user-group clearfix">
+        <div class="user-info">
+            <div class="hover-controls">
+                <form method="POST" action="{{ url_for('user_edit') }}">
+                    <input type="hidden" id="netid" name="netid" value="{{ user['netid'] }}" />
+                    <select id="type" name="type">
+                        {% for (val, label) in form.type.choices %}
+                        <option value="{{val}}" {%if val==user.type%}selected{%endif%}>{{label}}</option>
+                        {% endfor %}
+                    </select>
+                    <input class="shrink-button btn btn-default" type="submit" value="EDIT" />
+                </form>
+                <form method="POST" action="{{ url_for('user_delete') }}">
+                    <input type="hidden" id="netid" name="netid" value="{{ user['netid'] }}" />
+                    <input class="shrink-button btn btn-default" type="submit" value="DELETE" />
+                </form>
+            </div>
+            <div class="title">
+                {{ user['netid'] }}
+            </div>
+            {% if user['added_by'] %}
+                <div class="added-by">
+                    Added by: {{ user['added_by'] }}
+                </div>
+            {% endif %}
+        </div>
+    </article>
+    {% else %}
+        <p>
+            There are currently no administrators in the database.
+        </p>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,7 @@
+include README.*
+include shrunk/config.py.example
+exclude pip.req
+recursive-include shrunk *.py *.html *.css *.png *.ico *.js
+recursive-exclude test *.py
+recursive-exclude data *
+recursive-exclude virtualenv *

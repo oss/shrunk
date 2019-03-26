@@ -1,0 +1,28 @@
+# Temporary files
+*.sw[op]
+*~
+
+# Secrets
+shrunk/config.py
+
+# Build artifacts and the like
+Makefile
+__pycache__
+*.pyc
+dist/
+shrunk.egg-info/
+data/
+
+# Virtual environment
+virtualenv/
+
+# Flask logs
+*.log
+
+# GeoIP DB
+*.mmdb
+
+# Misc
+startapp.py
+startlinks.py
+startdb.sh

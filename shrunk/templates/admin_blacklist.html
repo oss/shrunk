@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="links-box col-xs-12 col-sm-8 col-sm-offset-1">
+    <h1>User Blacklist</h1>
+    {% if msg %}
+    <div class="shrunk-messages">
+        {{ msg }}
+    </div>
+    {% endif %}
+
+    <article class="add-group clearfix">
+        <h3>Ban a User</h3>
+        <form method="POST" action="{{ url_for('admin_ban_user') }}" name="blacklist">
+            <input name="netid" type="text" class="form-control" /> <br />
+            <input class="shrink-button btn btn-default" type="submit" value="BAN" /> <br />
+        </form>
+    </article>
+
+    <h3>Edit Blacklist</h3>
+    {% for user in blacklist %}
+        <article class="link-group clearfix">
+            <div class="link-info" style="clear: both;">
+                <div class="hover-controls">
+                    <form method="POST" action="{{ url_for('admin_unban_user') }}">
+                        <input type="hidden" id="netid" name="netid" value="{{ user['netid'] }}" />
+                        <input class="shrunk-button btn btn-default" type="submit" value="DELETE" />
+                    </form>
+                </div>
+                <div class="title">
+                    {{ user['netid'] }}
+                </div>
+                <div class="bottom-row">
+                    Blocked by: {{ ','.join(user['banned_by']) }}
+                </div>
+            </div>
+        </article>
+    {% else %}
+        <p>
+            There are currently no blacklisted users.
+        </p>
+    {% endfor %}
+</div>
+{% endblock %}

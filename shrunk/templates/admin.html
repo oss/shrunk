@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="links-box col-xs-12 col-sm-8 col-sm-offset-1">
+        <article class="link-group clearfix">
+            <div class="link-info">
+                <a href="/admin/links" class="title">Block URLs</a>
+            </div>
+            <div class="bottom-row">
+                Block and unblock URLs from being shortened.
+            </div>
+        </article>
+        <article class="link-group clearfix">
+            <div class="link-info">
+                <a href="/admin/blacklist" class="title">Blacklist Users</a>
+            </div>
+            <div class="bottom-row">
+                Add and remove banned NetIDs from the banlist.
+            </div>
+        </article>
+        <article class="link-group clearfix">
+            <div class="link-info">
+                <a href="/admin/manage" class="title">Manage Administrators</a>
+            </div>
+            <div class="bottom-row">
+                Grant and revoke administrator privileges.
+            </div>
+        </article>
+    </div>
+{% endblock %}
