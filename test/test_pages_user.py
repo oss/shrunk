@@ -323,3 +323,15 @@ def test_visits_csv():
 
     assert 'Goggle Chrom' in b
     assert 'refuror.org' in b
+
+@loginw("admin")
+def test_visits_csv_no_url():
+    response = get('/link-visits-csv')
+    assert response.status_code == 400
+    assert 'error: request must have url' in str(response.get_data())
+
+@loginw("user")
+def test_visits_no_perm():
+    short = sclient.create_short_url('google.com', netid='shrunk_test')
+    response = get('/link-visits-csv?url=' + short)
+    assert response.status_code == 401
