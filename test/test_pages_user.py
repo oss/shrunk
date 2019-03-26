@@ -215,11 +215,15 @@ def test_edit_link_power():
 
 @loginw("user")
 def test_index_options():
-    """test all sortby options to make sure they dont crash"""
-    urls = ["/?sortby=" + str(option) for option in range(0, 4)]
+    """test all sortby options to make sure they don't crash"""
+
+    urls = ["/?sortby=" + option for option in list(map(str,(range(4)))) + ['']]
     responses = [get(url) for url in urls]
     for response in responses:
         assert response.status_code < 500
+
+    response = get("/?sortby=invalid")
+    assert response.status_code == 400
 
 @loginw("user")
 def test_index_search():
