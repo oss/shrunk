@@ -163,7 +163,10 @@ def render_index(**kwargs):
 
     #crappy workaround
     if sortby == "":
-        sortby = 0
+        sortby = "0"
+
+    if sortby not in map(str, range(4)):
+        return 'error: invalid sortby parameter', 400
 
     # Depending on the type of user, get info from the database
     is_admin = roles.check("admin", netid)
