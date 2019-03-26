@@ -16,6 +16,7 @@ def test_get_referer_domain():
     assert get('https://google.com') == 'google.com'
     assert get('https://sld.google.com') == 'sld.google.com'
     assert get('https://my.si.te:80') == 'my.si.te'
+    assert get_referer_domain('no u') == None
 
 def test_make_csv_for_links():
     def shorten(long_url):
