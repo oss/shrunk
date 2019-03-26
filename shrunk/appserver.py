@@ -260,9 +260,7 @@ def render_index(**kwargs):
 def add_link():
     """Adds a new link for the current user. and handles errors"""
     # default is no .xxx links
-    banned_regexes = ["\.xxx"]
-    if "BANNED_REGEXES" in app.config:
-        banned_regexes = app.config["BANNED_REGEXES"]
+    banned_regexes = app.config.get('BANNED_REGEXES', ['\.xxx'])
     form = LinkForm(request.form, banned_regexes)
     netid = session['user'].get('netid')
     client = app.get_shrunk()
