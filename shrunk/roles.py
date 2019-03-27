@@ -48,12 +48,17 @@ def new(role, qualifier_func, validator_func=lambda e: e != "",
 
 
 
-def grant(role, grantor, grantee):
+def grant(role, grantor, grantee, comment):
     """gives a role to grantee and remembers who did it"""
     if exists(role) and valid_entity_for[role](grantee):
         #guard against double insertions
         if not check(role, grantee):
-            grants.insert({"role": role, "entity": grantee, "granted_by": grantor})
+            grants.insert({
+                "role": role,
+                "entity": grantee,
+                "granted_by": grantor,
+                "comment": comment
+            })
             if role in oncreate_for:
                 oncreate_for[role](grantee)
     else:

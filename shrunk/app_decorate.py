@@ -154,6 +154,7 @@ class ShrunkFlask(ShrunkFlaskMini):
             try:
                 netid = session["user"]["netid"]
                 entity = request.form["entity"]
+                comment = request.form["comment"]
                 roles.grant(role, netid, entity)
                 return redirect("/roles/"+role)
             except roles.InvalidEntity:
