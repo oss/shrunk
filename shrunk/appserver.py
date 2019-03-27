@@ -456,19 +456,16 @@ def get_referer_stats():
 @app.route("/monthly-visits", methods=["GET"])
 @app.require_login
 def monthly_visits():
-    url = request.args["url"]
     client = app.get_shrunk()
     netid = session["user"].get("netid")
 
     if "url" not in request.args:
         return '{"error":"request must have url"}', 400
-
-    elif not client.is_owner_or_admin(url, netid):
+    url = request.args['url']
+    if not client.is_owner_or_admin(url, netid):
         return '{"error":"not authorized"}', 401
-
-    else:
-        visits = client.get_monthly_visits(url)
-        return json.dumps(visits)
+    visits = client.get_monthly_visits(url)
+    return json.dumps(visits)
 
 
 @app.route("/qr", methods=["GET"])
