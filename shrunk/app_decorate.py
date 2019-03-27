@@ -193,7 +193,6 @@ class ShrunkFlask(ShrunkFlaskMini):
             "revoke_button": "UNBLACKLIST",
             "empty": "there are currently no blacklisted users",
             "granted_by": "blacklisted by"
-
         })
 
         def onblock(url):
@@ -229,3 +228,13 @@ class ShrunkFlask(ShrunkFlaskMini):
             "empty": "there are currently no blocked urls",
             "granted_by": "blocked by"
         }, oncreate=onblock)
+
+        roles.new("whitelisted", is_admin, custom_text={
+            "title": "Whitelisted users",
+            "grant_title": "Whitelist a user:",
+            "grant_button": "WHITELIST",
+            "revoke_title": "Unwhitelist a user",
+            "revoke_button": "UNWHITELIST",
+            "empty": "there are currently no whitelisted users",
+            "granted_by": "whitelisted by"
+        })

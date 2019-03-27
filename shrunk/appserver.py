@@ -38,6 +38,7 @@ app.jinja_env.globals.update(formattime=formattime)
 def login(user_info):
     if (user_info.get("employeeType") not in app.config["VALID_EMPLOYEE_TYPES"] \
     and user_info.get("netid") not in app.config["USER_WHITELIST"]) \
+    and not roles.check("whitelisted", user_info.get("netid")) \
     or roles.check("blacklisted", user_info.get("netid")):
         return redirect("/unauthorized")
     session["user"] = user_info
