@@ -1,6 +1,8 @@
 from functools import partial
 import datetime
 from urllib.parse import quote
+import json
+import datetime
 
 from shrunk.appserver import app
 import shrunk.roles as roles
@@ -377,3 +379,53 @@ def test_geoip_no_perm():
     short = sclient.create_short_url('google.com', netid='shrunk_test')
     response = get('/geoip-csv?resolution=state&url=' + short)
     assert response.status_code == 401
+
+@loginw("admin")
+def test_useragent_stats():
+    short = sclient.create_short_url('google.com', netid='shrunk_test')
+
+    def check_stats(expected):
+        response = get('/useragent-stats?url=' + short)
+        assert response.status_code == 200
+        actual = json.loads(str(response.get_data(), 'utf8'))
+        assert actual == expected
+
+    check_stats({})
+
+    sclient.visit(short, '127.0.0.1', 'Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0', 'referer')
+    check_stats({'platform': {'Linux': 1}, 'browser': {'Firefox': 1}})
+
+    sclient.visit(short, '127.0.0.1', 'Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0', 'referer')
+    check_stats({'platform': {'Linux': 2}, 'browser': {'Firefox': 2}})
+
+    sclient.visit(short, '127.0.0.1', 'Mozilla/5.0 (Windows NT x.y; rv:10.0) Gecko/20100101 Firefox/10.0', 'referer')
+    check_stats({'platform': {'Linux': 2, 'Windows': 1}, 'browser': {'Firefox': 3}})
+
+    sclient.visit(short, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299', 'referer')
+    check_stats({'platform': {'Linux': 2, 'Windows': 2}, 'browser': {'Firefox': 3, 'Msie': 1}})
+
+@loginw("admin")
+def test_useragent_stats_no_visit():
+    """ we need to be able to handle visit documents without a user_agent field """
+    short = sclient.create_short_url('google.com', netid='shrunk_test')
+    mclient.shrunk_visits.visits.insert({
+        'short_url': short,
+        'source_ip': '127.0.0.1',
+        'time': datetime.datetime.now()
+    })
+    response = get('/useragent-stats?url=' + short)
+    assert response.status_code == 200
+    assert '{}' == str(response.get_data(), 'utf8')
+    
+@loginw("user")
+def test_useragent_stats_no_url():
+    response = get('/useragent-stats')
+    assert response.status_code == 400
+    assert 'error: request must have url' in str(response.get_data())
+    
+@loginw("user")
+def test_useragent_stats_no_perm():
+    short = sclient.create_short_url('google.com', netid='shrunk_test')
+    response = get('/useragent-stats?url=' + short)
+    assert response.status_code == 401
+    assert 'error: not authorized' in str(response.get_data())
