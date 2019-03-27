@@ -171,7 +171,10 @@ class ShrunkFlask(ShrunkFlaskMini):
         @self.require_login
         @self.require_qualified
         def role_list(role):
-            return render_template("role.html", **roles.template_data(role))
+            netid = session['user'].get('netid')
+            kwargs = roles.template_data(role)
+            kwargs['admin'] = roles.check('admin', netid)
+            return render_template("role.html", **kwargs)
 
     def setup_roles(self):
         """
