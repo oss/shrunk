@@ -504,9 +504,7 @@ def edit_link():
     client = app.get_shrunk()
 
     # default is no .xxx links
-    banned_regexes = ["\.xxx"]
-    if "BANNED_REGEXES" in app.config:
-        banned_regexes = app.config["BANNED_REGEXES"]
+    banned_regexes = app.config.get('BANNED_REGEXES', ['\.xxx'])
 
     form = LinkForm(request.form, banned_regexes)
     form.long_url.data = ensure_protocol(form.long_url.data)
