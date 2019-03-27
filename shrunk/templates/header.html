@@ -20,8 +20,7 @@
         <ul class="show-login navbar-subtitle nav navbar-nav">
             <li><a href="{{ url_for('render_index') }}">My URLs</a></li>
             <li><a href="/add">Shorten A URL</a></li>
-            <li><a href="{{ url_for('logout') }}">Log Out</a></li>
-        </ul>
+	</ul>
         {% if admin %}
         <ul class="admin-links show-login navbar-subtitle nav navbar-nav">
             <li><a href="/roles/blocked_url" class="title">Block URLs</a></li>
@@ -34,6 +33,9 @@
             <li><a href="/admin/" class="title">Admin</a></li>
         </ul>
         {% endif %}
+	<ul class="show-login navbar-subtitle nav navbar-nav">
+            <li><a href="{{ url_for('logout') }}">Log Out</a></li>
+        </ul>
     </div><!-- /.navbar-collapse -->
 </div>
 <div class="show-login shrunk-toolbar container-fluid">
