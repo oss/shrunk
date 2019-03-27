@@ -429,3 +429,34 @@ def test_useragent_stats_no_perm():
     response = get('/useragent-stats?url=' + short)
     assert response.status_code == 401
     assert 'error: not authorized' in str(response.get_data())
+
+@loginw("admin")
+def test_referer_stats():
+    short = sclient.create_short_url('google.com', netid='shrunk_test')
+
+    def check_stats(expected):
+        response = get('/referer-stats?url=' + short)
+        assert response.status_code == 200
+        actual = json.loads(str(response.get_data(), 'utf8'))
+        assert expected == actual
+
+    check_stats({})
+
+    sclient.visit(short, '127.0.0.1', 'user agent', 'https://facebook.com')
+    check_stats({'facebook.com': 1})
+
+    sclient.visit(short, '127.0.0.1', 'user agent', 'https://facebook.com')
+    check_stats({'facebook.com': 2})
+
+    sclient.visit(short, '127.0.0.1', 'user agent', 'https://twitter.com/tweet')
+    check_stats({'facebook.com': 2, 'twitter.com': 1})
+
+    sclient.visit(short, '127.0.0.1', 'user agent', 'https://old.reddit.com/r/rutgers')
+    check_stats({'facebook.com': 2, 'twitter.com': 1, 'old.reddit.com': 1})
+
+@loginw("user")
+def test_referer_stats_no_perm():
+    short = sclient.create_short_url('google.com', netid='shrunk_test')
+    response = get('/referer-stats?url=' + short)
+    assert response.status_code == 401
+    assert 'error: not authorized' in str(response.get_data())
