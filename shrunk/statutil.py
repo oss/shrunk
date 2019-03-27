@@ -8,8 +8,7 @@ from flask import make_response
 # TODO use already existing get_domain function instead?
 # maybe get doamin should use this implementation
 def get_referer_domain(visit):
-    p = urllib.parse.urlparse(visit['referer']).hostname
-    return p.lower() if p else None
+    return urllib.parse.urlparse(visit['referer']).hostname.lower() if 'referer' in visit else None
 
 def make_csv_for_links(client, links):
     f = io.StringIO()

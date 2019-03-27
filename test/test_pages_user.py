@@ -1,6 +1,8 @@
 from functools import partial
 import datetime
 from urllib.parse import quote
+import json
+import datetime
 
 from shrunk.appserver import app
 import shrunk.roles as roles
@@ -215,15 +217,19 @@ def test_edit_link_power():
 
 @loginw("user")
 def test_index_options():
-    """test all sortby options to make sure they dont crash"""
-    urls = ["/?sortby=" + str(option) for option in range(0, 4)]
+    """test all sortby options to make sure they don't crash"""
+
+    urls = ["/?sortby=" + option for option in list(map(str,(range(4)))) + ['']]
     responses = [get(url) for url in urls]
     for response in responses:
         assert response.status_code < 500
 
+    response = get("/?sortby=invalid")
+    assert response.status_code == 400
+
 @loginw("user")
 def test_index_search():
-    """make sure search checks all feilds"""
+    """make sure search checks all fields"""
     mclient.shrunk_urls.urls.insert({
         "_id": "id1", "title": "lmao1",
         "long_url": "https://google.com",
@@ -249,9 +255,11 @@ def test_index_search():
     login("admin")
     #search by netid
     find("DEV", "Showing results for", base="/?all_users=1&search=")
+    #this assumes that the DEV_ADMIN user does not have any links in the test db...
+    find("DEV", "No results found for", base="/?all_users=0&search=")
 
 def test_index_admin():
-    """make sure admin options dont appear for users"""
+    """make sure admin options don't appear for users"""
     mclient.shrunk_urls.urls.insert({
         "_id": "id1", "title": "lmao1",
         "long_url": "https://google.com",
@@ -283,3 +291,141 @@ def test_index_admin():
     assert "Admin" in text
 
     assert "lmao1" in text
+
+@loginw("user")
+def test_stats():
+    short = sclient.create_short_url('google.com')
+    sclient.visit(short, '127.0.0.1', 'user agent', 'ref')
+
+    response = get('/stats?url=' + short)
+    assert response.status_code == 200
+    assert 'Export visit data as CSV' in str(response.get_data())
+
+    response = get('/stats?url=invalid')
+    assert 'URL not found :(' in str(response.get_data())
+
+@loginw("admin")
+def test_visits_csv():
+    short = sclient.create_short_url('google.com', netid='shrunk_test')
+    sclient.visit(short, '127.0.0.1', 'Mozzarella Foxfire', 'https://referor.com')
+    sclient.visit(short, '196.168.1.1', 'Goggle Chrom', 'https://refuror.org')
+
+    response = get('/link-visits-csv?url=' + short)
+    assert response.status_code == 200
+    lines = str(response.get_data(), 'utf8').split('\r\n')
+    assert len(lines) == 4
+    assert lines[-1] == ''
+
+    [a, b] = lines[1], lines[2]
+    if 'Chrom' in a:
+        a, b = b, a
+
+    assert 'Mozzarella Foxfire' in a
+    assert 'referor.com' in a
+
+    assert 'Goggle Chrom' in b
+    assert 'refuror.org' in b
+
+@loginw("admin")
+def test_visits_csv_no_url():
+    response = get('/link-visits-csv')
+    assert response.status_code == 400
+    assert 'error: request must have url' in str(response.get_data())
+
+@loginw("user")
+def test_visits_no_perm():
+    short = sclient.create_short_url('google.com', netid='shrunk_test')
+    response = get('/link-visits-csv?url=' + short)
+    assert response.status_code == 401
+
+@loginw("admin")
+def test_geoip_csv():
+    short = sclient.create_short_url('google.com', netid='shrunk_test')
+    ips = ['165.230.224.67', '34.201.163.243', '35.168.234.184',
+           '107.77.70.130', '136.243.154.93', '94.130.167.121']
+    for ip in ips:
+        sclient.visit(short, ip, 'user agent', 'referer')
+
+    # test state-level csv
+    response = get('/geoip-csv?resolution=state&url=' + short)
+    assert response.status_code == 200
+    csv = str(response.get_data(), 'utf8').split('\n')
+    assert csv[0] == 'location,visits'
+    expected = ['NJ,1', 'NY,1', 'VA,2', 'RP,1', 'unknown,1']
+    assert sorted(csv[1:]) == sorted(expected)
+
+    # test country-level csv
+    response = get('/geoip-csv?resolution=country&url=' + short)
+    assert response.status_code == 200
+    csv = str(response.get_data(), 'utf8').split('\n')
+    assert csv[0] == 'location,visits'
+    expected = ['United States,4', 'Germany,2']
+    assert sorted(csv[1:]) == sorted(expected)
+
+    response = get('/geoip-csv')
+    assert response.status_code == 400
+    assert 'error: request must have url' in str(response.get_data())
+
+    response = get('/geoip-csv?url=' + short)
+    assert response.status_code == 400
+    assert 'error: request must have resolution' in str(response.get_data())
+
+    response = get('/geoip-csv?resolution=world&url=' + short)
+    assert response.status_code == 400
+    assert 'error: invalid resolution' in str(response.get_data())
+
+@loginw("user")
+def test_geoip_no_perm():
+    short = sclient.create_short_url('google.com', netid='shrunk_test')
+    response = get('/geoip-csv?resolution=state&url=' + short)
+    assert response.status_code == 401
+
+@loginw("admin")
+def test_useragent_stats():
+    short = sclient.create_short_url('google.com', netid='shrunk_test')
+
+    def check_stats(expected):
+        response = get('/useragent-stats?url=' + short)
+        assert response.status_code == 200
+        actual = json.loads(str(response.get_data(), 'utf8'))
+        assert actual == expected
+
+    check_stats({})
+
+    sclient.visit(short, '127.0.0.1', 'Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0', 'referer')
+    check_stats({'platform': {'Linux': 1}, 'browser': {'Firefox': 1}})
+
+    sclient.visit(short, '127.0.0.1', 'Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0', 'referer')
+    check_stats({'platform': {'Linux': 2}, 'browser': {'Firefox': 2}})
+
+    sclient.visit(short, '127.0.0.1', 'Mozilla/5.0 (Windows NT x.y; rv:10.0) Gecko/20100101 Firefox/10.0', 'referer')
+    check_stats({'platform': {'Linux': 2, 'Windows': 1}, 'browser': {'Firefox': 3}})
+
+    sclient.visit(short, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299', 'referer')
+    check_stats({'platform': {'Linux': 2, 'Windows': 2}, 'browser': {'Firefox': 3, 'Msie': 1}})
+
+@loginw("admin")
+def test_useragent_stats_no_visit():
+    """ we need to be able to handle visit documents without a user_agent field """
+    short = sclient.create_short_url('google.com', netid='shrunk_test')
+    mclient.shrunk_visits.visits.insert({
+        'short_url': short,
+        'source_ip': '127.0.0.1',
+        'time': datetime.datetime.now()
+    })
+    response = get('/useragent-stats?url=' + short)
+    assert response.status_code == 200
+    assert '{}' == str(response.get_data(), 'utf8')
+    
+@loginw("user")
+def test_useragent_stats_no_url():
+    response = get('/useragent-stats')
+    assert response.status_code == 400
+    assert 'error: request must have url' in str(response.get_data())
+    
+@loginw("user")
+def test_useragent_stats_no_perm():
+    short = sclient.create_short_url('google.com', netid='shrunk_test')
+    response = get('/useragent-stats?url=' + short)
+    assert response.status_code == 401
+    assert 'error: not authorized' in str(response.get_data())

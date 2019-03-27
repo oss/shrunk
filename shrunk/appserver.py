@@ -163,7 +163,10 @@ def render_index(**kwargs):
 
     #crappy workaround
     if sortby == "":
-        sortby = 0
+        sortby = "0"
+
+    if sortby not in map(str, range(4)):
+        return 'error: invalid sortby parameter', 400
 
     # Depending on the type of user, get info from the database
     is_admin = roles.check("admin", netid)
@@ -257,9 +260,7 @@ def render_index(**kwargs):
 def add_link():
     """Adds a new link for the current user. and handles errors"""
     # default is no .xxx links
-    banned_regexes = ["\.xxx"]
-    if "BANNED_REGEXES" in app.config:
-        banned_regexes = app.config["BANNED_REGEXES"]
+    banned_regexes = app.config.get('BANNED_REGEXES', ['\.xxx'])
     form = LinkForm(request.form, banned_regexes)
     netid = session['user'].get('netid')
     client = app.get_shrunk()
@@ -315,12 +316,14 @@ def get_stats():
         "query": session.get("query")
     }
 
-    if "url" in request.args:
-        url = request.args["url"]
-        client = app.get_shrunk()
-        template_data["url_info"] = client.get_url_info(url)
+    client = app.get_shrunk()
+    if 'url' in request.args:
+        url = request.args['url']
+        url_info = client.get_url_info(url)
+    if 'url' not in request.args or not url_info:
+        template_data['missing_url'] = True
     else:
-        template_data["missing_url"] = True
+        template_data['url_info'] = url_info
 
     return render_template("stats.html", short_url=request.args.get('url', ''), **template_data)
 
