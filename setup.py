@@ -10,7 +10,7 @@ except:
     readme_text = ""
 
 require = [
-    'Flask>=0.10.1',
+    'Flask>=0.12.3',
     'Flask-SSO>=0.4.0',
     'Jinja2>=2.7.3',
     'MarkupSafe>=0.23',
@@ -19,12 +19,12 @@ require = [
     'itsdangerous>=0.24',
     'pyasn1>=0.1.7',
     'pymongo>=3.6.1',
-    'geoip2>=2.9.0'
+    'geoip2==2.4.0'
 ]
 
 setup(
     name = "shrunk",
-    version = "0.5.7",
+    version = "0.6.0",
     packages = ["shrunk"],
     install_requires = require,
     package_dir = {"shrunk": "shrunk"},
