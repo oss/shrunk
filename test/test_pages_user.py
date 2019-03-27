@@ -460,3 +460,52 @@ def test_referer_stats_no_perm():
     response = get('/referer-stats?url=' + short)
     assert response.status_code == 401
     assert 'error: not authorized' in str(response.get_data())
+
+@loginw("admin")
+def test_monthly_visits():
+    short = sclient.create_short_url('google.com', netid='shrunk_test')
+
+    def make_visit(who, year, month):
+        mclient.shrunk_visits.visits.insert({
+            'short_url': short,
+            'source_ip': who,
+            'time': datetime.datetime(year, month, 1)
+        })
+
+    def check_visits(expected):
+        response = get('/monthly-visits?url=' + short)
+        assert response.status_code == 200
+        actual = json.loads(str(response.get_data(), 'utf8'))
+        assert expected == actual
+
+    check_visits([])
+
+    make_visit('127.0.0.1', 2019, 1)
+    check_visits([{'first_time_visits': 1, 'all_visits': 1, '_id': {'month': 1, 'year': 2019}}])
+
+    make_visit('127.0.0.1', 2019, 1)
+    check_visits([{'first_time_visits': 1, 'all_visits': 2, '_id': {'month': 1, 'year': 2019}}])
+
+    make_visit('127.0.0.2', 2019, 1)
+    check_visits([{'first_time_visits': 2, 'all_visits': 3, '_id': {'month': 1, 'year': 2019}}])
+
+    make_visit('127.0.0.1', 2019, 2)
+    check_visits([{'first_time_visits': 2, 'all_visits': 3, '_id': {'month': 1, 'year': 2019}},
+                  {'first_time_visits': 0, 'all_visits': 1, '_id': {'month': 2, 'year': 2019}}])
+
+    make_visit('127.0.0.3', 2019, 2)
+    check_visits([{'first_time_visits': 2, 'all_visits': 3, '_id': {'month': 1, 'year': 2019}},
+                  {'first_time_visits': 1, 'all_visits': 2, '_id': {'month': 2, 'year': 2019}}])
+
+@loginw("user")
+def test_monthly_visits_no_url():
+    response = get('/monthly-visits')
+    assert response.status_code == 400
+    assert '{"error":"request must have url"}' in str(response.get_data())
+
+@loginw("user")
+def test_monthly_visits_no_perm():
+    short = sclient.create_short_url('google.com', netid='shrunk_test')
+    response = get('/monthly-visits?url=' + short)
+    assert response.status_code == 401
+    assert '{"error":"not authorized"}' in str(response.get_data())
