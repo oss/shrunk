@@ -1,4 +1,4 @@
 #!/bin/bash
 source /var/www/base.sh
 echo
-echo $(check_mongodb memory -w 1300 -c 1500)
+echo $(check_mongodb memory -w 2000 -c 2500)
