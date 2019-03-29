@@ -363,3 +363,9 @@ Media Queries
     }
 }
 /* end vert toolbar */
+
+/* for role.html */
+#comment {
+    width: 100%;
+    resize: none;
+}

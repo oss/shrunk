@@ -12,9 +12,13 @@
     <form method="POST" action="/roles/{{role}}/" name="blacklist">
         <input name="entity" type="text" class="form-control" /> <br />
 	{% if allow_comment %}
-	Comment (optional):
-	<input name="comment" type="text" class="form-conttrol" /> <br />
+	<h3>Comment:</h3>
+
+	<textarea id="comment" name="comment" rows="5" cols="33" placeholder="placeholder">
+Describe why the user has been granted access to Shrunk. Include the NetID and department of the requesting full-time staff or faculty member.
+	</textarea> <br /> <br />
 	{% endif %}
+
         <input class="shrink-button btn btn-default" type="submit"
                value="{{ grant_button }}" /> <br />
     </form>
@@ -39,7 +43,7 @@
             {{ granted_by }}: {{ grant["granted_by"] }}
         </div>
 	{% if grant.get("comment") %}
-	<div class="bottom-row">
+	<div>
 	    comment: {{ grant["comment"] }}
 	</div>
 	{% endif %}
