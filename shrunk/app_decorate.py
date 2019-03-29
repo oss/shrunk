@@ -233,7 +233,10 @@ class ShrunkFlask(ShrunkFlaskMini):
             "granted_by": "blocked by"
         }, oncreate=onblock)
 
-        roles.new("whitelisted", is_admin, custom_text={
+        def admin_or_facstaff(netid):
+            return is_admin(netid) or roles.check("facstaff", netid)
+
+        roles.new("whitelisted", admin_or_facstaff, custom_text={
             "title": "Whitelisted users",
             "grant_title": "Whitelist a user",
             "grant_button": "WHITELIST",
@@ -244,9 +247,6 @@ class ShrunkFlask(ShrunkFlaskMini):
             "allow_comment": True
         })
 
-        def admin_or_facstaff(netid):
-            return is_admin(netid) or roles.check("facstaff", netid)
-
-        roles.new("facstaff", admin_or_facstaff, custom_text={
+        roles.new("facstaff", is_admin, custom_text={
             "title": "Faculty or Staff Member"
         })
