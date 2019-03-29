@@ -233,10 +233,11 @@ class ShrunkFlask(ShrunkFlaskMini):
             "granted_by": "blocked by"
         }, oncreate=onblock)
 
-        def admin_or_facstaff(netid):
-            return is_admin(netid) or roles.check("facstaff", netid)
+        def admin_facstaff_or_power(netid):
+            return is_admin(netid) or roles.check("facstaff", netid) \
+                or roles.check("power_user", netid)
 
-        roles.new("whitelisted", admin_or_facstaff, custom_text={
+        roles.new("whitelisted", admin_facstaff_or_power, custom_text={
             "title": "Whitelisted users",
             "grant_title": "Whitelist a user",
             "grant_button": "WHITELIST",
