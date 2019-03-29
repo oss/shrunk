@@ -36,21 +36,25 @@ app.jinja_env.globals.update(formattime=formattime)
 # Shibboleth handler
 @ext.login_handler
 def login(user_info):
-    valid_employee = user_info.get("employeeType") in app.config["VALID_EMPLOYEE_TYPES"]
+    types = user_info.get("employeeType").split(";")
+    app.logger.log(user_info)
+    app.logger.log(types)
+    netid = user_info.get("netid")
+    valid_employee = any(t in app.config["VALID_EMPLOYEE_TYPES"] for t in types)
     blacklisted = roles.check("blacklisted", user_info.get("netid"))
 
-    in_config_whitelist = user_info.get("netid") in app.config["USER_WHITELIST"]
-    in_db_whitelist = not roles.check("whitelisted", user_info.get("netid"))
+    in_config_whitelist = netid in app.config["USER_WHITELIST"]
+    in_db_whitelist = roles.check("whitelisted", netid)
 
     if blacklisted:
         return redirect("/unauthorized")
 
     if not valid_employee:
-        if  not in_config_whitelist and not in_db_whitelist:
+        if not in_config_whitelist and not in_db_whitelist:
             return redirect("/unauthorized")
 
-    if valid_employee:
-        roles.grant("facstaff", user_info.netid, "shibboleth")
+    if any(t in app.config["FACSTAFF_EMPLOYEE_TYPES"] for t in types):
+        roles.grant("facstaff", "shibboleth", netid)
 
     session["user"] = user_info
     return redirect("/")
