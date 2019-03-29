@@ -588,4 +588,4 @@ def admin_panel():
     """
     netid = session['user'].get('netid')
 
-    return render_template("admin.html", netid=netid, )
+    return render_template("admin.html", netid=netid, roles=roles.valid_roles())
