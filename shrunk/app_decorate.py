@@ -154,7 +154,11 @@ class ShrunkFlask(ShrunkFlaskMini):
             try:
                 netid = session["user"]["netid"]
                 entity = request.form["entity"]
-                roles.grant(role, netid, entity)
+                allow_comment = roles.template_data(role)['allow_comment']
+                comment = ''
+                if allow_comment:
+                    comment = request.form["comment"]
+                roles.grant(role, netid, entity, comment)
                 return redirect("/roles/"+role)
             except roles.InvalidEntity:
                 return render_template("role.html", **roles.template_data(role, invalid=True))
@@ -236,6 +240,7 @@ class ShrunkFlask(ShrunkFlaskMini):
             "revoke_title": "Unwhitelist a user",
             "revoke_button": "UNWHITELIST",
             "empty": "there are currently no whitelisted users",
-            "granted_by": "whitelisted by"
+            "granted_by": "whitelisted by",
+            "allow_comment": True
         })
         roles.new("facstaff", is_admin)

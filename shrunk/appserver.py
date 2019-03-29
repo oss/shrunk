@@ -321,11 +321,13 @@ def add_link_form():
 @app.require_login
 def get_stats():
     #should we require owner or admin to view?
+    netid = session['user'].get('netid')
     template_data = {
         "url_info": {},
         "missing_url": False,
         "monthy_visits": [],
-        "query": session.get("query")
+        "query": session.get("query"),
+        "admin": roles.check('admin', netid)
     }
 
     client = app.get_shrunk()
@@ -483,7 +485,10 @@ def monthly_visits():
 @app.route("/qr", methods=["GET"])
 @app.require_login
 def qr():
-    kwargs = {"print": "print" in request.args, "query": session.get("query")}
+    netid = session['user'].get('netid')
+    kwargs = {"print": "print" in request.args,
+              "query": session.get("query"),
+              "admin": roles.check('admin', netid)}
     return render_template("qr.html", **kwargs)
 
 
@@ -567,6 +572,7 @@ def edit_link_form():
     info['old_short_url'] = old_short_url
     info['show_short_url'] = roles.has_one_of(["admin", "power_user"], netid)
     info['query'] = session.get('query')
+    info['admin'] = roles.check('admin', netid)
     # Render the edit template
     return render_template("edit.html", **info)
 
