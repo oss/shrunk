@@ -238,3 +238,4 @@ class ShrunkFlask(ShrunkFlaskMini):
             "empty": "there are currently no whitelisted users",
             "granted_by": "whitelisted by"
         })
+        roles.new("facstaff", is_admin)

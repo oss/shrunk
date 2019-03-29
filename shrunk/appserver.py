@@ -46,8 +46,11 @@ def login(user_info):
         return redirect("/unauthorized")
 
     if not valid_employee:
-        if  not in_config_whitelist not in_db_whitelist:
+        if  not in_config_whitelist and not in_db_whitelist:
             return redirect("/unauthorized")
+
+    if valid_employee:
+        roles.grant("facstaff", user_info.netid, "shibboleth")
 
     session["user"] = user_info
     return redirect("/")
@@ -579,4 +582,4 @@ def admin_panel():
     """
     netid = session['user'].get('netid')
 
-    return render_template("admin.html", netid=netid)
+    return render_template("admin.html", netid=netid, )
