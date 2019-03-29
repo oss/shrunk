@@ -23,6 +23,9 @@
 	    {% if admin %}
             <li><a href="/admin/" class="title">Manage Users</a></li>
 	    {% endif %}
+	    {% if admin or facstaff %}
+	    <li><a href="/roles/whitelisted" class="title">Whitelist Users</a></li>
+	    {% endif%}
 	</ul>
 	<ul class="show-login navbar-subtitle nav navbar-nav">
             <li><a href="{{ url_for('logout') }}">Log Out</a></li>
