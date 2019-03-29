@@ -23,7 +23,8 @@ def default_text(role):
         "revoke_title": "Revoke "+ role,
         "revoke_button": "REVOKE",
         "empty": "there is currently nothing with the role "+role,
-        "granted_by": "granted by"
+        "granted_by": "granted by",
+        "allow_comment": False
     }
 
 def new(role, qualifier_func, validator_func=lambda e: e != "",

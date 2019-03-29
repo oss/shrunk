@@ -11,8 +11,10 @@
     <h3>{{ grant_title }}</h3>
     <form method="POST" action="/roles/{{role}}/" name="blacklist">
         <input name="entity" type="text" class="form-control" /> <br />
+	{% if allow_comment %}
 	Comment (optional):
 	<input name="comment" type="text" class="form-conttrol" /> <br />
+	{% endif %}
         <input class="shrink-button btn btn-default" type="submit"
                value="{{ grant_button }}" /> <br />
     </form>
