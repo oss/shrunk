@@ -27,9 +27,9 @@ DUAL_SERVER = False
 server. The default setting is False, which assumes that a separate server
 handles the links."""
 
-VALID_EMPLOYEE_TYPES = ["FACULTY", "STAFF"]
-
-USER_WHITELIST = ["anp120"]
+USER_WHITELIST = ["jcc", "mjw271", "peb60"]
+"""These users are always permitted to login (i.e. they can't be blacklisted)
+and are automatically admins."""
 
 SSO_ATTRIBUTE_MAP = {
     "SHIB_UID_1": (True, "netid"),

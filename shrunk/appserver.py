@@ -37,26 +37,57 @@ app.jinja_env.globals.update(formattime=formattime)
 @ext.login_handler
 def login(user_info):
     types = user_info.get("employeeType").split(";")
-    app.logger.info(user_info)
-    app.logger.info(types)
     netid = user_info.get("netid")
-    valid_employee = any(t in app.config["VALID_EMPLOYEE_TYPES"] for t in types)
-    is_student_worker = 'STUDENT WORKER' in types
-    blacklisted = roles.check("blacklisted", user_info.get("netid"))
 
-    in_config_whitelist = netid in app.config["USER_WHITELIST"]
-    in_db_whitelist = roles.check("whitelisted", netid)
+    def t(typ):
+        return typ in types
 
-    if blacklisted:
+    def log_failed(why):
+        app.logger.info("failed login for {} (roles: {}, reason: {})"
+                        .format(netid, user_info.get("employeeType"), why))
+
+    # get info from shibboleth types
+    fac_staff = t('FACULTY') or t('STAFF')
+    guest = t('GUEST')
+    worker = (t('STUDENT') or t('PRIOR STUDENT')) and t('STUDENT WORKER')
+
+    # get info from ACLs
+    is_admin = roles.check("admin", netid)
+    is_power = roles.check("power_user", netid)
+    is_blacklisted = roles.check("blacklisted", netid)
+    is_whitelisted = roles.check("whitelisted", netid)
+    is_config_whitelisted = netid in app.config["USER_WHITELIST"]
+
+    # now make decisions regarding whether the user can login, and what privs they should get 
+
+    # blacklisted users can never login, except config-whitelisted users can't
+    # be blacklisted (so OSS people can always login)
+    if is_blacklisted and not is_config_whitelisted:
+        log_failed("blacklisted")
         return redirect("/unauthorized")
 
-    if not valid_employee:
-        if not (in_config_whitelist or (in_db_whitelist and is_student_worker)):
-            return redirect("/unauthorized")
+    # config-whitelisted users are automatically made admins
+    if is_config_whitelisted:
+        roles.grant("admin", "Justice League", netid)
 
-    if valid_employee:
+    # (if not blacklisted) facstaff can always login, but we need to grant a role
+    # so the rest of the app knows what privs to give the user
+    if fac_staff:
         roles.grant("facstaff", "shibboleth", netid)
 
+    # now determine whether to allow login
+    if is_config_whitelisted or fac_staff:
+        pass  # allow
+    elif guest and (is_admin or is_power):
+        pass  # allow
+    elif worker and is_whitelisted:
+        pass  # allow
+    else:
+        log_failed("unauthorized")
+        return redirect("/unauthorized")
+
+    # If we get here, the user is allowed to login, and all necessary privs
+    # have been granted.
     session["user"] = user_info
     return redirect("/")
 
