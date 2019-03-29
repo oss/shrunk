@@ -587,5 +587,5 @@ def admin_panel():
     controls.
     """
     netid = session['user'].get('netid')
-
-    return render_template("admin.html", netid=netid, roles=roles.valid_roles())
+    roledata = [{"id": role, "title": roles.form_text[role]["title"]} for role in roles.valid_roles()]
+    return render_template("admin.html", netid=netid, roledata=roledata)

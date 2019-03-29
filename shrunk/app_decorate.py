@@ -182,7 +182,7 @@ class ShrunkFlask(ShrunkFlaskMini):
 
     def setup_roles(self):
         """
-        initialize the admin, power_user, blocked, and blacklisted roles
+        initialize the roles admin, power_user, blocked, facstaff, whitelisted and blacklisted
         the difference between blacklisted and blocked is that blacklisted
         refers to users where blocked refers to links
         """
@@ -235,12 +235,18 @@ class ShrunkFlask(ShrunkFlaskMini):
 
         roles.new("whitelisted", is_admin, custom_text={
             "title": "Whitelisted users",
-            "grant_title": "Whitelist a user:",
+            "grant_title": "Whitelist a user",
             "grant_button": "WHITELIST",
-            "revoke_title": "Unwhitelist a user",
+            "revoke_title": "Remove a user from the whitelist",
             "revoke_button": "UNWHITELIST",
             "empty": "there are currently no whitelisted users",
             "granted_by": "whitelisted by",
             "allow_comment": True
         })
-        roles.new("facstaff", is_admin)
+
+        def admin_or_facstaff(netid):
+            return is_admin(netid) or roles.check("facstaff", netid)
+
+        roles.new("facstaff", admin_or_facstaff, custom_text={
+            "title": "Faculty or Staff Member"
+        })

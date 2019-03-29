@@ -339,22 +339,6 @@ Media Queries
     }
 }
 
-/* admin toolbar collapse */
-.admin-links-collapse {
-    display: none;
-}
-
-@media (max-width: 1360px) {
-    .admin-links-collapse {
-	display: inherit;
-    }
-    .admin-links {
-	display: none;
-    }
-}
-
-/* end admin toolbar */
-
 /* vert toolbar */
 @media (max-width: 840px) {
     .shrunk-toolbar {

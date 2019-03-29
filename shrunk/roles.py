@@ -17,12 +17,12 @@ def default_text(role):
     """ gives the default text that apears in a role menu"""
     return {
         "title": role,
-        "invalid": "invalid entity for role "+role,
-        "grant_title": "Grant "+role,
+        "invalid": "invalid entity for role " + role,
+        "grant_title": "Grant " + role,
         "grant_button": "GRANT",
-        "revoke_title": "Revoke "+ role,
+        "revoke_title": "Revoke " + role,
         "revoke_button": "REVOKE",
-        "empty": "there is currently nothing with the role "+role,
+        "empty": "there is currently nothing with the role " + role,
         "granted_by": "granted by",
         "allow_comment": False
     }

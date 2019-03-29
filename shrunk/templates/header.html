@@ -20,19 +20,10 @@
         <ul class="show-login navbar-subtitle nav navbar-nav">
             <li><a href="{{ url_for('render_index') }}">My URLs</a></li>
             <li><a href="/add">Shorten A URL</a></li>
+	    {% if admin %}
+            <li><a href="/admin/" class="title">Manage Users</a></li>
+	    {% endif %}
 	</ul>
-        {% if admin %}
-        <ul class="admin-links show-login navbar-subtitle nav navbar-nav">
-            <li><a href="/roles/blocked_url" class="title">Block URLs</a></li>
-            <li><a href="/roles/blacklisted" class="title">Blacklist Users</a></li>
-	    <li><a href="/roles/whitelisted" class="title">Whitelist Users</a></li>
-            <li><a href="/roles/admin" class="title">Manage Administrators</a></li>
-            <li><a href="/roles/power_user" class="title">Manage Power Users</a></li>
-        </ul>
-        <ul class="admin-links-collapse show-login navbar-subtitle nav navbar-nav">
-            <li><a href="/admin/" class="title">Admin</a></li>
-        </ul>
-        {% endif %}
 	<ul class="show-login navbar-subtitle nav navbar-nav">
             <li><a href="{{ url_for('logout') }}">Log Out</a></li>
         </ul>
