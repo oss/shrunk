@@ -272,7 +272,7 @@ def test_index_admin():
         assert response.status_code < 500
         text = str(response.get_data())
         assert "lmao1" not in text
-        assert "Admin" not in text
+        assert "Manage Users" not in text
     logout()
 
     login("admin")
@@ -280,7 +280,7 @@ def test_index_admin():
     response = get(urls[0])
     assert response.status_code < 500
     text = str(response.get_data())
-    assert "Admin" in text
+    assert "Manage Users" in text
 
     assert "lmao1" not in text
 
@@ -288,7 +288,7 @@ def test_index_admin():
     response = get(urls[1])
     assert response.status_code < 500
     text = str(response.get_data())
-    assert "Admin" in text
+    assert "Manage Users" in text
 
     assert "lmao1" in text
 
