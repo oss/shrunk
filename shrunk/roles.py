@@ -47,9 +47,7 @@ def new(role, qualifier_func, validator_func=lambda e: e != "",
     valid_entity_for[role] = validator_func
     oncreate_for[role] = oncreate
 
-
-
-def grant(role, grantor, grantee, comment):
+def grant(role, grantor, grantee, comment=''):
     """gives a role to grantee and remembers who did it"""
     if exists(role) and valid_entity_for[role](grantee):
         #guard against double insertions
