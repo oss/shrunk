@@ -31,7 +31,7 @@
         <div class="link-info" style="clear: both;">
             <div class="hover-controls">
                 [ <a href="{{ url_for('edit_link', url=link['_id'])}}">Edit</a> ]
-                [ <a onClick="delete_link('{{ link['_id'] }}')">Delete</a> ]
+                [ <a onClick="delete_link('{{ link['_id'] }}')" style="cursor: pointer;">Delete</a> ]
                 [ <a href="{{ url_for('get_stats', url=link['_id']) }}">Stats</a> ]
                 [ <a href="{{url_for('qr', url=link['_id'])}}">QR Code</a> ]
             </div>
