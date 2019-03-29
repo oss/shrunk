@@ -37,10 +37,11 @@ app.jinja_env.globals.update(formattime=formattime)
 @ext.login_handler
 def login(user_info):
     types = user_info.get("employeeType").split(";")
-    app.logger.log(user_info)
-    app.logger.log(types)
+    app.logger.info(user_info)
+    app.logger.info(types)
     netid = user_info.get("netid")
     valid_employee = any(t in app.config["VALID_EMPLOYEE_TYPES"] for t in types)
+    is_student_worker = 'STUDENT WORKER' in types
     blacklisted = roles.check("blacklisted", user_info.get("netid"))
 
     in_config_whitelist = netid in app.config["USER_WHITELIST"]
@@ -50,10 +51,10 @@ def login(user_info):
         return redirect("/unauthorized")
 
     if not valid_employee:
-        if not in_config_whitelist and not in_db_whitelist:
+        if not (in_config_whitelist or (in_db_whitelist and is_student_worker)):
             return redirect("/unauthorized")
 
-    if any(t in app.config["FACSTAFF_EMPLOYEE_TYPES"] for t in types):
+    if valid_employee:
         roles.grant("facstaff", "shibboleth", netid)
 
     session["user"] = user_info
