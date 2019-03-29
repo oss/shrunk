@@ -104,6 +104,10 @@ def exists(role):
     """check if a role is valid"""
     return role in qualified_for
 
+def valid_roles():
+    """returns a list of valid roles"""
+    return list(qualified_for)
+
 def init(app, mongo_client=None):
     """init the module, namely get a reference to db"""
     if not mongo_client:
