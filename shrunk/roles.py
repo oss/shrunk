@@ -109,6 +109,8 @@ def template_data(role, netid, invalid=False):
         data["msg"] = form_text[role]["invalid"]
     data.update(form_text[role])
     data['admin'] = is_admin
+    data['power_user'] = check("power_user", netid)
+    data['facstaff'] = check("facstaff", netid)
     return data
 
 def exists(role):

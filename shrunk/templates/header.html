@@ -23,7 +23,7 @@
 	    {% if admin %}
             <li><a href="/admin/" class="title">Manage Users</a></li>
 	    {% endif %}
-	    {% if admin or facstaff %}
+	    {% if admin or facstaff or power_user %}
 	    <li><a href="/roles/whitelisted" class="title">Whitelist Users</a></li>
 	    {% endif%}
 	</ul>

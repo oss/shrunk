@@ -284,6 +284,7 @@ def render_index(**kwargs):
         render_template("index.html",
                         admin=is_admin,
                         facstaff=roles.check("facstaff", netid),
+                        power_user=roles.check("power_user", netid),
                         all_users=all_users,
                         begin_pages=begin_pages,
                         end_pages=end_pages,
@@ -367,7 +368,8 @@ def get_stats():
         "monthy_visits": [],
         "query": session.get("query"),
         "admin": roles.check('admin', netid),
-        "facstaff": roles.check("facstaff", netid)
+        "facstaff": roles.check("facstaff", netid),
+        "power_user": roles.check("power_user", netid)
     }
 
     client = app.get_shrunk()
@@ -529,7 +531,8 @@ def qr():
     kwargs = {"print": "print" in request.args,
               "query": session.get("query"),
               "admin": roles.check('admin', netid),
-              "facstaff": roles.check("facstaff", netid)}
+              "facstaff": roles.check("facstaff", netid),
+              "power_user": roles.check("power_user", netid)}
     return render_template("qr.html", **kwargs)
 
 
@@ -616,6 +619,7 @@ def edit_link_form():
     info['query'] = session.get('query')
     info['admin'] = roles.check('admin', netid)
     info['facstaff'] = roles.check("facstaff", netid),
+    info['power_user'] = roles.check("power_user", netid),
     # Render the edit template
     return render_template("edit.html", **info)
 
@@ -631,4 +635,4 @@ def admin_panel():
     """
     netid = session['user'].get('netid')
     roledata = [{"id": role, "title": roles.form_text[role]["title"]} for role in roles.valid_roles()]
-    return render_template("admin.html", netid=netid, roledata=roledata)
+    return render_template("admin.html", netid=netid, roledata=roledata, admin=True)
