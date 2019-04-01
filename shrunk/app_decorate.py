@@ -154,6 +154,10 @@ class ShrunkFlask(ShrunkFlaskMini):
             netid = session["user"]["netid"]
             try:
                 entity = request.form["entity"]
+                if roles.check(role, entity):
+                    kwargs = roles.template_data(role, netid)
+                    kwargs['error'] = 'The entity already has that role.'
+                    return render_template("role.html", **kwargs)
                 allow_comment = roles.template_data(role, netid)['allow_comment']
                 comment = ''
                 if allow_comment:

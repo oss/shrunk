@@ -7,6 +7,12 @@
 </div>
 {% endif %}
 
+{%if error %}
+<div class="error">
+    {{ error }}
+</div>
+{% endif %}
+
 <article class="add-group clearfix">
     <h3>{{ grant_title }}</h3>
     <form method="POST" action="/roles/{{role}}/" name="blacklist">
