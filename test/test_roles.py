@@ -11,6 +11,9 @@ client = ShrunkClient(host='unit_db')
 mongo_client = client._mongo
 init(None, mongo_client=mongo_client)
 
+def teardown_function():
+        mongo_client.drop_database("shrunk_roles")
+
 def test_invalid():
     with raises(InvalidEntity):
         grant('root', 'Justice League', 'peb60')
@@ -97,7 +100,7 @@ def test_template_data():
     assert not template['power_user']
     assert not template['facstaff']
     assert len(template['grants']) == 2
-    
+
     grant('admin', 'Justice League', 'shrunk_test')
 
     template = template_data('role0', 'shrunk_test')
@@ -108,3 +111,20 @@ def test_template_data():
 
     template = template_data('role0', 'shrunk_test', invalid=True)
     assert template['msg'] == 'invalid entity for role role0'
+
+def test_has_one_of():
+    new("prole0", True)
+    new("prole1", True)
+    grant('prole0', 'shrunk_test', 'entity0')
+    grant('prole1', 'shrunk_test', 'entity0')
+    grant('prole0', 'shrunk_test', 'entity1')
+    grant('prole1', 'shrunk_test', 'entity2')
+
+    assert has_one_of(["prole0", "prole1", "bogus"], "entity0")
+    assert has_one_of(["prole0", "prole1", "bogus"], "entity1")
+    assert not has_one_of(["prole0", "bogus"], "entity2")
+
+    assert has_one_of(["prole0", "prole1", "bogus"], "entity2")
+    assert not has_one_of(["prole1", "bogus"], "entity1")
+
+    assert not has_one_of(["fweuihiwf", "hash_slining_slasher", "bogus"], "entity0")
