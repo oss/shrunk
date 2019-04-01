@@ -151,33 +151,36 @@ class ShrunkFlask(ShrunkFlaskMini):
         @self.require_login
         @self.require_qualified
         def role_grant(role):
+            netid = session["user"]["netid"]
             try:
-                netid = session["user"]["netid"]
                 entity = request.form["entity"]
-                allow_comment = roles.template_data(role)['allow_comment']
+                allow_comment = roles.template_data(role, netid)['allow_comment']
                 comment = ''
                 if allow_comment:
                     comment = request.form["comment"]
                 roles.grant(role, netid, entity, comment)
                 return redirect("/roles/"+role)
             except roles.InvalidEntity:
-                return render_template("role.html", **roles.template_data(role, invalid=True))
+                return render_template("role.html", **roles.template_data(role, netid, invalid=True))
 
         @self.route("/roles/<role>/revoke", methods=["POST"])
         @self.require_login
         @self.require_qualified
         def role_revoke(role):
+            netid = session["user"]["netid"]
             entity = request.form["entity"]
-            roles.revoke(role, entity)
-            return redirect("/roles/"+role)
+            granted_by = roles.granted_by(role, entity)
+            if granted_by and (roles.check("admin", netid) or netid == granted_by):
+                roles.revoke(role, entity)
+                return redirect("/roles/"+role)
+            return redirect("/unauthorized")
 
         @self.route("/roles/<role>/", methods=["GET"])
         @self.require_login
         @self.require_qualified
         def role_list(role):
             netid = session['user'].get('netid')
-            kwargs = roles.template_data(role)
-            kwargs['admin'] = roles.check('admin', netid)
+            kwargs = roles.template_data(role, netid)
             return render_template("role.html", **kwargs)
 
     def setup_roles(self):
