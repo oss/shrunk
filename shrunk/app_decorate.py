@@ -248,7 +248,8 @@ class ShrunkFlask(ShrunkFlaskMini):
             "revoke_button": "UNWHITELIST",
             "empty": "there are currently no whitelisted users",
             "granted_by": "whitelisted by",
-            "allow_comment": True
+            "allow_comment": True,
+            "comment_prompt": "Describe why the user has been granted access to Go."
         })
 
         roles.new("facstaff", is_admin, custom_text={
