@@ -325,12 +325,8 @@ def add_link():
     template = {
         'netid': netid,
         'sortby': "0",
-<<<<<<< HEAD
         'all_users': "0",
         'roles': roles.get(netid)
-=======
-        'all_users': "0"
->>>>>>> 07fda24f6dcdd64693d55694b9ccdd64c51eb351
     }
     def add_url_template(**kwargs):
         template.update(kwargs)
@@ -358,10 +354,7 @@ def add_link_form():
     netid = session['user'].get('netid')
     template = {
         'netid': netid,
-<<<<<<< HEAD
         'roles': roles.get(netid),
-=======
->>>>>>> 07fda24f6dcdd64693d55694b9ccdd64c51eb351
         'sortby': "0",
         'all_users': "0"
     }
@@ -377,11 +370,8 @@ def get_stats():
         "missing_url": False,
         "monthy_visits": [],
         "query": session.get("query"),
-<<<<<<< HEAD
-        "roles": roles.get(netid)
-=======
+        "roles": roles.get(netid),
         "netid": netid
->>>>>>> 07fda24f6dcdd64693d55694b9ccdd64c51eb351
     }
 
     client = app.get_shrunk()
@@ -542,12 +532,9 @@ def qr():
     netid = session['user'].get('netid')
     kwargs = {"print": "print" in request.args,
               "query": session.get("query"),
-<<<<<<< HEAD
+              "netid": netid,
               "roles": roles.get(netid)
     }
-=======
-              "netid": netid}
->>>>>>> 07fda24f6dcdd64693d55694b9ccdd64c51eb351
     return render_template("qr.html", **kwargs)
 
 
@@ -630,11 +617,8 @@ def edit_link_form():
 
     info['old_short_url'] = old_short_url
     info['query'] = session.get('query')
-<<<<<<< HEAD
     info['roles'] = roles.get(netid)
-=======
     info['netid'] = netid
->>>>>>> 07fda24f6dcdd64693d55694b9ccdd64c51eb351
     # Render the edit template
     return render_template("edit.html", **info)
 

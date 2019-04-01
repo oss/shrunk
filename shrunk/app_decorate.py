@@ -192,8 +192,8 @@ class ShrunkFlask(ShrunkFlaskMini):
         @self.require_qualified
         def role_list(role):
             netid = session['user'].get('netid')
-            kwargs['roles'] = roles.get(netid)
             kwargs = roles.template_data(role, netid)
+            kwargs['roles'] = roles.get(netid)
             return render_template("role.html", **kwargs)
 
     def setup_roles(self):
