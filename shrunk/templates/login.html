@@ -26,12 +26,16 @@
         <button type="submit" class="login-button btn btn-default">DevUser Login</button>
     </form>
 
-    <form class="dev-login-btn" action="{{ dev_admin_login }}" method="get">
-        <button type="submit" class="login-button btn btn-default">DevAdmin Login</button>
+    <form class="dev-login-btn" action="{{ dev_facstaff_login }}" method="get">
+        <button type="submit" class="login-button btn btn-default">DevFacstaff Login</button>
     </form>
 
     <form class="dev-login-btn" action="{{ dev_power_login }}" method="get">
         <button type="submit" class="login-button btn btn-default">DevPowerUser Login</button>
+    </form>
+
+    <form class="dev-login-btn" action="{{ dev_admin_login }}" method="get">
+        <button type="submit" class="login-button btn btn-default">DevAdmin Login</button>
     </form>
     </div>
     {% endif %}

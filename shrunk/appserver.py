@@ -97,9 +97,7 @@ def logout():
         return redirect('/')
     user = session.pop('user')
     if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
-        if(user['netid'] == "DEV_ADMIN" or
-           user['netid'] == "DEV_USER" or
-           user['netid'] == "DEV_PWR_USER"):
+        if user['netid'] in ['DEV_USER', 'DEV_FACSTAFF', 'DEV_PWR_USER', 'DEV_ADMIN']:
             return redirect('/')
     return redirect('/shibboleth/Logout')
 
@@ -116,6 +114,7 @@ def render_login(**kwargs):
                                          shib_login='/login',
                                          dev=enable_dev,
                                          dev_user_login='/dev-user-login',
+                                         dev_facstaff_login='/dev-facstaff-login',
                                          dev_admin_login='/dev-admin-login',
                                          dev_power_login='/dev-power-login',
                                          **kwargs))
@@ -129,6 +128,16 @@ if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
         session['user'] = {'netid':'DEV_USER'}
         session["all_users"] = "0"
         session["sortby"] = "0"
+        return redirect('/')
+
+    @app.route('/dev-facstaff-login')
+    def dev_facstaff_login():
+        app.logger.info('dev facstaff login valid')
+        session['user'] = {'netid': 'DEV_FACSTAFF'}
+        session['all_users'] = '0'
+        session['sortby'] = '0'
+        if not roles.check('facstaff', 'DEV_FACSTAFF'):
+            roles.grant('facstaff', 'Justice League', 'DEV_FACSTAFF')
         return redirect('/')
 
     @app.route('/dev-admin-login')
