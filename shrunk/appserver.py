@@ -8,10 +8,10 @@ import werkzeug.useragents
 import urllib.parse
 import collections
 
-from flask import render_template, make_response, request, redirect, session
+from flask import make_response, request, redirect, session
 from flask_sso import SSO
 
-from shrunk.app_decorate import ShrunkFlask
+from shrunk.app_decorate import ShrunkFlask, render_template
 from shrunk.client import BadShortURLException, ForbiddenDomainException
 import shrunk.roles as roles
 
@@ -291,16 +291,13 @@ def render_index(**kwargs):
 
     resp = make_response(
         render_template("index.html",
-                        admin=is_admin,
-                        facstaff=roles.check("facstaff", netid),
-                        power_user=roles.check("power_user", netid),
+                        netid=netid,
                         all_users=all_users,
                         begin_pages=begin_pages,
                         end_pages=end_pages,
                         lastpage=lastpage,
                         links=links,
                         linkserver_url=app.config["LINKSERVER_URL"],
-                        netid=netid,
                         page=page,
                         query=query,
                         sortby=sortby,
@@ -327,10 +324,7 @@ def add_link():
     template = {
         'netid': netid,
         'sortby': "0",
-        'all_users': "0",
-        'admin': roles.check("admin", netid),
-        'power_user': roles.check("power_user", netid),
-        'facstaff': roles.check("facstaff", netid)
+        'all_users': "0"
     }
     def add_url_template(**kwargs):
         template.update(kwargs)
@@ -358,9 +352,6 @@ def add_link_form():
     netid = session['user'].get('netid')
     template = {
         'netid': netid,
-        'admin': roles.check("admin", netid),
-        'power_user': roles.check("power_user", netid),
-        'facstaff': roles.check("facstaff", netid),
         'sortby': "0",
         'all_users': "0"
     }
@@ -376,9 +367,7 @@ def get_stats():
         "missing_url": False,
         "monthy_visits": [],
         "query": session.get("query"),
-        "admin": roles.check('admin', netid),
-        "facstaff": roles.check("facstaff", netid),
-        "power_user": roles.check("power_user", netid)
+        "netid": netid
     }
 
     client = app.get_shrunk()
@@ -539,9 +528,7 @@ def qr():
     netid = session['user'].get('netid')
     kwargs = {"print": "print" in request.args,
               "query": session.get("query"),
-              "admin": roles.check('admin', netid),
-              "facstaff": roles.check("facstaff", netid),
-              "power_user": roles.check("power_user", netid)}
+              "netid": netid}
     return render_template("qr.html", **kwargs)
 
 
@@ -626,9 +613,7 @@ def edit_link_form():
     info['old_short_url'] = old_short_url
     info['show_short_url'] = roles.has_one_of(["admin", "power_user"], netid)
     info['query'] = session.get('query')
-    info['admin'] = roles.check('admin', netid)
-    info['facstaff'] = roles.check("facstaff", netid),
-    info['power_user'] = roles.check("power_user", netid),
+    info['netid'] = netid
     # Render the edit template
     return render_template("edit.html", **info)
 
@@ -644,4 +629,4 @@ def admin_panel():
     """
     netid = session['user'].get('netid')
     roledata = [{"id": role, "title": roles.form_text[role]["title"]} for role in roles.valid_roles()]
-    return render_template("admin.html", netid=netid, roledata=roledata, admin=True)
+    return render_template("admin.html", netid=netid, roledata=roledata)

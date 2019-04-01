@@ -1,10 +1,18 @@
 from functools import wraps, partial
 import logging
-from flask import Flask, session, redirect, render_template, request
+import flask
+from flask import Flask, session, redirect, request
 from shrunk.stringutil import validate_url
 import shrunk.roles as roles
 from shrunk.client import ShrunkClient
 from shrunk.stringutil import get_domain
+
+def render_template(template_name, **kwargs):
+    if 'netid' in kwargs:
+        netid = kwargs['netid']
+        for role in ['facstaff', 'power_user', 'admin']:
+            kwargs[role] = roles.check(role, netid)
+    return flask.render_template(template_name, **kwargs)
 
 class ShrunkFlaskMini(Flask):
     """set up and configs our basic shrunk aplication"""
