@@ -250,7 +250,7 @@ class ShrunkFlask(ShrunkFlaskMini):
             "grant_button": "WHITELIST",
             "revoke_title": "Remove a user from the whitelist",
             "revoke_button": "UNWHITELIST",
-            "empty": "there are currently no whitelisted users",
+            "empty": "you have not whitelisted any users",
             "granted_by": "whitelisted by",
             "allow_comment": True,
             "comment_prompt": "Describe why the user has been granted access to Go."
