@@ -50,6 +50,27 @@ def test_visit():
         
     assert client.get_num_visits(short_url) is hits
 
+def test_invalid_sort():
+    cursor = client.get_all_urls()
+    with raises(IndexError):
+        cursor.sort(100)
+
+def test_no_geoip():
+    old_geoip = client._geoip
+    client._geoip = None
+    assert client.get_geoip_location('8.8.8.8') == 'unknown'
+    assert client.get_country_name('8.8.8.8') == 'unknown'
+    assert client.get_state_code('8.8.8.8') == 'unknown'
+    client._geoip = old_geoip
+
+def test_172_geoip():
+    assert client.get_geoip_location('172.31.0.0') == 'Rutgers New Brunswick, New Jersey, United States'
+    assert client.get_geoip_location('172.27.0.0') == 'Rutgers Newark, New Jersey, United States'
+    assert client.get_geoip_location('172.24.0.0') == 'Rutgers Camden, New Jersey, United States'
+    assert client.get_geoip_location('172.0.0.0') == 'New Jersey, United States'
+    assert client.get_country_name('172.0.0.0') == 'United States'
+    assert client.get_state_code('172.0.0.0') == 'NJ'
+
 def test_count():
     "Test to see if links are counted correctly"
 
@@ -483,12 +504,14 @@ def test_search_netid():
     assert_search("title", "Knott MyLova", url2)
 
 def test_state_code():
+    assert client.get_state_code('66.249.88.21') == 'unknown'
     assert client.get_state_code('165.230.224.67') == 'NJ'
     assert client.get_state_code('34.201.163.243') == 'VA'
     assert client.get_state_code('35.168.234.184') == 'VA'
     assert client.get_state_code('107.77.70.130') == 'NY'
 
 def test_country_name():
+    assert client.get_country_name('66.249.88.21') == 'United States'
     assert client.get_country_name('165.230.224.67') == 'United States'
     assert client.get_country_name('34.201.163.243') == 'United States'
     assert client.get_country_name('35.168.234.184') == 'United States'
@@ -497,16 +520,13 @@ def test_country_name():
     assert client.get_country_name('94.130.167.121') == 'Germany'
 
 def test_geoip_location():
-    # Different versions of the geoip database can give significantly different
-    # results for the same IPs, so it is difficult to test get_geoip_location.
-    
-    # assert client.get_geoip_location('165.230.224.67') == 'Piscataway, New Jersey, United States'
-    # assert client.get_geoip_location('34.201.163.243') == 'Ashburn, Virginia, United States'
-    # assert client.get_geoip_location('35.168.234.184') == 'Ashburn, Virginia, United States'
-    # assert client.get_geoip_location('107.77.70.130') == 'New York, New York, United States'
-    # assert client.get_geoip_location('136.243.154.93') == 'Gummersbach, North Rhine-Westphalia, Germany'
-    # assert client.get_geoip_location('94.130.167.121') == 'Germany' 
-    pass
+    assert client.get_geoip_location('66.249.88.21') == 'United States'
+    assert client.get_geoip_location('165.230.224.67') == 'New Brunswick, New Jersey, United States'
+    assert client.get_geoip_location('34.201.163.243') == 'Ashburn, Virginia, United States'
+    assert client.get_geoip_location('35.168.234.184') == 'Ashburn, Virginia, United States'
+    assert client.get_geoip_location('107.77.70.130') == 'New York, New York, United States'
+    assert client.get_geoip_location('136.243.154.93') == 'Bockenheim, Rheinland-Pfalz, Germany'
+    assert client.get_geoip_location('94.130.167.121') == 'Germany' 
 
 def test_get_visitor_id():
     def test_id(ip):

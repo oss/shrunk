@@ -8,10 +8,10 @@ import werkzeug.useragents
 import urllib.parse
 import collections
 
-from flask import render_template, make_response, request, redirect, session
+from flask import make_response, request, redirect, session
 from flask_sso import SSO
 
-from shrunk.app_decorate import ShrunkFlask
+from shrunk.app_decorate import ShrunkFlask, render_template
 from shrunk.client import BadShortURLException, ForbiddenDomainException
 import shrunk.roles as roles
 
@@ -37,26 +37,57 @@ app.jinja_env.globals.update(formattime=formattime)
 @ext.login_handler
 def login(user_info):
     types = user_info.get("employeeType").split(";")
-    app.logger.info(user_info)
-    app.logger.info(types)
     netid = user_info.get("netid")
-    valid_employee = any(t in app.config["VALID_EMPLOYEE_TYPES"] for t in types)
-    is_student_worker = 'STUDENT WORKER' in types
-    blacklisted = roles.check("blacklisted", user_info.get("netid"))
 
-    in_config_whitelist = netid in app.config["USER_WHITELIST"]
-    in_db_whitelist = roles.check("whitelisted", netid)
+    def t(typ):
+        return typ in types
 
-    if blacklisted:
+    def log_failed(why):
+        app.logger.info("failed login for {} (roles: {}, reason: {})"
+                        .format(netid, user_info.get("employeeType"), why))
+
+    # get info from shibboleth types
+    fac_staff = t('FACULTY') or t('STAFF')
+    guest = t('GUEST')
+    worker = (t('STUDENT') or t('PRIOR STUDENT')) and t('STUDENT WORKER')
+
+    # get info from ACLs
+    is_admin = roles.check("admin", netid)
+    is_power = roles.check("power_user", netid)
+    is_blacklisted = roles.check("blacklisted", netid)
+    is_whitelisted = roles.check("whitelisted", netid)
+    is_config_whitelisted = netid in app.config["USER_WHITELIST"]
+
+    # now make decisions regarding whether the user can login, and what privs they should get 
+
+    # blacklisted users can never login, except config-whitelisted users can't
+    # be blacklisted (so OSS people can always login)
+    if is_blacklisted and not is_config_whitelisted:
+        log_failed("blacklisted")
         return redirect("/unauthorized")
 
-    if not valid_employee:
-        if not (in_config_whitelist or (in_db_whitelist and is_student_worker)):
-            return redirect("/unauthorized")
+    # config-whitelisted users are automatically made admins
+    if is_config_whitelisted:
+        roles.grant("admin", "Justice League", netid)
 
-    if valid_employee:
+    # (if not blacklisted) facstaff can always login, but we need to grant a role
+    # so the rest of the app knows what privs to give the user
+    if fac_staff:
         roles.grant("facstaff", "shibboleth", netid)
 
+    # now determine whether to allow login
+    if is_config_whitelisted or fac_staff:
+        pass  # allow
+    elif guest and (is_admin or is_power):
+        pass  # allow
+    elif worker and is_whitelisted:
+        pass  # allow
+    else:
+        log_failed("unauthorized")
+        return redirect("/unauthorized")
+
+    # If we get here, the user is allowed to login, and all necessary privs
+    # have been granted.
     session["user"] = user_info
     return redirect("/")
 
@@ -66,9 +97,7 @@ def logout():
         return redirect('/')
     user = session.pop('user')
     if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
-        if(user['netid'] == "DEV_ADMIN" or
-           user['netid'] == "DEV_USER" or
-           user['netid'] == "DEV_PWR_USER"):
+        if user['netid'] in ['DEV_USER', 'DEV_FACSTAFF', 'DEV_PWR_USER', 'DEV_ADMIN']:
             return redirect('/')
     return redirect('/shibboleth/Logout')
 
@@ -85,6 +114,7 @@ def render_login(**kwargs):
                                          shib_login='/login',
                                          dev=enable_dev,
                                          dev_user_login='/dev-user-login',
+                                         dev_facstaff_login='/dev-facstaff-login',
                                          dev_admin_login='/dev-admin-login',
                                          dev_power_login='/dev-power-login',
                                          **kwargs))
@@ -98,6 +128,16 @@ if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
         session['user'] = {'netid':'DEV_USER'}
         session["all_users"] = "0"
         session["sortby"] = "0"
+        return redirect('/')
+
+    @app.route('/dev-facstaff-login')
+    def dev_facstaff_login():
+        app.logger.info('dev facstaff login valid')
+        session['user'] = {'netid': 'DEV_FACSTAFF'}
+        session['all_users'] = '0'
+        session['sortby'] = '0'
+        if not roles.check('facstaff', 'DEV_FACSTAFF'):
+            roles.grant('facstaff', 'Justice League', 'DEV_FACSTAFF')
         return redirect('/')
 
     @app.route('/dev-admin-login')
@@ -252,13 +292,13 @@ def render_index(**kwargs):
     resp = make_response(
         render_template("index.html",
                         roles=roles.get(netid),
+                        netid=netid,
                         all_users=all_users,
                         begin_pages=begin_pages,
                         end_pages=end_pages,
                         lastpage=lastpage,
                         links=links,
                         linkserver_url=app.config["LINKSERVER_URL"],
-                        netid=netid,
                         page=page,
                         query=query,
                         sortby=sortby,
@@ -285,8 +325,12 @@ def add_link():
     template = {
         'netid': netid,
         'sortby': "0",
+<<<<<<< HEAD
         'all_users': "0",
         'roles': roles.get(netid)
+=======
+        'all_users': "0"
+>>>>>>> 07fda24f6dcdd64693d55694b9ccdd64c51eb351
     }
     def add_url_template(**kwargs):
         template.update(kwargs)
@@ -314,7 +358,10 @@ def add_link_form():
     netid = session['user'].get('netid')
     template = {
         'netid': netid,
+<<<<<<< HEAD
         'roles': roles.get(netid),
+=======
+>>>>>>> 07fda24f6dcdd64693d55694b9ccdd64c51eb351
         'sortby': "0",
         'all_users': "0"
     }
@@ -330,7 +377,11 @@ def get_stats():
         "missing_url": False,
         "monthy_visits": [],
         "query": session.get("query"),
+<<<<<<< HEAD
         "roles": roles.get(netid)
+=======
+        "netid": netid
+>>>>>>> 07fda24f6dcdd64693d55694b9ccdd64c51eb351
     }
 
     client = app.get_shrunk()
@@ -491,8 +542,12 @@ def qr():
     netid = session['user'].get('netid')
     kwargs = {"print": "print" in request.args,
               "query": session.get("query"),
+<<<<<<< HEAD
               "roles": roles.get(netid)
     }
+=======
+              "netid": netid}
+>>>>>>> 07fda24f6dcdd64693d55694b9ccdd64c51eb351
     return render_template("qr.html", **kwargs)
 
 
@@ -575,7 +630,11 @@ def edit_link_form():
 
     info['old_short_url'] = old_short_url
     info['query'] = session.get('query')
+<<<<<<< HEAD
     info['roles'] = roles.get(netid)
+=======
+    info['netid'] = netid
+>>>>>>> 07fda24f6dcdd64693d55694b9ccdd64c51eb351
     # Render the edit template
     return render_template("edit.html", **info)
 

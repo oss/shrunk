@@ -1,10 +1,18 @@
 from functools import wraps, partial
 import logging
-from flask import Flask, session, redirect, render_template, request
+import flask
+from flask import Flask, session, redirect, request
 from shrunk.stringutil import validate_url
 import shrunk.roles as roles
 from shrunk.client import ShrunkClient
 from shrunk.stringutil import get_domain
+
+def render_template(template_name, **kwargs):
+    if 'netid' in kwargs:
+        netid = kwargs['netid']
+        for role in ['facstaff', 'power_user', 'admin']:
+            kwargs[role] = roles.check(role, netid)
+    return flask.render_template(template_name, **kwargs)
 
 class ShrunkFlaskMini(Flask):
     """set up and configs our basic shrunk aplication"""
@@ -151,33 +159,41 @@ class ShrunkFlask(ShrunkFlaskMini):
         @self.require_login
         @self.require_qualified
         def role_grant(role):
+            netid = session["user"]["netid"]
             try:
-                netid = session["user"]["netid"]
                 entity = request.form["entity"]
-                allow_comment = roles.template_data(role)['allow_comment']
+                if roles.check(role, entity):
+                    kwargs = roles.template_data(role, netid)
+                    kwargs['error'] = 'The entity already has that role.'
+                    return render_template("role.html", **kwargs)
+                allow_comment = roles.template_data(role, netid)['allow_comment']
                 comment = ''
                 if allow_comment:
                     comment = request.form["comment"]
                 roles.grant(role, netid, entity, comment)
                 return redirect("/roles/"+role)
             except roles.InvalidEntity:
-                return render_template("role.html", **roles.template_data(role, invalid=True))
+                return render_template("role.html", **roles.template_data(role, netid, invalid=True))
 
         @self.route("/roles/<role>/revoke", methods=["POST"])
         @self.require_login
         @self.require_qualified
         def role_revoke(role):
+            netid = session["user"]["netid"]
             entity = request.form["entity"]
-            roles.revoke(role, entity)
-            return redirect("/roles/"+role)
+            granted_by = roles.granted_by(role, entity)
+            if granted_by and (roles.check("admin", netid) or netid == granted_by):
+                roles.revoke(role, entity)
+                return redirect("/roles/"+role)
+            return redirect("/unauthorized")
 
         @self.route("/roles/<role>/", methods=["GET"])
         @self.require_login
         @self.require_qualified
         def role_list(role):
             netid = session['user'].get('netid')
-            kwargs = roles.template_data(role)
             kwargs['roles'] = roles.get(netid)
+            kwargs = roles.template_data(role, netid)
             return render_template("role.html", **kwargs)
 
     def setup_roles(self):
@@ -243,9 +259,10 @@ class ShrunkFlask(ShrunkFlaskMini):
             "grant_button": "WHITELIST",
             "revoke_title": "Remove a user from the whitelist",
             "revoke_button": "UNWHITELIST",
-            "empty": "there are currently no whitelisted users",
+            "empty": "you have not whitelisted any users",
             "granted_by": "whitelisted by",
-            "allow_comment": True
+            "allow_comment": True,
+            "comment_prompt": "Describe why the user has been granted access to Go."
         })
 
         roles.new("facstaff", is_admin, custom_text={

@@ -9,6 +9,10 @@ def test_index():
     assert get("/").status_code == 200
     logout()
 
+    login("facstaff")
+    assert get("/").status_code == 200
+    logout()
+
     login("admin")
     assert get("/").status_code == 200
     logout()
@@ -19,6 +23,7 @@ def test_index():
 
 def test_dev_logins():
     assert_redirect(get("/dev-user-login"), "/")
+    assert_redirect(get("/dev-facstaff-login"), "/")
     assert_redirect(get("/dev-admin-login"), "/")
     assert_redirect(get("/dev-power-login"), "/")
 
@@ -43,3 +48,8 @@ def test_normal_login():
     assert get("/shrunk-login").status_code < 500
     login("user")
     assert_redirect(get("/shrunk-login"), "/")
+
+def test_admin_panel():
+    login("admin")
+    assert get("/admin").status_code < 500
+    logout()

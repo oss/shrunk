@@ -81,6 +81,12 @@ def get(entity):
     entity_grants = grants.find({"entity": entity})
     return [grant["role"] for grant in entity_grants]
 
+def granted_by(role, entity):
+    grant = grants.find_one({"role": role, "entity": entity})
+    if not grant:
+        return None
+    return grant["granted_by"]
+
 def list_all(role):
     """list all entities with the role"""
     return list(grants.find({"role": role}))
@@ -89,15 +95,22 @@ def revoke(role, entity):
     """revoke role from entity"""
     grants.remove({"role": role, "entity": entity})
 
-def template_data(role, invalid=False):
+def template_data(role, netid, invalid=False):
     """gets teplated data for lisiting entities with a role in the ui"""
+    is_admin = check('admin', netid)
+    grants = list_all(role)
+    if not is_admin:
+        grants = [g for g in grants if g['granted_by'] == netid]
     data = {
         "role": role,
-        "grants": list_all(role)
+        "grants": grants
     }
     if invalid:
         data["msg"] = form_text[role]["invalid"]
     data.update(form_text[role])
+    data['admin'] = is_admin
+    data['power_user'] = check("power_user", netid)
+    data['facstaff'] = check("facstaff", netid)
     return data
 
 def exists(role):

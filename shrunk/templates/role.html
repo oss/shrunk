@@ -7,6 +7,12 @@
 </div>
 {% endif %}
 
+{%if error %}
+<div class="error">
+    {{ error }}
+</div>
+{% endif %}
+
 <article class="add-group clearfix">
     <h3>{{ grant_title }}</h3>
     <form method="POST" action="/roles/{{role}}/" name="blacklist">
@@ -14,9 +20,7 @@
 	{% if allow_comment %}
 	<h3>Comment:</h3>
 
-	<textarea id="comment" name="comment" rows="5" cols="33" placeholder="placeholder">
-Describe why the user has been granted access to Shrunk. Include the NetID and department of the requesting full-time staff or faculty member.
-	</textarea> <br /> <br />
+	<textarea id="comment" name="comment" rows="5" cols="33" required placeholder="{{ comment_prompt }}"></textarea> <br /> <br />
 	{% endif %}
 
         <input class="shrink-button btn btn-default" type="submit"
