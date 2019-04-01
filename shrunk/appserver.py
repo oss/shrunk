@@ -251,8 +251,7 @@ def render_index(**kwargs):
 
     resp = make_response(
         render_template("index.html",
-                        admin=is_admin,
-                        facstaff=roles.check("facstaff", netid),
+                        roles=roles.get(netid),
                         all_users=all_users,
                         begin_pages=begin_pages,
                         end_pages=end_pages,
@@ -287,9 +286,7 @@ def add_link():
         'netid': netid,
         'sortby': "0",
         'all_users': "0",
-        'admin': roles.check("admin", netid),
-        'power_user': roles.check("power_user", netid),
-        'facstaff': roles.check("facstaff", netid)
+        'roles': roles.get(netid)
     }
     def add_url_template(**kwargs):
         template.update(kwargs)
@@ -317,9 +314,7 @@ def add_link_form():
     netid = session['user'].get('netid')
     template = {
         'netid': netid,
-        'admin': roles.check("admin", netid),
-        'power_user': roles.check("power_user", netid),
-        'facstaff': roles.check("facstaff", netid),
+        'roles': roles.get(netid),
         'sortby': "0",
         'all_users': "0"
     }
@@ -335,8 +330,7 @@ def get_stats():
         "missing_url": False,
         "monthy_visits": [],
         "query": session.get("query"),
-        "admin": roles.check('admin', netid),
-        "facstaff": roles.check("facstaff", netid)
+        "roles": roles.get(netid)
     }
 
     client = app.get_shrunk()
@@ -497,8 +491,8 @@ def qr():
     netid = session['user'].get('netid')
     kwargs = {"print": "print" in request.args,
               "query": session.get("query"),
-              "admin": roles.check('admin', netid),
-              "facstaff": roles.check("facstaff", netid)}
+              "roles": roles.get(netid)
+    }
     return render_template("qr.html", **kwargs)
 
 
@@ -538,7 +532,7 @@ def edit_link():
 
     template = {
         "netid": netid,
-        "show_short_url": roles.has_one_of(["admin", "power_user"], netid),
+        "roles": roles.get(netid),
         "title": request.form["title"],
         "old_short_url": request.form["old_short_url"],
         "long_url": request.form["long_url"]
@@ -552,7 +546,6 @@ def edit_link():
         # Success - make the edits in the database
         kwargs = form.to_json()
         kwargs['admin'] = roles.check("admin", netid)
-        kwargs['facstaff'] = roles.check("facstaff", netid),
         kwargs['power_user'] = roles.check("power_user", netid)
         kwargs['old_short_url'] = request.form['old_short_url']
         try:
@@ -581,10 +574,8 @@ def edit_link_form():
         return render_index(wrong_owner=True)
 
     info['old_short_url'] = old_short_url
-    info['show_short_url'] = roles.has_one_of(["admin", "power_user"], netid)
     info['query'] = session.get('query')
-    info['admin'] = roles.check('admin', netid)
-    info['facstaff'] = roles.check("facstaff", netid),
+    info['roles'] = roles.get(netid)
     # Render the edit template
     return render_template("edit.html", **info)
 

@@ -20,12 +20,12 @@
         <ul class="show-login navbar-subtitle nav navbar-nav">
             <li><a href="{{ url_for('render_index') }}">My URLs</a></li>
             <li><a href="/add">Shorten A URL</a></li>
-	    {% if admin %}
+	    {% if "admin" in roles %}
             <li><a href="/admin/" class="title">Manage Users</a></li>
 	    {% endif %}
-	    {% if admin or facstaff %}
+	    {% if "admin" in roles or "facstaff" in roles or "power_user" in roles %}
 	    <li><a href="/roles/whitelisted" class="title">Whitelist Users</a></li>
-	    {% endif%}
+	    {% endif %}
 	</ul>
 	<ul class="show-login navbar-subtitle nav navbar-nav">
             <li><a href="{{ url_for('logout') }}">Log Out</a></li>
@@ -41,7 +41,7 @@
             <option {% if sortby == "2" %} selected {% endif %}>A-Z</option>
             <option {% if sortby == "3" %} selected {% endif %}>Z-A</option>
         </select>
-        {% if admin %}
+        {% if "admin" in roles %}
         <select id="all-users" class="shrunk-toolbar-item" onchange="requery()">
             <option {% if all_users == "0" %} selected {% endif %}>My Links</option>
             <option {% if all_users == "1" %} selected {% endif %}>All Links</option>

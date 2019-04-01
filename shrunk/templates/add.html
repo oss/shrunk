@@ -24,7 +24,7 @@
             <input type="url" class="form-control" id="long_url" name="long_url"
                    placeholder="URL">
         </div>
-        {% if admin or power_user %}
+        {% if "admin" in roles or "power_user" in roles %}
         <div class="item">
             <label for="short_url">Optional Alias</label>
             {% if errors %}

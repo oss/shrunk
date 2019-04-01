@@ -50,7 +50,7 @@
                 <a href="{{ linkserver_url }}/{{ link['_id'] }}" target="_blank">{{ linkserver_url }}/{{ link['_id'] }}</a>
                 <span class="original-url"> &#8594 {{ link['long_url'] }} </span>
             </div>
-            {% if admin %}
+            {% if "admin" in roles %}
             <div class="owner" netid="{{ link['netid'] }}">
                 Owner: {{ link['netid'] }}
             </div>
