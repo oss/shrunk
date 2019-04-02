@@ -78,7 +78,7 @@ def login(user_info):
     # now determine whether to allow login
     if is_config_whitelisted or fac_staff:
         pass  # allow
-    elif guest and (is_admin or is_power):
+    elif guest and (is_admin or is_power or is_whitelisted):
         pass  # allow
     elif worker and is_whitelisted:
         pass  # allow
