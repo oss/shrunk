@@ -58,7 +58,7 @@ def login(user_info):
     is_whitelisted = roles.check("whitelisted", netid)
     is_config_whitelisted = netid in app.config["USER_WHITELIST"]
 
-    # now make decisions regarding whether the user can login, and what privs they should get 
+    # now make decisions regarding whether the user can login, and what privs they should get
 
     # blacklisted users can never login, except config-whitelisted users can't
     # be blacklisted (so OSS people can always login)
@@ -523,7 +523,21 @@ def monthly_visits():
     if not client.is_owner_or_admin(url, netid):
         return '{"error":"not authorized"}', 401
     visits = client.get_monthly_visits(url)
-    return json.dumps(visits)
+    return json.dumps(visits), 200, {"Content-Type": "application/json"}
+
+@app.route("/daily-visits", methods=["GET"])
+@app.require_login
+def daily_visits():
+    client = app.get_shrunk()
+    netid = session["user"].get("netid")
+
+    if "url" not in request.args:
+        return '{"error":"request must have url"}', 400
+    url = request.args['url']
+    if not client.is_owner_or_admin(url, netid):
+        return '{"error":"not authorized"}', 401
+    visits = client.get_daily_visits(url)
+    return json.dumps(visits), 200, {"Content-Type": "application/json"}
 
 
 @app.route("/qr", methods=["GET"])

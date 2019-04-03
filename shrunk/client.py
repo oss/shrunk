@@ -9,7 +9,7 @@ from pymongo.collection import ReturnDocument
 import geoip2.database
 import shrunk.roles as roles
 from shrunk.stringutil import get_domain
-from shrunk.aggregations import match_short_url, monthly_visits_aggregation
+from shrunk.aggregations import match_short_url, monthly_visits_aggregation, daily_visits_aggregation
 
 class BadShortURLException(Exception):
     """Raised when the there is an error with the requested short url"""
@@ -471,6 +471,23 @@ class ShrunkClient(object):
         aggregation = [match_short_url(short_url)] + monthly_visits_aggregation
         return list(db.visits.aggregate(aggregation))
 
+    def get_daily_visits(self, short_url):
+        """Given a short URL, return how many visits and new unique visiters it gets per month.
+
+        :Parameters:
+          - `short_url`: A shortened URL
+
+        :Returns:
+         An array, each of whose elements is a dict containing the data for one month.
+         The fields of each dict are:
+          - `_id`: a dict with keys for month and year.
+          - `first_time_visits`: new visits by users who haven't seen the link yet.
+          - `all_visits`: the total visits per that month.
+        """
+        db = self._mongo.shrunk_visits
+        aggregation = [match_short_url(short_url)] + daily_visits_aggregation
+        return list(db.visits.aggregate(aggregation))
+
     def get_long_url(self, short_url):
         """Given a short URL, returns the long URL.
 
@@ -679,7 +696,7 @@ class ShrunkClient(object):
              - `ipaddr`: a string containing an IPv4 address.
 
            :Returns:
-             A string containing the full name of the country in which the address 
+             A string containing the full name of the country in which the address
              is located (e.g. ``"United States"``), or the string ``"unknown"``
              if the country cannot be determined.
         """
