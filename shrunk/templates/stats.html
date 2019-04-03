@@ -22,15 +22,16 @@
 
     <div>
 	key:
-	<span style="color:steelblue">monthly total visits</span>
-	<span style="color:orange">monthly first time visits</span>
+	<span style="color:steelblue">total visits</span>
+	<span style="color:orange">first time visits</span>
     </div>
     <div id="nodata"></div>
     <svg height="0"></svg>
     <div>
 	<form class="form-inline">
-	    <select class="form-control" id="start"></select>
-	    <select class="form-control" id="end"></select>
+	    <input type="date" class="form-control" id="start"></input>
+	    <input type="date" class="form-control" id="end"></input>
+	    <button class="form-control" id="reset">reset</button>
 	</form>
 	<span id="error"></span>
     </div>

@@ -1,13 +1,36 @@
 (function(){
     let first_time_visits_elem=d3.select("#first_time_visits");
     let start_options=d3.select("#start");
-    let end_options=d3.select("#end")
-    let all_months=[];
+    let end_options=d3.select("#end");
+    let reset_btn=d3.select("#reset");
+    let all_visits=[];
 
     let url=new URL(document.location);
     const short_url=url.searchParams.get("url");
 
+    const obj2datestr = (obj) => {
+	const pad = (v) => parseInt(v) < 10 ? "0" + v : v;
+	return pad(obj._id.year) + "-" + pad(obj._id.month) + "-" + pad(obj._id.day);
+    }
+    const obj2date = (obj) => {
+	return new Date(obj2datestr(obj));
+    }
+    window.obj2datestr = obj2datestr;
+    window.obj2date = obj2date;
+
+    // parse the date / time
+    const parseTime = d3.timeParse("%Y-%m-%d");
+
+    // format the dates
+    const parse_dates = function(visits) {
+	visits.forEach(visit=>{
+	    visit.date = parseTime(visit._id.year+"-"+visit._id.month+"-"+visit._id.day);
+	});
+	return visits;
+    };
+
     const add_visits_chart = function(visits){
+	console.log("h",visits);
 	if(visits.length<2){
 	    d3.select("#nodata").text("Not enough data for a chart");
 	    return visits;
@@ -16,12 +39,25 @@
 	const width = 700 - margin.left - margin.right;
 	const height = 500 - margin.top - margin.bottom;
 
-	// parse the date / time
-	const parseTime = d3.timeParse("%Y-%m");
-
 	// set the ranges
-	let scale_time = d3.scaleTime().range([0, width]);
-	let scale_visits = d3.scaleLinear().range([height, 0]);
+	let scale_time = d3.scaleTime()
+	    .domain([Date.parse(visits[0].date), Date.parse(visits[visits.length - 1].date)])
+	    .range([0, width]);
+
+	// format ticks
+	scale_time.tickFormat = (count, specifier) => {
+	    const year = (d) => d3.timeFormat("%Y")(d);
+	    const day = (d) => d3.timeFormat("%b %d")(d);
+	    const month = (d) => d3.timeFormat("%b")(d);
+	    return (d) => {
+		return d.getMonth() == 0 && d.getDate == 0? year(d) :
+		    d.getDate() == 1 ? month(d) : day(d)
+	    };
+	}
+
+	let scale_visits = d3.scaleLinear()
+	    .domain([0, d3.max(visits, d=>d.all_visits)])
+	    .range([height, 0]);
 
 	// define the line
 	const all_visits_line = d3.line()
@@ -43,15 +79,6 @@
 	    .append("g")
 	    .attr("transform",
 		  "translate(" + margin.left + "," + margin.top + ")");
-
-	// format the dates
-	visits.forEach(visit=>{
-	    visit.date = parseTime(visit._id.year+"-"+visit._id.month);
-	});
-
-	// Scale the range of the data
-	scale_time.domain(d3.extent(visits, d=>d.date));
-	scale_visits.domain([0, d3.max(visits, d=>d.all_visits)]);
 
 	// Add the valueline path.
 	svg.append("path")
@@ -80,39 +107,43 @@
 	    .call(d3.axisLeft(scale_visits));
 	return visits;
     }
+    window.add_visits_chart = add_visits_chart;
 
-    const add_ranges = function(monthly_visits){
-	// you cant start from the last month or end on the first
-	for(let i=0;i<monthly_visits.length-1;i++){
-	    let month=monthly_visits[i]
-	    start_options
-		.append("option")
-		.text(month._id.month+"-"+month._id.year)
-		.attr("value", i)
-	}
-	//reversed to default to last month
-	for(let i=monthly_visits.length-1;i>0;i--){
-	    let month=monthly_visits[i]
-	    end_options
-		.append("option")
-		.text(month._id.month+"-"+month._id.year)
-		.attr("value", i)
-	}
+    const add_ranges = function(visits){
+	const first = obj2datestr(visits[0]);
+
+	const last = obj2datestr(visits[visits.length - 1]);
+	start_options.attr("min", first);
+	start_options.attr("max", last);
+	start_options.node().value = first;
+
+	end_options.attr("min", first);
+	end_options.attr("max", last);
+	end_options.node().value = last;
     }
 
-    const empty_month = function(month, year){
+    const empty_visit = function(yearOrDate, month, day){
+	let year = yearOrDate;
+	let date = yearOrDate;
+	if (month == undefined) {
+	    year = date.getFullYear();
+	    month = date.getMonth();
+	    day = date.getDate();
+	}
 	return {
 	    _id:{
-		month: month,
-		year:  year
+		month: month + 1,
+		year:  year,
+		day: day
 	    },
+	    date: new Date(year, month, day),
 	    all_visits: 0,
 	    first_time_visits: 0
 	}
     }
 
     /**
-     * if there is now view data for a month there is no months object
+     * if there is no view data for a month there is no months object
      * for that month and it creates a gap in the chart. this fills in the
      * gaps
      */
@@ -133,37 +164,38 @@
 		new_months.push(next_month_object);
 		i++;
 	    }else if(last_month===12){
-		new_months.push(empty_month(1, last_year+1));
+		new_months.push(empty_visit(1, last_year+1, 1));
 	    }else{
-		new_months.push(empty_month(last_month+1,last_year))
+		new_months.push(empty_month(last_month+1,last_year, 1))
 	    }
 	}
 	return new_months;
     }
-    
+
     const log = function(input){
 	console.log(input);
 	return input;
     }
-    const log_months = function(months){
-	months.map(month=>console.log(month._id.month, month._id.year))
-	return months;
+    const log_visits = function(visits){
+	visits.map(visit=>console.log(visit._id.visit, visit._id.year))
+	return visits;
     }
 
-    const set_first_time_visits = function(monthly_visits){
+    const set_first_time_visits = function(visits){
 	let total_first_time=0;
-	monthly_visits.map(month=>{
-	    total_first_time+=month.first_time_visits
+	visits.map(visit=>{
+	    total_first_time+=visit.first_time_visits
 	});
 	first_time_visits_elem.text(total_first_time);
-	return monthly_visits;
+	return visits;
     }
-    
-    const set_all_months = function(months){
-	all_months=months;
-	return months;
+
+    const set_all_visits = function(visits){
+	all_visits=visits;
+	window.all_visits = visits;
+	return visits;
     }
-    
+
     const set_range_error = function(){
 	d3.select("#error").text("Invalid range");
     }
@@ -172,38 +204,86 @@
     }
 
     /**
-     * start and end are the index of the month in monthly visits array
+     * filters the graph data to be within the date range
      */
-    const is_valid_range = function(start, end){
-	return end-start>0
-    }
 
     const update_range = function(){
-	const start=parseInt(start_options.node().value);
-	const end=parseInt(end_options.node().value);
-	if(!is_valid_range(start, end)){
+	const first = obj2date(all_visits[0]);
+	const last = obj2date(all_visits[all_visits.length - 1]);
+
+	const start = Date.parse(start_options.node().value);
+	const end = Date.parse(end_options.node().value);
+	if(isNaN(start) || isNaN(end) || start >= end
+	   || start < first || end > last){
 	    set_range_error();
 	}else{
 	    clear_range_error();
-	    const ranged_months=all_months.slice(start, end+1);
-	    add_visits_chart(ranged_months);
+	    add_visits_chart(
+		all_visits
+		    .filter(visit => obj2date(visit) <= end)
+		    .filter(visit => obj2date(visit) >= start)
+	    );
 	}
     }
 
+    const add_zero_days = function(visits){
+	const tomorow = (date) => {
+
+	    return new Date(date.valueOf() + 1000*60*60*24)
+	}
+	const yesterday = (date) => {
+	    return new Date(date.valueOf() - 1000*60*60*24)
+	}
+
+	let new_visits = [visits[0]];
+	let last = new_visits[0];
+	let i = 1;
+	while (i < visits.length) {
+	    console.log("l",i,last,visits[i], (visits[i].date - last.date)/1000/60/60/24)
+	    // if the next item in visits is tomorow
+	    if (visits[i].date - last.date == 1000*60*60*24) {
+		console.log("next");
+		new_visits.push(visits[i]);
+		i++;
+	    } else if (last.all_visits == 0) {
+		console.log("yesterday");
+		new_visits.push(empty_visit(yesterday(visits[i].date)));
+		new_visits.push(visits[i]);
+		i++;
+	    } else {
+		console.log("tomorow");
+		new_visits.push(empty_visit(tomorow(last.date)));
+	    }
+	    last = new_visits[new_visits.length - 1];
+	}
+	return new_visits;
+    }
+    window.add_zero_days = add_zero_days;
+
     start_options.on("input", update_range);
     end_options.on("input", update_range);
+    reset_btn.node().onclick = (e) => {
+	add_ranges(all_visits);
+	add_visits_chart(all_visits);
+	clear_range_error();
+	e.preventDefault();
+    };
 
-    fetch("/monthly-visits?url="+short_url, {
+    fetch("/daily-visits?url="+short_url, {
 	credentials: "include"
     })
-	.then(log)
+	//.then(log)
 	.then(response=>response.json())
+	.then(parse_dates)
+	.then(log)
+	//.then(add_zero_days)
+	.then(log)
 	.then(set_first_time_visits)
-    	.then(add_missing_months)
-	.then(set_all_months)
+    	//.then(add_missing_months)
+	.then(set_all_visits)
 	.then(add_visits_chart)
 	.then(add_ranges)
-	.catch(console.log);
+	.catch(console.error);
 }());
 
 
