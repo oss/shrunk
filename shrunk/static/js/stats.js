@@ -19,8 +19,8 @@
     window.obj2date = obj2date;
 
     // parse the date / time
-    const parseTime = d3.timeParse("%Y-%m-%d");
-
+    const parseTime = (strtime)=>new Date(strtime);
+    window.pt=parseTime;
     // format the dates
     const parse_dates = function(visits) {
 	visits.forEach(visit=>{
@@ -30,7 +30,6 @@
     };
 
     const add_visits_chart = function(visits){
-	console.log("h",visits);
 	if(visits.length<2){
 	    d3.select("#nodata").text("Not enough data for a chart");
 	    return visits;
@@ -227,31 +226,27 @@
     }
 
     const add_zero_days = function(visits){
-	const tomorow = (date) => {
-
-	    return new Date(date.valueOf() + 1000*60*60*24)
+	const add_date = (amt) => (date) => {
+	    let t = new Date(date);
+	    t.setDate(t.getDate() + amt);
+	    return t;
 	}
-	const yesterday = (date) => {
-	    return new Date(date.valueOf() - 1000*60*60*24)
-	}
+	const tomorow = add_date(1);
+	const yesterday = add_date(-1);
 
 	let new_visits = [visits[0]];
 	let last = new_visits[0];
 	let i = 1;
 	while (i < visits.length) {
-	    console.log("l",i,last,visits[i], (visits[i].date - last.date)/1000/60/60/24)
 	    // if the next item in visits is tomorow
-	    if (visits[i].date - last.date == 1000*60*60*24) {
-		console.log("next");
+	    if (visits[i].date - tomorow(last.date) == 0) {
 		new_visits.push(visits[i]);
 		i++;
 	    } else if (last.all_visits == 0) {
-		console.log("yesterday");
 		new_visits.push(empty_visit(yesterday(visits[i].date)));
 		new_visits.push(visits[i]);
 		i++;
 	    } else {
-		console.log("tomorow");
 		new_visits.push(empty_visit(tomorow(last.date)));
 	    }
 	    last = new_visits[new_visits.length - 1];
@@ -275,11 +270,8 @@
 	//.then(log)
 	.then(response=>response.json())
 	.then(parse_dates)
-	.then(log)
-	//.then(add_zero_days)
-	.then(log)
+	.then(add_zero_days)
 	.then(set_first_time_visits)
-    	//.then(add_missing_months)
 	.then(set_all_visits)
 	.then(add_visits_chart)
 	.then(add_ranges)
