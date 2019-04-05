@@ -222,7 +222,8 @@ class ShrunkClient(object):
         if test_client:
             self._mongo = test_client
         else:
-            self._mongo = pymongo.MongoClient(DB_HOST, DB_PORT)
+            self._mongo = pymongo.MongoClient(DB_HOST, DB_PORT, 
+                                              username=DB_USERNAME, password=DB_PASSWORD)
 
             db = self._mongo.shrunk_visits
             db.visits.create_index([('short_url', pymongo.ASCENDING)])
