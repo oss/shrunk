@@ -7,7 +7,7 @@ from shrunk import ShrunkClient
 import shrunk
 from shrunk.statutil import *
 
-client = ShrunkClient(host='unit_db', geolite_path='/opt/shrunk/GeoLite2-City.mmdb')
+client = ShrunkClient(DB_HOST='unit_db', GEOLITE_PATH='/opt/shrunk/GeoLite2-City.mmdb')
 mongoclient = client._mongo
 
 def test_get_referer_domain():

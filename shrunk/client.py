@@ -203,29 +203,33 @@ class ShrunkClient(object):
                       "monthly-visits", "edit"]
     """Reserved words that cannot be used as shortened urls."""
 
-    def __init__(self, host=None, port=None, test_client=None, geolite_path=None):
+    def __init__(self, DB_HOST=None, DB_PORT=27017, 
+                 GEOLITE_PATH=None, DB_USERNAME=None, DB_PASSWORD=None,
+                 test_client=None, **config):
         """Create a new client connection.
 
         This client uses MongoDB.
 
         :Parameters:
-          - `host` (optional): the hostname to connect to; defaults to
-            "localhost"
-          - `port` (optional): the port to connect to on the server; defaults to
+          - `DB_HOST` (optional): the hostname to connect to; defaults to "localhost"
+          - `DB_PORT` (optional): the port to connect to on the server; defaults to 27017
+          - `GEOLITE_PATH` (optional): path to geolite ip database
+          - `DB_USERNAME` (OPTIONAL): username to login to database
+          - `DB_PASSWORD` (OPTIONAL): password to login to database
           - `test_client` (optional): a mock client to use for testing
             the database default if not present
         """
         if test_client:
             self._mongo = test_client
         else:
-            self._mongo = pymongo.MongoClient(host, port)
+            self._mongo = pymongo.MongoClient(DB_HOST, DB_PORT)
 
             db = self._mongo.shrunk_visits
             db.visits.create_index([('short_url', pymongo.ASCENDING)])
             db.visitors.create_index([('ip', pymongo.ASCENDING)])
 
-        if geolite_path:
-            self._geoip = geoip2.database.Reader(geolite_path)
+        if GEOLITE_PATH:
+            self._geoip = geoip2.database.Reader(GEOLITE_PATH)
         else:
             self._geoip = None
 

@@ -7,7 +7,7 @@ from pytest import raises
 from shrunk.client import ShrunkClient
 from shrunk.roles import *
 
-client = ShrunkClient(host='unit_db')
+client = ShrunkClient(DB_HOST='unit_db')
 mongo_client = client._mongo
 init(None, mongo_client=mongo_client)
 
