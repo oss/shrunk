@@ -29,8 +29,7 @@ setup(
     install_requires = require,
     package_dir = {"shrunk": "shrunk"},
     package_data = {"shrunk": ["static/css/*", "static/img/*", "static/js/*",
-                               "templates/*"]},
-    data_files=[("/var/www",["../scripts/*"])]
+                               "templates/*", "../scripts/*"]},
     author = "Rutgers Open System Solutions",
     author_email = "oss@oss.rutgers.edu",
     description = "Rutgers University URL Shortener",
