@@ -1,4 +1,4 @@
 #!/bin/bash
 source /var/www/base.sh
 echo
-echo $(check_mongodb alive)
+echo $(../check_mongodb alive)
