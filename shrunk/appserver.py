@@ -48,8 +48,6 @@ def login(user_info):
 
     # get info from shibboleth types
     fac_staff = t('FACULTY') or t('STAFF')
-    guest = t('GUEST')
-    worker = (t('STUDENT') or t('PRIOR STUDENT')) and t('STUDENT WORKER')
 
     # get info from ACLs
     is_admin = roles.check("admin", netid)
@@ -76,13 +74,7 @@ def login(user_info):
         roles.grant("facstaff", "shibboleth", netid)
 
     # now determine whether to allow login
-    if is_config_whitelisted or fac_staff:
-        pass  # allow
-    elif guest and (is_admin or is_power or is_whitelisted):
-        pass  # allow
-    elif worker and is_whitelisted:
-        pass  # allow
-    else:
+    if not (is_config_whitelisted or fac_staff or is_whitelisted):
         log_failed("unauthorized")
         return redirect("/unauthorized")
 
