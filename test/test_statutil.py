@@ -6,8 +6,9 @@ Unit tests for statutil functions.
 from shrunk import ShrunkClient
 import shrunk
 from shrunk.statutil import *
+from shrunk.config import GEOLITE_PATH
 
-client = ShrunkClient(DB_HOST='unit_db', GEOLITE_PATH='/opt/shrunk/GeoLite2-City.mmdb')
+client = ShrunkClient(DB_HOST='unit_db', GEOLITE_PATH=GEOLITE_PATH)
 mongoclient = client._mongo
 
 def test_get_referer_domain():

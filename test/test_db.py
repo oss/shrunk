@@ -8,8 +8,9 @@ import shrunk
 from pytest import raises
 from datetime import datetime
 import shrunk.roles as roles
+from shrunk.config import GEOLITE_PATH
 
-client=ShrunkClient(DB_HOST="unit_db", GEOLITE_PATH='/opt/shrunk/GeoLite2-City.mmdb')
+client=ShrunkClient(DB_HOST="unit_db", GEOLITE_PATH=GEOLITE_PATH)
 mongoclient=client._mongo
 
 def teardown_function():
