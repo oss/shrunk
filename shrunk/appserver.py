@@ -156,6 +156,10 @@ if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
 def unauthorized():
     return make_response(render_template('unauthorized.html'))
 
+
+def error(message, code):
+    return make_response(render_template("error.html", message=message), code)
+
 ### Views ###
 # route /<short url> handle by shrunkFlaskMini
 
@@ -215,7 +219,7 @@ def render_index(**kwargs):
         sortby = "0"
 
     if sortby not in map(str, range(4)):
-        return 'error: invalid sortby parameter', 400
+        return error('error: invalid sortby parameter', 400)
 
     # Depending on the type of user, get info from the database
     is_admin = roles.check("admin", netid)
@@ -326,7 +330,6 @@ def add_link():
 
     form.long_url.data = ensure_protocol(form.long_url.data)
     if form.validate():
-        # TODO Decide whether we want to do something with the response
         kwargs = form.to_json()
         kwargs['netid'] = netid
         try:
@@ -383,10 +386,10 @@ def get_link_visits_csv():
     client = app.get_shrunk()
     netid = session['user'].get('netid')
     if 'url' not in request.args:
-        return 'error: request must have url', 400
+        return error('error: request must have url', 400)
     link = request.args['url']
     if not client.is_owner_or_admin(link, netid):
-        return 'error: not authorized', 401
+        return error('error: not authorized', 401)
     csv_output = make_csv_for_links(client, [link])
     return make_plaintext_response(csv_output)
 
@@ -398,7 +401,7 @@ def get_search_visits_csv():
     netid = session['user'].get('netid')
     all_users = request.args.get('all_users', '0') == '1' or session.get('all_users', '0') == '1'
     if all_users and not client.is_admin(netid):
-        return 'error: not authorized', 401
+        return error('error: not authorized', 401)
 
     if 'search' not in request.args:
         if all_users:  # show all links for all users
@@ -428,17 +431,17 @@ def get_geoip_csv():
     netid = session['user'].get('netid')
 
     if 'url' not in request.args:
-        return 'error: request must have url', 400
+        return error('error: request must have url', 400)
     link = request.args['url']
 
     if 'resolution' not in request.args:
-        return 'error: request must have resolution', 400
+        return error('error: request must have resolution', 400)
     resolution = request.args['resolution']
     if resolution not in ['country', 'state']:
-        return 'error: invalid resolution', 400
+        return ('error: invalid resolution', 400)
 
     if not client.is_owner_or_admin(link, netid):
-        return 'error: not authorized', 401
+        return error('error: not authorized', 401)
 
     if resolution == 'country':
         get_location = get_location_country
