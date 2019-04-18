@@ -21,10 +21,17 @@
             <li><a href="{{ url_for('render_index') }}">My URLs</a></li>
             <li><a href="/add">Shorten A URL</a></li>
 	    {% if "admin" in roles %}
-            <li><a href="/admin/" class="title">Manage Users</a></li>
+            <li><a href="/admin/" class="title">Admin</a></li>
 	    {% endif %}
+	</ul>
+	{# if admin hide the whitelist #}
+	{% if "admin" in roles %}
+        <ul class="show-login navbar-subtitle nav navbar-nav admin-navbar-hide">
+	{% else %}
+        <ul class="show-login navbar-subtitle nav navbar-nav">
+	{% endif %}
 	    {% if "admin" in roles or "facstaff" in roles or "power_user" in roles %}
-	    <li><a href="/roles/whitelisted" class="title">Whitelist Users</a></li>
+	    <li><a href="/roles/whitelisted" class="title">Whitelist</a></li>
 	    {% endif %}
 	</ul>
 	<ul class="show-login navbar-subtitle nav navbar-nav">

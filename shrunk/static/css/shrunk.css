@@ -311,6 +311,10 @@ label {
     color: #ccc;
 }
 
+.admin-navbar-hide {
+    display: none;
+}
+
 
 /* ---- 
 
@@ -318,7 +322,7 @@ Media Queries
 
 ---- */
 
-@media (max-width: 768px) {
+@media (max-width: 860px) {
     
     #shrunk-toggle {
 	border-color: white;
