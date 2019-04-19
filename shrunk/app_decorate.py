@@ -10,7 +10,7 @@ from shrunk.stringutil import get_domain
 def render_template(template_name, **kwargs):
     if 'netid' in kwargs:
         netid = kwargs['netid']
-        for role in ['facstaff', 'power_user', 'admin']:
+        for role in roles.valid_roles():
             kwargs[role] = roles.check(role, netid)
     return flask.render_template(template_name, **kwargs)
 
