@@ -220,19 +220,22 @@ def test_delete_and_visit():
     def assert_delete(deletion, url, visit):
         assert deletion["urlDataResponse"]["nRemoved"] is url
         assert deletion["visitDataResponse"]["nRemoved"] is visit
-    assert_no_delete = lambda delete: assert_delete(delete, 0, 0)
+
 
     #only owner or admin can delete not power_user or user
     #user
-    assert_no_delete(client.delete_url(url, "user"))
+    with raises(shrunk.client.AuthenticationException):
+            client.delete_url(url, "user")
     assert get_url(url)["visits"] is num_visits
 
     #power
-    assert_no_delete(client.delete_url(url, "power_user"))
+    with raises(shrunk.client.AuthenticationException):
+        client.delete_url(url, "power_user")
     assert get_url(url)["visits"] is num_visits
 
     #cant delete nonexistant link
-    assert_no_delete(client.delete_url("reasons-to-use-windows", "dnolen"))
+    with raises(shrunk.client.NoSuchLinkException):
+        client.delete_url("reasons-to-use-windows", "dnolen")
     
     #admin
     assert_delete(client.delete_url(url, "dnolen"), url = 1, visit = num_visits)

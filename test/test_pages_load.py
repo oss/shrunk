@@ -27,10 +27,15 @@ def test_dev_logins():
     assert_redirect(get("/dev-admin-login"), "/")
     assert_redirect(get("/dev-power-login"), "/")
 
+def test_delete():
+    assert_redirect(post("/delete"), "shrunk-login")
+    login("user")
+    assert get("/delete").status_code < 500
+
+
 def test_auth_no_500():
     routes = ["/add", "/stats", "/geoip-csv", "/useragent-stats",
-              "/referer-stats", "/monthly-visits", "/qr",
-              "/delete", "/edit"]
+              "/referer-stats", "/monthly-visits", "/qr",  "/edit"]
     for route in routes:
         print(route)
         assert_redirect(get(route), "shrunk-login")
