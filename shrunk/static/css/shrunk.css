@@ -167,7 +167,6 @@ label {
 }
 
 .add-group .shrink-button {
-    width: 18%;
     height: 36px;
     background-color: #d21034;
     color: #fefefe;
@@ -351,6 +350,18 @@ Media Queries
     }
 }
 /* end vert toolbar */
+
+@media (min-width: 996px) {
+    .shrink-button {
+	width: 18%;
+    }
+}
+
+@media (max-width: 996px) {
+    .shrink-button {
+	width: 143px;
+    }
+}
 
 /* for role.html */
 #comment {
