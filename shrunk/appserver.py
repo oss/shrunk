@@ -12,7 +12,8 @@ from flask import make_response, request, redirect, session
 from flask_sso import SSO
 
 from shrunk.app_decorate import ShrunkFlask, render_template
-from shrunk.client import BadShortURLException, ForbiddenDomainException
+from shrunk.client import BadShortURLException, ForbiddenDomainException, \
+    AuthenticationException, NoSuchLinkException
 import shrunk.roles as roles
 
 from shrunk.forms import LinkForm
@@ -547,7 +548,7 @@ def qr():
     return render_template("qr.html", **kwargs)
 
 
-@app.route("/delete", methods=["GET", "POST"])
+@app.route("/delete", methods=["POST"])
 @app.require_login
 def delete_link():
     """Deletes a link."""
@@ -555,12 +556,18 @@ def delete_link():
     client = app.get_shrunk()
     netid = session["user"].get("netid")
 
-    # TODO Handle the response intelligently, or put that logic somewhere else
-    if request.method == "POST":
-        app.logger.info("Deleting URL: {}".format(request.form["short_url"]))
-        # TODO give error page if url does not belong to this user
-        # currently it does not delete it and returns index
+    app.logger.info("Deleting URL: {}".format(request.form["short_url"]))
+    # TODO give error page if url does not belong to this user
+    # currently it does not delete it and returns index
+    try:
         client.delete_url(request.form["short_url"], netid)
+    except AuthenticationException:
+        print("serverror")
+        return error("you are not authorized to delete that link", 401)
+    except NoSuchLinkException:
+        print("serverror")
+        return error("that link does not exists", 404)
+
     return redirect("/")
 
 
