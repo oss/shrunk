@@ -26,6 +26,12 @@ class ForbiddenDomainException(Exception):
 class InvalidOperationException(Exception):
     """Raised when performing an invalid operation."""
 
+class AuthenticationException(Exception):
+    """User is not authorized to do that"""
+
+class NoSuchLinkException(Exception):
+    """link was not found"""
+
 class ShrunkCursor(object):
     """Easy-to-use wrapper for internal database cursors."""
     TIME_DESC = 0
@@ -399,32 +405,31 @@ class ShrunkClient(object):
 
         :Returns:
           A response in JSON detailing the effect of the database operations.
+        :Throws:
+          AuthenticationException if the user cant edit
+          NoSuchLinkException if url doesn't exist
         """
         url_db = self._mongo.shrunk_urls
         visit_db = self._mongo.shrunk_visits
 
-        can_edit = self.is_owner_or_admin(short_url, request_netid)
-        url_exists = self.get_url_info(short_url) is not None
-
-        if short_url is not None and can_edit and url_exists:
-            return {
-                "urlDataResponse": {
-                    "nRemoved": url_db.urls.delete_one({
-                        "_id" : short_url
-                    }).deleted_count
-                },
-                "visitDataResponse": {
-                    "nRemoved": visit_db.visits.delete_many({
-                        "short_url": short_url
-                    }).deleted_count
-                }
+        if not self.is_owner_or_admin(short_url, request_netid):
+            raise AuthenticationException()
+        if self.get_url_info(short_url) is None:
+            raise NoSuchLinkException()
+            
+        return {
+            "urlDataResponse": {
+                "nRemoved": url_db.urls.delete_one({
+                    "_id" : short_url
+                }).deleted_count
+            },
+            "visitDataResponse": {
+                "nRemoved": visit_db.visits.delete_many({
+                    "short_url": short_url
+                }).deleted_count
             }
-        else:
-            return {
-                "urlDataResponse": {"nRemoved": 0},
-                "visitDataResponse": {"nRemoved": 0}
-            }
-
+        }
+        
     def delete_user_urls(self, netid):
         """Deletes all URLs associated with a given NetID.
 
