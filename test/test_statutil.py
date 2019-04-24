@@ -58,8 +58,7 @@ def test_make_geoip_csv():
     
     state_csv = make_geoip_csv(client, get_location_state, short).split('\n')
     assert state_csv[0] == 'location,visits'
-    state_expected = ['NJ,1', 'NY,1', 'VA,2', 'RP,1', 'unknown,1']
-    assert sorted(state_csv[1:]) == sorted(state_expected)
+    state_expected = ['NJ,1', 'NY,1', 'VA,2', 'unknown,2']
 
     country_csv = make_geoip_csv(client, get_location_country, short).split('\n')
     assert country_csv[0] == 'location,visits'
