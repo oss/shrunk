@@ -19,12 +19,13 @@ require = [
     'itsdangerous==0.24',
     'pyasn1==0.1.7',
     'pymongo==3.6.*',
-    'geoip2==2.4.0'
+    'geoip2==2.4.0',
+    'uwsgidecorators==1.1.0'
 ]
 
 setup(
     name = "shrunk",
-    version = "0.6.2",
+    version = "0.6.3",
     packages = ["shrunk"],
     install_requires = require,
     package_dir = {"shrunk": "shrunk"},

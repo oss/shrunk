@@ -228,17 +228,30 @@ class ShrunkClient(object):
         if test_client:
             self._mongo = test_client
         else:
-            self._mongo = pymongo.MongoClient(DB_HOST, DB_PORT,
-                                              username=DB_USERNAME, password=DB_PASSWORD)
+            self._DB_USERNAME = DB_USERNAME
+            self._DB_PASSWORD = DB_PASSWORD
+            self._DB_HOST = DB_HOST
+            self._DB_PORT = DB_PORT
+            self.reconnect()
 
-        db = self._mongo.shrunk_visits
-        db.visits.create_index([('short_url', pymongo.ASCENDING)])
-        db.visitors.create_index([('ip', pymongo.ASCENDING)])
+        #db = self._mongo.shrunk_visits
+        #db.visits.create_index([('short_url', pymongo.ASCENDING)])
+        #db.visitors.create_index([('ip', pymongo.ASCENDING)])
 
         if GEOLITE_PATH:
             self._geoip = geoip2.database.Reader(GEOLITE_PATH)
         else:
             self._geoip = None
+
+    def reconnect(self):
+        """
+        mongoclient is not fork safe. this is used to create a new client
+        after potentially forking
+        """
+        self._mongo = pymongo.MongoClient(self._DB_HOST, self._DB_PORT,
+                                          username=self._DB_USERNAME,
+                                          password=self._DB_PASSWORD,
+                                          authSource="admin", connect=False)
 
     def clone_cursor(self, cursor):
         """Clones an already existing ShrunkCursor object.

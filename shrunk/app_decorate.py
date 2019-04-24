@@ -6,6 +6,20 @@ from shrunk.stringutil import validate_url
 import shrunk.roles as roles
 from shrunk.client import ShrunkClient
 from shrunk.stringutil import get_domain
+import importlib
+
+# support multiple ways of handling forking
+def new_postfork(f):
+    """by default don't do anything"""
+
+try:
+    from uwsgidecorators import postfork
+    new_postfork = postfork
+except ImportError:
+    pass
+
+postfork = new_postfork
+
 
 def render_template(template_name, **kwargs):
     if 'netid' in kwargs:
@@ -27,6 +41,16 @@ class ShrunkFlaskMini(Flask):
         self.logger.info("logging started")
 
         self._shrunk_client = ShrunkClient(**self.config)
+
+        @postfork
+        def reconnect():
+            """
+            mongoclient is not fork safe. this is used to create a new client
+            after potentially forking
+            """
+            self._shrunk_client.reconnect()
+
+        
         self.logger.info("ShrunkClient initialized %s:%s"
                          % (self.config["DB_HOST"],
                             self.config["DB_PORT"]))
@@ -86,6 +110,14 @@ class ShrunkFlask(ShrunkFlaskMini):
         self.add_roles_routes()
         self.setup_roles()
         self.logger.info("done with setup")
+        
+        @postfork
+        def reinit():
+            """
+            mongoclient is not fork safe. this reinits roles to use
+            a new client after forking
+            """
+            roles.init(self)
 
     def switch_db(self, host, port=27017):
         self._shrunk_client = ShrunkClient(host,

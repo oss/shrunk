@@ -124,7 +124,7 @@ def valid_roles():
 def init(app, mongo_client=None):
     """init the module, namely get a reference to db"""
     if not mongo_client:
-        mongo_client = MongoClient(app.config["DB_HOST"], app.config["DB_PORT"])
+        mongo_client = app.get_shrunk()._mongo
         #this forces pymongo to connect instead of sitting on its hands and blocking
         #the server. idk why it behaves like this but if you remove the next like the
         #server does not respond. pymongo3.6 aug 2018
