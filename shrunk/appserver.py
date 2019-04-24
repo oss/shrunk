@@ -457,7 +457,6 @@ def get_geoip_csv():
 @app.require_login
 def get_useragent_stats():
     client = app.get_shrunk()
-    print(session)
     netid = session['user'].get('netid')
 
     if 'url' not in request.args:
@@ -562,10 +561,8 @@ def delete_link():
     try:
         client.delete_url(request.form["short_url"], netid)
     except AuthenticationException:
-        print("serverror")
         return error("you are not authorized to delete that link", 401)
     except NoSuchLinkException:
-        print("serverror")
         return error("that link does not exists", 404)
 
     return redirect("/")
