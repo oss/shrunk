@@ -238,10 +238,7 @@ class ShrunkClient(object):
         #db.visits.create_index([('short_url', pymongo.ASCENDING)])
         #db.visitors.create_index([('ip', pymongo.ASCENDING)])
 
-        if GEOLITE_PATH:
-            self._geoip = geoip2.database.Reader(GEOLITE_PATH)
-        else:
-            self._geoip = None
+        self.set_geoip(GEOLITE_PATH)
 
     def reconnect(self):
         """
@@ -252,6 +249,11 @@ class ShrunkClient(object):
                                           username=self._DB_USERNAME,
                                           password=self._DB_PASSWORD,
                                           authSource="admin", connect=False)
+    def set_geoip(self, GEOLITE_PATH):
+        if GEOLITE_PATH:
+            self._geoip = geoip2.database.Reader(GEOLITE_PATH)
+        else:
+            self._geoip = None
 
     def clone_cursor(self, cursor):
         """Clones an already existing ShrunkCursor object.
