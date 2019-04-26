@@ -347,7 +347,8 @@ function show_world_map() {
 /* --- data --- */
 
 const browser_names = {
-    'Msie': 'Microsoft Edge/IE'
+    'Msie': 'Microsoft Edge/IE',
+    'unknown': 'Unknown'
 };
 
 const browser_colors = {
@@ -356,7 +357,8 @@ const browser_colors = {
     'Safari': { background: 'rgba(155,186,238,0.2)', border: 'rgba(155,186,238,1)' },
     'Msie': { background: 'rgba(136,198,247,0.2)', border: 'rgba(136,198,247,1)' },
     'Edge': { background: 'rgba(136,198,247,0.2)', border: 'rgba(136,198,247,1)' },
-    'Opera': { background: 'rgba(238,120,124,0.2)', border: 'rgba(238,120,124,1)' }
+    'Opera': { background: 'rgba(238,120,124,0.2)', border: 'rgba(238,120,124,1)' },
+    'unknown': { background: 'rgba(80,80,80,0.2)', border: 'rgba(80,80,80,1)' }
 };
 
 const browser_images = {
@@ -370,7 +372,8 @@ const browser_images = {
 
 const platform_names = {
     'Macos': 'MacOS',
-    'Iphone': 'iPhone'
+    'Iphone': 'iPhone',
+    'unknown': 'Unknown'
 };
 
 /* todo: iOS, *BSD, etc? */
@@ -378,7 +381,8 @@ const platform_colors = {
     'Linux': { background: 'rgba(251,230,143,0.2)', border: 'rgba(251,230,143,1)' },
     'Windows': { background: 'rgba(129,238,208,0.2)', border: 'rgba(129,238,208,1)' },
     'Macos': { background: 'rgba(201,201,201,0.2)', border: 'rgba(201,201,201,1)' },
-    'Android': { background: 'rgba(200,227,120,0.2)', border: 'rgba(200,227,120,1)' }
+    'Android': { background: 'rgba(200,227,120,0.2)', border: 'rgba(200,227,120,1)' },
+    'unknown': { background: 'rgba(80,80,80,0.2)', border: 'rgba(80,80,80,1)' }
 };
 
 const platform_images = {
@@ -392,14 +396,16 @@ const referer_names = {
     'facebook.com': 'Facebook',
     'twitter.com': 'Twitter',
     'instagram.com': 'Instagram',
-    'reddit.com': 'Reddit'
+    'reddit.com': 'Reddit',
+    'unknown': 'Unknown'
 };
 
 const referer_colors = {
     'facebook.com': { background: 'rgba(0,75,150,0.2)', border: 'rgba(0,75,150,1)' },
     'twitter.com': { background: 'rgba(147,191,241,0.2)', border: 'rgba(147,191,241,1)' },
     'instagram.com': { background: 'rgba(193,131,212,0.2)', border: 'rgba(193,131,212,1)' },
-    'reddit.com': { background: 'rgba(241,155,123,0.2)', border: 'rgba(241,155,123,1)' }
+    'reddit.com': { background: 'rgba(241,155,123,0.2)', border: 'rgba(241,155,123,1)' },
+    'unknown': { background: 'rgba(80,80,80,0.2)', border: 'rgba(80,80,80,1)' }
 };
 
 const referer_images = {
