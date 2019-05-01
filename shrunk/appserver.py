@@ -481,6 +481,8 @@ def get_useragent_stats():
 
     stats_json = json.dumps(stats)
     return make_plaintext_response(stats_json)
+    # TODO this sends.csv but contains json and is used for client only
+    # make it give json no make_plaintext
 
 
 @app.route("/referer-stats", methods=["GET"])
