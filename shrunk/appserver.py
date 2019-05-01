@@ -469,6 +469,8 @@ def get_useragent_stats():
     stats = collections.defaultdict(lambda: collections.defaultdict(int))
     for visit in client.get_visits(link):
         if 'user_agent' not in visit:
+            stats['platform']['unknown'] += 1
+            stats['browser']['unknown'] += 1
             continue
         ua = werkzeug.useragents.UserAgent(visit['user_agent'])
         if ua.platform:
@@ -503,6 +505,8 @@ def get_referer_stats():
         domain = get_referer_domain(visit)
         if domain:
             stats[domain] += 1
+        else:
+            stats['unknown'] += 1
 
     stats_json = json.dumps(stats)
     return make_plaintext_response(stats_json)

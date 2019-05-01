@@ -368,3 +368,10 @@ Media Queries
     width: 100%;
     resize: none;
 }
+
+/* for stats.html  */
+#pie-charts {
+    width: 65%;
+    margin: 0 auto;
+}
+

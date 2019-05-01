@@ -48,22 +48,26 @@
 	<div id="world-map"></div>
     </div>
 
-    <div id="browser-stats">
+    <div id="pie-charts">
+      <div id="browser-stats">
 	<hr>
 	<canvas id="browser-canvas"></canvas>
-    </div>
-
-    <div id="platform-stats">
+      </div>
+      
+      <div id="platform-stats">
 	<hr>
 	<canvas id="platform-canvas"></canvas>
-    </div>
-
-    <div id="referer-stats">
+      </div>
+      
+      <div id="referer-stats">
 	<hr>
 	<canvas id="referer-canvas"></canvas>
+      </div>
     </div>
 
     <script src="{{ url_for('static', filename='js/stats.js') }}"></script>
+
+    </br></br></br></br>
     {% endif %}
 </article>
 {% endblock %}
