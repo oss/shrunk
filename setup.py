@@ -25,7 +25,7 @@ require = [
 
 setup(
     name = "shrunk",
-    version = "0.6.3",
+    version = "0.6.4",
     packages = ["shrunk"],
     install_requires = require,
     package_dir = {"shrunk": "shrunk"},
