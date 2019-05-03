@@ -194,8 +194,8 @@ class ShrunkFlask(ShrunkFlaskMini):
                 entity = request.form["entity"]
                 if roles.check(role, entity):
                     kwargs = roles.template_data(role, netid)
-                    kwargs['error'] = 'The entity already has that role.'
-                    return render_template("role.html", **kwargs)
+                    kwargs['error'] = 'Role already granted.'
+                    return render_template("role.html", roles=roles.get(netid), **kwargs)
                 allow_comment = roles.template_data(role, netid)['allow_comment']
                 comment = ''
                 if allow_comment:
@@ -203,7 +203,8 @@ class ShrunkFlask(ShrunkFlaskMini):
                 roles.grant(role, netid, entity, comment)
                 return redirect("/roles/"+role)
             except roles.InvalidEntity:
-                return render_template("role.html", **roles.template_data(role, netid, invalid=True))
+                return render_template("role.html", roles=roles.get(netid),
+                                       **roles.template_data(role, netid, invalid=True))
 
         @self.route("/roles/<role>/revoke", methods=["POST"])
         @self.require_login
@@ -234,7 +235,11 @@ class ShrunkFlask(ShrunkFlaskMini):
         """
         is_admin = partial(roles.check, "admin")
         roles.new("admin", is_admin, custom_text={"title": "Admins"})
-        roles.new("power_user", is_admin, custom_text={"title": "Power Users"})
+        roles.new("power_user", is_admin, custom_text={
+            "title": "Power Users",
+            "grant_title": "Grant power user",
+            "revoke_title": "Revoke power user"
+        })
         roles.new("blacklisted", is_admin, custom_text={
             "title": "Blacklisted Users",
             "grant_title": "Blacklist a user:",
