@@ -641,7 +641,6 @@ def edit_link_form():
     # Render the edit template
     return render_template("edit.html", **info)
 
-# TODO not referenced in ui
 @app.route("/admin/")
 @app.require_login
 @app.require_admin
@@ -653,4 +652,4 @@ def admin_panel():
     """
     netid = session['user'].get('netid')
     roledata = [{"id": role, "title": roles.form_text[role]["title"]} for role in roles.valid_roles()]
-    return render_template("admin.html", netid=netid, roledata=roledata)
+    return render_template("admin.html", netid=netid, roledata=roledata, roles=roles.get(netid))
