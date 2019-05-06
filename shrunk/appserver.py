@@ -483,8 +483,6 @@ def get_useragent_stats():
 
     stats_json = json.dumps(stats)
     return make_plaintext_response(stats_json)
-    # TODO this sends.csv but contains json and is used for client only
-    # make it give json no make_plaintext
 
 
 @app.route("/referer-stats", methods=["GET"])
@@ -563,7 +561,6 @@ def delete_link():
 
     app.logger.info("Deleting URL: {}".format(request.form["short_url"]))
     # TODO give error page if url does not belong to this user
-    # currently it does not delete it and returns index
     try:
         client.delete_url(request.form["short_url"], netid)
     except AuthenticationException:
