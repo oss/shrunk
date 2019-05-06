@@ -392,7 +392,7 @@ def get_link_visits_csv():
     if not client.is_owner_or_admin(link, netid):
         return error('error: not authorized', 401)
     csv_output = make_csv_for_links(client, [link])
-    return make_plaintext_response(csv_output)
+    return make_plaintext_response(csv_output, filename='visits-{}.csv'.format(link))
 
 
 @app.route("/search-visits-csv", methods=["GET"])
@@ -423,7 +423,7 @@ def get_search_visits_csv():
         return 'error: too many visits to create CSV', 500
 
     csv_output = make_csv_for_links(client, map(lambda l: l['_id'], links))
-    return make_plaintext_response(csv_output)
+    return make_plaintext_response(csv_output, filename='visits-search.csv')
 
 @app.route("/geoip-csv", methods=["GET"])
 @app.require_login
