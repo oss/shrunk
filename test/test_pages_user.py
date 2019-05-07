@@ -421,8 +421,8 @@ def test_useragent_stats_no_visit():
     })
     response = get('/useragent-stats?url=' + short)
     assert response.status_code == 200
-    assert '{"platform": {"unknown": 1}, "browser": {"unknown": 1}}' \
-        == str(response.get_data(), 'utf8')
+    assert {"platform": {"unknown": 1}, "browser": {"unknown": 1}} \
+        == json.loads(str(response.get_data(), 'utf8'))
 
 @loginw("user")
 def test_useragent_stats_no_url():
