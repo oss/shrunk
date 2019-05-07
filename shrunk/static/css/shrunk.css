@@ -371,7 +371,11 @@ Media Queries
 
 /* for stats.html  */
 #pie-charts {
-    width: 65%;
     margin: 0 auto;
+    display: flex;
+}
+
+#pie-charts > .pie-div {
+    flex: 0 0 33%;
 }
 
