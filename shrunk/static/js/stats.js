@@ -431,7 +431,7 @@ function add_pie_chart(canvas_id, title, raw_data, human_readable_names, colors,
 
     var options = {
 	legend: {
-	    position: 'top'
+	    position: 'left'
 	},
 
 	title: {
