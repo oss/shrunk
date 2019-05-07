@@ -370,6 +370,7 @@ Media Queries
 }
 
 /* for stats.html  */
+
 #pie-charts {
     margin: 0 auto;
     display: flex;
@@ -379,3 +380,11 @@ Media Queries
     flex: 0 0 33%;
 }
 
+#browser-stats, #platform-stats {
+    border-right-style: dotted;
+    border-width: thin;
+}
+
+#platform-stats, #referer-stats {
+    margin-left: 50px;
+}
