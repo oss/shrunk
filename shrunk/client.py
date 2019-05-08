@@ -630,11 +630,10 @@ class ShrunkClient(object):
           was found in the database.
         """
         db = self._mongo.shrunk_urls
-        # TODO return type and validation that the URL exists
         db.urls.update({"_id" : short_url},
                        {"$inc" : {"visits" : 1}})
 
-        # TODO Do we need the source ip or can we detect it?
+
         db = self._mongo.shrunk_visits
         db.visits.insert({
             "short_url" : short_url,

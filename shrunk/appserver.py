@@ -286,28 +286,23 @@ def render_index(**kwargs):
         begin_pages = page - 4
         end_pages = page + 4
 
-    resp = make_response(
-        render_template("index.html",
-                        roles=roles.get(netid),
-                        netid=netid,
-                        all_users=all_users,
-                        begin_pages=begin_pages,
-                        end_pages=end_pages,
-                        lastpage=lastpage,
-                        links=links,
-                        linkserver_url=app.config["LINKSERVER_URL"],
-                        page=page,
-                        query=query,
-                        sortby=sortby,
-                        **kwargs))
-
-    #TODO since we're not setting we probably dont need make_response
-    #resp.set_cookie("all_users", all_users)
-    #resp.set_cookie("sortby", sortby)
     session["all_users"] = all_users
     session["query"] = query
     session["sortby"] = sortby
-    return resp
+    return render_template("index.html",
+                           roles=roles.get(netid),
+                           netid=netid,
+                           all_users=all_users,
+                           begin_pages=begin_pages,
+                           end_pages=end_pages,
+                           lastpage=lastpage,
+                           links=links,
+                           linkserver_url=app.config["LINKSERVER_URL"],
+                           page=page,
+                           query=query,
+                           sortby=sortby,
+                           **kwargs)
+
 
 @app.route("/add", methods=["POST"])
 @app.require_login
@@ -560,7 +555,7 @@ def delete_link():
     netid = session["user"].get("netid")
 
     app.logger.info("Deleting URL: {}".format(request.form["short_url"]))
-    # TODO give error page if url does not belong to this user
+
     try:
         client.delete_url(request.form["short_url"], netid)
     except AuthenticationException:
@@ -622,9 +617,6 @@ def edit_link():
 def edit_link_form():
     netid = session['user'].get('netid')
     client = app.get_shrunk()
-    # TODO ok to delete?
-    #form = LinkForm(request.form,
-    #                [strip_protocol(app.config["LINKSERVER_URL"])])
     # Hit the database to get information
     old_short_url = request.args["url"]
     info = client.get_url_info(old_short_url)
