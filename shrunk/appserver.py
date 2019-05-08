@@ -392,7 +392,7 @@ def get_link_visits_csv():
     if not client.is_owner_or_admin(link, netid):
         return error('error: not authorized', 401)
     csv_output = make_csv_for_links(client, [link])
-    return make_plaintext_response(csv_output)
+    return make_plaintext_response(csv_output, filename='visits-{}.csv'.format(link))
 
 
 @app.route("/search-visits-csv", methods=["GET"])
@@ -423,7 +423,7 @@ def get_search_visits_csv():
         return 'error: too many visits to create CSV', 500
 
     csv_output = make_csv_for_links(client, map(lambda l: l['_id'], links))
-    return make_plaintext_response(csv_output)
+    return make_plaintext_response(csv_output, filename='visits-search.csv')
 
 @app.route("/geoip-csv", methods=["GET"])
 @app.require_login
@@ -483,8 +483,6 @@ def get_useragent_stats():
 
     stats_json = json.dumps(stats)
     return make_plaintext_response(stats_json)
-    # TODO this sends.csv but contains json and is used for client only
-    # make it give json no make_plaintext
 
 
 @app.route("/referer-stats", methods=["GET"])
@@ -563,7 +561,6 @@ def delete_link():
 
     app.logger.info("Deleting URL: {}".format(request.form["short_url"]))
     # TODO give error page if url does not belong to this user
-    # currently it does not delete it and returns index
     try:
         client.delete_url(request.form["short_url"], netid)
     except AuthenticationException:
@@ -641,7 +638,6 @@ def edit_link_form():
     # Render the edit template
     return render_template("edit.html", **info)
 
-# TODO not referenced in ui
 @app.route("/admin/")
 @app.require_login
 @app.require_admin
@@ -653,4 +649,4 @@ def admin_panel():
     """
     netid = session['user'].get('netid')
     roledata = [{"id": role, "title": roles.form_text[role]["title"]} for role in roles.valid_roles()]
-    return render_template("admin.html", netid=netid, roledata=roledata)
+    return render_template("admin.html", netid=netid, roledata=roledata, roles=roles.get(netid))

@@ -224,6 +224,7 @@ class ShrunkFlask(ShrunkFlaskMini):
         def role_list(role):
             netid = session['user'].get('netid')
             kwargs = roles.template_data(role, netid)
+            kwargs['netid'] = netid
             kwargs['roles'] = roles.get(netid)
             return render_template("role.html", **kwargs)
 

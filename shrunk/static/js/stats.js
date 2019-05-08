@@ -378,7 +378,7 @@ const platform_names = {
 
 /* todo: iOS, *BSD, etc? */
 const platform_colors = {
-    'Linux': { background: 'rgba(251,230,143,0.2)', border: 'rgba(251,230,143,1)' },
+    'Linux': { background: 'rgba(216,171,36,0.2)', border: 'rgba(216,171,36,1)' },
     'Windows': { background: 'rgba(129,238,208,0.2)', border: 'rgba(129,238,208,1)' },
     'Macos': { background: 'rgba(201,201,201,0.2)', border: 'rgba(201,201,201,1)' },
     'Android': { background: 'rgba(200,227,120,0.2)', border: 'rgba(200,227,120,1)' },
@@ -431,7 +431,7 @@ function add_pie_chart(canvas_id, title, raw_data, human_readable_names, colors,
 
     var options = {
 	legend: {
-	    position: 'top'
+	    position: 'left'
 	},
 
 	title: {
