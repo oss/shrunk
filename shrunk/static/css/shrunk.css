@@ -48,6 +48,14 @@ label {
      color: white; 
 }
 
+.nav>li>p {
+    position: relative;
+    display: block;
+    padding: 15px;
+    line-height: 20px;
+    margin: 0;
+}
+
 .nav>li>a:hover {
      color: #337ab7;
 }
