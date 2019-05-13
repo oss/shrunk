@@ -285,6 +285,16 @@ label {
     color: #F0F0F0;
     text-align: center;
 }
+@media (max-width: 694px) {
+    #footer {
+	height: 60px;
+    }
+}
+@media (max-width: 358px) {
+    #footer {
+	height: 70px;
+    }
+}
 
 
 #footer a {
