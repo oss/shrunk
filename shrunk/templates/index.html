@@ -35,7 +35,7 @@
                 [ <a href="{{ url_for('get_stats', url=link['_id']) }}">Stats</a> ]
                 [ <a href="{{url_for('qr', url=link['_id'])}}">QR Code</a> ]
             </div>
-            <a href="{{ link['long_url'] }}" target="_blank" class="title">
+            <a href="{{ link['long_url'] }}" target="_blank" class="hover-title title">
                 {% if link['title'] %}
                     {% if link['title'] | length > 32 %}
                         {{ link['title'][:32]+'...' }}

@@ -232,10 +232,20 @@ label {
     color: #191917;
 }
 
+@media (max-width: 740px) {
+    .hover-controls {
+	float: left !important;
+	margin-right: 500px;
+    }
+}
+
 .link-group .hover-controls {
     float: right;
     color: #bbbbbb;
     font-size: 18px;
+}
+.hover-title {
+    float: left;
 }
 
 .page-group {
