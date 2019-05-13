@@ -35,6 +35,7 @@ setup(
     author_email = "oss@oss.rutgers.edu",
     description = "Rutgers University URL Shortener",
     long_description = readme_text,
+    long_description_content_type="text/markdown",
     keywords = "shrunk rutgers url shortener",
     classifiers = [
         "Development Status :: 4 - Beta",
