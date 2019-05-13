@@ -35,8 +35,14 @@
 	    return visits;
 	}
 	const margin = {top: 20, right: 20, bottom: 30, left: 50};
-	const width = 700 - margin.left - margin.right;
-	const height = 500 - margin.top - margin.bottom;
+	let width = 700 - margin.left - margin.right;
+	let height = 500 - margin.top - margin.bottom;
+	const aspect = height / width;
+	if (width > window.innerWidth * 0.7) {
+	    width = window.innerWidth * 0.7;
+	    height = width * aspect;
+	}
+	console.log("resize", width, height);
 
 	// set the ranges
 	let scale_time = d3.scaleTime()
@@ -433,13 +439,13 @@ function add_pie_chart(canvas_id, title, raw_data, human_readable_names, colors,
 	legend: {
 	    position: 'left'
 	},
-
 	title: {
 	    display: true,
 	    text: title,
 	    fontStyle: '',
-	    fontSize: 13
-	}
+	    fontSize: 13,
+	},
+	onResize: () => console.log("here")
     };
 
     if (images != null) {
@@ -489,11 +495,30 @@ function add_pie_chart(canvas_id, title, raw_data, human_readable_names, colors,
     }
 
     let ctx = document.getElementById(canvas_id).getContext('2d');
-    new Chart(ctx, {
+    let c = new Chart(ctx, {
 	type: 'doughnut',
 	data: data,
 	options: options
-    });
+    })
+    // HACK: manual resize
+    c.resize = function(silent) {
+	let width = 720;
+	let height = 360;
+	let aspect = height / width;
+	if (window.innerWidth > 1200) {
+	    width = 380;
+	    height = 190;
+	}
+	if (window.innerWidth < 690) {
+	    width = window.innerWidth * 0.9;
+	    height = width * aspect;
+	}
+	this.canvas.width = this.width = width;
+	this.canvas.height = this.height = height;
+	this.canvas.style.width = width + "px";
+	this.canvas.style.height = height + "px";
+	this.update();
+    }
 }
 
 /* render stats based on useragent and referer data */
