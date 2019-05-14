@@ -10,7 +10,10 @@ from flask import make_response
 def get_referer_domain(visit):
     referer = visit.get('referer')
     if referer:
-        return urllib.parse.urlparse(referer).hostname.lower()
+        try:
+            return urllib.parse.urlparse(referer).hostname.lower()
+        except:
+            return None
     return None
 
 def make_csv_for_links(client, links):
