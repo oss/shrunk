@@ -343,6 +343,34 @@ def test_visits_no_perm():
     assert response.status_code == 401
 
 @loginw("admin")
+def test_search_visits_csv():
+    short0 = sclient.create_short_url('google.com', netid='shrunk_test')
+    sclient.visit(short0, '1.2.3.4', 'visitor0', 'referer')
+    sclient.visit(short0, '1.2.3.4', 'visitor1', 'referer')
+    short1 = sclient.create_short_url('yahoo.com', netid='shrunk_test')
+    sclient.visit(short1, '1.2.3.4', 'visitor1', 'referer')
+    short2 = sclient.create_short_url('bing.com', netid='shrunk_test')
+    sclient.visit(short2, '1.2.3.4', 'visitor2', 'referer')
+
+    resp = get('/search-visits-csv?all_users=1&search=google')
+    assert resp.status_code == 200
+    csv = str(resp.get_data(), 'utf8')
+    assert 'visitor0' in csv and 'visitor1' in csv
+    assert 'visitor2' not in csv
+
+    resp = get('/search-visits-csv?all_users=1&search=yahoo')
+    assert resp.status_code == 200
+    csv = str(resp.get_data(), 'utf8')
+    assert 'visitor1' in csv
+    assert 'visitor0' not in csv and 'visitor2' not in csv
+
+    resp = get('/search-visits-csv?all_users=1&search=bing')
+    assert resp.status_code == 200
+    csv = str(resp.get_data(), 'utf8')
+    assert 'visitor2' in csv
+    assert 'visitor0' not in csv and 'visitor1' not in csv
+
+@loginw("admin")
 def test_geoip_csv():
     short = sclient.create_short_url('google.com', netid='shrunk_test')
     ips = ['165.230.224.67', '34.201.163.243', '35.168.234.184',
