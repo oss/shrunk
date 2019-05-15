@@ -211,7 +211,8 @@ class ShrunkClient(object):
 
     def __init__(self, DB_HOST=None, DB_PORT=27017, 
                  GEOLITE_PATH=None, DB_USERNAME=None, DB_PASSWORD=None,
-                 test_client=None, DB_REPLSET=None, **config):
+                 test_client=None, DB_REPLSET=None, DB_CONNECTION_STRING=None,
+                 **config):
         """Create a new client connection.
 
         This client uses MongoDB.
@@ -228,11 +229,15 @@ class ShrunkClient(object):
         if test_client:
             self._mongo = test_client
         else:
-            self._DB_USERNAME = DB_USERNAME
-            self._DB_PASSWORD = DB_PASSWORD
-            self._DB_HOST = DB_HOST
-            self._DB_PORT = DB_PORT
-            self._DB_REPLSET = DB_REPLSET
+            if DB_CONNECTION_STRING:
+                self._DB_CONNECTION_STRING = DB_CONNECTION_STRING
+            else:
+                self._DB_CONNECTION_STRING = None
+                self._DB_USERNAME = DB_USERNAME
+                self._DB_PASSWORD = DB_PASSWORD
+                self._DB_HOST = DB_HOST
+                self._DB_PORT = DB_PORT
+                self._DB_REPLSET = DB_REPLSET
             self.reconnect()
 
         #db = self._mongo.shrunk_visits
@@ -246,11 +251,15 @@ class ShrunkClient(object):
         mongoclient is not fork safe. this is used to create a new client
         after potentially forking
         """
-        self._mongo = pymongo.MongoClient(self._DB_HOST, self._DB_PORT,
-                                          username=self._DB_USERNAME,
-                                          password=self._DB_PASSWORD,
-                                          authSource="admin", connect=False,
-                                          replicaSet=self._DB_REPLSET)
+        if self._DB_CONNECTION_STRING:
+            self._mongo = pymongo.MongoClient(self._DB_CONNECTION_STRING,
+                                              connect=False)
+        else:
+            self._mongo = pymongo.MongoClient(self._DB_HOST, self._DB_PORT,
+                                              username=self._DB_USERNAME,
+                                              password=self._DB_PASSWORD,
+                                              authSource="admin", connect=False,
+                                              replicaSet=self._DB_REPLSET)
     def set_geoip(self, GEOLITE_PATH):
         if GEOLITE_PATH:
             self._geoip = geoip2.database.Reader(GEOLITE_PATH)
