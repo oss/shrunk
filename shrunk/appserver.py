@@ -463,11 +463,12 @@ def get_useragent_stats():
 
     stats = collections.defaultdict(lambda: collections.defaultdict(int))
     for visit in client.get_visits(link):
-        if 'user_agent' not in visit:
+        user_agent = visit.get('user_agent')
+        if not user_agent:
             stats['platform']['unknown'] += 1
             stats['browser']['unknown'] += 1
             continue
-        ua = werkzeug.useragents.UserAgent(visit['user_agent'])
+        ua = werkzeug.useragents.UserAgent(user_agent)
         if ua.platform:
             stats['platform'][ua.platform.title()] += 1
         if ua.browser:
