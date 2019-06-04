@@ -2,6 +2,17 @@
 {% block content %}
 <h1>Shorten URL</h1>
 <article class="add-group clearfix">
+
+    {% if shortened_url %}
+    <div class="item">
+      <label for="shortened_url">Your shortened URL is</label>
+      <span id="shortened_url">{{ shortened_url }}</span>
+      <button id="copy_shortened_url" class="btn" title="Copy short link to clipboard">
+	<span class="glyphicon glyphicon-share"></span>
+      </button>
+    </div>
+    {% endif %}
+
     <form method="POST" action="{{ url_for('add_link') }}" name="link_form"
           class="container" novalidate="novalidate">
         <div class="item">
@@ -41,5 +52,7 @@
         </div>
         <button type="submit" class="shrink-button btn btn-default">SHRINK</button>
     </form>
+
+    <script src="{{ url_for('static', filename='js/add.js') }}"></script>
 </article>
 {% endblock %}

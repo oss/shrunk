@@ -329,8 +329,9 @@ def add_link():
         kwargs = form.to_json()
         kwargs['netid'] = netid
         try:
-            client.create_short_url(**kwargs)
-            return redirect("/")
+            shortened = client.create_short_url(**kwargs)
+            return add_url_template(shortened_url=shortened)
+            # return redirect("/")
         except BadShortURLException as e:
             return add_url_template(errors={'short_url': [str(e)]})
         except ForbiddenDomainException as e:
