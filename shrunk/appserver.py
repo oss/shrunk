@@ -632,6 +632,16 @@ def edit_link_form():
     # Render the edit template
     return render_template("edit.html", **info)
 
+@app.route("/faq")
+@app.require_login
+def faq():
+    netid = session['user'].get('netid')
+    info = {
+        'netid': netid,
+        'roles': roles.get(netid)
+    }
+    return render_template("faq.html", **info)
+
 @app.route("/admin/")
 @app.require_login
 @app.require_admin
