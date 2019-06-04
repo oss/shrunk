@@ -275,13 +275,13 @@ class ShrunkFlask(ShrunkFlaskMini):
             self.logger.info("block "+url+" result: "+str(result.raw_result))
 
         roles.new("blocked_url", is_admin, validate_url, custom_text={
-            "title": "Blocked urls",
-            "invalid": "bad url",
-            "grant_title": "Block a url:",
+            "title": "Blocked URLs",
+            "invalid": "bad URL",
+            "grant_title": "Block a URL:",
             "grant_button": "BLOCK",
-            "revoke_title": "Unblock a url",
+            "revoke_title": "Unblock a URL",
             "revoke_button": "UNBLOCK",
-            "empty": "there are currently no blocked urls",
+            "empty": "there are currently no blocked URLs",
             "granted_by": "blocked by"
         }, oncreate=onblock)
 
