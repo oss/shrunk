@@ -48,6 +48,8 @@
             <option {% if sortby == "1" %} selected {% endif %}>Oldest first</option>
             <option {% if sortby == "2" %} selected {% endif %}>A-Z</option>
             <option {% if sortby == "3" %} selected {% endif %}>Z-A</option>
+	    <option {% if sortby == "4" %} selected {% endif %}>Increasing visits</option>
+	    <option {% if sortby == "5" %} selected {% endif %}>Decreasing visits</option>
         </select>
         {% if "admin" in roles %}
         <select id="all-users" class="shrunk-toolbar-item" onchange="requery()">

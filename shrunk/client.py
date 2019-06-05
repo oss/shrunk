@@ -47,6 +47,14 @@ class ShrunkCursor(object):
     TITLE_DESC = 3
     """Sort by title, reverse-alphabetically."""
 
+
+    POP_ASC = 4
+    """Sort by popularity (total number of visits), ascending."""
+
+    POP_DESC = 5
+    """Sort by popularity (total number of visits), descending."""
+
+
     def __init__(self, cursor):
         """Represents the result of a database operation.
 
@@ -174,6 +182,10 @@ class ShrunkCursor(object):
             elif sortby == ShrunkCursor.TITLE_DESC:
                 self.cursor.sort([("title", pymongo.DESCENDING),
                                   ("_id", pymongo.DESCENDING)])
+            elif sortby == ShrunkCursor.POP_ASC:
+                self.cursor.sort("visits", pymongo.ASCENDING)
+            elif sortby == ShrunkCursor.POP_DESC:
+                self.cursor.sort("visits", pymongo.DESCENDING)
             else:
                 raise IndexError("Invalid argument to 'sortby'")
         except ValueError:

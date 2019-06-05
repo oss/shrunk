@@ -219,7 +219,7 @@ def render_index(**kwargs):
     if sortby == "":
         sortby = "0"
 
-    if sortby not in map(str, range(4)):
+    if sortby not in map(str, range(6)):
         return error('error: invalid sortby parameter', 400)
 
     # Depending on the type of user, get info from the database
@@ -248,7 +248,7 @@ def render_index(**kwargs):
     # Perform sorting, pagination and get the results
     cursor.sort(sortby)
 
-    if int(sortby) in [0, 1]:
+    if int(sortby) in [0, 1, 4, 5]:
         page, lastpage = cursor.paginate(page, app.config["MAX_DISPLAY_LINKS"])
         links = cursor.get_results()
 
