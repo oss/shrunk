@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Shorten URL</h1>
+<h1>Shorten a URL</h1>
 <article class="add-group clearfix">
 
     {% if shortened_url %}
@@ -8,7 +8,7 @@
       <label for="shortened_url">Your shortened URL is</label>
       <span id="shortened_url">{{ shortened_url }}</span>
       <button id="copy_shortened_url" class="btn" title="Copy short link to clipboard">
-	<span class="glyphicon glyphicon-share"></span>
+	<i class="fas fa-copy"></i>
       </button>
     </div>
     {% endif %}

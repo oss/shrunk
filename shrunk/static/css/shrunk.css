@@ -36,6 +36,10 @@ label {
     margin: 0;
 }
 
+.bg-red {
+    background-color: #cc0e32;
+}
+
 .navbar-header {
     background-color: #cc0e32;
 }
@@ -48,6 +52,29 @@ label {
      color: white; 
 }
 
+.navbar-dark .navbar-nav .nav-link {
+    color: white;
+}
+
+.btn-outline-secondary {
+    color: #eabbc4;
+    border-color: #eabbc4;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #96606a;
+    border-color: #96606a;
+}
+
+.nav-pills > .nav-item:hover {
+    background-color: #96606a;
+    border-radius: 7px;
+}
+
+.nav-pills > .nav-item > .nav-link:hover {
+    color: white;
+}
+
 .nav>li>p {
     position: relative;
     display: block;
@@ -58,10 +85,6 @@ label {
 
 .nav>li>a:hover {
      color: #337ab7;
-}
-
-.navbar-collapse {
-    background-color: #d21034;
 }
 
 .navbar-subtitle {

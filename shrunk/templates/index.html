@@ -1,29 +1,27 @@
 {% extends "base.html" %}
 {% block content%}
-{% if query %}
-<div class="shrunk-messages">
-    {% if links %}
-    Showing results for: <strong>{{ query }}</strong>
-    {% else %}
-    No results found for: <strong>{{ query }}</strong>
-    {% endif %}
-</div>
-{% endif %}
 {% if wrong_owner %}
 <div class="shrunk-messages">
     You are not the owner of this URL...
 </div>
 {% endif %}
 
-<h1>Manage URLs</h1>
+<br />
+<br />
 
 {% if all_users == "0" %}
-<h3 class="links-header">My links</h3>
+<h2 class="links-header">My links</h2>
 <a href="/search-visits-csv?search={{ query }}">Export visit data as CSV</a>
 {% else %}
-<h3 class="links-header">All links</h3>
+<h2 class="links-header">All links</h2>
 <a href="/search-visits-csv?all_users=1&search={{ query }}">Export visit data as CSV</a>
 {%endif%}
+
+{% if query and not links %}
+<div class="shrunk-messages">
+    No results found for query <strong>{{ query }}</strong>
+</div>
+{% endif %}
 
 <div class="container">
     {% for link in links %}
