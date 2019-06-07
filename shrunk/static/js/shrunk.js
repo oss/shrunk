@@ -34,23 +34,35 @@ var delete_link = function(short_url) {
  *
  * Forces a redirect to the index.
  */
-var sort_links = function() {
-    var sel = document.getElementById("sortby");
+var requery = function(sortby) {
+    var url = new URL(window.location.href);
+
+    var all_users = url.searchParams.get("all_users");
+    if (all_users == null) {
+	all_users = "0";
+    }
+
+    var query = url.searchParams.get("search");
+    if (query == null) {
+	query = "";
+    }
+
+    window.location.replace("/?all_users=" + all_users + "&search=" + query + "&sortby=" + sortby);
 }
 
-
-var requery = function() {
-    var sortby = document.getElementById("sortby").selectedIndex;
+var requery_au = function(all_users) {
     var url = new URL(window.location.href);
-    var all_users = document.getElementById("all-users").selectedIndex;
-    var query = url.searchParams.get("search");
 
-    if(query === null){
-        query = "";
+    var query = url.searchParams.get("search");
+    if (query == null) {
+	query = "";
     }
-    if(all_users === null){
-        all_users = 0;
+
+    var sortby = url.searchParams.get("sortby");
+    if (sortby == null) {
+	sortby = "0";
     }
+
     window.location.replace("/?all_users=" + all_users + "&search=" + query + "&sortby=" + sortby);
 }
 
@@ -81,4 +93,3 @@ function toggleLinks(cb, netid) {
         }
     });
 }
-

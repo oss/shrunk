@@ -11,9 +11,57 @@
 
 {% if all_users == "0" %}
 <h2 class="links-header">My links</h2>
-<a href="/search-visits-csv?search={{ query }}">Export visit data as CSV</a>
 {% else %}
 <h2 class="links-header">All links</h2>
+{%endif%}
+
+<div class="dropdown">
+  <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown"
+	  aria-haspopup="true" aria-expanded="false">
+    {% if sortby == "0" %}
+    Newest first
+    {% elif sortby == "1" %}
+    Oldest first
+    {% elif sortby == "2" %}
+    A-Z
+    {% elif sortby == "3" %}
+    Z-A
+    {% elif sortby == "4" %}
+    Increasing visits
+    {% elif sortby == "5" %}
+    Decreasing visits
+    {% endif %}
+  </button>
+  <div class="dropdown-menu">
+    <a class="dropdown-item" href="javascript:requery('0')">Newest first</a>
+    <a class="dropdown-item" href="javascript:requery('1')">Oldest first</a>
+    <a class="dropdown-item" href="javascript:requery('2')">A-Z</a>
+    <a class="dropdown-item" href="javascript:requery('3')">Z-A</a>
+    <a class="dropdown-item" href="javascript:requery('4')">Increasing visits</a>
+    <a class="dropdown-item" href="javascript:requery('5')">Decreasing visits</a>
+  </div>
+</div>
+
+{% if admin %}
+<div class="dropdown">
+  <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown"
+	  aria-haspopup="true" aria-expanded="false">
+    {% if all_users == "0" %}
+    View my links
+    {% elif all_users == "1" %}
+    View all links
+    {% endif %}
+  </button>
+  <div class="dropdown-menu">
+    <a class="dropdown-item" href="javascript:requery_au('0')">View my links</a>
+    <a class="dropdown-item" href="javascript:requery_au('1')">View all links</a>
+  </div>
+</div>
+{% endif %}
+
+{% if all_users == "0" %}
+<a href="/search-visits-csv?search={{ query }}">Export visit data as CSV</a>
+{% else %}
 <a href="/search-visits-csv?all_users=1&search={{ query }}">Export visit data as CSV</a>
 {%endif%}
 
