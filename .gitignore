@@ -28,3 +28,4 @@ runappserver.py
 
 # pytest
 *pytest_cache*
+venv.old
