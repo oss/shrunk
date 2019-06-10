@@ -415,6 +415,14 @@ Media Queries
     }
 }
 
+.shrunk-nav-link {
+    color: white;
+}
+
+.btn-nav {
+    margin-left: 10px;
+}
+
 /* for role.html */
 #comment {
     width: 100%;

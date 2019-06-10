@@ -26,25 +26,25 @@
 
   <!-- Main nav items -->
   <div class="collapse navbar-collapse">
-    <ul class="nav nav-pills">
-      <li class="nav-item">
-	<a class="nav-link" href="{{ url_for('render_index') }}">My URLs</a>
-      </li>
+    <button type="button" class="btn btn-outline-secondary btn-no-border btn-nav">
+      My URLs
+    </button>
 
-      <li class="nav-item">
-	<a class="nav-link" href="/add">Shorten a URL</a>
-      </li>
+    {% if ("facstaff" in roles or "power_user" in roles) and "admin" not in roles %}
+    <button type="button" class="btn btn-outline-secondary btn-no-border">
+      Whitelist
+    </button>
+    {% endif %}
 
-      <li class="nav-item">
-	<a class="nav-link" href="{{ url_for('faq') }}">FAQ</a>
-      </li>
+    {% if "admin" in roles %}
+    <button type="button" class="btn btn-outline-secondary btn-no-border">
+      Admin
+    </button>
+    {% endif %}
 
-      {% if "admin" in roles %}
-      <li class="nav-item">
-	<a class="nav-link" href="/admin/">Admin</a>
-      </li>
-      {% endif %}
-    </ul>
+    <button type="button" class="btn btn-outline-secondary btn-no-border">
+      FAQ
+    </button>
   </div>
   
   <!-- Username and logout -->
