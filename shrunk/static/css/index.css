@@ -1,0 +1,43 @@
+.row {
+    margin-bottom: 10px;
+}
+
+.row-controls {
+    padding-bottom: 11px;
+    border-bottom: 1px solid;
+    border-color: #b7aa9f;
+}
+
+.col-csv-download {
+    border-left: 1px solid;
+    border-color: #b7aa9f;
+}
+
+.shrunk-title {
+    display: inline;
+    margin-right: 10px;
+}
+
+.shrunk-time-created {
+    margin-right: 10px;
+}
+
+.card-link {
+    border: none;
+    border-radius: 0;
+    border-bottom: 1px solid;
+    border-color: #b7aa9f;
+    overflow: hidden;
+}
+
+.row:last-of-type > .col > .card-link {
+    border: none;
+}
+
+.shrunk-long-url {
+    white-space: nowrap;
+}
+
+.btn-round {
+    border-radius: 25px;
+}

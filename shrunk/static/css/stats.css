@@ -1,0 +1,15 @@
+#pie-charts {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+@media (max-width: 1200px) {
+    #pie-charts {
+	flex-direction: column;
+    }
+}
+
+#pie-charts > .pie-div {
+    flex: 1;
+}

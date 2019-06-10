@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
+
+<!-- Stats CSS -->
+<link href="{{ url_for('static', filename='css/stats.css') }}" rel="stylesheet">
+
 <h1>URL stats</h1>
 <a href="/link-visits-csv?url={{ short_url }}">Export visit data as CSV</a>
 <article class="add-group clearfix">

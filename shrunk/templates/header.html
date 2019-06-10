@@ -9,6 +9,21 @@
 
   <!-- We only want to display navbar items when the user is logged in. -->
   {% if netid %}
+  <!-- Search box -->
+  <form class="form-inline">
+    <input type="hidden" name="all_users" value="{{ all_users }}">
+    <input type="hidden" name="sortby" value="{{ sortby }}">
+    <div class="input-group">
+      <input type="search" name="search" aria-label="Search"
+	     class="form-control input-large" placeholder="Search" value="{{ query }}">
+      <div class="input-group-append">
+	<button type="submit" id="submit-search" class="btn btn-outline-secondary">
+	  <i class="fas fa-search"></i>
+	</button>
+      </div>
+    </div>
+  </form>
+
   <!-- Main nav items -->
   <div class="collapse navbar-collapse">
     <ul class="nav nav-pills">
@@ -31,21 +46,6 @@
       {% endif %}
     </ul>
   </div>
-
-  <!-- Search box -->
-  <form class="form-inline">
-    <input type="hidden" name="all_users" value="{{ all_users }}">
-    <input type="hidden" name="sortby" value="{{ sortby }}">
-    <div class="input-group">
-      <input type="search" name="search" aria-label="Search"
-	     class="form-control" placeholder="Search" value="{{ query }}">
-      <div class="input-group-append">
-	<button type="submit" id="submit-search" class="btn btn-outline-secondary">
-	  <i class="fas fa-search"></i>
-	</button>
-      </div>
-    </div>
-  </form>
   
   <!-- Username and logout -->
   <div class="nav-item dropdown px-2">

@@ -1,0 +1,50 @@
+<div class="row">
+  <div class="col">
+    <div class="card bg-light card-link">
+      <div class="card-body">
+	<h2 class="shrunk-title">
+	  <a href="{{ link['long_url'] }}">
+	    {% if link['title'] %}
+	    {% if link['title'] | length > 32 %}
+	    {{ link['title'][:32] + '...' }}
+	    {% else %}
+	    {{ link['title'] }}
+	    {% endif %}
+	    {% else %}
+	    {{ link['_id'] }}
+	    {% endif %}
+	  </a>
+	</h2>
+	<span class="shrunk-time-created">{{ formattime(link['timeCreated']) }}</span>
+	<span>Visits: {{ link['visits'] }}</span>
+	<br/>
+	<a href="{{ linkserver_url }}/{{ link['_id']}}">{{ linkserver_url }}/{{ link['_id'] }}</a>
+	&#8594;
+	<span class="shrunk-long-url">{{ link['long_url'] }}</span>
+
+	<!-- For some reason, these buttons show up in the opposite 
+	     order that they're listed in the HTML. -->
+
+	<button type="button" title="Delete link"
+		class="btn btn-outline-danger btn-no-border btn-round float-right">
+	  <i class="fas fa-trash"></i>
+	</button>
+
+	<button type="button" title="Create QR code"
+		class="btn btn-outline-dark btn-no-border btn-round float-right">
+	  <i class="fas fa-qrcode"></i>
+	</button>
+
+	<button type="button" title="Link visit statistics"
+		class="btn btn-outline-dark btn-no-border btn-round float-right">
+	  <i class="fas fa-chart-line"></i>
+	</button>
+
+	<button type="button" title="Edit link"
+		class="btn btn-outline-dark btn-no-border btn-round float-right">
+	  <i class="fas fa-pencil-alt"></i>
+	</button>
+      </div> <!-- End card-body -->
+    </div> <!-- End card -->
+  </div> <!-- End col -->
+</div> <!-- End row -->

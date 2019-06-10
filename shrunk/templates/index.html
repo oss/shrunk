@@ -1,190 +1,168 @@
 {% extends "base.html" %}
-{% block content%}
+{% block content %}
+
+<link href="{{ url_for('static', filename='css/index.css') }}" rel="stylesheet">
+
 {% if wrong_owner %}
 <div class="shrunk-messages">
     You are not the owner of this URL...
 </div>
 {% endif %}
 
-<br />
-<br />
-
-{% if all_users == "0" %}
-<h2 class="links-header">My links</h2>
-{% else %}
-<h2 class="links-header">All links</h2>
-{%endif%}
-
-<div class="dropdown">
-  <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown"
-	  aria-haspopup="true" aria-expanded="false">
-    {% if sortby == "0" %}
-    Newest first
-    {% elif sortby == "1" %}
-    Oldest first
-    {% elif sortby == "2" %}
-    A-Z
-    {% elif sortby == "3" %}
-    Z-A
-    {% elif sortby == "4" %}
-    Increasing visits
-    {% elif sortby == "5" %}
-    Decreasing visits
-    {% endif %}
-  </button>
-  <div class="dropdown-menu">
-    <a class="dropdown-item" href="javascript:requery('0')">Newest first</a>
-    <a class="dropdown-item" href="javascript:requery('1')">Oldest first</a>
-    <a class="dropdown-item" href="javascript:requery('2')">A-Z</a>
-    <a class="dropdown-item" href="javascript:requery('3')">Z-A</a>
-    <a class="dropdown-item" href="javascript:requery('4')">Increasing visits</a>
-    <a class="dropdown-item" href="javascript:requery('5')">Decreasing visits</a>
+<div class="row row-controls">
+  <div class="col col-md-auto">
+    <h2>URL Dashboard</h2>
   </div>
-</div>
 
-{% if admin %}
-<div class="dropdown">
-  <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown"
-	  aria-haspopup="true" aria-expanded="false">
-    {% if all_users == "0" %}
-    View my links
-    {% elif all_users == "1" %}
-    View all links
-    {% endif %}
-  </button>
-  <div class="dropdown-menu">
-    <a class="dropdown-item" href="javascript:requery_au('0')">View my links</a>
-    <a class="dropdown-item" href="javascript:requery_au('1')">View all links</a>
+  <div class="col col-md-auto">
+    <button type="button" class="btn btn-primary">
+      <i class="fas fa-plus-circle"></i> New Link
+    </button>
   </div>
-</div>
-{% endif %}
 
-{% if all_users == "0" %}
-<a href="/search-visits-csv?search={{ query }}">Export visit data as CSV</a>
-{% else %}
-<a href="/search-visits-csv?all_users=1&search={{ query }}">Export visit data as CSV</a>
-{%endif%}
+  <!-- The sort dropdown (really ugly) -->
+  <div class="col col-md-auto">
+    <div class="dropdown">
+      <button class="btn btn-outline-primary dropdown-toggle btn-no-border btn-no-background"
+	      type="button" data-toggle="dropdown"
+	      aria-haspopup="true" aria-expanded="false">
+	{% if sortby == "0" %}
+	Newest first
+	{% elif sortby == "1" %}
+	Oldest first
+	{% elif sortby == "2" %}
+	A-Z
+	{% elif sortby == "3" %}
+	Z-A
+	{% elif sortby == "4" %}
+	Increasing visits
+	{% elif sortby == "5" %}
+	Decreasing visits
+	{% endif %}
+      </button>
+      <div class="dropdown-menu">
+	<a class="dropdown-item" href="javascript:requery('0')">Newest first</a>
+	<a class="dropdown-item" href="javascript:requery('1')">Oldest first</a>
+	<a class="dropdown-item" href="javascript:requery('2')">A-Z</a>
+	<a class="dropdown-item" href="javascript:requery('3')">Z-A</a>
+	<a class="dropdown-item" href="javascript:requery('4')">Increasing visits</a>
+	<a class="dropdown-item" href="javascript:requery('5')">Decreasing visits</a>
+      </div>
+    </div>
+  </div> <!-- End col -->
+
+  <!-- The my links/all links dropdown (ugly again) -->
+  {% if admin %}
+  <div class="col col-md-auto">
+    <div class="dropdown">
+      <button class="btn btn-outline-primary btn-no-border btn-no-background dropdown-toggle"
+	      type="button" data-toggle="dropdown"
+	      aria-haspopup="true" aria-expanded="false">
+	{% if all_users == "0" %}
+	View my links
+	{% elif all_users == "1" %}
+	View all links
+	{% endif %}
+      </button>
+      <div class="dropdown-menu">
+	<a class="dropdown-item" href="javascript:requery_au('0')">View my links</a>
+	<a class="dropdown-item" href="javascript:requery_au('1')">View all links</a>
+      </div>
+    </div>
+    {% endif %}
+  </div> <!-- End col -->
+
+  <div class="col col-csv-download">
+    <button type="button"
+	    class="btn btn-outline-primary btn-no-border btn-no-background btn-csv-download">
+      <i class="fas fa-download"></i> Export visit data as CSV
+    </button>
+    <!--{% if all_users == "0" %}
+    <a href="/search-visits-csv?search={{ query }}">Export visit data as CSV</a>
+    {% else %}
+    <a href="/search-visits-csv?all_users=1&search={{ query }}">Export visit data as CSV</a>
+    {%endif%}-->
+  </div> <!-- End col -->
+</div> <!-- End row -->
 
 {% if query and not links %}
-<div class="shrunk-messages">
-    No results found for query <strong>{{ query }}</strong>
+<div class="row">
+  <div class="col">
+    <div class="shrunk-messages">
+      No results found for query <strong>{{ query }}</strong>
+    </div>
+  </div>
 </div>
 {% endif %}
 
+{% if links %}
 <div class="container">
-    {% for link in links %}
-    <article class="link-group clearfix">
-        <div class="link-info" style="clear: both;">
-            <div class="hover-controls">
-                [ <a href="{{ url_for('edit_link', url=link['_id'])}}">Edit</a> ]
-                [ <a onClick="delete_link('{{ link['_id'] }}')" style="cursor: pointer;">Delete</a> ]
-                [ <a href="{{ url_for('get_stats', url=link['_id']) }}">Stats</a> ]
-                [ <a href="{{url_for('qr', url=link['_id'])}}">QR Code</a> ]
-            </div>
-            <a href="{{ link['long_url'] }}" target="_blank" class="hover-title title">
-                {% if link['title'] %}
-                    {% if link['title'] | length > 32 %}
-                        {{ link['title'][:32]+'...' }}
-                    {% else %}
-                        {{ link['title'] }}
-                    {% endif %}
-                {% else %}
-                    {{ link['_id'] }}
-                {% endif %}
-            </a>
-            <div class="short-link">
-                <a href="{{ linkserver_url }}/{{ link['_id'] }}" target="_blank">{{ linkserver_url }}/{{ link['_id'] }}</a>
-                <span class="original-url"> &#8594 {{ link['long_url'] }} </span>
-            </div>
-            {% if "admin" in roles %}
-            <div class="owner" netid="{{ link['netid'] }}">
-                Owner: {{ link['netid'] }}
-            </div>
-            {% endif %}
-            <div class="date">
-                {{ formattime(link['timeCreated']) }}
-            </div>
-            <div class="bottom-row">
-                Views: {{ link['visits'] }}
-            </div>
-        </div>
-    </article>
-    {% else %}
-    {% if not query %}
-    <!-- Don't show the info screen when an empty search result comes back -->
-    <article class="link-group clearfix">
-        <a href="#" class="title">
-            URL Shortener
-        </a>
-        <div class="bottom-row">
-            The official Rutgers University URL shortener. Click on
-            '<a href="{{ url_for('add_link') }}">add a link</a>' to start adding links.
-        </div>
-    </article>
-    {% endif %}
-    {% endfor %}
-</div>
+  {% for link in links %}
+  {% include "link_card.html" %}
+  {% endfor %}
+</div> <!-- End container -->
 
 {% if lastpage and lastpage > 1 %}
-<article class="page-group clearfix">
-    <nav role="navigation">
-        <div class="page-box">
-            <div class="prev">
-                {% if page > 1 %}
-                <span class="prev">
-                    <a href="{{ url_for('render_index', p=page-1, search=query)}}">
-                        <span aria-hidden="true">&laquo;</span>
-                    </a>
-                </span>
-                {% else %}
-                <span class="prev disabled">
-                    <a>
-                        <span aria-hidden="true">&laquo;</span>
-                    </a>
-                </span>
-                {% endif %}
-            </div>
+<nav aria-label="Search results pages">
+  <ul class="pagination justify-content-center">
+    <li class="page-item {{ 'disabled' if page == 1 else '' }}">
+      <a class="page-link" aria-label="Previous"
+	 href="{{ url_for('render_index', p=page-1, search=query) }}">
+	<span aria-hidden="true">&laquo;</span>
+	<span class="sr-only">Previous</span>
+      </a>
+    </li> <!-- End previous button -->
 
-            <div class="page-numbers">
-                {% if begin_pages != 1 %}
-                <span class="page">
-                    <a href="{{ url_for('render_index', p=1, search=query) }}">{{ 1 }}</a>
-                </span> ...
-                {% endif %}
-                {% for pg in range(begin_pages, end_pages +1) %}
-                    {% if pg == page %}
-                    <span class="page active">
-                        <a href="{{ url_for('render_index', p=pg, search=query) }}">{{ pg }}</a>
-                    </span>
-                    {% else %}
-                    <span class="page">
-                        <a href="{{ url_for('render_index', p=pg, search=query) }}">{{ pg }}</a>
-                    </span>
-                    {% endif %}
-                {% endfor %}
+    {% if begin_pages != 1 %}
+    <li class="page-item">
+      <a class="page-link" aria-label="Page 1"
+	 href="{{ url_for('render_index', p=1, search=query) }}">
+	1
+      </a>
+    </li>
 
-                {% if end_pages != lastpage %}
-                ... <span class="page">
-                        <a href="{{ url_for('render_index', p=lastpage, search=query) }}">
-                            {{ lastpage }}
-                        </a>
-                    </span>
-                {% endif %}
-            </div>
+    <li class="page-item disabled">
+      <a class="page-link" aria-label="Ellipsis">
+	...
+      </a>
+    </li>
+    {% endif %}
 
-            <div class="next">
-                {% if page < lastpage %}
-                    <span class="next">
-                        <a href="{{ url_for('render_index', p=page+1, search=query) }}">
-                            <span aria-hidden="true">&raquo;</span></a></span>
-                {% else %}
-                    <span class="next disabled">
-                        <a><span aria-hidden="true">&raquo;</span></a>
-                    </span>
-                {% endif %}
-            </div>
-        </div>
-    </nav>
-</article>
+    {% for page_number in range(begin_pages, end_pages+1) %}
+    <li class="page-item">
+      <a class="page-link" aria-label="Page {{ page_number }}"
+	 href="{{ url_for('render_index', p=page_number, search=query) }}">
+	{{ page_number }}
+      </a>
+    </li>
+    {% endfor %}
+
+    {% if end_pages != lastpage %}
+    <li class="page-item disabled">
+      <a class="page-link" aria-label="Ellipsis">
+	...
+      </a>
+    </li>
+
+    <li class="page-time">
+      <a class="page-link" aria-label="Page {{ lastpage }}"
+	 href="{{ url_for('render_index', p=lastpage, search=query) }}">
+	{{ lastpage }}
+      </a>
+    </li>
+    {% endif %}
+
+    <li class="page-item {{ 'disabled' if page == lastpage else '' }}">
+      <a class="page-link" aria-label="Next"
+	 href="{{ url_for('render_index', p=page+1, search=query) }}">
+	<span aria-hidden"true">&raquo;</span>
+	<span class="sr-only">Next</span>
+      </a>
+    </li> <!-- End next button -->
+  </ul>
+</nav>
 {% endif %}
+
+{% endif %}
+
 {% endblock %}

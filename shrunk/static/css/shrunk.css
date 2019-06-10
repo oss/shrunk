@@ -3,7 +3,7 @@
 }
 
 body {
-    padding-top: 70px;
+    padding-top: 40px;
     background-color: #fefefe;
 }
 
@@ -40,6 +40,10 @@ label {
     background-color: #cc0e32;
 }
 
+nav {
+    margin-bottom: 20px;
+}
+
 .navbar-header {
     background-color: #cc0e32;
 }
@@ -54,16 +58,6 @@ label {
 
 .navbar-dark .navbar-nav .nav-link {
     color: white;
-}
-
-.btn-outline-secondary {
-    color: #eabbc4;
-    border-color: #eabbc4;
-}
-
-.btn-outline-secondary:hover {
-    background-color: #96606a;
-    border-color: #96606a;
 }
 
 .nav-pills > .nav-item:hover {
@@ -105,6 +99,11 @@ label {
 
 .shrunk-toolbar-item {
     margin-right: 5px !important;
+}
+
+.main-container {
+    margin-top: 50px;
+    margin-bottom: 70px;
 }
 
 .error {
@@ -420,23 +419,6 @@ Media Queries
 #comment {
     width: 100%;
     resize: none;
-}
-
-/* for stats.html  */
-
-#pie-charts {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-}
-@media (max-width: 1200px) {
-    #pie-charts {
-	flex-direction: column;
-    }
-}
-
-#pie-charts > .pie-div {
-    flex: 1;
 }
 
 .dev-login-btn {
