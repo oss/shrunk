@@ -4,40 +4,65 @@
 {{ super() }}
 {% endblock %}
 {% block content %}
-<div class="login-box col-xs-12 col-sm-8 col-sm-offset-2">
-    <div class="message" id="go-url">
-        <font size="36" color="#cc0e32">go.rutgers.edu</font>
+<div class="login-box container">
+  <div class="message row" id="go-url">
+    <div class="col">
+      <font size="36" color="#cc0e32">go.rutgers.edu</font>
     </div>
+  </div>
 
-    <div class="message">
-        <font size="3">The official Rutgers URL shortener</font>
+  <div class="message row">
+    <div class="col">
+      <font size="3">The official Rutgers URL shortener</font>
     </div>
+  </div>
 
-    <div class="message">
-        <font size="4">You will need to be a Rutgers faculty or staff member to access this site.</font>
+  <div class="message row">
+    <div class="col">
+      <font size="4">You'll need to be a Rutgers faculty or staff member to access this site.</font>
     </div>
-    <div class="dev-login-box col-sm-4 col-sm-offset-4">
-	<form class="dev-login-btn" action="{{ shib_login }}" method="get">
-            <button type="submit" class="login-button btn btn-default">Login with CAS</button>
-	</form>
+  </div>
 
-    {% if dev %}
-	<form class="dev-login-btn" action="{{ dev_user_login }}" method="get">
-            <button type="submit" class="login-button btn btn-default">DevUser Login</button>
-	</form>
-
-	<form class="dev-login-btn" action="{{ dev_facstaff_login }}" method="get">
-            <button type="submit" class="login-button btn btn-default">DevFacstaff Login</button>
-	</form>
-
-	<form class="dev-login-btn" action="{{ dev_power_login }}" method="get">
-            <button type="submit" class="login-button btn btn-default">DevPowerUser Login</button>
-	</form>
-
-	<form class="dev-login-btn" action="{{ dev_admin_login }}" method="get">
-            <button type="submit" class="login-button btn btn-default">DevAdmin Login</button>
-	</form>
-    {% endif %}
+  <div class="row">
+    <div class="col">
+      <form class="dev-login-btn" action="{{ shib_login }}" method="get">
+        <button type="submit" class="login-button btn btn-default btn-block">Login with CAS</button>
+      </form>
     </div>
+  </div>
+
+  {% if dev %}
+  <div class="row justify-content-center">
+    <div class="col">
+      <form class="dev-login-btn" action="{{ dev_user_login }}" method="get">
+        <button type="submit" class="login-button btn btn-default btn-block">DevUser Login</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col">
+      <form class="dev-login-btn" action="{{ dev_facstaff_login }}" method="get">
+        <button type="submit" class="login-button btn btn-default btn-block">DevFacstaff Login</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col">
+      <form class="dev-login-btn" action="{{ dev_power_login }}" method="get">
+        <button type="submit" class="login-button btn btn-default btn-block">DevPowerUser Login</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col">
+      <form class="dev-login-btn" action="{{ dev_admin_login }}" method="get">
+        <button type="submit" class="login-button btn btn-default btn-block">DevAdmin Login</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

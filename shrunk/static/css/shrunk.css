@@ -140,6 +140,7 @@ label {
 .dev-login-box {
     display: flex;
     flex-direction: column;
+    width: 25%;
 }
 
 .dev-login-box>*>.login-button {
@@ -436,4 +437,9 @@ Media Queries
 
 #pie-charts > .pie-div {
     flex: 1;
+}
+
+.dev-login-btn {
+    width: 25%;
+    margin: auto;
 }
