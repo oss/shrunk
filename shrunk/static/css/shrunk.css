@@ -303,11 +303,6 @@ nav {
     font-size: 48px;
 }
 
-.active {
-    font-weight: bold;
-    font-size: 36px;
-}
-
 #footer {
     position:   fixed;
     width:      100%;

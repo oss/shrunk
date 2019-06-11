@@ -129,7 +129,8 @@
     {% endif %}
 
     {% for page_number in range(begin_pages, end_pages+1) %}
-    <li class="page-item">
+    {% set maybe_active = 'active' if page_number == page else '' %}
+    <li class="page-item {{ maybe_active }}">
       <a class="page-link" aria-label="Page {{ page_number }}"
 	 href="{{ url_for('render_index', p=page_number, search=query) }}">
 	{{ page_number }}
