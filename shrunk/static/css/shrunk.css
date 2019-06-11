@@ -428,3 +428,11 @@ Media Queries
     width: 25%;
     margin: auto;
 }
+
+.btn-no-border {
+    border: none !important;
+}
+
+.btn-no-background {
+    background: none !important;
+}

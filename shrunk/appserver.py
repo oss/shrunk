@@ -10,6 +10,7 @@ import collections
 
 from flask import make_response, request, redirect, session
 from flask_sso import SSO
+from flask_assets import Environment, Bundle
 
 from shrunk.app_decorate import ShrunkFlask, render_template
 from shrunk.client import BadShortURLException, ForbiddenDomainException, \
@@ -25,6 +26,10 @@ from shrunk.statutil import *
 # Create application
 # ShrunkFlask extends flask and adds decorators and configs itself
 app = ShrunkFlask(__name__)
+assets = Environment(app)
+assets.url = app.static_url_path
+scss_bootstrap = Bundle('shrunk_bootstrap.scss', filters='scss', output='shrunk_bootstrap.css')
+assets.register('scss_bootstrap', scss_bootstrap)
 
 # This attaches the *flask_sso* login handler to the SSO_LOGIN_URL,
 # which essentially maps the SSO attributes to a dictionary and

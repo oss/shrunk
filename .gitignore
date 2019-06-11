@@ -29,3 +29,5 @@ runappserver.py
 # pytest
 *pytest_cache*
 venv.old
+shrunk/static/shrunk_bootstrap.css
+shrunk/static/.webassets-cache

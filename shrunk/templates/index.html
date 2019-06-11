@@ -25,7 +25,7 @@
   <!-- The sort dropdown (really ugly) -->
   <div class="col col-md-auto">
     <div class="dropdown">
-      <button class="btn btn-outline-primary dropdown-toggle btn-no-border btn-no-background"
+      <button class="btn btn-outline-primary dropdown-toggle btn-no-border btn-no-background bg-light"
 	      type="button" data-toggle="dropdown"
 	      aria-haspopup="true" aria-expanded="false">
 	{% if sortby == "0" %}
@@ -57,7 +57,7 @@
   {% if admin %}
   <div class="col col-md-auto">
     <div class="dropdown">
-      <button class="btn btn-outline-primary btn-no-border btn-no-background dropdown-toggle"
+      <button class="btn btn-outline-primary btn-no-border btn-no-background dropdown-toggle bg-light"
 	      type="button" data-toggle="dropdown"
 	      aria-haspopup="true" aria-expanded="false">
 	{% if all_users == "0" %}
@@ -77,7 +77,7 @@
   <div class="col col-csv-download">
     <form action="/search-visits-csv?all_users={{ all_users }}&search={{ query }}">
       <button type="submit"
-	      class="btn btn-outline-primary btn-no-border btn-no-background btn-csv-download">
+	      class="btn btn-outline-primary btn-no-border btn-no-background btn-csv-download bg-light">
 	<i class="fas fa-download"></i> Export visit data as CSV
       </button>
     </form>
