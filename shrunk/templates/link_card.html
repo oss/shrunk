@@ -1,7 +1,9 @@
 <div class="row">
   <div class="col">
     <div class="card bg-light card-link">
-      <div class="card-body">
+      <div class="card-block">
+	<div class="row">
+	  <div class="col col-link-info">
 	<h2 class="shrunk-title">
 	  <a href="{{ link['long_url'] }}">
 	    {% if link['title'] %}
@@ -18,13 +20,19 @@
 	<span class="shrunk-time-created">{{ formattime(link['timeCreated']) }}</span>
 	<span>Visits: {{ link['visits'] }}</span>
 	<br/>
-	<a href="{{ linkserver_url }}/{{ link['_id']}}">{{ linkserver_url }}/{{ link['_id'] }}</a>
-	&#8594;
-	<span class="shrunk-long-url">{{ link['long_url'] }}</span>
+	<nobr>
+	  {% set short_url = linkserver_url + '/' + link['_id'] %}
+	  <a href="{{ short_url }}">{{ short_url }}</a>
+	  &#8594; <!-- right arrow -->
+	  <span class="shrunk-long-url" title="{{ link['long_url'] }}">{{ link['long_url'] }}</span>
+	</nobr>
+
+	</div> <!-- End col -->
 
 	<!-- For some reason, these buttons show up in the opposite 
 	     order that they're listed in the HTML. -->
 
+	  <div class="col-3 align-self-center">
 	<button type="button" title="Delete link"
 		class="btn btn-outline-danger btn-no-border btn-round float-right">
 	  <i class="fas fa-trash"></i>
@@ -44,7 +52,12 @@
 		class="btn btn-outline-dark btn-no-border btn-round float-right">
 	  <i class="fas fa-pencil-alt"></i>
 	</button>
-      </div> <!-- End card-body -->
+
+	  </div> <!-- End col -->
+
+	  </div> <!-- End row -->
+	
+      </div> <!-- End card-block -->
     </div> <!-- End card -->
   </div> <!-- End col -->
 </div> <!-- End row -->
