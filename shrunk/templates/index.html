@@ -15,9 +15,11 @@
   </div>
 
   <div class="col col-md-auto">
-    <button type="button" class="btn btn-primary">
-      <i class="fas fa-plus-circle"></i> New Link
-    </button>
+    <form action="/add">
+      <button type="submit" class="btn btn-primary">
+	<i class="fas fa-plus-circle"></i> New Link
+      </button>
+    </form>
   </div>
 
   <!-- The sort dropdown (really ugly) -->
@@ -73,15 +75,12 @@
   {% endif %}
 
   <div class="col col-csv-download">
-    <button type="button"
-	    class="btn btn-outline-primary btn-no-border btn-no-background btn-csv-download">
-      <i class="fas fa-download"></i> Export visit data as CSV
-    </button>
-    <!--{% if all_users == "0" %}
-    <a href="/search-visits-csv?search={{ query }}">Export visit data as CSV</a>
-    {% else %}
-    <a href="/search-visits-csv?all_users=1&search={{ query }}">Export visit data as CSV</a>
-    {%endif%}-->
+    <form action="/search-visits-csv?all_users={{ all_users }}&search={{ query }}">
+      <button type="submit"
+	      class="btn btn-outline-primary btn-no-border btn-no-background btn-csv-download">
+	<i class="fas fa-download"></i> Export visit data as CSV
+      </button>
+    </form>
   </div> <!-- End col -->
 </div> <!-- End row -->
 
