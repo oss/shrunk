@@ -247,7 +247,7 @@ class ShrunkFlask(ShrunkFlaskMini):
             "grant_button": "BLACKLIST",
             "revoke_title": "Unblacklist a user",
             "revoke_button": "UNBLACKLIST",
-            "empty": "there are currently no blacklisted users",
+            "empty": "There are currently no blacklisted users",
             "granted_by": "blacklisted by"
         })
 
@@ -276,13 +276,13 @@ class ShrunkFlask(ShrunkFlaskMini):
 
         roles.new("blocked_url", is_admin, validate_url, custom_text={
             "title": "Blocked URLs",
-            "invalid": "bad URL",
+            "invalid": "Bad URL",
             "grant_title": "Block a URL:",
             "grant_button": "BLOCK",
             "revoke_title": "Unblock a URL",
             "revoke_button": "UNBLOCK",
-            "empty": "there are currently no blocked URLs",
-            "granted_by": "blocked by"
+            "empty": "There are currently no blocked URLs",
+            "granted_by": "Blocked by"
         }, oncreate=onblock)
 
         def admin_facstaff_or_power(netid):
@@ -295,8 +295,8 @@ class ShrunkFlask(ShrunkFlaskMini):
             "grant_button": "WHITELIST",
             "revoke_title": "Remove a user from the whitelist",
             "revoke_button": "UNWHITELIST",
-            "empty": "you have not whitelisted any users",
-            "granted_by": "whitelisted by",
+            "empty": "You have not whitelisted any users",
+            "granted_by": "Whitelisted by",
             "allow_comment": True,
             "comment_prompt": "Describe why the user has been granted access to Go."
         })

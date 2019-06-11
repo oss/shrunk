@@ -1,0 +1,30 @@
+.row {
+    margin-bottom: 10px;
+}
+
+.revoke-title-row {
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+
+.comment {
+    margin-bottom: 10px;
+    resize: none;
+}
+
+.card-role {
+    border: none;
+    border-radius: 0;
+    border-bottom: 1px solid;
+    border-color: #b7aa9f;
+}
+
+.row:last-of-type > .col > .card-role {
+    border: none;
+}
+
+.col-grant {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}

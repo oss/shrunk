@@ -1,61 +1,74 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>{{ title }}</h1>
+
+<link href="{{ url_for('static', filename='css/role.css') }}" rel="stylesheet">
+
+<div class="row">
+  <div class="col">
+    <h1>{{ title }}</h1>
+  </div> <!-- End col -->
+</div> <!-- End row -->
+
 {% if msg %}
-<div class="shrunk-messages">
-    {{ msg }}
-</div>
+<div class="row">
+  <div class="col">
+    <h3>{{ msg }}</h3>
+  </div> <!-- End col -->
+</div> <!-- End row -->
 {% endif %}
 
-{%if error %}
-<div class="error">
-    {{ error }}
-</div>
-{% endif %}
-
-<article class="add-group clearfix">
-    <h3>{{ grant_title }}</h3>
-    <form method="POST" action="/roles/{{role}}/" name="blacklist">
-        <input name="entity" type="text" class="form-control" /> <br />
-	{% if allow_comment %}
-	<h3>Comment:</h3>
-
-	<textarea id="comment" name="comment" rows="5" cols="33" required placeholder="{{ comment_prompt }}"></textarea> <br /> <br />
-	{% endif %}
-
-        <input class="shrink-button btn btn-default" type="submit"
-               value="{{ grant_button }}" /> <br />
-    </form>
-</article>
-
-<h3>{{ revoke_title }}</h3>
-{% for grant in grants %}
-<article class="link-group clearfix">
-    <div class="link-info" style="clear: both;">
-        <div class="hover-controls">
-            <form method="POST" action="/roles/{{role}}/revoke">
-                <input type="hidden" id="entity"
-                       name="entity" value="{{ grant['entity'] }}" />
-                <input class="shrunk-button btn btn-default" type="submit"
-                       value="{{ revoke_button }}" />
-            </form>
-        </div>
-        <div class="title">
-            {{ grant["entity"] }}
-        </div>
-        <div class="bottom-row">
-            {{ granted_by }}: {{ grant["granted_by"] }}
-        </div>
-	{% if grant.get("comment") %}
-	<div>
-	    comment: {{ grant["comment"] }}
-	</div>
-	{% endif %}
+{% if error %}
+<div class="row">
+  <div class="col">
+    <div class="error">
+      {{ error }}
     </div>
-</article>
+  </div> <!-- End col -->
+</div> <!-- End row -->
+{% endif %}
+
+<!-- The grant role box -->
+<div class="row">
+  <div class="col">
+    <form action="/roles/{{ role }}/" method="post">
+      {% if allow_comment %}
+      <h3>Comment:</h3>
+      <textarea name="comment" rows="5" cols="33" required class="form-control comment"
+		placeholder="{{ comment_prompt }}"></textarea>
+      {% endif %}
+
+      <div class="input-group">
+	<input name="entity" type="text" aria-label="Grantee" class="form-control input-large"
+	       placeholder="Grantee">
+	<div class="input-group-append">
+	  <button type="submit" class="btn btn-primary">
+	    {{ grant_button }}
+	  </button>
+	</div>
+      </div>
+    </form>
+  </div> <!-- End col -->
+</div> <!-- End row -->
+
+{% if grants %}
+<div class="row revoke-title-row">
+  <div class="col">
+    <h3>{{ revoke_title }}</h3>
+  </div> <!-- End col -->
+</div> <!-- End row -->
+
+<div class="container">
+  {% for grant in grants %}
+  {% include "role_card.html" %}
+  {% endfor %}
+</div> <!-- End container -->
 {% else %}
-<p>
-    {{ empty }}.
-</p>
-{% endfor %}
+<div class="row revoke-title-row">
+  <div class="col">
+    <h3>{{ empty }}</h3>
+  </div> <!-- End col -->
+</div> <!-- End row -->
+{% endif %}
+
+
 {% endblock %}
