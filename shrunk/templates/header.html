@@ -26,25 +26,36 @@
 
   <!-- Main nav items -->
   <div class="collapse navbar-collapse">
-    <button type="button" class="btn btn-outline-secondary btn-no-border btn-nav">
-      My URLs
-    </button>
+    <form action="/" method="get">
+      <input type="hidden" name="all_users" value="{{ all_users }}">
+      <input type="hidden" name="sortby" value="{{ sortby }}">
+      <input type="hidden" name="search" value="{{ query }}">
+      <button type="submit" class="btn btn-outline-secondary btn-no-border btn-nav">
+	My URLs
+      </button>
+    </form>
 
     {% if ("facstaff" in roles or "power_user" in roles) and "admin" not in roles %}
-    <button type="button" class="btn btn-outline-secondary btn-no-border">
-      Whitelist
-    </button>
+    <form action="/roles/whitelisted" method="get">
+      <button type="submit" class="btn btn-outline-secondary btn-no-border">
+	Whitelist
+      </button>
+    </form>
     {% endif %}
 
     {% if "admin" in roles %}
-    <button type="button" class="btn btn-outline-secondary btn-no-border">
-      Admin
-    </button>
+    <form action="/admin" method="get">
+      <button type="submit" class="btn btn-outline-secondary btn-no-border">
+	Admin
+      </button>
+    </form>
     {% endif %}
 
-    <button type="button" class="btn btn-outline-secondary btn-no-border">
-      FAQ
-    </button>
+    <form action="/faq" method="get">
+      <button type="submit" class="btn btn-outline-secondary btn-no-border">
+	FAQ
+      </button>
+    </form>
   </div>
   
   <!-- Username and logout -->
