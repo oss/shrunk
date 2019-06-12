@@ -7,36 +7,12 @@ var shrunk = shrunk || function() {
  *
  * Forces a redirect to the index.
  */
-var requery = function(sortby) {
-    var url = new URL(window.location.href);
-
-    var all_users = url.searchParams.get("all_users");
-    if (all_users == null) {
-	all_users = "0";
-    }
-
-    var query = url.searchParams.get("search");
-    if (query == null) {
-	query = "";
-    }
-
-    window.location.replace("/?all_users=" + all_users + "&search=" + query + "&sortby=" + sortby);
+function change_sortby(sortby) {
+    window.location.replace('/?sortby=' + sortby);
 }
 
-var requery_au = function(all_users) {
-    var url = new URL(window.location.href);
-
-    var query = url.searchParams.get("search");
-    if (query == null) {
-	query = "";
-    }
-
-    var sortby = url.searchParams.get("sortby");
-    if (sortby == null) {
-	sortby = "0";
-    }
-
-    window.location.replace("/?all_users=" + all_users + "&search=" + query + "&sortby=" + sortby);
+function change_all_users(all_users) {
+    window.location.replace('/?all_users=' + all_users);
 }
 
 var clear_search = function(){

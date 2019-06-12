@@ -11,11 +11,10 @@
   {% if netid %}
   <!-- Search box -->
   <form class="form-inline">
-    <input type="hidden" name="all_users" value="{{ all_users }}">
-    <input type="hidden" name="sortby" value="{{ sortby }}">
     <div class="input-group">
-      <input type="search" name="search" aria-label="Search"
-	     class="form-control input-large" placeholder="Search" value="{{ query }}">
+      <input type="search" name="query" aria-label="Search"
+	     class="form-control input-large" placeholder="Search"
+	     value="{{ query if query else '' }}">
       <div class="input-group-append">
 	<button type="submit" id="submit-search" class="btn btn-outline-secondary">
 	  <i class="fas fa-search"></i>

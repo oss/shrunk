@@ -8,11 +8,11 @@ import werkzeug.useragents
 import urllib.parse
 import collections
 
-from flask import make_response, request, redirect, session
+from flask import make_response, request, redirect, session, render_template
 from flask_sso import SSO
 from flask_assets import Environment, Bundle
 
-from shrunk.app_decorate import ShrunkFlask, render_template
+from shrunk.app_decorate import ShrunkFlask
 from shrunk.client import BadShortURLException, ForbiddenDomainException, \
     AuthenticationException, NoSuchLinkException
 import shrunk.roles as roles
@@ -38,6 +38,22 @@ ext = SSO(app=app)
 
 # Allows us to use the function in our templates
 app.jinja_env.globals.update(formattime=formattime)
+
+@app.context_processor
+def add_search_params():
+    params = {}
+    if 'query' in session:
+        params['query'] = session['query']
+    if 'all_users' in session:
+        params['all_users'] = session['all_users']
+    if 'sortby' in session:
+        params['sortby'] = session['sortby']
+    return params
+
+@app.context_processor
+def add_user_info():
+    netid = session['user']['netid']
+    return {'netid': netid, 'roles': roles.get(netid)}
 
 # Shibboleth handler
 @ext.login_handler
@@ -188,44 +204,21 @@ def render_index(**kwargs):
     except:
         page = 0
 
-    # If this exists, execute a search query
-    try:
-        query = request.args["search"]
-    except:
-        query = ""
+    def get_param(name, *, default=None, valid=None):
+        param = request.args.get(name)
+        param = param if param is not None else session.get(name)
+        param = param if param is not None else default
+        if valid and param not in valid:
+            assert default
+            param = default
+        if param is not None:
+            session[name] = param
+        app.logger.info('param {} = {}'.format(name, param))
+        return param
 
-
-    # Display all users or just the current administrator?
-    # this question is only a concern if user is admin.
-    if not roles.check("admin", netid):
-        all_users = "0"
-    else:
-        try:
-            all_users = request.args["all_users"]
-        except:
-            if "all_users" in session:
-                all_users = session["all_users"]
-            else:                       #default is to print only "my links"
-                all_users = "0"
-
-
-    #just in case I forgot to account for something
-    if all_users == "":
-        all_users = "0"
-
-    sortby = "0" #default
-    # Change sorting preferences
-    if "sortby" in request.args:
-        sortby = request.args["sortby"]
-    elif "sortby" in session:
-        sortby = session["sortby"]
-
-    #crappy workaround
-    if sortby == "":
-        sortby = "0"
-
-    if sortby not in map(str, range(6)):
-        return error('error: invalid sortby parameter', 400)
+    query = get_param('query')
+    all_users = get_param('all_users', default='0', valid=['0', '1'])
+    sortby = get_param('sortby', default='0', valid=map(str, range(6)))
 
     # Depending on the type of user, get info from the database
     is_admin = roles.check("admin", netid)
@@ -291,21 +284,13 @@ def render_index(**kwargs):
         begin_pages = page - 4
         end_pages = page + 4
 
-    session["all_users"] = all_users
-    session["query"] = query
-    session["sortby"] = sortby
     return render_template("index.html",
-                           roles=roles.get(netid),
-                           netid=netid,
-                           all_users=all_users,
                            begin_pages=begin_pages,
                            end_pages=end_pages,
                            lastpage=lastpage,
                            links=links,
                            linkserver_url=app.config["LINKSERVER_URL"],
                            page=page,
-                           query=query,
-                           sortby=sortby,
                            **kwargs)
 
 
@@ -347,27 +332,17 @@ def add_link():
 @app.require_login
 def add_link_form():
     """Displays link form"""
-    netid = session['user'].get('netid')
-    template = {
-        'netid': netid,
-        'roles': roles.get(netid),
-        'sortby': "0",
-        'all_users': "0"
-    }
-    return render_template("add.html", **template)
+    return render_template("add.html")
 
 @app.route("/stats", methods=["GET"])
 @app.require_login
 def get_stats():
-    #should we require owner or admin to view?
-    netid = session['user'].get('netid')
+    # should we require owner or admin to view?
+
     template_data = {
         "url_info": {},
         "missing_url": False,
-        "monthy_visits": [],
-        "query": session.get("query"),
-        "roles": roles.get(netid),
-        "netid": netid
+        "monthy_visits": []
     }
 
     client = app.get_shrunk()
@@ -543,12 +518,7 @@ def daily_visits():
 @app.route("/qr", methods=["GET"])
 @app.require_login
 def qr():
-    netid = session['user'].get('netid')
-    kwargs = {"print": "print" in request.args,
-              "query": session.get("query"),
-              "netid": netid,
-              "roles": roles.get(netid)
-    }
+    kwargs = {"print": "print" in request.args}
     return render_template("qr.html", **kwargs)
 
 
@@ -630,21 +600,16 @@ def edit_link_form():
         return render_index(wrong_owner=True)
 
     info['old_short_url'] = old_short_url
-    info['query'] = session.get('query')
-    info['roles'] = roles.get(netid)
+    # WARNING: the dict returned by client.get_url_info includes
+    # a "netid" field already, so we have to overwrite it here with
+    # the correct netid.
     info['netid'] = netid
-    # Render the edit template
     return render_template("edit.html", **info)
 
 @app.route("/faq")
 @app.require_login
 def faq():
-    netid = session['user'].get('netid')
-    info = {
-        'netid': netid,
-        'roles': roles.get(netid)
-    }
-    return render_template("faq.html", **info)
+    return render_template("faq.html")
 
 @app.route("/admin/")
 @app.require_login
@@ -655,6 +620,5 @@ def admin_panel():
     This displays an administrator panel with navigation links to the admin
     controls.
     """
-    netid = session['user'].get('netid')
     roledata = [{"id": role, "title": roles.form_text[role]["title"]} for role in roles.valid_roles()]
-    return render_template("admin.html", netid=netid, roledata=roledata, roles=roles.get(netid))
+    return render_template("admin.html", roledata=roledata)

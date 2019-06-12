@@ -41,18 +41,18 @@
 	{% endif %}
       </button>
       <div class="dropdown-menu">
-	<a class="dropdown-item" href="javascript:requery('0')">Newest first</a>
-	<a class="dropdown-item" href="javascript:requery('1')">Oldest first</a>
-	<a class="dropdown-item" href="javascript:requery('2')">A-Z</a>
-	<a class="dropdown-item" href="javascript:requery('3')">Z-A</a>
-	<a class="dropdown-item" href="javascript:requery('4')">Increasing visits</a>
-	<a class="dropdown-item" href="javascript:requery('5')">Decreasing visits</a>
+	<a class="dropdown-item" href="javascript:change_sortby('0')">Newest first</a>
+	<a class="dropdown-item" href="javascript:change_sortby('1')">Oldest first</a>
+	<a class="dropdown-item" href="javascript:change_sortby('2')">A-Z</a>
+	<a class="dropdown-item" href="javascript:change_sortby('3')">Z-A</a>
+	<a class="dropdown-item" href="javascript:change_sortby('4')">Increasing visits</a>
+	<a class="dropdown-item" href="javascript:change_sortby('5')">Decreasing visits</a>
       </div>
     </div>
   </div> <!-- End col -->
 
   <!-- The my links/all links dropdown (ugly again) -->
-  {% if admin %}
+  {% if "admin" in roles %}
   <div class="col col-md-auto">
     <div class="dropdown">
       <button class="btn btn-outline-primary btn-no-border btn-no-background dropdown-toggle bg-light"
@@ -65,8 +65,8 @@
 	{% endif %}
       </button>
       <div class="dropdown-menu">
-	<a class="dropdown-item" href="javascript:requery_au('0')">View my links</a>
-	<a class="dropdown-item" href="javascript:requery_au('1')">View all links</a>
+	<a class="dropdown-item" href="javascript:change_all_users('0')">View my links</a>
+	<a class="dropdown-item" href="javascript:change_all_users('1')">View all links</a>
       </div>
     </div>
   </div> <!-- End col -->

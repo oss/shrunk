@@ -1,7 +1,7 @@
 from functools import wraps, partial
 import logging
 import flask
-from flask import Flask, session, redirect, request
+from flask import Flask, session, redirect, request, render_template
 from shrunk.stringutil import validate_url
 import shrunk.roles as roles
 from shrunk.client import ShrunkClient
@@ -20,13 +20,6 @@ except ImportError:
 
 postfork = new_postfork
 
-
-def render_template(template_name, **kwargs):
-    if 'netid' in kwargs:
-        netid = kwargs['netid']
-        for role in roles.valid_roles():
-            kwargs[role] = roles.check(role, netid)
-    return flask.render_template(template_name, **kwargs)
 
 class ShrunkFlaskMini(Flask):
     """set up and configs our basic shrunk aplication"""
@@ -195,7 +188,7 @@ class ShrunkFlask(ShrunkFlaskMini):
                 if roles.check(role, entity):
                     kwargs = roles.template_data(role, netid)
                     kwargs['error'] = 'Role already granted.'
-                    return render_template("role.html", roles=roles.get(netid), **kwargs)
+                    return render_template("role.html", **kwargs)
                 allow_comment = roles.template_data(role, netid)['allow_comment']
                 comment = ''
                 if allow_comment:
@@ -203,7 +196,7 @@ class ShrunkFlask(ShrunkFlaskMini):
                 roles.grant(role, netid, entity, comment)
                 return redirect("/roles/"+role)
             except roles.InvalidEntity:
-                return render_template("role.html", roles=roles.get(netid),
+                return render_template("role.html",
                                        **roles.template_data(role, netid, invalid=True))
 
         @self.route("/roles/<role>/revoke", methods=["POST"])
@@ -224,8 +217,6 @@ class ShrunkFlask(ShrunkFlaskMini):
         def role_list(role):
             netid = session['user'].get('netid')
             kwargs = roles.template_data(role, netid)
-            kwargs['netid'] = netid
-            kwargs['roles'] = roles.get(netid)
             return render_template("role.html", **kwargs)
 
     def setup_roles(self):
