@@ -314,35 +314,34 @@ def render_index(**kwargs):
 def add_link():
     """Adds a new link for the current user. and handles errors"""
     # default is no .xxx links
-    banned_regexes = app.config.get('BANNED_REGEXES', ['\.xxx'])
-    form = LinkForm(request.form, banned_regexes)
-    netid = session['user'].get('netid')
-    client = app.get_shrunk()
 
-    template = {
-        'netid': netid,
-        'sortby': "0",
-        'all_users': "0",
-        'roles': roles.get(netid)
-    }
-    def add_url_template(**kwargs):
-        template.update(kwargs)
-        return render_template("add.html", **template)
+    client = app.get_shrunk()
+    banned_regexes = app.config.get('BANNED_REGEXES', ['\.xxx'])
+    form = LinkForm(request.form, banned_regexes, client)
+    netid = session['user'].get('netid')
 
     form.long_url.data = ensure_protocol(form.long_url.data)
     if form.validate():
         kwargs = form.to_json()
         kwargs['netid'] = netid
+
         try:
             shortened = client.create_short_url(**kwargs)
-            return add_url_template(shortened_url=shortened)
-            # return redirect("/")
+            resp = {'created': {'short_url': shortened}}
+            return make_plaintext_response(json.dumps(resp))
         except BadShortURLException as e:
-            return add_url_template(errors={'short_url': [str(e)]})
+            resp = {'errors': {'short_url': str(e)}}
+            return make_plaintext_response(json.dumps(resp))
         except ForbiddenDomainException as e:
-            return add_url_template(errors={'long_url': [str(e)]})
+            resp = {'errors': {'long_url': str(e)}}
+            return make_plaintext_response(json.dumps(resp))
     else: # WTForms detects a form validation error:
-        return add_url_template(errors=form.errors)
+        resp = {'errors': {}}
+        for name in ['title', 'long_url', 'short_url']:
+            err = form.errors.get(name)
+            if err:
+                resp['errors'][name] = err[0]
+        return make_plaintext_response(json.dumps(resp))
 
 @app.route("/add", methods=["GET"])
 @app.require_login
