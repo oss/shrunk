@@ -2,6 +2,10 @@
     font-family: 'Roboto', sans-serif;
 }
 
+body, html {
+    min-height: 100%;
+}
+
 body {
     padding-top: 40px;
     background-color: #fefefe;

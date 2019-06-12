@@ -41,6 +41,7 @@ class LinkForm(Form):
             for regex in banned_regexes:
                 LinkForm.rejected_regexes.append(re.compile(regex, re.IGNORECASE))
         self.client = client
+        self.old_short_url = form.get('old_short_url')
 
     def validate_long_url(self, field):
         """Performs validation on the long_url field."""
@@ -53,7 +54,8 @@ class LinkForm(Form):
         if not field.data.isalnum():
             raise ValidationError('Custom alias must be alphanumeric.')
         if self.client.get_long_url(field.data):
-            raise ValidationError('That name already exists.')
+            if not (self.old_short_url and self.old_short_url == field.data):
+                raise ValidationError('That name already exists.')
 
     def to_json(self):
         """Exports the form"s fields into a JSON-compatible dictionary."""

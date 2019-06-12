@@ -2,6 +2,7 @@
 {% block content %}
 
 <link href="{{ url_for('static', filename='css/add.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/link_form.css') }}" rel="stylesheet">
 
 <div class="row">
   <div class="col">
@@ -9,50 +10,9 @@
   </div> <!-- End col -->
 </div> <!-- End row -->
 
-<form class="needs-validation" novalidate>
-  <div class="form-group form-row">
-    <label for="title" class="col-sm-2 col-form-label-lg">Title</label>
-    <div class="col-sm-10">
-      <input type="text" class="form-control" id="title" placeholder="Title">
-      <div class="invalid-feedback" id="title-feedback"></div>
-    </div>
-  </div>
-
-  <div class="form-group row">
-    <label for="url" class="col-sm-2 col-form-label-lg">URL</label>
-    <div class="col-sm-10">
-      <input type="text" class="form-control" id="url" placeholder="URL">
-      <div class="invalid-feedback" id="url-feedback"></div>
-    </div>
-  </div>
-
-  {% if "admin" in roles or "power_user" in roles %}
-  <div class="form-group row">
-    <label for="alias" class="col-sm-2 col-form-label-lg">Alias (optional)</label>
-    <div class="col-sm-10">
-      <input type="text" class="form-control" id="alias" placeholder="Alias">
-      <div class="invalid-feedback" id="alias-feedback"></div>
-    </div>
-  </div>
-  {% endif %}
-
-  <div class="row">
-    <div class="col-2">
-      <button type="button" id="submit_form" class="btn btn-primary">
-	SHRINK
-      </button>
-    </div> <!-- End col -->
-
-    <div id="shortened_url_col" class="col invisible">
-      <label for="shortened_url">Your shortened URL is</label>
-      <strong id="shortened_url"></strong>
-      <button type="button" id="copy_shortened_url" class="btn btn-secondary"
-	      title="Copy short link to clipboard">
-	<i class="fas fa-copy"></i>
-      </button>
-    </div> <!-- End col -->
-  </div> <!-- End row -->
-</form>
+{% set button_message = "SHRINK" %}
+{% set is_add = True %}
+{% include "link_form.html" %}
 
 <script src="{{ url_for('static', filename='js/add.js') }}"></script>
 

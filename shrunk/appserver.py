@@ -327,7 +327,7 @@ def add_link():
 
         try:
             shortened = client.create_short_url(**kwargs)
-            resp = {'created': {'short_url': shortened}}
+            resp = {'success': {'short_url': shortened}}
             return make_plaintext_response(json.dumps(resp))
         except BadShortURLException as e:
             resp = {'errors': {'short_url': str(e)}}
@@ -586,19 +586,9 @@ def edit_link():
     # default is no .xxx links
     banned_regexes = app.config.get('BANNED_REGEXES', ['\.xxx'])
 
-    form = LinkForm(request.form, banned_regexes)
+    app.logger.info('form: {}'.format(request.form))
+    form = LinkForm(request.form, banned_regexes, client)
     form.long_url.data = ensure_protocol(form.long_url.data)
-
-    template = {
-        "netid": netid,
-        "roles": roles.get(netid),
-        "title": request.form["title"],
-        "old_short_url": request.form["old_short_url"],
-        "long_url": request.form["long_url"]
-    }
-    def edit_url_template(**kwargs):
-        template.update(kwargs)
-        return render_template("edit.html", **template)
 
     # Validate form before continuing
     if form.validate():
@@ -609,14 +599,22 @@ def edit_link():
         kwargs['old_short_url'] = request.form['old_short_url']
         try:
             client.modify_url(**kwargs)
-            return redirect("/")
+            new_short_url = kwargs.get('short_url') or old_short_url
+            resp = {'success': {'new_short_url': new_short_url}}
+            return make_plaintext_response(json.dumps(resp))
         except BadShortURLException as e:
-            return edit_url_template(errors={'short_url' : [str(e)]})
+            resp = {'errors': {'short_url': str(e)}}
+            return make_plaintext_response(json.dumps(resp))
         except ForbiddenDomainException as e:
-            return edit_url_template(errors={'long_url' : [str(e)]})
+            resp = {'errors': {'long_url': str(e)}}
+            return make_plaintext_response(json.dumps(resp))
     else:
-        info = client.get_url_info(template['old_short_url'])
-        return edit_url_template(errors=form.errors, **info)
+        resp = {'errors': {}}
+        for name in ['title', 'long_url', 'short_url']:
+            err = form.errors.get(name)
+            if err:
+                resp['errors'][name] = err[0]
+        return make_plaintext_response(json.dumps(resp))
 
 @app.route("/edit", methods=["GET"])
 @app.require_login
@@ -626,6 +624,8 @@ def edit_link_form():
     # Hit the database to get information
     old_short_url = request.args["url"]
     info = client.get_url_info(old_short_url)
+    if not info:
+        return redirect("/")
     if not client.is_owner_or_admin(old_short_url, netid):
         return render_index(wrong_owner=True)
 
