@@ -15,11 +15,9 @@
   </div>
 
   <div class="col col-md-auto">
-    <form action="/add">
-      <button type="submit" class="btn btn-primary">
-	<i class="fas fa-plus-circle"></i> New Link
-      </button>
-    </form>
+    <a tabindex="0" role="button" class="btn btn-primary" href="{{ url_for('add_link') }}">
+      <i class="fas fa-plus-circle"></i> New Link
+    </a>
   </div>
 
   <!-- The sort dropdown (really ugly) -->

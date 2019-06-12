@@ -26,36 +26,29 @@
 
   <!-- Main nav items -->
   <div class="collapse navbar-collapse">
-    <form action="/" method="get">
-      <input type="hidden" name="all_users" value="{{ all_users }}">
-      <input type="hidden" name="sortby" value="{{ sortby }}">
-      <input type="hidden" name="search" value="{{ query }}">
-      <button type="submit" class="btn btn-outline-secondary btn-no-border btn-nav">
-	My URLs
-      </button>
-    </form>
+    <a tabindex="0" role="button" class="btn btn-outline-secondary btn-no-border"
+       href="{{ url_for('render_index') }}">
+      My URLs
+    </a>
 
     {% if ("facstaff" in roles or "power_user" in roles) and "admin" not in roles %}
-    <form action="/roles/whitelisted" method="get">
-      <button type="submit" class="btn btn-outline-secondary btn-no-border">
-	Whitelist
-      </button>
-    </form>
+    <a tabindex="0" role="button" class="btn btn-outline-secondary btn-no-border"
+       href="/roles/whitelisted">
+      Whitelist
+    </a>
     {% endif %}
 
     {% if "admin" in roles %}
-    <form action="/admin" method="get">
-      <button type="submit" class="btn btn-outline-secondary btn-no-border">
-	Admin
-      </button>
-    </form>
+    <a tabindex="0" role="button" class="btn btn-outline-secondary btn-no-border"
+       href="{{ url_for('admin_panel') }}">
+      Admin
+    </a>
     {% endif %}
 
-    <form action="/faq" method="get">
-      <button type="submit" class="btn btn-outline-secondary btn-no-border">
-	FAQ
-      </button>
-    </form>
+    <a tabindex="0" role="button" class="btn btn-outline-secondary btn-no-border"
+       href="{{ url_for('faq') }}">
+      FAQ
+    </a>
   </div>
   
   <!-- Username and logout -->
