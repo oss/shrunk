@@ -48,10 +48,8 @@ function process_response(resp) {
 }
 
 $("html").on("click", function(e) {
-    console.log('clicked body');
     if ($(e.target).data('toggle') !== 'popover'
 	&& $(e.target).parents('.popover.in').length === 0) {
-	console.log('closing popover');
 	$('[data-toggle="popover"]').popover('hide');
     }
 });

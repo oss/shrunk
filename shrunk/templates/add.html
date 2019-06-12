@@ -1,8 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 
-<link href="{{ url_for('static', filename='css/add.css') }}" rel="stylesheet">
-<link href="{{ url_for('static', filename='css/link_form.css') }}" rel="stylesheet">
+
 
 <div class="row">
   <div class="col">
@@ -14,6 +13,8 @@
 {% set is_add = True %}
 {% include "link_form.html" %}
 
-<script src="{{ url_for('static', filename='js/add.js') }}"></script>
+{% assets "add_js" %}
+<script src="{{ ASSET_URL }}"></script>
+{% endassets %}
 
 {% endblock %}

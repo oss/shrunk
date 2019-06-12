@@ -1,8 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
 
-<link href="{{ url_for('static', filename='css/link_form.css') }}" rel="stylesheet">
-
 <div class="row">
   <div class="col">
     <h1>Edit URL</h1>
@@ -13,8 +11,10 @@
 {% set is_edit = True %}
 {% include "link_form.html" %}
 
-<script src="{{ url_for('static', filename='js/edit.js') }}"></script>
-
 <input type="hidden" id="old_short_url" value="{{ old_short_url }}">
+
+{% assets "shrunk_edit" %}
+<script src="{{ ASSET_URL }}"></script>
+{% endassets %}
 
 {% endblock %}

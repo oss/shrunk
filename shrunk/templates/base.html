@@ -12,12 +12,14 @@
 	  rel="stylesheet" crossorigin="anonymous">
 
     <!-- Custom bootstrap theme -->
-    {% assets "scss_bootstrap" %}
+    {% assets "shrunk_bootstrap" %}
     <link href="{{ ASSET_URL }}" rel="stylesheet" type="text/css">
     {% endassets %}
 
     <!-- Shrunk CSS -->
-    <link href="{{ url_for('static', filename='css/shrunk.css') }}" rel="stylesheet">
+    {% assets "shrunk_css" %}
+    <link href="{{ ASSET_URL }}" rel="stylesheet" type="text/css">
+    {% endassets %}
 
     <!-- Favicon -->
     <link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon" type="image/ico">
@@ -52,13 +54,12 @@
       Questions? Bugs? Contact us: <a href="mailto:oss@oss.rutgers.edu">oss@oss.rutgers.edu</a>
     </div>
 
-    <!-- JS -->
+    <!-- External JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"
 	    integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
 	    crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"
 	    integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
 	    crossorigin="anonymous"></script>
-    <script src="{{ url_for('static', filename='js/shrunk.js') }}"></script>
   </body>
 </html>

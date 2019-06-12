@@ -1,8 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
 
-<link href="{{ url_for('static', filename='css/index.css') }}" rel="stylesheet">
-
 {% if wrong_owner %}
 <div class="shrunk-messages">
     You are not the owner of this URL...
@@ -153,7 +151,7 @@
     <li class="page-item {{ 'disabled' if page == lastpage else '' }}">
       <a class="page-link" aria-label="Next"
 	 href="{{ url_for('render_index', p=page+1, search=query) }}">
-	<span aria-hidden"true">&raquo;</span>
+	<span aria-hidden="true">&raquo;</span>
 	<span class="sr-only">Next</span>
       </a>
     </li> <!-- End next button -->
@@ -162,5 +160,9 @@
 {% endif %}
 
 {% endif %}
+
+{% assets "shrunk_js" %}
+<script src="{{ ASSET_URL }}"></script>
+{% endassets %}
 
 {% endblock %}

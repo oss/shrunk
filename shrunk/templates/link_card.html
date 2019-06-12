@@ -36,7 +36,7 @@
 
 	  <div class="col-3 align-self-center">
 	    <form action="delete" method="post">
-	      <input type="hidden" name="short_url" value="{{ link['_id'] }}"></input>
+	      <input type="hidden" name="short_url" value="{{ link['_id'] }}">
 	      <button type="submit" title="Delete link"
 		      class="btn btn-outline-danger btn-no-border btn-round float-right">
 		<i class="fas fa-trash"></i>
@@ -44,7 +44,7 @@
 	    </form>
 
 	    <form action="/qr" method="get">
-	      <input type="hidden" name="url" value="{{ link['_id'] }}"></input>
+	      <input type="hidden" name="url" value="{{ link['_id'] }}">
 	      <button type="submit" title="Create QR code"
 		      class="btn btn-outline-dark btn-no-border btn-round float-right">
 		<i class="fas fa-qrcode"></i>
@@ -52,7 +52,7 @@
 	    </form>
 
 	    <form action="/stats" method="get">
-	      <input type="hidden" name="url" value="{{ link['_id'] }}"></input>
+	      <input type="hidden" name="url" value="{{ link['_id'] }}">
 	      <button type="submit" title="Link visit statistics"
 		      class="btn btn-outline-dark btn-no-border btn-round float-right">
 		<i class="fas fa-chart-line"></i>
@@ -60,7 +60,7 @@
 	    </form>
 
 	    <form action="/edit" method="get">
-	      <input type="hidden" name="url" value="{{ link['_id'] }}"></input>
+	      <input type="hidden" name="url" value="{{ link['_id'] }}">
 	      <button type="submit" title="Edit link"
 		      class="btn btn-outline-dark btn-no-border btn-round float-right">
 		<i class="fas fa-pencil-alt"></i>

@@ -26,10 +26,33 @@ from shrunk.statutil import *
 # Create application
 # ShrunkFlask extends flask and adds decorators and configs itself
 app = ShrunkFlask(__name__)
+
+# Flask-Assets stuff
 assets = Environment(app)
 assets.url = app.static_url_path
-scss_bootstrap = Bundle('shrunk_bootstrap.scss', filters='scss', output='shrunk_bootstrap.css')
-assets.register('scss_bootstrap', scss_bootstrap)
+
+# Compile+minify custom bootstrap
+shrunk_bootstrap = Bundle('scss/shrunk_bootstrap.scss', filters='scss,cssmin',
+                          output='shrunk_bootstrap.css')
+assets.register('shrunk_bootstrap', shrunk_bootstrap)
+
+# Minify shrunk css
+shrunk_css = Bundle('css/*.css', filters='cssmin', output='shrunk_css.css')
+assets.register('shrunk_css', shrunk_css)
+
+# Create JS bundles for each page
+JS_BUNDLES = {
+    'shrunk_js': [],
+    'shrunk_add': ['js/add.js'],
+    'shrunk_edit': ['js/edit.js'],
+    'shrunk_qr': ['js/qrcode.js', 'js/shrunkqr.js'],
+    'shrunk_stats': ['js/stats.js']
+}
+
+for bundle_name, bundle_files in JS_BUNDLES.items():
+    output_name = '{}.js'.format(bundle_name)
+    bundle = Bundle('js/shrunk.js', *bundle_files, filters='jsmin', output=output_name)
+    assets.register(bundle_name, bundle)
 
 # This attaches the *flask_sso* login handler to the SSO_LOGIN_URL,
 # which essentially maps the SSO attributes to a dictionary and

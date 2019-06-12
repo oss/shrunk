@@ -1,8 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
 
-<link href="{{ url_for('static', filename='css/role.css') }}" rel="stylesheet">
-
 <div class="row">
   <div class="col">
     <h1>{{ title }}</h1>
@@ -70,5 +68,8 @@
 </div> <!-- End row -->
 {% endif %}
 
+{% assets "shrunk_js" %}
+<script src="{{ ASSET_URL }}"></script>
+{% endassets %}
 
 {% endblock %}

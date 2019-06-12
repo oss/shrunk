@@ -1,13 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
+
 {% for role in roledata %}
 <article class="link-group clearfix">
     <div class="link-info">
         <a href="/roles/{{ role['id'] }}/" class="title">{{ role["title"] }}</a>
     </div>
-    {#<div class="bottom-row">
-        Block and unblock URLs from being shortened.
-    </div>#}
 </article>
 {% endfor %}
+
+{% assets "shrunk_js" %}
+<script src="{{ ASSET_URL }}"></script>
+{% endassets %}
+
 {% endblock %}
