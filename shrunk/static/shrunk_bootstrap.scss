@@ -1,6 +1,28 @@
+$primary-color: #cc0e32;
+$secondary-color: #ffffff;
+$link-color: #407aaa;
+
 $theme-colors: (
-    "primary": #cc0e32,
-    "secondary": #ffffff
+    "primary": $primary-color,
+    "secondary": $secondary-color
 );
 
+// Seems to not work?
+$enable-shadows: false;
+
 @import "./bootstrap/scss/bootstrap";
+
+.btn-outline-primary {
+    @include button-outline-variant($color: $primary-color, $color-hover: $primary-color);
+
+    &:not(:disabled):not(.disabled):active,
+    &:not(:disabled):not(.disabled).active,
+    .show > &.dropdown-toggle {
+	color: $primary-color;
+	background-color: rgba($primary-color, .5);
+
+	&:focus {
+	    box-shadow: none; // XXX
+	}
+    }
+}
