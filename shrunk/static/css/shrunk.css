@@ -48,6 +48,16 @@ nav {
     margin-bottom: 20px;
 }
 
+nav form {
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+nav a.btn {
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
 .navbar-header {
     background-color: #cc0e32;
 }
