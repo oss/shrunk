@@ -5,7 +5,7 @@
 	<div class="row">
 
 	  <div class="col col-link-info">
-	    <nobr>
+	    <nobr class="link-info">
 	      {% if link["title"] %}
 	        {% if link["title"] | length > 32 %}
 	        {% set link_name = link["title"][:32] + "..." %}
@@ -16,9 +16,16 @@
 	        {% set link_name = link["_id"] %}
 	      {% endif %}
 
-	      <a href="{{ link['long_url'] }}" class="shrunk-title">{{ link_name }}</a>
-	      <span class="shrunk-time-created">{{ formattime(link['timeCreated']) }}</span>
-	      <span>Visits: {{ link['visits'] }}</span>
+	      {% set full_link_name = link["title"] if link["title"] else link["_id"] %}
+
+	      <a href="{{ link['long_url'] }}" class="shrunk-title"
+		 title="{{ full_link_name }}">{{ link_name }}</a>
+	      {% set formatted_time = formattime(link["timeCreated"]) %}
+	      <span title="{{ formatted_time }}">{{ formatted_time }}</span>
+	      {% set formatted_visits = "Visits: " + (link["visits"] | string) %}
+	      <span title="{{ formatted_visits }}">{{ formatted_visits }}</span>
+	      {% set formatted_owner = "Owner: " + link["netid"] %}
+	      <span title="{{ formatted_owner }}">{{ formatted_owner }}</span>
 	    </nobr>
 
 	    <br/>

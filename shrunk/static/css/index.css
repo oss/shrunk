@@ -18,7 +18,7 @@
     font-size: 23pt;
 }
 
-.shrunk-time-created {
+nobr.link-info > span {
     margin-right: 10px;
 }
 
