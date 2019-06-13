@@ -1,30 +1,55 @@
 {% if print %}
+
+<!DOCTYPE html>
 <html>
     <body>
-        <div id="qr"></div>
-        <script src="{{ url_for('static', filename='js/qrcode.min.js') }}"></script>
-        <script src="{{ url_for('static', filename='js/shrunkqr.js') }}"></script>
+      <div id="qr"></div>
+
+      {% assets "shrunk_qr" %}
+      <script src="{{ ASSET_URL }}"></script>
+      {% endassets %}
     </body>
 </html>
+
 {% else %}
+
 {% extends "base.html" %}
 {% block content %}
-<h1>QR Code</h1>
-<article class="add-group clearfix qr-col">
-    {% if missing_url %}
+
+<div class="row">
+  <div class="col">
+    <h1>QR Code</h1>
+  </div> <!-- End col -->
+</div> <!-- End row -->
+
+{% if missing_url %}
+<div class="row">
+  <div class="col">
     <h3> URL not found :( </h3>
-    {% else %}
+  </div> <!-- End col -->
+</div> <!-- End row -->
+{% else %}
+
+<div class="row">
+  <div class="col">
     <div id="qr"></div>
-    <button id="print" class="btn btn-default shrink-button">print</button>
-    <button id="download" class="btn btn-default shrink-button">download</button>
-    <script src="{{ url_for('static', filename='js/qrcode.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/shrunkqr.js') }}"></script>
-    {% endif %}
-</article>
-{% endblock %}
+  </div> <!-- End col -->
+</div> <!-- End row -->
+
+<div class="row">
+  <div class="col">
+    <div id="qr-buttons" class="btn-group" role="group" aria-label="Print or download">
+      <button id="print" type="button" class="btn btn-primary btn-qr">Print</button>
+      <button id="download" type="button" class="btn btn-primary btn-qr">Download</button>
+    </div>
+  </div> <!-- End col -->
+</div> <!-- End row -->
+{% endif %}
 
 {% assets "shrunk_qr" %}
 <script src="{{ ASSET_URL }}"></script>
 {% endassets %}
+
+{% endblock %}
 
 {% endif %}

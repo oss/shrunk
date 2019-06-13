@@ -75,8 +75,11 @@ def add_search_params():
 
 @app.context_processor
 def add_user_info():
-    netid = session['user']['netid']
-    return {'netid': netid, 'roles': roles.get(netid)}
+    try:
+        netid = session['user']['netid']
+        return {'netid': netid, 'roles': roles.get(netid)}
+    except:
+        return {}
 
 # Shibboleth handler
 @ext.login_handler
@@ -541,7 +544,15 @@ def daily_visits():
 @app.route("/qr", methods=["GET"])
 @app.require_login
 def qr():
-    kwargs = {"print": "print" in request.args}
+    kwargs = {
+        "print": "print" in request.args,
+        "missing_url": "url" not in request.args
+    }
+
+    client = app.get_shrunk()
+    if "url" in request.args and not client.get_long_url(request.args["url"]):
+        kwargs["missing_url"] = True
+
     return render_template("qr.html", **kwargs)
 
 
