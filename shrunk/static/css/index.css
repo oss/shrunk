@@ -14,8 +14,8 @@
 }
 
 .shrunk-title {
-    display: inline;
     margin-right: 10px;
+    font-size: 23pt;
 }
 
 .shrunk-time-created {
@@ -27,6 +27,8 @@
     border-radius: 0;
     border-bottom: 1px solid;
     border-color: #b7aa9f;
+    padding-top: 10px;
+    padding-bottom: 10px;
 }
 
 .row:last-of-type > .col > .card-link {
