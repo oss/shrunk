@@ -102,7 +102,7 @@
   <ul class="pagination justify-content-center">
     <li class="page-item {{ 'disabled' if page == 1 else '' }}">
       <a class="page-link" aria-label="Previous"
-	 href="{{ url_for('render_index', p=page-1, search=query) }}">
+	 href="{{ url_for('render_index', page=page-1) }}">
 	<span aria-hidden="true">&laquo;</span>
 	<span class="sr-only">Previous</span>
       </a>
@@ -111,7 +111,7 @@
     {% if begin_pages != 1 %}
     <li class="page-item">
       <a class="page-link" aria-label="Page 1"
-	 href="{{ url_for('render_index', p=1, search=query) }}">
+	 href="{{ url_for('render_index', page=1) }}">
 	1
       </a>
     </li>
@@ -127,7 +127,7 @@
     {% set maybe_active = 'active' if page_number == page else '' %}
     <li class="page-item {{ maybe_active }}">
       <a class="page-link" aria-label="Page {{ page_number }}"
-	 href="{{ url_for('render_index', p=page_number, search=query) }}">
+	 href="{{ url_for('render_index', page=page_number) }}">
 	{{ page_number }}
       </a>
     </li>
@@ -142,7 +142,7 @@
 
     <li class="page-time">
       <a class="page-link" aria-label="Page {{ lastpage }}"
-	 href="{{ url_for('render_index', p=lastpage, search=query) }}">
+	 href="{{ url_for('render_index', page=lastpage) }}">
 	{{ lastpage }}
       </a>
     </li>
@@ -150,7 +150,7 @@
 
     <li class="page-item {{ 'disabled' if page == lastpage else '' }}">
       <a class="page-link" aria-label="Next"
-	 href="{{ url_for('render_index', p=page+1, search=query) }}">
+	 href="{{ url_for('render_index', page=page+1) }}">
 	<span aria-hidden="true">&raquo;</span>
 	<span class="sr-only">Next</span>
       </a>

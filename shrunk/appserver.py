@@ -71,6 +71,8 @@ def add_search_params():
         params['all_users'] = session['all_users']
     if 'sortby' in session:
         params['sortby'] = session['sortby']
+    if 'p' in session:
+        params['page'] = session['page']
     return params
 
 @app.context_processor
@@ -230,11 +232,11 @@ def render_index(**kwargs):
     except:
         page = 0
 
-    def get_param(name, *, default=None, valid=None):
+    def get_param(name, *, default=None, validator=None):
         param = request.args.get(name)
         param = param if param is not None else session.get(name)
         param = param if param is not None else default
-        if valid and param not in valid:
+        if validator and not validator(param):
             assert default
             param = default
         if param is not None:
@@ -243,8 +245,15 @@ def render_index(**kwargs):
         return param
 
     query = get_param('query')
-    all_users = get_param('all_users', default='0', valid=['0', '1'])
-    sortby = get_param('sortby', default='0', valid=map(str, range(6)))
+    all_users = get_param('all_users', default='0', validator=lambda x: x in ['0', '1'])
+    sortby = get_param('sortby', default='0', validator=lambda x: x in map(str, range(6)))
+    def validate_page(page):
+        try:
+            page = int(page)
+            return page >= 1
+        except ValueError:
+            return False
+    page = int(get_param('page', default='1', validator=validate_page))
 
     # Depending on the type of user, get info from the database
     is_admin = roles.check("admin", netid)
