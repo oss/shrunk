@@ -157,10 +157,6 @@ class ShrunkCursor(object):
         The cursor can be sorted only if it hasn't been used yet; that is, no
         records have been read from it.
 
-        Note: MongoDB does not sort in case-insensitive alphabetical order, so
-        it sorts by A-Z, then a-z. Address this by filtering list output on
-        view controller.
-
         :Parameters:
           - `sortby`: The direction to sort in. Should be one of TIME_ASC,
             TIME_DESC, TITLE_ASC, or TITLE_DESC
@@ -177,11 +173,11 @@ class ShrunkCursor(object):
             elif sortby == ShrunkCursor.TIME_DESC:
                 self.cursor.sort("timeCreated", pymongo.DESCENDING)
             elif sortby == ShrunkCursor.TITLE_ASC:
-                self.cursor.sort([("title", pymongo.ASCENDING),
-                                  ("_id", pymongo.ASCENDING)])
+                self.cursor.collation({"locale": "en"})
+                self.cursor.sort([("title", pymongo.ASCENDING), ("_id", pymongo.ASCENDING)])
             elif sortby == ShrunkCursor.TITLE_DESC:
-                self.cursor.sort([("title", pymongo.DESCENDING),
-                                  ("_id", pymongo.DESCENDING)])
+                self.cursor.collation({"locale": "en"})
+                self.cursor.sort([("title", pymongo.DESCENDING), ("_id", pymongo.DESCENDING)])
             elif sortby == ShrunkCursor.POP_ASC:
                 self.cursor.sort("visits", pymongo.ASCENDING)
             elif sortby == ShrunkCursor.POP_DESC:

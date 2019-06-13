@@ -280,26 +280,8 @@ def render_index(**kwargs):
 
     # Perform sorting, pagination and get the results
     cursor.sort(sortby)
-
-    if int(sortby) in [0, 1, 4, 5]:
-        page, lastpage = cursor.paginate(page, app.config["MAX_DISPLAY_LINKS"])
-        links = cursor.get_results()
-
-    # If links are requested alphabetically, run more specific cursor operations
-    elif int(sortby) in [2, 3]:
-
-        # Clone the cursor, and paginate the clone. Sort all links from old cursor.
-        page_cursor = client.clone_cursor(cursor)
-        page, lastpage = page_cursor.paginate(page, app.config["MAX_DISPLAY_LINKS"])
-        links = sorted(cursor.get_results(), key=lambda x: str.lower(x['title']))
-        if int(sortby) in [3]:
-            links = reversed(links)
-
-        # Skip and limit on the old cursor's links.
-        link_offset = (page-1)*app.config["MAX_DISPLAY_LINKS"]
-        links = list(links)[link_offset:link_offset+8]
-
-
+    page, lastpage = cursor.paginate(page, app.config["MAX_DISPLAY_LINKS"])
+    links = cursor.get_results()
 
     #choose 9 pages to display so there's not like 200 page links
     #is 9 the optimal number?
