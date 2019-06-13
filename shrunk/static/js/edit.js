@@ -14,6 +14,7 @@ function process_response(resp) {
     if (resp.hasOwnProperty("success")) {
 	$("#submit_form").popover("show");
 	$("#old_short_url").val(resp["success"]["new_short_url"]);
+	$("#title").val(resp["success"]["new_title"]);
 	$("#title").removeClass("is-invalid");
 	$("#url").removeClass("is-invalid");
 	if ($("#alias").length) {

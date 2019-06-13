@@ -241,7 +241,6 @@ def render_index(**kwargs):
             param = default
         if param is not None:
             session[name] = param
-        app.logger.info('param {} = {}'.format(name, param))
         return param
 
     query = get_param('query')
@@ -326,6 +325,7 @@ def add_link():
     if form.validate():
         kwargs = form.to_json()
         kwargs['netid'] = netid
+        kwargs['title'] = kwargs['title'].strip()
 
         try:
             shortened = client.create_short_url(**kwargs)
@@ -581,7 +581,6 @@ def edit_link():
     # default is no .xxx links
     banned_regexes = app.config.get('BANNED_REGEXES', ['\.xxx'])
 
-    app.logger.info('form: {}'.format(request.form))
     form = LinkForm(request.form, banned_regexes, client)
     form.long_url.data = ensure_protocol(form.long_url.data)
 
@@ -590,12 +589,16 @@ def edit_link():
         # Success - make the edits in the database
         kwargs = form.to_json()
         kwargs['admin'] = roles.check("admin", netid)
+        kwargs['title'] = kwargs['title'].strip()
         kwargs['power_user'] = roles.check("power_user", netid)
         kwargs['old_short_url'] = request.form['old_short_url']
         try:
             client.modify_url(**kwargs)
             new_short_url = kwargs.get('short_url') or old_short_url
-            resp = {'success': {'new_short_url': new_short_url}}
+            resp = {'success': {
+                'new_short_url': new_short_url,
+                'new_title': kwargs['title'],
+            }}
             return make_plaintext_response(json.dumps(resp))
         except BadShortURLException as e:
             resp = {'errors': {'short_url': str(e)}}
