@@ -329,7 +329,8 @@ def add_link():
 
         try:
             shortened = client.create_short_url(**kwargs)
-            resp = {'success': {'short_url': shortened}}
+            short_url = '{}/{}'.format(app.config['LINKSERVER_URL'], shortened)
+            resp = {'success': {'short_url': short_url}}
             return make_plaintext_response(json.dumps(resp))
         except BadShortURLException as e:
             resp = {'errors': {'short_url': str(e)}}
