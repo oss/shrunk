@@ -318,26 +318,28 @@ nav a.btn {
 }
 
 #footer {
-    position:   fixed;
-    width:      100%;
-    height:     40px;
-    bottom:     0;
-    padding:    12px;
+    position: fixed;
+    width: 100%;
+    height: 40px;
+    bottom: 0;
+    padding: 12px;
     background: #363636;
     color: #F0F0F0;
     text-align: center;
+    z-index: 10;
 }
+
 @media (max-width: 694px) {
     #footer {
 	height: 60px;
     }
 }
+
 @media (max-width: 358px) {
     #footer {
 	height: 70px;
     }
 }
-
 
 #footer a {
     color: #fefefe;
