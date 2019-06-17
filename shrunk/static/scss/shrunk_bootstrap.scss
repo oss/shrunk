@@ -10,7 +10,7 @@ $theme-colors: (
 // Seems to not work?
 $enable-shadows: false;
 
-@import "./bootstrap/scss/bootstrap";
+@import "../bootstrap/scss/bootstrap";
 
 .btn-outline-primary {
     @include button-outline-variant($color: $primary-color, $color-hover: $primary-color);
