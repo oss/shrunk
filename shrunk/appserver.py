@@ -233,17 +233,21 @@ def render_index(**kwargs):
         page = 0
 
     def get_param(name, *, default=None, validator=None):
+        if validator:
+            assert default
+
         param = request.args.get(name)
         param = param if param is not None else session.get(name)
         param = param if param is not None else default
         if validator and not validator(param):
-            assert default
             param = default
         if param is not None:
             session[name] = param
         return param
 
+    old_query = session.get('query')
     query = get_param('query')
+    query_changed = query != old_query
     all_users = get_param('all_users', default='0', validator=lambda x: x in ['0', '1'])
     sortby = get_param('sortby', default='0', validator=lambda x: x in map(str, range(6)))
     def validate_page(page):
@@ -253,6 +257,8 @@ def render_index(**kwargs):
         except ValueError:
             return False
     page = int(get_param('page', default='1', validator=validate_page))
+    if query_changed:
+        page = 1
 
     # Depending on the type of user, get info from the database
     is_admin = roles.check("admin", netid)
