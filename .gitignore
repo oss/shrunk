@@ -33,3 +33,4 @@ shrunk/static/shrunk_bootstrap.css
 shrunk/static/.webassets-cache
 shrunk_css.css
 shrunk/static/shrunk_*.js
+.sass-cache
