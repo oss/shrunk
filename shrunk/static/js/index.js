@@ -46,3 +46,18 @@ function copy_short_url(ev) {
     document.execCommand('Copy');
     text_area.remove();
 }
+
+function delete_link(ev) {
+    const parent = ev.target.parentElement;
+    const link_id = parent.querySelector('.link-id').value;
+    $('#link-delete-id').val(link_id);
+    $('#link-delete-modal').modal();
+}
+
+function do_delete_link() {
+    const link_id = $('#link-delete-id').val();
+    $('#link-delete-id').val();
+    console.log('link-id = ' + link_id);
+    const req = { 'short_url': link_id };
+    $.post('/delete', req, function () { location.reload(); });
+}
