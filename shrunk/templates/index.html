@@ -12,13 +12,39 @@
     <h2>URL Dashboard</h2>
   </div>
 
+  {# Add Link dropdown menu #}
   <div class="col col-md-auto">
-    <a tabindex="0" role="button" class="btn btn-primary" href="{{ url_for('add_link') }}">
-      <i class="fas fa-plus-circle"></i> New Link
-    </a>
+    <div class="dropdown">
+      <button type="button" class="btn btn-primary dropdown-toggle"
+	 data-toggle="dropdown" aria-expanded="false" onclick="clear_add_link_form()">
+	<i class="fas fa-plus-circle"></i> Add Link
+      </button>
+
+      <div class="dropdown-menu create-org-dropdown">
+	<form class="px-4 py-3 needs-validation" novalidate>
+	  <div class="form-group row">
+	    <input type="text" id="add-link-title" class="form-control" placeholder="Title">
+	    <div id="add-link-title-feedback" class="invalid-feedback"></div>
+	  </div>
+	  <div class="form-group row">
+	    <input type="text" id="add-link-long_url" class="form-control" placeholder="URL">
+	    <div id="add-link-long_url-feedback" class="invalid-feedback"></div>
+	  </div>
+	  <div class="form-group row">
+	    <input type="text" id="add-link-short_url" class="form-control"
+		   placeholder="Alias (optional)">
+	    <div id="add-link-short_url-feedback" class="invalid-feedback"></div>
+	  </div>
+	  <button id="add-link-button" class="btn btn-primary" type="button"
+		  onclick="send_add_request()">
+	    Shrink
+	  </button>
+	</form>
+      </div>
+    </div>
   </div>
 
-  <!-- The sort dropdown (really ugly) -->
+  {# Sort dropdown menu #}
   <div class="col col-md-auto">
     <div class="dropdown">
       <button class="btn btn-outline-primary dropdown-toggle btn-no-border btn-no-background bg-light"
@@ -47,9 +73,9 @@
 	<a class="dropdown-item" href="javascript:change_sortby('5')">Decreasing visits</a>
       </div>
     </div>
-  </div> <!-- End col -->
+  </div>
 
-  <!-- The my links/all links dropdown (ugly again) -->
+  {# My Links/All Links dropdown menu #}
   {% if "admin" in roles %}
   <div class="col col-md-auto">
     <div class="dropdown">
@@ -67,7 +93,7 @@
 	<a class="dropdown-item" href="javascript:change_all_users('1')">View all links</a>
       </div>
     </div>
-  </div> <!-- End col -->
+  </div>
   {% endif %}
 
   <div class="col col-csv-download">
@@ -77,8 +103,8 @@
 	<i class="fas fa-download"></i> Export visit data as CSV
       </button>
     </form>
-  </div> <!-- End col -->
-</div> <!-- End row -->
+  </div>
+</div>
 
 {% if query and not links %}
 <div class="row">
@@ -95,7 +121,7 @@
   {% for link in links %}
   {% include "link_card.html" %}
   {% endfor %}
-</div> <!-- End container -->
+</div>
 
 {% if lastpage and lastpage > 1 %}
 <nav aria-label="Search results pages">
@@ -106,7 +132,7 @@
 	<span aria-hidden="true">&laquo;</span>
 	<span class="sr-only">Previous</span>
       </a>
-    </li> <!-- End previous button -->
+    </li>
 
     {% if begin_pages != 1 %}
     <li class="page-item">
@@ -154,14 +180,14 @@
 	<span aria-hidden="true">&raquo;</span>
 	<span class="sr-only">Next</span>
       </a>
-    </li> <!-- End next button -->
+    </li>
   </ul>
 </nav>
 {% endif %}
 
 {% endif %}
 
-{% assets "shrunk_js" %}
+{% assets "shrunk_index" %}
 <script src="{{ ASSET_URL }}"></script>
 {% endassets %}
 

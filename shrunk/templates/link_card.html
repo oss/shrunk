@@ -20,7 +20,7 @@
 
 	      <a href="{{ link['long_url'] }}" class="shrunk-title"
 		 title="{{ full_link_name }}">{{ link_name }}</a>
-	      {% set formatted_time = formattime(link["timeCreated"]) %}
+	      {% set formatted_time = "Created: " + formattime(link["timeCreated"]) %}
 	      <span title="{{ formatted_time }}">{{ formatted_time }}</span>
 	      {% set formatted_visits = "Visits: " + (link["visits"] | string) %}
 	      <span title="{{ formatted_visits }}">{{ formatted_visits }}</span>
@@ -32,16 +32,21 @@
 
 	    <nobr>
 	      {% set short_url = linkserver_url + '/' + link['_id'] %}
-	      <a href="{{ short_url }}">{{ short_url }}</a>
-	      &#8594; <!-- right arrow -->
+	      <a class="short-url" href="{{ short_url }}">{{ short_url }}</a>
+	      <button type="button" class="btn btn-outline-dark btn-no-border"
+		      onclick="copy_short_url(event)"
+		      title="Copy short URL to clipboard">
+		<i class="fas fa-copy"></i>
+	      </button>
+	      &#8594; {# right arrow #}
 	      <span class="shrunk-long-url" title="{{ link['long_url'] }}">
 		{{ link['long_url'] }}
 	      </span>
 	    </nobr>
-	  </div> <!-- End col -->
+	  </div>
 
-	  <!-- For some reason, these buttons show up in the opposite 
-	       order that they're listed in the HTML. -->
+	  {# For some reason, these buttons show up in the opposite order
+	  that they're listed in the HTML. #}
 
 	  <div class="col-3 align-self-center">
 	    <form action="delete" method="post">
@@ -75,10 +80,10 @@
 		<i class="fas fa-pencil-alt"></i>
 	      </button>
 	    </form>
-	  </div> <!-- End col -->
+	  </div>
 
-	</div> <!-- End row -->
-      </div> <!-- End card-block -->
-    </div> <!-- End card -->
-  </div> <!-- End col -->
-</div> <!-- End row -->
+	</div>
+      </div>
+    </div>
+  </div>
+</div>

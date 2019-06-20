@@ -44,3 +44,7 @@ nobr.link-info > span {
     white-space: nowrap;
     text-overflow: ellipsis;
 }
+
+#add-link-button {
+    width: 100%;
+}

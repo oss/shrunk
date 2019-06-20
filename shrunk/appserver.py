@@ -43,7 +43,7 @@ assets.register('shrunk_css', shrunk_css)
 # Create JS bundles for each page
 JS_BUNDLES = {
     'shrunk_js': [],
-    'shrunk_add': ['js/add.js'],
+    'shrunk_index': ['js/index.js'],
     'shrunk_edit': ['js/edit.js'],
     'shrunk_qr': ['js/qrcode.js', 'js/shrunkqr.js'],
     'shrunk_stats': ['js/stats.js']
@@ -351,12 +351,6 @@ def add_link():
             if err:
                 resp['errors'][name] = err[0]
         return make_plaintext_response(json.dumps(resp))
-
-@app.route("/add", methods=["GET"])
-@app.require_login
-def add_link_form():
-    """Displays link form"""
-    return render_template("add.html")
 
 @app.route("/stats", methods=["GET"])
 @app.require_login
