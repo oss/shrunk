@@ -1,27 +1,47 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Frequently Asked Questions</h1>
-<article class="add-group clearfix">
-  <h3>What is Go?</h3>
-  <p>Go is the official URL shortener of Rutgers University.</p>
 
-  <h3>Who has access to Go?</h3>
-  <p>All current Rutgers University faculty and staff members are able
-    to log into <a href="https://go.rutgers.edu/">go.rutgers.edu</a> with
-    their NetID and password. Undergraduate student workers can be granted
-    access to Go by a faculty or staff member.</p>
-    
-  
-  <h3>Can I choose the URL my link will be shortened to?</h3>
-  <p>To create a custom short URL, you must have the "power user" role.
-    This role is available only to faculty and staff members. To request to
-    be added to this role, please email
-    <a href="mailto:oss@oss.rutgers.edu">oss@oss.rutgers.edu</a>.
+<div class="row row-controls">
+  <div class="col col-md-auto">
+    <h2>Frequently Asked Questions</h2>
+  </div>
+</div>
 
-  <h3>How can I grant my undergraduate student worker access to Go?</h3>
-  <p>To grant access to an undergraduate user, click the <a href="roles/whitelisted">
-      Whitelist</a> tab in the navigation bar, then enter the user's NetID and the
-    reason the user needs access to Go. Undergraduate users should only use Go for
-    purposes related to their employment with the University.</p>
-</article>
+<div class="row">
+  <div class="col">
+    <h4>What is Go?</h4>
+    <p>Go is the official URL shortener of Rutgers University.</p>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col">
+    <h4>Who has access to Go?</h4>
+    <p>All current Rutgers University faculty and staff members are able
+      to log into <a href="https://go.rutgers.edu/">go.rutgers.edu</a> with
+      their NetID and password. Undergraduate student workers can be granted
+      access to Go by a faculty or staff member.</p>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col">
+    <h4>Can I choose the URL my link will be shortened to?</h4>
+    <p>To create a custom short URL, you must have the "power user" role.
+      This role is available only to faculty and staff members. To request to
+      be added to this role, please email
+      <a href="mailto:oss@oss.rutgers.edu">oss@oss.rutgers.edu</a>.
+  </div>
+</div>
+
+<div class="row">
+  <div class="col">
+    <h4>How can I grant an undergraduate student worker access to Go?</h4>
+    <p>To grant access to an undergraduate user, click the <a href="roles/whitelisted">
+	Whitelist</a> tab in the navigation bar, then enter the user's NetID and the
+      reason the user needs access to Go. Undergraduate users should only use Go for
+      purposes related to their employment with the University.</p>
+  </div>
+</div>
+
 {% endblock %}

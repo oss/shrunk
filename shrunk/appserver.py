@@ -538,7 +538,7 @@ def daily_visits():
 def qr():
     kwargs = {
         "print": "print" in request.args,
-        "missing_url": "url" not in request.args
+        "url": request.args.get("url")
     }
 
     client = app.get_shrunk()

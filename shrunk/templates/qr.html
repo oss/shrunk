@@ -16,25 +16,18 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="row">
+{% if url %}
+<div class="row row-controls">
   <div class="col">
-    <h1>QR Code</h1>
-  </div> <!-- End col -->
-</div> <!-- End row -->
-
-{% if missing_url %}
-<div class="row">
-  <div class="col">
-    <h3> URL not found :( </h3>
-  </div> <!-- End col -->
-</div> <!-- End row -->
-{% else %}
+    <h2>QR code for <em>{{ url }}</em></h2>
+  </div>
+</div>
 
 <div class="row">
   <div class="col">
     <div id="qr"></div>
-  </div> <!-- End col -->
-</div> <!-- End row -->
+  </div>
+</div>
 
 <div class="row">
   <div class="col">
@@ -42,8 +35,14 @@
       <button id="print" type="button" class="btn btn-primary btn-qr">Print</button>
       <button id="download" type="button" class="btn btn-primary btn-qr">Download</button>
     </div>
-  </div> <!-- End col -->
-</div> <!-- End row -->
+  </div>
+</div>
+{% else %}
+<div class="row">
+  <div class="col">
+    <h3> URL not found :( </h3>
+  </div>
+</div>
 {% endif %}
 
 {% assets "shrunk_qr" %}

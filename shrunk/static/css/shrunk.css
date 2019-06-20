@@ -452,3 +452,10 @@ Media Queries
 .btn-no-background {
     background: none !important;
 }
+
+.row-controls {
+    padding-bottom: 11px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid;
+    border-color: #b7aa9f;
+}

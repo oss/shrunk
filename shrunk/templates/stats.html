@@ -1,8 +1,22 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h1>URL stats</h1>
-<a href="/link-visits-csv?url={{ short_url }}">Export visit data as CSV</a>
+<div class="row row-controls">
+  <div class="col col-auto">
+    <h2 style="display: inline-block">Visit statistics for <em>{{ short_url }}</em></h2>
+  </div>
+
+  <div class="col">
+    <form action="/link-visits-csv">
+      <input type="hidden" name="url" value="{{ short_url }}">
+      <button type="submit"
+	      class="btn btn-outline-primary btn-no-border btn-no-background btn-csv-download bg-light">
+	<i class="fas fa-download"></i> Export visit data as CSV
+      </button>
+    </form>
+  </div>
+</div>
+
 <article class="add-group clearfix">
     {% if missing_url %}
     <h3> URL not found :( </h3>
