@@ -1,19 +1,16 @@
 <div class="row">
   <div class="col">
-    <div class="card bg-light card-org">
+    <div class="card bg-light card-shrunk">
       <div class="card-block">
 	<div class="row">
 
-	  <div class="col col-org-info">
+	  <div class="col col-shrunk-info">
 	    <nobr class="org-info">
-	      <span title="{{ org['name'] }}" class="org-name">{{ org['name'] }}</span>
+	      <span title="{{ org['name'] }}" class="shrunk-card-name">{{ org['name'] }}</span>
 	      {% set formatted_time = "Created: " + formattime(org["timeCreated"]) %}
 	      <span title="{{ formatted_time }}">{{ formatted_time }}</span>
 	    </nobr>
-	  </div> <!-- End col -->
-
-	  <!-- For some reason, these buttons show up in the opposite 
-	       order that they're listed in the HTML. -->
+	  </div>
 
 	  <div class="col-3 align-self-center">
 	    {% if is_org_admin %}

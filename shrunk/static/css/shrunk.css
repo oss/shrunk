@@ -459,3 +459,47 @@ Media Queries
     border-bottom: 1px solid;
     border-color: #b7aa9f;
 }
+
+.row {
+    margin-bottom: 10px;
+}
+
+.shrunk-card-name {
+    margin-right: 10px;
+    font-size: 23pt;
+}
+
+nobr.shrunk-info > span {
+    margin-right: 10px;
+}
+
+.card-shrunk {
+    border: none;
+    border-radius: 0;
+    border-bottom: 1px solid;
+    border-color: #b7aa9f;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.row:last-of-type > .col > .card-shrunk {
+    border: none;
+}
+
+.col-shrunk-info {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+nobr.link-info > span {
+    margin-right: 10px;
+}
+
+.create-org-dropdown {
+    min-width: 300px;
+}
+
+.btn-round {
+    border-radius: 25px;
+}

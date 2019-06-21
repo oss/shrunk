@@ -1,10 +1,10 @@
 <div class="row">
   <div class="col">
-    <div class="card bg-light card-role">
+    <div class="card bg-light card-shrunk">
       <div class="card-block">
 	<div class="row">
 
-	  <div class="col col-grant">
+	  <div class="col col-shrunk-info">
 	    <h4>{{ grant["entity"] }}</h4>
 	    <em>{{ granted_by }}:</em> {{ grant["granted_by"] }}<br />
 	    {% if grant.get("comment") %}
@@ -12,7 +12,7 @@
 	      <em>Comment:</em> {{ grant["comment"] }}
 	    </span>
 	    {% endif %}
-	  </div> <!-- End col -->
+	  </div>
 
 	  <div class="col-3 align-self-center">
 	    <form action="/roles/{{ role }}/revoke" method="post">
@@ -21,10 +21,10 @@
 		{{ revoke_button }}
 	      </button>
 	    </form>
-	  </div> <!-- End col -->
+	  </div>
 
-	</div> <!-- End row -->
-      </div> <!-- End card-block -->
-    </div> <!-- End card -->
-  </div> <!-- End col -->
-</div> <!-- End row -->
+	</div>
+      </div>
+    </div>
+  </div>
+</div>

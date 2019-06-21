@@ -1,11 +1,11 @@
 <div class="row">
   <div class="col">
-    <div class="card bg-light card-link">
+    <div class="card bg-light card-shrunk">
       <div class="card-block">
 	<div class="row">
 
-	  <div class="col col-link-info">
-	    <nobr class="link-info">
+	  <div class="col col-shrunk-info">
+	    <nobr class="shrunk-info">
 	      {% if link["title"] %}
 	        {% if link["title"] | length > 32 %}
 	        {% set link_name = link["title"][:32] + "..." %}
@@ -18,7 +18,7 @@
 
 	      {% set full_link_name = link["title"] if link["title"] else link["_id"] %}
 
-	      <a href="{{ link['long_url'] }}" class="shrunk-title"
+	      <a href="{{ link['long_url'] }}" class="shrunk-card-name"
 		 title="{{ full_link_name }}">{{ link_name }}</a>
 	      {% set formatted_time = "Created: " + formattime(link["timeCreated"]) %}
 	      <span title="{{ formatted_time }}">{{ formatted_time }}</span>
@@ -44,9 +44,6 @@
 	      </span>
 	    </nobr>
 	  </div>
-
-	  {# For some reason, these buttons show up in the opposite order
-	  that they're listed in the HTML. #}
 
 	  <div class="col-3 align-self-center">
 	    <form>

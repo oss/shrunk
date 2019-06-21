@@ -1,42 +1,6 @@
-.row {
-    margin-bottom: 10px;
-}
-
 .col-csv-download {
     border-left: 1px solid;
     border-color: #b7aa9f;
-}
-
-.shrunk-title {
-    margin-right: 10px;
-    font-size: 23pt;
-}
-
-nobr.link-info > span {
-    margin-right: 10px;
-}
-
-.card-link {
-    border: none;
-    border-radius: 0;
-    border-bottom: 1px solid;
-    border-color: #b7aa9f;
-    padding-top: 10px;
-    padding-bottom: 10px;
-}
-
-.row:last-of-type > .col > .card-link {
-    border: none;
-}
-
-.btn-round {
-    border-radius: 25px;
-}
-
-.col-link-info {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
 }
 
 #add-link-button, .edit-link-button {
