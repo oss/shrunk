@@ -1,0 +1,41 @@
+<div class="row">
+  <div class="col">
+    <div class="card bg-light card-org">
+      <div class="card-block">
+	<div class="row">
+
+	  <div class="col col-org-info">
+	    <nobr class="org-info">
+	      <span title="{{ org['name'] }}" class="org-name">{{ org['name'] }}</span>
+	      {% set formatted_time = "Created: " + formattime(org["timeCreated"]) %}
+	      <span title="{{ formatted_time }}">{{ formatted_time }}</span>
+	    </nobr>
+	  </div> <!-- End col -->
+
+	  <!-- For some reason, these buttons show up in the opposite 
+	       order that they're listed in the HTML. -->
+
+	  <div class="col-3 align-self-center">
+	    {% if is_org_admin %}
+	    <form>
+	      <input type="hidden" class="org-name" value="{{ org['name'] }}">
+	      <button type="button" title="Delete organization" onclick="delete_org_list(event)"
+		      class="btn btn-outline-danger btn-no-border btn-round float-right">
+		<i class="fas fa-trash"></i>
+	      </button>
+	    </form>
+	    {% endif %}
+
+	    <form action="{{ url_for('manage_organization') }}" method="get">
+	      <input type="hidden" name="name" value="{{ org['name'] }}">
+	      <button type="submit" title="Manage organization"
+		      class="btn btn-outline-dark btn-no-border btn-round float-right">
+		<i class="fas fa-user-friends"></i>
+	      </button>
+	    </form>
+	  </div>
+	</div>
+      </div>
+    </div>
+  </div>
+</div>

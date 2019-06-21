@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="row row-controls">
+  <div class="col col-auto">
+    <h2>Manage organization <em>{{ name }}</em></h2>
+  </div>
+
+  <div class="col col-md-auto">
+    <div class="dropdown">
+      <a class="btn btn-primary dropdown-toggle" href="#" role="button" id="create_toggle"
+	 data-toggle="dropdown" aria-expanded="false" tabindex="0" data-trigger="manual"
+	 onclick="clear_form(ADD_MEMBER_FORM)">
+	<i class="fas fa-plus-circle"></i> Add a Member
+      </a>
+      <div class="dropdown-menu create-org-dropdown">
+	<form class="px-4 py-3 needs-validation" novalidate>
+	  <input type="hidden" id="member-add-name" value="{{ name }}">
+	  <input type="hidden" id="member-add-is_admin" value="">
+	  <div class="input-group">
+	    <input type="text" id="member-add-netid" class="form-control"
+		   onkeydown="add_member_keypress()" placeholder="NetID">
+
+	    {% if user_is_admin %}
+	    <div class="input-group-append">
+	      <div class="input-group-text">
+		Admin?
+		&nbsp;
+		<input type="checkbox" id="member-add-is_admin-checkbox"
+		       aria-label="Should the new member be an administrator?">
+	      </div>
+	    </div>
+	    {% endif %}
+	    
+	    <div class="input-group-append">
+	      <button type="button" class="btn btn-primary" onclick="add_member_shim()">
+		Add
+	      </button>
+	    </div>
+	  </div>
+
+	  <div id="member-add-netid-feedback" class="invalid-feedback"></div>
+	</form>
+      </div>
+    </div>
+  </div>
+
+  {% if user_is_admin %}
+  <div class="col col-md-auto">
+    <button class="btn btn-outline-primary btn-no-border btn-no-background bg-light"
+	    type="button" onclick="delete_org_manage('{{ name }}')">
+      <i class="fas fa-trash"></i> Delete Organization
+    </button>
+  </div>
+  {% endif %}
+</div>
+
+{% if members %}
+<div class="container">
+  {% for member in members %}
+  {% include "member_card.html" %}
+  {% endfor %}
+</div>
+{% else %}
+<div class="row">
+  <div class="col">
+    <h4>This organization currently has no members.</h4>
+  </div>
+</div>
+{% endif %}
+
+{% include "delete_organization_modal.html" %}
+
+{% assets "shrunk_manage_org" %}
+<script src="{{ ASSET_URL }}"></script>
+{% endassets %}
+
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="row row-controls">
+  <div class="col col-md-auto">
+    <h2>Organizations</h2>
+  </div>
+
+  {% if "facstaff" in roles or "admin" in roles %}
+  <div class="col col-md-auto">
+    <div class="dropdown">
+      <a class="btn btn-primary dropdown-toggle" href="#" role="button" id="create_toggle"
+	 data-toggle="dropdown" aria-expanded="false" tabindex="0" data-trigger="manual"
+	 onclick="clear_create_org()">
+	<i class="fas fa-plus-circle"></i> Create an Organization
+      </a>
+
+      <div class="dropdown-menu create-org-dropdown">
+	<form class="px-4 py-3 needs-validation" novalidate>
+	  <div class="input-group">
+	    <input type="text" id="create_org_name" class="form-control"
+		   onkeydown="if (event.keyCode==13) { event.preventDefault(); create_org() }"
+		   placeholder="Organization Name">
+	    <div class="input-group-append">
+	      <button type="button" class="btn btn-primary" onclick="create_org()">
+		Create
+	      </button>
+	    </div>
+	  </div>
+	  <div class="invalid-feedback" id="create-org-name-feedback"></div>
+	</form>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<div class="row">
+  <div class="col col-md-auto">
+    {% if not member_orgs %}
+    <h2>You are not currently a member of any organizations.</h2>
+    {% else %}
+    <h2>You are currently a member of these organizations:</h2>
+    {% endif %}
+  </div>
+</div>
+
+{% if member_orgs %}
+<div class="container">
+  {% for org in member_orgs %}
+  {% include "organization_card.html" %}
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="row">
+  <div class="col col-md-auto">
+    {% if not admin_orgs %}
+    <h2>You are not currently an administrator of any organizations.</h2>
+    {% else %}
+    <h2>You are currently an administrator of these organizations:</h2>
+    {% endif %}
+  </div>
+</div>
+
+{% if admin_orgs %}
+<div class="container">
+  {% set is_org_admin = True %}
+  {% for org in member_orgs %}
+  {% include "organization_card.html" %}
+  {% endfor %}
+</div>
+{% endif %}
+
+{% include "delete_organization_modal.html" %}
+
+{% assets "shrunk_organizations" %}
+<script src="{{ ASSET_URL }}"></script>
+{% endassets %}
+
+{% endblock %}

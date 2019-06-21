@@ -45,7 +45,10 @@ JS_BUNDLES = {
     'shrunk_js': [],
     'shrunk_index': ['js/index.js', 'js/ajax_form.js'],
     'shrunk_qr': ['js/qrcode.js', 'js/shrunkqr.js'],
-    'shrunk_stats': ['js/stats.js']
+    'shrunk_stats': ['js/stats.js'],
+    'shrunk_organizations': ['js/organizations.js'],
+    'shrunk_manage_org': ['js/manage_organization.js', 'js/ajax_form.js'],
+    'shrunk_delete_organization': ['js/delete_organization.js']
 }
 
 for bundle_name, bundle_files in JS_BUNDLES.items():
@@ -640,3 +643,108 @@ def admin_panel():
     """
     roledata = [{"id": role, "title": roles.form_text[role]["title"]} for role in roles.valid_roles()]
     return render_template("admin.html", roledata=roledata)
+
+@app.route("/organizations")
+@app.require_login
+def list_organizations():
+    # need to pass two lists of dicts: member_orgs and admin_orgs
+    netid = session['user'].get('netid')
+    client = app.get_shrunk()
+    member_orgs = [client.get_organization_info(org['name']) for org
+                   in client.get_member_organizations(netid)]
+    admin_orgs = [client.get_organization_info(org['name']) for org
+                  in client.get_admin_organizations(netid)]
+    return render_template("organizations.html", member_orgs=member_orgs, admin_orgs=admin_orgs)
+
+@app.route("/create_organization", methods=["POST"])
+@app.require_login
+def create_organization_form():
+    def resp(r):
+        return make_plaintext_response(json.dumps(r))
+    
+    netid = session['user'].get('netid')
+    if not roles.check('facstaff', netid) and not roles.check('admin', netid):
+        return resp({'errors': {'unauthorized': True}})
+
+    name = request.form.get('name')
+    app.logger.info('{} is trying to create org {}'.format(netid, name))
+    if not name:
+        return resp({'errors': {'name': 'You must supply a name.'}})
+
+    name = name.strip()
+    if not name.isalnum():
+        return resp({'errors': {'name': 'Organization names must be alphanumeric.'}})
+
+    name = name.strip()
+    client = app.get_shrunk()
+    if not client.create_organization(name):
+        return resp({'errors': {'name': 'An organization by that name already exists.'}})
+
+    client.add_organization_admin(name, netid)
+    return resp({'success': {'name': name}})
+
+@app.route("/add_organization_member", methods=["POST"])
+@app.require_login
+def add_organization_member():
+    def resp(r):
+        return make_plaintext_response(json.dumps(r))
+
+    client = app.get_shrunk()
+    netid_grantor = session['user'].get('netid')
+    netid_grantee = request.form.get('netid')
+    if not netid_grantee:
+        return resp({'errors': {'netid': 'You must supply a NetID.'}})
+
+    name = request.form.get('name')
+    admin = request.form.get('is_admin', 'false') == 'true'
+    if not name:
+        return resp({'errors': {'name': 'You must supply a name.'}})
+
+    if not client.is_organization_member(name, netid_grantor):
+        return resp({'errors': {'netid': 'Permission denied.'}})
+
+    if admin and not client.is_organization_admin(name, netid_grantor):
+        return resp({'errors': {'netid': 'Permission denied.'}})
+
+    if admin:
+        res = client.add_organization_admin(name, netid_grantee)
+    else:
+        res = client.add_organization_member(name, netid_grantee)
+
+    if not res:
+        return resp({'errors': {'netid': 'Member already exists.'}})
+
+    return resp({'success': {}})
+
+@app.route("/manage_organization", methods=["GET"])
+@app.require_login
+def manage_organization():
+    client = app.get_shrunk()
+    netid = session['user']['netid']
+    name = request.args.get('name')
+    if not name:
+        app.logger.info('no name')
+        return redirect('/unauthorized')
+    if not client.may_manage_organization(netid, name):
+        app.logger.info('unauthorized')
+        return redirect('/unauthorized')
+    kwargs = {
+        'name': name,
+        'user_is_admin': client.is_organization_admin(name, netid),
+        'members': client.get_organization_members(name)
+    }
+
+    return render_template('manage_organization.html', **kwargs)
+
+@app.route("/delete_organization", methods=["POST"])
+@app.require_login
+def delete_organization():
+    netid = session['user']['netid']
+    client = app.get_shrunk()
+    name = request.form.get('name')
+    if not name:
+        return redirect('/unauthorized')
+    if not roles.check('admin', netid) and not client.is_organization_admin(name, netid):
+        return redirect('/unauthorized')
+    client.delete_organization(name)
+    return redirect('/organizations')

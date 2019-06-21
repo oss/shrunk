@@ -1,0 +1,21 @@
+var org_delete_name;
+var org_delete_fn;
+
+function delete_org_list(ev) {
+    const parent = ev.target.parentElement;
+    org_delete_name = parent.querySelector('.org-name').value;
+    org_delete_fn = function () { location.reload(); };
+    $('#org-delete-modal').modal();
+}
+
+function delete_org_manage(name) {
+    org_delete_name = name;
+    org_delete_fn = function () { window.location.replace('/organizations'); };
+    $('#org-delete-modal').modal();
+}
+
+function do_delete_org() {
+    const req = { 'name': org_delete_name };
+    org_delete_name = '';
+    $.post('/delete_organization', req, org_delete_fn);
+}
