@@ -1,36 +1,49 @@
-const ADD_LINK_FIELDS = ['title', 'long_url', 'short_url'];
+const ADD_LINK_FORM = {
+    'endpoint': '/add',
+    'field_element_prefix': '#add-link-',
+    'fields': ['title', 'long_url', 'short_url']
+};
 
-function clear_add_link_form() {
-    ADD_LINK_FIELDS.forEach(function (field, index) {
-	$('#add-link-' + field).val('');
-	$('#add-link-' + field).removeClass('is-invalid');
-	$('#add-link-' + field + '-feedback').hide('is-invalid');
+const EDIT_LINK_FORM = {
+    'endpoint': '/edit',
+    'field_element_prefix': '#edit-link-',
+    'fields': ['title', 'long_url', 'short_url', 'old_short_url']
+};
+
+function clear_form(form) {
+    const prefix = form['field_element_prefix'];
+    form['fields'].forEach(function (field, index) {
+	$(prefix + field).val('');
+	$(prefix + field).removeClass('is-invalid');
+	$(prefix + field + '-feedback').hide('is-invalid');
     });
 }
 
-function send_add_request() {
+function send_request(form) {
+    const prefix = form['field_element_prefix'];
     var req = {};
-    ADD_LINK_FIELDS.forEach(function (field, index) {
-	if ($('#add-link-' + field).length) {
-	    req[field] = $('#add-link-' + field).val();
-	}
+    form['fields'].forEach(function (field, index) {
+	if ($(prefix + field).length) {
+	    req[field] = $(prefix + field).val();
+	}	   
     });
-    $.post('add', req, process_add_response, 'json');
+    $.post(form['endpoint'], req, resp => process_response(form, resp), 'json');
 }
 
-function process_add_response(resp) {
+function process_response(form, resp) {
     if (resp.hasOwnProperty('success')) {
-	location.reload()
+	location.reload();
     } else {
+	const prefix = form['field_element_prefix'];
 	const errors = resp['errors'];
-	ADD_LINK_FIELDS.forEach(function (field, index) {
+	form['fields'].forEach(function (field, index) {
 	    if (errors.hasOwnProperty(field)) {
-		$('#add-link-' + field).addClass('is-invalid');
-		$('#add-link-' + field + '-feedback').html(errors[field]);
-		$('#add-link-' + field + '-feedback').show();
+		$(prefix + field).addClass('is-invalid');
+		$(prefix + field + '-feedback').html(errors[field]);
+		$(prefix + field + '-feedback').show();
 	    } else {
-		$('#add-link-' + field).removeClass('is-invalid');
-		$('#add-link-' + field + '-feedback').hide();
+		$(prefix + field).removeClass('is-invalid');
+		$(prefix + field + '-feedback').hide();
 	    }
 	});
     }
@@ -60,4 +73,17 @@ function do_delete_link() {
     console.log('link-id = ' + link_id);
     const req = { 'short_url': link_id };
     $.post('/delete', req, function () { location.reload(); });
+}
+
+function edit_link(ev) {
+    const parent = ev.target.parentElement;
+    const link_id = parent.querySelector('.link-id').value;
+    const title = parent.querySelector('.link-title').value;
+    const long_url = parent.querySelector('.link-url').value;
+    $('#link-edit-modal-title').html('Editing <em>' + link_id + '</em>');
+    $('#edit-link-old_short_url').val(link_id);
+    $('#edit-link-title').val(title);
+    $('#edit-link-long_url').val(long_url);
+    $('#edit-link-short_url').val(link_id);
+    $('#link-edit-modal').modal();
 }

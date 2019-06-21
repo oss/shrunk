@@ -50,7 +50,7 @@
 
 	  <div class="col-3 align-self-center">
 	    <form>
-	      <input type="hidden" name="short_url" class="link-id" value="{{ link['_id'] }}">
+	      <input type="hidden" class="link-id" value="{{ link['_id'] }}">
 	      <button type="button" title="Delete link" onclick="delete_link(event)"
 		      class="btn btn-outline-danger btn-no-border btn-round float-right">
 		<i class="fas fa-trash"></i>
@@ -73,9 +73,11 @@
 	      </button>
 	    </form>
 
-	    <form action="/edit" method="get">
-	      <input type="hidden" name="url" value="{{ link['_id'] }}">
-	      <button type="submit" title="Edit link"
+	    <form>
+	      <input type="hidden" class="link-id" value="{{ link['_id'] }}">
+	      <input type="hidden" class="link-title" value="{{ link['title'] }}">
+	      <input type="hidden" class="link-url" value="{{ link['long_url'] }}">
+	      <button type="button" title="Edit link" onclick="edit_link(event)"
 		      class="btn btn-outline-dark btn-no-border btn-round float-right">
 		<i class="fas fa-pencil-alt"></i>
 	      </button>

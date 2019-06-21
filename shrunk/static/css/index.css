@@ -39,6 +39,14 @@ nobr.link-info > span {
     text-overflow: ellipsis;
 }
 
-#add-link-button {
+#add-link-button, .edit-link-button {
     width: 100%;
+}
+
+.edit-link-modal-header {
+    padding-bottom: 0;
+}
+
+.edit-link-modal-body {
+    padding-top: 0;
 }

@@ -44,7 +44,6 @@ assets.register('shrunk_css', shrunk_css)
 JS_BUNDLES = {
     'shrunk_js': [],
     'shrunk_index': ['js/index.js'],
-    'shrunk_edit': ['js/edit.js'],
     'shrunk_qr': ['js/qrcode.js', 'js/shrunkqr.js'],
     'shrunk_stats': ['js/stats.js']
 }
@@ -593,6 +592,16 @@ def edit_link():
         kwargs['title'] = kwargs['title'].strip()
         kwargs['power_user'] = roles.check("power_user", netid)
         kwargs['old_short_url'] = request.form['old_short_url']
+
+        if not client.is_owner_or_admin(kwargs['old_short_url'], netid):
+            resp = {'errors': {'permission denied': {}}}
+            return make_plaintext_response(json.dumps(resp))
+
+        # this should be done in WTForms, but then we'd have to
+        # have different forms for /add and /edit
+        if 'short_url' not in kwargs:
+            resp = {'errors': {'short_url': 'Please enter a short URL.'}}
+            return make_plaintext_response(json.dumps(resp))
         try:
             client.modify_url(**kwargs)
             new_short_url = kwargs.get('short_url') or old_short_url
@@ -614,26 +623,6 @@ def edit_link():
             if err:
                 resp['errors'][name] = err[0]
         return make_plaintext_response(json.dumps(resp))
-
-@app.route("/edit", methods=["GET"])
-@app.require_login
-def edit_link_form():
-    netid = session['user'].get('netid')
-    client = app.get_shrunk()
-    # Hit the database to get information
-    old_short_url = request.args["url"]
-    info = client.get_url_info(old_short_url)
-    if not info:
-        return redirect("/")
-    if not client.is_owner_or_admin(old_short_url, netid):
-        return render_index(wrong_owner=True)
-
-    info['old_short_url'] = old_short_url
-    # WARNING: the dict returned by client.get_url_info includes
-    # a "netid" field already, so we have to overwrite it here with
-    # the correct netid.
-    info['netid'] = netid
-    return render_template("edit.html", **info)
 
 @app.route("/faq")
 @app.require_login

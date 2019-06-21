@@ -16,7 +16,7 @@
   <div class="col col-md-auto">
     <div class="dropdown">
       <button type="button" class="btn btn-primary dropdown-toggle"
-	 data-toggle="dropdown" aria-expanded="false" onclick="clear_add_link_form()">
+	 data-toggle="dropdown" aria-expanded="false" onclick="clear_form(ADD_LINK_FORM)">
 	<i class="fas fa-plus-circle"></i> Add Link
       </button>
 
@@ -36,7 +36,7 @@
 	    <div id="add-link-short_url-feedback" class="invalid-feedback"></div>
 	  </div>
 	  <button id="add-link-button" class="btn btn-primary" type="button"
-		  onclick="send_add_request()">
+		  onclick="send_request(ADD_LINK_FORM)">
 	    Shrink
 	  </button>
 	</form>
@@ -189,8 +189,7 @@
 
 <input type="hidden" id="link-delete-id">
 
-<div id="link-delete-modal" class="modal fade" tabindex="-1"
-     role="dialog" aria-hidden="true">
+<div id="link-delete-modal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
@@ -210,6 +209,51 @@
 	<button type="button" class="btn btn-secondary float-right" data-dismiss="modal">
 	  Cancel
 	</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="link-edit-modal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header edit-link-modal-header">
+	<h4 id="link-edit-modal-title"></h4>
+	<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	  <span aria-hidden="true">&times;</span>
+	</button>
+      </div>
+
+      <div class="modal-body edit-link-modal-body">
+	<form class="px-4 py-3 needs-validation" novalidate>
+	  <input type="hidden" id="edit-link-old_short_url">
+	  <div class="form-group row">
+	    <input type="text" id="edit-link-title" class="form-control" placeholder="Title">
+	    <div id="edit-link-title-feedback" class="invalid-feedback"></div>
+	  </div>
+	  <div class="form-group row">
+	    <input type="text" id="edit-link-long_url" class="form-control" placeholder="URL">
+	    <div id="edit-link-long_url-feedback" class="invalid-feedback"></div>
+	  </div>
+	  <div class="form-group row">
+	    <input type="text" id="edit-link-short_url" class="form-control" placeholder="Alias">
+	    <div id="edit-link-short_url-feedback" class="invalid-feedback"></div>
+	  </div>
+	  <div class="row">
+	    <div class="col">
+	      <button class="btn btn-secondary edit-link-button" type="button" data-dismiss="modal">
+		Cancel
+	      </button>
+	    </div>
+
+	    <div class="col">
+	      <button class="btn btn-primary edit-link-button" type="button"
+		      onclick="send_request(EDIT_LINK_FORM)">
+		Save
+	      </button>
+	    </div>
+	  </div>
+	</form>
       </div>
     </div>
   </div>
