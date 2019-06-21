@@ -827,7 +827,7 @@ class ShrunkClient(object):
             return res
 
     def remove_organization_member(self, name, netid):
-        with self._monog.start_session() as s:
+        with self._mongo.start_session() as s:
             s.start_transaction()
             self.remove_organization_admin(name, netid)
             col = self.db.organization_members

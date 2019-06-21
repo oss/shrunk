@@ -33,7 +33,6 @@ function delete_link(ev) {
 function do_delete_link() {
     const link_id = $('#link-delete-id').val();
     $('#link-delete-id').val();
-    console.log('link-id = ' + link_id);
     const req = { 'short_url': link_id };
     $.post('/delete', req, function () { location.reload(); });
 }

@@ -10,6 +10,19 @@
 	    {% set formatted_time = "Created: " + formattime(member["timeCreated"]) %}
 	    <span title="{{ formatted_time }}">{{ formatted_time }}</span>
 	  </div>
+
+	  {% if user_is_admin %}
+	  <div class="col-3 align-self-center">
+	    <form>
+	      <input type="hidden" class="org-name" value="{{ name }}">
+	      <input type="hidden" class="org-member-netid" value="{{ member['netid'] }}">
+	      <button type="button" title="Remove member" onclick="remove_member(event)"
+		      class="btn btn-outline-danger btn-no-border btn-round float-right">
+		<i class="fas fa-times-circle"></i>
+	      </button>
+	    </form>
+	  </div>
+	  {% endif %}
 	</div>
       </div>
     </div>

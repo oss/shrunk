@@ -69,6 +69,31 @@
 </div>
 {% endif %}
 
+<div id="member-remove-modal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+	<h4>Are you sure you want to remove this member?</h4>
+	<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+	  <span aria-hidden="true">&times;</span>
+	</button>
+      </div>
+
+      <div class="modal-body">
+	This operation cannot be undone.
+
+	<button type="button" class="btn btn-primary float-right" onclick="do_remove_member()">
+	  Delete
+	</button>
+
+	<button type="button" class="btn btn-secondary float-right" data-dismiss="modal">
+	  Cancel
+	</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% include "delete_organization_modal.html" %}
 
 {% assets "shrunk_manage_org" %}

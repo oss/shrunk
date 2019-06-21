@@ -20,3 +20,22 @@ function add_member_shim() {
     }
     send_request(ADD_MEMBER_FORM);
 }
+
+var remove_member_org_name;
+var remove_member_netid;
+
+function remove_member(ev) {
+    remove_member_org_name = ev.target.parentElement.querySelector('.org-name').value;
+    remove_member_netid = ev.target.parentElement.querySelector('.org-member-netid').value;
+    $('#member-remove-modal').modal();
+}
+
+function do_remove_member() {
+    const req = {
+	'name': remove_member_org_name,
+	'netid': remove_member_netid
+    };
+    remove_member_org_name = '';
+    remove_member_netid = '';
+    $.post('/remove_organization_member', req, function () { location.reload(); });
+}

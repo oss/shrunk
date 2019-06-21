@@ -683,6 +683,19 @@ def create_organization_form():
     client.add_organization_admin(name, netid)
     return resp({'success': {'name': name}})
 
+@app.route("/delete_organization", methods=["POST"])
+@app.require_login
+def delete_organization():
+    netid = session['user']['netid']
+    client = app.get_shrunk()
+    name = request.form.get('name')
+    if not name:
+        return redirect('/unauthorized')
+    if not roles.check('admin', netid) and not client.is_organization_admin(name, netid):
+        return redirect('/unauthorized')
+    client.delete_organization(name)
+    return redirect('/organizations')
+
 @app.route("/add_organization_member", methods=["POST"])
 @app.require_login
 def add_organization_member():
@@ -716,6 +729,23 @@ def add_organization_member():
 
     return resp({'success': {}})
 
+@app.route("/remove_organization_member", methods=["POST"])
+@app.require_login
+def remove_organization_member():
+    def resp(r):
+        return make_plaintext_response(json.dumps(r))
+
+    client = app.get_shrunk()
+    netid_remover = session['user'].get('netid')
+    netid_removed = request.form.get('netid')
+    name = request.form.get('name')
+    if not netid_removed or not name:
+        return redirect('/unauthorized')
+    if not client.is_organization_admin(name, netid_remover):
+        return redirect('/unauthorized')
+    client.remove_organization_member(name, netid_removed)
+    return resp({'success': {}})
+
 @app.route("/manage_organization", methods=["GET"])
 @app.require_login
 def manage_organization():
@@ -735,16 +765,3 @@ def manage_organization():
     }
 
     return render_template('manage_organization.html', **kwargs)
-
-@app.route("/delete_organization", methods=["POST"])
-@app.require_login
-def delete_organization():
-    netid = session['user']['netid']
-    client = app.get_shrunk()
-    name = request.form.get('name')
-    if not name:
-        return redirect('/unauthorized')
-    if not roles.check('admin', netid) and not client.is_organization_admin(name, netid):
-        return redirect('/unauthorized')
-    client.delete_organization(name)
-    return redirect('/organizations')
