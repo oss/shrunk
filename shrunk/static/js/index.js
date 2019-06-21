@@ -1,53 +1,16 @@
 const ADD_LINK_FORM = {
     'endpoint': '/add',
     'field_element_prefix': '#add-link-',
-    'fields': ['title', 'long_url', 'short_url']
+    'fields': ['title', 'long_url', 'short_url'],
+    'fields_clear': ['title', 'long_url', 'short_url']
 };
 
 const EDIT_LINK_FORM = {
     'endpoint': '/edit',
     'field_element_prefix': '#edit-link-',
-    'fields': ['title', 'long_url', 'short_url', 'old_short_url']
+    'fields': ['title', 'long_url', 'short_url', 'old_short_url'],
+    'fields_clear': ['title', 'long_url', 'short_url']
 };
-
-function clear_form(form) {
-    const prefix = form['field_element_prefix'];
-    form['fields'].forEach(function (field, index) {
-	$(prefix + field).val('');
-	$(prefix + field).removeClass('is-invalid');
-	$(prefix + field + '-feedback').hide('is-invalid');
-    });
-}
-
-function send_request(form) {
-    const prefix = form['field_element_prefix'];
-    var req = {};
-    form['fields'].forEach(function (field, index) {
-	if ($(prefix + field).length) {
-	    req[field] = $(prefix + field).val();
-	}	   
-    });
-    $.post(form['endpoint'], req, resp => process_response(form, resp), 'json');
-}
-
-function process_response(form, resp) {
-    if (resp.hasOwnProperty('success')) {
-	location.reload();
-    } else {
-	const prefix = form['field_element_prefix'];
-	const errors = resp['errors'];
-	form['fields'].forEach(function (field, index) {
-	    if (errors.hasOwnProperty(field)) {
-		$(prefix + field).addClass('is-invalid');
-		$(prefix + field + '-feedback').html(errors[field]);
-		$(prefix + field + '-feedback').show();
-	    } else {
-		$(prefix + field).removeClass('is-invalid');
-		$(prefix + field + '-feedback').hide();
-	    }
-	});
-    }
-}
 
 function copy_short_url(ev) {
     const parent = ev.target.parentElement;

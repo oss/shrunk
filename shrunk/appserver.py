@@ -43,7 +43,7 @@ assets.register('shrunk_css', shrunk_css)
 # Create JS bundles for each page
 JS_BUNDLES = {
     'shrunk_js': [],
-    'shrunk_index': ['js/index.js'],
+    'shrunk_index': ['js/index.js', 'js/ajax_form.js'],
     'shrunk_qr': ['js/qrcode.js', 'js/shrunkqr.js'],
     'shrunk_stats': ['js/stats.js']
 }
