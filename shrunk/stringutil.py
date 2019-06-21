@@ -1,4 +1,5 @@
 import re
+
 def get_domain(long_url):
     """
     takes in a url and gets the top level domain

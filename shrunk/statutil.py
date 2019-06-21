@@ -36,12 +36,6 @@ def make_csv_for_links(client, links):
 
     return f.getvalue()
 
-def make_plaintext_response(csv_output, filename=None):
-    headers = {'Content-Type': 'text/plain; charset=utf-8'}
-    if filename:
-        headers['Content-Disposition'] = 'attachment; filename={}'.format(filename)
-    return make_response((csv_output, 200, headers))
-
 def get_location_state(client, ip):
     return client.get_state_code(ip)
 
