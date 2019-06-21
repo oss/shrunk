@@ -248,10 +248,7 @@ class ShrunkClient(object):
                 self._DB_REPLSET = DB_REPLSET
             self.reconnect()
 
-        #db = self._mongo.shrunk_visits
-        #db.visits.create_index([('short_url', pymongo.ASCENDING)])
-        #db.visitors.create_index([('ip', pymongo.ASCENDING)])
-
+        self.db = self._mongo.shrunk
         self.set_geoip(GEOLITE_PATH)
 
     def reconnect(self):
@@ -779,6 +776,94 @@ class ShrunkClient(object):
             return resp.subdivisions.most_specific.iso_code or unk
         except:
             return unk
+
+    def create_organization(self, name):
+        col = self.db.organizations
+        rec_query = {'name': name}
+        rec_insert = {'name': name, 'timeCreated': datetime.datetime.now()}
+        res = col.find_one_and_update(rec_query, {'$setOnInsert': rec_insert}, upsert=True,
+                                      return_document=ReturnDocument.BEFORE)
+        # return false if organization already existed, otherwise true
+        return res is None
+
+    def delete_organization(self, name):
+        with self._mongo.start_session() as s:
+            s.start_transaction()
+            self.db.organization_members.remove({'name': name})
+            self.db.organization_admins.remove({'name': name})
+            self.db.organizations.remove({'name': name})
+            s.commit_transaction()
+
+    def get_organization_info(self, name):
+        col = self.db.organizations
+        return col.find_one({'name': name})
+
+    def is_organization_member(self, name, netid):
+        col = self.db.organization_members
+        res = col.find_one({'name': name, 'netid': netid})
+        return bool(res)
+
+    def is_organization_admin(self, name, netid):
+        col = self.db.organization_admins
+        res = col.find_one({'name': name, 'netid': netid})
+        return bool(res)
+
+    def add_organization_member(self, name, netid):
+        col = self.db.organization_members
+        rec = {'name': name, 'netid': netid}
+        rec_insert = {'name': name, 'netid': netid, 'timeCreated': datetime.datetime.now()}
+        res = col.find_one_and_update(rec, {'$setOnInsert': rec_insert}, upsert=True,
+                                      return_document=ReturnDocument.BEFORE)
+        return res is None
+
+    def add_organization_admin(self, name, netid):
+        with self._mongo.start_session() as s:
+            s.start_transaction()
+            res = self.add_organization_member(name, netid)
+            col = self.db.organization_admins
+            rec = {'name': name, 'netid': netid}
+            col.find_one_and_update(rec, {'$setOnInsert': rec}, upsert=True)
+            s.commit_transaction()
+            return res
+
+    def remove_organization_member(self, name, netid):
+        with self._monog.start_session() as s:
+            s.start_transaction()
+            self.remove_organization_admin(name, netid)
+            col = self.db.organization_members
+            col.remove({'name': name, 'netid': netid})
+            s.commit_transaction()
+
+    def remove_organization_admin(self, name, netid):
+        col = self.db.organization_admins
+        col.remove({'name': name, 'netid': netid})
+
+    def get_organization_members(self, name):
+        col = self.db.organization_members
+        return col.find({'name': name})
+
+    def get_organization_admins(self, name):
+        col = self.db.organization_admins
+        return col.find({'name': name})
+
+    def get_member_organizations(self, netid):
+        col = self.db.organization_members
+        return col.find({'netid': netid})
+
+    def get_admin_organizations(self, netid):
+        col = self.db.organization_admins
+        return col.find({'netid': netid})
+
+    def may_manage_organization(self, netid, name):
+        if not self.get_organization_info(name):
+            return False
+        if roles.check('admin', netid):
+            return 'admin'
+        if self.is_organization_admin(name, netid):
+            return 'admin'
+        if self.is_organization_member(name, netid):
+            return 'member'
+        return False
 
     @staticmethod
     def _generate_unique_key():
