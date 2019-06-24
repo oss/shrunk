@@ -4,11 +4,16 @@
       <div class="card-block">
 	<div class="row">
 	  <div class="col col-shrunk-info">
-	    <span title="{{ member['netid'] }}" class="shrunk-card-name">
-	      {{ member['netid'] }}
-	    </span>
-	    {% set formatted_time = "Created: " + formattime(member["timeCreated"]) %}
-	    <span title="{{ formatted_time }}">{{ formatted_time }}</span>
+	    <nobr class="shrunk-info">
+	      <span title="{{ member['netid'] }}" class="shrunk-card-name">
+		{{ member['netid'] }}
+	      </span>
+	      {% set formatted_time = "Added: " + formattime(member["timeCreated"]) %}
+	      <span title="{{ formatted_time }}">{{ formatted_time }}</span>
+	      {% if member['is_admin'] %}
+	      <span title="User is an Administrator"><em>Administrator</em></span>
+	      {% endif %}
+	    </nobr>
 	  </div>
 
 	  {% if user_is_admin %}
