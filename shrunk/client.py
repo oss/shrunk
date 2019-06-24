@@ -249,6 +249,14 @@ class ShrunkClient(object):
             self.reconnect()
 
         self.db = self._mongo.shrunk
+
+        self.db.visits.create_index([('short_url', pymongo.ASCENDING)])
+        self.db.visitors.create_index([('ip', pymongo.ASCENDING)])
+        self.db.organizations.create_index([('name', pymongo.ASCENDING)], unique=True)
+        self.db.organization_members.create_index([('name', pymongo.ASCENDING),
+                                                   ('netid', pymongo.ASCENDING)],
+                                                  unique=True)
+
         self.set_geoip(GEOLITE_PATH)
 
     def reconnect(self):
