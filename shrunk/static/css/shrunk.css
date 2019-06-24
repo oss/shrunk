@@ -503,3 +503,7 @@ nobr.link-info > span {
 .btn-round {
     border-radius: 25px;
 }
+
+.modal-body > button:first-of-type {
+    margin-left: 10px;
+}
