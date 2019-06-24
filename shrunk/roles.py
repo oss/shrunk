@@ -130,4 +130,4 @@ def init(app, mongo_client=None):
         #server does not respond. pymongo3.6 aug 2018
         mongo_client.admin.command("ismaster")
     global grants
-    grants = mongo_client.shrunk_roles.grants
+    grants = mongo_client.shrunk.grants

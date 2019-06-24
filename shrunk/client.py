@@ -295,11 +295,10 @@ class ShrunkClient(object):
         :Returns:
           A nonnegative integer.
         """
-        db = self._mongo.shrunk_urls
         if netid:
-            return db.urls.find({"netid": netid}).count()
+            return self.db.urls.find({"netid": netid}).count()
         else:
-            return db.urls.count()
+            return self.db.urls.count()
 
     def create_short_url(self, long_url, short_url=None, netid=None, title=None):
         """Given a long URL, create a new short URL.
@@ -321,8 +320,6 @@ class ShrunkClient(object):
             has been banned by an administrator
           - DuplicateIdException: if the requested name is already taken
         """
-        db = self._mongo.shrunk_urls
-
         if self.is_blocked(long_url):
             raise ForbiddenDomainException("That URL is not allowed.")
 
@@ -343,7 +340,7 @@ class ShrunkClient(object):
                 raise ForbiddenNameException("That name is reserved.")
 
             try:
-                response = db.urls.insert(document)
+                response = self.db.urls.insert(document)
             except pymongo.errors.DuplicateKeyError:
                 raise DuplicateIdException("That name already exists.")
         else:
@@ -356,7 +353,7 @@ class ShrunkClient(object):
                         url = ShrunkClient._generate_unique_key()
 
                     document["_id"] = url
-                    response = db.urls.insert(document)
+                    response = self.db.urls.insert(document)
                 except pymongo.errors.DuplicateKeyError:
                     continue
 
@@ -376,12 +373,10 @@ class ShrunkClient(object):
           - `short_url`: The new short url (for custom urls)
           - `new_doc`: All the feilds to $set in the document
         """
-        db = self._mongo.shrunk_urls
-
         if self.is_blocked(new_doc["long_url"]):
             raise ForbiddenDomainException("That URL is not allowed.")
 
-        document = db.urls.find_one({"_id": old_short_url})
+        document = self.db.urls.find_one({"_id": old_short_url})
 
         if not admin and not power_user:
             short_url = None
@@ -397,15 +392,12 @@ class ShrunkClient(object):
                     response = db.urls.insert(document)
                 except pymongo.errors.DuplicateKeyError:
                     raise DuplicateIdException("That name already exists.")
-                db.urls.remove({"_id": old_short_url})
-                db.urls.update({"_id" : short_url},
-                               {"$set" : new_doc})
+                self.db.urls.remove({"_id": old_short_url})
+                self.db.urls.update({"_id" : short_url}, {"$set" : new_doc})
             else:
-                response = db.urls.update({"_id" : old_short_url},
-                                          {"$set" : new_doc})
+                response = self.db.urls.update({"_id" : old_short_url}, {"$set" : new_doc})
         else:
-            response = db.urls.update({"_id" : old_short_url},
-                                      {"$set" : new_doc})
+            response = self.db.urls.update({"_id" : old_short_url}, {"$set" : new_doc})
 
         return response
 
@@ -415,8 +407,7 @@ class ShrunkClient(object):
 
     def is_owner_or_admin(self, short_url, request_netid):
         "checks if the url is owned by the user or if the user is an admin"
-        url_db = self._mongo.shrunk_urls
-        url = url_db.urls.find_one({"_id":short_url}, projection={"netid"})
+        url = self.db.urls.find_one({"_id":short_url}, projection={"netid"})
         if not url:
             return roles.check("admin", request_netid)
 
@@ -473,11 +464,10 @@ class ShrunkClient(object):
         :Returns:
           A response in JSON detailing the effect of the database operations.
         """
-        db = self._mongo.shrunk_urls
         if netid is None:
             return {"ok": 0, "n" : 0}
         else:
-            return db.urls.remove({"netid" : netid})
+            return self.db.urls.remove({"netid" : netid})
 
     def get_url_info(self, short_url):
         """Given a short URL, return information about it.
@@ -492,8 +482,7 @@ class ShrunkClient(object):
         :Parameters:
           - `short_url`: A shortened URL
         """
-        db = self._mongo.shrunk_urls
-        return db.urls.find_one({"_id" : short_url})
+        return self.db.urls.find_one({"_id" : short_url})
 
     def get_monthly_visits(self, short_url):
         """Given a short URL, return how many visits and new unique visiters it gets per month.
@@ -508,9 +497,8 @@ class ShrunkClient(object):
           - `first_time_visits`: new visits by users who haven't seen the link yet.
           - `all_visits`: the total visits per that month.
         """
-        db = self._mongo.shrunk_visits
         aggregation = [match_short_url(short_url)] + monthly_visits_aggregation
-        return list(db.visits.aggregate(aggregation))
+        return list(self.db.visits.aggregate(aggregation))
 
     def get_daily_visits(self, short_url):
         """Given a short URL, return how many visits and new unique visiters it gets per month.
@@ -525,9 +513,8 @@ class ShrunkClient(object):
           - `first_time_visits`: new visits by users who haven't seen the link yet.
           - `all_visits`: the total visits per that month.
         """
-        db = self._mongo.shrunk_visits
         aggregation = [match_short_url(short_url)] + daily_visits_aggregation
-        return list(db.visits.aggregate(aggregation))
+        return list(self.db.visits.aggregate(aggregation))
 
     def get_long_url(self, short_url):
         """Given a short URL, returns the long URL.
@@ -555,8 +542,7 @@ class ShrunkClient(object):
         :Response:
           - A JSON-compatible Python dict containing the database response.
         """
-        db = self._mongo.shrunk_visits
-        return db.visits.find({"short_url" : short_url})
+        return self.db.visits.find({"short_url" : short_url})
 
     def get_num_visits(self, short_url):
         """Given a short URL, return the number of visits.
@@ -568,8 +554,7 @@ class ShrunkClient(object):
           A nonnegative integer indicating the number of times the URL has been
           visited, or None if the URL does not exist in the database.
         """
-        db = self._mongo.shrunk_urls
-        document = db.urls.find_one({"_id" : short_url})
+        document = self.db.urls.find_one({"_id" : short_url})
         return document["visits"] if document else None
 
     def get_all_urls(self, filter_dict=None):
@@ -583,12 +568,10 @@ class ShrunkClient(object):
         :Returns:
           A ShrunkCursor containing the results of the operation.
         """
-        db = self._mongo.shrunk_urls
         if not filter_dict:
-            cursor = db.urls.find(sort=[("timeCreated", pymongo.DESCENDING)])
+            cursor = self.db.urls.find(sort=[("timeCreated", pymongo.DESCENDING)])
         else:
-            cursor = db.urls.find(filter_dict,
-                                  sort=[("timeCreated", pymongo.DESCENDING)])
+            cursor = self.db.urls.find(filter_dict, sort=[("timeCreated", pymongo.DESCENDING)])
         return ShrunkCursor(cursor)
 
     def get_urls(self, netid):
@@ -616,7 +599,6 @@ class ShrunkClient(object):
           A Shrunk cursor containing the results of the search, or None if an
           error occurred.
         """
-        db = self._mongo.shrunk_urls
         match = {"$regex" : search_string, "$options" : "i"}
 
         # '_id' is the short url
@@ -627,7 +609,7 @@ class ShrunkClient(object):
         if netid is not None:
             query["netid"] = netid
 
-        cursor = db.urls.find(query)
+        cursor = self.db.urls.find(query)
         return ShrunkCursor(cursor)
 
     def visit(self, short_url, source_ip, user_agent, referer):
@@ -645,13 +627,9 @@ class ShrunkClient(object):
           The long URL corresponding to the short URL, or None if no such URL
           was found in the database.
         """
-        db = self._mongo.shrunk_urls
-        db.urls.update({"_id" : short_url},
-                       {"$inc" : {"visits" : 1}})
+        self.db.urls.update({"_id" : short_url}, {"$inc" : {"visits" : 1}})
 
-
-        db = self._mongo.shrunk_visits
-        db.visits.insert({
+        self.db.visits.insert({
             "short_url" : short_url,
             "source_ip" : source_ip,
             "time" : datetime.datetime.now(),
@@ -675,10 +653,9 @@ class ShrunkClient(object):
            :Returns:
              A hexadecimal string which uniquely identifies the given IP address.
         """
-        ipaddr = str(ipaddr)
-        db = self._mongo.shrunk_visits
-        res = db.visitors.find_one_and_update({'ip': ipaddr}, {'$setOnInsert': {'ip': ipaddr}},
-                                              upsert=True, return_document=ReturnDocument.AFTER)
+        rec = {'ip': str(ipaddr)}
+        res = self.db.visitors.find_one_and_update(rec, {'$setOnInsert': {'ip': rec}}, upsert=True,
+                                                   return_document=ReturnDocument.AFTER)
         return str(res['_id'])
 
     def get_geoip_location(self, ipaddr):
@@ -790,7 +767,6 @@ class ShrunkClient(object):
         with self._mongo.start_session() as s:
             s.start_transaction()
             self.db.organization_members.remove({'name': name})
-            self.db.organization_admins.remove({'name': name})
             self.db.organizations.remove({'name': name})
             s.commit_transaction()
 
@@ -804,55 +780,46 @@ class ShrunkClient(object):
         return bool(res)
 
     def is_organization_admin(self, name, netid):
-        col = self.db.organization_admins
+        col = self.db.organization_members
         res = col.find_one({'name': name, 'netid': netid})
-        return bool(res)
+        return res['is_admin']
 
-    def add_organization_member(self, name, netid):
+    def add_organization_member(self, name, netid, is_admin=False):
         col = self.db.organization_members
         rec = {'name': name, 'netid': netid}
+        rec_update = {'is_admin': is_admin}
         rec_insert = {'name': name, 'netid': netid, 'timeCreated': datetime.datetime.now()}
-        res = col.find_one_and_update(rec, {'$setOnInsert': rec_insert}, upsert=True,
-                                      return_document=ReturnDocument.BEFORE)
+        res = col.find_one_and_update(rec, {'$set': rec_update, '$setOnInsert': rec_insert},
+                                      upsert=True, return_document=ReturnDocument.BEFORE)
         return res is None
 
     def add_organization_admin(self, name, netid):
-        with self._mongo.start_session() as s:
-            s.start_transaction()
-            res = self.add_organization_member(name, netid)
-            col = self.db.organization_admins
-            rec = {'name': name, 'netid': netid}
-            col.find_one_and_update(rec, {'$setOnInsert': rec}, upsert=True)
-            s.commit_transaction()
-            return res
+        self.add_organization_member(name, netid, is_admin=True)
+        return True
 
     def remove_organization_member(self, name, netid):
-        with self._mongo.start_session() as s:
-            s.start_transaction()
-            self.remove_organization_admin(name, netid)
-            col = self.db.organization_members
-            col.remove({'name': name, 'netid': netid})
-            s.commit_transaction()
+        col = self.db.organization_members
+        col.remove({'name': name, 'netid': netid})
 
     def remove_organization_admin(self, name, netid):
-        col = self.db.organization_admins
-        col.remove({'name': name, 'netid': netid})
+        col = self.db.organization_members
+        col.update({'name': name, 'netid': netid}, {'$set': {'is_admin': False}})
 
     def get_organization_members(self, name):
         col = self.db.organization_members
         return col.find({'name': name})
 
     def get_organization_admins(self, name):
-        col = self.db.organization_admins
-        return col.find({'name': name})
+        col = self.db.organization_members
+        return col.find({'name': name, 'is_admin': True})
 
     def get_member_organizations(self, netid):
         col = self.db.organization_members
         return col.find({'netid': netid})
 
     def get_admin_organizations(self, netid):
-        col = self.db.organization_admins
-        return col.find({'netid': netid})
+        col = self.db.organization_members
+        return col.find({'netid': netid, 'is_admin': True})
 
     def may_manage_organization(self, netid, name):
         if not self.get_organization_info(name):
