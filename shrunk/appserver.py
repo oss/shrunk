@@ -142,6 +142,7 @@ def logout():
     if "user" not in session:
         return redirect('/')
     user = session.pop('user')
+    session.clear()
     if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
         if user['netid'] in ['DEV_USER', 'DEV_FACSTAFF', 'DEV_PWR_USER', 'DEV_ADMIN']:
             return redirect('/')
