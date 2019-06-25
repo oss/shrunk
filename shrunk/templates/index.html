@@ -30,11 +30,15 @@
 	    <input type="text" id="add-link-long_url" class="form-control" placeholder="URL">
 	    <div id="add-link-long_url-feedback" class="invalid-feedback"></div>
 	  </div>
+
+	  {% if "admin" in roles or "power_user" in roles %}
 	  <div class="form-group row">
 	    <input type="text" id="add-link-short_url" class="form-control"
 		   placeholder="Alias (optional)">
 	    <div id="add-link-short_url-feedback" class="invalid-feedback"></div>
 	  </div>
+	  {% endif %}
+
 	  <button id="add-link-button" class="btn btn-primary" type="button"
 		  onclick="send_request(ADD_LINK_FORM)">
 	    Shrink
@@ -82,15 +86,37 @@
       <button class="btn btn-outline-primary btn-no-border btn-no-background dropdown-toggle bg-light"
 	      type="button" data-toggle="dropdown"
 	      aria-haspopup="true" aria-expanded="false">
-	{% if all_users == "0" %}
-	View my links
-	{% elif all_users == "1" %}
-	View all links
-	{% endif %}
+	{{ selected_links_set }}
       </button>
       <div class="dropdown-menu">
-	<a class="dropdown-item" href="javascript:change_all_users('0')">View my links</a>
-	<a class="dropdown-item" href="javascript:change_all_users('1')">View all links</a>
+	<a class="dropdown-item" href="javascript:change_links_set('GO!my')">My links</a>
+	<a class="dropdown-item" href="javascript:change_links_set('GO!all')">All links</a>
+	{% if orgs %}
+	<div class="dropdown-divider"></div>
+	{% for org in orgs %}
+	<a class="dropdown-item" href="javascript:change_links_set('{{ org['name'] }}')">
+	  {{ org['name'] }}
+	</a>
+	{% endfor %}
+	{% endif %}
+      </div>
+    </div>
+  </div>
+  {% elif "admin" not in roles and orgs %}
+  <div class="col col-md-auto">
+    <div class="dropdown">
+      <button class="btn btn-outline-primary btn-no-border btn-no-background dropdown-toggle bg-light"
+	      type="button" data-toggle="dropdown"
+	      aria-haspopup="true" aria-expanded="false">
+	{{ selected_links_set }}
+      </button>
+      <div class="dropdown-menu">
+	<a class="dropdown-item" href="javascript:change_links_set('GO!my')">My links</a>
+	{% for org in orgs %}
+	<a class="dropdown-item" href="javascript:change_links_set('{{ org['name'] }}')">
+	  {{ org['name'] }}
+	</a>
+	{% endfor %}
       </div>
     </div>
   </div>

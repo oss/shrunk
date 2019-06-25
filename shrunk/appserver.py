@@ -252,7 +252,7 @@ def render_index(**kwargs):
     old_query = session.get('query')
     query = get_param('query')
     query_changed = query != old_query
-    all_users = get_param('all_users', default='0', validator=lambda x: x in ['0', '1'])
+    links_set = get_param('links_set', default='GO!my')
     sortby = get_param('sortby', default='0', validator=lambda x: x in map(str, range(6)))
     def validate_page(page):
         try:
@@ -264,28 +264,45 @@ def render_index(**kwargs):
     if query_changed:
         page = 1
 
-    # Depending on the type of user, get info from the database
-    is_admin = roles.check("admin", netid)
-    if is_admin:
-        if query and all_users == "0":
-            #search my links
-            cursor = client.search(query, netid=netid)
-        elif query and all_users == "1":
-            #search all links
-            cursor = client.search(query)
-        elif all_users == "1":
-            #show all links but no query
-            cursor = client.get_all_urls()
-        else:
-            #show all of my links but no query
-            cursor = client.get_urls(netid)
-    else:
+    # links_set determines which set of links we show the user.
+    # valid values of links_set are:
+    #   GO!my  --- show the user's own links
+    #   GO!all --- show all links
+    #   <org>, where <org> is the name of an organization of which
+    #      the user is a member --- show all links belonging to members of <org>
+
+    # permissions checking
+    authorized = False
+    if links_set == 'GO!all' and roles.check('admin', netid):
+        authorized = True
+    if links_set not in ['GO!my', 'GO!all']:
+        if client.is_organization_member(links_set, netid):
+            authorized = True
+
+    if not authorized:
+        links_set = 'GO!my'
+
+    selected_links_set = links_set
+    if links_set == 'GO!my':
+        selected_links_set = 'My links'
+    elif links_set == 'GO!all':
+        selected_links_set = 'All links'
+
+    if links_set == 'GO!my':
         if query:
             cursor = client.search(query, netid=netid)
-            app.logger.info("search: {}, '{}'".format(netid, query))
         else:
             cursor = client.get_urls(netid)
-            app.logger.info("render index: {}".format(netid))
+    elif links_set == 'GO!all':
+        if query:
+            cursor = client.search(query)
+        else:
+            cursor = client.get_all_urls()
+    else:
+        if query:
+            cursor = client.search(query, org=links_set)
+        else:
+            cursor = client.get_org_urls(links_set)
 
     # Perform sorting, pagination and get the results
     cursor.sort(sortby)
@@ -317,6 +334,8 @@ def render_index(**kwargs):
                            links=links,
                            linkserver_url=app.config["LINKSERVER_URL"],
                            page=page,
+                           selected_links_set=selected_links_set,
+                           orgs=client.get_member_organizations(netid),
                            **kwargs)
 
 @app.route("/add", methods=["POST"])
@@ -655,7 +674,6 @@ def create_organization_form():
         return shrunk.util.unauthorized()
 
     name = request.form.get('name')
-    app.logger.info('{} is trying to create org {}'.format(netid, name))
     if not name:
         return make_json_response({'errors': {'name': 'You must supply a name.'}}, status=400)
 

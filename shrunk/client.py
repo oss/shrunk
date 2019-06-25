@@ -4,8 +4,10 @@
 import datetime
 import random
 import string
+import math
 import pymongo
 from pymongo.collection import ReturnDocument
+from pymongo.collation import Collation
 import geoip2.database
 import shrunk.roles as roles
 from shrunk.stringutil import get_domain
@@ -108,10 +110,7 @@ class ShrunkCursor(object):
           A list of JSON-compatible dictionaries containing the results from the
           database.
         """
-        if self.cursor is None:
-            return []
-        else:
-            return list(self.cursor)
+        return [] if self.cursor is None else list(self.cursor)
 
     def __iter__(self):
         """Gets the results in the cursor in list form.
@@ -142,7 +141,7 @@ class ShrunkCursor(object):
         if not self.cursor:
             return 1
 
-        count = self.cursor.count()
+        count = len(self)
         if count < links_per_page:
             return 1
         elif count % links_per_page == 0:
@@ -188,6 +187,64 @@ class ShrunkCursor(object):
             raise ValueError("'sortby' must be an integer")
         except pymongo.errors.InvalidOperation:
             raise InvalidOperationException("You cannot sort a cursor after use.")
+
+
+class AggregationCursor(ShrunkCursor):
+    """ The result from aggregate() doesn't present the same interface
+        as the result from find(). In particular, the result from aggregate()
+        doesn't support the .sort(), .skip(), and .limit() methods. This
+        class is a hack to allow aggregate() results to be used as a ShrunkCursor. """
+
+    def __init__(self, agg, col):
+        self.agg = agg
+        self.col = col
+        self.collation = Collation('en')
+
+    def paginate(self, page, links_per_page):
+        page = max(1, page)
+        num_to_skip = (page-1)*links_per_page
+        self.agg.append(
+            {'$facet': {
+                'paginated': [{ '$skip': num_to_skip }, { '$limit': links_per_page }],
+                'total_links': [{ '$count': 'count' }]
+            }})
+        self.result = next(self.col.aggregate(self.agg, collation=self.collation))
+        self.paginated = self.result['paginated']
+        self.total_links = self.result['total_links'][0]['count']
+        num_pages = math.ceil(self.total_links / links_per_page)
+        page = min(num_pages, page)
+        return page, num_pages
+
+    def get_results(self):
+        return self.paginated
+
+    def __iter__(self):
+        return self.paginated
+
+    def get_last_page(self, links_per_page):
+        if self.total_links == 0:
+            return 1
+        return math.ceil(self.total_links / links_per_page)
+
+    def sort(self, sortby):
+        try:
+            sortby = int(sortby)
+            if sortby == ShrunkCursor.TIME_ASC:
+                self.agg.append({'$sort': {'timeCreated': 1}})
+            elif sortby == ShrunkCursor.TIME_DESC:
+                self.agg.append({'$sort': {'timeCreated': -1}})
+            elif sortby == ShrunkCursor.TITLE_ASC:
+                self.agg.append({'$sort': {'_id': 1, 'title': 1}})
+            elif sortby == ShrunkCursor.TITLE_DESC:
+                self.agg.append({'$sort': {'_id': -1, 'title': -1}})
+            elif sortby == ShrunkCursor.POP_ASC:
+                self.agg.append({'$sort': {'visits': 1}})
+            elif sortby == ShrunkCursor.POP_DESC:
+                self.agg.append({'$sort': {'visits': -1}})
+            else:
+                raise IndexError("Invalid argument to 'sortby'")
+        except ValueError:
+            raise ValueError("'sortby' must be an integer")
 
 
 class ShrunkClient(object):
@@ -593,7 +650,22 @@ class ShrunkClient(object):
         """
         return self.get_all_urls({"netid": netid})
 
-    def search(self, search_string, netid=None):
+    def get_org_urls(self, org):
+        aggregation = [
+            { '$match': { 'name': org } },
+            { '$lookup': {
+                'from': 'urls',
+                'localField': 'netid',
+                'foreignField': 'netid',
+                'as': 'urls'
+            }},
+            { '$unwind': '$urls' },
+            { '$replaceRoot': { 'newRoot': '$urls' } }
+        ]
+
+        return AggregationCursor(aggregation, self.db.organization_members)
+
+    def search(self, search_string, netid=None, org=None):
         """Search for URLs containing the given search string.
 
         Searches for links where the title or URL contain the given search
@@ -607,18 +679,40 @@ class ShrunkClient(object):
           A Shrunk cursor containing the results of the search, or None if an
           error occurred.
         """
-        match = {"$regex" : search_string, "$options" : "i"}
+
+        aggregation = []
 
         # '_id' is the short url
-        query = {"$or" : [{"long_url" : match},
-                          {"_id" : match},
-                          {"title" : match},
-                          {"netid" : match}]}
+        match = {"$regex" : search_string, "$options" : "i"}
+        query = {"$match": { "$or" : [{"long_url" : match},
+                                      {"_id" : match},
+                                      {"title" : match},
+                                      {"netid" : match}]}}
         if netid is not None:
             query["netid"] = netid
 
-        cursor = self.db.urls.find(query)
-        return ShrunkCursor(cursor)
+        if org is not None:
+            aggregation += [ {
+                '$lookup': {
+                    'from': 'organization_members',
+                    'localField': 'netid',
+                    'foreignField': 'netid',
+                    'as': 'owner_membership'
+                }
+            }, {
+                '$addFields': {
+                    'owner_orgs': {
+                        '$map': { 'input': '$owner_membership', 'in': '$$this.name' }
+                    }
+                }
+            }, {
+                '$match': { '$expr': { '$in': [ org, '$owner_orgs' ] } }
+            }, {
+                '$project': { 'owner_membership': False, 'owner_orgs': False }
+            } ]
+
+        aggregation.append(query)
+        return AggregationCursor(aggregation, self.db.urls)
 
     def visit(self, short_url, source_ip, user_agent, referer):
         """Visits the given URL and logs visit information.

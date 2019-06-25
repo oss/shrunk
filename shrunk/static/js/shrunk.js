@@ -2,19 +2,6 @@ var shrunk = shrunk || function() {
 
 }
 
-/**
- * Change the order in which links are sorted on the front page.
- *
- * Forces a redirect to the index.
- */
-function change_sortby(sortby) {
-    window.location.replace('/?sortby=' + sortby);
-}
-
-function change_all_users(all_users) {
-    window.location.replace('/?all_users=' + all_users);
-}
-
 var clear_search = function(){
     var url = new URL(window.location.href);
 

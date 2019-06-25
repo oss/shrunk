@@ -49,3 +49,11 @@ function edit_link(ev) {
     $('#edit-link-short_url').val(link_id);
     $('#link-edit-modal').modal();
 }
+
+function change_sortby(sortby) {
+    window.location.replace('/?sortby=' + sortby);
+}
+
+function change_links_set(new_set) {
+    window.location.replace('/?links_set=' + new_set);
+}
