@@ -5,10 +5,13 @@
 	<div class="row">
 
 	  <div class="col col-shrunk-info">
-	    <nobr class="org-info">
+	    <nobr class="shrunk-info">
 	      <span title="{{ org['name'] }}" class="shrunk-card-name">{{ org['name'] }}</span>
 	      {% set formatted_time = "Created: " + formattime(org["timeCreated"]) %}
 	      <span title="{{ formatted_time }}">{{ formatted_time }}</span>
+	      {% if is_org_admin %}
+	      <span title="User is an administrator"><em>Administrator</em></span>
+	      {% endif %}
 	    </nobr>
 	  </div>
 

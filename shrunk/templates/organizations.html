@@ -48,25 +48,7 @@
 {% if member_orgs %}
 <div class="container">
   {% for org in member_orgs %}
-  {% include "organization_card.html" %}
-  {% endfor %}
-</div>
-{% endif %}
-
-<div class="row">
-  <div class="col col-md-auto">
-    {% if not admin_orgs %}
-    <h2>You are not currently an administrator of any organizations.</h2>
-    {% else %}
-    <h2>You are currently an administrator of these organizations:</h2>
-    {% endif %}
-  </div>
-</div>
-
-{% if admin_orgs %}
-<div class="container">
-  {% set is_org_admin = True %}
-  {% for org in member_orgs %}
+  {% set is_org_admin = org in admin_orgs %}
   {% include "organization_card.html" %}
   {% endfor %}
 </div>
