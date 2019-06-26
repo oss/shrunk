@@ -23,18 +23,21 @@
       <div class="dropdown-menu create-org-dropdown">
 	<form class="px-4 py-3 needs-validation" novalidate>
 	  <div class="form-group row">
-	    <input type="text" id="add-link-title" class="form-control" placeholder="Title">
+	    <input type="text" id="add-link-title" class="form-control" placeholder="Title"
+		   onkeydown="send_request_keypress(event, ADD_LINK_FORM)">
 	    <div id="add-link-title-feedback" class="invalid-feedback"></div>
 	  </div>
 	  <div class="form-group row">
-	    <input type="text" id="add-link-long_url" class="form-control" placeholder="URL">
+	    <input type="text" id="add-link-long_url" class="form-control" placeholder="URL"
+		   onkeydown="send_request_keypress(event, ADD_LINK_FORM)">
 	    <div id="add-link-long_url-feedback" class="invalid-feedback"></div>
 	  </div>
 
 	  {% if "admin" in roles or "power_user" in roles %}
 	  <div class="form-group row">
 	    <input type="text" id="add-link-short_url" class="form-control"
-		   placeholder="Alias (optional)">
+		   placeholder="Alias (optional)"
+		   onkeydown="send_request_keypress(event, ADD_LINK_FORM)">
 	    <div id="add-link-short_url-feedback" class="invalid-feedback"></div>
 	  </div>
 	  {% endif %}
@@ -254,15 +257,18 @@
 	<form class="px-4 py-3 needs-validation" novalidate>
 	  <input type="hidden" id="edit-link-old_short_url">
 	  <div class="form-group row">
-	    <input type="text" id="edit-link-title" class="form-control" placeholder="Title">
+	    <input type="text" id="edit-link-title" class="form-control" placeholder="Title"
+		   onkeydown="send_request_keypress(event, EDIT_LINK_FORM)">
 	    <div id="edit-link-title-feedback" class="invalid-feedback"></div>
 	  </div>
 	  <div class="form-group row">
-	    <input type="text" id="edit-link-long_url" class="form-control" placeholder="URL">
+	    <input type="text" id="edit-link-long_url" class="form-control" placeholder="URL"
+		   onkeydown="send_request_keypress(event, EDIT_LINK_FORM)">
 	    <div id="edit-link-long_url-feedback" class="invalid-feedback"></div>
 	  </div>
 	  <div class="form-group row">
 	    <input type="text" id="edit-link-short_url" class="form-control" placeholder="Alias"
+		   onkeydown="send_request_keypress(event, EDIT_LINK_FORM)"
 		   {% if "power_user" not in roles and "admin" not in roles %}
 		   disabled
 		   {% endif %}>
