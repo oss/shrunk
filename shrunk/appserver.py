@@ -48,7 +48,7 @@ JS_BUNDLES = {
     'shrunk_index': ['js/index.js', 'js/ajax_form.js'],
     'shrunk_qr': ['js/qrcode.js', 'js/shrunkqr.js'],
     'shrunk_stats': ['js/stats.js'],
-    'shrunk_organizations': ['js/organizations.js'],
+    'shrunk_organizations': ['js/organizations.js', 'js/ajax_form.js'],
     'shrunk_manage_org': ['js/manage_organization.js', 'js/ajax_form.js'],
     'shrunk_delete_organization': ['js/delete_organization.js']
 }
@@ -686,8 +686,7 @@ def create_organization_form():
     name = name.strip()
     client = app.get_shrunk()
     if not client.create_organization(name):
-        return make_json_response({'errors':
-                                   {'name': 'An organization by that name already exists.'}},
+        return make_json_response({'errors': {'name': 'An organization by that name already exists.'}},
                                   status=400)
 
     client.add_organization_admin(name, netid)

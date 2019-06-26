@@ -11,18 +11,18 @@
     <div class="dropdown">
       <a class="btn btn-primary dropdown-toggle" href="#" role="button" id="create_toggle"
 	 data-toggle="dropdown" aria-expanded="false" tabindex="0" data-trigger="manual"
-	 onclick="clear_create_org()">
+	 onclick="clear_form(CREATE_ORG_FORM)">
 	<i class="fas fa-plus-circle"></i> Create an Organization
       </a>
 
       <div class="dropdown-menu create-org-dropdown">
 	<form class="px-4 py-3 needs-validation" novalidate>
 	  <div class="input-group">
-	    <input type="text" id="create_org_name" class="form-control"
-		   onkeydown="if (event.keyCode==13) { event.preventDefault(); create_org() }"
+	    <input type="text" id="create-org-name" class="form-control"
+		   onkeydown="send_request_keypress(event, CREATE_ORG_FORM)"
 		   placeholder="Organization Name">
 	    <div class="input-group-append">
-	      <button type="button" class="btn btn-primary" onclick="create_org()">
+	      <button type="button" class="btn btn-primary" onclick="send_request(CREATE_ORG_FORM)">
 		Create
 	      </button>
 	    </div>
