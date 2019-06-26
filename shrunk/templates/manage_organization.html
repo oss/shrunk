@@ -19,7 +19,7 @@
 	  <input type="hidden" id="member-add-is_admin" value="">
 	  <div class="input-group">
 	    <input type="text" id="member-add-netid" class="form-control"
-		   onkeydown="add_member_keypress()" placeholder="NetID">
+		   onkeydown="add_member_keypress(event)" placeholder="NetID">
 
 	    {% if user_is_admin %}
 	    <div class="input-group-append">
