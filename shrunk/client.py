@@ -454,7 +454,7 @@ class ShrunkClient(object):
 
             if old_short_url != short_url:
                 try:
-                    response = db.urls.insert(document)
+                    response = self.db.urls.insert(document)
                 except pymongo.errors.DuplicateKeyError:
                     raise DuplicateIdException("That name already exists.")
                 self.db.urls.remove({"_id": old_short_url})
@@ -496,9 +496,6 @@ class ShrunkClient(object):
           AuthenticationException if the user cant edit
           NoSuchLinkException if url doesn't exist
         """
-        url_db = self._mongo.shrunk_urls
-        visit_db = self._mongo.shrunk_visits
-
         if not self.is_owner_or_admin(short_url, request_netid):
             raise AuthenticationException()
         if self.get_url_info(short_url) is None:
@@ -506,12 +503,12 @@ class ShrunkClient(object):
             
         return {
             "urlDataResponse": {
-                "nRemoved": url_db.urls.delete_one({
+                "nRemoved": self.db.urls.delete_one({
                     "_id" : short_url
                 }).deleted_count
             },
             "visitDataResponse": {
-                "nRemoved": visit_db.visits.delete_many({
+                "nRemoved": self.db.visits.delete_many({
                     "short_url": short_url
                 }).deleted_count
             }
