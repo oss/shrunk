@@ -2,7 +2,9 @@ var org_delete_name;
 var org_delete_fn;
 
 function delete_org_list(ev) {
-    const parent = ev.target.parentElement;
+    var parent = ev.target.parentElement;
+    if (parent.tagName == 'BUTTON')
+	parent = parent.parentElement;
     org_delete_name = parent.querySelector('.org-name').value;
     org_delete_fn = function () { location.reload(); };
     $('#org-delete-modal').modal();
