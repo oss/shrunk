@@ -70,6 +70,7 @@
 	      </button>
 	    </form>
 
+	    {% if netid == link['netid'] %}
 	    <form>
 	      <input type="hidden" class="link-id" value="{{ link['_id'] }}">
 	      <input type="hidden" class="link-title" value="{{ link['title'] }}">
@@ -79,6 +80,7 @@
 		<i class="fas fa-pencil-alt"></i>
 	      </button>
 	    </form>
+	    {% endif %}
 	  </div>
 
 	</div>

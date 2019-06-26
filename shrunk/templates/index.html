@@ -261,12 +261,13 @@
 	    <input type="text" id="edit-link-long_url" class="form-control" placeholder="URL">
 	    <div id="edit-link-long_url-feedback" class="invalid-feedback"></div>
 	  </div>
-	  {% if "power_user" in roles or "admin" in roles %}
 	  <div class="form-group row">
-	    <input type="text" id="edit-link-short_url" class="form-control" placeholder="Alias">
+	    <input type="text" id="edit-link-short_url" class="form-control" placeholder="Alias"
+		   {% if "power_user" not in roles and "admin" not in roles %}
+		   disabled
+		   {% endif %}>
 	    <div id="edit-link-short_url-feedback" class="invalid-feedback"></div>
 	  </div>
-	  {% endif %}
 	  <div class="row">
 	    <div class="col">
 	      <button class="btn btn-secondary edit-link-button" type="button" data-dismiss="modal">
