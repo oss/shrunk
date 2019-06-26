@@ -617,11 +617,12 @@ def edit_link():
 
         # this should be done in WTForms, but then we'd have to
         # have different forms for /add and /edit
-        if 'short_url' not in kwargs:
-            make_json_response({'errors': {'short_url': 'Please enter a short URL.'}}, status=400)
+        if 'short_url' not in kwargs or not kwargs['short_url']:
+            return make_json_response({'errors': {'short_url': 'Custom alias cannot be empty.'}},
+                                      status=400)
         try:
             client.modify_url(**kwargs)
-            new_short_url = kwargs.get('short_url') or old_short_url
+            new_short_url = kwargs.get('short_url') or kwargs['old_short_url']
             return make_json_response({'success': {
                 'new_short_url': new_short_url,
                 'new_title': kwargs['title'],
