@@ -70,7 +70,7 @@
 	      </button>
 	    </form>
 
-	    {% if netid == link['netid'] %}
+	    {% if netid == link['netid'] or 'admin' in roles %}
 	    <form>
 	      <input type="hidden" class="link-id" value="{{ link['_id'] }}">
 	      <input type="hidden" class="link-title" value="{{ link['title'] }}">
