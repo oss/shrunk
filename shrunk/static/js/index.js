@@ -13,7 +13,9 @@ const EDIT_LINK_FORM = {
 };
 
 function copy_short_url(ev) {
-    const parent = ev.target.parentElement;
+    var parent = ev.target.parentElement;
+    if (parent.tagName == 'BUTTON')
+	parent = parent.parentElement;
     const link = parent.querySelector('.short-url');
     var text_area = document.createElement('textarea');
     text_area.value = link.href;
@@ -24,7 +26,9 @@ function copy_short_url(ev) {
 }
 
 function delete_link(ev) {
-    const parent = ev.target.parentElement;
+    var parent = ev.target.parentElement;
+    if (parent.tagName == 'BUTTON')
+	parent = parent.parentElement;
     const link_id = parent.querySelector('.link-id').value;
     $('#link-delete-id').val(link_id);
     $('#link-delete-modal').modal();
@@ -38,7 +42,9 @@ function do_delete_link() {
 }
 
 function edit_link(ev) {
-    const parent = ev.target.parentElement;
+    var parent = ev.target.parentElement;
+    if (parent.tagName == 'BUTTON')
+	parent = parent.parentElement;
     const link_id = parent.querySelector('.link-id').value;
     const title = parent.querySelector('.link-title').value;
     const long_url = parent.querySelector('.link-url').value;
