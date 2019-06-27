@@ -46,6 +46,7 @@
 	  </div>
 
 	  <div class="col-3 align-self-center">
+	    {% if netid == link['netid'] or 'admin' in roles %}
 	    <form>
 	      <input type="hidden" class="link-id" value="{{ link['_id'] }}">
 	      <button type="button" title="Delete link" onclick="delete_link(event)"
@@ -53,6 +54,7 @@
 		<i class="fas fa-trash"></i>
 	      </button>
 	    </form>
+	    {% endif %}
 
 	    <form action="/qr" method="get">
 	      <input type="hidden" name="url" value="{{ link['_id'] }}">
