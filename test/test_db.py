@@ -20,7 +20,7 @@ def setup_module():
     roles.init(None, mongo_client=mongoclient, db_name="shrunk_test")
 
 def insert_urls(long_urls, netid):
-    return [client.create_short_url(url, netid = netid) for url in long_urls]
+    return [client.create_short_url(url, netid=netid) for url in long_urls]
 
 def get_url(url):
     return client._mongo.shrunk_test.urls.find_one({"_id": url})
@@ -170,7 +170,7 @@ def test_is_owner_or_admin():
     """test utility function to see if somone can modify a url"""
     
     url = client.create_short_url("https://linux.org", netid = "dude")
-    roles.grants.insert({"role": "admin", "entity": "dnolen", "granted_by": "rhickey"})
+    roles.grants.insert_one({"role": "admin", "entity": "dnolen", "granted_by": "rhickey"})
     
     assert client.is_owner_or_admin(url, "dude") is True
     assert client.is_owner_or_admin(url, "dnolen") is True
@@ -205,8 +205,13 @@ def test_visit2():
 
 def test_delete_and_visit():
     """test utility function to see if somone can modify a url"""
-    roles.grants.insert({"role": "admin", "entity": "dnolen", "granted_by": "rhickey"})
-    roles.grants.insert({"role": "power_user","netid": "power_user", "added_by": "Justice League"})
+    roles.grants.insert_one({"role": "admin", "entity": "dnolen", "granted_by": "rhickey"})
+    roles.grants.insert_one({
+        "role": "power_user",
+        "netid": "power_user",
+        "added_by": "Justice League"
+    })
+
     num_visits = 3
     num_visits2 = 4
     url, url2 = make_urls(num_visits, num_visits2)
@@ -327,10 +332,10 @@ def test_get_visits():
     assert expected_visits2 == actual_visits2
     
     print(dir(client.get_visits(url3)))
-    assert client.get_visits(url3).count() is 0
+    assert client.get_visits(url3).total_results == 0
     
-    #nonexistent should be None
-    assert client.get_visits("hogwash").count() is 0
+    # nonexistent should be None
+    assert client.get_visits("hogwash").total_results == 0
     
     
 def test_get_num_visits():

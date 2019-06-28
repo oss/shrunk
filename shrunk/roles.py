@@ -52,7 +52,7 @@ def grant(role, grantor, grantee, comment=''):
     if exists(role) and valid_entity_for[role](grantee):
         #guard against double insertions
         if not check(role, grantee):
-            grants.insert({
+            grants.insert_one({
                 "role": role,
                 "entity": grantee,
                 "granted_by": grantor,

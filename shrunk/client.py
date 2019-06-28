@@ -196,9 +196,9 @@ class ShrunkClient:
           A nonnegative integer.
         """
         if netid:
-            return self.db.urls.find({"netid": netid}).count()
+            return self.db.urls.count_documents({"netid": netid})
         else:
-            return self.db.urls.count()
+            return self.db.urls.count_documents({})
 
     def create_short_url(self, long_url, short_url=None, netid=None, title=None):
         """Given a long URL, create a new short URL.
@@ -240,7 +240,7 @@ class ShrunkClient:
                 raise ForbiddenNameException("That name is reserved.")
 
             try:
-                response = self.db.urls.insert(document)
+                response = self.db.urls.insert_one(document)
             except pymongo.errors.DuplicateKeyError:
                 raise DuplicateIdException("That name already exists.")
         else:
@@ -253,11 +253,11 @@ class ShrunkClient:
                         url = ShrunkClient._generate_unique_key()
 
                     document["_id"] = url
-                    response = self.db.urls.insert(document)
+                    response = self.db.urls.insert_one(document)
                 except pymongo.errors.DuplicateKeyError:
                     continue
 
-        return response
+        return str(response.inserted_id)
 
     def modify_url(self, old_short_url=None, admin=False, power_user=False,
                    short_url=None, **new_doc):
@@ -271,7 +271,7 @@ class ShrunkClient:
           - `admin`: If the requester is an admin
           - `power_user`: If the requester is an power user
           - `short_url`: The new short url (for custom urls)
-          - `new_doc`: All the feilds to $set in the document
+          - `new_doc`: All the fields to $set in the document
         """
         if self.is_blocked(new_doc["long_url"]):
             raise ForbiddenDomainException("That URL is not allowed.")
@@ -289,15 +289,15 @@ class ShrunkClient:
 
             if old_short_url != short_url:
                 try:
-                    response = self.db.urls.insert(document)
+                    response = self.db.urls.insert_one(document)
                 except pymongo.errors.DuplicateKeyError:
                     raise DuplicateIdException("That name already exists.")
-                self.db.urls.remove({"_id": old_short_url})
-                self.db.urls.update({"_id" : short_url}, {"$set" : new_doc})
+                self.db.urls.delete_one({"_id": old_short_url})
+                self.db.urls.insert_one(new_doc)
             else:
-                response = self.db.urls.update({"_id" : old_short_url}, {"$set" : new_doc})
+                response = self.db.urls.replace_one({"_id": old_short_url}, new_doc)
         else:
-            response = self.db.urls.update({"_id" : old_short_url}, {"$set" : new_doc})
+            response = self.db.urls.replace_one({"_id": old_short_url}, new_doc)
 
         return response
 
@@ -364,7 +364,7 @@ class ShrunkClient:
         if netid is None:
             return {"ok": 0, "n" : 0}
         else:
-            return self.db.urls.remove({"netid" : netid})
+            return self.db.urls.delete_many({"netid" : netid}).raw_result
 
     def get_url_info(self, short_url):
         """Given a short URL, return information about it.
@@ -439,7 +439,8 @@ class ShrunkClient:
         :Response:
           - A JSON-compatible Python dict containing the database response.
         """
-        return self.db.visits.find({"short_url" : short_url})
+        query = {'short_url': short_url}
+        return SearchResults(self.db.visits.find(query), self.db.visits.count_documents(query))
 
     def get_num_visits(self, short_url):
         """Given a short URL, return the number of visits.
@@ -563,9 +564,9 @@ class ShrunkClient:
           The long URL corresponding to the short URL, or None if no such URL
           was found in the database.
         """
-        self.db.urls.update({"_id" : short_url}, {"$inc" : {"visits" : 1}})
+        self.db.urls.update_one({"_id" : short_url}, {"$inc" : {"visits" : 1}})
 
-        self.db.visits.insert({
+        self.db.visits.insert_one({
             "short_url" : short_url,
             "source_ip" : source_ip,
             "time" : datetime.datetime.now(),
