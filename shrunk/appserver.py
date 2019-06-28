@@ -7,6 +7,7 @@ import json
 import werkzeug.useragents
 import urllib.parse
 import collections
+import functools
 
 from flask import make_response, request, redirect, session, render_template
 from flask_sso import SSO
@@ -14,7 +15,7 @@ from flask_assets import Environment, Bundle
 
 from shrunk.app_decorate import ShrunkFlask
 from shrunk.client import BadShortURLException, ForbiddenDomainException, \
-    AuthenticationException, NoSuchLinkException
+    AuthenticationException, NoSuchLinkException, Pagination
 import shrunk.roles as roles
 
 from shrunk.forms import LinkForm
@@ -254,7 +255,7 @@ def render_index(**kwargs):
     query = get_param('query')
     query_changed = query != old_query
     links_set = get_param('links_set', default='GO!my')
-    sortby = get_param('sortby', default='0', validator=lambda x: x in map(str, range(6)))
+    sort = get_param('sortby', default='0', validator=lambda x: x in map(str, range(6)))
     def validate_page(page):
         try:
             page = int(page)
@@ -289,29 +290,29 @@ def render_index(**kwargs):
     elif links_set == 'GO!all':
         selected_links_set = 'All links'
 
+    pagination = Pagination(page, app.config['MAX_DISPLAY_LINKS'])
+    search = functools.partial(client.search, sort=sort, pagination=pagination)
+
     if links_set == 'GO!my':
         if query:
-            cursor = client.search(query, netid=netid)
+            results = search(query=query, netid=netid)
         else:
-            cursor = client.get_urls(netid)
+            results = search(netid=netid)
     elif links_set == 'GO!all':
         if query:
-            cursor = client.search(query)
+            results = search(query=query)
         else:
-            cursor = client.get_all_urls()
+            results = search()
     else:
         if query:
-            cursor = client.search(query, org=links_set)
+            results = search(query=query, org=links_set)
         else:
-            cursor = client.get_org_urls(links_set)
-
-    # Perform sorting, pagination and get the results
-    cursor.sort(sortby)
-    page, lastpage = cursor.paginate(page, app.config["MAX_DISPLAY_LINKS"])
-    links = cursor.get_results()
+            results = search(org=links_set)
 
     #choose 9 pages to display so there's not like 200 page links
     #is 9 the optimal number?
+
+    lastpage = pagination.num_pages(results.total_results)
 
     begin_pages = -1
     end_pages = -1
@@ -332,8 +333,8 @@ def render_index(**kwargs):
                            begin_pages=begin_pages,
                            end_pages=end_pages,
                            lastpage=lastpage,
-                           links=links,
-                           linkserver_url=app.config["LINKSERVER_URL"],
+                           links=list(results),
+                           linkserver_url=app.config['LINKSERVER_URL'],
                            page=page,
                            selected_links_set=selected_links_set,
                            orgs=client.get_member_organizations(netid),
@@ -419,15 +420,15 @@ def get_search_visits_csv():
 
     if 'search' not in request.args:
         if all_users:  # show all links for all users
-            links = client.get_all_urls()
+            links = client.search()
         else:  # show all links for current user
-            links = client.get_urls(netid)
+            links = client.search(netid=netid)
     else:
         search = request.args['search']
         if all_users:  # show links matching `search` for all users
-            links = client.search(search)
+            links = client.search(query=search)
         else:  # show links matching `search` for current user
-            links = client.search(search, netid=netid)
+            links = client.search(query=search, netid=netid)
 
     links = list(links)
     total_visits = sum(map(lambda l: l['visits'], links))

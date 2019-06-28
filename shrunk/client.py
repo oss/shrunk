@@ -5,6 +5,7 @@ import datetime
 import random
 import string
 import math
+import enum
 import pymongo
 from pymongo.collection import ReturnDocument
 from pymongo.collation import Collation
@@ -34,21 +35,19 @@ class AuthenticationException(Exception):
 class NoSuchLinkException(Exception):
     """link was not found"""
 
-class ShrunkCursor(object):
-    """Easy-to-use wrapper for internal database cursors."""
+
+class SortOrder(enum.IntEnum):
     TIME_DESC = 0
     """Sort by creation time, descending."""
 
     TIME_ASC = 1
     """Sort by creation time, ascending."""
 
-
     TITLE_ASC = 2
     """Sort by title, alphabetically."""
 
     TITLE_DESC = 3
     """Sort by title, reverse-alphabetically."""
-
 
     POP_ASC = 4
     """Sort by popularity (total number of visits), ascending."""
@@ -57,197 +56,29 @@ class ShrunkCursor(object):
     """Sort by popularity (total number of visits), descending."""
 
 
-    def __init__(self, cursor):
-        """Represents the result of a database operation.
+class Pagination:
+    def __init__(self, page, links_per_page):
+        self.page = page
+        self.links_per_page = links_per_page
 
-        :Parameters:
-          - `cursor`: A MongoDB cursor
-        """
-        self.cursor = cursor
+    def num_pages(self, total_results):
+        total_results = max(1, total_results)
+        return math.ceil(total_results / self.links_per_page)
+
+
+class SearchResults:
+    def __init__(self, results, total_results):
+        self.results = results
+        self.total_results = total_results
 
     def __len__(self):
-        return self.cursor.count()
-
-    def paginate(self, page, links_per_page):
-        """Performs pagination on this cursor.
-
-        This pagination assumes that pages are one-indexed; that is, the first
-        page starts numbering as page 1. Specifying a page number of zero or
-        less gives the first page; specifying a page number after the last gives
-        the last page.
-
-        :Parameters:
-          - `page`: An integer. Only show the results that belong on this page
-          - `links_per_page`: Limit the number of results for each page
-
-        :Side Effects:
-          Calling `get_results` on this cursor will return only the results that
-          belong on the given page. (All of the other results will be lost.)
-
-        :Returns:
-          A tuple containing the current page number and the last page number.
-        """
-        if self.cursor is None:
-            return (1, 1)
-
-        # Calculate the pagination
-        last_page = self.get_last_page(links_per_page)
-        page = min(max(page, 1), last_page)
-
-        # Apply a skip and limit to the cursor
-        self.cursor.skip((page-1)*links_per_page).limit(links_per_page)
-
-        # Return the new page number and total count
-        return (page, last_page)
-
-    def get_results(self):
-        """Gets the results in the cursor in list form.
-
-        After calling this function, the cursor will be exhausted and no more
-        results may be drawn from it.
-
-        :Returns:
-          A list of JSON-compatible dictionaries containing the results from the
-          database.
-        """
-        return [] if self.cursor is None else list(self.cursor)
+        return len(self.results)
 
     def __iter__(self):
-        """Gets the results in the cursor in list form.
-
-        After calling this function, the cursor will be exhausted and no more
-        results may be drawn from it.
-
-        :Returns:
-          A list of JSON-compatible dictionaries containing the results from the
-          database.
-        """
-        return self.cursor
-
-    def get_last_page(self, links_per_page):
-        """Calculates the total number of pages of results.
-
-        Performs some simple calculation of the total number of pages that will
-        be shown for the main application's pagination.
-
-        :Parameters:
-          - `links_per_page`: The maximum number of links per page
-
-        :Returns:
-          A nonnegative integer indicating the one-based index number of the
-          last page. For instance, if `count` is 11 and `links_per_page` is 5,
-          then this function returns 3.
-        """
-        if not self.cursor:
-            return 1
-
-        count = len(self)
-        if count < links_per_page:
-            return 1
-        elif count % links_per_page == 0:
-            # Special case: fills all pages exactly
-            return count // links_per_page
-        else:
-            return (count // links_per_page) + 1
-
-    def sort(self, sortby):
-        """Sort the results in the cursor.
-
-        The cursor can be sorted only if it hasn't been used yet; that is, no
-        records have been read from it.
-
-        :Parameters:
-          - `sortby`: The direction to sort in. Should be one of TIME_ASC,
-            TIME_DESC, TITLE_ASC, or TITLE_DESC
-
-        :Raises:
-          - ValueError: if the sorting parameter is invalid
-          - InvalidOperationException: if the cursor has already been used
-            before sorting
-        """
-        try:
-            sortby = int(sortby)
-            if sortby == ShrunkCursor.TIME_ASC:
-                self.cursor.sort("timeCreated", pymongo.ASCENDING)
-            elif sortby == ShrunkCursor.TIME_DESC:
-                self.cursor.sort("timeCreated", pymongo.DESCENDING)
-            elif sortby == ShrunkCursor.TITLE_ASC:
-                self.cursor.collation({"locale": "en"})
-                self.cursor.sort([("title", pymongo.ASCENDING), ("_id", pymongo.ASCENDING)])
-            elif sortby == ShrunkCursor.TITLE_DESC:
-                self.cursor.collation({"locale": "en"})
-                self.cursor.sort([("title", pymongo.DESCENDING), ("_id", pymongo.DESCENDING)])
-            elif sortby == ShrunkCursor.POP_ASC:
-                self.cursor.sort("visits", pymongo.ASCENDING)
-            elif sortby == ShrunkCursor.POP_DESC:
-                self.cursor.sort("visits", pymongo.DESCENDING)
-            else:
-                raise IndexError("Invalid argument to 'sortby'")
-        except ValueError:
-            raise ValueError("'sortby' must be an integer")
-        except pymongo.errors.InvalidOperation:
-            raise InvalidOperationException("You cannot sort a cursor after use.")
+        return iter(self.results)
 
 
-class AggregationCursor(ShrunkCursor):
-    """ The result from aggregate() doesn't present the same interface
-        as the result from find(). In particular, the result from aggregate()
-        doesn't support the .sort(), .skip(), and .limit() methods. This
-        class is a hack to allow aggregate() results to be used as a ShrunkCursor. """
-
-    def __init__(self, agg, col):
-        self.agg = agg
-        self.col = col
-        self.collation = Collation('en')
-
-    def paginate(self, page, links_per_page):
-        page = max(1, page)
-        num_to_skip = (page-1)*links_per_page
-        self.agg.append(
-            {'$facet': {
-                'paginated': [{ '$skip': num_to_skip }, { '$limit': links_per_page }],
-                'total_links': [{ '$count': 'count' }]
-            }})
-        self.result = next(self.col.aggregate(self.agg, collation=self.collation))
-        self.paginated = self.result['paginated']
-        self.total_links = self.result['total_links'][0]['count']
-        num_pages = math.ceil(self.total_links / links_per_page)
-        page = min(num_pages, page)
-        return page, num_pages
-
-    def get_results(self):
-        return self.paginated
-
-    def __iter__(self):
-        return self.paginated
-
-    def get_last_page(self, links_per_page):
-        if self.total_links == 0:
-            return 1
-        return math.ceil(self.total_links / links_per_page)
-
-    def sort(self, sortby):
-        try:
-            sortby = int(sortby)
-            if sortby == ShrunkCursor.TIME_ASC:
-                self.agg.append({'$sort': {'timeCreated': 1}})
-            elif sortby == ShrunkCursor.TIME_DESC:
-                self.agg.append({'$sort': {'timeCreated': -1}})
-            elif sortby == ShrunkCursor.TITLE_ASC:
-                self.agg.append({'$sort': {'_id': 1, 'title': 1}})
-            elif sortby == ShrunkCursor.TITLE_DESC:
-                self.agg.append({'$sort': {'_id': -1, 'title': -1}})
-            elif sortby == ShrunkCursor.POP_ASC:
-                self.agg.append({'$sort': {'visits': 1}})
-            elif sortby == ShrunkCursor.POP_DESC:
-                self.agg.append({'$sort': {'visits': -1}})
-            else:
-                raise IndexError("Invalid argument to 'sortby'")
-        except ValueError:
-            raise ValueError("'sortby' must be an integer")
-
-
-class ShrunkClient(object):
+class ShrunkClient:
     """A class for database interactions."""
 
     ALPHABET = string.digits + string.ascii_lowercase
@@ -619,97 +450,99 @@ class ShrunkClient(object):
         document = self.db.urls.find_one({"_id" : short_url})
         return document["visits"] if document else None
 
-    def get_all_urls(self, filter_dict=None):
-        """Gets all the URLs created.
+    def search(self, *, query=None, netid=None, org=None, sort=None, pagination=None):
+        pipeline = []
 
-        :Parameters:
-          - `filter_dict` (optional): Mongo filter to be applied to the query
-          - `skip` (optional): The number of results to skip
-          - `limit` (optional): The maximum number of results
-
-        :Returns:
-          A ShrunkCursor containing the results of the operation.
-        """
-        if not filter_dict:
-            cursor = self.db.urls.find(sort=[("timeCreated", pymongo.DESCENDING)])
-        else:
-            cursor = self.db.urls.find(filter_dict, sort=[("timeCreated", pymongo.DESCENDING)])
-        return ShrunkCursor(cursor)
-
-    def get_urls(self, netid):
-        """Gets all the URLs created by the given NetID.
-
-        :Parameters:
-          - `netid`: A Rutgers NetID
-
-        :Returns:
-          A ShrunkCursor containing the results of the operation.
-        """
-        return self.get_all_urls({"netid": netid})
-
-    def get_org_urls(self, org):
-        aggregation = [
-            { '$match': { 'name': org } },
-            { '$lookup': {
-                'from': 'urls',
-                'localField': 'netid',
-                'foreignField': 'netid',
-                'as': 'urls'
-            }},
-            { '$unwind': '$urls' },
-            { '$replaceRoot': { 'newRoot': '$urls' } }
-        ]
-
-        return AggregationCursor(aggregation, self.db.organization_members)
-
-    def search(self, search_string, netid=None, org=None):
-        """Search for URLs containing the given search string.
-
-        Searches for links where the title or URL contain the given search
-        string. The search is non-case-sensitive.
-
-        :Parameters:
-          - `search_string`: A query string
-          - `netid` (optional): Search for links only owned by this NetID
-
-        :Returns:
-          A Shrunk cursor containing the results of the search, or None if an
-          error occurred.
-        """
-
-        aggregation = []
-
-        # '_id' is the short url
-        match = {"$regex" : search_string, "$options" : "i"}
-        query = {"$match": { "$or" : [{"long_url" : match},
-                                      {"_id" : match},
-                                      {"title" : match},
-                                      {"netid" : match}]}}
         if netid is not None:
-            query["netid"] = netid
+            pipeline.append({ '$match': { 'netid': netid } })
 
         if org is not None:
-            aggregation += [ {
+            pipeline.append({
                 '$lookup': {
                     'from': 'organization_members',
                     'localField': 'netid',
                     'foreignField': 'netid',
                     'as': 'owner_membership'
                 }
-            }, {
+            })
+
+            pipeline.append({
                 '$addFields': {
                     'owner_orgs': {
                         '$map': { 'input': '$owner_membership', 'in': '$$this.name' }
                     }
                 }
-            }, {
-                '$match': { '$expr': { '$in': [ org, '$owner_orgs' ] } }
-            }, {
-                '$project': { 'owner_membership': False, 'owner_orgs': False }
-            } ]
+            })
 
-        aggregation.append(query)
-        return AggregationCursor(aggregation, self.db.urls)
+            pipeline.append({
+                '$match': { '$expr': { '$in': [ org, '$owner_orgs' ] } }
+            })
+
+            pipeline.append({
+                '$project': { 'owner_membership': False, 'owner_orgs': False }
+            })
+
+        if query is not None:
+            match = {
+                '$regex': query,
+                '$options': 'i'
+            }
+
+            pipeline.append({
+                '$match': {
+                    '$or': [
+                        { '_id': match },
+                        { 'long_url': match },
+                        { 'title': match },
+                        { 'netid': match }
+                    ]
+                }
+            })
+
+        if sort is not None:
+            try:
+                sort = int(sort)
+            except ValueError:
+                raise IndexError('Invalid sort order.')
+
+            if sort == SortOrder.TIME_ASC:
+                sort_exp = { 'timeCreated': 1 }
+            elif sort == SortOrder.TIME_DESC:
+                sort_exp = { 'timeCreated': -1 }
+            elif sort == SortOrder.TITLE_ASC:
+                sort_exp = { 'title': 1 }
+            elif sort == SortOrder.TITLE_DESC:
+                sort_exp = { 'title': -1 }
+            elif sort == SortOrder.POP_ASC:
+                sort_exp = { 'visits': 1 }
+            elif sort == SortOrder.POP_DESC:
+                sort_exp = { 'visits': -1 }
+            else:
+                raise IndexError('Invalid sort order.')
+            pipeline.append({
+                '$sort': sort_exp
+            })
+
+        facet = {
+            'count': [ { '$count': 'count' } ],
+            'result': []
+        }
+
+        if pagination is not None:
+            num_skip = (pagination.page - 1) * pagination.links_per_page
+            facet['result'] = [
+                { '$skip': num_skip },
+                { '$limit': pagination.links_per_page }
+            ]
+
+        pipeline.append({
+            '$facet': facet
+        })
+
+        cur = next(self.db.urls.aggregate(pipeline, collation=Collation('en')))
+        count = cur['count'][0]['count']
+        result = cur['result']
+        return SearchResults(result, count)
 
     def visit(self, short_url, source_ip, user_agent, referer):
         """Visits the given URL and logs visit information.
