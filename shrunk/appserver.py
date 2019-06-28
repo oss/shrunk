@@ -223,7 +223,7 @@ def error(message, code):
 
 @app.route("/")
 @app.require_login
-def render_index(**kwargs):
+def render_index(netid, client, **kwargs):
     """Renders the homepage.
 
     Renders the homepage for the current user. By default, this renders all of
@@ -274,9 +274,6 @@ def render_index(**kwargs):
         if cur_page > total_pages - 4:  # display last 9 pages
             return (total_pages - 8, total_pages)
         return (cur_page - 4, cur_page + 4)  # display current page +- 4 adjacent pages
-
-    netid = session['user'].get('netid')
-    client = app.get_shrunk()
 
     old_query = session.get('query')
     query = get_param('query')
@@ -329,10 +326,8 @@ def render_index(**kwargs):
 
 @app.route("/add", methods=["POST"])
 @app.require_login
-def add_link():
+def add_link(netid, client):
     """ Adds a new link for the current user and handles errors. """
-    netid = session['user'].get('netid')
-    client = app.get_shrunk()
 
     form = AddLinkForm(request.form, app.config['BANNED_REGEXES'])
     if form.validate():
@@ -361,7 +356,7 @@ def add_link():
 
 @app.route("/stats", methods=["GET"])
 @app.require_login
-def get_stats():
+def get_stats(netid, client):
     """ Render the stats page for a given URL. """
 
     template_data = {
@@ -370,7 +365,6 @@ def get_stats():
         "monthy_visits": []
     }
 
-    client = app.get_shrunk()
     if 'url' in request.args:
         url = request.args['url']
         url_info = client.get_url_info(url)
@@ -383,11 +377,9 @@ def get_stats():
 
 @app.route("/link-visits-csv", methods=["GET"])
 @app.require_login
-def get_link_visits_csv():
+def get_link_visits_csv(netid, client):
     """ Get CSV-formatted data describing (anonymized) visitors to the link. """
 
-    client = app.get_shrunk()
-    netid = session['user'].get('netid')
     if 'url' not in request.args:
         return error('error: request must have url', 400)
     link = request.args['url']
@@ -399,14 +391,12 @@ def get_link_visits_csv():
 
 @app.route("/search-visits-csv", methods=["GET"])
 @app.require_login
-def get_search_visits_csv():
+def get_search_visits_csv(netid, client):
     """ Get CSV-formatted data describing (anonymized) visitors to the current
         search results. """
 
     # TODO: update this to deal with organizations etc.
 
-    client = app.get_shrunk()
-    netid = session['user'].get('netid')
     all_users = request.args.get('all_users', '0') == '1' or session.get('all_users', '0') == '1'
     if all_users and not client.is_admin(netid):
         return shrunk.util.unauthorized()
@@ -434,13 +424,10 @@ def get_search_visits_csv():
 
 @app.route("/geoip-csv", methods=["GET"])
 @app.require_login
-def get_geoip_csv():
+def get_geoip_csv(netid, client):
     """ Return CSV-formatted data giving the number of visitors from
         each geographic region. The 'resolution' parameter controls
         whether the data is state-level or country-level. """
-
-    client = app.get_shrunk()
-    netid = session['user'].get('netid')
 
     if 'url' not in request.args:
         return error('error: request must have url', 400)
@@ -466,12 +453,9 @@ def get_geoip_csv():
 
 @app.route("/useragent-stats", methods=["GET"])
 @app.require_login
-def get_useragent_stats():
+def get_useragent_stats(netid, client):
     """ Return a JSON dictionary describing the user agents, platforms,
         and browsers that have visited the given link. """
-
-    client = app.get_shrunk()
-    netid = session['user'].get('netid')
 
     if 'url' not in request.args:
         return 'error: request must have url', 400
@@ -501,12 +485,9 @@ def get_useragent_stats():
 
 @app.route("/referer-stats", methods=["GET"])
 @app.require_login
-def get_referer_stats():
+def get_referer_stats(netid, client):
     """ Get a JSON dictionary describing the domains of the referers
         of visits to the given URL. """
-
-    client = app.get_shrunk()
-    netid = session['user'].get('netid')
 
     if 'url' not in request.args:
         return 'error: request must have url', 400
@@ -528,12 +509,9 @@ def get_referer_stats():
 
 @app.route("/monthly-visits", methods=["GET"])
 @app.require_login
-def monthly_visits():
+def monthly_visits(netid, client):
     """ Returns a JSON dictionary describing the monthly
         visits to the given link. """
-
-    client = app.get_shrunk()
-    netid = session["user"].get("netid")
 
     if "url" not in request.args:
         return '{"error":"request must have url"}', 400
@@ -545,12 +523,9 @@ def monthly_visits():
 
 @app.route("/daily-visits", methods=["GET"])
 @app.require_login
-def daily_visits():
+def daily_visits(netid, client):
     """ Returns a JSON dictionary describing the daily
         visits to the given link. """
-
-    client = app.get_shrunk()
-    netid = session["user"].get("netid")
 
     if "url" not in request.args:
         return '{"error":"request must have url"}', 400
@@ -563,7 +538,7 @@ def daily_visits():
 
 @app.route("/qr", methods=["GET"])
 @app.require_login
-def qr_code():
+def qr_code(netid, client):
     """ Render a QR code for the given link. """
 
     kwargs = {
@@ -580,11 +555,8 @@ def qr_code():
 
 @app.route("/delete", methods=["POST"])
 @app.require_login
-def delete_link():
+def delete_link(netid, client):
     """Deletes a link."""
-
-    client = app.get_shrunk()
-    netid = session["user"].get("netid")
 
     app.logger.info("{} tries to delete {}".format(netid, request.form["short_url"]))
 
@@ -600,14 +572,12 @@ def delete_link():
 
 @app.route("/edit", methods=["POST"])
 @app.require_login
-def edit_link():
+def edit_link(netid, client):
     """Edits a link.
 
     On POST, this route expects a form that contains the unique short URL that
     will be edited.
     """
-    netid = session['user'].get('netid')
-    client = app.get_shrunk()
 
     form = EditLinkForm(request.form, app.config['BANNED_REGEXES'])
     if form.validate():
@@ -639,14 +609,14 @@ def edit_link():
 
 @app.route("/faq")
 @app.require_login
-def faq():
+def faq(netid, client):
     """ Render the FAQ. """
     return render_template("faq.html")
 
 @app.route("/admin/")
 @app.require_login
 @app.require_admin
-def admin_panel():
+def admin_panel(netid, client):
     """Renders the administrator panel.
 
     This displays an administrator panel with navigation links to the admin
@@ -659,11 +629,9 @@ def admin_panel():
 
 @app.route("/organizations")
 @app.require_login
-def list_organizations():
+def list_organizations(netid, client):
     """ List the organizations of which the current user is a member. """
 
-    netid = session['user'].get('netid')
-    client = app.get_shrunk()
     member_orgs = [client.get_organization_info(org['name']) for org
                    in client.get_member_organizations(netid)]
     admin_orgs = [client.get_organization_info(org['name']) for org
@@ -672,12 +640,11 @@ def list_organizations():
 
 @app.route("/create_organization", methods=["POST"])
 @app.require_login
-def create_organization_form():
+def create_organization_form(netid, client):
     """ Create an organization. The name of the organization to create
         should be given in the parameter 'name'. The creating user will
         automatically be made a member of the organization. """
 
-    netid = session['user'].get('netid')
     if not roles.check('facstaff', netid) and not roles.check('admin', netid):
         return shrunk.util.unauthorized()
 
@@ -691,7 +658,6 @@ def create_organization_form():
                                   status=400)
 
     name = name.strip()
-    client = app.get_shrunk()
     if not client.create_organization(name):
         err = {'name': 'An organization by that name already exists.'}
         return make_json_response({'errors': err}, status=400)
@@ -701,12 +667,10 @@ def create_organization_form():
 
 @app.route("/delete_organization", methods=["POST"])
 @app.require_login
-def delete_organization():
+def delete_organization(netid, client):
     """ Delete an organization. The name of the organization to delete
         should be given in the parameter 'name'. """
 
-    netid = session['user']['netid']
-    client = app.get_shrunk()
     name = request.form.get('name')
     if not name:
         return shrunk.util.unauthorized()
@@ -717,13 +681,11 @@ def delete_organization():
 
 @app.route("/add_organization_member", methods=["POST"])
 @app.require_login
-def add_organization_member():
+def add_organization_member(netid_grantor, client):
     """ Add a member to an organization. The organization name
         should be given in the parameter 'name' and the netid of the user
         to add should be given in the parameter 'netid'. """
 
-    client = app.get_shrunk()
-    netid_grantor = session['user'].get('netid')
     netid_grantee = request.form.get('netid')
     if not netid_grantee:
         return make_json_response({'errors': {'netid': 'You must supply a NetID.'}}, status=400)
@@ -751,13 +713,11 @@ def add_organization_member():
 
 @app.route("/remove_organization_member", methods=["POST"])
 @app.require_login
-def remove_organization_member():
+def remove_organization_member(netid_remover, client):
     """ Remove a member from an organization. The organization name
         should be given in the parameter 'name' and the netid of the user
         to remove should be given in the parameter 'netid'. """
 
-    client = app.get_shrunk()
-    netid_remover = session['user'].get('netid')
     netid_removed = request.form.get('netid')
     name = request.form.get('name')
     if not netid_removed or not name:
@@ -769,12 +729,10 @@ def remove_organization_member():
 
 @app.route("/manage_organization", methods=["GET"])
 @app.require_login
-def manage_organization():
+def manage_organization(netid, client):
     """ Render the manage_organization page. The organization name
         should be given in the parameter 'name'. """
 
-    client = app.get_shrunk()
-    netid = session['user']['netid']
     name = request.args.get('name')
     if not name:
         return shrunk.util.unauthorized()

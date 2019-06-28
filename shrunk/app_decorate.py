@@ -159,7 +159,9 @@ class ShrunkFlask(ShrunkFlaskMini):
                 return redirect("/shrunk-login")
             if roles.check("blacklisted", session["user"].get("netid")):
                 return redirect("/unauthorized")
-            return func(*args, **kwargs)
+            netid = session['user']['netid']
+            client = self.get_shrunk()
+            return func(netid, client, *args, **kwargs)
         return wrapper
 
     def require_admin(self, func):
