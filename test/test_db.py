@@ -101,7 +101,7 @@ def test_create():
                                 netid = "dude", short_url = "shrunk-login")
 
 def test_modify():
-    """make sure modifing the url sets the new info properly"""
+    """ Make sure modifing the url sets the new info properly. """
     roles.grant("blocked_url", "ltorvalds", "https://microsoft.com")
     url = client.create_short_url("https://linux.org", netid = "dude", title = "title")
     custom_url = client.create_short_url("https://linux.org/custom", 
@@ -116,52 +116,23 @@ def test_modify():
         args.update(newargs)
         return client.modify_url(**args)
 
-    def modify_admin(**newargs):
-        args={"admin": True}
-        args.update(newargs)
-        return modify(**args)
-    #TODO modify_power_user
-
     #can't edit to blocked urls
     with raises(shrunk.client.ForbiddenDomainException):
-        modify(long_url = "https://microsoft.com")
+        modify(long_url="https://microsoft.com")
 
     with raises(shrunk.client.ForbiddenDomainException):
-        modify(long_url = "https://ComL3te-MeSs.mIcroSoft.cOm/of-AllofTh3m/4.aspx")
+        modify(long_url="https://ComL3te-MeSs.mIcroSoft.cOm/of-AllofTh3m/4.aspx")
 
     #can't edit to a reserved word
     with raises(shrunk.client.ForbiddenNameException):
-        modify_admin(short_url = "logout")
+        modify(short_url="logout")
 
     #can't edit to an already taken short url
-    with raises(shrunk.client.DuplicateIdException):
-        modify_admin(short_url = "custom-link")
-        
-    #can't have custom url if not admin or power user
-    modify_admin(short_url = "new-custom")
-    new_custom1 = get_url("new-custom")
-    assert new_custom1["long_url"] == "https://linux.org"
-
-    modify(power_user = True, short_url = url, old_short_url = "new-custom")
-    new_custom2 = get_url(url)
-    assert new_custom2["long_url"] == "https://linux.org"
-
-    modify(short_url = "fail")
-    new_custom3 = get_url("fail")
-    assert new_custom3 is None
-
-    # cover client.py:362
-    modify_admin(short_url = custom_url4, old_short_url=custom_url4, 
-                 long_url="https://mongodb.org", title="title2")
-    new_custom4 = get_url(custom_url4)
-    assert new_custom4 is not None
-    assert new_custom4["long_url"] == "https://mongodb.org"
-    assert new_custom4["title"] == "title2"
-    
+    with raises(shrunk.client.BadShortURLException):
+        modify(short_url="custom-link")
 
     #all new information should be set
-    
-    modify(title = "new-title", long_url = "https://linux.org/other-page.html")
+    modify(title="new-title", long_url="https://linux.org/other-page.html")
     new_url = get_url(url)
     assert new_url["title"] == "new-title"
     assert new_url["long_url"] == "https://linux.org/other-page.html"
@@ -169,16 +140,17 @@ def test_modify():
 def test_is_owner_or_admin():
     """test utility function to see if somone can modify a url"""
     
-    url = client.create_short_url("https://linux.org", netid = "dude")
+    url = client.create_short_url("https://linux.org", netid="dude")
+    print(url)
     roles.grants.insert_one({"role": "admin", "entity": "dnolen", "granted_by": "rhickey"})
     
-    assert client.is_owner_or_admin(url, "dude") is True
-    assert client.is_owner_or_admin(url, "dnolen") is True
-    assert client.is_owner_or_admin(url, "bgates") is False
+    assert client.is_owner_or_admin(url, "dude")
+    assert client.is_owner_or_admin(url, "dnolen")
+    assert not client.is_owner_or_admin(url, "bgates")
     
-    #nonexistent url
-    assert client.is_owner_or_admin("hogwash", "dnolen") is True
-    assert client.is_owner_or_admin("hogwash", "dude") is False
+    # nonexistent url
+    assert client.is_owner_or_admin("hogwash", "dnolen")
+    assert not client.is_owner_or_admin("hogwash", "dude")
 
 def make_urls(num_visits, num_visits2):
     url = client.create_short_url("https://linux.org", netid = "dude")
