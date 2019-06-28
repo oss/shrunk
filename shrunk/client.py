@@ -264,7 +264,7 @@ class ShrunkClient:
 
         return str(response.inserted_id)
 
-    def modify_url(self, *, title, long_url, short_url, old_short_url):
+    def modify_url(self, *, title=None, long_url=None, short_url=None, old_short_url):
         """Modifies an existing URL.
 
         Edits the values of the url `short_url` and replaces them with the
@@ -277,16 +277,20 @@ class ShrunkClient:
           - `old_short_url`: The old short url
         """
 
+        if short_url is None:
+            short_url = old_short_url
+
         if self.is_blocked(long_url):
             raise ForbiddenDomainException('That URL is not allowed.')
 
         if short_url in ShrunkClient.RESERVED_WORDS:
             raise ForbiddenNameException('That name is reserved.')
 
-        new_doc = {
-            'title': title,
-            'long_url': long_url
-        }
+        new_doc = {}
+        if title is not None:
+            new_doc['title'] = title
+        if long_url is not None:
+            new_doc['long_url'] = long_url
 
         if short_url == old_short_url:
             response = self.db.urls.update_one({'_id': old_short_url}, {'$set': new_doc})
@@ -303,17 +307,16 @@ class ShrunkClient:
         return response
 
     def is_admin(self, request_netid):
-        """checks if netid is an admin"""
+        """ Checks if netid is an admin. """
         return roles.check('admin', request_netid)
 
     def is_owner_or_admin(self, short_url, request_netid):
-        "checks if the url is owned by the user or if the user is an admin"
-        info = self.get_url_info(short_url)
-        if not info:
-            return False
-        if info['netid'] == request_netid:
+        """ Returns True if request_netid is an admin, or if short_url exists and
+            request_netid is the owner of short_url. """
+        if roles.check('admin', request_netid):
             return True
-        return roles.check('admin', request_netid)
+        info = self.get_url_info(short_url)
+        return info and info['netid'] == request_netid
 
     def delete_url(self, short_url, request_netid):
         """Given a short URL, delete it from the database.
