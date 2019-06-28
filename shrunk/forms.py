@@ -3,66 +3,61 @@
 """Application forms for shrunk."""
 
 import re
-
-from wtforms import Form, TextField, validators, ValidationError
+from wtforms import Form, StringField, validators, ValidationError
+from shrunk.filters import strip_whitespace, ensure_protocol
 
 class LinkForm(Form):
-    """A WTForm for creating and editing links.
+    long_url = StringField('URL', filters=[strip_whitespace, ensure_protocol], validators=[
+        validators.DataRequired('You need a link to shrink!'),
+        validators.URL(require_tld=True, message='Please enter a valid URL.')
+    ])
 
-    :Fields:
-      - `long_url`: Text field for the original unshrunk URL
-      - `title`: Text field for a descriptive link title
-    """
-    long_url = TextField("URL", validators=[
-        validators.DataRequired("You need a link to shrink!"),
-        validators.URL(require_tld=True, message="Please enter a valid URL.")
+    title = StringField('Title', filters=[strip_whitespace], validators=[
+        validators.DataRequired('Please enter a title.')
     ])
-    title = TextField("Title", validators=[
-        validators.DataRequired("Please enter a title.")
-    ])
-    short_url = TextField("Custom Alias", validators=[
+
+    banned_regexes = []
+
+    def __init__(self, form, banned_regexes):
+        super().__init__(form)
+        self.banned_regexes = [re.compile(regex, re.IGNORECASE) for regex in banned_regexes]
+
+    def validate_long_url(self, field):
+        """ Validates the long_url field. """
+        for regex in self.banned_regexes:
+            if regex.search(field.data):
+                raise ValidationError('That URL is not allowed.')
+
+
+class AddLinkForm(LinkForm):
+    short_url = StringField('Custom Alias', filters=[strip_whitespace], validators=[
         validators.Length(min=5, max=16, message="""Custom alias length must be
             between %(min)d and %(max)d characters."""),
+        validators.Regexp('^[a-zA-Z0-9]*$', message='Custom alias must be alphanumeric.'),
         validators.Optional(strip_whitespace=False)
     ])
 
-    rejected_regexes = []
+    def __init__(self, form, banned_regexes):
+        super().__init__(form, banned_regexes)
 
-    def __init__(self, form, banned_regexes, client):
-        """Initializes the form.
+    def to_json(self):
+        fields = ['long_url', 'title', 'short_url']
+        return {field: getattr(self, field).data for field in fields}
 
-        :Parameters:
-          - `form`: The form from an incoming request
-          - `banlist` (optional): A list of strings to restrict, in addition to
-            the default ones
-        """
-        super(LinkForm, self).__init__(form)
-        if banned_regexes:
-            for regex in banned_regexes:
-                LinkForm.rejected_regexes.append(re.compile(regex, re.IGNORECASE))
-        self.client = client
-        self.old_short_url = form.get('old_short_url')
 
-    def validate_long_url(self, field):
-        """Performs validation on the long_url field."""
-        for regex in LinkForm.rejected_regexes:
-            if regex.search(field.data):
-                raise ValidationError("That URL is not allowed.")
+class EditLinkForm(LinkForm):
+    short_url = StringField('Custom Alias', filters=[strip_whitespace], validators=[
+        validators.Length(min=5, max=16, message="""Custom alias length must be
+            between %(min)d and %(max)d characters."""),
+        validators.Regexp('^[a-zA-Z0-9]*$', message='Custom alias must be alphanumeric.')
+    ])
 
-    def validate_short_url(self, field):
-        """Performs validation on the short_url field."""
-        if not field.data.isalnum():
-            raise ValidationError('Custom alias must be alphanumeric.')
-        if self.client.get_long_url(field.data):
-            if not (self.old_short_url and self.old_short_url == field.data):
-                raise ValidationError('That name already exists.')
+    old_short_url = StringField('old_short_url', validators=[validators.DataRequired()])
+
+    def __init__(self, form, banned_regexes):
+        super().__init__(form, banned_regexes)
 
     def to_json(self):
         """Exports the form"s fields into a JSON-compatible dictionary."""
-        data = {
-            "long_url": self.long_url.data,
-            "title": self.title.data,
-        }
-        if self.short_url.data:
-            data["short_url"] = self.short_url.data
-        return data
+        fields = ['long_url', 'title', 'short_url', 'old_short_url']
+        return {field: getattr(self, field).data for field in fields}

@@ -13,6 +13,7 @@ import geoip2.database
 import shrunk.roles as roles
 from shrunk.stringutil import get_domain
 from shrunk.aggregations import match_short_url, monthly_visits_aggregation, daily_visits_aggregation
+from flask import current_app
 
 class BadShortURLException(Exception):
     """Raised when the there is an error with the requested short url"""
@@ -141,6 +142,10 @@ class ShrunkClient:
         self._create_indexes()
         self._set_geoip(GEOLITE_PATH)
 
+    def _switch_db(self, db_name):
+        self._DB_NAME = db_name
+        self.db = self._mongo[self._DB_NAME]
+
     def _create_indexes(self):
         self.db.visits.create_index([('short_url', pymongo.ASCENDING)])
         self.db.visitors.create_index([('ip', pymongo.ASCENDING)])
@@ -234,7 +239,7 @@ class ShrunkClient:
         if title is not None:
             document["title"] = title
 
-        if short_url is not None:
+        if short_url:
             # Attempt to insert the custom URL
             if short_url in ShrunkClient.RESERVED_WORDS:
                 raise ForbiddenNameException("That name is reserved.")
@@ -259,45 +264,41 @@ class ShrunkClient:
 
         return str(response.inserted_id)
 
-    def modify_url(self, old_short_url=None, admin=False, power_user=False,
-                   short_url=None, **new_doc):
+    def modify_url(self, *, title, long_url, short_url, old_short_url):
         """Modifies an existing URL.
 
         Edits the values of the url `short_url` and replaces them with the
         values specified in the keyword arguments.
 
         :Parameters:
-          - `old_short_url`: The ID of the URL to edit.
-          - `admin`: If the requester is an admin
-          - `power_user`: If the requester is an power user
-          - `short_url`: The new short url (for custom urls)
-          - `new_doc`: All the fields to $set in the document
+          - `title`: The new title
+          - `long_url`: The new long url
+          - `short_url`: The new short url (may be same as old_short_url)
+          - `old_short_url`: The old short url
         """
-        if self.is_blocked(new_doc["long_url"]):
-            raise ForbiddenDomainException("That URL is not allowed.")
 
-        document = self.db.urls.find_one({"_id": old_short_url})
+        if self.is_blocked(long_url):
+            raise ForbiddenDomainException('That URL is not allowed.')
 
-        if not admin and not power_user:
-            short_url = None
+        if short_url in ShrunkClient.RESERVED_WORDS:
+            raise ForbiddenNameException('That name is reserved.')
 
-        if short_url is not None:
-            if short_url in ShrunkClient.RESERVED_WORDS:
-                raise ForbiddenNameException("That name is reserved.")
-            else:
-                document["_id"] = short_url
+        new_doc = {
+            'title': title,
+            'long_url': long_url
+        }
 
-            if old_short_url != short_url:
-                try:
-                    response = self.db.urls.insert_one(document)
-                except pymongo.errors.DuplicateKeyError:
-                    raise DuplicateIdException("That name already exists.")
-                self.db.urls.delete_one({"_id": old_short_url})
-                self.db.urls.insert_one(new_doc)
-            else:
-                response = self.db.urls.replace_one({"_id": old_short_url}, new_doc)
+        if short_url == old_short_url:
+            response = self.db.urls.update_one({'_id': old_short_url}, {'$set': new_doc})
         else:
-            response = self.db.urls.replace_one({"_id": old_short_url}, new_doc)
+            old_doc = self.db.urls.find_one({'_id': old_short_url})
+            old_doc['_id'] = short_url
+            old_doc.update(new_doc)
+            try:
+                response = self.db.urls.insert_one(old_doc)
+            except pymongo.errors.DuplicateKeyError:
+                raise BadShortURLException('That name already exists.')
+            self.db.urls.delete_one({'_id': old_short_url})
 
         return response
 
@@ -307,13 +308,12 @@ class ShrunkClient:
 
     def is_owner_or_admin(self, short_url, request_netid):
         "checks if the url is owned by the user or if the user is an admin"
-        url = self.db.urls.find_one({"_id":short_url}, projection={"netid"})
-        if not url:
-            return roles.check("admin", request_netid)
-
-        url_owner = url["netid"]
-        requester_is_owner = url_owner == request_netid
-        return requester_is_owner or self.is_admin(request_netid)
+        info = self.get_url_info(short_url)
+        if not info:
+            return False
+        if info['netid'] == request_netid:
+            return True
+        return roles.check('admin', request_netid)
 
     def delete_url(self, short_url, request_netid):
         """Given a short URL, delete it from the database.
@@ -545,8 +545,8 @@ class ShrunkClient:
         })
 
         cur = next(self.db.urls.aggregate(pipeline, collation=Collation('en')))
-        count = cur['count'][0]['count']
         result = cur['result']
+        count = cur['count'][0]['count'] if cur['count'] else 0
         return SearchResults(result, count)
 
     def visit(self, short_url, source_ip, user_agent, referer):

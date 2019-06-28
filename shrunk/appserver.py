@@ -18,8 +18,7 @@ from shrunk.client import BadShortURLException, ForbiddenDomainException, \
     AuthenticationException, NoSuchLinkException, Pagination
 import shrunk.roles as roles
 
-from shrunk.forms import LinkForm
-from shrunk.filters import strip_protocol, ensure_protocol
+from shrunk.forms import AddLinkForm, EditLinkForm
 from shrunk.stringutil import formattime
 from shrunk.statutil import *
 from shrunk.util import make_plaintext_response, make_json_response
@@ -343,19 +342,21 @@ def render_index(**kwargs):
 @app.route("/add", methods=["POST"])
 @app.require_login
 def add_link():
-    """Adds a new link for the current user. and handles errors"""
-    # default is no .xxx links
-
-    client = app.get_shrunk()
-    banned_regexes = app.config.get('BANNED_REGEXES', ['\.xxx'])
-    form = LinkForm(request.form, banned_regexes, client)
+    """ Adds a new link for the current user and handles errors. """
     netid = session['user'].get('netid')
+    client = app.get_shrunk()
 
-    form.long_url.data = ensure_protocol(form.long_url.data)
+    # default is no .xxx links
+    banned_regexes = app.config.get('BANNED_REGEXES', ['\.xxx'])
+
+    form = AddLinkForm(request.form, banned_regexes)
     if form.validate():
         kwargs = form.to_json()
         kwargs['netid'] = netid
-        kwargs['title'] = kwargs['title'].strip()
+        admin_or_power = roles.check('admin', netid) or roles.check('power_user', netid)
+
+        if kwargs['short_url'] and not admin_or_power:
+            return shrunk.util.unauthorized()
 
         try:
             shortened = client.create_short_url(**kwargs)
@@ -365,7 +366,7 @@ def add_link():
             return make_json_response({'errors': {'short_url': str(e)}}, status=400)
         except ForbiddenDomainException as e:
             return make_json_response({'errors': {'long_url': str(e)}}, status=400)
-    else: # WTForms detects a form validation error:
+    else:
         resp = {'errors': {}}
         for name in ['title', 'long_url', 'short_url']:
             err = form.errors.get(name)
@@ -575,14 +576,14 @@ def delete_link():
     client = app.get_shrunk()
     netid = session["user"].get("netid")
 
-    app.logger.info("Deleting URL: {}".format(request.form["short_url"]))
+    app.logger.info("{} tries to delete {}".format(netid, request.form["short_url"]))
 
     try:
         client.delete_url(request.form["short_url"], netid)
     except AuthenticationException:
         return shrunk.util.unauthorized()
     except NoSuchLinkException:
-        return error("that link does not exists", 404)
+        return error("that link does not exist", 404)
 
     return redirect("/")
 
@@ -601,37 +602,24 @@ def edit_link():
     # default is no .xxx links
     banned_regexes = app.config.get('BANNED_REGEXES', ['\.xxx'])
 
-    form = LinkForm(request.form, banned_regexes, client)
-    form.long_url.data = ensure_protocol(form.long_url.data)
-
-    # Validate form before continuing
+    form = EditLinkForm(request.form, banned_regexes)
     if form.validate():
-        # Success - make the edits in the database
+        # The form has been validated---now do permissions checking
         kwargs = form.to_json()
-        kwargs['admin'] = roles.check("admin", netid)
-        kwargs['title'] = kwargs['title'].strip()
-        kwargs['power_user'] = roles.check("power_user", netid)
-        kwargs['old_short_url'] = request.form['old_short_url']
+        admin_or_power = roles.check('admin', netid) or roles.check('power_user', netid)
 
         if not client.is_owner_or_admin(kwargs['old_short_url'], netid):
             return shrunk.util.unauthorized()
 
-        # this should be done in WTForms, but then we'd have to
-        # have different forms for /add and /edit
-        if 'short_url' not in kwargs or not kwargs['short_url']:
-            return make_json_response({'errors': {'short_url': 'Custom alias cannot be empty.'}},
-                                      status=400)
+        if kwargs['short_url'] != kwargs['old_short_url'] and not admin_or_power:
+            return shrunk.util.unauthorized()
+
         try:
+            # The client has permission---try to update the database
             client.modify_url(**kwargs)
-            new_short_url = kwargs.get('short_url') or kwargs['old_short_url']
-            return make_json_response({'success': {
-                'new_short_url': new_short_url,
-                'new_title': kwargs['title'],
-            }})
-        except BadShortURLException as e:
+            return make_json_response({'success': {}})
+        except (BadShortURLException, ForbiddenDomainException) as e:
             return make_json_response({'errors': {'short_url': str(e)}}, status=400)
-        except ForbiddenDomainException as e:
-            return make_json_response({'errors': {'long_url': str(e)}}, status=400)
     else:
         resp = {'errors': {}}
         for name in ['title', 'long_url', 'short_url']:

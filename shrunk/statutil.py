@@ -25,8 +25,7 @@ def make_csv_for_links(client, links):
     writer.writerow(header)
 
     for link in links:
-        visits = client.get_visits(link)
-        for visit in visits:
+        for visit in client.get_visits(link):
             ipaddr = visit['source_ip']
             visitor_id = client.get_visitor_id(ipaddr)
             location = client.get_geoip_location(ipaddr)

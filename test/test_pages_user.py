@@ -11,17 +11,14 @@ from views import *
 from shrunk.config import GEOLITE_PATH
 
 
-app.switch_db("unit_db")
+app.switch_db("shrunk_test")
 sclient = app.get_shrunk()
-sclient.set_geoip(GEOLITE_PATH)
+sclient._set_geoip(GEOLITE_PATH)
 mclient = sclient._mongo
 
 
 def teardown_function():
-    mclient.drop_database("shrunk_urls")
-    mclient.drop_database("shrunk_visits")
-    mclient.drop_database("shrunk_users")
-    mclient.drop_database("shrunk_roles")
+    mclient.drop_database("shrunk_test")
     logout()
 
 def in_post_resp(endpoint, string, data):
@@ -51,7 +48,10 @@ def test_add_link():
     response = post("/add", data={
         "long_url": "google.com", "title": "lmao"
     })
-    assert_redirect(response, "/")
+    assert response.status_code == 200
+    short_url = json.loads(str(response.get_data(), 'utf8'))['success']['short_url']
+    assert_redirect(get('/' + short_url.split('/')[-1]), 'google.com')
+
     # make sure link shows up on page
     response = get("/")
     text = str(response.get_data())
@@ -87,7 +87,7 @@ def test_add_link_power():
         "title":"lmao",
         "short_url": "customthing"
     })
-    assert response.status_code == 302
+    assert response.status_code == 200
     # make sure link shows up on page
     response = get("/")
     text = str(response.get_data())
@@ -96,128 +96,141 @@ def test_add_link_power():
     assert "customthing" in text
 
 def test_delete():
-    mclient.shrunk_urls.urls.insert_many([
+    mclient.shrunk_test.urls.insert_many([
         {"_id": "1", "title": "lmao1",
          "long_url": "https://google.com", "netid": "DEV_USER"},
         {"_id": "2", "title": "lmao2",
          "long_url": "https://google.com", "netid": "dude"}
     ])
-    login("user")
 
     # confirm normal delete
-    assert_redirect(post("/delete", data={"short_url": "1"}), "/")
+    logout()
+    login("user")
+    response = post("/delete", data={"short_url": "1"})
+    assert response.status_code == 302
     response = get("/")
     text = str(response.get_data())
     assert "lmao1" not in text
+    assert mclient.shrunk_test.urls.find_one({"_id": "1"}) is None
 
     # confirm user cant delete another users link
     # TODO show a message to user telling them they cant delete that link?
-    post("/delete", data={"short_url": "2"})
-    url = mclient.shrunk_urls.urls.find_one({"_id": "2"})
-    assert url is not None
+    response = post("/delete", data={"short_url": "2"})
+    assert response.status_code == 401
+    assert mclient.shrunk_test.urls.find_one({"_id": "2"}) is not None
 
     # confirm power user cant delete another users link
     logout()
     login("power")
-    post("/delete", data={"short_url": "2"})
-    url = mclient.shrunk_urls.urls.find_one({"_id": "2"})
-    assert url is not None
+    response = post("/delete", data={"short_url": "2"})
+    assert response.status_code == 401
+    assert mclient.shrunk_test.urls.find_one({"_id": "2"}) is not None
 
     #confirm admin can delete
     logout()
     login("admin")
-    post("/delete", data={"short_url": "2"})
-    url = mclient.shrunk_urls.urls.find_one({"_id": "2"})
-    assert url is None
+    response = post("/delete", data={"short_url": "2"})
+    assert response.status_code == 302
+    assert mclient.shrunk_test.urls.find_one({"_id": "2"}) is None
 
 @loginw("user")
 def test_edit_link():
-    mclient.shrunk_urls.urls.insert({
-        "_id": "1", "title": "lmao1",
-        "long_url": "https://google.com",
-        "timeCreated": datetime.datetime.now(),
-        "netid": "DEV_USER"
+    mclient.shrunk_test.urls.insert_one({
+        '_id': 'short1',
+        'title': 'lmao1',
+        'long_url': 'https://google.com',
+        'timeCreated': datetime.datetime.now(),
+        'netid': 'DEV_USER'
     })
 
     # invalid urls
-    for url in ["ay", "", "longerrrrrr"]:
+    for url in ['ay', '', 'longerrrrrr']:
         print(url)
-        in_post_resp("/edit", "Please enter a valid URL.", {
-            "long_url": url, "title": "lmao1", "old_short_url": "1"
+        in_post_resp('/edit', 'Please enter a valid URL.', {
+            'long_url': url,
+            'title': 'lmao1',
+            'short_url': 'short1',
+            'old_short_url': 'short1'
         })
 
     # invalid title
-    in_post_resp("/edit", "Please enter a title.", {
-        "title": "", "long_url": "google.com",
-        "old_short_url": "1"
+    in_post_resp('/edit', 'Please enter a title.', {
+        'title': '',
+        'long_url': 'google.com',
+        'short_url': 'short1',
+        'old_short_url': 'short1'
     })
 
-    # cant be blocked
-    roles.grant("blocked_url", "anti-foo-man", "https://foo.com")
-    in_post_resp("/edit", "That URL is not allowed.", {
-        "long_url": "https://lmao.foo.com/sus.php",
-        "title": "lmao",
-        "old_short_url": "1"
+    # can't be blocked
+    roles.grant('blocked_url', 'anti-foo-man', 'https://foo.com')
+    in_post_resp('/edit', 'That URL is not allowed.', {
+        'long_url': 'https://lmao.foo.com/sus.php',
+        'title': 'lmao',
+        'short_url': 'short1',
+        'old_short_url': 'short1'
     })
 
     # proper insert
-    response = post("/edit", data={
-        "long_url": "facebook.com", "title": "new-lmao",
-        "old_short_url": "1"
+    response = post('/edit', data={
+        'long_url': 'facebook.com',
+        'title': 'new-lmao',
+        'short_url': 'short1',
+        'old_short_url': 'short1'
     })
-    assert_redirect(response, "/")
+    assert response.status_code == 200
     # make sure link shows up on page
-    response = get("/")
+    response = get('/')
     text = str(response.get_data())
-    assert "new-lmao" in text
-    assert "facebook.com" in text
+    assert 'new-lmao' in text
+    assert 'facebook.com' in text
 
     # shorturl doesnt work
-    response = post("/edit", data={
-        "long_url":"nope.com",
-        "title":"nope",
-        "short_url": "custom-thing",
-        "old_short_url": "1"
+    response = post('/edit', data={
+        'long_url': 'nope.com',
+        'title':'nope',
+        'short_url': 'custom-thing',
+        'old_short_url': 'short1'
     })
     assert response.status_code != 302
     assert response.status_code < 500
 
     # not on index
-    response = get("/")
+    response = get('/')
     text = str(response.get_data())
-    assert "nope" not in text
+    assert 'nope' not in text
 
 @loginw("power")
 def test_edit_link_power():
-    mclient.shrunk_urls.urls.insert({
-        "_id": "1", "title": "lmao1",
-        "long_url": "https://google.com",
-        "timeCreated": datetime.datetime.now(),
-        "netid": "DEV_PWR_USER"
+    mclient.shrunk_test.urls.insert_one({
+        '_id': 'short1',
+        'title': 'lmao1',
+        'long_url': 'https://google.com',
+        'timeCreated': datetime.datetime.now(),
+        'netid': 'DEV_PWR_USER'
     })
 
     # test reserved link
-    in_post_resp("/edit", "That name is reserved", {
-        "long_url":"google.com",
-        "title":"lmao",
-        "short_url": "admin",
-        "old_short_url": "1"
+    in_post_resp('/edit', 'That name is reserved', {
+        'long_url':'google.com',
+        'title':'lmao',
+        'short_url': 'admin',
+        'old_short_url': 'short1'
     })
 
     # shorturl works
-    response = post("/edit", data={
-        "long_url": "facebook.com",
-        "title": "new-title",
-        "short_url": "customthing",
-        "old_short_url": "1"
+    response = post('/edit', data={
+        'long_url': 'facebook.com',
+        'title': 'new-title',
+        'short_url': 'customthing',
+        'old_short_url': 'short1'
     })
-    assert response.status_code == 302
+    assert response.status_code == 200
     # make sure link shows up on page
-    response = get("/")
+    response = get('/')
     text = str(response.get_data())
-    assert "new-title" in text
-    assert "facebook.com" in text
-    assert "customthing" in text
+    assert 'new-title' in text
+    assert 'facebook.com' in text
+    assert 'customthing' in text
 
 @loginw("user")
 def test_index_options():
@@ -228,23 +241,25 @@ def test_index_options():
     for response in responses:
         assert response.status_code < 500
 
+    # when sortby is invalid shrunk should default to '0'
     response = get("/?sortby=invalid")
-    assert response.status_code == 400
+    assert response.status_code == 200
 
 @loginw("user")
 def test_index_search():
     """make sure search checks all fields"""
-    mclient.shrunk_urls.urls.insert({
+    mclient.shrunk_test.urls.insert_one({
         "_id": "id1", "title": "lmao1",
         "long_url": "https://google.com",
         "timeCreated": datetime.datetime.now(),
         "netid": "DEV_USER"
     })
 
-    def find(search, intext, base="/?search="):
+    def find(search, intext, base="/?query="):
         response = get(base + quote(search))
         assert response.status_code < 500
         text = str(response.get_data())
+        app.logger.info(text)
         assert intext in text
 
     #search by title
@@ -258,43 +273,43 @@ def test_index_search():
     logout()
     login("admin")
     #search by netid
-    find("DEV", "Showing results for", base="/?all_users=1&search=")
+    find("DEV", "DEV", base="/?all_users=1&query=")
     #this assumes that the DEV_ADMIN user does not have any links in the test db...
-    find("DEV", "No results found for", base="/?all_users=0&search=")
+    find("DEV", "No results found for query", base="/?all_users=0&query=NO_RESULTS_QUERY")
 
 def test_index_admin():
-    """make sure admin options don't appear for users"""
-    mclient.shrunk_urls.urls.insert({
-        "_id": "id1", "title": "lmao1",
-        "long_url": "https://google.com",
-        "timeCreated": datetime.datetime.now(),
-        "netid": "dad"
+    """ Make sure admin options don't appear for normal users. """
+    mclient.shrunk_test.urls.insert_one({
+        '_id': 'id1',
+        'title': 'lmao1',
+        'long_url': 'https://google.com',
+        'timeCreated': datetime.datetime.now(),
+        'netid': 'dad'
     })
-    urls = ["/?all_users=0", "?all_users=1"]
-    login("user")
+    urls = ['/?links_set=GO!my', '/?links_set=GO!all']
+    login('user')
     for response in [get(url) for url in urls]:
         assert response.status_code < 500
         text = str(response.get_data())
-        assert "lmao1" not in text
-        assert "Admin" not in text
+        assert 'lmao1' not in text
+        assert 'Admin' not in text
     logout()
 
-    login("admin")
-    #my links
+    login('admin')
+    # my links
     response = get(urls[0])
-    assert response.status_code < 500
+    assert response.status_code == 200
     text = str(response.get_data())
-    assert "Admin" in text
+    assert 'Admin' in text
+    assert 'lmao1' not in text
 
-    assert "lmao1" not in text
-
-    #other's links
+    login('admin')
+    # all links
     response = get(urls[1])
-    assert response.status_code < 500
+    assert response.status_code == 200
     text = str(response.get_data())
-    assert "Admin" in text
-
-    assert "lmao1" in text
+    assert 'Admin' in text
+    assert 'lmao1' in text
 
 @loginw("user")
 def test_stats():
@@ -383,7 +398,7 @@ def test_geoip_csv():
     assert response.status_code == 200
     csv = str(response.get_data(), 'utf8').split('\n')
     assert csv[0] == 'location,visits'
-    expected = ['NJ,1', 'NY,1', 'VA,2', 'unknown,2']
+    expected = ['BY,1', 'NJ,1', 'NY,1', 'VA,2', 'unknown,1']
     print(sorted(csv[1:]))
     print(sorted(expected))
     assert sorted(csv[1:]) == sorted(expected)
@@ -440,9 +455,9 @@ def test_useragent_stats():
 
 @loginw("admin")
 def test_useragent_stats_no_visit():
-    """ we need to be able to handle visit documents without a user_agent field """
+    """ We need to be able to handle visit documents without a user_agent field. """
     short = sclient.create_short_url('google.com', netid='shrunk_test')
-    mclient.shrunk_visits.visits.insert({
+    mclient.shrunk_test.visits.insert_one({
         'short_url': short,
         'source_ip': '127.0.0.1',
         'time': datetime.datetime.now()
@@ -464,7 +479,7 @@ def test_useragent_stats_no_perm():
     short = sclient.create_short_url('google.com', netid='shrunk_test')
     response = get('/useragent-stats?url=' + short)
     assert response.status_code == 401
-    assert 'error: not authorized' in str(response.get_data())
+    assert 'Unauthorized' in str(response.get_data())
 
 @loginw("admin")
 def test_referer_stats():
@@ -495,14 +510,14 @@ def test_referer_stats_no_perm():
     short = sclient.create_short_url('google.com', netid='shrunk_test')
     response = get('/referer-stats?url=' + short)
     assert response.status_code == 401
-    assert 'error: not authorized' in str(response.get_data())
+    assert 'Unauthorized' in str(response.get_data())
 
 @loginw("admin")
 def test_monthly_visits():
     short = sclient.create_short_url('google.com', netid='shrunk_test')
 
     def make_visit(who, year, month):
-        mclient.shrunk_visits.visits.insert({
+        mclient.shrunk_test.visits.insert_one({
             'short_url': short,
             'source_ip': who,
             'time': datetime.datetime(year, month, 1)
@@ -544,11 +559,10 @@ def test_monthly_visits():
 def test_monthly_visits_no_url():
     response = get('/monthly-visits')
     assert response.status_code == 400
-    assert '{"error":"request must have url"}' in str(response.get_data())
 
 @loginw("user")
 def test_monthly_visits_no_perm():
     short = sclient.create_short_url('google.com', netid='shrunk_test')
     response = get('/monthly-visits?url=' + short)
     assert response.status_code == 401
-    assert '{"error":"not authorized"}' in str(response.get_data())
+    assert 'Unauthorized' in str(response.get_data())

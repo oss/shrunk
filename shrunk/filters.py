@@ -86,3 +86,8 @@ def strip_protocol(url):
       The URL without a protocol. If none exists, it returns the original URL.
     """
     return url.replace("http://", "", 1).replace("https://", "", 1)
+
+
+def strip_whitespace(s):
+    """ Removes whitespace from the input string. """
+    return s.strip()
