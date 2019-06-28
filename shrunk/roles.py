@@ -121,7 +121,7 @@ def valid_roles():
     """returns a list of valid roles"""
     return list(qualified_for)
 
-def init(app, mongo_client=None):
+def init(app, mongo_client=None, db_name='shrunk'):
     """init the module, namely get a reference to db"""
     if not mongo_client:
         mongo_client = app.get_shrunk()._mongo
@@ -130,4 +130,4 @@ def init(app, mongo_client=None):
         #server does not respond. pymongo3.6 aug 2018
         mongo_client.admin.command("ismaster")
     global grants
-    grants = mongo_client.shrunk.grants
+    grants = mongo_client[db_name].grants

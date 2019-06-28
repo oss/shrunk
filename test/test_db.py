@@ -10,24 +10,20 @@ from datetime import datetime
 import shrunk.roles as roles
 from shrunk.config import GEOLITE_PATH
 
-client=ShrunkClient(DB_HOST="unit_db", GEOLITE_PATH=GEOLITE_PATH)
+client=ShrunkClient(DB_HOST="db", DB_NAME="shrunk_test", GEOLITE_PATH=GEOLITE_PATH)
 mongoclient=client._mongo
 
 def teardown_function():
-    mongoclient.drop_database("shrunk_urls")
-    mongoclient.drop_database("shrunk_visits")
-    mongoclient.drop_database("shrunk_users")
-    mongoclient.drop_database("shrunk_roles")
+    mongoclient.drop_database("shrunk_test")
 
 def setup_module():
-    roles.init(None, mongo_client = mongoclient)
-    
+    roles.init(None, mongo_client=mongoclient, db_name="shrunk_test")
 
 def insert_urls(long_urls, netid):
     return [client.create_short_url(url, netid = netid) for url in long_urls]
 
 def get_url(url):
-    return client._mongo.shrunk_urls.urls.find_one({"_id": url})
+    return client._mongo.shrunk_test.urls.find_one({"_id": url})
 
 #TODO add more testing in the case of blocked urls, already take ones, reserved words, banned user
 #TODO test custom short_urls
@@ -52,9 +48,8 @@ def test_visit():
     assert client.get_num_visits(short_url) is hits
 
 def test_invalid_sort():
-    cursor = client.get_all_urls()
     with raises(IndexError):
-        cursor.sort(100)
+        cursor = client.search(sort=100)
 
 def test_no_geoip():
     old_geoip = client._geoip
@@ -200,19 +195,18 @@ def test_visit2():
     num_visits2 = 4
     url, url2 = make_urls(num_visits, num_visits2)
 
-    visits = list(client._mongo.shrunk_visits.visits.find({"short_url": url}))
+    visits = list(client._mongo.shrunk_test.visits.find({"short_url": url}))
     assert get_url(url)["visits"] is num_visits
     assert len(visits) is num_visits
 
-    visits2 = list(client._mongo.shrunk_visits.visits.find({"short_url": url2}))
+    visits2 = list(client._mongo.shrunk_test.visits.find({"short_url": url2}))
     assert get_url(url2)["visits"] is num_visits2
     assert len(visits2) is num_visits2
 
 def test_delete_and_visit():
     """test utility function to see if somone can modify a url"""
     roles.grants.insert({"role": "admin", "entity": "dnolen", "granted_by": "rhickey"})
-    #roles.grants.insert({"role": "power_user","netid": "power_user", "added_by": "Justice League"})
-    mongoclient.shrunk_users.power_users.insert({"role": "power_user","netid": "power_user", "added_by": "Justice League"})
+    roles.grants.insert({"role": "power_user","netid": "power_user", "added_by": "Justice League"})
     num_visits = 3
     num_visits2 = 4
     url, url2 = make_urls(num_visits, num_visits2)
@@ -244,12 +238,12 @@ def test_delete_and_visit():
     assert get_url(url) is None
 
     #deleting a url should remove its visits
-    visits3 = list(client._mongo.shrunk_visits.visits.find({"short_url": url}))
+    visits3 = list(client._mongo.shrunk_test.visits.find({"short_url": url}))
     assert get_url(url) is None
     assert len(visits3) is 0
     
     #deleting one url shouldn't affect the visits of another
-    visits4 = list(client._mongo.shrunk_visits.visits.find({"short_url": url2}))
+    visits4 = list(client._mongo.shrunk_test.visits.find({"short_url": url2}))
     assert get_url(url2)["visits"] is num_visits2
     assert len(visits4) is num_visits2
 
@@ -257,7 +251,7 @@ def test_delete_and_visit():
     assert_delete(client.delete_url(url2, "dude"), url = 1, visit = num_visits2)
     assert get_url(url2) is None
 
-    visits5 = list(client._mongo.shrunk_visits.visits.find({"short_url": url2}))
+    visits5 = list(client._mongo.shrunk_test.visits.find({"short_url": url2}))
     assert get_url(url2) is None
     assert len(visits5) is 0
 
@@ -322,9 +316,9 @@ def test_get_visits():
     url3 = client.create_short_url("https://linux.org/third", netid = "dude")
     
     expected_visits = set([visit["_id"] for visit 
-                           in client._mongo.shrunk_visits.visits.find({"short_url": url})])
+                           in client._mongo.shrunk_test.visits.find({"short_url": url})])
     expected_visits2 = set([visit["_id"] for visit
-                            in client._mongo.shrunk_visits.visits.find({"short_url": url2})])
+                            in client._mongo.shrunk_test.visits.find({"short_url": url2})])
     
     actual_visits = set([visit["_id"] for visit in client.get_visits(url)])
     actual_visits2 = set([visit["_id"] for visit in client.get_visits(url2)])
@@ -360,7 +354,7 @@ def test_get_all_urls():
                  "http://microsoft.com", 
                  "https://microsoft.com/page.aspx"]
     short_urls = insert_urls(long_urls, "bgates")
-    all_urls = [url["long_url"] for url in client.get_all_urls()]
+    all_urls = [url["long_url"] for url in client.search()]
 
     for url in long_urls:
         assert url in all_urls
@@ -406,7 +400,7 @@ def test_monthly_visits_hard():
             "time" : datetime(year=year, month=month, day=day)
         }
         
-    client._mongo.shrunk_visits.visits.insert_many([
+    client._mongo.shrunk_test.visits.insert_many([
         visit(2018,3,3), #same month different year should be different
         visit(2018,3,3),
         visit(2018,3,3, source_ip="127.0.0.2"),
@@ -429,7 +423,7 @@ def test_get_urls():
     uname="bgates"
     short_urls = insert_urls(long_urls, uname)
      
-    user_urls = client.get_urls(uname).get_results()
+    user_urls = client.search(netid=uname)
     assert len(user_urls) == len(long_urls)
     user_short_urls = {url["_id"] for url in user_urls}
     
@@ -441,7 +435,7 @@ def test_get_urls():
 
 def test_search():
     def shortURL(url, title):
-        return client.create_short_url(url, netid = "shrunk_test", title=title)
+        return client.create_short_url(url, netid="shrunk_test", title=title)
     url = shortURL("https://linux.org", "one") 
     url2 = shortURL("https://thing.org", "other") 
     url3 = shortURL("https://thing.com", "another") 
@@ -450,44 +444,44 @@ def test_search():
         assert title in {link["title"] for link in search_result}
 
     def assert_id(_id, search_result):
-        assert _id in {link["_id"] for link in client.search("LiNuX")}
+        assert _id in {link["_id"] for link in client.search(query="LiNuX")}
 
     #match url or title
-    assert_id(url, client.search("linux"))
-    assert_title("one", client.search("one"))
+    assert_id(url, client.search(query="linux"))
+    assert_title("one", client.search(query="one"))
 
     #case insensitive
-    assert_title("one", client.search("oNe"))
-    assert_title("one", client.search("ONE"))
-    assert_id(url, client.search("LiNuX"))
-    assert_id(url, client.search("LINUX"))
+    assert_title("one", client.search(query="oNe"))
+    assert_title("one", client.search(query="ONE"))
+    assert_id(url, client.search(query="LiNuX"))
+    assert_id(url, client.search(query="LINUX"))
 
     #mutliple in a result
-    result = {link["_id"] for link in client.search("org")}
+    result = {link["_id"] for link in client.search(query="org")}
     assert url in result
     assert url2 in result
 
     #mutliple in title
-    result2 = {link["title"] for link in client.search("otHer")}
+    result2 = {link["title"] for link in client.search(query="otHer")}
     assert "other" in result2
     assert "another" in result2
 
     #search by netid
-    result3 = {link["_id"] for link in client.search("shrunk_test")}
+    result3 = {link["_id"] for link in client.search(query="shrunk_test")}
     assert url in result3
     assert url2 in result3
     assert url3 in result3
 
 def test_search_netid():
     print(list(roles.grants.find()))
-    url = client.create_short_url("https://test.com", netid = "Billie Jean", title = "title")
-    url2 = client.create_short_url("https://test.com", netid = "Knott MyLova", title = "title")
+    url = client.create_short_url("https://test.com", netid="Billie Jean", title="title")
+    url2 = client.create_short_url("https://test.com", netid="Knott MyLova", title="title")
 
     def assert_len(length, keyword, netid=None):
-        assert len(list(client.search(keyword, netid))) is length
+        assert len(list(client.search(query=keyword, netid=netid))) is length
 
     def assert_search(keyword, netid, url):
-        assert list(client.search(keyword, netid))[0]["_id"] == url
+        assert list(client.search(query=keyword, netid=netid))[0]["_id"] == url
 
     #searches with netid should screen search results withought that netid
     assert_len(1, "test", "Billie Jean")
@@ -525,11 +519,11 @@ def test_country_name():
 
 def test_geoip_location():
     assert client.get_geoip_location('66.249.88.21') == 'United States'
-    assert client.get_geoip_location('165.230.224.67') == 'Piscataway, New Jersey, United States'
+    assert client.get_geoip_location('165.230.224.67') == 'New Brunswick, New Jersey, United States'
     assert client.get_geoip_location('34.201.163.243') == 'Ashburn, Virginia, United States'
     assert client.get_geoip_location('35.168.234.184') == 'Ashburn, Virginia, United States'
     assert client.get_geoip_location('107.77.70.130') == 'New York, New York, United States'
-    assert client.get_geoip_location('136.243.154.93') == 'Germany'
+    assert client.get_geoip_location('136.243.154.93') == 'Nuremberg, Bavaria, Germany'
     assert client.get_geoip_location('94.130.167.121') == 'Germany' 
 
 def test_get_visitor_id():

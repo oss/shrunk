@@ -113,9 +113,8 @@ class ShrunkFlask(ShrunkFlaskMini):
             roles.init(self)
 
     def switch_db(self, host, port=27017):
-        self._shrunk_client = ShrunkClient(host,
-                                           port,
-                                           geolite_path=self.config.get("GEOLITE_PATH"))
+        self._shrunk_client = ShrunkClient(DB_HOST=host, DB_PORT=port,
+                                           GEOLITE_PATH=self.config.get("GEOLITE_PATH"))
         roles.init(self)
 
     def require_qualified(self, func):

@@ -105,10 +105,9 @@ class ShrunkClient:
                       "monthly-visits", "edit"]
     """Reserved words that cannot be used as shortened urls."""
 
-    def __init__(self, DB_HOST=None, DB_PORT=27017, 
-                 GEOLITE_PATH=None, DB_USERNAME=None, DB_PASSWORD=None,
+    def __init__(self, *, DB_HOST=None, DB_PORT=27017, DB_USERNAME=None, DB_PASSWORD=None,
                  test_client=None, DB_REPLSET=None, DB_CONNECTION_STRING=None,
-                 **config):
+                 DB_NAME='shrunk', GEOLITE_PATH=None, **config):
         """Create a new client connection.
 
         This client uses MongoDB.
@@ -122,8 +121,11 @@ class ShrunkClient:
           - `test_client` (optional): a mock client to use for testing
             the database default if not present
         """
+
+        self._DB_NAME = DB_NAME
         if test_client:
             self._mongo = test_client
+            self.db = self._mongo[self._DB_NAME]
         else:
             if DB_CONNECTION_STRING:
                 self._DB_CONNECTION_STRING = DB_CONNECTION_STRING
@@ -136,16 +138,16 @@ class ShrunkClient:
                 self._DB_REPLSET = DB_REPLSET
             self.reconnect()
 
-        self.db = self._mongo.shrunk
+        self._create_indexes()
+        self._set_geoip(GEOLITE_PATH)
 
+    def _create_indexes(self):
         self.db.visits.create_index([('short_url', pymongo.ASCENDING)])
         self.db.visitors.create_index([('ip', pymongo.ASCENDING)])
         self.db.organizations.create_index([('name', pymongo.ASCENDING)], unique=True)
         self.db.organization_members.create_index([('name', pymongo.ASCENDING),
                                                    ('netid', pymongo.ASCENDING)],
                                                   unique=True)
-
-        self.set_geoip(GEOLITE_PATH)
 
     def reconnect(self):
         """
@@ -161,7 +163,9 @@ class ShrunkClient:
                                               password=self._DB_PASSWORD,
                                               authSource="admin", connect=False,
                                               replicaSet=self._DB_REPLSET)
-    def set_geoip(self, GEOLITE_PATH):
+        self.db = self._mongo[self._DB_NAME]
+
+    def _set_geoip(self, GEOLITE_PATH):
         if GEOLITE_PATH:
             self._geoip = geoip2.database.Reader(GEOLITE_PATH)
         else:
@@ -525,7 +529,7 @@ class ShrunkClient:
 
         facet = {
             'count': [ { '$count': 'count' } ],
-            'result': []
+            'result': [ { '$skip': 0 } ]  # because this can't be empty
         }
 
         if pagination is not None:
@@ -586,7 +590,8 @@ class ShrunkClient:
              A hexadecimal string which uniquely identifies the given IP address.
         """
         rec = {'ip': str(ipaddr)}
-        res = self.db.visitors.find_one_and_update(rec, {'$setOnInsert': {'ip': rec}}, upsert=True,
+        res = self.db.visitors.find_one_and_update(rec, {'$setOnInsert': {'ip': str(ipaddr)}},
+                                                   upsert=True,
                                                    return_document=ReturnDocument.AFTER)
         return str(res['_id'])
 
