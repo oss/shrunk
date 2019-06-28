@@ -34,10 +34,9 @@ def test_delete():
 
 
 def test_auth_no_500():
-    routes = ["/add", "/stats", "/geoip-csv", "/useragent-stats",
-              "/referer-stats", "/monthly-visits", "/qr",  "/edit"]
+    routes = ["/stats", "/geoip-csv", "/useragent-stats",
+              "/referer-stats", "/monthly-visits", "/qr"]
     for route in routes:
-        print(route)
         assert_redirect(get(route), "shrunk-login")
         login("user")
         assert get(route).status_code < 500
