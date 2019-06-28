@@ -36,3 +36,4 @@ shrunk/static/shrunk_*.js
 .sass-cache
 .#*
 \#*
+.coverage

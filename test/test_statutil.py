@@ -3,8 +3,8 @@
 Unit tests for statutil functions.
 """
 
-from shrunk import ShrunkClient
 import shrunk
+from shrunk.client import ShrunkClient
 from shrunk.statutil import *
 from shrunk.config import GEOLITE_PATH
 

@@ -1,14 +1,10 @@
-""" shrunk - Rutgers University URL Shortener
-
-Sets up a Flask application for the main web server.
-"""
+""" Sets up the Flask application for the main web server. """
 
 import json
-import werkzeug.useragents
-import urllib.parse
 import collections
 import functools
 
+import werkzeug.useragents
 from flask import make_response, request, redirect, session, render_template
 from flask_sso import SSO
 from flask_assets import Environment, Bundle
@@ -20,26 +16,27 @@ import shrunk.roles as roles
 
 from shrunk.forms import AddLinkForm, EditLinkForm
 from shrunk.stringutil import formattime
-from shrunk.statutil import *
+from shrunk.statutil import get_referer_domain, make_csv_for_links, make_geoip_csv, \
+    get_location_state, get_location_country
 from shrunk.util import make_plaintext_response, make_json_response
 import shrunk.util
 
 
 # Create application
 # ShrunkFlask extends flask and adds decorators and configs itself
-app = ShrunkFlask(__name__)
+app = ShrunkFlask(__name__)  #pylint: disable=invalid-name
 
 # Flask-Assets stuff
-assets = Environment(app)
+assets = Environment(app)  #pylint: disable=invalid-name
 assets.url = app.static_url_path
 
 # Compile+minify custom bootstrap
-shrunk_bootstrap = Bundle('scss/shrunk_bootstrap.scss', filters='scss,cssmin',
-                          output='shrunk_bootstrap.css')
+shrunk_bootstrap = Bundle('scss/shrunk_bootstrap.scss', filters='scss,cssmin', \
+    output='shrunk_bootstrap.css')
 assets.register('shrunk_bootstrap', shrunk_bootstrap)
 
 # Minify shrunk css
-shrunk_css = Bundle('css/*.css', filters='cssmin', output='shrunk_css.css')
+shrunk_css = Bundle('css/*.css', filters='cssmin', output='shrunk_css.css')  #pylint: disable=invalid-name
 assets.register('shrunk_css', shrunk_css)
 
 # Create JS bundles for each page
@@ -61,39 +58,43 @@ for bundle_name, bundle_files in JS_BUNDLES.items():
 # This attaches the *flask_sso* login handler to the SSO_LOGIN_URL,
 # which essentially maps the SSO attributes to a dictionary and
 # calls *our* login_handler, passing the attribute dictionary
-ext = SSO(app=app)
+ext = SSO(app=app)  #pylint: disable=invalid-name
 
 # Allows us to use the function in our templates
 app.jinja_env.globals.update(formattime=formattime)
 
 @app.context_processor
 def add_search_params():
+    """ Passes search parameters (query, links_set, sortby, page) to every template. """
     params = {}
     if 'query' in session:
         params['query'] = session['query']
-    if 'all_users' in session:
+    if 'links_set' in session:
         params['all_users'] = session['all_users']
     if 'sortby' in session:
         params['sortby'] = session['sortby']
-    if 'p' in session:
+    if 'page' in session:
         params['page'] = session['page']
     return params
 
 @app.context_processor
 def add_user_info():
+    """ Passes user info (netid, roles) to every template. """
     try:
         netid = session['user']['netid']
         return {'netid': netid, 'roles': roles.get(netid)}
-    except:
+    except KeyError:
         return {}
 
 # Shibboleth handler
 @ext.login_handler
 def login(user_info):
+    """ Get the user's attributes from shibboleth, decide whether the user
+        should be allowed to access Shrunk, and possibly grant roles. """
     types = user_info.get("employeeType").split(";")
     netid = user_info.get("netid")
 
-    def t(typ):
+    def t(typ):  #pylint: disable=invalid-name
         return typ in types
 
     def log_failed(why):
@@ -104,8 +105,6 @@ def login(user_info):
     fac_staff = t('FACULTY') or t('STAFF')
 
     # get info from ACLs
-    is_admin = roles.check("admin", netid)
-    is_power = roles.check("power_user", netid)
     is_blacklisted = roles.check("blacklisted", netid)
     is_whitelisted = roles.check("whitelisted", netid)
     is_config_whitelisted = netid in app.config["USER_WHITELIST"]
@@ -139,6 +138,7 @@ def login(user_info):
 
 @app.route('/logout')
 def logout():
+    """ Clears the user's session and sends them to Shibboleth to finish logging out. """
     if "user" not in session:
         return redirect('/')
     user = session.pop('user')
@@ -169,6 +169,8 @@ def render_login(**kwargs):
 
 # add devlogins if necessary
 if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
+    #pylint: disable=missing-docstring
+
     @app.route('/dev-user-login')
     def dev_user_login():
         app.logger.info('user dev login valid')
@@ -209,10 +211,11 @@ if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
 
 @app.route('/unauthorized')
 def unauthorized():
+    """ Displays an unauthorized page. """
     return make_response(render_template('unauthorized.html'))
 
-
 def error(message, code):
+    """ Returns the error page with a given message and HTTP status code. """
     return make_response(render_template("error.html", message=message), code)
 
 ### Views ###
@@ -228,19 +231,13 @@ def render_index(**kwargs):
     matching their search query are shown.
     """
 
-    netid = session['user'].get('netid')
-    client = app.get_shrunk()
-    # TODO init default dict and dict.update(request.args) instead of this long thing
-    # Grab the current page number
-    try:
-        page = int(request.args["p"])
-    except:
-        page = 0
-
     def get_param(name, *, default=None, validator=None):
+        """ Get a parameter. First try the request args, then the session,
+            then use the default. Store the final value of the parameter
+            in the session. Optionally apply a validator to the parameter,
+            falling back to the default if validation fails. """
         if validator:
             assert default
-
         param = request.args.get(name)
         param = param if param is not None else session.get(name)
         param = param if param is not None else default
@@ -249,6 +246,37 @@ def render_index(**kwargs):
         if param is not None:
             session[name] = param
         return param
+
+    def authorized_for_links_set(links_set, netid):
+        """ Test whether the user is authorized to view links_set. """
+        authorized = False
+        if links_set == 'GO!all' and roles.check('admin', netid):
+            authorized = True
+        if links_set not in ['GO!my', 'GO!all']:
+            if client.is_organization_member(links_set, netid):
+                authorized = True
+        return authorized
+
+    def display_links_set(links_set):
+        """ Get a human-readable name for links_set. """
+        if links_set == 'GO!my':
+            return 'My links'
+        if links_set == 'GO!all':
+            return 'All links'
+        return links_set
+
+    def paginate(cur_page, total_pages):
+        """ Compute the range of pages that should be displayed to the user. """
+        if total_pages <= 9:
+            return (1, total_pages)
+        if cur_page < 5:  # display first 9 pages
+            return (1, 9)
+        if cur_page > total_pages - 4:  # display last 9 pages
+            return (total_pages - 8, total_pages)
+        return (cur_page - 4, cur_page + 4)  # display current page +- 4 adjacent pages
+
+    netid = session['user'].get('netid')
+    client = app.get_shrunk()
 
     old_query = session.get('query')
     query = get_param('query')
@@ -272,70 +300,30 @@ def render_index(**kwargs):
     #   <org>, where <org> is the name of an organization of which
     #      the user is a member --- show all links belonging to members of <org>
 
-    # permissions checking
-    authorized = False
-    if links_set == 'GO!all' and roles.check('admin', netid):
-        authorized = True
-    if links_set not in ['GO!my', 'GO!all']:
-        if client.is_organization_member(links_set, netid):
-            authorized = True
-
-    if not authorized:
+    if not authorized_for_links_set(links_set, netid):
         links_set = 'GO!my'
-
-    selected_links_set = links_set
-    if links_set == 'GO!my':
-        selected_links_set = 'My links'
-    elif links_set == 'GO!all':
-        selected_links_set = 'All links'
 
     pagination = Pagination(page, app.config['MAX_DISPLAY_LINKS'])
     search = functools.partial(client.search, sort=sort, pagination=pagination)
 
     if links_set == 'GO!my':
-        if query:
-            results = search(query=query, netid=netid)
-        else:
-            results = search(netid=netid)
+        results = search(query=query, netid=netid)
     elif links_set == 'GO!all':
-        if query:
-            results = search(query=query)
-        else:
-            results = search()
+        results = search(query=query)
     else:
-        if query:
-            results = search(query=query, org=links_set)
-        else:
-            results = search(org=links_set)
+        results = search(query=query, org=links_set)
 
-    #choose 9 pages to display so there's not like 200 page links
-    #is 9 the optimal number?
-
-    lastpage = pagination.num_pages(results.total_results)
-
-    begin_pages = -1
-    end_pages = -1
-    if lastpage < 10:     #9 or fewer pages
-        begin_pages = 1
-        end_pages = lastpage
-    elif page < 5:         #display first 9 pages
-        begin_pages = 1
-        end_pages = 9
-    elif page > lastpage - 4:     #display last 9 pages
-        begin_pages = lastpage - 8
-        end_pages = lastpage
-    else:                       #display current page +- 4 adjacent pages
-        begin_pages = page - 4
-        end_pages = page + 4
+    total_pages = pagination.num_pages(results.total_results)
+    begin_pages, end_pages = paginate(page, total_pages)
 
     return render_template("index.html",
                            begin_pages=begin_pages,
                            end_pages=end_pages,
-                           lastpage=lastpage,
+                           lastpage=total_pages,
                            links=list(results),
                            linkserver_url=app.config['LINKSERVER_URL'],
                            page=page,
-                           selected_links_set=selected_links_set,
+                           selected_links_set=display_links_set(links_set),
                            orgs=client.get_member_organizations(netid),
                            **kwargs)
 
@@ -346,10 +334,7 @@ def add_link():
     netid = session['user'].get('netid')
     client = app.get_shrunk()
 
-    # default is no .xxx links
-    banned_regexes = app.config.get('BANNED_REGEXES', ['\.xxx'])
-
-    form = AddLinkForm(request.form, banned_regexes)
+    form = AddLinkForm(request.form, app.config['BANNED_REGEXES'])
     if form.validate():
         kwargs = form.to_json()
         kwargs['netid'] = netid
@@ -362,10 +347,10 @@ def add_link():
             shortened = client.create_short_url(**kwargs)
             short_url = '{}/{}'.format(app.config['LINKSERVER_URL'], shortened)
             return make_json_response({'success': {'short_url': short_url}})
-        except BadShortURLException as e:
-            return make_json_response({'errors': {'short_url': str(e)}}, status=400)
-        except ForbiddenDomainException as e:
-            return make_json_response({'errors': {'long_url': str(e)}}, status=400)
+        except BadShortURLException as ex:
+            return make_json_response({'errors': {'short_url': str(ex)}}, status=400)
+        except ForbiddenDomainException as ex:
+            return make_json_response({'errors': {'long_url': str(ex)}}, status=400)
     else:
         resp = {'errors': {}}
         for name in ['title', 'long_url', 'short_url']:
@@ -377,7 +362,7 @@ def add_link():
 @app.route("/stats", methods=["GET"])
 @app.require_login
 def get_stats():
-    # should we require owner or admin to view?
+    """ Render the stats page for a given URL. """
 
     template_data = {
         "url_info": {},
@@ -399,6 +384,8 @@ def get_stats():
 @app.route("/link-visits-csv", methods=["GET"])
 @app.require_login
 def get_link_visits_csv():
+    """ Get CSV-formatted data describing (anonymized) visitors to the link. """
+
     client = app.get_shrunk()
     netid = session['user'].get('netid')
     if 'url' not in request.args:
@@ -413,6 +400,11 @@ def get_link_visits_csv():
 @app.route("/search-visits-csv", methods=["GET"])
 @app.require_login
 def get_search_visits_csv():
+    """ Get CSV-formatted data describing (anonymized) visitors to the current
+        search results. """
+
+    # TODO: update this to deal with organizations etc.
+
     client = app.get_shrunk()
     netid = session['user'].get('netid')
     all_users = request.args.get('all_users', '0') == '1' or session.get('all_users', '0') == '1'
@@ -433,7 +425,7 @@ def get_search_visits_csv():
 
     links = list(links)
     total_visits = sum(map(lambda l: l['visits'], links))
-    max_visits = app.config.get('MAX_VISITS_FOR_CSV', 6000)  # default 6000
+    max_visits = app.config['MAX_VISITS_FOR_CSV']
     if total_visits >= max_visits:
         return 'error: too many visits to create CSV', 500
 
@@ -443,6 +435,10 @@ def get_search_visits_csv():
 @app.route("/geoip-csv", methods=["GET"])
 @app.require_login
 def get_geoip_csv():
+    """ Return CSV-formatted data giving the number of visitors from
+        each geographic region. The 'resolution' parameter controls
+        whether the data is state-level or country-level. """
+
     client = app.get_shrunk()
     netid = session['user'].get('netid')
 
@@ -471,6 +467,9 @@ def get_geoip_csv():
 @app.route("/useragent-stats", methods=["GET"])
 @app.require_login
 def get_useragent_stats():
+    """ Return a JSON dictionary describing the user agents, platforms,
+        and browsers that have visited the given link. """
+
     client = app.get_shrunk()
     netid = session['user'].get('netid')
 
@@ -488,14 +487,14 @@ def get_useragent_stats():
             stats['platform']['unknown'] += 1
             stats['browser']['unknown'] += 1
             continue
-        ua = werkzeug.useragents.UserAgent(user_agent)
-        if ua.platform:
-            stats['platform'][ua.platform.title()] += 1
-        if ua.browser:
+        user_agent = werkzeug.useragents.UserAgent(user_agent)
+        if user_agent.platform:
+            stats['platform'][user_agent.platform.title()] += 1
+        if user_agent.browser:
             if 'Edge' in visit['user_agent']:
                 stats['browser']['Msie'] += 1
             else:
-                stats['browser'][ua.browser.title()] += 1
+                stats['browser'][user_agent.browser.title()] += 1
 
     return make_json_response(stats)
 
@@ -503,6 +502,9 @@ def get_useragent_stats():
 @app.route("/referer-stats", methods=["GET"])
 @app.require_login
 def get_referer_stats():
+    """ Get a JSON dictionary describing the domains of the referers
+        of visits to the given URL. """
+
     client = app.get_shrunk()
     netid = session['user'].get('netid')
 
@@ -527,6 +529,9 @@ def get_referer_stats():
 @app.route("/monthly-visits", methods=["GET"])
 @app.require_login
 def monthly_visits():
+    """ Returns a JSON dictionary describing the monthly
+        visits to the given link. """
+
     client = app.get_shrunk()
     netid = session["user"].get("netid")
 
@@ -541,6 +546,9 @@ def monthly_visits():
 @app.route("/daily-visits", methods=["GET"])
 @app.require_login
 def daily_visits():
+    """ Returns a JSON dictionary describing the daily
+        visits to the given link. """
+
     client = app.get_shrunk()
     netid = session["user"].get("netid")
 
@@ -555,7 +563,9 @@ def daily_visits():
 
 @app.route("/qr", methods=["GET"])
 @app.require_login
-def qr():
+def qr_code():
+    """ Render a QR code for the given link. """
+
     kwargs = {
         "print": "print" in request.args,
         "url": request.args.get("url")
@@ -599,10 +609,7 @@ def edit_link():
     netid = session['user'].get('netid')
     client = app.get_shrunk()
 
-    # default is no .xxx links
-    banned_regexes = app.config.get('BANNED_REGEXES', ['\.xxx'])
-
-    form = EditLinkForm(request.form, banned_regexes)
+    form = EditLinkForm(request.form, app.config['BANNED_REGEXES'])
     if form.validate():
         # The form has been validated---now do permissions checking
         kwargs = form.to_json()
@@ -618,8 +625,10 @@ def edit_link():
             # The client has permission---try to update the database
             client.modify_url(**kwargs)
             return make_json_response({'success': {}})
-        except (BadShortURLException, ForbiddenDomainException) as e:
-            return make_json_response({'errors': {'short_url': str(e)}}, status=400)
+        except BadShortURLException as ex:
+            return make_json_response({'errors': {'short_url': str(ex)}}, status=400)
+        except ForbiddenDomainException as ex:
+            return make_json_response({'errors': {'short_url': str(ex)}}, status=400)
     else:
         resp = {'errors': {}}
         for name in ['title', 'long_url', 'short_url']:
@@ -631,6 +640,7 @@ def edit_link():
 @app.route("/faq")
 @app.require_login
 def faq():
+    """ Render the FAQ. """
     return render_template("faq.html")
 
 @app.route("/admin/")
@@ -642,13 +652,16 @@ def admin_panel():
     This displays an administrator panel with navigation links to the admin
     controls.
     """
-    roledata = [{"id": role, "title": roles.form_text[role]["title"]} for role in roles.valid_roles()]
-    return render_template("admin.html", roledata=roledata)
+
+    valid_roles = roles.valid_roles()
+    roledata = [{'id': role, 'title': roles.form_text[role]['title']} for role in valid_roles]
+    return render_template('admin.html', roledata=roledata)
 
 @app.route("/organizations")
 @app.require_login
 def list_organizations():
-    # need to pass two lists of dicts: member_orgs and admin_orgs
+    """ List the organizations of which the current user is a member. """
+
     netid = session['user'].get('netid')
     client = app.get_shrunk()
     member_orgs = [client.get_organization_info(org['name']) for org
@@ -660,6 +673,10 @@ def list_organizations():
 @app.route("/create_organization", methods=["POST"])
 @app.require_login
 def create_organization_form():
+    """ Create an organization. The name of the organization to create
+        should be given in the parameter 'name'. The creating user will
+        automatically be made a member of the organization. """
+
     netid = session['user'].get('netid')
     if not roles.check('facstaff', netid) and not roles.check('admin', netid):
         return shrunk.util.unauthorized()
@@ -676,8 +693,8 @@ def create_organization_form():
     name = name.strip()
     client = app.get_shrunk()
     if not client.create_organization(name):
-        return make_json_response({'errors': {'name': 'An organization by that name already exists.'}},
-                                  status=400)
+        err = {'name': 'An organization by that name already exists.'}
+        return make_json_response({'errors': err}, status=400)
 
     client.add_organization_admin(name, netid)
     return make_json_response({'success': {'name': name}})
@@ -685,6 +702,9 @@ def create_organization_form():
 @app.route("/delete_organization", methods=["POST"])
 @app.require_login
 def delete_organization():
+    """ Delete an organization. The name of the organization to delete
+        should be given in the parameter 'name'. """
+
     netid = session['user']['netid']
     client = app.get_shrunk()
     name = request.form.get('name')
@@ -698,6 +718,10 @@ def delete_organization():
 @app.route("/add_organization_member", methods=["POST"])
 @app.require_login
 def add_organization_member():
+    """ Add a member to an organization. The organization name
+        should be given in the parameter 'name' and the netid of the user
+        to add should be given in the parameter 'netid'. """
+
     client = app.get_shrunk()
     netid_grantor = session['user'].get('netid')
     netid_grantee = request.form.get('netid')
@@ -728,6 +752,10 @@ def add_organization_member():
 @app.route("/remove_organization_member", methods=["POST"])
 @app.require_login
 def remove_organization_member():
+    """ Remove a member from an organization. The organization name
+        should be given in the parameter 'name' and the netid of the user
+        to remove should be given in the parameter 'netid'. """
+
     client = app.get_shrunk()
     netid_remover = session['user'].get('netid')
     netid_removed = request.form.get('netid')
@@ -742,6 +770,9 @@ def remove_organization_member():
 @app.route("/manage_organization", methods=["GET"])
 @app.require_login
 def manage_organization():
+    """ Render the manage_organization page. The organization name
+        should be given in the parameter 'name'. """
+
     client = app.get_shrunk()
     netid = session['user']['netid']
     name = request.args.get('name')

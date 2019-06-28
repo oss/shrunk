@@ -3,8 +3,8 @@
 Unit tests for the database.
 """
 
-from shrunk import ShrunkClient
 import shrunk
+from shrunk.client import ShrunkClient
 from pytest import raises
 from datetime import datetime
 import shrunk.roles as roles
