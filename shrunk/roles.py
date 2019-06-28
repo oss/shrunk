@@ -93,7 +93,7 @@ def list_all(role):
 
 def revoke(role, entity):
     """revoke role from entity"""
-    grants.remove({"role": role, "entity": entity})
+    grants.delete_one({"role": role, "entity": entity})
 
 def template_data(role, netid, invalid=False):
     """gets teplated data for lisiting entities with a role in the ui"""

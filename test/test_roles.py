@@ -7,12 +7,12 @@ from pytest import raises
 from shrunk.client import ShrunkClient
 from shrunk.roles import *
 
-client = ShrunkClient(DB_HOST='unit_db')
+client = ShrunkClient(DB_HOST='db', DB_NAME='shrunk_test')
 mongo_client = client._mongo
-init(None, mongo_client=mongo_client)
+init(None, mongo_client=mongo_client, db_name='shrunk_test')
 
 def teardown_function():
-        mongo_client.drop_database("shrunk_roles")
+        mongo_client.drop_database('shrunk_test')
 
 def test_invalid():
     with raises(InvalidEntity):
