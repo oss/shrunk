@@ -1,0 +1,11 @@
+db = new Mongo().getDB('admin');
+db.disableFreeMonitoring();
+db.getMongo().getDB('shrunk').dropDatabase();
+db.adminCommand({ renameCollection: 'shrunk_roles.grants', to: 'shrunk.grants' });
+db.adminCommand({ renameCollection: 'shrunk_urls.urls', to: 'shrunk.urls' });
+db.adminCommand({ renameCollection: 'shrunk_visits.visits', to: 'shrunk.visits' });
+db.adminCommand({ renameCollection: 'shrunk_visits.visitors', to: 'shrunk.visitors' });
+db.getMongo().getDB('shrunk_roles').dropDatabase();
+db.getMongo().getDB('shrunk_urls').dropDatabase();
+db.getMongo().getDB('shrunk_visits').dropDatabase();
+db.getMongo().getDB('shrunk_users').dropDatabase();
