@@ -27,7 +27,8 @@
 		Admin?
 		&nbsp;
 		<input type="checkbox" id="member-add-is_admin-checkbox"
-		       aria-label="Should the new member be an administrator?">
+		       aria-label="Should the new member be an administrator?"
+		       onkeydown="add_member_keypress(event)">
 	      </div>
 	    </div>
 	    {% endif %}
