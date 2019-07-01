@@ -29,6 +29,8 @@
 <div class="row">
   <div class="col">
     <form action="/roles/{{ role }}/" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
       {% if allow_comment %}
       <h3>Comment:</h3>
       <textarea name="comment" rows="5" cols="33" required class="form-control comment"

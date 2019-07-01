@@ -29,3 +29,11 @@ function toggleLinks(cb, netid) {
         }
     });
 }
+
+const CSRF_TOKEN = $('meta[name=csrf-token]').attr('content');
+
+$.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+	xhr.setRequestHeader('X-CSRFToken', CSRF_TOKEN);
+    }
+});

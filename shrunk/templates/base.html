@@ -40,6 +40,8 @@
 	<![endif]-->
   </head>
   <body>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     {% block header scoped %}
     {% include "header.html" %}
     {% endblock %}

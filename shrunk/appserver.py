@@ -7,6 +7,7 @@ import werkzeug.useragents
 from flask import make_response, request, redirect, session, render_template
 from flask_sso import SSO
 from flask_assets import Environment, Bundle
+from flask_wtf.csrf import CSRFProtect
 
 from . import roles
 from . import forms
@@ -22,6 +23,9 @@ from .client import BadShortURLException, ForbiddenDomainException, \
 # Create application
 # ShrunkFlask extends flask and adds decorators and configs itself
 app = ShrunkFlask(__name__)  # pylint: disable=invalid-name
+
+# Enable CSRF protection
+csrf = CSRFProtect(app)
 
 # Flask-Assets stuff
 assets = Environment(app)  # pylint: disable=invalid-name
@@ -43,9 +47,10 @@ JS_BUNDLES = {
     'shrunk_index': ['js/index.js', 'js/ajax_form.js'],
     'shrunk_qr': ['js/qrcode.js', 'js/shrunkqr.js'],
     'shrunk_stats': ['js/stats.js'],
-    'shrunk_organizations': ['js/organizations.js', 'js/ajax_form.js'],
-    'shrunk_manage_org': ['js/manage_organization.js', 'js/ajax_form.js'],
-    'shrunk_delete_organization': ['js/delete_organization.js']
+    'shrunk_organizations': ['js/organizations.js', 'js/delete_organization.js',
+                             'js/ajax_form.js'],
+    'shrunk_manage_org': ['js/manage_organization.js', 'js/delete_organization.js',
+                          'js/ajax_form.js'],
 }
 
 for bundle_name, bundle_files in JS_BUNDLES.items():

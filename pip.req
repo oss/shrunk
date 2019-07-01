@@ -1,6 +1,7 @@
 Flask==1.0.3
 Flask-SSO==0.4.0
 Flask-Assets==0.12
+Flask-WTF==0.14
 cssmin==0.2.0
 jsmin==2.2.2
 Jinja2==2.10.1
