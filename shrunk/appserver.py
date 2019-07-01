@@ -15,11 +15,12 @@ from shrunk.client import BadShortURLException, ForbiddenDomainException, \
 import shrunk.roles as roles
 
 from shrunk.forms import AddLinkForm, EditLinkForm
-from shrunk.stringutil import formattime
-from shrunk.statutil import get_referer_domain, make_csv_for_links, make_geoip_csv, \
+from shrunk.util.string import formattime
+from shrunk.util.stat import get_referer_domain, make_csv_for_links, make_geoip_csv, \
     get_location_state, get_location_country
-from shrunk.util import make_plaintext_response, make_json_response
+from shrunk.util import make_plaintext_response, make_json_response, get_param
 import shrunk.util
+import shrunk.util.search
 
 
 # Create application
@@ -231,32 +232,6 @@ def render_index(netid, client, **kwargs):
     matching their search query are shown.
     """
 
-    def get_param(name, *, default=None, validator=None):
-        """ Get a parameter. First try the request args, then the session,
-            then use the default. Store the final value of the parameter
-            in the session. Optionally apply a validator to the parameter,
-            falling back to the default if validation fails. """
-        if validator:
-            assert default
-        param = request.args.get(name)
-        param = param if param is not None else session.get(name)
-        param = param if param is not None else default
-        if validator and not validator(param):
-            param = default
-        if param is not None:
-            session[name] = param
-        return param
-
-    def authorized_for_links_set(links_set, netid):
-        """ Test whether the user is authorized to view links_set. """
-        authorized = False
-        if links_set == 'GO!all' and roles.check('admin', netid):
-            authorized = True
-        if links_set not in ['GO!my', 'GO!all']:
-            if client.is_organization_member(links_set, netid):
-                authorized = True
-        return authorized
-
     def display_links_set(links_set):
         """ Get a human-readable name for links_set. """
         if links_set == 'GO!my':
@@ -265,61 +240,16 @@ def render_index(netid, client, **kwargs):
             return 'All links'
         return links_set
 
-    def paginate(cur_page, total_pages):
-        """ Compute the range of pages that should be displayed to the user. """
-        if total_pages <= 9:
-            return (1, total_pages)
-        if cur_page < 5:  # display first 9 pages
-            return (1, 9)
-        if cur_page > total_pages - 4:  # display last 9 pages
-            return (total_pages - 8, total_pages)
-        return (cur_page - 4, cur_page + 4)  # display current page +- 4 adjacent pages
-
-    old_query = session.get('query')
-    query = get_param('query')
-    query_changed = query != old_query
-    links_set = get_param('links_set', default='GO!my')
-    sort = get_param('sortby', default='0', validator=lambda x: x in map(str, range(6)))
-    def validate_page(page):
-        try:
-            page = int(page)
-            return page >= 1
-        except ValueError:
-            return False
-    page = int(get_param('page', default='1', validator=validate_page))
-    if query_changed:
-        page = 1
-
-    # links_set determines which set of links we show the user.
-    # valid values of links_set are:
-    #   GO!my  --- show the user's own links
-    #   GO!all --- show all links
-    #   <org>, where <org> is the name of an organization of which
-    #      the user is a member --- show all links belonging to members of <org>
-
-    if not authorized_for_links_set(links_set, netid):
-        links_set = 'GO!my'
-
-    pagination = Pagination(page, app.config['MAX_DISPLAY_LINKS'])
-    search = functools.partial(client.search, sort=sort, pagination=pagination)
-
-    if links_set == 'GO!my':
-        results = search(query=query, netid=netid)
-    elif links_set == 'GO!all':
-        results = search(query=query)
-    else:
-        results = search(query=query, org=links_set)
-
-    total_pages = pagination.num_pages(results.total_results)
-    begin_pages, end_pages = paginate(page, total_pages)
+    links_set = get_param('links_set', request, session, default='GO!my')
+    results = shrunk.util.search.search(netid, client, request, session)
 
     return render_template("index.html",
-                           begin_pages=begin_pages,
-                           end_pages=end_pages,
-                           lastpage=total_pages,
+                           begin_pages=results.begin_page,
+                           end_pages=results.end_page,
+                           lastpage=results.total_pages,
                            links=list(results),
                            linkserver_url=app.config['LINKSERVER_URL'],
-                           page=page,
+                           page=results.page,
                            selected_links_set=display_links_set(links_set),
                            orgs=client.get_member_organizations(netid),
                            **kwargs)
@@ -395,29 +325,11 @@ def get_search_visits_csv(netid, client):
     """ Get CSV-formatted data describing (anonymized) visitors to the current
         search results. """
 
-    # TODO: update this to deal with organizations etc.
-
-    all_users = request.args.get('all_users', '0') == '1' or session.get('all_users', '0') == '1'
-    if all_users and not client.is_admin(netid):
-        return shrunk.util.unauthorized()
-
-    if 'search' not in request.args:
-        if all_users:  # show all links for all users
-            links = client.search()
-        else:  # show all links for current user
-            links = client.search(netid=netid)
-    else:
-        search = request.args['search']
-        if all_users:  # show links matching `search` for all users
-            links = client.search(query=search)
-        else:  # show links matching `search` for current user
-            links = client.search(query=search, netid=netid)
-
-    links = list(links)
+    links = list(shrunk.util.search.search(netid, client, request, session, should_paginate=False))
     total_visits = sum(map(lambda l: l['visits'], links))
     max_visits = app.config['MAX_VISITS_FOR_CSV']
     if total_visits >= max_visits:
-        return 'error: too many visits to create CSV', 500
+        return 'error: too many visits to create CSV', 400
 
     csv_output = make_csv_for_links(client, map(lambda l: l['_id'], links))
     return make_plaintext_response(csv_output, filename='visits-search.csv')

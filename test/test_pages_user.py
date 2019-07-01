@@ -367,19 +367,19 @@ def test_search_visits_csv():
     short2 = sclient.create_short_url('bing.com', netid='shrunk_test')
     sclient.visit(short2, '1.2.3.4', 'visitor2', 'referer')
 
-    resp = get('/search-visits-csv?all_users=1&search=google')
+    resp = get('/search-visits-csv?links_set=GO!all&query=google')
     assert resp.status_code == 200
     csv = str(resp.get_data(), 'utf8')
     assert 'visitor0' in csv and 'visitor1' in csv
     assert 'visitor2' not in csv
 
-    resp = get('/search-visits-csv?all_users=1&search=yahoo')
+    resp = get('/search-visits-csv?links_set=GO!all&query=yahoo')
     assert resp.status_code == 200
     csv = str(resp.get_data(), 'utf8')
     assert 'visitor1' in csv
     assert 'visitor0' not in csv and 'visitor2' not in csv
 
-    resp = get('/search-visits-csv?all_users=1&search=bing')
+    resp = get('/search-visits-csv?links_set=GO!all&query=bing')
     assert resp.status_code == 200
     csv = str(resp.get_data(), 'utf8')
     assert 'visitor2' in csv

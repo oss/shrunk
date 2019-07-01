@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """ shrunk - Rutgers University URL Shortener """
 
 from setuptools import setup

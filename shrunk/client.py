@@ -11,7 +11,7 @@ from pymongo.collection import ReturnDocument
 from pymongo.collation import Collation
 import geoip2.database
 import shrunk.roles as roles
-from shrunk.stringutil import get_domain
+from shrunk.util.string import get_domain
 from shrunk.aggregations import match_short_url, monthly_visits_aggregation, daily_visits_aggregation
 from flask import current_app
 
@@ -68,9 +68,14 @@ class Pagination:
 
 
 class SearchResults:
-    def __init__(self, results, total_results):
+    def __init__(self, results, total_results,
+                 page=None, begin_page=None, end_page=None, total_pages=None):
         self.results = results
         self.total_results = total_results
+        self.page = page
+        self.begin_page = begin_page
+        self.end_page = end_page
+        self.total_pages = total_pages
 
     def __len__(self):
         return len(self.results)
