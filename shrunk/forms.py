@@ -3,8 +3,10 @@
 """Application forms for shrunk."""
 
 import re
+
 from wtforms import Form, StringField, validators, ValidationError
-from shrunk.filters import strip_whitespace, ensure_protocol
+
+from .filters import strip_whitespace, ensure_protocol
 
 class LinkForm(Form):
     long_url = StringField('URL', filters=[strip_whitespace, ensure_protocol], validators=[

@@ -1,5 +1,6 @@
-import shrunk.stringutil as stringutil
+import shrunk.util.string as stringutil
 from datetime import datetime
+
 def test_get_domain():
     """testing to get the domain from a url"""
     assert stringutil.get_domain("test.com") == "test.com"

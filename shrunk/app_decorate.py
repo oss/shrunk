@@ -1,11 +1,13 @@
 import importlib
-from functools import wraps, partial
 import logging
+from functools import wraps, partial
+
 import flask
 from flask import Flask, session, redirect, request, render_template
-import shrunk.roles as roles
-from shrunk.client import ShrunkClient
-from shrunk.util.string import validate_url, get_domain
+
+from . import roles
+from .client import ShrunkClient
+from .util.string import validate_url, get_domain
 
 # support multiple ways of handling forking
 def new_postfork(f):

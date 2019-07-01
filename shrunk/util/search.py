@@ -1,8 +1,10 @@
 import functools
+
 import flask
-import shrunk.roles as roles
-from shrunk.util import get_param
-from shrunk.client import Pagination
+
+from .. import roles
+from ..util import get_param
+from ..client import Pagination
 
 def authorized_for_links_set(client, links_set, netid):
     """ Test whether the user is authorized to view links_set. """

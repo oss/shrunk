@@ -5,7 +5,7 @@ Unit tests for statutil functions.
 
 import shrunk
 from shrunk.client import ShrunkClient
-from shrunk.statutil import *
+from shrunk.util.stat import *
 from shrunk.config import GEOLITE_PATH
 
 client = ShrunkClient(DB_HOST='db', DB_NAME='shrunk_test', GEOLITE_PATH=GEOLITE_PATH)

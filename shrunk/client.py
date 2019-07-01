@@ -6,14 +6,16 @@ import random
 import string
 import math
 import enum
+
 import pymongo
 from pymongo.collection import ReturnDocument
 from pymongo.collation import Collation
 import geoip2.database
-import shrunk.roles as roles
-from shrunk.util.string import get_domain
-from shrunk.aggregations import match_short_url, monthly_visits_aggregation, daily_visits_aggregation
 from flask import current_app
+
+from . import roles
+from . import aggregations
+from .util.string import get_domain
 
 class BadShortURLException(Exception):
     """Raised when the there is an error with the requested short url"""
@@ -402,7 +404,8 @@ class ShrunkClient:
           - `first_time_visits`: new visits by users who haven't seen the link yet.
           - `all_visits`: the total visits per that month.
         """
-        aggregation = [match_short_url(short_url)] + monthly_visits_aggregation
+        aggregation = [aggregations.match_short_url(short_url)] \
+            + aggregations.monthly_visits_aggregation
         return list(self.db.visits.aggregate(aggregation))
 
     def get_daily_visits(self, short_url):
@@ -418,7 +421,8 @@ class ShrunkClient:
           - `first_time_visits`: new visits by users who haven't seen the link yet.
           - `all_visits`: the total visits per that month.
         """
-        aggregation = [match_short_url(short_url)] + daily_visits_aggregation
+        aggregation = [aggregations.match_short_url(short_url)] + \
+            aggregations.daily_visits_aggregation
         return list(self.db.visits.aggregate(aggregation))
 
     def get_long_url(self, short_url):

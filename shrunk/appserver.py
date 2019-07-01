@@ -9,19 +9,16 @@ from flask import make_response, request, redirect, session, render_template
 from flask_sso import SSO
 from flask_assets import Environment, Bundle
 
-from shrunk.app_decorate import ShrunkFlask
-from shrunk.client import BadShortURLException, ForbiddenDomainException, \
-    AuthenticationException, NoSuchLinkException, Pagination
-import shrunk.roles as roles
-
-from shrunk.forms import AddLinkForm, EditLinkForm
-from shrunk.util.string import formattime
-from shrunk.util.stat import get_referer_domain, make_csv_for_links, make_geoip_csv, \
+from . import roles
+from . import forms
+from . import util
+from .util import search
+from .util import string
+from .util.stat import get_referer_domain, make_csv_for_links, make_geoip_csv, \
     get_location_state, get_location_country
-from shrunk.util import make_plaintext_response, make_json_response, get_param
-import shrunk.util
-import shrunk.util.search
-
+from .app_decorate import ShrunkFlask
+from .client import BadShortURLException, ForbiddenDomainException, \
+    AuthenticationException, NoSuchLinkException, Pagination
 
 # Create application
 # ShrunkFlask extends flask and adds decorators and configs itself
@@ -62,7 +59,7 @@ for bundle_name, bundle_files in JS_BUNDLES.items():
 ext = SSO(app=app)  #pylint: disable=invalid-name
 
 # Allows us to use the function in our templates
-app.jinja_env.globals.update(formattime=formattime)
+app.jinja_env.globals.update(formattime=string.formattime)
 
 @app.context_processor
 def add_search_params():
@@ -240,8 +237,8 @@ def render_index(netid, client, **kwargs):
             return 'All links'
         return links_set
 
-    links_set = get_param('links_set', request, session, default='GO!my')
-    results = shrunk.util.search.search(netid, client, request, session)
+    links_set = util.get_param('links_set', request, session, default='GO!my')
+    results = search.search(netid, client, request, session)
 
     return render_template("index.html",
                            begin_pages=results.begin_page,
@@ -259,30 +256,30 @@ def render_index(netid, client, **kwargs):
 def add_link(netid, client):
     """ Adds a new link for the current user and handles errors. """
 
-    form = AddLinkForm(request.form, app.config['BANNED_REGEXES'])
+    form = forms.AddLinkForm(request.form, app.config['BANNED_REGEXES'])
     if form.validate():
         kwargs = form.to_json()
         kwargs['netid'] = netid
         admin_or_power = roles.check('admin', netid) or roles.check('power_user', netid)
 
         if kwargs['short_url'] and not admin_or_power:
-            return shrunk.util.unauthorized()
+            return util.unauthorized()
 
         try:
             shortened = client.create_short_url(**kwargs)
             short_url = '{}/{}'.format(app.config['LINKSERVER_URL'], shortened)
-            return make_json_response({'success': {'short_url': short_url}})
+            return util.make_json_response({'success': {'short_url': short_url}})
         except BadShortURLException as ex:
-            return make_json_response({'errors': {'short_url': str(ex)}}, status=400)
+            return util.make_json_response({'errors': {'short_url': str(ex)}}, status=400)
         except ForbiddenDomainException as ex:
-            return make_json_response({'errors': {'long_url': str(ex)}}, status=400)
+            return util.make_json_response({'errors': {'long_url': str(ex)}}, status=400)
     else:
         resp = {'errors': {}}
         for name in ['title', 'long_url', 'short_url']:
             err = form.errors.get(name)
             if err:
                 resp['errors'][name] = err[0]
-        return make_json_response(resp, status=400)
+        return util.make_json_response(resp, status=400)
 
 @app.route("/stats", methods=["GET"])
 @app.require_login
@@ -314,9 +311,9 @@ def get_link_visits_csv(netid, client):
         return error('error: request must have url', 400)
     link = request.args['url']
     if not client.is_owner_or_admin(link, netid):
-        return shrunk.util.unauthorized()
+        return util.unauthorized()
     csv_output = make_csv_for_links(client, [link])
-    return make_plaintext_response(csv_output, filename='visits-{}.csv'.format(link))
+    return util.make_plaintext_response(csv_output, filename='visits-{}.csv'.format(link))
 
 
 @app.route("/search-visits-csv", methods=["GET"])
@@ -325,14 +322,14 @@ def get_search_visits_csv(netid, client):
     """ Get CSV-formatted data describing (anonymized) visitors to the current
         search results. """
 
-    links = list(shrunk.util.search.search(netid, client, request, session, should_paginate=False))
+    links = list(search.search(netid, client, request, session, should_paginate=False))
     total_visits = sum(map(lambda l: l['visits'], links))
     max_visits = app.config['MAX_VISITS_FOR_CSV']
     if total_visits >= max_visits:
         return 'error: too many visits to create CSV', 400
 
     csv_output = make_csv_for_links(client, map(lambda l: l['_id'], links))
-    return make_plaintext_response(csv_output, filename='visits-search.csv')
+    return util.make_plaintext_response(csv_output, filename='visits-search.csv')
 
 @app.route("/geoip-csv", methods=["GET"])
 @app.require_login
@@ -352,7 +349,7 @@ def get_geoip_csv(netid, client):
         return ('error: invalid resolution', 400)
 
     if not client.is_owner_or_admin(link, netid):
-        return shrunk.util.unauthorized()
+        return util.unauthorized()
 
     if resolution == 'country':
         get_location = get_location_country
@@ -360,7 +357,7 @@ def get_geoip_csv(netid, client):
         get_location = get_location_state
 
     csv_output = make_geoip_csv(client, get_location, link)
-    return make_plaintext_response(csv_output)
+    return util.make_plaintext_response(csv_output)
 
 
 @app.route("/useragent-stats", methods=["GET"])
@@ -374,7 +371,7 @@ def get_useragent_stats(netid, client):
     link = request.args['url']
 
     if not client.is_owner_or_admin(link, netid):
-        return shrunk.util.unauthorized()
+        return util.unauthorized()
 
     stats = collections.defaultdict(lambda: collections.defaultdict(int))
     for visit in client.get_visits(link):
@@ -392,7 +389,7 @@ def get_useragent_stats(netid, client):
             else:
                 stats['browser'][user_agent.browser.title()] += 1
 
-    return make_json_response(stats)
+    return util.make_json_response(stats)
 
 
 @app.route("/referer-stats", methods=["GET"])
@@ -406,7 +403,7 @@ def get_referer_stats(netid, client):
     link = request.args['url']
 
     if not client.is_owner_or_admin(link, netid):
-        return shrunk.util.unauthorized()
+        return util.unauthorized()
 
     stats = collections.defaultdict(int)
     for visit in client.get_visits(link):
@@ -416,7 +413,7 @@ def get_referer_stats(netid, client):
         else:
             stats['unknown'] += 1
 
-    return make_json_response(stats)
+    return util.make_json_response(stats)
 
 
 @app.route("/monthly-visits", methods=["GET"])
@@ -429,7 +426,7 @@ def monthly_visits(netid, client):
         return '{"error":"request must have url"}', 400
     url = request.args['url']
     if not client.is_owner_or_admin(url, netid):
-        return shrunk.util.unauthorized()
+        return util.unauthorized()
     visits = client.get_monthly_visits(url)
     return json.dumps(visits), 200, {"Content-Type": "application/json"}
 
@@ -443,7 +440,7 @@ def daily_visits(netid, client):
         return '{"error":"request must have url"}', 400
     url = request.args['url']
     if not client.is_owner_or_admin(url, netid):
-        return shrunk.util.unauthorized()
+        return util.unauthorized()
     visits = client.get_daily_visits(url)
     return json.dumps(visits), 200, {"Content-Type": "application/json"}
 
@@ -475,7 +472,7 @@ def delete_link(netid, client):
     try:
         client.delete_url(request.form["short_url"], netid)
     except AuthenticationException:
-        return shrunk.util.unauthorized()
+        return util.unauthorized()
     except NoSuchLinkException:
         return error("that link does not exist", 404)
 
@@ -491,33 +488,33 @@ def edit_link(netid, client):
     will be edited.
     """
 
-    form = EditLinkForm(request.form, app.config['BANNED_REGEXES'])
+    form = forms.EditLinkForm(request.form, app.config['BANNED_REGEXES'])
     if form.validate():
         # The form has been validated---now do permissions checking
         kwargs = form.to_json()
         admin_or_power = roles.check('admin', netid) or roles.check('power_user', netid)
 
         if not client.is_owner_or_admin(kwargs['old_short_url'], netid):
-            return shrunk.util.unauthorized()
+            return util.unauthorized()
 
         if kwargs['short_url'] != kwargs['old_short_url'] and not admin_or_power:
-            return shrunk.util.unauthorized()
+            return util.unauthorized()
 
         try:
             # The client has permission---try to update the database
             client.modify_url(**kwargs)
-            return make_json_response({'success': {}})
+            return util.make_json_response({'success': {}})
         except BadShortURLException as ex:
-            return make_json_response({'errors': {'short_url': str(ex)}}, status=400)
+            return util.make_json_response({'errors': {'short_url': str(ex)}}, status=400)
         except ForbiddenDomainException as ex:
-            return make_json_response({'errors': {'short_url': str(ex)}}, status=400)
+            return util.make_json_response({'errors': {'short_url': str(ex)}}, status=400)
     else:
         resp = {'errors': {}}
         for name in ['title', 'long_url', 'short_url']:
             err = form.errors.get(name)
             if err:
                 resp['errors'][name] = err[0]
-        return make_json_response(resp, status=400)
+        return util.make_json_response(resp, status=400)
 
 @app.route("/faq")
 @app.require_login
@@ -558,24 +555,25 @@ def create_organization_form(netid, client):
         automatically be made a member of the organization. """
 
     if not roles.check('facstaff', netid) and not roles.check('admin', netid):
-        return shrunk.util.unauthorized()
+        return util.unauthorized()
 
     name = request.form.get('name')
     if not name:
-        return make_json_response({'errors': {'name': 'You must supply a name.'}}, status=400)
+        return util.make_json_response({'errors': {'name': 'You must supply a name.'}}, status=400)
 
     name = name.strip()
     if not name.isalnum():
-        return make_json_response({'errors': {'name': 'Organization names must be alphanumeric.'}},
-                                  status=400)
+        return util.make_json_response({'errors': {'name':
+                                                   'Organization names must be alphanumeric.'}},
+        status=400)
 
     name = name.strip()
     if not client.create_organization(name):
         err = {'name': 'An organization by that name already exists.'}
-        return make_json_response({'errors': err}, status=400)
+        return util.make_json_response({'errors': err}, status=400)
 
     client.add_organization_admin(name, netid)
-    return make_json_response({'success': {'name': name}})
+    return util.make_json_response({'success': {'name': name}})
 
 @app.route("/delete_organization", methods=["POST"])
 @app.require_login
@@ -585,9 +583,9 @@ def delete_organization(netid, client):
 
     name = request.form.get('name')
     if not name:
-        return shrunk.util.unauthorized()
+        return util.unauthorized()
     if not roles.check('admin', netid) and not client.is_organization_admin(name, netid):
-        return shrunk.util.unauthorized()
+        return util.unauthorized()
     client.delete_organization(name)
     return redirect('/organizations')
 
@@ -600,18 +598,19 @@ def add_organization_member(netid_grantor, client):
 
     netid_grantee = request.form.get('netid')
     if not netid_grantee:
-        return make_json_response({'errors': {'netid': 'You must supply a NetID.'}}, status=400)
+        return util.make_json_response({'errors': {'netid': 'You must supply a NetID.'}},
+                                       status=400)
 
     name = request.form.get('name')
     admin = request.form.get('is_admin', 'false') == 'true'
     if not name:
-        return make_json_response({'errors': {'name': 'You must supply a name.'}}, status=400)
+        return util.make_json_response({'errors': {'name': 'You must supply a name.'}}, status=400)
 
     if not client.is_organization_member(name, netid_grantor):
-        return shrunk.util.unauthorized()
+        return util.unauthorized()
 
     if admin and not client.is_organization_admin(name, netid_grantor):
-        return shrunk.util.unauthorized()
+        return util.unauthorized()
 
     if admin:
         res = client.add_organization_admin(name, netid_grantee)
@@ -619,9 +618,9 @@ def add_organization_member(netid_grantor, client):
         res = client.add_organization_member(name, netid_grantee)
 
     if not res:
-        return make_json_response({'errors': {'netid': 'Member already exists.'}}, status=400)
+        return util.make_json_response({'errors': {'netid': 'Member already exists.'}}, status=400)
 
-    return make_json_response({'success': {}})
+    return util.make_json_response({'success': {}})
 
 @app.route("/remove_organization_member", methods=["POST"])
 @app.require_login
@@ -633,11 +632,11 @@ def remove_organization_member(netid_remover, client):
     netid_removed = request.form.get('netid')
     name = request.form.get('name')
     if not netid_removed or not name:
-        return shrunk.util.unauthorized()
+        return util.unauthorized()
     if not client.is_organization_admin(name, netid_remover):
-        return shrunk.util.unauthorized()
+        return util.unauthorized()
     client.remove_organization_member(name, netid_removed)
-    return make_json_response({'success': {}})
+    return util.make_json_response({'success': {}})
 
 @app.route("/manage_organization", methods=["GET"])
 @app.require_login
@@ -647,9 +646,9 @@ def manage_organization(netid, client):
 
     name = request.args.get('name')
     if not name:
-        return shrunk.util.unauthorized()
+        return util.unauthorized()
     if not client.may_manage_organization(netid, name):
-        return shrunk.util.unauthorized()
+        return util.unauthorized()
     kwargs = {
         'name': name,
         'user_is_admin': client.is_organization_admin(name, netid),
