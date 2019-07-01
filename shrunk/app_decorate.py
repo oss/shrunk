@@ -129,7 +129,7 @@ class ShrunkFlask(ShrunkFlaskMini):
         return wrapper
 
     def require_role(self, role):
-        """force a somone to have a role to see an enpoint
+        """force a somone to have a role to see an endpoint
         @app.route("/my/secret/route")
         @roles.require("cool_person")
         def secret_route():
@@ -175,9 +175,9 @@ class ShrunkFlask(ShrunkFlaskMini):
     def add_roles_routes(self):
         """adds dynamic roles routes"""
         @self.route("/roles/<role>/", methods=["POST"])
-        @self.require_login
         @self.require_qualified
-        def role_grant(role):
+        @self.require_login
+        def role_grant(netid, client, role):
             netid = session["user"]["netid"]
             try:
                 entity = request.form["entity"]
@@ -196,9 +196,9 @@ class ShrunkFlask(ShrunkFlaskMini):
                                        **roles.template_data(role, netid, invalid=True))
 
         @self.route("/roles/<role>/revoke", methods=["POST"])
-        @self.require_login
         @self.require_qualified
-        def role_revoke(role):
+        @self.require_login
+        def role_revoke(netid, client, role):
             netid = session["user"]["netid"]
             entity = request.form["entity"]
             granted_by = roles.granted_by(role, entity)
@@ -208,9 +208,9 @@ class ShrunkFlask(ShrunkFlaskMini):
             return redirect("/unauthorized")
 
         @self.route("/roles/<role>/", methods=["GET"])
-        @self.require_login
         @self.require_qualified
-        def role_list(role):
+        @self.require_login
+        def role_list(netid, client, role):
             netid = session['user'].get('netid')
             kwargs = roles.template_data(role, netid)
             return render_template("role.html", **kwargs)
