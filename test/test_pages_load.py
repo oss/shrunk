@@ -32,9 +32,9 @@ def test_dev_logins():
 
 
 def test_delete():
-    assert_redirect(post("/delete"), "shrunk-login")
-    login("user")
-    assert get("/delete").status_code < 500
+    # not logged in => no CSRF token => error 400
+    resp = post('/delete', csrf_protect=False)
+    assert resp.status_code == 400
 
 
 def test_auth_no_500():

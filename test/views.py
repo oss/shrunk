@@ -1,5 +1,6 @@
-from shrunk.appserver import app
 from functools import wraps
+import bs4
+from shrunk.appserver import app
 
 client = app.test_client()
 
@@ -12,12 +13,24 @@ def logout():
     return client.get("/logout")
 
 
+def get_csrf_token():
+    resp = get('/faq')
+    assert resp.status_code == 200
+    soup = bs4.BeautifulSoup(resp.get_data(), features='html.parser')
+    meta = soup.find('meta', {'name': 'csrf-token'})
+    assert meta is not None
+    return meta['content']
+
+
 def get(url, *args, **kwargs):
     return client.get(url, *args, **kwargs)
 
 
-def post(url, *args, **kwargs):
-    return client.post(url, *args, **kwargs)
+def post(url, csrf_protect=True, *args, **kwargs):
+    headers = {}
+    if csrf_protect:
+        headers['X-CSRFToken'] = get_csrf_token()
+    return client.post(url, headers=headers, *args, **kwargs)
 
 
 def loginw(role):

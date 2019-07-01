@@ -5,7 +5,6 @@ import json
 from shrunk.appserver import app
 import shrunk.roles as roles
 from views import login, logout, get, post, loginw, assert_redirect
-
 from shrunk.config import GEOLITE_PATH
 
 
