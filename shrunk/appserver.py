@@ -2,7 +2,6 @@
 
 import json
 import collections
-import functools
 
 import werkzeug.useragents
 from flask import make_response, request, redirect, session, render_template
@@ -18,23 +17,24 @@ from .util.stat import get_referer_domain, make_csv_for_links, make_geoip_csv, \
     get_location_state, get_location_country
 from .app_decorate import ShrunkFlask
 from .client import BadShortURLException, ForbiddenDomainException, \
-    AuthenticationException, NoSuchLinkException, Pagination
+    AuthenticationException, NoSuchLinkException
 
 # Create application
 # ShrunkFlask extends flask and adds decorators and configs itself
-app = ShrunkFlask(__name__)  #pylint: disable=invalid-name
+app = ShrunkFlask(__name__)  # pylint: disable=invalid-name
 
 # Flask-Assets stuff
-assets = Environment(app)  #pylint: disable=invalid-name
+assets = Environment(app)  # pylint: disable=invalid-name
 assets.url = app.static_url_path
 
 # Compile+minify custom bootstrap
-shrunk_bootstrap = Bundle('scss/shrunk_bootstrap.scss', filters='scss,cssmin', \
-    output='shrunk_bootstrap.css')
+shrunk_bootstrap = Bundle('scss/shrunk_bootstrap.scss', filters='scss,cssmin',
+                          output='shrunk_bootstrap.css')
 assets.register('shrunk_bootstrap', shrunk_bootstrap)
 
 # Minify shrunk css
-shrunk_css = Bundle('css/*.css', filters='cssmin', output='shrunk_css.css')  #pylint: disable=invalid-name
+shrunk_css = Bundle('css/*.css', filters='cssmin',
+                    output='shrunk_css.css')  # pylint: disable=invalid-name
 assets.register('shrunk_css', shrunk_css)
 
 # Create JS bundles for each page
@@ -56,10 +56,11 @@ for bundle_name, bundle_files in JS_BUNDLES.items():
 # This attaches the *flask_sso* login handler to the SSO_LOGIN_URL,
 # which essentially maps the SSO attributes to a dictionary and
 # calls *our* login_handler, passing the attribute dictionary
-ext = SSO(app=app)  #pylint: disable=invalid-name
+ext = SSO(app=app)  # pylint: disable=invalid-name
 
 # Allows us to use the function in our templates
 app.jinja_env.globals.update(formattime=string.formattime)
+
 
 @app.context_processor
 def add_search_params():
@@ -74,6 +75,7 @@ def add_search_params():
     if 'page' in session:
         params['page'] = session['page']
     return params
+
 
 @app.context_processor
 def add_user_info():
@@ -92,7 +94,7 @@ def login(user_info):
     types = user_info.get("employeeType").split(";")
     netid = user_info.get("netid")
 
-    def t(typ):  #pylint: disable=invalid-name
+    def t(typ):  # pylint: disable=invalid-name
         return typ in types
 
     def log_failed(why):
@@ -134,6 +136,7 @@ def login(user_info):
     session["user"] = user_info
     return redirect("/")
 
+
 @app.route('/logout')
 def logout():
     """ Clears the user's session and sends them to Shibboleth to finish logging out. """
@@ -145,6 +148,7 @@ def logout():
         if user['netid'] in ['DEV_USER', 'DEV_FACSTAFF', 'DEV_PWR_USER', 'DEV_ADMIN']:
             return redirect('/')
     return redirect('/shibboleth/Logout')
+
 
 @app.route('/shrunk-login')
 def render_login(**kwargs):
@@ -165,14 +169,15 @@ def render_login(**kwargs):
                                          **kwargs))
     return resp
 
+
 # add devlogins if necessary
 if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
-    #pylint: disable=missing-docstring
+    # pylint: disable=missing-docstring
 
     @app.route('/dev-user-login')
     def dev_user_login():
         app.logger.info('user dev login valid')
-        session['user'] = {'netid':'DEV_USER'}
+        session['user'] = {'netid': 'DEV_USER'}
         session["all_users"] = "0"
         session["sortby"] = "0"
         return redirect('/')
@@ -212,12 +217,14 @@ def unauthorized():
     """ Displays an unauthorized page. """
     return make_response(render_template('unauthorized.html'))
 
+
 def error(message, code):
     """ Returns the error page with a given message and HTTP status code. """
     return make_response(render_template("error.html", message=message), code)
 
-### Views ###
+# ===== Views =====
 # route /<short url> handle by shrunkFlaskMini
+
 
 @app.route("/")
 @app.require_login
@@ -251,6 +258,7 @@ def render_index(netid, client, **kwargs):
                            orgs=client.get_member_organizations(netid),
                            **kwargs)
 
+
 @app.route("/add", methods=["POST"])
 @app.require_login
 def add_link(netid, client):
@@ -281,6 +289,7 @@ def add_link(netid, client):
                 resp['errors'][name] = err[0]
         return util.make_json_response(resp, status=400)
 
+
 @app.route("/stats", methods=["GET"])
 @app.require_login
 def get_stats(netid, client):
@@ -301,6 +310,7 @@ def get_stats(netid, client):
         template_data['url_info'] = url_info
 
     return render_template("stats.html", short_url=request.args.get('url', ''), **template_data)
+
 
 @app.route("/link-visits-csv", methods=["GET"])
 @app.require_login
@@ -330,6 +340,7 @@ def get_search_visits_csv(netid, client):
 
     csv_output = make_csv_for_links(client, map(lambda l: l['_id'], links))
     return util.make_plaintext_response(csv_output, filename='visits-search.csv')
+
 
 @app.route("/geoip-csv", methods=["GET"])
 @app.require_login
@@ -430,6 +441,7 @@ def monthly_visits(netid, client):
     visits = client.get_monthly_visits(url)
     return json.dumps(visits), 200, {"Content-Type": "application/json"}
 
+
 @app.route("/daily-visits", methods=["GET"])
 @app.require_login
 def daily_visits(netid, client):
@@ -516,11 +528,13 @@ def edit_link(netid, client):
                 resp['errors'][name] = err[0]
         return util.make_json_response(resp, status=400)
 
+
 @app.route("/faq")
 @app.require_login
 def faq(netid, client):
     """ Render the FAQ. """
     return render_template("faq.html")
+
 
 @app.route("/admin/")
 @app.require_login
@@ -536,6 +550,7 @@ def admin_panel(netid, client):
     roledata = [{'id': role, 'title': roles.form_text[role]['title']} for role in valid_roles]
     return render_template('admin.html', roledata=roledata)
 
+
 @app.route("/organizations")
 @app.require_login
 def list_organizations(netid, client):
@@ -546,6 +561,7 @@ def list_organizations(netid, client):
     admin_orgs = [client.get_organization_info(org['name']) for org
                   in client.get_admin_organizations(netid)]
     return render_template("organizations.html", member_orgs=member_orgs, admin_orgs=admin_orgs)
+
 
 @app.route("/create_organization", methods=["POST"])
 @app.require_login
@@ -565,7 +581,7 @@ def create_organization_form(netid, client):
     if not name.isalnum():
         return util.make_json_response({'errors': {'name':
                                                    'Organization names must be alphanumeric.'}},
-        status=400)
+                                       status=400)
 
     name = name.strip()
     if not client.create_organization(name):
@@ -574,6 +590,7 @@ def create_organization_form(netid, client):
 
     client.add_organization_admin(name, netid)
     return util.make_json_response({'success': {'name': name}})
+
 
 @app.route("/delete_organization", methods=["POST"])
 @app.require_login
@@ -588,6 +605,7 @@ def delete_organization(netid, client):
         return util.unauthorized()
     client.delete_organization(name)
     return redirect('/organizations')
+
 
 @app.route("/add_organization_member", methods=["POST"])
 @app.require_login
@@ -622,6 +640,7 @@ def add_organization_member(netid_grantor, client):
 
     return util.make_json_response({'success': {}})
 
+
 @app.route("/remove_organization_member", methods=["POST"])
 @app.require_login
 def remove_organization_member(netid_remover, client):
@@ -637,6 +656,7 @@ def remove_organization_member(netid_remover, client):
         return util.unauthorized()
     client.remove_organization_member(name, netid_removed)
     return util.make_json_response({'success': {}})
+
 
 @app.route("/manage_organization", methods=["GET"])
 @app.require_login

@@ -1,29 +1,23 @@
-import importlib
 import logging
 from functools import wraps, partial
 
-import flask
 from flask import Flask, session, redirect, request, render_template
 
 from . import roles
 from .client import ShrunkClient
 from .util.string import validate_url, get_domain
 
-# support multiple ways of handling forking
-def new_postfork(f):
-    """by default don't do anything"""
 
 try:
     from uwsgidecorators import postfork
-    new_postfork = postfork
 except ImportError:
-    pass
-
-postfork = new_postfork
+    def postfork(func):
+        pass
 
 
 class ShrunkFlaskMini(Flask):
     """set up and configs our basic shrunk aplication"""
+
     def __init__(self, name):
         super(ShrunkFlaskMini, self).__init__(name)
         # Import settings in config.py
@@ -44,7 +38,6 @@ class ShrunkFlaskMini(Flask):
             """
             self._shrunk_client.reconnect()
 
-        
         self.logger.info("ShrunkClient initialized %s:%s"
                          % (self.config["DB_HOST"],
                             self.config["DB_PORT"]))
@@ -94,8 +87,10 @@ class ShrunkFlaskMini(Flask):
         """returns the shrunk client attached to this server"""
         return self._shrunk_client
 
+
 class ShrunkFlask(ShrunkFlaskMini):
     """also sets up roles system for administration panel"""
+
     def __init__(self, name):
         super(ShrunkFlask, self).__init__(name)
         roles.init(self)
@@ -104,7 +99,7 @@ class ShrunkFlask(ShrunkFlaskMini):
         self.add_roles_routes()
         self.setup_roles()
         self.logger.info("done with setup")
-        
+
         @postfork
         def reinit():
             """
@@ -245,12 +240,12 @@ class ShrunkFlask(ShrunkFlaskMini):
 
         def onblock(url):
             domain = get_domain(url)
-            self.logger.info(url+" is blocked! "+
+            self.logger.info(url+" is blocked! " +
                              "removing all urls with domain "+domain)
             urls = self.get_shrunk()._mongo.shrunk_urls.urls
             contains_domain = list(urls.find({"long_url": {
                 # . needs to be escaped in the domain because it is regex wildcard
-                "$regex": "%s*" % domain.replace(".", "\.")
+                "$regex": "%s*" % domain.replace(".", r"\.")
             }}))
 
             matches_domain = [link for link in contains_domain

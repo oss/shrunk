@@ -33,7 +33,7 @@ and are automatically admins."""
 
 SSO_ATTRIBUTE_MAP = {
     "SHIB_UID_1": (True, "netid"),
-    #"SHIB_UID_2": (True, "uid2"),
+    # "SHIB_UID_2": (True, "uid2"),
     "SHIB_UID_3": (True, "employeeType"),
 }
 """Map SSO attributes to session keys"""

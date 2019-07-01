@@ -8,7 +8,7 @@ from setuptools import setup
 try:
     with open("README.md") as fd:
         readme_text = fd.read()
-except:
+except FileNotFoundError:
     readme_text = ""
 
 require = [
@@ -26,24 +26,24 @@ require = [
 ]
 
 setup(
-    name = "shrunk",
-    version = "0.6.7",
-    packages = ["shrunk"],
-    install_requires = require,
-    package_dir = {"shrunk": "shrunk"},
-    package_data = {"shrunk": ["static/css/*", "static/img/*", "static/js/*",
-                               "templates/*", "../scripts/*"]},
-    author = "Rutgers Open System Solutions",
-    author_email = "oss@oss.rutgers.edu",
-    description = "Rutgers University URL Shortener",
-    long_description = readme_text,
+    name="shrunk",
+    version="0.6.7",
+    packages=["shrunk"],
+    install_requires=require,
+    package_dir={"shrunk": "shrunk"},
+    package_data={"shrunk": ["static/css/*", "static/img/*", "static/js/*",
+                             "templates/*", "../scripts/*"]},
+    author="Rutgers Open System Solutions",
+    author_email="oss@oss.rutgers.edu",
+    description="Rutgers University URL Shortener",
+    long_description=readme_text,
     long_description_content_type="text/markdown",
-    keywords = "shrunk rutgers url shortener",
-    classifiers = [
+    keywords="shrunk rutgers url shortener",
+    classifiers=[
         "Development Status :: 4 - Beta",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python",
         "Topic :: Utilities"
     ],
-    url = "https://github.com/oss/shrunk"
+    url="https://github.com/oss/shrunk"
 )

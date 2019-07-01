@@ -5,18 +5,22 @@ Unit tests for roles system.
 
 from pytest import raises
 from shrunk.client import ShrunkClient
-from shrunk.roles import *
+from shrunk.roles import init, grant, revoke, has_one_of, template_data, \
+    new, get, granted_by, list_all, valid_roles, InvalidEntity
 
 client = ShrunkClient(DB_HOST='db', DB_NAME='shrunk_test')
 mongo_client = client._mongo
 init(None, mongo_client=mongo_client, db_name='shrunk_test')
 
+
 def teardown_function():
-        mongo_client.drop_database('shrunk_test')
+    mongo_client.drop_database('shrunk_test')
+
 
 def test_invalid():
     with raises(InvalidEntity):
         grant('root', 'Justice League', 'peb60')
+
 
 def test_get():
     def check(expected):
@@ -37,10 +41,12 @@ def test_get():
     revoke('facstaff', 'peb60')
     check([])
 
+
 def test_granted_by():
     grant('admin', 'Justice League', 'peb60')
     assert granted_by('admin', 'peb60') == 'Justice League'
-    assert granted_by('power_user', 'peb60') == None
+    assert granted_by('power_user', 'peb60') is None
+
 
 def test_list_all():
     def check(role, expected):
@@ -74,12 +80,13 @@ def test_list_all():
     check('facstaff', [])
     check('power_user', [])
 
+
 def test_valid_roles():
     def check(expected):
         for r in expected:
             assert r in valid_roles()
 
-    true = lambda _: True
+    def true(_): return True
 
     new('role0', true)
     check(['role0'])
@@ -89,6 +96,7 @@ def test_valid_roles():
 
     new('role2', true)
     check(['role0', 'role1', 'role2'])
+
 
 def test_template_data():
     grant('role0', 'shrunk_test', 'entity0')
@@ -111,6 +119,7 @@ def test_template_data():
 
     template = template_data('role0', 'shrunk_test', invalid=True)
     assert template['msg'] == 'invalid entity for role role0'
+
 
 def test_has_one_of():
     new("prole0", True)

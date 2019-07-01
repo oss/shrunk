@@ -6,6 +6,7 @@ from .. import roles
 from ..util import get_param
 from ..client import Pagination
 
+
 def authorized_for_links_set(client, links_set, netid):
     """ Test whether the user is authorized to view links_set. """
     authorized = False
@@ -14,6 +15,7 @@ def authorized_for_links_set(client, links_set, netid):
     if links_set not in ['GO!my', 'GO!all'] and client.is_organization_member(links_set, netid):
         authorized = True
     return authorized
+
 
 def paginate(cur_page, total_pages):
     """ Compute the range of pages that should be displayed to the user. """
@@ -25,12 +27,14 @@ def paginate(cur_page, total_pages):
         return (total_pages - 8, total_pages)
     return (cur_page - 4, cur_page + 4)  # display current page +- 4 adjacent pages
 
+
 def validate_page(page):
     try:
         page = int(page)
         return page >= 1
     except ValueError:
         return False
+
 
 def search(netid, client, request, session, should_paginate=True):
     old_query = session.get('query')

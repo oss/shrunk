@@ -3,18 +3,20 @@ import csv
 import collections
 import urllib.parse
 
-from flask import make_response
 
 # TODO use already existing get_domain function instead?
 # maybe get doamin should use this implementation
+
+
 def get_referer_domain(visit):
     referer = visit.get('referer')
     if referer:
         try:
             return urllib.parse.urlparse(referer).hostname.lower()
-        except:
+        except (ValueError, AttributeError):
             return None
     return None
+
 
 def make_csv_for_links(client, links):
     f = io.StringIO()
@@ -35,11 +37,14 @@ def make_csv_for_links(client, links):
 
     return f.getvalue()
 
+
 def get_location_state(client, ip):
     return client.get_state_code(ip)
 
+
 def get_location_country(client, ip):
     return client.get_country_name(ip)
+
 
 def make_geoip_csv(client, get_location, link):
     location_counts = collections.defaultdict(int)

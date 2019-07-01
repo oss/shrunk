@@ -8,6 +8,7 @@ from wtforms import Form, StringField, validators, ValidationError
 
 from .filters import strip_whitespace, ensure_protocol
 
+
 class LinkForm(Form):
     long_url = StringField('URL', filters=[strip_whitespace, ensure_protocol], validators=[
         validators.DataRequired('You need a link to shrink!'),

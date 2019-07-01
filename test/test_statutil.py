@@ -3,13 +3,14 @@
 Unit tests for statutil functions.
 """
 
-import shrunk
 from shrunk.client import ShrunkClient
-from shrunk.util.stat import *
+from shrunk.util.stat import get_referer_domain, make_csv_for_links, \
+    make_geoip_csv, get_location_state, get_location_country
 from shrunk.config import GEOLITE_PATH
 
 client = ShrunkClient(DB_HOST='db', DB_NAME='shrunk_test', GEOLITE_PATH=GEOLITE_PATH)
 mongoclient = client._mongo
+
 
 def test_get_referer_domain():
     def get(url):
@@ -18,9 +19,10 @@ def test_get_referer_domain():
     assert get('https://sld.google.com') == 'sld.google.com'
     assert get('https://my.si.te:80') == 'my.si.te'
 
+
 def test_make_csv_for_links():
     def shorten(long_url):
-        return client.create_short_url(long_url, netid = 'shrunk_test')
+        return client.create_short_url(long_url, netid='shrunk_test')
 
     short0 = shorten('http://www.foobar.net/index')
     short1 = shorten('http://www.rutger.edu/coleg')
@@ -38,7 +40,7 @@ def test_make_csv_for_links():
     assert len(csv0) == 6
     assert csv0[0] == header
     assert all(map(lambda l: 'facebook.com' in l if l else True, csv0[1:]))
-    
+
     csv1 = make_csv_for_links(client, [short1]).split('\r\n')
     assert len(csv1) == 6
     assert csv1[0] == header
@@ -48,17 +50,19 @@ def test_make_csv_for_links():
     assert len(csv01) == 10
     assert csv01[0] == header
 
+
 def test_make_geoip_csv():
-    short = client.create_short_url('google.com', netid = 'shrunk_test')
+    short = client.create_short_url('google.com', netid='shrunk_test')
 
     ips = ['165.230.224.67', '34.201.163.243', '35.168.234.184',
            '107.77.70.130', '136.243.154.93', '94.130.167.121']
     for ip in ips:
         client.visit(short, ip, 'user agent', 'referer')
-    
+
     state_csv = make_geoip_csv(client, get_location_state, short).split('\n')
     assert state_csv[0] == 'location,visits'
-    state_expected = ['NJ,1', 'NY,1', 'VA,2', 'unknown,2']
+    state_expected = ['NJ,1', 'BY,1', 'NY,1', 'VA,2', 'unknown,1']
+    assert sorted(state_csv[1:]) == sorted(state_expected)
 
     country_csv = make_geoip_csv(client, get_location_country, short).split('\n')
     assert country_csv[0] == 'location,visits'

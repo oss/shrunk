@@ -10,30 +10,37 @@ import enum
 import pymongo
 from pymongo.collection import ReturnDocument
 from pymongo.collation import Collation
+import geoip2.errors
 import geoip2.database
-from flask import current_app
 
 from . import roles
 from . import aggregations
 from .util.string import get_domain
 
+
 class BadShortURLException(Exception):
     """Raised when the there is an error with the requested short url"""
+
 
 class DuplicateIdException(BadShortURLException):
     """Raised when trying to add a duplicate key to the database."""
 
+
 class ForbiddenNameException(BadShortURLException):
     """Raised when trying to use a forbidden custom short URL."""
+
 
 class ForbiddenDomainException(Exception):
     """Raised when trying to make a link to a forbidden domain"""
 
+
 class InvalidOperationException(Exception):
     """Raised when performing an invalid operation."""
 
+
 class AuthenticationException(Exception):
     """User is not authorized to do that"""
+
 
 class NoSuchLinkException(Exception):
     """link was not found"""
@@ -183,17 +190,6 @@ class ShrunkClient:
         else:
             self._geoip = None
 
-    def clone_cursor(self, cursor):
-        """Clones an already existing ShrunkCursor object.
-
-        :Parameters:
-          - `cursor`: An already existing ShrunkCursor object.
-
-        :Returns:
-          Another ShrunkCursor object. A clone.
-        """
-        return ShrunkCursor(cursor.cursor.clone())
-
     def count_links(self, netid=None):
         """Counts the number of created links.
 
@@ -236,10 +232,10 @@ class ShrunkClient:
             raise ForbiddenDomainException("That URL is not allowed.")
 
         document = {
-            "_id" : short_url,
-            "long_url" : long_url,
-            "timeCreated" : datetime.datetime.now(),
-            "visits" : 0
+            "_id": short_url,
+            "long_url": long_url,
+            "timeCreated": datetime.datetime.now(),
+            "visits": 0
         }
         if netid is not None:
             document["netid"] = netid
@@ -345,11 +341,11 @@ class ShrunkClient:
             raise AuthenticationException()
         if self.get_url_info(short_url) is None:
             raise NoSuchLinkException()
-            
+
         return {
             "urlDataResponse": {
                 "nRemoved": self.db.urls.delete_one({
-                    "_id" : short_url
+                    "_id": short_url
                 }).deleted_count
             },
             "visitDataResponse": {
@@ -358,7 +354,7 @@ class ShrunkClient:
                 }).deleted_count
             }
         }
-        
+
     def delete_user_urls(self, netid):
         """Deletes all URLs associated with a given NetID.
 
@@ -372,9 +368,9 @@ class ShrunkClient:
           A response in JSON detailing the effect of the database operations.
         """
         if netid is None:
-            return {"ok": 0, "n" : 0}
+            return {"ok": 0, "n": 0}
         else:
-            return self.db.urls.delete_many({"netid" : netid}).raw_result
+            return self.db.urls.delete_many({"netid": netid}).raw_result
 
     def get_url_info(self, short_url):
         """Given a short URL, return information about it.
@@ -389,7 +385,7 @@ class ShrunkClient:
         :Parameters:
           - `short_url`: A shortened URL
         """
-        return self.db.urls.find_one({"_id" : short_url})
+        return self.db.urls.find_one({"_id": short_url})
 
     def get_monthly_visits(self, short_url):
         """Given a short URL, return how many visits and new unique visiters it gets per month.
@@ -464,14 +460,14 @@ class ShrunkClient:
           A nonnegative integer indicating the number of times the URL has been
           visited, or None if the URL does not exist in the database.
         """
-        document = self.db.urls.find_one({"_id" : short_url})
+        document = self.db.urls.find_one({"_id": short_url})
         return document["visits"] if document else None
 
     def search(self, *, query=None, netid=None, org=None, sort=None, pagination=None):
         pipeline = []
 
         if netid is not None:
-            pipeline.append({ '$match': { 'netid': netid } })
+            pipeline.append({'$match': {'netid': netid}})
 
         if org is not None:
             pipeline.append({
@@ -486,17 +482,17 @@ class ShrunkClient:
             pipeline.append({
                 '$addFields': {
                     'owner_orgs': {
-                        '$map': { 'input': '$owner_membership', 'in': '$$this.name' }
+                        '$map': {'input': '$owner_membership', 'in': '$$this.name'}
                     }
                 }
             })
 
             pipeline.append({
-                '$match': { '$expr': { '$in': [ org, '$owner_orgs' ] } }
+                '$match': {'$expr': {'$in': [org, '$owner_orgs']}}
             })
 
             pipeline.append({
-                '$project': { 'owner_membership': False, 'owner_orgs': False }
+                '$project': {'owner_membership': False, 'owner_orgs': False}
             })
 
         if query is not None:
@@ -508,10 +504,10 @@ class ShrunkClient:
             pipeline.append({
                 '$match': {
                     '$or': [
-                        { '_id': match },
-                        { 'long_url': match },
-                        { 'title': match },
-                        { 'netid': match }
+                        {'_id': match},
+                        {'long_url': match},
+                        {'title': match},
+                        {'netid': match}
                     ]
                 }
             })
@@ -523,17 +519,17 @@ class ShrunkClient:
                 raise IndexError('Invalid sort order.')
 
             if sort == SortOrder.TIME_ASC:
-                sort_exp = { 'timeCreated': 1 }
+                sort_exp = {'timeCreated': 1}
             elif sort == SortOrder.TIME_DESC:
-                sort_exp = { 'timeCreated': -1 }
+                sort_exp = {'timeCreated': -1}
             elif sort == SortOrder.TITLE_ASC:
-                sort_exp = { 'title': 1 }
+                sort_exp = {'title': 1}
             elif sort == SortOrder.TITLE_DESC:
-                sort_exp = { 'title': -1 }
+                sort_exp = {'title': -1}
             elif sort == SortOrder.POP_ASC:
-                sort_exp = { 'visits': 1 }
+                sort_exp = {'visits': 1}
             elif sort == SortOrder.POP_DESC:
-                sort_exp = { 'visits': -1 }
+                sort_exp = {'visits': -1}
             else:
                 raise IndexError('Invalid sort order.')
             pipeline.append({
@@ -541,15 +537,15 @@ class ShrunkClient:
             })
 
         facet = {
-            'count': [ { '$count': 'count' } ],
-            'result': [ { '$skip': 0 } ]  # because this can't be empty
+            'count': [{'$count': 'count'}],
+            'result': [{'$skip': 0}]  # because this can't be empty
         }
 
         if pagination is not None:
             num_skip = (pagination.page - 1) * pagination.links_per_page
             facet['result'] = [
-                { '$skip': num_skip },
-                { '$limit': pagination.links_per_page }
+                {'$skip': num_skip},
+                {'$limit': pagination.links_per_page}
             ]
 
         pipeline.append({
@@ -576,12 +572,12 @@ class ShrunkClient:
           The long URL corresponding to the short URL, or None if no such URL
           was found in the database.
         """
-        self.db.urls.update_one({"_id" : short_url}, {"$inc" : {"visits" : 1}})
+        self.db.urls.update_one({"_id": short_url}, {"$inc": {"visits": 1}})
 
         self.db.visits.insert_one({
-            "short_url" : short_url,
-            "source_ip" : source_ip,
-            "time" : datetime.datetime.now(),
+            "short_url": short_url,
+            "source_ip": source_ip,
+            "time": datetime.datetime.now(),
             "user_agent": user_agent,
             "referer": referer
         })
@@ -643,7 +639,7 @@ class ShrunkClient:
             state = None
             try:
                 state = resp.subdivisions.most_specific.name
-            except:
+            except AttributeError:
                 pass
             country = resp.country.name
 
@@ -653,7 +649,7 @@ class ShrunkClient:
                 return unk
 
             return ', '.join(components)
-        except:  # geoip2.errors.AddressNotFoundError:
+        except geoip2.errors.AddressNotFoundError:
             return unk
 
     def get_country_name(self, ipaddr):
@@ -676,7 +672,7 @@ class ShrunkClient:
         try:
             resp = self._geoip.city(ipaddr)
             return resp.country.name or unk
-        except:
+        except geoip2.errors.AddressNotFoundError:
             return unk
 
     def get_state_code(self, ipaddr):
@@ -701,7 +697,7 @@ class ShrunkClient:
         try:
             resp = self._geoip.city(ipaddr)
             return resp.subdivisions.most_specific.iso_code or unk
-        except:
+        except (AttributeError, geoip2.errors.AddressNotFoundError):
             return unk
 
     def create_organization(self, name):

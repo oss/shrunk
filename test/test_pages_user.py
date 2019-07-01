@@ -1,12 +1,10 @@
-from functools import partial
 import datetime
 from urllib.parse import quote
 import json
-import datetime
 
 from shrunk.appserver import app
 import shrunk.roles as roles
-from views import *
+from views import login, logout, get, post, loginw, assert_redirect
 
 from shrunk.config import GEOLITE_PATH
 
@@ -21,9 +19,11 @@ def teardown_function():
     mclient.drop_database("shrunk_test")
     logout()
 
+
 def in_post_resp(endpoint, string, data):
     response = post(endpoint, data=data)
     assert string in str(response.get_data())
+
 
 @loginw("user")
 def test_add_link():
@@ -60,8 +60,8 @@ def test_add_link():
 
     # shorturl doesnt work
     response = post("/add", data={
-        "long_url":"nope.com",
-        "title":"nope",
+        "long_url": "nope.com",
+        "title": "nope",
         "short_url": "custom-thing"
     })
     assert response.status_code != 302
@@ -72,19 +72,20 @@ def test_add_link():
     text = str(response.get_data())
     assert "nope" not in text
 
+
 @loginw("power")
 def test_add_link_power():
     # test reserved link
     in_post_resp("/add", "That name is reserved", {
-        "long_url":"google.com",
-        "title":"lmao",
+        "long_url": "google.com",
+        "title": "lmao",
         "short_url": "admin"
     })
 
     # shorturl works
     response = post("/add", data={
-        "long_url":"google.com",
-        "title":"lmao",
+        "long_url": "google.com",
+        "title": "lmao",
         "short_url": "customthing"
     })
     assert response.status_code == 200
@@ -94,6 +95,7 @@ def test_add_link_power():
     assert "lmao" in text
     assert "google.com" in text
     assert "customthing" in text
+
 
 def test_delete():
     mclient.shrunk_test.urls.insert_many([
@@ -126,12 +128,13 @@ def test_delete():
     assert response.status_code == 401
     assert mclient.shrunk_test.urls.find_one({"_id": "2"}) is not None
 
-    #confirm admin can delete
+    # confirm admin can delete
     logout()
     login("admin")
     response = post("/delete", data={"short_url": "2"})
     assert response.status_code == 302
     assert mclient.shrunk_test.urls.find_one({"_id": "2"}) is None
+
 
 @loginw("user")
 def test_edit_link():
@@ -187,7 +190,7 @@ def test_edit_link():
     # shorturl doesnt work
     response = post('/edit', data={
         'long_url': 'nope.com',
-        'title':'nope',
+        'title': 'nope',
         'short_url': 'custom-thing',
         'old_short_url': 'short1'
     })
@@ -198,6 +201,7 @@ def test_edit_link():
     response = get('/')
     text = str(response.get_data())
     assert 'nope' not in text
+
 
 @loginw("power")
 def test_edit_link_power():
@@ -211,8 +215,8 @@ def test_edit_link_power():
 
     # test reserved link
     in_post_resp('/edit', 'That name is reserved', {
-        'long_url':'google.com',
-        'title':'lmao',
+        'long_url': 'google.com',
+        'title': 'lmao',
         'short_url': 'admin',
         'old_short_url': 'short1'
     })
@@ -232,11 +236,12 @@ def test_edit_link_power():
     assert 'facebook.com' in text
     assert 'customthing' in text
 
+
 @loginw("user")
 def test_index_options():
     """test all sortby options to make sure they don't crash"""
 
-    urls = ["/?sortby=" + option for option in list(map(str,(range(4)))) + ['']]
+    urls = ["/?sortby=" + option for option in list(map(str, (range(4)))) + ['']]
     responses = [get(url) for url in urls]
     for response in responses:
         assert response.status_code < 500
@@ -244,6 +249,7 @@ def test_index_options():
     # when sortby is invalid shrunk should default to '0'
     response = get("/?sortby=invalid")
     assert response.status_code == 200
+
 
 @loginw("user")
 def test_index_search():
@@ -262,20 +268,21 @@ def test_index_search():
         app.logger.info(text)
         assert intext in text
 
-    #search by title
+    # search by title
     find("lmao", "lmao1")
-    #search by long_url
+    # search by long_url
     find("google", "google.com")
-    #search by short_url
+    # search by short_url
     find("id", "id1")
 
-    #admin
+    # admin
     logout()
     login("admin")
-    #search by netid
+    # search by netid
     find("DEV", "DEV", base="/?all_users=1&query=")
-    #this assumes that the DEV_ADMIN user does not have any links in the test db...
+    # this assumes that the DEV_ADMIN user does not have any links in the test db...
     find("DEV", "No results found for query", base="/?all_users=0&query=NO_RESULTS_QUERY")
+
 
 def test_index_admin():
     """ Make sure admin options don't appear for normal users. """
@@ -311,6 +318,7 @@ def test_index_admin():
     assert 'Admin' in text
     assert 'lmao1' in text
 
+
 @loginw("user")
 def test_stats():
     short = sclient.create_short_url('google.com')
@@ -322,6 +330,7 @@ def test_stats():
 
     response = get('/stats?url=invalid')
     assert 'URL not found :(' in str(response.get_data())
+
 
 @loginw("admin")
 def test_visits_csv():
@@ -345,17 +354,20 @@ def test_visits_csv():
     assert 'Goggle Chrom' in b
     assert 'refuror.org' in b
 
+
 @loginw("admin")
 def test_visits_csv_no_url():
     response = get('/link-visits-csv')
     assert response.status_code == 400
     assert 'error: request must have url' in str(response.get_data())
 
+
 @loginw("user")
 def test_visits_no_perm():
     short = sclient.create_short_url('google.com', netid='shrunk_test')
     response = get('/link-visits-csv?url=' + short)
     assert response.status_code == 401
+
 
 @loginw("admin")
 def test_search_visits_csv():
@@ -384,6 +396,7 @@ def test_search_visits_csv():
     csv = str(resp.get_data(), 'utf8')
     assert 'visitor2' in csv
     assert 'visitor0' not in csv and 'visitor1' not in csv
+
 
 @loginw("admin")
 def test_geoip_csv():
@@ -423,11 +436,13 @@ def test_geoip_csv():
     assert response.status_code == 400
     assert 'error: invalid resolution' in str(response.get_data())
 
+
 @loginw("user")
 def test_geoip_no_perm():
     short = sclient.create_short_url('google.com', netid='shrunk_test')
     response = get('/geoip-csv?resolution=state&url=' + short)
     assert response.status_code == 401
+
 
 @loginw("admin")
 def test_useragent_stats():
@@ -441,17 +456,25 @@ def test_useragent_stats():
 
     check_stats({})
 
-    sclient.visit(short, '127.0.0.1', 'Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0', 'referer')
+    sclient.visit(short, '127.0.0.1',
+                  'Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0',
+                  'referer')
     check_stats({'platform': {'Linux': 1}, 'browser': {'Firefox': 1}})
 
-    sclient.visit(short, '127.0.0.1', 'Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0', 'referer')
+    sclient.visit(short, '127.0.0.1',
+                  'Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0',
+                  'referer')
     check_stats({'platform': {'Linux': 2}, 'browser': {'Firefox': 2}})
 
-    sclient.visit(short, '127.0.0.1', 'Mozilla/5.0 (Windows NT x.y; rv:10.0) Gecko/20100101 Firefox/10.0', 'referer')
+    sclient.visit(short, '127.0.0.1',
+                  'Mozilla/5.0 (Windows NT x.y; rv:10.0) Gecko/20100101 Firefox/10.0',
+                  'referer')
     check_stats({'platform': {'Linux': 2, 'Windows': 1}, 'browser': {'Firefox': 3}})
 
-    sclient.visit(short, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299', 'referer')
+    sclient.visit(short, '127.0.0.1',
+                  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299', 'referer')
     check_stats({'platform': {'Linux': 2, 'Windows': 2}, 'browser': {'Firefox': 3, 'Msie': 1}})
+
 
 @loginw("admin")
 def test_useragent_stats_no_visit():
@@ -468,11 +491,13 @@ def test_useragent_stats_no_visit():
     assert json.dumps({'platform': {'unknown': 1}, 'browser': {'unknown': 1}}) \
         == str(response.get_data(), 'utf8')
 
+
 @loginw("user")
 def test_useragent_stats_no_url():
     response = get('/useragent-stats')
     assert response.status_code == 400
     assert 'error: request must have url' in str(response.get_data())
+
 
 @loginw("user")
 def test_useragent_stats_no_perm():
@@ -480,6 +505,7 @@ def test_useragent_stats_no_perm():
     response = get('/useragent-stats?url=' + short)
     assert response.status_code == 401
     assert 'Unauthorized' in str(response.get_data())
+
 
 @loginw("admin")
 def test_referer_stats():
@@ -505,12 +531,14 @@ def test_referer_stats():
     sclient.visit(short, '127.0.0.1', 'user agent', 'https://old.reddit.com/r/rutgers')
     check_stats({'facebook.com': 2, 'twitter.com': 1, 'old.reddit.com': 1})
 
+
 @loginw("user")
 def test_referer_stats_no_perm():
     short = sclient.create_short_url('google.com', netid='shrunk_test')
     response = get('/referer-stats?url=' + short)
     assert response.status_code == 401
     assert 'Unauthorized' in str(response.get_data())
+
 
 @loginw("admin")
 def test_monthly_visits():
@@ -555,10 +583,12 @@ def test_monthly_visits():
                   {'first_time_visits': 1, 'all_visits': 2,
                    '_id': {'day': '1', 'month': 2, 'year': 2019}}])
 
+
 @loginw("user")
 def test_monthly_visits_no_url():
     response = get('/monthly-visits')
     assert response.status_code == 400
+
 
 @loginw("user")
 def test_monthly_visits_no_perm():

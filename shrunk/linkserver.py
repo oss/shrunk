@@ -2,7 +2,7 @@
 
 """Flask application for the link server."""
 
-from flask import render_template, request, redirect
+from flask import request, redirect
 
 from .app_decorate import ShrunkFlaskMini
 
@@ -11,7 +11,7 @@ from .app_decorate import ShrunkFlaskMini
 app = ShrunkFlaskMini(__name__)
 
 
-### Views ###
+# ===== Views =====
 # route /<short url> handle by shrunkFlaskMini
 @app.route("/")
 def render_index():

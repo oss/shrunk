@@ -1,17 +1,19 @@
-from pymongo import MongoClient
-
-#function hashes
+# function hashes
 qualified_for = {}
 valid_entity_for = {}
 oncreate_for = {}
 form_text = {}
-#mongo coll to persist the roles data
+# mongo coll to persist the roles data
 grants = None
+
 
 class NotQualified(Exception):
     pass
+
+
 class InvalidEntity(Exception):
     pass
+
 
 def default_text(role):
     """ gives the default text that apears in a role menu"""
@@ -26,6 +28,7 @@ def default_text(role):
         "granted_by": "granted by",
         "allow_comment": False
     }
+
 
 def new(role, qualifier_func, validator_func=lambda e: e != "",
         custom_text={},
@@ -47,10 +50,11 @@ def new(role, qualifier_func, validator_func=lambda e: e != "",
     valid_entity_for[role] = validator_func
     oncreate_for[role] = oncreate
 
+
 def grant(role, grantor, grantee, comment=''):
     """gives a role to grantee and remembers who did it"""
     if exists(role) and valid_entity_for[role](grantee):
-        #guard against double insertions
+        # guard against double insertions
         if not check(role, grantee):
             grants.insert_one({
                 "role": role,
@@ -63,11 +67,13 @@ def grant(role, grantor, grantee, comment=''):
     else:
         raise InvalidEntity()
 
+
 def check(role, entity):
     """check if an entity has a role"""
     if grants.find_one({"role": role, "entity": entity}):
         return True
     return False
+
 
 def has_one_of(roles, entity):
     """check if an entity has atleast one of the roles int the list"""
@@ -76,10 +82,12 @@ def has_one_of(roles, entity):
             return True
     return False
 
+
 def get(entity):
     """gives list of strings for all roles an entity has"""
     entity_grants = grants.find({"entity": entity})
     return [grant["role"] for grant in entity_grants]
+
 
 def granted_by(role, entity):
     grant = grants.find_one({"role": role, "entity": entity})
@@ -87,13 +95,16 @@ def granted_by(role, entity):
         return None
     return grant["granted_by"]
 
+
 def list_all(role):
     """list all entities with the role"""
     return list(grants.find({"role": role}))
 
+
 def revoke(role, entity):
     """revoke role from entity"""
     grants.delete_one({"role": role, "entity": entity})
+
 
 def template_data(role, netid, invalid=False):
     """gets teplated data for lisiting entities with a role in the ui"""
@@ -113,21 +124,24 @@ def template_data(role, netid, invalid=False):
     data['facstaff'] = check("facstaff", netid)
     return data
 
+
 def exists(role):
     """check if a role is valid"""
     return role in qualified_for
+
 
 def valid_roles():
     """returns a list of valid roles"""
     return list(qualified_for)
 
+
 def init(app, mongo_client=None, db_name='shrunk'):
     """init the module, namely get a reference to db"""
     if not mongo_client:
         mongo_client = app.get_shrunk()._mongo
-        #this forces pymongo to connect instead of sitting on its hands and blocking
-        #the server. idk why it behaves like this but if you remove the next like the
-        #server does not respond. pymongo3.6 aug 2018
+        # this forces pymongo to connect instead of sitting on its hands and blocking
+        # the server. idk why it behaves like this but if you remove the next like the
+        # server does not respond. pymongo3.6 aug 2018
         mongo_client.admin.command("ismaster")
     global grants
     grants = mongo_client[db_name].grants
