@@ -728,14 +728,16 @@ class ShrunkClient:
     def is_organization_admin(self, name, netid):
         col = self.db.organization_members
         res = col.find_one({'name': name, 'netid': netid})
-        return res['is_admin']
+        return res['is_admin'] if res else False
 
     def add_organization_member(self, name, netid, is_admin=False):
         col = self.db.organization_members
         rec = {'name': name, 'netid': netid}
-        rec_update = {'is_admin': is_admin}
-        rec_insert = {'name': name, 'netid': netid, 'timeCreated': datetime.datetime.now()}
-        res = col.find_one_and_update(rec, {'$set': rec_update, '$setOnInsert': rec_insert},
+        rec_insert = {'name': name,
+                      'is_admin': is_admin,
+                      'netid': netid,
+                      'timeCreated': datetime.datetime.now()}
+        res = col.find_one_and_update(rec, {'$setOnInsert': rec_insert},
                                       upsert=True, return_document=ReturnDocument.BEFORE)
         return res is None
 
