@@ -74,7 +74,7 @@ def add_search_params():
     if 'query' in session:
         params['query'] = session['query']
     if 'links_set' in session:
-        params['all_users'] = session['all_users']
+        params['links_set'] = session['links_set']
     if 'sortby' in session:
         params['sortby'] = session['sortby']
     if 'page' in session:
