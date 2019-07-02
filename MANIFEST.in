@@ -15,6 +15,4 @@ exclude *.log
 exclude *pytest_cache*
 recursive-exclude shrunk.egg-info *
 exclude __pycache__ *.pyc
-
 include scripts/*
-

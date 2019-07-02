@@ -16,6 +16,17 @@ pipeline {
                 sh 'cp shrunk/config.py.example shrunk/config.py'
                 sh 'LANG=en_US.utf8 FLASK_APP=shrunk flask assets build'
                 sh './setup.py sdist bdist_wheel'
+                script {
+                    SHRUNK_WHL_NAME = sh(script: 'ls dist | grep whl', returnStdout: true).trim()
+                    SHRUNK_DIR_NAME = sh(script: 'ls dist | grep whl | cut -d- -f1,2',
+                                         returnStdout: true).trim()
+                }
+		dir("dist") {
+                    sh "wheel unpack ${SHRUNK_WHL_NAME}"
+                    sh "rm ${SHRUNK_DIR_NAME}/shrunk/config.py"
+                    sh "wheel pack ${SHRUNK_DIR_NAME}"
+                    sh "rm -rf ${SHRUNK_DIR_NAME}"
+                }
                 stash name: 'packages', includes: 'dist/*'
             }
         }
