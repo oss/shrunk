@@ -56,3 +56,5 @@ MAX_VISITS_FOR_CSV = 6000
    This restriction does not apply to CSV files generated from a single short URL."""
 
 BANNED_REGEXES = [r'\.xxx']
+
+ASSETS_PROD = True

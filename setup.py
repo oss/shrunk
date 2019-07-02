@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.6
 
 """ shrunk - Rutgers University URL Shortener """
 
@@ -12,15 +12,19 @@ except FileNotFoundError:
     readme_text = ""
 
 require = [
-    'Flask==0.12.3',
+    'Flask==1.0.3',
     'Flask-SSO==0.4.0',
-    'Jinja2==2.7.3',
+    'Flask-Assets==0.12',
+    'Flask-WTF==0.14',
+    'cssmin==0.2.0',
+    'jsmin==2.2.2',
+    'Jinja2==2.10.1',
     'MarkupSafe==0.23',
     'WTForms==2.0.1',
-    'Werkzeug==0.9.6',
+    'Werkzeug==0.15.4',
     'itsdangerous==0.24',
     'pyasn1==0.1.7',
-    'pymongo==3.6.*',
+    'pymongo==3.8.0',
     'geoip2==2.4.0',
     'uwsgidecorators==1.1.0'
 ]
@@ -31,7 +35,8 @@ setup(
     packages=["shrunk"],
     install_requires=require,
     package_dir={"shrunk": "shrunk"},
-    package_data={"shrunk": ["static/css/*", "static/img/*", "static/js/*",
+    package_data={"shrunk": ["util/*", "static/css/*", "static/img/*", "static/js/*",
+                             "static/scss/*", "static/out/*", "static/bootstrap/*",
                              "templates/*", "../scripts/*"]},
     author="Rutgers Open System Solutions",
     author_email="oss@oss.rutgers.edu",
@@ -45,5 +50,10 @@ setup(
         "Programming Language :: Python",
         "Topic :: Utilities"
     ],
-    url="https://github.com/oss/shrunk"
+    url="https://github.com/oss/shrunk",
+    entry_points={
+        'flask.commands': [
+            'assets = flask_assets:assets'
+        ]
+    }
 )

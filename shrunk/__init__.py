@@ -13,7 +13,3 @@ def create_app():
 def wsgi(*args, **kwargs):
     """ The wsgi entry point. """
     return appserver.app(*args, **kwargs)
-
-
-if __name__ == '__main__':
-    appserver.app.run()

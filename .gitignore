@@ -37,3 +37,4 @@ shrunk/static/shrunk_*.js
 .#*
 \#*
 .coverage
+shrunk/static/out

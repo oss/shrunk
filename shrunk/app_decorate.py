@@ -28,20 +28,6 @@ class ShrunkFlaskMini(Flask):
         self.set_logger()
         self.logger.info("logging started")
 
-        self._shrunk_client = ShrunkClient(**self.config)
-
-        @postfork
-        def reconnect():
-            """
-            mongoclient is not fork safe. this is used to create a new client
-            after potentially forking
-            """
-            self._shrunk_client.reconnect()
-
-        self.logger.info("ShrunkClient initialized %s:%s"
-                         % (self.config["DB_HOST"],
-                            self.config["DB_PORT"]))
-
         # forward urls
         @self.route("/<short_url>")
         def redirect_link(short_url):
@@ -71,6 +57,22 @@ class ShrunkFlaskMini(Flask):
                 else:
                     return redirect("http://{}".format(long_url))
 
+    def initialize(self, *args, **kwargs):
+        self.logger.info('ShrunkFlaskMini.initialize')
+        self._shrunk_client = ShrunkClient(**self.config)
+
+        @postfork
+        def reconnect():
+            """
+            mongoclient is not fork safe. this is used to create a new client
+            after potentially forking
+            """
+            self._shrunk_client.reconnect()
+
+        self.logger.info("ShrunkClient initialized %s:%s"
+                         % (self.config["DB_HOST"],
+                            self.config["DB_PORT"]))
+
     def set_logger(self):
         """Sets a logger with standard settings.
 
@@ -93,19 +95,18 @@ class ShrunkFlask(ShrunkFlaskMini):
 
     def __init__(self, name):
         super(ShrunkFlask, self).__init__(name)
-        roles.init(self)
-        self.logger.info("roles initialized")
+        self.logger.info('ShrunkFlask.__init__')
 
+    def initialize(self, *args, **kwargs):
+        self.logger.info('ShrunkFlask.initialize')
+        super().initialize(*args, **kwargs)
+        roles.init(self)
+        self.logger.info('roles initialized')
         self.add_roles_routes()
         self.setup_roles()
-        self.logger.info("done with setup")
-
+        self.logger.info('done with setup')
         @postfork
         def reinit():
-            """
-            mongoclient is not fork safe. this reinits roles to use
-            a new client after forking
-            """
             roles.init(self)
 
     def switch_db(self, db_name):

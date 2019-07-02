@@ -24,21 +24,31 @@ from .client import BadShortURLException, ForbiddenDomainException, \
 # ShrunkFlask extends flask and adds decorators and configs itself
 app = ShrunkFlask(__name__)  # pylint: disable=invalid-name
 
+@app.before_first_request
+def _init_app():
+    app.initialize()
+
 # Enable CSRF protection
 csrf = CSRFProtect(app)
 
 # Flask-Assets stuff
 assets = Environment(app)  # pylint: disable=invalid-name
 assets.url = app.static_url_path
+if app.config['ASSETS_PROD']:
+    assets.debug = False
+    assets.auto_build = False
+else:
+    assets.debug = True
+    assets.auto_build = True
 
 # Compile+minify custom bootstrap
 shrunk_bootstrap = Bundle('scss/shrunk_bootstrap.scss', filters='scss,cssmin',
-                          output='shrunk_bootstrap.css')
+                          output='out/shrunk_bootstrap.css')
 assets.register('shrunk_bootstrap', shrunk_bootstrap)
 
 # Minify shrunk css
 shrunk_css = Bundle('css/*.css', filters='cssmin',
-                    output='shrunk_css.css')  # pylint: disable=invalid-name
+                    output='out/shrunk_css.css')  # pylint: disable=invalid-name
 assets.register('shrunk_css', shrunk_css)
 
 # Create JS bundles for each page
@@ -54,7 +64,7 @@ JS_BUNDLES = {
 }
 
 for bundle_name, bundle_files in JS_BUNDLES.items():
-    output_name = '{}.js'.format(bundle_name)
+    output_name = 'out/{}.js'.format(bundle_name)
     bundle = Bundle('js/shrunk.js', *bundle_files, filters='jsmin', output=output_name)
     assets.register(bundle_name, bundle)
 
