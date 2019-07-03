@@ -41,6 +41,10 @@ pipeline {
         stage('docker-compose build') {
             agent any
 
+            environment {
+	        DC = credentials('harbor_shrunk')
+            }
+
             steps {
                 git url: 'ssh://em-oss-phab@vault.phacility.com/source/docker-shrunk.git',
                     branch: 'jenkins',
@@ -56,6 +60,7 @@ pipeline {
                 sh "sed -i -e \"s/SHRUNK_WHL_NAME/$SHRUNK_WHL_NAME/g\" app/Dockerfile"
                 sh "cp dist/$SHRUNK_WHL_NAME app"
                 sh 'docker-compose -f docker-compose.$GIT_COMMIT.yml build'
+		sh 'docker login --username=$DC_USR --password=$DC_PSW maguro.oss.rutgers.edu'
                 sh 'docker-compose -f docker-compose.$GIT_COMMIT.yml push'
 		stash name: 'docker-compose', includes: 'docker-compose.*.yml'
                 archiveArtifacts artifacts: 'docker-compose.*.yml', fingerprint: true
