@@ -7,7 +7,8 @@ from setuptools import setup
 require = [
     'shrunk',
     'pytest==5.0.0',
-    'pytest-cov==2.7.1'
+    'pytest-cov==2.7.1',
+    'beautifulsoup4==4.7.1'
 ]
 
 setup(

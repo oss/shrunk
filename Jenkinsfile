@@ -52,11 +52,13 @@ pipeline {
                     credentialsId: 'em-oss-phab.phacility.com'
                 unstash name: 'shrunk_packages'
                 script {
-                    SHRUNK_WHL_NAME = sh(script: 'ls dist | grep whl', returnStdout: true).trim()
+                    SHRUNK_WHL_NAME = sh(script: 'ls dist | grep -v test | grep whl',
+		                         returnStdout: true).trim()
                 }
                 sh "cp docker-compose.yml docker-compose.${GIT_COMMIT}.yml"
                 sh "sed -i -e \"s/APP_TAG/$GIT_COMMIT/g\" docker-compose.${GIT_COMMIT}.yml"
                 sh "sed -i -e \"s/HTTPD_TAG/$GIT_COMMIT/g\" docker-compose.${GIT_COMMIT}.yml"
+		sh 'echo $SHRUNK_WHL_NAME'
                 sh "sed -i -e \"s/SHRUNK_WHL_NAME/$SHRUNK_WHL_NAME/g\" app/Dockerfile"
                 sh "cp dist/$SHRUNK_WHL_NAME app"
                 sh 'docker-compose -f docker-compose.$GIT_COMMIT.yml build'
@@ -80,8 +82,14 @@ pipeline {
                     branch: 'jenkins',
                     credentialsId: 'em-oss-phab.phacility.com'
 		unstash name: 'docker-compose'
-	        sh 'ls -la'
+		unstash name: 'shrunk_test_packages'
+                script {
+                    SHRUNK_WHL_NAME = sh(script: 'ls dist | grep test | grep whl',
+		                         returnStdout: true).trim()
+                }
+		sh "sed -i -e \"/config\\.py/d\" docker-compose.${GIT_COMMIT}.yml"
 	        sh 'docker-compose -f docker-compose.$GIT_COMMIT.yml up -d'
+		sh "./run_tests.sh docker-compose.${GIT_COMMIT}.yml dist/$SHRUNK_WHL_NAME"
             }
 
             post {
