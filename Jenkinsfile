@@ -2,20 +2,15 @@ pipeline {
     agent none
 
     stages {
-        stage('build python packages') {
+        stage('./setup.py sdist bdist_wheel') {
             agent {
                 docker {
-                    image 'maguro.oss.rutgers.edu/library/pybuild'
+                    image 'maguro.oss.rutgers.edu/library/pybuild:0.1'
                 }
             }
 
             steps {
-                sh 'pip3.6 install -r pip.req'
-                sh 'pip3.6 install -r pip.req.dev'
-                sh 'pip3.6 install wheel'
 		dir ("shrunk") {
-		    sh 'pwd'
-		    sh 'ls -la'
                     sh 'cp shrunk/config.py.example shrunk/config.py'
                     sh 'LANG=en_US.utf8 FLASK_APP=shrunk flask assets build'
                     sh './setup.py sdist bdist_wheel'
@@ -43,7 +38,7 @@ pipeline {
             } // end steps
         } // end build python packages
 
-        stage('build docker containers') {
+        stage('docker-compose build') {
             agent any
 
             steps {
@@ -58,7 +53,6 @@ pipeline {
                 sh "cp docker-compose.yml docker-compose.${GIT_COMMIT}.yml"
                 sh "sed -i -e \"s/APP_TAG/$GIT_COMMIT/g\" docker-compose.${GIT_COMMIT}.yml"
                 sh "sed -i -e \"s/HTTPD_TAG/$GIT_COMMIT/g\" docker-compose.${GIT_COMMIT}.yml"
-		sh 'echo $SHRUNK_WHL_NAME'
                 sh "sed -i -e \"s/SHRUNK_WHL_NAME/$SHRUNK_WHL_NAME/g\" app/Dockerfile"
                 sh "cp dist/$SHRUNK_WHL_NAME app"
                 sh 'docker-compose -f docker-compose.$GIT_COMMIT.yml build'
@@ -74,7 +68,7 @@ pipeline {
 	    }
         } // end build docker containers
 
-        stage('run docker containers') {
+        stage('pytest') {
 	    agent any
 
             steps {
