@@ -10,6 +10,7 @@ Makefile
 __pycache__
 *.pyc
 dist/
+dist
 shrunk.egg-info/
 docs_out/
 
@@ -17,6 +18,7 @@ docs_out/
 venv/
 virtualenv/
 build/
+build
 
 # Flask logs
 *.log
@@ -29,12 +31,13 @@ runappserver.py
 # pytest
 *pytest_cache*
 venv.old
-shrunk/static/shrunk_bootstrap.css
-shrunk/static/.webassets-cache
+shrunk/srunk/static/shrunk_bootstrap.css
+.webassets-cache
 shrunk_css.css
-shrunk/static/shrunk_*.js
+shrunk/shrunk/static/shrunk_*.js
 .sass-cache
 .#*
 \#*
 .coverage
-shrunk/static/out
+shrunk/shrunk/static/out
+*.egg-info

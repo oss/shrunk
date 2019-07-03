@@ -6,7 +6,7 @@ from setuptools import setup
 
 # Text from the README
 try:
-    with open("README.md") as fd:
+    with open("../README.md") as fd:
         readme_text = fd.read()
 except FileNotFoundError:
     readme_text = ""
