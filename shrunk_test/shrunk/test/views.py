@@ -2,6 +2,7 @@ from functools import wraps
 import bs4
 from shrunk.appserver import app
 
+app.initialize()
 client = app.test_client()
 
 

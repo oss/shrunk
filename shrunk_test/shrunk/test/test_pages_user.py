@@ -7,7 +7,7 @@ import shrunk.roles as roles
 from views import login, logout, get, post, loginw, assert_redirect
 from shrunk.config import GEOLITE_PATH
 
-
+app.initialize()
 app.switch_db("shrunk_test")
 sclient = app.get_shrunk()
 sclient._set_geoip(GEOLITE_PATH)
