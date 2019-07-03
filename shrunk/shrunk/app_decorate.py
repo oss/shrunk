@@ -20,6 +20,9 @@ class ShrunkFlaskMini(Flask):
 
     def __init__(self, name):
         super(ShrunkFlaskMini, self).__init__(name)
+
+        self.initialized = False
+        
         # Import settings in config.py
         self.config.from_pyfile("config.py", silent=True)
         self.secret_key = self.config["SECRET_KEY"]
@@ -58,6 +61,9 @@ class ShrunkFlaskMini(Flask):
                     return redirect("http://{}".format(long_url))
 
     def initialize(self, *args, **kwargs):
+        if self.initialized:
+            return
+        self.initialized = True
         self.logger.info('ShrunkFlaskMini.initialize')
         self._shrunk_client = ShrunkClient(**self.config)
 
@@ -99,6 +105,8 @@ class ShrunkFlask(ShrunkFlaskMini):
 
     def initialize(self, *args, **kwargs):
         self.logger.info('ShrunkFlask.initialize')
+        if self.initialized:
+            return
         super().initialize(*args, **kwargs)
         roles.init(self)
         self.logger.info('roles initialized')
