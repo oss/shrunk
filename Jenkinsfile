@@ -89,6 +89,7 @@ pipeline {
             post {
 	        always {
 		    sh 'echo docker-compose -f docker-compose.$GIT_COMMIT.yml down -v'
+		    junit testResults: 'junit.xml'
 		    deleteDir()
 		}
             }
