@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
 
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+
 <div class="row row-controls">
   <div class="col col-auto">
     <h2 style="display: inline-block">Visit statistics for <em>{{ short_url }}</em></h2>
@@ -44,8 +47,8 @@
     <svg height="0"></svg>
     <div>
 	<form class="form-inline">
-	    <input type="date" class="form-control" id="start"></input>
-	    <input type="date" class="form-control" id="end"></input>
+	    <input type="text" class="datepicker" id="start_datepicker">
+	    <input type="text" class="datepicker" id="end_datepicker">
 	    <button class="form-control" id="reset">reset</button>
 	</form>
 	<span id="error"></span>

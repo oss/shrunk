@@ -1,22 +1,12 @@
 (function(){
     let first_time_visits_elem=d3.select("#first_time_visits");
-    let start_options=d3.select("#start");
-    let end_options=d3.select("#end");
+    let start_options=$("#start_datepicker");
+    let end_options=$("#end_datepicker");
     let reset_btn=d3.select("#reset");
     let all_visits=[];
 
     let url=new URL(document.location);
     const short_url=url.searchParams.get("url");
-
-    const obj2datestr = (obj) => {
-	const pad = (v) => parseInt(v) < 10 ? "0" + v : v;
-	return pad(obj._id.year) + "-" + pad(obj._id.month) + "-" + pad(obj._id.day);
-    }
-    const obj2date = (obj) => {
-	return new Date(obj2datestr(obj));
-    }
-    window.obj2datestr = obj2datestr;
-    window.obj2date = obj2date;
 
     // parse the date / time
     const parseTime = (strtime)=>new Date(strtime);
@@ -24,7 +14,11 @@
     // format the dates
     const parse_dates = function(visits) {
 	visits.forEach(visit=>{
-	    visit.date = parseTime(visit._id.year+"-"+visit._id.month+"-"+visit._id.day);
+	    // when you use this form of the Date constructor, the date is
+	    // interpreted as being in the local timezone; when you use the
+	    // form with a date string, it's interpreted as being in GMT.
+	    // because of course
+	    visit.date = new Date(visit._id.year, visit._id.month-1, visit._id.day);
 	});
 	return visits;
     };
@@ -114,19 +108,6 @@
     }
     window.add_visits_chart = add_visits_chart;
 
-    const add_ranges = function(visits){
-	const first = obj2datestr(visits[0]);
-
-	const last = obj2datestr(visits[visits.length - 1]);
-	start_options.attr("min", first);
-	start_options.attr("max", last);
-	start_options.node().value = first;
-
-	end_options.attr("min", first);
-	end_options.attr("max", last);
-	end_options.node().value = last;
-    }
-
     const empty_visit = function(yearOrDate, month, day){
 	let year = yearOrDate;
 	let date = yearOrDate;
@@ -204,6 +185,7 @@
     const set_range_error = function(){
 	d3.select("#error").text("Invalid range");
     }
+
     const clear_range_error = function(){
 	d3.select("#error").text("");
     }
@@ -212,23 +194,44 @@
      * filters the graph data to be within the date range
      */
 
-    const update_range = function(){
-	const first = obj2date(all_visits[0]);
-	const last = obj2date(all_visits[all_visits.length - 1]);
+    const update_range = function() {
+	const first = all_visits[0].date;
+	const last = all_visits[all_visits.length-1].date;
+	const start = start_options.datepicker('getDate');
+	const end = end_options.datepicker('getDate');
 
-	const start = Date.parse(start_options.node().value);
-	const end = Date.parse(end_options.node().value);
-	if(isNaN(start) || isNaN(end) || start >= end
-	   || start < first || end > last){
+	if (isNaN(start) || isNaN(end) || start >= end || start < first || end > last) {
 	    set_range_error();
-	}else{
+	} else {
 	    clear_range_error();
 	    add_visits_chart(
 		all_visits
-		    .filter(visit => obj2date(visit) <= end)
-		    .filter(visit => obj2date(visit) >= start)
+		    .filter(visit => start <= visit.date && visit.date <= end)
 	    );
 	}
+    }
+
+    const add_ranges = function(visits) {
+	const first = visits[0].date;
+	const last = visits[visits.length-1].date;
+
+	start_options.datepicker({
+	    minDate: first,
+	    maxDate: last,
+	    defaultDate: first,
+	    dateFormat: 'yy-mm-dd',
+	    onClose: update_range
+	});
+	start_options.datepicker('setDate', first);
+
+	end_options.datepicker({
+	    minDate: first,
+	    maxDate: last,
+	    defaultDate: last,
+	    dateFormat: 'yy-mm-dd',
+	    onClose: update_range
+	});
+	end_options.datepicker('setDate', last);
     }
 
     const add_zero_days = function(visits){
@@ -261,8 +264,6 @@
     }
     window.add_zero_days = add_zero_days;
 
-    start_options.on("input", update_range);
-    end_options.on("input", update_range);
     reset_btn.node().onclick = (e) => {
 	add_ranges(all_visits);
 	add_visits_chart(all_visits);
