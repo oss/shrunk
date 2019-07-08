@@ -4,6 +4,7 @@
 
 # Secrets
 shrunk/config.py
+config.py
 
 # Build artifacts and the like
 Makefile
