@@ -59,14 +59,13 @@ pipeline {
                     SHRUNK_WHL_NAME = sh(script: 'ls shrunk_test/dist | grep test | grep whl',
                                          returnStdout: true).trim()
                 }
-                sh "sed -i -e \"/config\\.py/d\" docker-compose.${GIT_COMMIT}.yml"
-                sh 'docker-compose -f docker-compose.$GIT_COMMIT.yml up -d'
-                sh "./run_tests.sh docker-compose.${GIT_COMMIT}.yml shrunk_test/dist/$SHRUNK_WHL_NAME"
+                sh 'docker-compose -f docker-compose-test.yml up -d'
+                sh "./run_tests.sh docker-compose-test.yml shrunk_test/dist/$SHRUNK_WHL_NAME"
             }
 
             post {
 	        always {
-		    sh 'echo docker-compose -f docker-compose.$GIT_COMMIT.yml down -v'
+		    sh 'echo docker-compose -f docker-compose-test.yml down -v'
 		    junit testResults: 'junit.xml'
 		    deleteDir()
 		}
