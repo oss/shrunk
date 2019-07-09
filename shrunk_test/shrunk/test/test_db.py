@@ -529,11 +529,11 @@ def test_country_name():
 def test_geoip_location():
     assert client.get_geoip_location('66.249.88.21') == 'United States'
     assert client.get_geoip_location(
-        '165.230.224.67') == 'New Brunswick, New Jersey, United States'
+        '165.230.224.67') == 'Piscataway, New Jersey, United States'
     assert client.get_geoip_location('34.201.163.243') == 'Ashburn, Virginia, United States'
     assert client.get_geoip_location('35.168.234.184') == 'Ashburn, Virginia, United States'
     assert client.get_geoip_location('107.77.70.130') == 'New York, New York, United States'
-    assert client.get_geoip_location('136.243.154.93') == 'Nuremberg, Bavaria, Germany'
+    assert client.get_geoip_location('136.243.154.93') == 'Hebertsfelden, Bavaria, Germany'
     assert client.get_geoip_location('94.130.167.121') == 'Germany'
 
 
