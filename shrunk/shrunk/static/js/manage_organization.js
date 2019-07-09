@@ -38,7 +38,16 @@ function do_remove_member() {
 	'name': remove_member_org_name,
 	'netid': remove_member_netid
     };
-    remove_member_org_name = '';
-    remove_member_netid = '';
-    $.post('/remove_organization_member', req, function () { location.reload(); });
+    $.ajax({
+	type: 'POST',
+	url: '/remove_organization_member',
+	data: req,
+	error: (jqXHR, textStatus, errorThrown) => remove_member_error(jqXHR),
+	success: () => location.reload()
+    });
+}
+
+function remove_member_error(jqXHR) {
+    const err = jQuery.parseJSON(jqXHR.responseText)['error'];
+    $("#delete-member-message").text(err).css('color', 'red');
 }

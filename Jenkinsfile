@@ -59,6 +59,7 @@ pipeline {
                     SHRUNK_WHL_NAME = sh(script: 'ls shrunk_test/dist | grep test | grep whl',
                                          returnStdout: true).trim()
                 }
+		sh "sed -i -e \"s/COMMIT_HASH/$GIT_COMMIT/g\" docker-compose-test.yml"
                 sh 'docker-compose -f docker-compose-test.yml up -d'
                 sh "./run_tests.sh docker-compose-test.yml shrunk_test/dist/$SHRUNK_WHL_NAME"
             }
