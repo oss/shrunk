@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
 
+<input type="hidden" id="org_name" value="{{ name }}">
+<input type="hidden" id="netid" value="{{ netid }}">
+
 <div class="row row-controls">
   <div class="col col-auto">
     <h2>Manage organization <em>{{ name }}</em></h2>
@@ -54,6 +57,13 @@
     </button>
   </div>
   {% endif %}
+
+  <div class="col col-md-auto">
+    <button class="btn btn-outline-primary btn-no-border btn-no-background bg-light"
+	    type="button" onclick="remove_self()">
+      <i class="fas fa-times"></i> Leave Organization
+    </button>
+  </div>
 </div>
 
 {% if members %}
@@ -74,7 +84,7 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-	<h4>Are you sure you want to remove this member?</h4>
+	<h4 id="delete-member-header">Are you sure you want to remove this member?</h4>
 	<button type="button" class="close" data-dismiss="modal" aria-label="Close">
 	  <span aria-hidden="true">&times;</span>
 	</button>

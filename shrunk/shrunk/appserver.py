@@ -667,7 +667,8 @@ def remove_organization_member(netid_remover, client):
     name = request.form.get('name')
     if not netid_removed or not name:
         return util.unauthorized()
-    if not client.is_organization_admin(name, netid_remover):
+    if not client.is_organization_admin(name, netid_remover) \
+       and netid_removed != netid_remover:
         return util.unauthorized()
     if client.get_organization_members(name).count() == 1:
         return util.make_json_response({'error': 'Cannot remove last member.'}, status=400)

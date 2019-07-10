@@ -21,8 +21,14 @@ function add_member_shim() {
     send_request(ADD_MEMBER_FORM);
 }
 
+// These variables are set in remove_member and remove_self. When the
+// confirmation button is pressed in the modal, do_remove_member is called
+// and sends an AJAX request to the server. On success, remove_member_cont
+// is invoked. On failure, remove_member_error is invoked with the jqXHR
+// object as its argument.
 var remove_member_org_name;
 var remove_member_netid;
+var remove_member_cont;
 
 function remove_member(ev) {
     var parent = ev.target.parentElement;
@@ -30,6 +36,18 @@ function remove_member(ev) {
 	parent = parent.parentElement;
     remove_member_org_name = parent.querySelector('.org-name').value;
     remove_member_netid = parent.querySelector('.org-member-netid').value;
+    remove_member_cont = () => location.reload();
+    $('#delete-member-header').text('Are you sure you want to remove this member?');
+    $('#delete-member-message').text('This operation cannot be undone.').css('color', 'black');
+    $('#member-remove-modal').modal();
+}
+
+function remove_self() {
+    remove_member_org_name = $('#org_name').val();
+    remove_member_netid = $('#netid').val();
+    remove_member_cont = () => location.replace('/');
+    $('#delete-member-header').text('Are you sure you want to leave this organization?');
+    $('#delete-member-message').text('This operation cannot be undone.').css('color', 'black');
     $('#member-remove-modal').modal();
 }
 
@@ -43,11 +61,11 @@ function do_remove_member() {
 	url: '/remove_organization_member',
 	data: req,
 	error: (jqXHR, textStatus, errorThrown) => remove_member_error(jqXHR),
-	success: () => location.reload()
+	success: remove_member_cont
     });
 }
 
 function remove_member_error(jqXHR) {
     const err = jQuery.parseJSON(jqXHR.responseText)['error'];
-    $("#delete-member-message").text(err).css('color', 'red');
+    $('#delete-member-message').text(err).css('color', 'red');
 }
