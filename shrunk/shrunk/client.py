@@ -769,11 +769,11 @@ class ShrunkClient:
         col = self.db.organization_members
         return col.find({'netid': netid, 'is_admin': True})
 
-    def may_manage_organization(self, netid, name):
+    def may_manage_organization(self, name, netid):
         if not self.get_organization_info(name):
             return False
         if roles.check('admin', netid):
-            return 'admin'
+            return 'site-admin'
         if self.is_organization_admin(name, netid):
             return 'admin'
         if self.is_organization_member(name, netid):

@@ -58,12 +58,14 @@
   </div>
   {% endif %}
 
+  {% if user_is_member %}
   <div class="col col-md-auto">
     <button class="btn btn-outline-primary btn-no-border btn-no-background bg-light"
 	    type="button" onclick="remove_self()">
       <i class="fas fa-times"></i> Leave Organization
     </button>
   </div>
+  {% endif %}
 </div>
 
 {% if members %}

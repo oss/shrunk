@@ -616,7 +616,8 @@ def delete_organization(netid, client):
     name = request.form.get('name')
     if not name:
         return util.unauthorized()
-    if not roles.check('admin', netid) and not client.is_organization_admin(name, netid):
+    manage = client.may_manage_organization(name, netid)
+    if manage not in ['admin', 'site-admin']:
         return util.unauthorized()
     client.delete_organization(name)
     return redirect('/organizations')
@@ -639,10 +640,10 @@ def add_organization_member(netid_grantor, client):
     if not name:
         return util.make_json_response({'errors': {'name': 'You must supply a name.'}}, status=400)
 
-    if not client.is_organization_member(name, netid_grantor):
+    manage = client.may_manage_organization(name, netid_grantor)
+    if not manage:
         return util.unauthorized()
-
-    if admin and not client.is_organization_admin(name, netid_grantor):
+    if admin and manage not in ['admin', 'site-admin']:
         return util.unauthorized()
 
     if admin:
@@ -667,11 +668,14 @@ def remove_organization_member(netid_remover, client):
     name = request.form.get('name')
     if not netid_removed or not name:
         return util.unauthorized()
-    if not client.is_organization_admin(name, netid_remover) \
-       and netid_removed != netid_remover:
+    manage = client.may_manage_organization(name, netid_remover)
+    if manage not in ['admin', 'site-admin'] and netid_removed != netid_remover:
         return util.unauthorized()
     if client.get_organization_members(name).count() == 1:
         return util.make_json_response({'error': 'Cannot remove last member.'}, status=400)
+    admins = client.get_organization_admins(name)
+    if admins.count() == 1 and netid_removed in map(lambda a: a['netid'], admins):
+        return util.make_json_response({'error': 'Cannot remove last administrator.'}, status=400)
     client.remove_organization_member(name, netid_removed)
     return util.make_json_response({'success': {}})
 
@@ -685,12 +689,15 @@ def manage_organization(netid, client):
     name = request.args.get('name')
     if not name:
         return util.unauthorized()
-    if not client.may_manage_organization(netid, name):
+    manage = client.may_manage_organization(name, netid)
+    if not manage:
         return util.unauthorized()
     kwargs = {
         'name': name,
-        'user_is_admin': client.is_organization_admin(name, netid),
-        'members': client.get_organization_members(name)
+        'user_is_admin': manage in ['admin', 'site-admin'],
+        'user_is_member': client.is_organization_member(name, netid),
+        'members': client.get_organization_members(name),
+        'manage': manage
     }
 
     return render_template('manage_organization.html', **kwargs)

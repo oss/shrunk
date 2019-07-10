@@ -36,7 +36,14 @@ function remove_member(ev) {
 	parent = parent.parentElement;
     remove_member_org_name = parent.querySelector('.org-name').value;
     remove_member_netid = parent.querySelector('.org-member-netid').value;
-    remove_member_cont = () => location.reload();
+    // If the user is removing themself from an organization through this
+    // function (which is possible for an organization admin), we can't
+    // reload the manage_organization page, because the user will no longer
+    // have permission to view it. So we redirect back to the index instead.
+    if (remove_member_netid == $('#netid').val())
+	remove_member_cont = () => location.replace('/');
+    else
+	remove_member_cont = () => location.reload();
     $('#delete-member-header').text('Are you sure you want to remove this member?');
     $('#delete-member-message').text('This operation cannot be undone.').css('color', 'black');
     $('#member-remove-modal').modal();
