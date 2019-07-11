@@ -270,7 +270,7 @@ def render_index(netid, client, **kwargs):
                            linkserver_url=app.config['LINKSERVER_URL'],
                            page=results.page,
                            selected_links_set=display_links_set(links_set),
-                           orgs=client.get_member_organizations(netid),
+                           orgs=list(client.get_member_organizations(netid)),
                            **kwargs)
 
 
