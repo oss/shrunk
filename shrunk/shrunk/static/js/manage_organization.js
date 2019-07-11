@@ -46,6 +46,7 @@ function remove_member(ev) {
 	remove_member_cont = () => location.reload();
     $('#delete-member-header').text('Are you sure you want to remove this member?');
     $('#delete-member-message').text('This operation cannot be undone.').css('color', 'black');
+    $('#delete-member-button').html('Delete');
     $('#member-remove-modal').modal();
 }
 
@@ -55,6 +56,7 @@ function remove_self() {
     remove_member_cont = () => location.replace('/');
     $('#delete-member-header').text('Are you sure you want to leave this organization?');
     $('#delete-member-message').text('This operation cannot be undone.').css('color', 'black');
+    $('#delete-member-button').html('Leave');
     $('#member-remove-modal').modal();
 }
 
