@@ -1,8 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
 
-<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/modules/export-data.js"></script>
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-1.48.3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.bundle.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/emn178/chartjs-plugin-labels/src/chartjs-plugin-labels.js"></script>
 
 <div class="row row-controls">
   <div class="col col-auto">
@@ -20,70 +25,54 @@
   </div>
 </div>
 
-<article class="add-group clearfix">
-    {% if missing_url %}
-    <h3> URL not found :( </h3>
-    {% else %}
-    <script src="https://d3js.org/d3.v5.min.js"></script>
-    <script src="https://cdn.plot.ly/plotly-1.48.3.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.bundle.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/emn178/chartjs-plugin-labels/src/chartjs-plugin-labels.js"></script>
-    <h3><a href="{{ url_info['long_url'] }}">
-	    {{ url_info["title"] }}
-    </a></h3>
-    <ul>
-	<li>Visits: {{ url_info["visits"] }}</li>
-	<li>First Time Visits: <span id="first_time_visits">Loading...</span></li>
+<div class="row">
+  <div class="col">
+    <h3><a href="{{ url_info['long_url'] }}">{{ url_info["title"] }}</a></h3>
+      <span style="margin-right: 10px">Total visits: {{ url_info["visits"] }}</span>
+      <span>First time visits: <span id="first_time_visits">Loading...</span></span>
+
+      <div id="visits-container" style="min-width 310px; height: 400px; margin: 0 auto"></div>
     </ul>
+  </div>
+</div>
 
-    <hr>
+<hr>
 
-    <div>
-	key:
-	<span style="color:steelblue">total visits</span>
-	<span style="color:orange">first time visits</span>
-    </div>
-    <div id="nodata"></div>
-    <svg height="0"></svg>
-    <div>
-	<form class="form-inline">
-	    <input type="text" class="datepicker" id="start_datepicker">
-	    <input type="text" class="datepicker" id="end_datepicker">
-	    <button class="form-control" id="reset">reset</button>
-	</form>
-	<span id="error"></span>
-    </div>
-
-    <hr>
-
+<div class="row">
+  <div class="col">
     <div id="map-toggle" class="btn-group">
-	<button class="btn btn-default" type="button" onmouseup="show_us_map()">US</button>
-	<button class="btn btn-default" type="button" onmouseup="show_world_map()">World</button>
+      <button class="btn btn-default" type="button" onmouseup="show_us_map()">US</button>
+      <button class="btn btn-default" type="button" onmouseup="show_world_map()">World</button>
     </div>
 
     <div id="maps-div">
-	<div id="us-map"></div>
-	<div id="world-map"></div>
+      <div id="us-map"></div>
+      <div id="world-map"></div>
     </div>
-    <hr>
-    <div id="pie-charts">
-      <div class="pie-div" height="191" id="browser-stats">
-	<canvas id="browser-canvas"></canvas>
-      </div>
-      
-      <div class="pie-div" id="platform-stats">
-	<canvas id="platform-canvas"></canvas>
-      </div>
-      
-      <div class="pie-div" id="referer-stats">
-	<canvas id="referer-canvas"></canvas>
-      </div>
+  </div>
+</div>
+
+<hr>
+
+<div class="row">
+  <div class="col">
+    <div class="pie-div" height="191" id="browser-stats">
+      <canvas id="browser-canvas"></canvas>
     </div>
+  </div>
 
+  <div class="col">
+    <div class="pie-div" id="platform-stats">
+      <canvas id="platform-canvas"></canvas>
+    </div>
+  </div>
 
-    </br></br></br></br>
-    {% endif %}
-</article>
+  <div class="col">
+    <div class="pie-div" id="referer-stats">
+      <canvas id="referer-canvas"></canvas>
+    </div>
+  </div>
+</div>
 
 {% assets "shrunk_stats" %}
 <script src="{{ ASSET_URL }}"></script>

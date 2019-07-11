@@ -1,290 +1,41 @@
-(function(){
-    let first_time_visits_elem=d3.select("#first_time_visits");
-    let start_options=$("#start_datepicker");
-    let end_options=$("#end_datepicker");
-    let reset_btn=d3.select("#reset");
-    let all_visits=[];
+/* ===== visits chart ===== */
 
-    let url=new URL(document.location);
-    const short_url=url.searchParams.get("url");
+function date_of_id(_id) {
+    return Date.UTC(_id.year, _id.month-1, _id.day);
+}
 
-    // parse the date / time
-    const parseTime = (strtime)=>new Date(strtime);
-    window.pt=parseTime;
-    // format the dates
-    const parse_dates = function(visits) {
-	visits.forEach(visit=>{
-	    // when you use this form of the Date constructor, the date is
-	    // interpreted as being in the local timezone; when you use the
-	    // form with a date string, it's interpreted as being in GMT.
-	    // because of course
-	    visit.date = new Date(visit._id.year, visit._id.month-1, visit._id.day);
-	});
-	return visits;
-    };
+$.getJSON('/daily-visits?url=' + (new URL(document.location)).searchParams.get('url'),
+	  function (data) {
+	      const first_time_visits = data.reduce((acc, el) => acc + el.first_time_visits, 0);
+	      $('#first_time_visits').text(first_time_visits);
 
-    const add_visits_chart = function(visits){
-	if(visits.length<2){
-	    d3.select("#nodata").text("Not enough data for a chart");
-	    return visits;
-	}
-	const margin = {top: 20, right: 20, bottom: 30, left: 50};
-	let width = 700 - margin.left - margin.right;
-	let height = 500 - margin.top - margin.bottom;
-	const aspect = height / width;
-	if (width > window.innerWidth * 0.7) {
-	    width = window.innerWidth * 0.7;
-	    height = width * aspect;
-	}
-	console.log("resize", width, height);
-
-	// set the ranges
-	let scale_time = d3.scaleTime()
-	    .domain([Date.parse(visits[0].date), Date.parse(visits[visits.length - 1].date)])
-	    .range([0, width]);
-
-	// format ticks
-	scale_time.tickFormat = (count, specifier) => {
-	    const year = (d) => d3.timeFormat("%Y")(d);
-	    const day = (d) => d3.timeFormat("%b %d")(d);
-	    const month = (d) => d3.timeFormat("%b")(d);
-	    return (d) => {
-		return d.getMonth() == 0 && d.getDate == 0? year(d) :
-		    d.getDate() == 1 ? month(d) : day(d)
-	    };
-	}
-
-	let scale_visits = d3.scaleLinear()
-	    .domain([0, d3.max(visits, d=>d.all_visits)])
-	    .range([height, 0]);
-
-	// define the line
-	const all_visits_line = d3.line()
-	    .x(d=>scale_time(d.date))
-	    .y(d=>scale_visits(d.all_visits));
-	const first_visits_line = d3.line()
-	    .x(d=>scale_time(d.date))
-	    .y(d=>scale_visits(d.first_time_visits));
-
-	//clear the svg first
-	d3.select("svg > *").remove();
-
-	// append the svg obgect to the body of the page
-	// appends a 'group' element to 'svg'
-	// moves the 'group' element to the top left margin
-	let svg = d3.select("svg")
-	    .attr("width", width + margin.left + margin.right)
-	    .attr("height", height + margin.top + margin.bottom)
-	    .append("g")
-	    .attr("transform",
-		  "translate(" + margin.left + "," + margin.top + ")");
-
-	// Add the valueline path.
-	svg.append("path")
-	    .data([visits])
-	    .attr("class", "line")
-	    .attr("d", all_visits_line)
-	    .attr("stroke", "steelblue")
-	    .attr("fill", "none")
-	    .attr("stroke-width", "2px");
-
-	svg.append("path")
-	    .data([visits])
-	    .attr("class", "line")
-	    .attr("d", first_visits_line)
-	    .attr("stroke", "orange")
-	    .attr("fill", "none")
-	    .attr("stroke-width", "2px");
-
-	// Add the Time Axis
-	svg.append("g")
-	    .attr("transform", "translate(0," + height + ")")
-	    .call(d3.axisBottom(scale_time));
-
-	// Add the Visits Axis
-	svg.append("g")
-	    .call(d3.axisLeft(scale_visits));
-	return visits;
-    }
-    window.add_visits_chart = add_visits_chart;
-
-    const empty_visit = function(yearOrDate, month, day){
-	let year = yearOrDate;
-	let date = yearOrDate;
-	if (month == undefined) {
-	    year = date.getFullYear();
-	    month = date.getMonth();
-	    day = date.getDate();
-	}
-	return {
-	    _id:{
-		month: month + 1,
-		year:  year,
-		day: day
-	    },
-	    date: new Date(year, month, day),
-	    all_visits: 0,
-	    first_time_visits: 0
-	}
-    }
-
-    /**
-     * if there is no view data for a month there is no months object
-     * for that month and it creates a gap in the chart. this fills in the
-     * gaps
-     */
-    const add_missing_months = function(months){
-	let new_months=[months[0]];
-	for(let i=1;i<months.length;){
-	    const last_month=new_months[new_months.length-1]._id.month;
-	    const next_month=months[i]._id.month
-	    const last_year=new_months[new_months.length-1]._id.year;
-	    const next_year=months[i]._id.year
-	    const next_month_object=months[i]
-
-	    if(next_month===last_month+1
-	       ||(next_month===1
-		  &&last_month===12
-		  &&next_year===last_year+1))
-	    {
-		new_months.push(next_month_object);
-		i++;
-	    }else if(last_month===12){
-		new_months.push(empty_visit(1, last_year+1, 1));
-	    }else{
-		new_months.push(empty_month(last_month+1,last_year, 1))
-	    }
-	}
-	return new_months;
-    }
-
-    const log = function(input){
-	console.log(input);
-	return input;
-    }
-    const log_visits = function(visits){
-	visits.map(visit=>console.log(visit._id.visit, visit._id.year))
-	return visits;
-    }
-
-    const set_first_time_visits = function(visits){
-	let total_first_time=0;
-	visits.map(visit=>{
-	    total_first_time+=visit.first_time_visits
-	});
-	first_time_visits_elem.text(total_first_time);
-	return visits;
-    }
-
-    const set_all_visits = function(visits){
-	all_visits=visits;
-	window.all_visits = visits;
-	return visits;
-    }
-
-    const set_range_error = function(){
-	d3.select("#error").text("Invalid range");
-    }
-
-    const clear_range_error = function(){
-	d3.select("#error").text("");
-    }
-
-    /**
-     * filters the graph data to be within the date range
-     */
-
-    const update_range = function() {
-	const first = all_visits[0].date;
-	const last = all_visits[all_visits.length-1].date;
-	const start = start_options.datepicker('getDate');
-	const end = end_options.datepicker('getDate');
-
-	if (isNaN(start) || isNaN(end) || start >= end || start < first || end > last) {
-	    set_range_error();
-	} else {
-	    clear_range_error();
-	    add_visits_chart(
-		all_visits
-		    .filter(visit => start <= visit.date && visit.date <= end)
-	    );
-	}
-    }
-
-    const add_ranges = function(visits) {
-	const first = visits[0].date;
-	const last = visits[visits.length-1].date;
-
-	start_options.datepicker({
-	    minDate: first,
-	    maxDate: last,
-	    defaultDate: first,
-	    dateFormat: 'yy-mm-dd',
-	    onClose: update_range
-	});
-	start_options.datepicker('setDate', first);
-
-	end_options.datepicker({
-	    minDate: first,
-	    maxDate: last,
-	    defaultDate: last,
-	    dateFormat: 'yy-mm-dd',
-	    onClose: update_range
-	});
-	end_options.datepicker('setDate', last);
-    }
-
-    const add_zero_days = function(visits){
-	const add_date = (amt) => (date) => {
-	    let t = new Date(date);
-	    t.setDate(t.getDate() + amt);
-	    return t;
-	}
-	const tomorow = add_date(1);
-	const yesterday = add_date(-1);
-
-	let new_visits = [visits[0]];
-	let last = new_visits[0];
-	let i = 1;
-	while (i < visits.length) {
-	    // if the next item in visits is tomorow
-	    if (visits[i].date - tomorow(last.date) == 0) {
-		new_visits.push(visits[i]);
-		i++;
-	    } else if (last.all_visits == 0) {
-		new_visits.push(empty_visit(yesterday(visits[i].date)));
-		new_visits.push(visits[i]);
-		i++;
-	    } else {
-		new_visits.push(empty_visit(tomorow(last.date)));
-	    }
-	    last = new_visits[new_visits.length - 1];
-	}
-	return new_visits;
-    }
-    window.add_zero_days = add_zero_days;
-
-    reset_btn.node().onclick = (e) => {
-	add_ranges(all_visits);
-	add_visits_chart(all_visits);
-	clear_range_error();
-	e.preventDefault();
-    };
-
-    fetch("/daily-visits?url="+short_url, {
-	credentials: "include"
-    })
-	//.then(log)
-	.then(response=>response.json())
-	.then(parse_dates)
-	.then(add_zero_days)
-	.then(set_first_time_visits)
-	.then(set_all_visits)
-	.then(add_visits_chart)
-	.then(add_ranges)
-	.catch(console.error);
-}());
-
+	      Highcharts.chart('visits-container', {
+		  chart: {
+		      type: 'spline',
+		      zoomType: 'x'
+		  },
+		  title: { text: 'Visits' },
+		  subtitle: { text: 'Click and drag to zoom in' },
+		  xAxis: {
+		      type: 'datetime',
+		      title: { text: 'Date' }
+		  },
+		  yAxis: {
+		      title: { text: 'Visits' },
+		      min: 0
+		  },
+		  plotOptions: {
+		      spline: { marker: { enabled: true } }
+		  },
+		  series: [{
+		      name: 'First time visits',
+		      data: data.map(el => [date_of_id(el._id), el.first_time_visits])
+		  }, {
+		      name: 'Total visits',
+		      data: data.map(el => [date_of_id(el._id), el.all_visits])
+		  }]
+	      })
+	  });
 
 /* ===== choropleths of visitor locations ===== */
 
