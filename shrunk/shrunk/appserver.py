@@ -159,7 +159,7 @@ def logout():
         return redirect('/')
     user = session.pop('user')
     session.clear()
-    if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
+    if app.config.get('DEV_LOGINS'):
         if user['netid'] in ['DEV_USER', 'DEV_FACSTAFF', 'DEV_PWR_USER', 'DEV_ADMIN']:
             return redirect('/')
     return redirect('/shibboleth/Logout')
@@ -171,22 +171,20 @@ def render_login(**kwargs):
 
     Takes a WTForm in the keyword arguments.
     """
-    if "user" in session:
+    if 'user' in session:
         return redirect('/')
-    enable_dev = 'DEV_LOGINS' in app.config and app.config['DEV_LOGINS']
-    resp = make_response(render_template('login.html',
-                                         shib_login='/login',
-                                         dev=enable_dev,
-                                         dev_user_login='/dev-user-login',
-                                         dev_facstaff_login='/dev-facstaff-login',
-                                         dev_admin_login='/dev-admin-login',
-                                         dev_power_login='/dev-power-login',
-                                         **kwargs))
-    return resp
+    enable_dev = bool(app.config.get('DEV_LOGINS', False))
+    kwargs.update({'shib_login': '/login',
+                   'dev': enable_dev,
+                   'dev_user_login': '/dev-user-login',
+                   'dev_facstaff_login': '/dev-facstaff-login',
+                   'dev_power_login': '/dev-power-login',
+                   'dev_admin_login': '/dev-admin-login'})
+    return make_response(render_template('login.html', **kwargs))
 
 
 # add devlogins if necessary
-if('DEV_LOGINS' in app.config and app.config['DEV_LOGINS']):
+if app.config.get('DEV_LOGINS'):
     # pylint: disable=missing-docstring
 
     @app.route('/dev-user-login')
@@ -261,16 +259,15 @@ def render_index(netid, client, **kwargs):
 
     results = search.search(netid, client, request, session)
 
-    return render_template("index.html",
-                           begin_pages=results.begin_page,
-                           end_pages=results.end_page,
-                           lastpage=results.total_pages,
-                           links=list(results),
-                           linkserver_url=app.config['LINKSERVER_URL'],
-                           page=results.page,
-                           selected_links_set=display_links_set(results.links_set),
-                           orgs=list(client.get_member_organizations(netid)),
-                           **kwargs)
+    kwargs.update({'begin_pages': results.begin_page,
+                   'end_pages': results.end_page,
+                   'lastpage': results.total_pages,
+                   'page': results.page,
+                   'links': list(results),
+                   'linkserver_url': app.config['LINKSERVER_URL'],
+                   'selected_links_set': display_links_set(results.links_set),
+                   'orgs': list(client.get_member_organizations(netid))})
+    return render_template('index.html', **kwargs)
 
 
 @app.route("/add", methods=["POST"])
@@ -309,21 +306,21 @@ def add_link(netid, client):
 def get_stats(netid, client):
     """ Render the stats page for a given URL. """
 
-    template_data = {
-        "url_info": {},
-        "missing_url": False,
-        "monthy_visits": []
+    url = request.args.get('url', '')
+    kwargs = {
+        'url_info': {},
+        'missing_url': False,
+        'monthy_visits': [],
+        'short_url': url
     }
 
-    if 'url' in request.args:
-        url = request.args['url']
-        url_info = client.get_url_info(url)
-    if 'url' not in request.args or not url_info:
-        template_data['missing_url'] = True
+    url_info = client.get_url_info(url) if url else None
+    if not url_info:
+        kwargs['missing_url'] = True
     else:
-        template_data['url_info'] = url_info
+        kwargs['url_info'] = url_info
 
-    return render_template("stats.html", short_url=request.args.get('url', ''), **template_data)
+    return render_template("stats.html", **kwargs)
 
 
 @app.route("/link-visits-csv", methods=["GET"])
@@ -570,11 +567,15 @@ def admin_panel(netid, client):
 def list_organizations(netid, client):
     """ List the organizations of which the current user is a member. """
 
-    member_orgs = [client.get_organization_info(org['name']) for org
-                   in client.get_member_organizations(netid)]
-    admin_orgs = [client.get_organization_info(org['name']) for org
-                  in client.get_admin_organizations(netid)]
-    return render_template("organizations.html", member_orgs=member_orgs, admin_orgs=admin_orgs)
+    def org_info(org):
+        return client.get_organization_info(org['name'])
+
+    kwargs = {
+        'member_orgs': list(map(org_info, client.get_member_organizations(netid))),
+        'admin_orgs': list(map(org_info, client.get_admin_organizations(netid)))
+    }
+
+    return render_template("organizations.html", **kwargs)
 
 
 @app.route("/create_organization", methods=["POST"])
