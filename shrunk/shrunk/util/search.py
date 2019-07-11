@@ -9,12 +9,11 @@ from ..client import Pagination
 
 def authorized_for_links_set(client, links_set, netid):
     """ Test whether the user is authorized to view links_set. """
-    authorized = False
-    if links_set == 'GO!all' and roles.check('admin', netid):
-        authorized = True
-    if links_set not in ['GO!my', 'GO!all'] and client.is_organization_member(links_set, netid):
-        authorized = True
-    return authorized
+    if links_set == 'GO!my':
+        return True
+    if links_set == 'GO!all':
+        return roles.check('admin', netid)
+    return bool(client.may_manage_organization(links_set, netid))
 
 
 def paginate(cur_page, total_pages):
@@ -56,6 +55,7 @@ def search(netid, client, request, session, should_paginate=True):
 
     if not authorized_for_links_set(client, links_set, netid):
         links_set = 'GO!my'
+    session['links_set'] = links_set
 
     def do_search(page):
         if should_paginate:
@@ -77,8 +77,8 @@ def search(netid, client, request, session, should_paginate=True):
             results.begin_page, results.end_page = paginate(page, results.total_pages)
         return results
 
-    # hack
     results = do_search(page)
+    results.links_set = links_set
     if not should_paginate:
         return results
     if page > results.total_pages:

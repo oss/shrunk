@@ -259,7 +259,6 @@ def render_index(netid, client, **kwargs):
             return 'All links'
         return links_set
 
-    links_set = util.get_param('links_set', request, session, default='GO!my')
     results = search.search(netid, client, request, session)
 
     return render_template("index.html",
@@ -269,7 +268,7 @@ def render_index(netid, client, **kwargs):
                            links=list(results),
                            linkserver_url=app.config['LINKSERVER_URL'],
                            page=results.page,
-                           selected_links_set=display_links_set(links_set),
+                           selected_links_set=display_links_set(results.links_set),
                            orgs=list(client.get_member_organizations(netid)),
                            **kwargs)
 
