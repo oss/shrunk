@@ -14,7 +14,7 @@ from . import forms
 from . import util
 from .util import search
 from .util import string
-from .util.stat import get_referer_domain, make_csv_for_links, make_geoip_json
+from .util.stat import get_referer_domain, make_csv_for_links
 from .app_decorate import ShrunkFlask
 from .client import BadShortURLException, ForbiddenDomainException, \
     AuthenticationException, NoSuchLinkException
@@ -360,7 +360,7 @@ def get_geoip_json(netid, client):
         return util.make_json_response({'error': 'no url'}, status=400)
     if not client.is_owner_or_admin(url, netid):
         return util.make_json_response({'error': 'forbidden'}, status=403)
-    return util.make_json_response(make_geoip_json(client, url))
+    return util.make_json_response(client.get_geoip_json(url))
 
 
 @app.route("/useragent-stats", methods=["GET"])

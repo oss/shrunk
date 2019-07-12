@@ -36,23 +36,3 @@ def make_csv_for_links(client, links):
             writer.writerow([visit['short_url'], visitor_id, location, referer, ua, visit['time']])
 
     return f.getvalue()
-
-
-def make_geoip_json(client, url):
-    us = collections.defaultdict(int)
-    world = collections.defaultdict(int)
-    for visit in client.get_visits(url):
-        ipaddr = visit['source_ip']
-        if ipaddr == '128.6.68.130':
-            # XXX skip instigate for now, but we should come up with
-            # a better solution at some point
-            continue
-        state, country = client.get_location_codes(ipaddr)
-        if state:
-            us[state] += 1
-        world[country] += 1
-
-    def to_json(j):
-        return [{'code': key, 'value': value} for key, value in j.items()]
-
-    return { 'us': to_json(us), 'world': to_json(world) }

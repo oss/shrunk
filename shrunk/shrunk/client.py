@@ -113,11 +113,15 @@ class ShrunkClient:
     all URLs do not exceed eight characters.
     """
 
+    # XXX can we automatically get a list of endpoints from Flask?
     RESERVED_WORDS = ["add", "login", "logout", "delete", "admin", "stats", "qr",
                       "shrunk-login", "roles", "dev-user-login", "dev-admin-login",
-                      "dev-power-login", "unauthorized", "link-visits-csv",
+                      "dev-facstaff-login", "dev-power-login", "unauthorized", "link-visits-csv",
                       "search-visits-csv", "useragent-stats", "referer-stats",
-                      "monthly-visits", "edit"]
+                      "monthly-visits", "daily-visits", "edit", "geoip-json", "faq"
+                      "organizations", "create_organization", "delete_organization",
+                      "add_organization_member", "remove_organization_member",
+                      "manage_organization"]
     """Reserved words that cannot be used as shortened urls."""
 
     def __init__(self, *, DB_HOST=None, DB_PORT=27017, DB_USERNAME=None, DB_PASSWORD=None,
@@ -574,12 +578,15 @@ class ShrunkClient:
         """
         self.db.urls.update_one({"_id": short_url}, {"$inc": {"visits": 1}})
 
+        state_code, country_code = self.get_location_codes(source_ip)
         self.db.visits.insert_one({
             "short_url": short_url,
             "source_ip": source_ip,
             "time": datetime.datetime.now(),
             "user_agent": user_agent,
-            "referer": referer
+            "referer": referer,
+            "state_code": state_code,
+            "country_code": country_code
         })
 
     def is_blocked(self, long_url):
@@ -652,13 +659,42 @@ class ShrunkClient:
         except geoip2.errors.AddressNotFoundError:
             return unk
 
+    def get_geoip_json(self, url):
+        def not_null(field):
+            return [{'$match': {field: {'$exists': True, '$ne': None}}}]
+
+        def group_by(op):
+            return [{'$group': {'_id': op, 'value': {'$sum': 1}}}]
+
+        filter_us = [{'$match': {'country_code': 'US'}}]
+
+        rename_id = [
+            {'$addFields': {'code': '$_id'}},
+            {'$project': {'_id': 0}}
+        ]
+
+        aggregation = [
+            {'$match': {'short_url': url}},
+            {'$facet': {
+                'us': filter_us + not_null('state_code') + group_by('$state_code') + rename_id,
+                'world': not_null('country_code') + group_by('$country_code') + rename_id
+            }}
+        ]
+
+        return next(self.db.visits.aggregate(aggregation))
+
     def get_location_codes(self, ipaddr):
+        if not self._geoip:
+            return None, None
         if ipaddr.startswith('172.'):
             return 'NJ', 'US'
         try:
             resp = self._geoip.city(ipaddr)
             country = resp.country.iso_code
-            state = resp.subdivisions.most_specific.iso_code if country == 'US' else None
+            try:
+                state = resp.subdivisions.most_specific.iso_code if country == 'US' else None
+            except AttributeError:
+                state = None
             return state, country
         except (AttributeError, geoip2.errors.AddressNotFoundError):
             return None, None
