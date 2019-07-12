@@ -2,6 +2,12 @@
 {% block content %}
 
 <script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/maps/modules/map.js"></script>
+<script src="https://code.highcharts.com/maps/modules/data.js"></script>
+<script src="https://code.highcharts.com/maps/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/maps/modules/offline-exporting.js"></script>
+<script src="https://code.highcharts.com/mapdata/countries/us/us-all.js"></script>
+<script src="https://code.highcharts.com/mapdata/custom/world.js"></script>
 <script src="https://code.highcharts.com/modules/exporting.js"></script>
 <script src="https://code.highcharts.com/modules/export-data.js"></script>
 <script src="https://d3js.org/d3.v5.min.js"></script>
@@ -30,7 +36,6 @@
     <h3><a href="{{ url_info['long_url'] }}">{{ url_info["title"] }}</a></h3>
       <span style="margin-right: 10px">Total visits: {{ url_info["visits"] }}</span>
       <span>First time visits: <span id="first_time_visits">Loading...</span></span>
-
       <div id="visits-container" style="min-width 310px; height: 400px; margin: 0 auto"></div>
     </ul>
   </div>
@@ -46,8 +51,8 @@
     </div>
 
     <div id="maps-div">
-      <div id="us-map"></div>
-      <div id="world-map"></div>
+      <div id="us-map" style="min-width 310px; height: 500px; margin: 0 auto"></div>
+      <div id="world-map" style="min-width 310px; height: 500px; margin: 0 auto"></div>
     </div>
   </div>
 </div>

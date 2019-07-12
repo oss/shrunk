@@ -652,53 +652,16 @@ class ShrunkClient:
         except geoip2.errors.AddressNotFoundError:
             return unk
 
-    def get_country_name(self, ipaddr):
-        """Gets the name of the country in which the given IPv4 address is located.
-
-           :Parameters:
-             - `ipaddr`: a string containing an IPv4 address.
-
-           :Returns:
-             A string containing the full name of the country in which the address
-             is located (e.g. ``"United States"``), or the string ``"unknown"``
-             if the country cannot be determined.
-        """
-
-        unk = 'unknown'
-        if not self._geoip:
-            return unk
+    def get_location_codes(self, ipaddr):
         if ipaddr.startswith('172.'):
-            return 'United States'
+            return 'NJ', 'US'
         try:
             resp = self._geoip.city(ipaddr)
-            return resp.country.name or unk
-        except geoip2.errors.AddressNotFoundError:
-            return unk
-
-    def get_state_code(self, ipaddr):
-        """Gets a string describing the state or province in which the given
-           IPv4 address is located.
-
-           :Parameters:
-             - `ipaddr`: a string containing an IPv4 address.
-
-           :Returns:
-             A string containing the ISO code of the state or province in which
-             the address is located (e.g. ``"NY"``, ``"NJ"``, ``"VA"``) or the string
-             ``"unknown"`` if the location cannot
-             be determined.
-        """
-
-        unk = 'unknown'
-        if not self._geoip:
-            return unk
-        if ipaddr.startswith('172.'):
-            return 'NJ'
-        try:
-            resp = self._geoip.city(ipaddr)
-            return resp.subdivisions.most_specific.iso_code or unk
+            country = resp.country.iso_code
+            state = resp.subdivisions.most_specific.iso_code if country == 'US' else None
+            return state, country
         except (AttributeError, geoip2.errors.AddressNotFoundError):
-            return unk
+            return None, None
 
     def create_organization(self, name):
         col = self.db.organizations

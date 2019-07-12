@@ -38,21 +38,21 @@ def make_csv_for_links(client, links):
     return f.getvalue()
 
 
-def get_location_state(client, ip):
-    return client.get_state_code(ip)
-
-
-def get_location_country(client, ip):
-    return client.get_country_name(ip)
-
-
-def make_geoip_csv(client, get_location, link):
-    location_counts = collections.defaultdict(int)
-    for visit in client.get_visits(link):
+def make_geoip_json(client, url):
+    us = collections.defaultdict(int)
+    world = collections.defaultdict(int)
+    for visit in client.get_visits(url):
         ipaddr = visit['source_ip']
-        location = get_location(client, ipaddr)
-        location_counts[location] += 1
+        if ipaddr == '128.6.68.130':
+            # XXX skip instigate for now, but we should come up with
+            # a better solution at some point
+            continue
+        state, country = client.get_location_codes(ipaddr)
+        if state:
+            us[state] += 1
+        world[country] += 1
 
-    csv_output = 'location,visits\n' + '\n'.join(map(lambda x: '{},{}'.format(*x),
-                                                     location_counts.items()))
-    return csv_output
+    def to_json(j):
+        return [{'code': key, 'value': value} for key, value in j.items()]
+
+    return { 'us': to_json(us), 'world': to_json(world) }

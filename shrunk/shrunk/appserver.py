@@ -14,8 +14,7 @@ from . import forms
 from . import util
 from .util import search
 from .util import string
-from .util.stat import get_referer_domain, make_csv_for_links, make_geoip_csv, \
-    get_location_state, get_location_country
+from .util.stat import get_referer_domain, make_csv_for_links, make_geoip_json
 from .app_decorate import ShrunkFlask
 from .client import BadShortURLException, ForbiddenDomainException, \
     AuthenticationException, NoSuchLinkException
@@ -353,33 +352,15 @@ def get_search_visits_csv(netid, client):
     return util.make_plaintext_response(csv_output, filename='visits-search.csv')
 
 
-@app.route("/geoip-csv", methods=["GET"])
+@app.route("/geoip-json", methods=["GET"])
 @app.require_login
-def get_geoip_csv(netid, client):
-    """ Return CSV-formatted data giving the number of visitors from
-        each geographic region. The 'resolution' parameter controls
-        whether the data is state-level or country-level. """
-
-    if 'url' not in request.args:
-        return error('error: request must have url', 400)
-    link = request.args['url']
-
-    if 'resolution' not in request.args:
-        return error('error: request must have resolution', 400)
-    resolution = request.args['resolution']
-    if resolution not in ['country', 'state']:
-        return ('error: invalid resolution', 400)
-
-    if not client.is_owner_or_admin(link, netid):
-        return util.unauthorized()
-
-    if resolution == 'country':
-        get_location = get_location_country
-    else:  # resolution == 'state'
-        get_location = get_location_state
-
-    csv_output = make_geoip_csv(client, get_location, link)
-    return util.make_plaintext_response(csv_output)
+def get_geoip_json(netid, client):
+    url = request.args.get('url')
+    if not url:
+        return util.make_json_response({'error': 'no url'}, status=400)
+    if not client.is_owner_or_admin(url, netid):
+        return util.make_json_response({'error': 'forbidden'}, status=403)
+    return util.make_json_response(make_geoip_json(client, url))
 
 
 @app.route("/useragent-stats", methods=["GET"])

@@ -1,10 +1,12 @@
+const url = (new URL(document.location)).searchParams.get('url');
+
 /* ===== visits chart ===== */
 
 function date_of_id(_id) {
     return Date.UTC(_id.year, _id.month-1, _id.day);
 }
 
-$.getJSON('/daily-visits?url=' + (new URL(document.location)).searchParams.get('url'),
+$.getJSON('/daily-visits?url=' + url,
 	  function (data) {
 	      const first_time_visits = data.reduce((acc, el) => acc + el.first_time_visits, 0);
 	      $('#first_time_visits').text(first_time_visits);
@@ -29,9 +31,11 @@ $.getJSON('/daily-visits?url=' + (new URL(document.location)).searchParams.get('
 		  },
 		  series: [{
 		      name: 'First time visits',
+		      color: '#FCE2CC',
 		      data: data.map(el => [date_of_id(el._id), el.first_time_visits])
 		  }, {
 		      name: 'Total visits',
+		      color: '#FC580C',
 		      data: data.map(el => [date_of_id(el._id), el.all_visits])
 		  }]
 	      })
@@ -39,26 +43,43 @@ $.getJSON('/daily-visits?url=' + (new URL(document.location)).searchParams.get('
 
 /* ===== choropleths of visitor locations ===== */
 
-function add_map(div_id, csv_url, locationmode, layout) {
-    Plotly.d3.csv(csv_url,
-		  function(err, rows) {
-		      function unpack(rows, key) {
-			  return rows.map(function(row) { return row[key]; });
-		      }
-
-		      var data = [{
-			  type: 'choropleth',
-			  locationmode: locationmode,
-			  locations: unpack(rows, 'location'),
-			  z: unpack(rows, 'visits'),
-			  text: unpack(rows, 'location'),
-			  autocolorscale: true
-		      }];
-
-		      var div = document.getElementById(div_id);
-		      Plotly.plot(div, data, layout, {showLink: false});
-		  });
+function add_map(div_name, map_name, title, join, data) {
+    Highcharts.mapChart(div_name, {
+	chart: { map: map_name },
+	title: { text: title },
+	mapNavigation: { enabled: true },
+	exporting: {
+	    sourceWidth: 600,
+	    sourceHeight: 500
+	},
+	legend: {
+	    layout: 'vertical',
+	    align: 'left',
+	    verticalAlign: 'bottom'
+	},
+	colorAxis: {
+	    min: 1,
+	    minColor: '#FCE2CC',
+	    maxColor: '#FC580C'
+	},
+	series: [{
+	    data: data,
+	    joinBy: [join, 'code'],
+	    name: 'Visits',
+	    tooltip: { pointFormat: '{point.name}: {point.value}' }
+	}]
+    });
 }
+
+// Add both US and world maps
+$.getJSON('/geoip-json?url=' + url,
+	  function (data) {
+	      add_map('us-map', 'countries/us/us-all', 'US visitors',
+		       'postal-code', data['us']);
+	      add_map('world-map', 'custom/world', 'Worldwide visitors',
+		       'iso-a2', data['world']);
+	  });
+
 
 function show_us_map() {
     document.getElementById('us-map').style.display = '';
@@ -70,35 +91,8 @@ function show_world_map() {
     document.getElementById('world-map').style.display = '';
 }
 
-/* render maps */
-(function(){
-    const short_link = (new URL(document.location)).searchParams.get('url');
-
-    /* render state-level map */
-    const state_csv_url = '/geoip-csv?resolution=state&url=' + short_link;
-    const state_layout = {
-	title: 'Visits per state',
-	geo: {
-	    scope: 'usa',
-	    projection: { type: 'albers usa' }
-	}
-    };
-    add_map('us-map', state_csv_url, 'USA-states', state_layout);
-
-    /* render world map */
-    const country_csv_url = "/geoip-csv?resolution=country&url=" + short_link;
-    const country_layout = {
-	title: 'Visits per country',
-	geo: {
-	    projection: { type: 'robinson' }
-	}
-    };
-    add_map('world-map', country_csv_url, 'country names', country_layout);
-
-    /* default to displaying US map */
-    show_us_map();
-}());
-
+// Initially only display the US map
+show_us_map();
 
 /* ===== pie/doughnut charts of various statistics ===== */
 
