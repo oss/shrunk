@@ -47,6 +47,7 @@ function add_map(div_name, map_name, title, join, data) {
     Highcharts.mapChart(div_name, {
 	chart: { map: map_name },
 	title: { text: title },
+	subtitle: { text: '(Logarithmic scale)' },
 	mapNavigation: { enabled: true },
 	exporting: {
 	    sourceWidth: 600,
@@ -59,6 +60,7 @@ function add_map(div_name, map_name, title, join, data) {
 	},
 	colorAxis: {
 	    min: 1,
+	    type: 'logarithmic',
 	    minColor: '#FCE2CC',
 	    maxColor: '#FC580C'
 	},
