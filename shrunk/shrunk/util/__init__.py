@@ -15,10 +15,6 @@ def make_plaintext_response(data, *, status=200, filename=None):
     return make_response((data, status, headers))
 
 
-def make_json_response(data, *, status=200, filename=None):
-    return make_plaintext_response(json.dumps(data), status=status, filename=filename)
-
-
 def get_param(name, request, session, *, default=None, validator=None):
     """ Get a parameter. First try the request args, then the session,
         then use the default. Store the final value of the parameter

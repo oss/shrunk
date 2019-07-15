@@ -110,7 +110,7 @@
   </div>
 
   <div class="col col-csv-download">
-    <form action="/search-visits-csv?all_users={{ all_users }}&search={{ query }}">
+    <form action="{{ url_for('stat.search-csv') }}">
       <button type="submit"
 	      class="btn btn-outline-primary btn-no-border btn-no-background btn-csv-download bg-light">
 	<i class="fas fa-download"></i> Export visit data as CSV
@@ -141,7 +141,7 @@
   <ul class="pagination justify-content-center">
     <li class="page-item {{ 'disabled' if page == 1 else '' }}">
       <a class="page-link" aria-label="Previous"
-	 href="{{ url_for('render_index', page=page-1) }}">
+	 href="{{ url_for('shrunk.render_index', page=page-1) }}">
 	<span aria-hidden="true">&laquo;</span>
 	<span class="sr-only">Previous</span>
       </a>
@@ -150,7 +150,7 @@
     {% if begin_pages != 1 %}
     <li class="page-item">
       <a class="page-link" aria-label="Page 1"
-	 href="{{ url_for('render_index', page=1) }}">
+	 href="{{ url_for('shrunk.render_index', page=1) }}">
 	1
       </a>
     </li>
@@ -166,7 +166,7 @@
     {% set maybe_active = 'active' if page_number == page else '' %}
     <li class="page-item {{ maybe_active }}">
       <a class="page-link" aria-label="Page {{ page_number }}"
-	 href="{{ url_for('render_index', page=page_number) }}">
+	 href="{{ url_for('shrunk.render_index', page=page_number) }}">
 	{{ page_number }}
       </a>
     </li>
@@ -181,7 +181,7 @@
 
     <li class="page-time">
       <a class="page-link" aria-label="Page {{ lastpage }}"
-	 href="{{ url_for('render_index', page=lastpage) }}">
+	 href="{{ url_for('shrunk.render_index', page=lastpage) }}">
 	{{ lastpage }}
       </a>
     </li>
@@ -189,7 +189,7 @@
 
     <li class="page-item {{ 'disabled' if page == lastpage else '' }}">
       <a class="page-link" aria-label="Next"
-	 href="{{ url_for('render_index', page=page+1) }}">
+	 href="{{ url_for('shrunk.render_index', page=page+1) }}">
 	<span aria-hidden="true">&raquo;</span>
 	<span class="sr-only">Next</span>
       </a>

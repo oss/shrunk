@@ -34,32 +34,40 @@
   {% if dev %}
   <div class="row justify-content-center">
     <div class="col">
-      <form class="dev-login-btn" action="{{ dev_user_login }}" method="get">
-        <button type="submit" class="login-button btn btn-default btn-block">DevUser Login</button>
+      <form class="dev-login-btn" action="{{ url_for('devlogins.user') }}" method="get">
+        <button type="submit" class="login-button btn btn-default btn-block">
+	  DevUser Login
+	</button>
       </form>
     </div>
   </div>
 
   <div class="row">
     <div class="col">
-      <form class="dev-login-btn" action="{{ dev_facstaff_login }}" method="get">
-        <button type="submit" class="login-button btn btn-default btn-block">DevFacstaff Login</button>
+      <form class="dev-login-btn" action="{{ url_for('devlogins.facstaff') }}" method="get">
+        <button type="submit" class="login-button btn btn-default btn-block">
+	  DevFacstaff Login
+	</button>
       </form>
     </div>
   </div>
 
   <div class="row">
     <div class="col">
-      <form class="dev-login-btn" action="{{ dev_power_login }}" method="get">
-        <button type="submit" class="login-button btn btn-default btn-block">DevPowerUser Login</button>
+      <form class="dev-login-btn" action="{{ url_for('devlogins.power') }}" method="get">
+        <button type="submit" class="login-button btn btn-default btn-block">
+	  DevPowerUser Login
+	</button>
       </form>
     </div>
   </div>
 
   <div class="row">
     <div class="col">
-      <form class="dev-login-btn" action="{{ dev_admin_login }}" method="get">
-        <button type="submit" class="login-button btn btn-default btn-block">DevAdmin Login</button>
+      <form class="dev-login-btn" action="{{ url_for('devlogins.admin') }}" method="get">
+        <button type="submit" class="login-button btn btn-default btn-block">
+	  DevAdmin Login
+	</button>
       </form>
     </div>
   </div>

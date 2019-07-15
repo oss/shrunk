@@ -1,5 +1,5 @@
 const ADD_MEMBER_FORM = {
-    'endpoint': '/add_organization_member',
+    'endpoint': '/orgs/add_member',
     'field_element_prefix': '#member-add-',
     'fields': ['name', 'netid', 'is_admin'],
     'fields_clear': ['netid', 'is_admin']
@@ -67,7 +67,7 @@ function do_remove_member() {
     };
     $.ajax({
 	type: 'POST',
-	url: '/remove_organization_member',
+	url: '/orgs/remove_member',
 	data: req,
 	error: (jqXHR, textStatus, errorThrown) => remove_member_error(jqXHR),
 	success: remove_member_cont

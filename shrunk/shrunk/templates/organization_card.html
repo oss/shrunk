@@ -26,7 +26,7 @@
 	    </form>
 	    {% endif %}
 
-	    <form action="{{ url_for('manage_organization') }}" method="get">
+	    <form action="{{ url_for('orgs.manage') }}" method="get">
 	      <input type="hidden" name="name" value="{{ org['name'] }}">
 	      <button type="submit" title="Manage organization"
 		      class="btn btn-outline-dark btn-no-border btn-round float-right">

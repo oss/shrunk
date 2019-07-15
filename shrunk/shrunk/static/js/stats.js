@@ -6,7 +6,7 @@ function date_of_id(_id) {
     return Date.UTC(_id.year, _id.month-1, _id.day);
 }
 
-$.getJSON('/daily-visits?url=' + url,
+$.getJSON('/stat/visits/daily?url=' + url,
 	  function (data) {
 	      const first_time_visits = data.reduce((acc, el) => acc + el.first_time_visits, 0);
 	      $('#first_time_visits').text(first_time_visits);
@@ -74,7 +74,7 @@ function add_map(div_name, map_name, title, join, data) {
 }
 
 // Add both US and world maps
-$.getJSON('/geoip-json?url=' + url,
+$.getJSON('/stat/geoip?url=' + url,
 	  function (data) {
 	      add_map('us-map', 'countries/us/us-all', 'US visitors',
 		       'postal-code', data['us']);
@@ -121,7 +121,8 @@ const browser_images = {
     'Safari': { src: '/static/img/small-safari-icon.png', width: 22, height: 22 },
     'Msie': { src: '/static/img/small-edge-icon.png', width: 22, height: 22 },
     'Edge': { src: '/static/img/small-edge-icon.png', width: 22, height: 22 },
-    'Opera': { src: '/static/img/small-opera-icon.png', width: 22, height: 22 }
+    'Opera': { src: '/static/img/small-opera-icon.png', width: 22, height: 22 },
+    'none': { src: '/static/img/pixel.png', width: 1, height: 1 }
 };
 
 const platform_names = {
@@ -143,7 +144,8 @@ const platform_images = {
     'Linux': { src: '/static/img/small-tux-icon.png', width: 22, height: 22},
     'Windows': { src: '/static/img/small-windows-icon.png', width: 22, height: 22},
     'Macos': { src: '/static/img/small-mac-icon.png', width: 22, height: 22},
-    'Android': { src: '/static/img/small-android-icon.png', width: 22, height: 22}
+    'Android': { src: '/static/img/small-android-icon.png', width: 22, height: 22},
+    'none': { src: '/static/img/pixel.png', width: 1, height: 1 }
 };
 
 const referer_names = {
@@ -166,7 +168,8 @@ const referer_images = {
     'facebook.com': { src: '/static/img/small-facebook-icon.png', width: 22, height: 22 },
     'twitter.com': { src: '/static/img/small-twitter-icon.png', width: 22, height: 22 },
     'instagram.com': { src: '/static/img/small-instagram-icon.png', width: 22, height: 22 },
-    'reddit.com': { src: '/static/img/small-reddit-icon.png', width: 22, height: 22 }
+    'reddit.com': { src: '/static/img/small-reddit-icon.png', width: 22, height: 22 },
+    'none': { src: '/static/img/pixel.png', width: 1, height: 1 }
 };
 
 /* --- code --- */
@@ -237,6 +240,8 @@ function add_pie_chart(canvas_id, title, raw_data, human_readable_names, colors,
 	    let image = {};
 	    if (images.hasOwnProperty(key)) {
 		image = images[key];
+	    } else {
+		image = images['none'];
 	    }
 	    options.plugins.labels.images.push(image);
 	}
@@ -282,8 +287,8 @@ function add_pie_chart(canvas_id, title, raw_data, human_readable_names, colors,
     }
 
     const short_link = (new URL(document.location)).searchParams.get('url');
-    const useragent_stats_url = '/useragent-stats?url=' + short_link;
-    const referer_stats_url = '/referer-stats?url=' + short_link;
+    const useragent_stats_url = '/stat/useragent?url=' + short_link;
+    const referer_stats_url = '/stat/referer?url=' + short_link;
 
     Plotly.d3.json(useragent_stats_url, function(err, json) {
 	try_render(json, 'browser', 'Browsers', browser_names, browser_colors, browser_images);

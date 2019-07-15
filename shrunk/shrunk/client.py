@@ -391,23 +391,6 @@ class ShrunkClient:
         """
         return self.db.urls.find_one({"_id": short_url})
 
-    def get_monthly_visits(self, short_url):
-        """Given a short URL, return how many visits and new unique visiters it gets per month.
-
-        :Parameters:
-          - `short_url`: A shortened URL
-
-        :Returns:
-         An array, each of whose elements is a dict containing the data for one month.
-         The fields of each dict are:
-          - `_id`: a dict with keys for month and year.
-          - `first_time_visits`: new visits by users who haven't seen the link yet.
-          - `all_visits`: the total visits per that month.
-        """
-        aggregation = [aggregations.match_short_url(short_url)] \
-            + aggregations.monthly_visits_aggregation
-        return list(self.db.visits.aggregate(aggregation))
-
     def get_daily_visits(self, short_url):
         """Given a short URL, return how many visits and new unique visiters it gets per month.
 

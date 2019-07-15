@@ -21,10 +21,9 @@
   </div>
 
   <div class="col">
-    <form action="/link-visits-csv">
+    <form action="{{ url_for('stat.link-csv') }}">
       <input type="hidden" name="url" value="{{ short_url }}">
-      <button type="submit"
-	      class="btn btn-outline-primary btn-no-border btn-no-background btn-csv-download bg-light">
+      <button type="submit" class="btn btn-outline-primary btn-no-border btn-no-background btn-csv-download bg-light">
 	<i class="fas fa-download"></i> Export visit data as CSV
       </button>
     </form>
