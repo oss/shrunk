@@ -35,7 +35,7 @@ setup(
     packages=["shrunk"],
     install_requires=require,
     package_dir={"shrunk": "shrunk"},
-    package_data={"shrunk": ["util/*", "static/css/*", "static/img/*", "static/js/*",
+    package_data={"shrunk": ["util/*", "roles/*", "static/css/*", "static/img/*", "static/js/*",
                              "static/scss/*", "static/out/*", "static/bootstrap/*",
                              "templates/*", "../scripts/*"]},
     author="Rutgers Open System Solutions",

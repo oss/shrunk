@@ -9,7 +9,7 @@ from assertions import assert_status
 
 @pytest.fixture(scope='session')
 def app():
-    app = shrunk.create_app(DB_NAME='shrunk_test', DISABLE_CSRF_PROTECTION=True, TESTING=True)
+    app = shrunk.create_app(config_path='/etc/shrunk.test-config.py')
     with app.test_client() as client:
         # Force ShrunkFlask to initialize the database connection, since that
         # initialization is deferred until the first request.
