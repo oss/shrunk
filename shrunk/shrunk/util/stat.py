@@ -1,6 +1,5 @@
 import io
 import csv
-import collections
 import urllib.parse
 
 

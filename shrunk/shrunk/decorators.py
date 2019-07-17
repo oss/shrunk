@@ -41,7 +41,8 @@ def require_role(role):
             if not roles.exists(role):
                 logger.error(f'require_role: role {role} does not exist')
                 return flask.redirect('/')
-            if roles.qualified_for[role](flask.session['user']['netid']):
+            netid = flask.session['user']['netid']
+            if roles.qualified_for[role](netid):
                 logger.debug(f'require_role: user {netid} authorized for role {role}')
                 return func(*args, **kwargs)
             logger.warning(f'require_role: user {netid} not authorized for role {role}')

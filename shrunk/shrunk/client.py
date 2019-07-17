@@ -126,7 +126,7 @@ class ShrunkClient:
 
     def __init__(self, *, DB_HOST=None, DB_PORT=27017, DB_USERNAME=None, DB_PASSWORD=None,
                  test_client=None, DB_REPLSET=None, DB_CONNECTION_STRING=None,
-                 DB_NAME='shrunk', GEOLITE_PATH=None, **config):
+                 DB_NAME='shrunk', GEOLITE_PATH=None, TESTING=False, **config):
         """Create a new client connection.
 
         This client uses MongoDB.
@@ -142,6 +142,7 @@ class ShrunkClient:
         """
 
         self._DB_NAME = DB_NAME
+        self._TESTING = TESTING
         if test_client:
             self._mongo = test_client
             self.db = self._mongo[self._DB_NAME]
@@ -171,6 +172,19 @@ class ShrunkClient:
         self.db.organization_members.create_index([('name', pymongo.ASCENDING),
                                                    ('netid', pymongo.ASCENDING)],
                                                   unique=True)
+
+    def drop_database(self):
+        if self._TESTING:
+            self._mongo.drop_database(self._DB_NAME)
+
+    def reset_database(self):
+        if self._TESTING:
+            # self._mongo.drop_database(self._DB_NAME)
+            # self.reconnect()
+            # self._create_indexes()
+            for col in ['grants', 'organization_members', 'organizations',
+                        'urls', 'visitors', 'visits']:
+                self.db[col].delete_many({})
 
     def reconnect(self):
         """

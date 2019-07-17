@@ -1,19 +1,13 @@
 """ Sets up the Flask application for the main web server. """
 
-import collections
-
 import flask
 from flask import Blueprint, make_response, request, redirect, session, \
     render_template, current_app
-import werkzeug.useragents
 
 from . import roles
 from . import forms
 from . import util
 from .util import search
-from .util import string
-from .util.stat import get_referer_domain, make_csv_for_links
-from .app_decorate import ShrunkFlask
 from .client import BadShortURLException, ForbiddenDomainException, \
     AuthenticationException, NoSuchLinkException
 from .decorators import require_login, require_admin
@@ -26,12 +20,12 @@ bp = Blueprint('shrunk', __name__, url_prefix='/')
 def logout():
     """ Clears the user's session and sends them to Shibboleth to finish logging out. """
     if "user" not in session:
-        return redirect('/')
+        return redirect('/shrunk-login')
     user = session.pop('user')
     session.clear()
     if current_app.config.get('DEV_LOGINS'):
         if user['netid'] in ['DEV_USER', 'DEV_FACSTAFF', 'DEV_PWR_USER', 'DEV_ADMIN']:
-            return redirect('/')
+            return redirect('/shrunk-login')
     return redirect('/shibboleth/Logout')
 
 
@@ -45,18 +39,14 @@ def render_login(**kwargs):
         return redirect('/')
     enable_dev = bool(current_app.config.get('DEV_LOGINS', False))
     kwargs.update({'shib_login': '/login',
-                   'dev': enable_dev,
-                   'dev_user_login': '/dev-user-login',
-                   'dev_facstaff_login': '/dev-facstaff-login',
-                   'dev_power_login': '/dev-power-login',
-                   'dev_admin_login': '/dev-admin-login'})
+                   'dev': enable_dev})
     return make_response(render_template('login.html', **kwargs))
 
 
 @bp.route('/unauthorized')
 def unauthorized():
     """ Displays an unauthorized page. """
-    return make_response(render_template('unauthorized.html'))
+    return make_response(render_template('unauthorized.html')), 401
 
 
 def error(message, code):

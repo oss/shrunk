@@ -7,6 +7,7 @@ from . import roles
 
 ext = flask_sso.SSO()
 
+
 @ext.login_handler
 def login(user_info):
     """ Get the user's attributes from shibboleth, decide whether the user
@@ -57,5 +58,5 @@ def login(user_info):
     # If we get here, the user is allowed to login, and all necessary privs
     # have been granted.
     logger.debug(f'login: SSO login by {netid}')
-    session['user'] = user_info
+    flask.session['user'] = user_info
     return flask.redirect('/')

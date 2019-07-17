@@ -34,8 +34,8 @@ class LinkForm(Form):
 
 class AddLinkForm(LinkForm):
     short_url = StringField('Custom Alias', filters=[strip_whitespace], validators=[
-        validators.Length(min=5, max=16, message="""Custom alias length must be
-            between %(min)d and %(max)d characters."""),
+        validators.Length(min=5, max=16, message="""Custom alias length must be \
+between %(min)d and %(max)d characters."""),
         validators.Regexp('^[a-zA-Z0-9]*$', message='Custom alias must be alphanumeric.'),
         validators.Optional(strip_whitespace=False)
     ])

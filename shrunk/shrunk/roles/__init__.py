@@ -1,6 +1,3 @@
-from . import views  # reexport
-
-
 # function hashes
 qualified_for = {}
 valid_entity_for = {}

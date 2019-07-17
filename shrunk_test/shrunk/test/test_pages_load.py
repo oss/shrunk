@@ -1,66 +1,64 @@
-from views import login, logout, get, post, assert_redirect
+import pytest
+
+from fixtures import app, client, dev_login  # noqa: F401
+from fixtures import dev_login
+from assertions import assert_redirect, assert_status, assert_not_500, assert_ok
 
 
-def teardown_function():
-    logout()
+DEV_ROLES = ['user', 'facstaff', 'power', 'admin']
 
 
-def test_index():
-    assert_redirect(get("/"), "shrunk-login")
-    login("user")
-    assert get("/").status_code == 200
-    logout()
-
-    login("facstaff")
-    assert get("/").status_code == 200
-    logout()
-
-    login("admin")
-    assert get("/").status_code == 200
-    logout()
-
-    login("power")
-    assert get("/").status_code == 200
-    logout()
+def test_index_logged_out(client):
+    assert_redirect(client.get('/'), 'shrunk-login')
 
 
-def test_dev_logins():
-    assert_redirect(get("/dev-user-login"), "/")
-    assert_redirect(get("/dev-facstaff-login"), "/")
-    assert_redirect(get("/dev-admin-login"), "/")
-    assert_redirect(get("/dev-power-login"), "/")
+@pytest.mark.parametrize('role', DEV_ROLES)
+def test_index_dev_logins(client, role):
+    with dev_login(client, role):
+        assert_ok(client.get('/'))
 
 
-def test_delete():
-    # not logged in => no CSRF token => error 400
-    resp = post('/delete', csrf_protect=False)
-    assert resp.status_code == 400
+@pytest.mark.parametrize('role', DEV_ROLES)
+def test_dev_logins(client, role):
+    try:
+        assert_redirect(client.get(f'/devlogins/{role}'), '/')
+    finally:
+        assert_status(client.get(f'/logout'), 302)
 
 
-def test_auth_no_500():
-    routes = ["/stats", "/geoip-csv", "/useragent-stats",
-              "/referer-stats", "/monthly-visits", "/qr"]
-    for route in routes:
-        assert_redirect(get(route), "shrunk-login")
-        login("user")
-        assert get(route).status_code < 500
-        logout()
+def test_delete(client):
+    assert_redirect(client.post('/delete'), 'shrunk-login')
 
 
-def test_unauthorized():
-    assert get("/unauthorized").status_code < 500
-    login("user")
-    assert get("/unauthorized").status_code < 500
-    logout()
+# We need to use '/admin/' instead of '/admin' here, because
+# '/admin' serves a 308 redirect to '/admin', which then serves
+# a 302 redirect to '/shrunk-login'.
+NO_500_ROUTES = [
+    '/admin/', '/faq', '/stats', '/qr', '/logout', '/stat/visits/daily',
+    '/stat/geoip', '/stat/referer', '/stat/useragent', '/stat/csv/link',
+    '/stat/csv/search', '/orgs/'
+]
 
 
-def test_normal_login():
-    assert get("/shrunk-login").status_code < 500
-    login("user")
-    assert_redirect(get("/shrunk-login"), "/")
+@pytest.mark.parametrize('route', NO_500_ROUTES)
+def test_auth_no_500(client, route):
+    assert_redirect(client.get(route), 'shrunk-login')
+    with dev_login(client, 'user'):
+        assert_not_500(client.get(route))
 
 
-def test_admin_panel():
-    login("admin")
-    assert get("/admin").status_code < 500
-    logout()
+def test_unauthorized(client):
+    assert_status(client.get('/unauthorized'), 401)
+    with dev_login(client, 'user'):
+        assert_status(client.get('/unauthorized'), 401)
+
+
+def test_normal_login(client):
+    assert_ok(client.get('/shrunk-login'))
+    with dev_login(client, 'user'):
+        assert_redirect(client.get('/shrunk-login'), '/')
+
+
+def test_admin_panel(client):
+    with dev_login(client, 'admin'):
+        assert_ok(client.get('/admin/'))

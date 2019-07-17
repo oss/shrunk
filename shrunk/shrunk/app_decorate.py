@@ -1,12 +1,10 @@
 import logging
-from functools import wraps, partial
 
-from flask import Flask, session, redirect, request, render_template, current_app
+from flask import Flask, redirect, request, render_template, current_app
 
 from . import roles
 from .client import ShrunkClient
 from .util.string import validate_url, get_domain, formattime
-from .decorators import require_qualified, require_login
 
 
 class ShrunkFlaskMini(Flask):

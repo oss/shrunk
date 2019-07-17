@@ -20,6 +20,7 @@ def role_list(netid, client, role):
     kwargs = roles.template_data(role, netid)
     return flask.render_template('role.html', **kwargs)
 
+
 @bp.route('/<role>/', endpoint='grant', methods=['POST'])
 @require_qualified
 @require_login
@@ -39,6 +40,7 @@ def role_grant(netid, client, role):
     except roles.InvalidEntity:
         kwargs = roles.template_data(role, netid, invalid=True)
         return flask.render_template('role.html', **kwargs)
+
 
 @bp.route('/<role>/revoke', endpoint='revoke', methods=['POST'])
 @require_qualified
