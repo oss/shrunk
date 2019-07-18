@@ -441,7 +441,7 @@ def test_referer_stats(db, client, short_url):
         check_stats({'facebook.com': 2, 'twitter.com': 1})
 
         db.visit(short_url, '127.0.0.1', 'user agent', 'https://old.reddit.com/r/rutgers')
-        check_stats({'facebook.com': 2, 'twitter.com': 1, 'old.reddit.com': 1})
+        check_stats({'facebook.com': 2, 'twitter.com': 1, 'reddit.com': 1})
 
 
 def test_referer_stats_unauthorized(client, short_url_power):

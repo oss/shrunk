@@ -38,6 +38,9 @@ def get_geoip_json(netid, client):
     return flask.jsonify(client.get_geoip_json(url))
 
 
+# TODO: probably store parsed and normalized referer data
+# in mongo, so we can replace this with a (much faster)
+# aggregation.
 @bp.route('/referer', endpoint='referer', methods=['GET'])
 @require_login
 def get_referer_stats(netid, client):
@@ -58,6 +61,13 @@ def get_referer_stats(netid, client):
             stats[domain] += 1
         else:
             stats['unknown'] += 1
+
+    # Return the top five referers.
+    # XXX is this something we want to keep?
+    freqs = sorted(stats.values())
+    if len(freqs) >= 5:
+        cutoff = freqs[-5]
+        stats = {key: value for key, value in stats.items() if value >= cutoff}
 
     return flask.jsonify(stats)
 
