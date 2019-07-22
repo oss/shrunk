@@ -47,12 +47,6 @@ def test_auth_no_500(client, route):
         assert_not_500(client.get(route))
 
 
-def test_unauthorized(client):
-    assert_status(client.get('/unauthorized'), 401)
-    with dev_login(client, 'user'):
-        assert_status(client.get('/unauthorized'), 401)
-
-
 def test_normal_login(client):
     assert_ok(client.get('/shrunk-login'))
     with dev_login(client, 'user'):
@@ -62,3 +56,7 @@ def test_normal_login(client):
 def test_admin_panel(client):
     with dev_login(client, 'admin'):
         assert_ok(client.get('/admin/'))
+
+
+def test_404(client):
+    assert_status(client.get('/abcdefg!@#$%'), 404)

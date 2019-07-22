@@ -5,17 +5,25 @@ Unit tests for statutil functions.
 
 import operator
 
+import pytest
+
 from shrunk.util.stat import get_referer_domain, make_csv_for_links
 
 from fixtures import app, db  # noqa: F401
 
 
-def test_get_referer_domain():
-    def get(url):
-        return get_referer_domain({'referer': url})
-    assert get('https://google.com') == 'google.com'
-    assert get('https://sld.google.com') == 'sld.google.com'
-    assert get('https://my.si.te:80') == 'my.si.te'
+@pytest.mark.parametrize('url,expected', [('https://google.com', 'google.com'),
+                                          ('https://sld.google.com/abc', 'sld.google.com'),
+                                          ('https://my.si.te:80', 'my.si.te'),
+                                          ('https://www.example.com/pa/th/', 'example.com'),
+                                          ('https://t.co/link', 'twitter.com'),
+                                          ('android-app://com.linkedin.android', 'LinkedIn App')])
+def test_get_referer_domain(url, expected):
+    assert get_referer_domain({'referer': url}) == expected
+
+
+def test_get_referer_domain_no_referer():
+    assert get_referer_domain({}) is None
 
 
 def test_make_csv_for_links(db):

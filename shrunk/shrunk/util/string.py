@@ -121,7 +121,7 @@ regex = re.compile(
 pattern = re.compile(regex)
 
 
-def validate_url(value, public=False):
+def validate_url(value):
     """
     stolen from python-validators
     Return whether or not given value is a valid URL.
@@ -148,9 +148,6 @@ def validate_url(value, public=False):
         >>> url('http://foobar.d')
         ValidationFailure(func=url, ...)
 
-        >>> url('http://10.0.0.1', public=True)
-        ValidationFailure(func=url, ...)
-
     .. versionadded:: 0.2
 
     .. versionchanged:: 0.10.2
@@ -170,13 +167,11 @@ def validate_url(value, public=False):
 
         Added support for URLs containing localhost
 
-    :param value: URL address string to validate
-    :param public: (default=False) Set True to only allow a public IP address
-    """
-    result = pattern.match(value)
-    if not public:
-        return result
+    .. versionchanged:: 1.0.0
 
-    return result and not any(
-        (result.groupdict().get(key) for key in ('private_ip', 'private_host'))
-    )
+        Removed unused ``public`` parameter.
+
+    :param value: URL address string to validate
+    """
+
+    return pattern.match(value)

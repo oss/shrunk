@@ -85,7 +85,7 @@ def strip_protocol(url):
     :Returns:
       The URL without a protocol. If none exists, it returns the original URL.
     """
-    return url.replace("http://", "", 1).replace("https://", "", 1)
+    return url.replace('http://', '', 1).replace('https://', '', 1)
 
 
 def strip_whitespace(s):

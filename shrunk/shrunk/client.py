@@ -125,8 +125,7 @@ class ShrunkClient:
     """Reserved words that cannot be used as shortened urls."""
 
     def __init__(self, *, DB_HOST=None, DB_PORT=27017, DB_USERNAME=None, DB_PASSWORD=None,
-                 test_client=None, DB_REPLSET=None, DB_CONNECTION_STRING=None,
-                 DB_NAME='shrunk', GEOLITE_PATH=None, TESTING=False, **config):
+                 DB_REPLSET=None, DB_NAME='shrunk', GEOLITE_PATH=None, TESTING=False, **config):
         """Create a new client connection.
 
         This client uses MongoDB.
@@ -143,27 +142,16 @@ class ShrunkClient:
 
         self._DB_NAME = DB_NAME
         self._TESTING = TESTING
-        if test_client:
-            self._mongo = test_client
-            self.db = self._mongo[self._DB_NAME]
-        else:
-            if DB_CONNECTION_STRING:
-                self._DB_CONNECTION_STRING = DB_CONNECTION_STRING
-            else:
-                self._DB_CONNECTION_STRING = None
-                self._DB_USERNAME = DB_USERNAME
-                self._DB_PASSWORD = DB_PASSWORD
-                self._DB_HOST = DB_HOST
-                self._DB_PORT = DB_PORT
-                self._DB_REPLSET = DB_REPLSET
-            self.reconnect()
+        self._DB_CONNECTION_STRING = None
+        self._DB_USERNAME = DB_USERNAME
+        self._DB_PASSWORD = DB_PASSWORD
+        self._DB_HOST = DB_HOST
+        self._DB_PORT = DB_PORT
+        self._DB_REPLSET = DB_REPLSET
+        self.reconnect()
 
         self._create_indexes()
         self._set_geoip(GEOLITE_PATH)
-
-    def _switch_db(self, db_name):
-        self._DB_NAME = db_name
-        self.db = self._mongo[self._DB_NAME]
 
     def _create_indexes(self):
         self.db.visits.create_index([('short_url', pymongo.ASCENDING)])
@@ -179,9 +167,6 @@ class ShrunkClient:
 
     def reset_database(self):
         if self._TESTING:
-            # self._mongo.drop_database(self._DB_NAME)
-            # self.reconnect()
-            # self._create_indexes()
             for col in ['grants', 'organization_members', 'organizations',
                         'urls', 'visitors', 'visits']:
                 self.db[col].delete_many({})
@@ -191,22 +176,15 @@ class ShrunkClient:
         mongoclient is not fork safe. this is used to create a new client
         after potentially forking
         """
-        if self._DB_CONNECTION_STRING:
-            self._mongo = pymongo.MongoClient(self._DB_CONNECTION_STRING,
-                                              connect=False)
-        else:
-            self._mongo = pymongo.MongoClient(self._DB_HOST, self._DB_PORT,
-                                              username=self._DB_USERNAME,
-                                              password=self._DB_PASSWORD,
-                                              authSource="admin", connect=False,
-                                              replicaSet=self._DB_REPLSET)
+        self._mongo = pymongo.MongoClient(self._DB_HOST, self._DB_PORT,
+                                          username=self._DB_USERNAME,
+                                          password=self._DB_PASSWORD,
+                                          authSource="admin", connect=False,
+                                          replicaSet=self._DB_REPLSET)
         self.db = self._mongo[self._DB_NAME]
 
     def _set_geoip(self, GEOLITE_PATH):
-        if GEOLITE_PATH:
-            self._geoip = geoip2.database.Reader(GEOLITE_PATH)
-        else:
-            self._geoip = None
+        self._geoip = geoip2.database.Reader(GEOLITE_PATH)
 
     def count_links(self, netid=None):
         """Counts the number of created links.
@@ -326,10 +304,6 @@ class ShrunkClient:
             self.db.urls.delete_one({'_id': old_short_url})
 
         return response
-
-    def is_admin(self, request_netid):
-        """ Checks if netid is an admin. """
-        return roles.check('admin', request_netid)
 
     def is_owner_or_admin(self, short_url, request_netid):
         """ Returns True if request_netid is an admin, or if short_url exists and
@@ -622,9 +596,6 @@ class ShrunkClient:
 
         unk = 'unknown'
 
-        if not self._geoip:
-            return unk
-
         if ipaddr.startswith('172.31'):  # RUWireless (NB)
             return 'Rutgers New Brunswick, New Jersey, United States'
         elif ipaddr.startswith('172.27'):  # RUWireless (NWK)
@@ -681,8 +652,6 @@ class ShrunkClient:
         return next(self.db.visits.aggregate(aggregation))
 
     def get_location_codes(self, ipaddr):
-        if not self._geoip:
-            return None, None
         if ipaddr.startswith('172.'):
             return 'NJ', 'US'
         try:
@@ -696,6 +665,33 @@ class ShrunkClient:
         except (AttributeError, geoip2.errors.AddressNotFoundError):
             return None, None
 
+    def may_view_url(self, url, netid):
+        if roles.check('admin', netid):
+            return True
+
+        def match_netid(netid):
+            return [{'$match': {'netid': netid}}, {'$project': {'_id': 0, 'name': 1}}]
+
+        info = self.get_url_info(url)
+        if not info:
+            return False
+        owner_netid = info['netid']
+
+        if netid == owner_netid:
+            return True
+
+        aggregation = [
+            {'$facet': {
+                'owner_orgs': match_netid(owner_netid),
+                'viewer_orgs': match_netid(netid)
+            }},
+            {'$project': {'intersection': {'$setIntersection': ['$owner_orgs', '$viewer_orgs']}}},
+            {'$project': {'owner_orgs': 0, 'viewer_orgs': 0}}
+        ]
+
+        result = next(self.db.organization_members.aggregate(aggregation))
+        return len(result['intersection']) != 0 if result else False
+
     def create_organization(self, name):
         col = self.db.organizations
         rec_query = {'name': name}
@@ -708,8 +704,8 @@ class ShrunkClient:
     def delete_organization(self, name):
         with self._mongo.start_session() as s:
             s.start_transaction()
-            self.db.organization_members.remove({'name': name})
-            self.db.organizations.remove({'name': name})
+            self.db.organization_members.delete_many({'name': name})
+            self.db.organizations.delete_one({'name': name})
             s.commit_transaction()
 
     def get_organization_info(self, name):
@@ -743,15 +739,23 @@ class ShrunkClient:
 
     def remove_organization_member(self, name, netid):
         col = self.db.organization_members
-        col.remove({'name': name, 'netid': netid})
+        col.delete_one({'name': name, 'netid': netid})
 
     def remove_organization_admin(self, name, netid):
         col = self.db.organization_members
-        col.update({'name': name, 'netid': netid}, {'$set': {'is_admin': False}})
+        col.update_one({'name': name, 'netid': netid}, {'$set': {'is_admin': False}})
+
+    def count_organization_members(self, name):
+        col = self.db.organization_members
+        return col.count_documents({'name': name})
 
     def get_organization_members(self, name):
         col = self.db.organization_members
         return col.find({'name': name})
+
+    def count_organization_admins(self, name):
+        col = self.db.organization_members
+        return col.count_documents({'name': name, 'is_admin': True})
 
     def get_organization_admins(self, name):
         col = self.db.organization_members

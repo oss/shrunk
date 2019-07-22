@@ -3,6 +3,7 @@
 import functools
 
 import flask
+from werkzeug.exceptions import abort
 
 from . import roles
 
@@ -16,39 +17,18 @@ def require_qualified(func):
     def wrapper(role, *args, **kwargs):
         logger = flask.current_app.logger
         if not roles.exists(role):
-            return flask.redirect('/')
+            logger.error(f'require_qualified: role {role} does not exist')
+            return flask.redirect(flask.url_for('shrunk.render_index'))
+        if 'user' not in flask.session:
+            return flask.redirect(flask.url_for('shrunk.render_index'))
         netid = flask.session['user']['netid']
         if roles.qualified_for[role](netid):
             logger.debug(f'require_qualified: user {netid} authorized for role {role}')
             new_args = [role] + list(args)
             return func(*new_args, **kwargs)
         logger.warning(f'require_qualified: user {netid} not authorized for role {role}')
-        return flask.redirect('/unauthorized')
+        abort(403)
     return wrapper
-
-
-def require_role(role):
-    """force a somone to have a role to see an endpoint
-    @app.route("/my/secret/route")
-    @roles.require("cool_person")
-    def secret_route():
-       return "top secret stuff"
-    """
-    def decorator(func):
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            logger = flask.current_app.logger
-            if not roles.exists(role):
-                logger.error(f'require_role: role {role} does not exist')
-                return flask.redirect('/')
-            netid = flask.session['user']['netid']
-            if roles.qualified_for[role](netid):
-                logger.debug(f'require_role: user {netid} authorized for role {role}')
-                return func(*args, **kwargs)
-            logger.warning(f'require_role: user {netid} not authorized for role {role}')
-            return flask.redirect('/unauthorized')
-        return wrapper
-    return decorator
 
 
 def require_login(func):
@@ -58,11 +38,11 @@ def require_login(func):
         logger = flask.current_app.logger
         if 'user' not in flask.session or 'netid' not in flask.session['user']:
             logger.debug(f'require_login: user not logged in')
-            return flask.redirect('/shrunk-login')
+            return flask.redirect(flask.url_for('shrunk.render_login'))
         netid = flask.session['user']['netid']
         if roles.check('blacklisted', netid):
             logger.warning(f'require_login: user {netid} is blacklisted')
-            return flask.redirect('/unauthorized')
+            abort(403)
         client = flask.current_app.get_shrunk()
         return func(netid, client, *args, **kwargs)
     return wrapper
@@ -73,13 +53,10 @@ def require_admin(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         logger = flask.current_app.logger
-        netid = flask.session['user'].get('netid')
-        if roles.check('blacklisted', netid):
-            logger.warning(f'require_admin: user {netid} is blacklisted')
-            return flask.redirect('/unauthorized')
+        netid = flask.session['user']['netid']
         if not roles.check('admin', netid):
             logger.warning(f'require_admin: user {netid} is not an admin')
-            return flask.redirect('/')
+            abort(403)
         logger.debug(f'require_admin: user {netid} authorized for admin')
         return func(*args, **kwargs)
     return wrapper

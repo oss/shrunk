@@ -7,7 +7,9 @@ import pytest
 
 from shrunk import roles
 
-from fixtures import app, db  # noqa: F401
+from fixtures import app, db, client  # noqa: F401
+from fixtures import dev_login
+from assertions import assert_status
 
 
 def test_invalid(db):
@@ -131,3 +133,9 @@ def test_has_one_of(db):
     assert not roles.has_one_of(["prole1", "bogus"], "entity1")
 
     assert not roles.has_one_of(["fweuihiwf", "hash_slining_slasher", "bogus"], "entity0")
+
+
+def test_blacklisted(db, client):
+    roles.grant('blacklisted', 'shrunk_test', 'DEV_USER')
+    with dev_login(client, 'user'):
+        assert_status(client.get('/'), 403)

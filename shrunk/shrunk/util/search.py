@@ -9,10 +9,12 @@ from ..client import Pagination
 
 def authorized_for_links_set(client, links_set, netid):
     """ Test whether the user is authorized to view links_set. """
+    if roles.check('admin', netid):
+        return True
     if links_set == 'GO!my':
         return True
     if links_set == 'GO!all':
-        return roles.check('admin', netid)
+        return False  # only admin is authorized, and that case is handled above
     return bool(client.may_manage_organization(links_set, netid))
 
 

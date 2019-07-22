@@ -17,3 +17,7 @@ def assert_not_500(resp):
 
 def assert_in_resp(resp, string):
     assert string in str(resp.get_data(), 'utf8')
+
+
+def assert_json(resp, expected):
+    assert resp.get_json() == expected

@@ -2,11 +2,11 @@
 
 import flask
 from flask import Blueprint, make_response, request, redirect, session, \
-    render_template, current_app
+    render_template, current_app, url_for
+from werkzeug.exceptions import abort
 
 from . import roles
 from . import forms
-from . import util
 from .util import search
 from .client import BadShortURLException, ForbiddenDomainException, \
     AuthenticationException, NoSuchLinkException
@@ -20,12 +20,12 @@ bp = Blueprint('shrunk', __name__, url_prefix='/')
 def logout():
     """ Clears the user's session and sends them to Shibboleth to finish logging out. """
     if "user" not in session:
-        return redirect('/shrunk-login')
+        return redirect(url_for('shrunk.render_login'))
     user = session.pop('user')
     session.clear()
     if current_app.config.get('DEV_LOGINS'):
         if user['netid'] in ['DEV_USER', 'DEV_FACSTAFF', 'DEV_PWR_USER', 'DEV_ADMIN']:
-            return redirect('/shrunk-login')
+            return redirect(url_for('shrunk.render_login'))
     return redirect('/shibboleth/Logout')
 
 
@@ -36,22 +36,11 @@ def render_login(**kwargs):
     Takes a WTForm in the keyword arguments.
     """
     if 'user' in session:
-        return redirect('/')
+        return redirect(url_for('shrunk.render_index'))
     enable_dev = bool(current_app.config.get('DEV_LOGINS', False))
-    kwargs.update({'shib_login': '/login',
-                   'dev': enable_dev})
+    kwargs.update({'shib_login': '/login', 'dev': enable_dev})
     return make_response(render_template('login.html', **kwargs))
 
-
-@bp.route('/unauthorized')
-def unauthorized():
-    """ Displays an unauthorized page. """
-    return make_response(render_template('unauthorized.html')), 401
-
-
-def error(message, code):
-    """ Returns the error page with a given message and HTTP status code. """
-    return make_response(render_template("error.html", message=message), code)
 
 # ===== Views =====
 # route /<short url> handle by shrunkFlaskMini
@@ -100,7 +89,7 @@ def add_link(netid, client):
         admin_or_power = roles.check('admin', netid) or roles.check('power_user', netid)
 
         if kwargs['short_url'] and not admin_or_power:
-            return util.unauthorized()
+            abort(403)
 
         try:
             shortened = client.create_short_url(**kwargs)
@@ -124,21 +113,25 @@ def add_link(netid, client):
 def get_stats(netid, client):
     """ Render the stats page for a given URL. """
 
-    url = request.args.get('url', '')
+    url = request.args.get('url')
+    if not url:
+        abort(400)
+
+    if not client.may_view_url(url, netid):
+        abort(403)
+
+    url_info = client.get_url_info(url)
+    if not url_info:
+        abort(400)
+
     kwargs = {
-        'url_info': {},
+        'url_info': url_info,
         'missing_url': False,
         'monthy_visits': [],
-        'short_url': url
+        'short_url': url,
     }
 
-    url_info = client.get_url_info(url) if url else None
-    if not url_info:
-        kwargs['missing_url'] = True
-    else:
-        kwargs['url_info'] = url_info
-
-    return render_template("stats.html", **kwargs)
+    return render_template('stats.html', **kwargs)
 
 
 @bp.route('/qr', methods=['GET'])
@@ -146,15 +139,19 @@ def get_stats(netid, client):
 def qr_code(netid, client):
     """ Render a QR code for the given link. """
 
+    url = request.args.get('url')
+    if not url:
+        abort(400)
+
+    if not client.get_long_url(url):
+        abort(400)
+
     kwargs = {
-        "print": "print" in request.args,
-        "url": request.args.get("url")
+        'print': 'print' in request.args,
+        'url': url
     }
 
-    if "url" in request.args and not client.get_long_url(request.args["url"]):
-        kwargs["missing_url"] = True
-
-    return render_template("qr.html", **kwargs)
+    return render_template('qr.html', **kwargs)
 
 
 @bp.route('/delete', methods=['POST'])
@@ -163,19 +160,19 @@ def delete_link(netid, client):
     """Deletes a link."""
 
     short_url = request.form.get('short_url')
-    if short_url:
-        current_app.logger.info(f'{netid} tries to delete {short_url}')
-    else:
+    if not short_url:
         current_app.logger.info(f'{netid} sends an invalid delete request')
+        abort(400)
+    current_app.logger.info(f'{netid} tries to delete {short_url}')
 
     try:
-        client.delete_url(request.form["short_url"], netid)
+        client.delete_url(short_url, netid)
     except AuthenticationException:
-        return util.unauthorized()
+        abort(403)
     except NoSuchLinkException:
-        return error("that link does not exist", 404)
+        abort(400)
 
-    return redirect("/")
+    return '', 200
 
 
 @bp.route('/edit', methods=['POST'])
@@ -194,10 +191,10 @@ def edit_link(netid, client):
         admin_or_power = roles.check('admin', netid) or roles.check('power_user', netid)
 
         if not client.is_owner_or_admin(kwargs['old_short_url'], netid):
-            return util.unauthorized()
+            abort(403)
 
         if kwargs['short_url'] != kwargs['old_short_url'] and not admin_or_power:
-            return util.unauthorized()
+            abort(403)
 
         try:
             # The client has permission---try to update the database

@@ -2,6 +2,7 @@
 
 import flask
 import flask_sso
+from werkzeug.exceptions import abort
 
 from . import roles
 
@@ -39,7 +40,7 @@ def login(user_info):
     # be blacklisted (so OSS people can always login)
     if is_blacklisted and not is_config_whitelisted:
         log_failed('blacklisted')
-        return flask.redirect('/unauthorized')
+        abort(403)
 
     # config-whitelisted users are automatically made admins
     if is_config_whitelisted:
@@ -53,10 +54,10 @@ def login(user_info):
     # now determine whether to allow login
     if not (is_config_whitelisted or fac_staff or is_whitelisted):
         log_failed('unauthorized')
-        return flask.redirect('/unauthorized')
+        abort(403)
 
     # If we get here, the user is allowed to login, and all necessary privs
     # have been granted.
     logger.debug(f'login: SSO login by {netid}')
     flask.session['user'] = user_info
-    return flask.redirect('/')
+    return flask.redirect(flask.url_for('shrunk.render_index'))

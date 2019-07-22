@@ -30,16 +30,19 @@ def role_grant(netid, client, role):
         if roles.check(role, entity):
             kwargs = roles.template_data(role, netid)
             kwargs['error'] = 'Role already granted.'
-            return flask.render_template('role.html', **kwargs)
+            return flask.render_template('role.html', **kwargs), 400
         allow_comment = roles.template_data(role, netid)['allow_comment']
         comment = ''
         if allow_comment:
-            comment = flask.request.form['comment']
+            comment = flask.request.form.get('comment')
+            if not comment:
+                kwargs = roles.template_data(role, netid, invalid=True)
+                return flask.render_template('role.html', **kwargs), 400
         roles.grant(role, netid, entity, comment)
-        return flask.redirect('/roles/'+role)
+        return flask.redirect(flask.url_for('roles.list', role=role))
     except roles.InvalidEntity:
         kwargs = roles.template_data(role, netid, invalid=True)
-        return flask.render_template('role.html', **kwargs)
+        return flask.render_template('role.html', **kwargs), 400
 
 
 @bp.route('/<role>/revoke', endpoint='revoke', methods=['POST'])
@@ -48,7 +51,8 @@ def role_grant(netid, client, role):
 def role_revoke(netid, client, role):
     entity = flask.request.form['entity']
     granted_by = roles.granted_by(role, entity)
-    if granted_by and (roles.check('admin', netid) or netid == granted_by):
+    if roles.check('admin', netid) or (granted_by and netid == granted_by):
         roles.revoke(role, entity)
-        return flask.redirect('/roles/'+role)
-    return flask.redirect('/unauthorized')
+        return flask.redirect(flask.url_for('roles.list', role=role))
+    kwargs = roles.template_data(role, netid, invalid=True)
+    return flask.render_template('role.html', **kwargs), 403

@@ -70,17 +70,12 @@ def grant(role, grantor, grantee, comment=''):
 
 def check(role, entity):
     """check if an entity has a role"""
-    if grants.find_one({"role": role, "entity": entity}):
-        return True
-    return False
+    return bool(grants.find_one({'role': role, 'entity': entity}))
 
 
 def has_one_of(roles, entity):
     """check if an entity has atleast one of the roles int the list"""
-    for role in roles:
-        if grants.find_one({"role": role, "entity": entity}):
-            return True
-    return False
+    return any(check(role, entity) for role in roles)
 
 
 def get(entity):

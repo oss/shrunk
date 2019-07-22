@@ -2,8 +2,8 @@
     (regular, facstaff, power user, admin). """
 
 import flask
+from werkzeug.exceptions import abort
 
-from . import util
 from . import roles
 
 
@@ -14,7 +14,7 @@ def mk_dev_login(netid, role):
     def view():
         if not flask.current_app.config.get('DEV_LOGINS'):
             flask.current_app.logger.warning(f'failed dev login with {netid}')
-            return util.unauthorized()
+            abort(403)
 
         flask.current_app.logger.info(f'successful dev login with netid {netid}')
         flask.session.update({
@@ -24,7 +24,7 @@ def mk_dev_login(netid, role):
         })
         if role is not None and not roles.check(role, netid):
             roles.grant(role, 'Justice League', netid)
-        return flask.redirect('/')
+        return flask.redirect(flask.url_for('shrunk.render_index'))
     return view
 
 

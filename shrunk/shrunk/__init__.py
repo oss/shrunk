@@ -1,5 +1,8 @@
 """ Shrunk, the official URL shortener of Rutgers University. """
 
+import flask
+
+
 # App-level stuff
 from . import app_decorate
 from . import context_processors
@@ -44,10 +47,17 @@ def create_app(config_path='config.py', **kwargs):
     assets.ext.init_app(app)
     sso.ext.init_app(app)
 
+    # set up error handlers
+    @app.errorhandler(400)
+    def http400_bad_request(e):
+        return flask.render_template('errors/400_bad_request.html'), 400
+
+    @app.errorhandler(403)
+    def http403_forbidden(e):
+        return flask.render_template('errors/403_forbidden.html'), 403
+
+    @app.errorhandler(404)
+    def http404_not_found(e):
+        return flask.render_template('errors/404_not_found.html'), 404
+
     return app
-
-
-def wsgi(*args, **kwargs):
-    """ The wsgi entry point. """
-    app = create_app()
-    return app(*args, **kwargs)

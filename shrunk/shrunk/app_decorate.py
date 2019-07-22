@@ -1,6 +1,7 @@
 import logging
 
-from flask import Flask, redirect, request, render_template, current_app
+from flask import Flask, redirect, request, current_app
+from werkzeug.exceptions import abort
 
 from . import roles
 from .client import ShrunkClient
@@ -33,7 +34,7 @@ class ShrunkFlaskMini(Flask):
             # Perform a lookup and redirect
             long_url = client.get_long_url(short_url)
             if long_url is None:
-                return render_template('link-404.html', short_url=short_url)
+                abort(404)
             else:
                 client.visit(short_url, request.remote_addr,
                              request.headers.get('User-Agent'),
@@ -42,6 +43,9 @@ class ShrunkFlaskMini(Flask):
                 if '://' in long_url:
                     return redirect(long_url)
                 else:
+                    # the DB doesn't seem to contain any links lacking a protocol,
+                    # and a protocol is automatically added to any new links
+                    # without one (cf. forms.py). So, can this be removed?
                     return redirect(f'http://{long_url}')
 
     def _init_logging(self):
@@ -121,26 +125,23 @@ class ShrunkFlask(ShrunkFlaskMini):
 
         def onblock(url):
             domain = get_domain(url)
-            self.logger.info(url+" is blocked! " +
-                             "removing all urls with domain "+domain)
-            urls = self.get_shrunk()._mongo.shrunk.urls
-            contains_domain = list(urls.find({"long_url": {
+            urls = self.get_shrunk().db.urls
+            self.logger.info(f'url {url} has been blocked. removing all urls with domain {domain}')
+
+            contains_domain = urls.find({'long_url': {
                 # . needs to be escaped in the domain because it is regex wildcard
-                "$regex": "%s*" % domain.replace(".", r"\.")
-            }}))
+                '$regex': '%s*' % domain.replace('.', r'\.')
+            }})
 
             matches_domain = [link for link in contains_domain
-                              if get_domain(link["long_url"]) == domain]
-            # print 3 to a line
-            logmessage = "FOUND:\n"
-            for link in matches_domain:
-                logmessage += str(link["long_url"].encode("utf-8")) + "\n"
-            self.logger.info(logmessage)
+                              if get_domain(link['long_url']) == domain]
 
-            result = urls.delete_many({
-                "_id": {"$in": [doc["_id"] for doc in matches_domain]}
-            })
-            self.logger.info("block "+url+" result: "+str(result.raw_result))
+            msg = 'deleting links: ' \
+                + ', '.join(f'{l["_id"]} -> {l["long_url"]}' for l in matches_domain)
+            self.logger.info(msg)
+
+            result = urls.delete_many({'_id': {'$in': [doc['_id'] for doc in matches_domain]}})
+            self.logger.info(f'block {url} delete many result: {result.raw_result}')
 
         roles.new('blocked_url', is_admin, validate_url, custom_text={
             'title': 'Blocked URLs',
@@ -153,7 +154,7 @@ class ShrunkFlask(ShrunkFlaskMini):
             'granted_by': 'Blocked by'
         }, oncreate=onblock)
 
-        roles.new("whitelisted", has_some_role(['admin', 'facstaff', 'power_user']), custom_text={
+        roles.new('whitelisted', has_some_role(['admin', 'facstaff', 'power_user']), custom_text={
             'title': 'Whitelisted users',
             'grant_title': 'Whitelist a user',
             'grant_button': 'WHITELIST',
@@ -165,6 +166,4 @@ class ShrunkFlask(ShrunkFlaskMini):
             'comment_prompt': 'Describe why the user has been granted access to Go.'
         })
 
-        roles.new('facstaff', is_admin, custom_text={
-            'title': 'Faculty or Staff Member'
-        })
+        roles.new('facstaff', is_admin, custom_text={'title': 'Faculty or Staff Member'})

@@ -9,7 +9,6 @@ import shrunk.client
 import shrunk.roles as roles
 
 from fixtures import app, db  # noqa: F401
-from fixtures import set_geoip
 
 
 def insert_urls(db, long_urls, netid):
@@ -48,13 +47,6 @@ def test_visit(db):
 def test_invalid_sort(db):
     with pytest.raises(IndexError):
         db.search(sort=100)
-
-
-def test_no_geoip(db):
-    with set_geoip(db, None):
-        assert db.get_geoip_location('8.8.8.8') == 'unknown'
-        codes = db.get_location_codes('8.8.8.8')
-        assert codes == (None, None)
 
 
 def test_172_geoip(db):
@@ -488,3 +480,46 @@ def test_get_visitor_id(db, ip):
     id1 = db.get_visitor_id(ip)
     id2 = db.get_visitor_id(ip)
     assert id1 == id2
+
+
+def test_bad_sort(db):
+    with pytest.raises(IndexError):
+        db.search(sort='bad')
+
+
+def test_pop_sort(db):
+    url0 = db.create_short_url('http://0.example.com')
+    url1 = db.create_short_url('http://1.example.com')
+    db.visit(url0, '127.0.0.1', 'Test-User-Agent', 'http://example.com')
+    db.visit(url0, '127.0.0.1', 'Test-User-Agent', 'http://example.com')
+    db.visit(url1, '127.0.0.1', 'Test-User-Agent', 'http://example.com')
+
+    results = db.search(sort=shrunk.client.SortOrder.POP_ASC).results
+    assert results[0]['_id'] == url1
+    assert results[1]['_id'] == url0
+
+    results = db.search(sort=shrunk.client.SortOrder.POP_DESC).results
+    assert results[0]['_id'] == url0
+    assert results[1]['_id'] == url1
+
+
+def test_remove_admin(db):
+    db.create_organization('test-org')
+    db.add_organization_admin('test-org', 'test-admin')
+    assert db.is_organization_member('test-org', 'test-admin')
+    assert db.is_organization_admin('test-org', 'test-admin')
+    db.remove_organization_admin('test-org', 'test-admin')
+    assert db.is_organization_member('test-org', 'test-admin')
+    assert not db.is_organization_admin('test-org', 'test-admin')
+
+
+def test_may_manage_organization(db):
+    db.create_organization('test-org')
+    db.add_organization_admin('test-org', 'test-admin')
+    db.add_organization_member('test-org', 'test-member')
+    assert db.may_manage_organization('test-org', 'test-admin') == 'admin'
+    assert db.may_manage_organization('test-org', 'test-member') == 'member'
+    roles.grant('admin', 'test', 'test-admin', None)
+    assert db.may_manage_organization('test-org', 'test-admin') == 'site-admin'
+    assert db.may_manage_organization('test-org', 'not-member') is False
+    assert db.may_manage_organization('not-an-org', 'not-member') is False

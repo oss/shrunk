@@ -13,11 +13,11 @@ app = ShrunkFlaskMini(__name__)
 
 # ===== Views =====
 # route /<short url> handle by shrunkFlaskMini
-@app.route("/")
+@app.route('/')
 def render_index():
     """Renders the homepage.
 
     The link server will redirect to the URL for the public URL manager.
     """
-    app.logger.info("Redirecting {} to shrunk".format(request.remote_addr))
-    return redirect(app.config["SHRUNK_URL"])
+    app.logger.info(f'Redirecting {request.remote_addr} to shrunk')
+    return redirect(app.config['SHRUNK_URL'])

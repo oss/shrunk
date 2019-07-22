@@ -2,6 +2,7 @@ import collections
 
 import flask
 import werkzeug.useragents
+from werkzeug.exceptions import abort
 
 from . import util
 from .util import stat
@@ -18,11 +19,11 @@ def daily_visits(netid, client):
     """ Returns a JSON dictionary describing the daily
         visits to the given link. """
 
-    if "url" not in flask.request.args:
-        return '{"error":"request must have url"}', 400
-    url = flask.request.args['url']
-    if not client.is_owner_or_admin(url, netid):
-        return util.unauthorized()
+    url = flask.request.args.get('url')
+    if not url:
+        abort(400)
+    if not client.may_view_url(url, netid):
+        abort(403)
     visits = client.get_daily_visits(url)
     return flask.jsonify(visits)
 
@@ -32,9 +33,9 @@ def daily_visits(netid, client):
 def get_geoip_json(netid, client):
     url = flask.request.args.get('url')
     if not url:
-        return flask.jsonify({'error': 'no url'}), 400
-    if not client.is_owner_or_admin(url, netid):
-        return flask.jsonify({'error': 'forbidden'}), 403
+        abort(400)
+    if not client.may_view_url(url, netid):
+        abort(403)
     return flask.jsonify(client.get_geoip_json(url))
 
 
@@ -47,15 +48,15 @@ def get_referer_stats(netid, client):
     """ Get a JSON dictionary describing the domains of the referers
         of visits to the given URL. """
 
-    if 'url' not in flask.request.args:
-        return 'error: request must have url', 400
-    link = flask.request.args['url']
+    url = flask.request.args.get('url')
+    if not url:
+        abort(400)
 
-    if not client.is_owner_or_admin(link, netid):
-        return util.unauthorized()
+    if not client.may_view_url(url, netid):
+        abort(403)
 
     stats = collections.defaultdict(int)
-    for visit in client.get_visits(link):
+    for visit in client.get_visits(url):
         domain = stat.get_referer_domain(visit)
         if domain:
             stats[domain] += 1
@@ -78,15 +79,15 @@ def get_useragent_stats(netid, client):
     """ Return a JSON dictionary describing the user agents, platforms,
         and browsers that have visited the given link. """
 
-    if 'url' not in flask.request.args:
-        return 'error: request must have url', 400
-    link = flask.request.args['url']
+    url = flask.request.args.get('url')
+    if not url:
+        abort(400)
 
-    if not client.is_owner_or_admin(link, netid):
-        return util.unauthorized()
+    if not client.may_view_url(url, netid):
+        abort(403)
 
     stats = collections.defaultdict(lambda: collections.defaultdict(int))
-    for visit in client.get_visits(link):
+    for visit in client.get_visits(url):
         user_agent = visit.get('user_agent')
         if not user_agent:
             stats['platform']['unknown'] += 1
@@ -109,13 +110,14 @@ def get_useragent_stats(netid, client):
 def link_visits_csv(netid, client):
     """ Get CSV-formatted data describing (anonymized) visitors to the link. """
 
-    if 'url' not in flask.request.args:
-        return 'error: request must have url', 400
-    link = flask.request.args['url']
-    if not client.is_owner_or_admin(link, netid):
-        return util.unauthorized()
-    csv_output = stat.make_csv_for_links(client, [link])
-    return util.make_plaintext_response(csv_output, filename='visits-{}.csv'.format(link))
+    url = flask.request.args.get('url')
+    if not url:
+        abort(400)
+
+    if not client.may_view_url(url, netid):
+        abort(403)
+    csv_output = stat.make_csv_for_links(client, [url])
+    return util.make_plaintext_response(csv_output, filename=f'visits-{url}.csv')
 
 
 @bp.route('/csv/search', endpoint='search-csv', methods=['GET'])

@@ -16,7 +16,6 @@
 {% extends "base.html" %}
 {% block content %}
 
-{% if url %}
 <div class="row row-controls">
   <div class="col">
     <h2>QR code for <em>{{ url }}</em></h2>
@@ -37,18 +36,10 @@
     </div>
   </div>
 </div>
-{% else %}
-<div class="row">
-  <div class="col">
-    <h3> URL not found :( </h3>
-  </div>
-</div>
-{% endif %}
 
 {% assets "shrunk_qr" %}
 <script src="{{ ASSET_URL }}"></script>
 {% endassets %}
 
 {% endblock %}
-
 {% endif %}

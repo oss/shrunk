@@ -1,6 +1,6 @@
 import flask
+from werkzeug.exceptions import abort
 
-from . import util
 from . import roles
 from .decorators import require_login
 
@@ -32,14 +32,14 @@ def create_org(netid, client):
         automatically be made a member of the organization. """
 
     if not roles.check('facstaff', netid) and not roles.check('admin', netid):
-        return util.unauthorized()
+        abort(403)
 
     name = flask.request.form.get('name')
     if not name:
         return flask.jsonify({'errors': {'name': 'You must supply a name.'}}), 400
 
     name = name.strip()
-    if not name.isalnum():
+    if not all(c.isalnum() or c in '_-' for c in name):
         return flask.jsonify({'errors': {'name': 'Organization names must be alphanumeric.'}}), 400
 
     name = name.strip()
@@ -59,12 +59,12 @@ def delete_org(netid, client):
 
     name = flask.request.form.get('name')
     if not name:
-        return util.unauthorized()
+        abort(400)
     manage = client.may_manage_organization(name, netid)
     if manage not in ['admin', 'site-admin']:
-        return util.unauthorized()
+        abort(403)
     client.delete_organization(name)
-    return flask.redirect('/orgs')
+    return flask.redirect(flask.url_for('orgs.list'))
 
 
 @bp.route('/manage', endpoint='manage', methods=['GET'])
@@ -75,10 +75,10 @@ def manage_org(netid, client):
 
     name = flask.request.args.get('name')
     if not name:
-        return util.unauthorized()
+        abort(400)
     manage = client.may_manage_organization(name, netid)
     if not manage:
-        return util.unauthorized()
+        abort(403)
     kwargs = {
         'name': name,
         'user_is_admin': manage in ['admin', 'site-admin'],
@@ -108,9 +108,9 @@ def add_org_member(netid_grantor, client):
 
     manage = client.may_manage_organization(name, netid_grantor)
     if not manage:
-        return util.unauthorized()
+        abort(403)
     if admin and manage not in ['admin', 'site-admin']:
-        return util.unauthorized()
+        abort(403)
 
     if admin:
         res = client.add_organization_admin(name, netid_grantee)
@@ -133,14 +133,15 @@ def remove_org_member(netid_remover, client):
     netid_removed = flask.request.form.get('netid')
     name = flask.request.form.get('name')
     if not netid_removed or not name:
-        return util.unauthorized()
+        abort(400)
     manage = client.may_manage_organization(name, netid_remover)
     if manage not in ['admin', 'site-admin'] and netid_removed != netid_remover:
-        return util.unauthorized()
-    if client.get_organization_members(name).count() == 1:
+        abort(403)
+    if client.count_organization_members(name) == 1:
         return flask.jsonify({'error': 'Cannot remove last member.'}), 400
-    admins = client.get_organization_admins(name)
-    if admins.count() == 1 and netid_removed in map(lambda a: a['netid'], admins):
-        return flask.jsonify({'error': 'Cannot remove last administrator.'}), 400
+    if client.count_organization_admins(name) == 1:
+        admins = client.get_organization_admins(name)
+        if netid_removed in map(lambda a: a['netid'], admins):
+            return flask.jsonify({'error': 'Cannot remove last administrator.'}), 400
     client.remove_organization_member(name, netid_removed)
     return flask.jsonify({'success': {}})

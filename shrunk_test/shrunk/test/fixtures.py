@@ -39,13 +39,3 @@ def dev_login(client, dev_login):
         yield
     finally:
         assert_status(client.get('/logout'), 302)
-
-
-@contextlib.contextmanager
-def set_geoip(db, geoip):
-    old_geoip = db._geoip
-    db._geoip = geoip
-    try:
-        yield
-    finally:
-        db._geoip = old_geoip
