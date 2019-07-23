@@ -37,7 +37,7 @@ setup(
     package_dir={"shrunk": "shrunk"},
     package_data={"shrunk": ["util/*", "roles/*", "static/css/*", "static/img/*", "static/js/*",
                              "static/scss/*", "static/out/*", "static/bootstrap/*",
-                             "templates/*", "../scripts/*"]},
+                             "templates/*", "templates/errors/*", "../scripts/*"]},
     author="Rutgers Open System Solutions",
     author_email="oss@oss.rutgers.edu",
     description="Rutgers University URL Shortener",
