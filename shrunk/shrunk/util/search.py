@@ -80,10 +80,8 @@ def search(netid, client, request, session, should_paginate=True):
         return results
 
     results = do_search(page)
-    results.links_set = links_set
-    if not should_paginate:
-        return results
-    if page > results.total_pages:
+    if should_paginate and page > results.total_pages:
         session['page'] = str(results.total_pages)
-        return do_search(results.total_pages)
+        results = do_search(results.total_pages)
+    results.links_set = links_set
     return results

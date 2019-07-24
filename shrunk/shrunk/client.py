@@ -438,37 +438,31 @@ class ShrunkClient:
         document = self.db.urls.find_one({"_id": short_url})
         return document["visits"] if document else None
 
+    # go through organization_members, get all the members of org
+    # find all links with that netid. ez pz?
+
     def search(self, *, query=None, netid=None, org=None, sort=None, pagination=None):
         pipeline = []
 
         if netid is not None:
             pipeline.append({'$match': {'netid': netid}})
 
+        # if an org filter exists, we run the aggregation on the organization_members
+        # collection instead of the urls collection. But the output of this stage
+        # is just a bunch of URL documents, so the downstream stages don't know the
+        # difference.
         if org is not None:
+            pipeline.append({'$match': {'name': org}})
             pipeline.append({
                 '$lookup': {
-                    'from': 'organization_members',
+                    'from': 'urls',
                     'localField': 'netid',
                     'foreignField': 'netid',
-                    'as': 'owner_membership'
+                    'as': 'urls'
                 }
             })
-
-            pipeline.append({
-                '$addFields': {
-                    'owner_orgs': {
-                        '$map': {'input': '$owner_membership', 'in': '$$this.name'}
-                    }
-                }
-            })
-
-            pipeline.append({
-                '$match': {'$expr': {'$in': [org, '$owner_orgs']}}
-            })
-
-            pipeline.append({
-                '$project': {'owner_membership': False, 'owner_orgs': False}
-            })
+            pipeline.append({'$unwind': '$urls'})
+            pipeline.append({'$replaceRoot': {'newRoot': '$urls'}})
 
         if query is not None:
             match = {
@@ -527,7 +521,11 @@ class ShrunkClient:
             '$facet': facet
         })
 
-        cur = next(self.db.urls.aggregate(pipeline, collation=Collation('en')))
+        if org is not None:
+            cur = next(self.db.organization_members.aggregate(pipeline, collation=Collation('en')))
+        else:
+            cur = next(self.db.urls.aggregate(pipeline, collation=Collation('en')))
+
         result = cur['result']
         count = cur['count'][0]['count'] if cur['count'] else 0
         return SearchResults(result, count)
