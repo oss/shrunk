@@ -1,5 +1,5 @@
 db = new Mongo().getDB('admin');
-db.disableFreeMonitoring();
+// db.disableFreeMonitoring();
 db.getMongo().getDB('shrunk').dropDatabase();
 db.adminCommand({ renameCollection: 'shrunk_roles.grants', to: 'shrunk.grants' });
 db.adminCommand({ renameCollection: 'shrunk_urls.urls', to: 'shrunk.urls' });
