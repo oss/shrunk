@@ -6,7 +6,6 @@ sdist bdist_wheel: shrunk setup.py assets
 	./setup.py $@
 
 assets: shrunk
-	cp shrunk/config.py.example shrunk/config.py
 	LANG=en_US.utf8 FLASK_APP=shrunk flask assets build
 
 clean:
