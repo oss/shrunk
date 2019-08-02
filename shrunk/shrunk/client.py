@@ -302,6 +302,9 @@ class ShrunkClient:
             except pymongo.errors.DuplicateKeyError:
                 raise BadShortURLException('That name already exists.')
             self.db.urls.delete_one({'_id': old_short_url})
+            # FIXME the right way to do this is to normalize the database
+            self.db.visits.update_many({'short_url': old_short_url},
+                                       {'$set': {'short_url': short_url}})
 
         return response
 
