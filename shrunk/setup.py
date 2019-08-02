@@ -26,7 +26,8 @@ require = [
     'pyasn1==0.1.7',
     'pymongo==3.8.0',
     'geoip2==2.4.0',
-    'uwsgidecorators==1.1.0'
+    'uwsgidecorators==1.1.0',
+    'httpagentparser==1.8.2'
 ]
 
 setup(

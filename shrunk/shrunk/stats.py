@@ -1,8 +1,8 @@
 import collections
 
 import flask
-import werkzeug.useragents
 from werkzeug.exceptions import abort
+import httpagentparser
 
 from . import util
 from .util import stat
@@ -57,11 +57,7 @@ def get_referer_stats(netid, client):
 
     stats = collections.defaultdict(int)
     for visit in client.get_visits(url):
-        domain = stat.get_referer_domain(visit)
-        if domain:
-            stats[domain] += 1
-        else:
-            stats['unknown'] += 1
+        stats[stat.get_human_readable_referer_domain(visit)] += 1
 
     # Return the top five referers.
     # XXX is this something we want to keep?
@@ -86,23 +82,33 @@ def get_useragent_stats(netid, client):
     if not client.may_view_url(url, netid):
         abort(403)
 
-    stats = collections.defaultdict(lambda: collections.defaultdict(int))
+    platforms = collections.defaultdict(int)
+    browsers = collections.defaultdict(int)
+
     for visit in client.get_visits(url):
         user_agent = visit.get('user_agent')
         if not user_agent:
-            stats['platform']['unknown'] += 1
-            stats['browser']['unknown'] += 1
+            platforms['Unknown'] += 1
+            browsers['Unknown'] += 1
             continue
-        user_agent = werkzeug.useragents.UserAgent(user_agent)
-        if user_agent.platform:
-            stats['platform'][user_agent.platform.title()] += 1
-        if user_agent.browser:
-            if 'Edge' in visit['user_agent']:
-                stats['browser']['Msie'] += 1
-            else:
-                stats['browser'][user_agent.browser.title()] += 1
+        detected = httpagentparser.detect(user_agent)
 
-    return flask.jsonify(stats)
+        try:
+            if 'dist' in detected:
+                platform = detected['dist']['name']
+            else:
+                platform = detected['os']['name']
+            platforms[stat.get_human_readable_platform(platform.title())] += 1
+        except KeyError:
+            platforms['Unknown'] += 1
+
+        try:
+            browser = detected['browser']['name']
+            browsers[stat.get_human_readable_browser(browser.title())] += 1
+        except KeyError:
+            browsers['Unknown'] += 1
+
+    return flask.jsonify({'platform': platforms, 'browser': browsers})
 
 
 @bp.route('/csv/link', endpoint='link-csv', methods=['GET'])

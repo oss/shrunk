@@ -3,20 +3,20 @@ import csv
 import urllib.parse
 
 
-# TODO use already existing get_domain function instead?
-# maybe get doamin should use this implementation
-
-
 REFERER_STRIP_PREFIXES = ['www.', 'amp.', 'm.', 'l.']
 REFERER_NORMALIZE_DOMAINS = ['facebook.com', 'twitter.com', 'instagram.com', 'reddit.com']
-REFERER_ANDROID_APPS = {
+REFERER_MAPPING = {
+    'facebook.com': 'Facebook',
+    'twitter.com': 'Twitter',
+    'instagram.com': 'Instagram',
+    'reddit.com': 'Reddit',
     'com.google.android.googlequicksearchbox': 'Android Search',
     'com.google.android.gm': 'GMail App',
     'com.linkedin.android': 'LinkedIn App'
 }
 
 
-def get_referer_domain(visit):
+def get_human_readable_referer_domain(visit):
     referer = visit.get('referer')
     if referer:
         try:
@@ -33,22 +33,24 @@ def get_referer_domain(visit):
             for dom in REFERER_NORMALIZE_DOMAINS:
                 if dom in hostname:
                     hostname = dom
+                    break
 
             # Apparently people like to pass our shortened links
             # through... twitter's URL shortener?
             if hostname == 't.co':
                 hostname = 'twitter.com'
 
-            # Android apps can set their own referer (which is not a real DNS
-            # name), so we translate such referers into a user-friendly representation
-            # here.
-            if hostname in REFERER_ANDROID_APPS:
-                hostname = REFERER_ANDROID_APPS[hostname]
-
-            return hostname
+            return REFERER_MAPPING.get(hostname, hostname)
         except (ValueError, AttributeError):
-            return None
-    return None
+            return 'Unknown'
+    return 'Unknown'
+
+
+def get_referer_domain(visit):
+    referer = visit.get('referer')
+    if not referer:
+        return None
+    return urllib.parse.urlparse(referer).hostname
 
 
 def make_csv_for_links(client, links):
@@ -69,3 +71,24 @@ def make_csv_for_links(client, links):
             writer.writerow([visit['short_url'], visitor_id, location, referer, ua, visit['time']])
 
     return f.getvalue()
+
+
+def get_human_readable_browser(browser):
+    mapping = {
+        'Androidbrowser': 'Android Browser',
+        'Chromeios': 'Chrome',
+        'Msedge': 'Microsoft Edge'
+    }
+
+    return mapping.get(browser, browser)
+
+
+def get_human_readable_platform(platform):
+    mapping = {
+        'Chromeos': 'ChromeOS',
+        'Iphone': 'iPhone',
+        'Ipad': 'iPad',
+        'Macintosh': 'Mac'
+    }
+
+    return mapping.get(platform, platform)
