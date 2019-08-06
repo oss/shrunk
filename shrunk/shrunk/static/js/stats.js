@@ -101,185 +101,87 @@ show_us_map();
 /* --- data --- */
 
 const browser_colors = {
-    'Firefox': { background: 'rgba(244,199,133,0.2)', border: 'rgba(244,199,133,1)' },
-    'Chrome': { background: 'rgba(200,240,97,0.2)', border: 'rgba(200,240,97,1)' },
-    'Safari': { background: 'rgba(155,186,238,0.2)', border: 'rgba(155,186,238,1)' },
-    'Microsoft Internet Explorer': {
-	background: 'rgba(136,198,247,0.2)', border: 'rgba(136,198,247,1)'
-    },
-    'Microsoft Edge': { background: 'rgba(136,198,247,0.2)', border: 'rgba(136,198,247,1)' },
-    'Opera': { background: 'rgba(238,120,124,0.2)', border: 'rgba(238,120,124,1)' },
-    'Unknown': { background: 'rgba(80,80,80,0.2)', border: 'rgba(80,80,80,1)' }
-};
-
-const browser_images = {
-    'Firefox': { src: '/static/img/small-firefox-icon.png', width: 22, height: 22 },
-    'Chrome': { src: '/static/img/small-chrome-icon.png', width: 22, height: 22 },
-    'Safari': { src: '/static/img/small-safari-icon.png', width: 22, height: 22 },
-    'Microsoft Internet Explorer': {
-	src: '/static/img/small-edge-icon.png', width: 22, height: 22
-    },
-    'Microsoft Edge': { src: '/static/img/small-edge-icon.png', width: 22, height: 22 },
-    'Opera': { src: '/static/img/small-opera-icon.png', width: 22, height: 22 },
-    'none': { src: '/static/img/pixel.png', width: 1, height: 1 }
+    'Firefox': 'rgba(244,199,133,1.0)',
+    'Chrome': 'rgba(200,240,97,1.0)',
+    'Safari': 'rgba(155,186,238,1.0)',
+    'Microsoft Internet Explorer': 'rgba(136,198,247,1.0)',
+    'Microsoft Edge': 'rgba(136,198,247,1.0)',
+    'Opera': 'rgba(238,120,124,1.0)',
+    'Unknown': 'rgba(80,80,80,0.2)'
 };
 
 /* todo: iOS, *BSD, etc? */
 const platform_colors = {
-    'Linux': { background: 'rgba(216,171,36,0.2)', border: 'rgba(216,171,36,1)' },
-    'Windows': { background: 'rgba(129,238,208,0.2)', border: 'rgba(129,238,208,1)' },
-    'Mac': { background: 'rgba(201,201,201,0.2)', border: 'rgba(201,201,201,1)' },
-    'Android': { background: 'rgba(200,227,120,0.2)', border: 'rgba(200,227,120,1)' },
-    'Unknown': { background: 'rgba(80,80,80,0.2)', border: 'rgba(80,80,80,1)' }
-};
-
-const platform_images = {
-    'Linux': { src: '/static/img/small-tux-icon.png', width: 22, height: 22},
-    'Windows': { src: '/static/img/small-windows-icon.png', width: 22, height: 22},
-    'Mac': { src: '/static/img/small-mac-icon.png', width: 22, height: 22},
-    'Android': { src: '/static/img/small-android-icon.png', width: 22, height: 22},
-    'none': { src: '/static/img/pixel.png', width: 1, height: 1 }
+    'Linux': 'rgba(216,171,36,1.0)',
+    'Windows': 'rgba(129,238,208,1.0)',
+    'Mac': 'rgba(201,201,201,1.0)',
+    'Android': 'rgba(200,227,120,1.0)',
+    'Unknown': 'rgba(80,80,80,0.2)'
 };
 
 const referer_colors = {
-    'Facebook': { background: 'rgba(0,75,150,0.2)', border: 'rgba(0,75,150,1)' },
-    'Twitter': { background: 'rgba(147,191,241,0.2)', border: 'rgba(147,191,241,1)' },
-    'Instagram': { background: 'rgba(193,131,212,0.2)', border: 'rgba(193,131,212,1)' },
-    'Reddit': { background: 'rgba(241,155,123,0.2)', border: 'rgba(241,155,123,1)' },
-    'Unknown': { background: 'rgba(80,80,80,0.2)', border: 'rgba(80,80,80,1)' }
+    'Facebook': 'rgba(0,75,150,1.0)',
+    'Twitter': 'rgba(147,191,241,1.0)',
+    'Instagram': 'rgba(193,131,212,1.0)',
+    'Reddit': 'rgba(241,155,123,1.0)',
+    'Unknown': 'rgba(80,80,80,0.2)'
 };
 
-const referer_images = {
-    'Facebook': { src: '/static/img/small-facebook-icon.png', width: 22, height: 22 },
-    'Twitter': { src: '/static/img/small-twitter-icon.png', width: 22, height: 22 },
-    'Instagram': { src: '/static/img/small-instagram-icon.png', width: 22, height: 22 },
-    'Reddit': { src: '/static/img/small-reddit-icon.png', width: 22, height: 22 },
-    'none': { src: '/static/img/pixel.png', width: 1, height: 1 }
-};
-
-/* --- code --- */
-
-function add_pie_chart(canvas_id, title, raw_data, colors, images) {
-    let data = {
-	labels: [],
-	datasets: [{
-	    label: title,
-	    data: [],
-	    backgroundColor: [],
-	    borderColor: [],
-	    borderWidth: 1
+function make_pie_chart(container, title, data) {
+    Highcharts.chart(container, {
+	chart: {
+	    plotBackgroundColor: null,
+	    plotBorderWidth: null,
+	    plotShadow: false,
+	    type: 'pie'
+	},
+	title: { text: title },
+	tooltip: {
+	    pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+	},
+	plotOptions: {
+	    pie: {
+		allowPointSelect: true,
+		cursor: 'pointer',
+		showInLegend: true,
+		dataLabels: {
+		    enabled: false,
+		    format: '<b>{point.name}</b>: {point.percentage:.1f}%'
+		}
+	    }
+	},
+	series: [{
+	    name: 'Referrers',
+	    colorByPoint: true,
+	    data: data
 	}]
-    };
-
-    var options = {
-	legend: {
-	    position: 'left'
-	},
-	title: {
-	    display: true,
-	    text: title,
-	    fontStyle: '',
-	    fontSize: 13,
-	},
-	onResize: () => console.log("here")
-    };
-
-    if (images != null) {
-	options.plugins = {
-	    labels: {
-		render: 'image',
-		images: []
-	    }
-	};
-    }
-
-    /* add each data item to the `data` and `options` objects */
-    for (var key in raw_data) {
-	if (!raw_data.hasOwnProperty(key)) {
-	    continue;
-	}
-
-	if (colors != null && colors.hasOwnProperty(key)) {
-	    var background_color = colors[key].background;
-	    var border_color = colors[key].border;
-	} else {
-	    /* randomly generate a color */
-	    const r = Math.floor(Math.random() * 255);
-	    const g = Math.floor(Math.random() * 255);
-	    const b = Math.floor(Math.random() * 255);
-	    var background_color = 'rgba(' + r + ',' + g + ',' + b + ',' + '0.2)';
-	    var border_color = 'rgba(' + r + ',' + g + ',' + b + ',' + '1)';
-	}
-
-	data.labels.push(key);
-	data.datasets[0].data.push(raw_data[key]);
-	data.datasets[0].backgroundColor.push(background_color);
-	data.datasets[0].borderColor.push(border_color);
-
-	if (images != null) {
-	    let image = {};
-	    if (images.hasOwnProperty(key)) {
-		image = images[key];
-	    } else {
-		image = images['none'];
-	    }
-	    options.plugins.labels.images.push(image);
-	}
-    }
-
-    let ctx = document.getElementById(canvas_id).getContext('2d');
-    let c = new Chart(ctx, {
-	type: 'doughnut',
-	data: data,
-	options: options
-    })
-    // HACK: manual resize
-    c.resize = function(silent) {
-	let width = 720;
-	let height = 360;
-	let aspect = height / width;
-	if (window.innerWidth > 1200) {
-	    width = 380;
-	    height = 190;
-	}
-	if (window.innerWidth < 690) {
-	    width = window.innerWidth * 0.9;
-	    height = width * aspect;
-	}
-	this.canvas.width = this.width = width;
-	this.canvas.height = this.height = height;
-	this.canvas.style.width = width + "px";
-	this.canvas.style.height = height + "px";
-	this.update();
-    }
+    });
 }
 
-/* render stats based on useragent and referer data */
-(function(){
-    function try_render(json, name, title, colors, images) {
-	let canvas_id = name + '-canvas';
-	let div_id = name + '-stats';
-	if (json.hasOwnProperty(name)) {
-	    add_pie_chart(canvas_id, title, json[name], colors, images)
-	} else {
-	    document.getElementById(div_id).style.display = 'none';
-	}
-    }
+$.getJSON('/stat/referer?url=' + url,
+	  function (json) {
+	      let data = [];
+	      Object.keys(json).forEach(function(key) {
+		  data.push({ name: key, y: json[key], color: referer_colors[key] });
+	      });
 
-    const short_link = (new URL(document.location)).searchParams.get('url');
-    const useragent_stats_url = '/stat/useragent?url=' + short_link;
-    const referer_stats_url = '/stat/referer?url=' + short_link;
+	      make_pie_chart('referer-stats', 'Referrer Statistics', data);
+	  });
 
-    Plotly.d3.json(useragent_stats_url, function(err, json) {
-	try_render(json, 'browser', 'Browsers', browser_colors, browser_images);
-	try_render(json, 'platform', 'Platforms', platform_colors, platform_images);
-    });
+$.getJSON('/stat/useragent?url=' + url,
+	  function (json) {
+	      let browsers = [];
+	      let platforms = [];
 
-    Plotly.d3.json(referer_stats_url, function(err, json) {
-	if (Object.keys(json).length != 0) {
-	    add_pie_chart('referer-canvas', 'Referrers', json, referer_colors, referer_images);
-	} else {
-	    document.getElementById('referer-stats').style.display = 'none';
-	}
-    });
-}());
+	      Object.keys(json.browser).forEach(function(key) {
+		  browsers.push({ name: key, y: json.browser[key], color: browser_colors[key] });
+	      });
+
+	      Object.keys(json.platform).forEach(function(key) {
+		  platforms.push({ name: key, y: json.platform[key],
+				   color: platform_colors[key] });
+	      });
+
+	      make_pie_chart('browser-stats', 'Browser Statistics', browsers);
+	      make_pie_chart('platform-stats', 'Platform Statistics', platforms);
+	  });

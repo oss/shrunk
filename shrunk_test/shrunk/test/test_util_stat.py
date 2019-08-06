@@ -7,7 +7,8 @@ import operator
 
 import pytest
 
-from shrunk.util.stat import get_referer_domain, make_csv_for_links
+from shrunk.util.stat import get_referer_domain, make_csv_for_links, \
+    get_human_readable_referer_domain
 
 from fixtures import app, db  # noqa: F401
 
@@ -16,10 +17,10 @@ from fixtures import app, db  # noqa: F401
                                           ('https://sld.google.com/abc', 'sld.google.com'),
                                           ('https://my.si.te:80', 'my.si.te'),
                                           ('https://www.example.com/pa/th/', 'example.com'),
-                                          ('https://t.co/link', 'twitter.com'),
+                                          ('https://t.co/link', 'Twitter'),
                                           ('android-app://com.linkedin.android', 'LinkedIn App')])
-def test_get_referer_domain(url, expected):
-    assert get_referer_domain({'referer': url}) == expected
+def test_get_human_readable_referer_domain(url, expected):
+    assert get_human_readable_referer_domain({'referer': url}) == expected
 
 
 def test_get_referer_domain_no_referer():

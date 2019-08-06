@@ -61,12 +61,7 @@ def get_referer_stats(netid, client):
 
     # Return the top five referers.
     # XXX is this something we want to keep?
-    freqs = sorted(stats.values())
-    if len(freqs) >= 5:
-        cutoff = freqs[-5]
-        stats = {key: value for key, value in stats.items() if value >= cutoff}
-
-    return flask.jsonify(stats)
+    return flask.jsonify(stat.top_n(stats, n=5))
 
 
 @bp.route('/useragent', endpoint='useragent', methods=['GET'])
@@ -108,6 +103,8 @@ def get_useragent_stats(netid, client):
         except KeyError:
             browsers['Unknown'] += 1
 
+    platforms = stat.top_n(platforms, n=5)
+    browsers = stat.top_n(browsers, n=5)
     return flask.jsonify({'platform': platforms, 'browser': browsers})
 
 

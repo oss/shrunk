@@ -92,3 +92,11 @@ def get_human_readable_platform(platform):
     }
 
     return mapping.get(platform, platform)
+
+
+def top_n(stats, *, n):
+    if len(stats) >= n:
+        freqs = sorted(stats.values())
+        cutoff = freqs[-n]
+        stats = {key: value for key, value in stats.items() if value >= cutoff}
+    return stats

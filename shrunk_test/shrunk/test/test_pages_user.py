@@ -465,7 +465,7 @@ def test_useragent_stats(db, client, short_url):
         assert_json(resp, expected)
 
     with dev_login(client, 'user'):
-        check_stats({})
+        check_stats({'platform': {}, 'browser': {}})
 
         db.visit(short_url, '127.0.0.1',
                  'Mozilla/5.0 (X11; Linux x86_64; rv:10.0) Gecko/20100101 Firefox/10.0',
@@ -485,7 +485,8 @@ def test_useragent_stats(db, client, short_url):
         db.visit(short_url, '127.0.0.1',
                  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299', 'referer')
-        check_stats({'platform': {'Linux': 2, 'Windows': 2}, 'browser': {'Firefox': 3, 'Msie': 1}})
+        check_stats({'platform': {'Linux': 2, 'Windows': 2},
+                     'browser': {'Firefox': 3, 'Microsoft Edge': 1}})
 
 
 def test_useragent_stats_no_visit(db, client, short_url):
@@ -502,7 +503,7 @@ def test_useragent_stats_no_visit(db, client, short_url):
     with dev_login(client, 'user'):
         resp = client.get(f'/stat/useragent?url={short_url}')
         assert_ok(resp)
-        assert_json(resp, {'platform': {'unknown': 1}, 'browser': {'unknown': 1}})
+        assert_json(resp, {'platform': {'Unknown': 1}, 'browser': {'Unknown': 1}})
 
 
 def test_useragent_stats_no_url(client):
@@ -525,19 +526,19 @@ def test_referer_stats(db, client, short_url):
         check_stats({})
 
         db.visit(short_url, '127.0.0.1', 'Test-User-Agent', 'https://facebook.com')
-        check_stats({'facebook.com': 1})
+        check_stats({'Facebook': 1})
 
         db.visit(short_url, '127.0.0.1', 'Test-User-Agent', 'https://facebook.com')
-        check_stats({'facebook.com': 2})
+        check_stats({'Facebook': 2})
 
         db.visit(short_url, '127.0.0.1', 'Test-User-Agent', 'https://twitter.com/tweet')
-        check_stats({'facebook.com': 2, 'twitter.com': 1})
+        check_stats({'Facebook': 2, 'Twitter': 1})
 
         db.visit(short_url, '127.0.0.1', 'Test-User-Agent', 'https://old.reddit.com/r/rutgers')
-        check_stats({'facebook.com': 2, 'twitter.com': 1, 'reddit.com': 1})
+        check_stats({'Facebook': 2, 'Twitter': 1, 'Reddit': 1})
 
         db.visit(short_url, '127.0.0.1', 'Test-User-Agent', '1nV4L!D')
-        check_stats({'facebook.com': 2, 'twitter.com': 1, 'reddit.com': 1, 'unknown': 1})
+        check_stats({'Facebook': 2, 'Twitter': 1, 'Reddit': 1, 'Unknown': 1})
 
 
 def test_referer_stats_many(db, client, short_url):
