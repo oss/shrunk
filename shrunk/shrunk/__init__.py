@@ -1,6 +1,7 @@
 """ Shrunk, the official URL shortener of Rutgers University. """
 
 import flask
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 
 # App-level stuff
@@ -28,6 +29,9 @@ def create_app(config_path='config.py', **kwargs):
     app = app_decorate.ShrunkFlask(__name__)
     app.config.from_pyfile(config_path, silent=True)
     app.config.update(kwargs)
+
+    # wsgi middleware
+    app.wsgi_app = ProxyFix(app.wsgi_app)
 
     # set up global context processors
     context_processors.init_app(app)
