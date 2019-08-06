@@ -17,6 +17,7 @@ GEOIP_FILE = sys.argv[2]
 conn = pymongo.MongoClient(DB_HOST, 27017)
 geoip = geoip2.database.Reader(GEOIP_FILE)
 
+
 def get_codes(ipaddr):
     if ipaddr.startswith('172.'):
         return 'NJ', 'US'
@@ -27,6 +28,7 @@ def get_codes(ipaddr):
         return state, country
     except (AttributeError, geoip2.errors.AddressNotFoundError):
         return None, None
+
 
 TOTAL_VISITS = conn.shrunk.visits.count()
 

@@ -10,6 +10,8 @@ DB_HOST = "localhost"
 DB_PORT = 27017
 """The database's port on the host machine."""
 
+DB_NAME = "shrunk"
+
 GEOLITE_PATH = "./GeoLite2-City.mmdb"
 """The path to the geolite geoip database."""
 
@@ -58,3 +60,5 @@ MAX_VISITS_FOR_CSV = 6000
 BANNED_REGEXES = [r'\.xxx']
 
 ASSETS_PROD = True
+
+LDAP_VALIDATE_NETIDS = True
