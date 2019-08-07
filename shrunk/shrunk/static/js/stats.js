@@ -1,3 +1,11 @@
+const MENU_ITEMS = [
+    'printChart',
+    'separator',
+    'downloadPNG',
+    'downloadJPEG',
+    'downloadSVG'
+];
+
 const url = (new URL(document.location)).searchParams.get('url');
 
 /* ===== visits chart ===== */
@@ -16,6 +24,7 @@ $.getJSON('/stat/visits/daily?url=' + url,
 		      type: 'spline',
 		      zoomType: 'x'
 		  },
+		  exporting: { buttons: { contextButton: { menuItems: MENU_ITEMS } } },
 		  title: { text: 'Visits' },
 		  subtitle: { text: 'Click and drag to zoom in' },
 		  xAxis: {
@@ -51,7 +60,8 @@ function add_map(div_name, map_name, title, join, data) {
 	mapNavigation: { enabled: true },
 	exporting: {
 	    sourceWidth: 600,
-	    sourceHeight: 500
+	    sourceHeight: 500,
+	    buttons: { contextButton: { menuItems: MENU_ITEMS } }
 	},
 	legend: {
 	    layout: 'vertical',
@@ -135,6 +145,7 @@ function make_pie_chart(container, title, data) {
 	    plotShadow: false,
 	    type: 'pie'
 	},
+	exporting: { buttons: { contextButton: { menuItems: MENU_ITEMS } } },
 	title: { text: title },
 	tooltip: {
 	    pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
