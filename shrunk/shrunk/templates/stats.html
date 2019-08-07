@@ -19,10 +19,18 @@
   <div class="col">
     <form action="{{ url_for('stat.link-csv') }}">
       <input type="hidden" name="url" value="{{ short_url }}">
-      <button type="submit" class="btn btn-outline-primary btn-no-border btn-no-background btn-csv-download bg-light">
+      <button type="submit" class="btn btn-outline-primary btn-no-border btn-no-background btn-csv-download bg-light" {% if not url_info or not url_info["visits"] %} disabled {% endif %}>
 	<i class="fas fa-download"></i> Export visit data as CSV
       </button>
     </form>
+  </div>
+</div>
+
+{% if url_info and url_info["visits"] %}
+<div class="row" id="ad_blocker_message">
+  <div class="col">
+    <h4>If you see this message and are using an ad blocker or a script blocker,
+      you may need to disable it for this page to load properly.</h4>
   </div>
 </div>
 
@@ -73,8 +81,21 @@
     </div>
   </div>
 </div>
+{% elif not url_info %}
+<div class="row">
+  <div class="col">
+    <h3>That link does not exist.</h3>
+  </div>
+</div>
+{% else %}
+<div class="row">
+  <div class="col">
+    <h3>There have not yet been any visits to this link.</h3>
+  </div>
+</div>
+{% endif %}
 
-{% assets "shrunk_stats" %}
+{% assets "shrunk_stats_" %}
 <script src="{{ ASSET_URL }}"></script>
 {% endassets %}
 

@@ -467,6 +467,7 @@ Media Queries
 .shrunk-card-name {
     margin-right: 10px;
     font-size: 23pt;
+    color: #686b69;
 }
 
 nobr.shrunk-info > span {
