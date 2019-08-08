@@ -82,7 +82,7 @@ def get_human_readable_browser(browser):
         'Msedge': 'Microsoft Edge'
     }
 
-    return mapping.get(browser, browser)
+    return mapping.get(browser.title(), browser)
 
 
 def get_human_readable_platform(platform):
@@ -93,7 +93,7 @@ def get_human_readable_platform(platform):
         'Macintosh': 'Mac'
     }
 
-    return mapping.get(platform, platform)
+    return mapping.get(platform.title(), platform)
 
 
 def get_browser_platform(user_agent):
@@ -113,13 +113,16 @@ def get_browser_platform(user_agent):
             platform = detected['dist']['name']
         else:
             platform = detected['os']['name']
-        platform = get_human_readable_platform(platform.title())
+        platform = get_human_readable_platform(platform)
     except KeyError:
         platform = 'Unknown'
 
     try:
-        browser = detected['browser']['name']
-        browser = get_human_readable_browser(browser.title())
+        if 'Vivaldi' in user_agent:
+            browser = 'Vivaldi'
+        else:
+            browser = detected['browser']['name']
+        browser = get_human_readable_browser(browser)
     except KeyError:
         browser = 'Unknown'
 
