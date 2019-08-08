@@ -18,8 +18,7 @@
 
 	      {% set full_link_name = link["title"] if link["title"] else link["_id"] %}
 
-	      <a href="{{ link['long_url'] }}" class="shrunk-card-name"
-		 title="{{ full_link_name }}">{{ link_name }}</a>
+	      <span class="shrunk-card-name" title="{{ full_link_name }}">{{ link_name }}</span>
 	      {% set formatted_time = "Created: " + formattime(link["timeCreated"]) %}
 	      <span title="{{ formatted_time }}">{{ formatted_time }}</span>
 	      {% set formatted_visits = "Visits: " + (link["visits"] | string) %}
@@ -39,9 +38,7 @@
 	      {% set short_url = linkserver_url + '/' + link['_id'] %}
 	      <a class="short-url" href="{{ short_url }}">{{ short_url }}</a>
 	      &#8594; {# right arrow #}
-	      <span class="shrunk-long-url" title="{{ link['long_url'] }}">
-		{{ link['long_url'] }}
-	      </span>
+	      <a class="shrunk-long-url" href="{{ link['long_url'] }}">{{ link['long_url'] }}</a>
 	    </nobr>
 	  </div>
 
