@@ -21,6 +21,7 @@ def default_text(role):
         "title": role,
         "invalid": "invalid entity for role " + role,
         "grant_title": "Grant " + role,
+        "grantee_text": "Grantee",
         "grant_button": "GRANT",
         "revoke_title": "Revoke " + role,
         "revoke_button": "REVOKE",

@@ -116,6 +116,7 @@ class ShrunkFlask(ShrunkFlaskMini):
         roles.new('blacklisted', is_admin, custom_text={
             'title': 'Blacklisted Users',
             'grant_title': 'Blacklist a user:',
+            'grantee_text': 'User to blacklist',
             'grant_button': 'BLACKLIST',
             'revoke_title': 'Unblacklist a user',
             'revoke_button': 'UNBLACKLIST',
@@ -147,6 +148,7 @@ class ShrunkFlask(ShrunkFlaskMini):
             'title': 'Blocked URLs',
             'invalid': 'Bad URL',
             'grant_title': 'Block a URL:',
+            'grantee_text': 'URL to block',
             'grant_button': 'BLOCK',
             'revoke_title': 'Unblock a URL',
             'revoke_button': 'UNBLOCK',
@@ -155,8 +157,9 @@ class ShrunkFlask(ShrunkFlaskMini):
         }, oncreate=onblock)
 
         roles.new('whitelisted', has_some_role(['admin', 'facstaff', 'power_user']), custom_text={
-            'title': 'Whitelisted users',
+            'title': 'Whitelisted Users',
             'grant_title': 'Whitelist a user',
+            'grantee_text': 'User to whitelist',
             'grant_button': 'WHITELIST',
             'revoke_title': 'Remove a user from the whitelist',
             'revoke_button': 'UNWHITELIST',

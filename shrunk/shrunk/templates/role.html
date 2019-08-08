@@ -4,15 +4,15 @@
 <div class="row row-controls">
   <div class="col">
     <h2>{{ title }}</h2>
-  </div> <!-- End col -->
-</div> <!-- End row -->
+  </div>
+</div>
 
 {% if msg %}
 <div class="row">
   <div class="col">
     <h3>{{ msg }}</h3>
-  </div> <!-- End col -->
-</div> <!-- End row -->
+  </div>
+</div>
 {% endif %}
 
 {% if error %}
@@ -21,11 +21,11 @@
     <div class="error">
       {{ error }}
     </div>
-  </div> <!-- End col -->
-</div> <!-- End row -->
+  </div>
+</div>
 {% endif %}
 
-<!-- The grant role box -->
+{# The grant role box #}
 <div class="row">
   <div class="col">
     <form action="/roles/{{ role }}/" method="post">
@@ -39,7 +39,7 @@
 
       <div class="input-group">
 	<input name="entity" type="text" aria-label="Grantee" class="form-control input-large"
-	       placeholder="Grantee">
+	       placeholder="{{ grantee_text }}">
 	<div class="input-group-append">
 	  <button type="submit" class="btn btn-primary">
 	    {{ grant_button }}
@@ -47,27 +47,27 @@
 	</div>
       </div>
     </form>
-  </div> <!-- End col -->
-</div> <!-- End row -->
+  </div>
+</div>
 
 {% if grants %}
 <div class="row revoke-title-row">
   <div class="col">
     <h3>{{ revoke_title }}</h3>
-  </div> <!-- End col -->
-</div> <!-- End row -->
+  </div>
+</div>
 
 <div class="container">
   {% for grant in grants %}
   {% include "role_card.html" %}
   {% endfor %}
-</div> <!-- End container -->
+</div>
 {% else %}
 <div class="row revoke-title-row">
   <div class="col">
     <h3>{{ empty }}</h3>
-  </div> <!-- End col -->
-</div> <!-- End row -->
+  </div>
+</div>
 {% endif %}
 
 {% assets "shrunk_js" %}
