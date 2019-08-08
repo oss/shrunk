@@ -1,3 +1,5 @@
+$('#ad_blocker_message').remove();
+
 const MENU_ITEMS = [
     'printChart',
     'separator',

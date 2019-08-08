@@ -27,6 +27,13 @@
 </div>
 
 {% if url_info and url_info["visits"] %}
+<div class="row" id="ad_blocker_message">
+  <div class="col">
+    <h4>If you see this message and are using an ad blocker or a script blocker,
+      you may need to disable it for this page to load properly.</h4>
+  </div>
+</div>
+
 <div class="row">
   <div class="col">
     <h3><a href="{{ url_info['long_url'] }}">{{ url_info["title"] }}</a></h3>
@@ -88,7 +95,7 @@
 </div>
 {% endif %}
 
-{% assets "shrunk_stats" %}
+{% assets "shrunk_stats_" %}
 <script src="{{ ASSET_URL }}"></script>
 {% endassets %}
 

@@ -13,3 +13,7 @@
 #pie-charts > .pie-div {
     flex: 1;
 }
+
+#ad_blocker_message {
+    color: #f26435
+}

@@ -16,16 +16,13 @@ ext.register('shrunk_css',
                                  filters='cssmin',
                                  output='out/shrunk_css.css'))
 
-# We create one minified javascript bundle for each page. This reduces
-# the number of bytes that need to be transferred per-page, and
-# avoids the possibility of naming conflicts. The file js/shrunk.js
-# is automatically included in each bundle.
-
 JS_BUNDLES = {
     'shrunk_js': [],
     'shrunk_index': ['js/index.js', 'js/ajax_form.js'],
     'shrunk_qr': ['js/qrcode.js', 'js/shrunkqr.js'],
-    'shrunk_stats': ['js/stats.js'],
+    # Why does 'shrunk_stats_' end in an underscore? Because uBlock likes to block
+    # scripts whose name ends in 'stats.js'.
+    'shrunk_stats_': ['js/stats.js'],
     'shrunk_organizations': ['js/organizations.js', 'js/delete_organization.js',
                              'js/ajax_form.js'],
     'shrunk_manage_org': ['js/manage_organization.js', 'js/delete_organization.js',
