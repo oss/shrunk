@@ -5,7 +5,7 @@
 from setuptools import setup
 
 require = [
-    'shrunk==1.0.1',
+    'shrunk==1.0.2',
     'pytest==5.0.0',
     'pytest-cov==2.7.1',
     'beautifulsoup4==4.7.1'
@@ -13,7 +13,7 @@ require = [
 
 setup(
     name="shrunk_test",
-    version="1.0.1",
+    version="1.0.2",
     packages=["shrunk.test"],
     install_requires=require,
     package_dir={"shrunk_test": "test"},

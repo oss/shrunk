@@ -2,7 +2,6 @@ import collections
 
 import flask
 from werkzeug.exceptions import abort
-import httpagentparser
 
 from . import util
 from .util import stat
