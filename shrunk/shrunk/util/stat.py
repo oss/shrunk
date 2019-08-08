@@ -2,6 +2,8 @@ import io
 import csv
 import urllib.parse
 
+import httpagentparser
+
 
 REFERER_STRIP_PREFIXES = ['www.', 'amp.', 'm.', 'l.']
 REFERER_NORMALIZE_DOMAINS = ['facebook.com', 'twitter.com', 'instagram.com', 'reddit.com']
@@ -92,6 +94,36 @@ def get_human_readable_platform(platform):
     }
 
     return mapping.get(platform, platform)
+
+
+def get_browser_platform(user_agent):
+    if not user_agent:
+        return 'Unknown', 'Unknown'
+
+    detected = httpagentparser.detect(user_agent)
+
+    try:
+        if 'OpenBSD' in user_agent:
+            platform = 'OpenBSD'
+        elif 'FreeBSD' in user_agent:
+            platform = 'FreeBSD'
+        elif 'NetBSD' in user_agent:
+            platform = 'NetBSD'
+        elif 'dist' in detected:
+            platform = detected['dist']['name']
+        else:
+            platform = detected['os']['name']
+        platform = get_human_readable_platform(platform.title())
+    except KeyError:
+        platform = 'Unknown'
+
+    try:
+        browser = detected['browser']['name']
+        browser = get_human_readable_browser(browser.title())
+    except KeyError:
+        browser = 'Unknown'
+
+    return browser, platform
 
 
 def top_n(stats, *, n):

@@ -82,26 +82,9 @@ def get_useragent_stats(netid, client):
 
     for visit in client.get_visits(url):
         user_agent = visit.get('user_agent')
-        if not user_agent:
-            platforms['Unknown'] += 1
-            browsers['Unknown'] += 1
-            continue
-        detected = httpagentparser.detect(user_agent)
-
-        try:
-            if 'dist' in detected:
-                platform = detected['dist']['name']
-            else:
-                platform = detected['os']['name']
-            platforms[stat.get_human_readable_platform(platform.title())] += 1
-        except KeyError:
-            platforms['Unknown'] += 1
-
-        try:
-            browser = detected['browser']['name']
-            browsers[stat.get_human_readable_browser(browser.title())] += 1
-        except KeyError:
-            browsers['Unknown'] += 1
+        browser, platform = stat.get_browser_platform(user_agent)
+        browsers[browser] += 1
+        platforms[platform] += 1
 
     platforms = stat.top_n(platforms, n=5)
     browsers = stat.top_n(browsers, n=5)
