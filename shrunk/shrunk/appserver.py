@@ -121,9 +121,6 @@ def get_stats(netid, client):
         abort(403)
 
     url_info = client.get_url_info(url)
-    if not url_info:
-        abort(400)
-
     kwargs = {
         'url_info': url_info,
         'missing_url': False,
@@ -143,14 +140,14 @@ def qr_code(netid, client):
     if not url:
         abort(400)
 
-    if not client.get_long_url(url):
-        abort(400)
-
+    url_exists = client.get_long_url(url) is not None
     kwargs = {
-        'print': 'print' in request.args,
-        'url': url
+        'url': url,
+        'url_exists': url_exists
     }
 
+    if url_exists and 'print' in request.args:
+        return render_template('qr_print.html', **kwargs)
     return render_template('qr.html', **kwargs)
 
 

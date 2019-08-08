@@ -1,24 +1,3 @@
-{% if print %}
-
-<!DOCTYPE html>
-<html>
-    <body>
-      <div id="qr"></div>
-
-      {# We have to include jquery manually here since we don't
-         extend base.html when print=true #}
-      <script src="https://code.jquery.com/jquery-3.4.1.min.js"
-	      integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
-	      crossorigin="anonymous"></script>
-
-      {% assets "shrunk_qr" %}
-      <script src="{{ ASSET_URL }}"></script>
-      {% endassets %}
-    </body>
-</html>
-
-{% else %}
-
 {% extends "base.html" %}
 {% block content %}
 
@@ -28,6 +7,7 @@
   </div>
 </div>
 
+{% if url_exists %}
 <div class="row">
   <div class="col">
     <div id="qr"></div>
@@ -42,10 +22,16 @@
     </div>
   </div>
 </div>
+{% else %}
+<div class="row">
+  <div class="col">
+    <h3>That link does not exist.</h3>
+  </div>
+</div>
+{% endif %}
 
 {% assets "shrunk_qr" %}
 <script src="{{ ASSET_URL }}"></script>
 {% endassets %}
 
 {% endblock %}
-{% endif %}
