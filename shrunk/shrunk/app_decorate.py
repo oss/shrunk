@@ -6,6 +6,7 @@ from werkzeug.exceptions import abort
 from . import roles
 from .client import ShrunkClient
 from .util.string import validate_url, get_domain, formattime
+from .util.ldap import is_valid_netid
 
 
 class ShrunkFlaskMini(Flask):
@@ -105,15 +106,15 @@ class ShrunkFlask(ShrunkFlaskMini):
 
         is_admin = has_some_role(['admin'])
 
-        roles.new('admin', is_admin, custom_text={'title': 'Admins'})
+        roles.new('admin', is_admin, is_valid_netid, custom_text={'title': 'Admins'})
 
-        roles.new('power_user', is_admin, custom_text={
+        roles.new('power_user', is_admin, is_valid_netid, custom_text={
             'title': 'Power Users',
             'grant_title': 'Grant power user',
             'revoke_title': 'Revoke power user'
         })
 
-        roles.new('blacklisted', is_admin, custom_text={
+        roles.new('blacklisted', is_admin, is_valid_netid, custom_text={
             'title': 'Blacklisted Users',
             'grant_title': 'Blacklist a user:',
             'grantee_text': 'User to blacklist',
@@ -156,17 +157,19 @@ class ShrunkFlask(ShrunkFlaskMini):
             'granted_by': 'Blocked by'
         }, oncreate=onblock)
 
-        roles.new('whitelisted', has_some_role(['admin', 'facstaff', 'power_user']), custom_text={
-            'title': 'Whitelisted Users',
-            'grant_title': 'Whitelist a user',
-            'grantee_text': 'User to whitelist',
-            'grant_button': 'WHITELIST',
-            'revoke_title': 'Remove a user from the whitelist',
-            'revoke_button': 'UNWHITELIST',
-            'empty': 'You have not whitelisted any users',
-            'granted_by': 'Whitelisted by',
-            'allow_comment': True,
-            'comment_prompt': 'Describe why the user has been granted access to Go.'
-        })
+        roles.new('whitelisted', has_some_role(['admin', 'facstaff', 'power_user']),
+                  is_valid_netid, custom_text={
+                      'title': 'Whitelisted Users',
+                      'grant_title': 'Whitelist a user',
+                      'grantee_text': 'User to whitelist',
+                      'grant_button': 'WHITELIST',
+                      'revoke_title': 'Remove a user from the whitelist',
+                      'revoke_button': 'UNWHITELIST',
+                      'empty': 'You have not whitelisted any users',
+                      'granted_by': 'Whitelisted by',
+                      'allow_comment': True,
+                      'comment_prompt': 'Describe why the user has been granted access to Go.'
+                  })
 
-        roles.new('facstaff', is_admin, custom_text={'title': 'Faculty or Staff Member'})
+        roles.new('facstaff', is_admin, is_valid_netid,
+                  custom_text={'title': 'Faculty or Staff Member'})

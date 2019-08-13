@@ -57,9 +57,6 @@ def get_referer_stats(netid, client):
     stats = collections.defaultdict(int)
     for visit in client.get_visits(url):
         stats[stat.get_human_readable_referer_domain(visit)] += 1
-
-    # Return the top five referers.
-    # XXX is this something we want to keep?
     return flask.jsonify(stat.top_n(stats, n=5))
 
 

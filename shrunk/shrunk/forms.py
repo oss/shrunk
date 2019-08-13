@@ -9,6 +9,11 @@ from wtforms import Form, StringField, validators, ValidationError
 from .filters import strip_whitespace, ensure_protocol
 
 
+SHORT_URL_REGEX_VALIDATOR = validators.Regexp('^[a-zA-Z0-9_.,-]*$',
+                                              message='Custom alias must consist of numbers, \
+letters, and the characters ", . _ -".')
+
+
 class LinkForm(Form):
     long_url = StringField('URL', filters=[strip_whitespace, ensure_protocol], validators=[
         validators.DataRequired('You need a link to shrink!'),
@@ -36,7 +41,7 @@ class AddLinkForm(LinkForm):
     short_url = StringField('Custom Alias', filters=[strip_whitespace], validators=[
         validators.Length(min=5, max=16, message="""Custom alias length must be \
 between %(min)d and %(max)d characters."""),
-        validators.Regexp('^[a-zA-Z0-9]*$', message='Custom alias must be alphanumeric.'),
+        SHORT_URL_REGEX_VALIDATOR,
         validators.Optional(strip_whitespace=False)
     ])
 
@@ -52,7 +57,7 @@ class EditLinkForm(LinkForm):
     short_url = StringField('Custom Alias', filters=[strip_whitespace], validators=[
         validators.Length(min=5, max=16, message="""Custom alias length must be
             between %(min)d and %(max)d characters."""),
-        validators.Regexp('^[a-zA-Z0-9]*$', message='Custom alias must be alphanumeric.')
+        SHORT_URL_REGEX_VALIDATOR
     ])
 
     old_short_url = StringField('old_short_url', validators=[validators.DataRequired()])

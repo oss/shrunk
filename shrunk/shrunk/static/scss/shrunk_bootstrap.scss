@@ -20,9 +20,5 @@ $enable-shadows: false;
     .show > &.dropdown-toggle {
 	color: $primary-color;
 	background-color: rgba($primary-color, .5);
-
-	&:focus {
-	    box-shadow: none; // XXX
-	}
     }
 }

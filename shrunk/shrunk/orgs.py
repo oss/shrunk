@@ -2,6 +2,7 @@ import flask
 from werkzeug.exceptions import abort
 
 from . import roles
+from .util import ldap
 from .decorators import require_login
 
 
@@ -10,7 +11,7 @@ bp = flask.Blueprint('orgs', __name__, url_prefix='/orgs')
 
 @bp.route('/', endpoint='list', methods=['GET'])
 @require_login
-def list_orgs(netid, client):  # XXX rename lol
+def list_orgs(netid, client):
     """ List the organizations of which the current user is a member. """
 
     def org_info(org):
@@ -111,6 +112,9 @@ def add_org_member(netid_grantor, client):
         abort(403)
     if admin and manage not in ['admin', 'site-admin']:
         abort(403)
+
+    if not ldap.is_valid_netid(netid_grantee):
+        return flask.jsonify({'errors': {'netid': 'That NetID is not valid.'}}), 400
 
     if admin:
         res = client.add_organization_admin(name, netid_grantee)

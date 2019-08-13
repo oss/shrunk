@@ -453,9 +453,9 @@ def test_stats_no_url(client):
         assert_status(client.get('/stats?url='), 400)
 
 
-def test_stats_bad_url(client):
+def test_stats_nonexistent_url(client):
     with dev_login(client, 'admin'):
-        assert_status(client.get('/stats?url=does_not_exist'), 400)
+        assert_ok(client.get('/stats?url=does_not_exist'))
 
 
 def test_useragent_stats(db, client, short_url):
@@ -574,7 +574,7 @@ def test_qr_no_url(client):
 
 def test_qr_nonexistent_url(client):
     with dev_login(client, 'user'):
-        assert_status(client.get('/qr?url=does_not_exist'), 400)
+        assert_ok(client.get('/qr?url=does_not_exist'))
 
 
 def test_qr_ok(client, short_url):
