@@ -13,10 +13,10 @@
 	        {% set link_name = link["title"] %}
 	        {% endif %}
 	      {% else %}
-	        {% set link_name = link["_id"] %}
+	        {% set link_name = link["short_url"] %}
 	      {% endif %}
 
-	      {% set full_link_name = link["title"] if link["title"] else link["_id"] %}
+	      {% set full_link_name = link["title"] if link["title"] else link["short_url"] %}
 
 	      <span class="shrunk-card-name" title="{{ full_link_name }}">{{ link_name }}</span>
 	      {% set formatted_time = "Created: " + formattime(link["timeCreated"]) %}
@@ -35,7 +35,7 @@
 		      title="Copy short URL to clipboard">
 		<i class="fas fa-copy"></i>
 	      </button>
-	      {% set short_url = linkserver_url + '/' + link['_id'] %}
+	      {% set short_url = linkserver_url + '/' + link['short_url'] %}
 	      <a class="short-url" href="{{ short_url }}">{{ short_url }}</a>
 	      &#8594; {# right arrow #}
 	      <a class="shrunk-long-url" href="{{ link['long_url'] }}">{{ link['long_url'] }}</a>
@@ -45,7 +45,7 @@
 	  <div class="col-3 align-self-center">
 	    {% if netid == link['netid'] or 'admin' in roles %}
 	    <form>
-	      <input type="hidden" class="link-id" value="{{ link['_id'] }}">
+	      <input type="hidden" class="link-id" value="{{ link['short_url'] }}">
 	      <button type="button" title="Delete link" onclick="delete_link(event)"
 		      class="btn btn-outline-danger btn-no-border btn-round float-right">
 		<i class="fas fa-trash"></i>
@@ -54,7 +54,7 @@
 	    {% endif %}
 
 	    <form action="/qr" method="get">
-	      <input type="hidden" name="url" value="{{ link['_id'] }}">
+	      <input type="hidden" name="url" value="{{ link['short_url'] }}">
 	      <button type="submit" title="Create QR code"
 		      class="btn btn-outline-dark btn-no-border btn-round float-right">
 		<i class="fas fa-qrcode"></i>
@@ -62,7 +62,7 @@
 	    </form>
 
 	    <form action="/stats" method="get">
-	      <input type="hidden" name="url" value="{{ link['_id'] }}">
+	      <input type="hidden" name="url" value="{{ link['short_url'] }}">
 	      <button type="submit" title="Link visit statistics"
 		      class="btn btn-outline-dark btn-no-border btn-round float-right">
 		<i class="fas fa-chart-line"></i>
@@ -71,7 +71,7 @@
 
 	    {% if netid == link['netid'] or 'admin' in roles %}
 	    <form>
-	      <input type="hidden" class="link-id" value="{{ link['_id'] }}">
+	      <input type="hidden" class="link-id" value="{{ link['short_url'] }}">
 	      <input type="hidden" class="link-title" value="{{ link['title'] }}">
 	      <input type="hidden" class="link-url" value="{{ link['long_url'] }}">
 	      <button type="button" title="Edit link" onclick="edit_link(event)"

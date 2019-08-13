@@ -1,8 +1,8 @@
 from collections import OrderedDict
 
 
-def match_short_url(url):
-    return {"$match": {"short_url": url}}
+def match_link_id(link_id):
+    return {"$match": {"link_id": link_id}}
 
 
 # daily visits aggregations phases

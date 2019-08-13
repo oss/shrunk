@@ -220,35 +220,6 @@ def test_delete_and_visit(db):
     assert len(visits5) == 0
 
 
-def test_delete_user_urls(db):
-    other_url = db.create_short_url("https://linux.org", netid="dude")
-    long_urls = ["https://microsoft.com",
-                 "http://microsoft.com",
-                 "https://microsoft.com/page.aspx"]
-    short_urls = insert_urls(db, long_urls, "bgates")
-    deletion = db.delete_user_urls("bgates")
-    print(deletion)
-    assert deletion["n"] == len(long_urls)
-    assert deletion["ok"]
-
-    # should remove all of a user's urls
-    for url in short_urls:
-        assert get_url(db, url) is None
-
-    # should not remove other users urls
-    assert get_url(db, other_url) is not None
-
-    # not giving a netid shouldn't delete anything
-    deletion2 = db.delete_user_urls(None)
-    assert deletion2["n"] == 0
-    assert not deletion2["ok"]
-
-    # deleting form a user with no urls shouldn't delete anything
-    deletion2 = db.delete_user_urls("bgates")
-    assert deletion2["n"] == 0
-    assert deletion2["ok"]
-
-
 def test_get_url_info(db):
     url = db.create_short_url("https://linux.org", netid="dude", title="my link")
 

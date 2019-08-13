@@ -113,7 +113,7 @@ class ShrunkClient:
     all URLs do not exceed eight characters.
     """
 
-    # XXX can we automatically get a list of endpoints from Flask?
+    # TODO can we automatically get a list of endpoints from Flask?
     RESERVED_WORDS = ["add", "login", "logout", "delete", "admin", "stats", "qr",
                       "shrunk-login", "roles", "dev-user-login", "dev-admin-login",
                       "dev-facstaff-login", "dev-power-login", "unauthorized", "link-visits-csv",
@@ -154,8 +154,9 @@ class ShrunkClient:
         self._set_geoip(GEOLITE_PATH)
 
     def _create_indexes(self):
-        self.db.visits.create_index([('short_url', pymongo.ASCENDING)])
-        self.db.visitors.create_index([('ip', pymongo.ASCENDING)])
+        self.db.urls.create_index([('short_url', pymongo.ASCENDING)], unique=True)
+        self.db.visits.create_index([('link_id', pymongo.ASCENDING)])
+        self.db.visitors.create_index([('ip', pymongo.ASCENDING)], unique=True)
         self.db.organizations.create_index([('name', pymongo.ASCENDING)], unique=True)
         self.db.organization_members.create_index([('name', pymongo.ASCENDING),
                                                    ('netid', pymongo.ASCENDING)],
@@ -228,7 +229,7 @@ class ShrunkClient:
             raise ForbiddenDomainException("That URL is not allowed.")
 
         document = {
-            "_id": short_url,
+            "short_url": short_url,
             "long_url": long_url,
             "timeCreated": datetime.datetime.now(),
             "visits": 0
@@ -256,7 +257,7 @@ class ShrunkClient:
                     while url in ShrunkClient.RESERVED_WORDS:
                         url = ShrunkClient._generate_unique_key()
 
-                    document["_id"] = url
+                    document["short_url"] = url
                     response = self.db.urls.insert_one(document)
                 except pymongo.errors.DuplicateKeyError:
                     continue
@@ -276,9 +277,6 @@ class ShrunkClient:
           - `old_short_url`: The old short url
         """
 
-        if short_url is None:
-            short_url = old_short_url
-
         if self.is_blocked(long_url):
             raise ForbiddenDomainException('That URL is not allowed.')
 
@@ -290,23 +288,10 @@ class ShrunkClient:
             new_doc['title'] = title
         if long_url is not None:
             new_doc['long_url'] = long_url
+        if short_url is not None:
+            new_doc['short_url'] = short_url
 
-        if short_url == old_short_url:
-            response = self.db.urls.update_one({'_id': old_short_url}, {'$set': new_doc})
-        else:
-            old_doc = self.db.urls.find_one({'_id': old_short_url})
-            old_doc['_id'] = short_url
-            old_doc.update(new_doc)
-            try:
-                response = self.db.urls.insert_one(old_doc)
-            except pymongo.errors.DuplicateKeyError:
-                raise BadShortURLException('That name already exists.')
-            self.db.urls.delete_one({'_id': old_short_url})
-            # FIXME the right way to do this is to normalize the database
-            self.db.visits.update_many({'short_url': old_short_url},
-                                       {'$set': {'short_url': short_url}})
-
-        return response
+        return self.db.urls.update_one({'short_url': old_short_url}, {'$set': new_doc})
 
     def is_owner_or_admin(self, short_url, request_netid):
         """ Returns True if request_netid is an admin, or if short_url exists and
@@ -334,38 +319,19 @@ class ShrunkClient:
         """
         if not self.is_owner_or_admin(short_url, request_netid):
             raise AuthenticationException()
-        if self.get_url_info(short_url) is None:
+
+        response = self.db.urls.find_one({'short_url': short_url})
+        if response is None:
             raise NoSuchLinkException()
 
         return {
             "urlDataResponse": {
-                "nRemoved": self.db.urls.delete_one({
-                    "_id": short_url
-                }).deleted_count
+                "nRemoved": self.db.urls.delete_one({"short_url": short_url}).deleted_count
             },
             "visitDataResponse": {
-                "nRemoved": self.db.visits.delete_many({
-                    "short_url": short_url
-                }).deleted_count
+                "nRemoved": self.db.visits.delete_many({"link_id": response['_id']}).deleted_count
             }
         }
-
-    def delete_user_urls(self, netid):
-        """Deletes all URLs associated with a given NetID.
-
-        The response, encoded as a JSON-compatible Python dict, will at least
-        contained an "nRemoved" indicating the number of records removed.
-
-        :Parameters:
-          - `netid`: The NetID of the URLs to delete.
-
-        :Returns:
-          A response in JSON detailing the effect of the database operations.
-        """
-        if netid is None:
-            return {"ok": 0, "n": 0}
-        else:
-            return self.db.urls.delete_many({"netid": netid}).raw_result
 
     def get_url_info(self, short_url):
         """Given a short URL, return information about it.
@@ -380,7 +346,7 @@ class ShrunkClient:
         :Parameters:
           - `short_url`: A shortened URL
         """
-        return self.db.urls.find_one({"_id": short_url})
+        return self.db.urls.find_one({"short_url": short_url})
 
     def get_daily_visits(self, short_url):
         """Given a short URL, return how many visits and new unique visiters it gets per month.
@@ -395,7 +361,8 @@ class ShrunkClient:
           - `first_time_visits`: new visits by users who haven't seen the link yet.
           - `all_visits`: the total visits per that month.
         """
-        aggregation = [aggregations.match_short_url(short_url)] + \
+        resp = self.db.urls.find_one({'short_url': short_url})
+        aggregation = [aggregations.match_link_id(resp['_id'])] + \
             aggregations.daily_visits_aggregation
         return list(self.db.visits.aggregate(aggregation))
 
@@ -425,7 +392,8 @@ class ShrunkClient:
         :Response:
           - A JSON-compatible Python dict containing the database response.
         """
-        query = {'short_url': short_url}
+        response = self.db.urls.find_one({'short_url': short_url})
+        query = {'link_id': response['_id']}
         return SearchResults(self.db.visits.find(query), self.db.visits.count_documents(query))
 
     def get_num_visits(self, short_url):
@@ -438,11 +406,8 @@ class ShrunkClient:
           A nonnegative integer indicating the number of times the URL has been
           visited, or None if the URL does not exist in the database.
         """
-        document = self.db.urls.find_one({"_id": short_url})
+        document = self.db.urls.find_one({"short_url": short_url})
         return document["visits"] if document else None
-
-    # go through organization_members, get all the members of org
-    # find all links with that netid. ez pz?
 
     def search(self, *, query=None, netid=None, org=None, sort=None, pagination=None):
         pipeline = []
@@ -476,7 +441,7 @@ class ShrunkClient:
             pipeline.append({
                 '$match': {
                     '$or': [
-                        {'_id': match},
+                        {'short_url': match},
                         {'long_url': match},
                         {'title': match},
                         {'netid': match}
@@ -548,17 +513,18 @@ class ShrunkClient:
           The long URL corresponding to the short URL, or None if no such URL
           was found in the database.
         """
-        self.db.urls.update_one({"_id": short_url}, {"$inc": {"visits": 1}})
+        self.db.urls.update_one({'short_url': short_url}, {'$inc': {'visits': 1}})
+        resp = self.db.urls.find_one({'short_url': short_url})
 
         state_code, country_code = self.get_location_codes(source_ip)
         self.db.visits.insert_one({
-            "short_url": short_url,
-            "source_ip": source_ip,
-            "time": datetime.datetime.now(),
-            "user_agent": user_agent,
-            "referer": referer,
-            "state_code": state_code,
-            "country_code": country_code
+            'link_id': resp['_id'],
+            'source_ip': source_ip,
+            'time': datetime.datetime.now(),
+            'user_agent': user_agent,
+            'referer': referer,
+            'state_code': state_code,
+            'country_code': country_code
         })
 
     def is_blocked(self, long_url):
@@ -635,6 +601,7 @@ class ShrunkClient:
         def group_by(op):
             return [{'$group': {'_id': op, 'value': {'$sum': 1}}}]
 
+        resp = self.db.urls.find_one({'short_url': url})
         filter_us = [{'$match': {'country_code': 'US'}}]
 
         rename_id = [
@@ -643,7 +610,7 @@ class ShrunkClient:
         ]
 
         aggregation = [
-            {'$match': {'short_url': url}},
+            {'$match': {'link_id': resp['_id']}},
             {'$facet': {
                 'us': filter_us + not_null('state_code') + group_by('$state_code') + rename_id,
                 'world': not_null('country_code') + group_by('$country_code') + rename_id
