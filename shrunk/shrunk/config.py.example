@@ -11,8 +11,9 @@ DB_PORT = 27017
 """The database's port on the host machine."""
 
 DB_NAME = "shrunk"
+"""Should be set to shrunk-test for testing and shrunk for prod."""
 
-GEOLITE_PATH = "./GeoLite2-City.mmdb"
+GEOLITE_PATH = "/usr/share/GeoIP/GeoLite2-City.mmdb"
 """The path to the geolite geoip database."""
 
 SECRET_KEY = "something_secret"
@@ -49,7 +50,7 @@ LOG_FORMAT = "%(levelname)s %(asctime)s: %(message)s [in %(pathname)s:%(lineno)d
 LOG_FILENAME = "shrunk.log"
 """The name of the log file."""
 
-MAX_DISPLAY_LINKS = 50
+MAX_DISPLAY_LINKS = 15
 """The maximum number of links to display per page."""
 
 MAX_VISITS_FOR_CSV = 6000
@@ -59,6 +60,27 @@ MAX_VISITS_FOR_CSV = 6000
 
 BANNED_REGEXES = [r'\.xxx']
 
-ASSETS_PROD = True
+ASSETS_AUTO_BUILD = False
+"""Whether to recompile assets dynamically. This should be set to False for
+production because it incurs substantial overhead."""
+
+ASSETS_DEBUG = False
+"""Should be set to True for dev and False for prod."""
 
 LDAP_VALIDATE_NETIDS = True
+"""Whether NetIDs should be validated against the LDAP server defined below."""
+
+LDAP_URI = ""
+"""URI of the LDAP server."""
+
+LDAP_BIND_DN = ""
+"""DN to bind to before executing the search."""
+
+LDAP_CRED = ""
+"""Password with which to bind to the LDAP server."""
+
+LDAP_QUERY_STR = "uid={}"
+"""LDAP search string. The placeholder will be replaced with the user's NetID."""
+
+LDAP_BASE_DN = ""
+"""Base DN for the search."""
