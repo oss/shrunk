@@ -8,11 +8,23 @@
 </div>
 
 {% for role in roledata %}
-<article class="link-group clearfix">
-    <div class="link-info">
-        <a href="/roles/{{ role['id'] }}/" class="title">{{ role["title"] }}</a>
+<div class="row">
+  <div class="col">
+    <div class="card card-shrunk">
+      <div class="card-block">
+	<div class="row">
+	  <div class="col colshrunk-info">
+	    <h3>
+	      <a href="{{ url_for('roles.list', role=role['id']) }}" class="title">
+		{{ role["title"] }}
+	      </a>
+	    </h3>
+	  </div>
+	</div>
+      </div>
     </div>
-</article>
+  </div>
+</div>
 {% endfor %}
 
 {% assets "shrunk_js" %}
