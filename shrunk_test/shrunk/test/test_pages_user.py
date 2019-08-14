@@ -65,7 +65,7 @@ def test_add_banned(client):
 @pytest.mark.parametrize('alias,err',
                          [('a', 'Custom alias length must'),
                           ('aaaaaaaaaaaaaaaaaaaa', 'Custom alias length must'),
-                          ('!@#$%^', 'Custom alias must be alphanumeric')])
+                          ('!@#$%^', 'Custom alias must consist')])
 def test_invalid_short_url(client, alias, err):
     with dev_login(client, 'user'):
         req = {
@@ -387,6 +387,7 @@ def test_search_visits_csv(db, client):
     def do_query(q, present, absent):
         resp = client.get(f'/stat/csv/search?links_set=GO!all&query={q}')
         assert_ok(resp)
+        print(resp.get_data())
         for p in present:
             assert_in_resp(resp, p)
         for a in absent:
@@ -495,7 +496,7 @@ def test_useragent_stats_no_visit(db, client, short_url):
     # WARNING: accessing mongo directly. This will need to be updated if we change
     # the DB schema.
     db.db.visits.insert_one({
-        'short_url': short_url,
+        'link_id': db.get_url_id(short_url),
         'source_ip': '127.0.0.1',
         'time': datetime.datetime.now()
     })

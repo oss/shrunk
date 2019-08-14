@@ -114,5 +114,5 @@ def search_visits_csv(netid, client):
     if total_visits >= max_visits:
         return 'error: too many visits to create CSV', 400
 
-    csv_output = stat.make_csv_for_links(client, map(lambda l: l['_id'], links))
+    csv_output = stat.make_csv_for_links(client, map(lambda l: l['short_url'], links))
     return util.make_plaintext_response(csv_output, filename='visits-search.csv')

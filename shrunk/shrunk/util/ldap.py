@@ -8,16 +8,14 @@ def validate_netid_chars(netid):
 
 def is_valid_netid(netid):
     """ Return True if the netid is valid, false otherwise. """
-    assert netid
+    if not current_app.config['LDAP_VALIDATE_NETIDS']:
+        return True
 
     if current_app.config['DEV_LOGINS'] and netid.startswith('DEV_'):
         return True
 
     if not validate_netid_chars(netid):
         return False
-
-    if not current_app.config['LDAP_VALIDATE_NETIDS']:
-        return True
 
     conn = ldap.initialize(current_app.config['LDAP_URI'])
     try:

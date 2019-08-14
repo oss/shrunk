@@ -71,8 +71,9 @@ def test_grant_invalid_entity(client):
 
 
 @pytest.mark.parametrize('role', ['whitelisted'])
-def test_revoke(client, role):
-    roles.grant(role, 'DEV_ADMIN', 'DEV_USER', None)
+def test_revoke(app, client, role):
+    with app.app_context():
+        roles.grant(role, 'DEV_ADMIN', 'DEV_USER', None)
     with dev_login(client, 'admin'):
         assert roles.check(role, 'DEV_USER')
         req = {'entity': 'DEV_USER'}
@@ -80,8 +81,9 @@ def test_revoke(client, role):
         assert not roles.check(role, 'DEV_USER')
 
 
-def test_revoke_whitelist_no_perm(client):
-    roles.grant('whitelisted', 'DEV_ADMIN', 'DEV_USER', None)
+def test_revoke_whitelist_no_perm(app, client):
+    with app.app_context():
+        roles.grant('whitelisted', 'DEV_ADMIN', 'DEV_USER', None)
     with dev_login(client, 'power'):
         req = {'entity': 'DEV_USER'}
         assert_status(client.post('/roles/whitelisted/revoke', data=req), 403)
@@ -97,7 +99,8 @@ def test_whitelist_no_perm(client):
         assert_status(client.get('/roles/whitelisted/'), 403)
 
 
-def test_admin_blacklisted(client):
-    roles.grant('blacklisted', 'test', 'DEV_ADMIN', None)
+def test_admin_blacklisted(app, client):
+    with app.app_context():
+        roles.grant('blacklisted', 'test', 'DEV_ADMIN', None)
     with dev_login(client, 'admin'):
         assert_status(client.get('/admin/'), 403)

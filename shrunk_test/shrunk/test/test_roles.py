@@ -17,63 +17,66 @@ def test_invalid(db):
         roles.grant('root', 'Justice League', 'peb60')
 
 
-def test_get(db):
+def test_get(app, db):
     def check(expected):
         assert sorted(roles.get('peb60')) == sorted(expected)
 
-    check([])
-    roles.grant('admin', 'Justice League', 'peb60')
-    check(['admin'])
-    roles.grant('power_user', 'Justice League', 'peb60')
-    check(['admin', 'power_user'])
-    roles.grant('facstaff', 'Justice League', 'peb60')
-    check(['admin', 'power_user', 'facstaff'])
+    with app.app_context():
+        check([])
+        roles.grant('admin', 'Justice League', 'peb60')
+        check(['admin'])
+        roles.grant('power_user', 'Justice League', 'peb60')
+        check(['admin', 'power_user'])
+        roles.grant('facstaff', 'Justice League', 'peb60')
+        check(['admin', 'power_user', 'facstaff'])
 
-    roles.revoke('power_user', 'peb60')
-    check(['admin', 'facstaff'])
-    roles.revoke('admin', 'peb60')
-    check(['facstaff'])
-    roles.revoke('facstaff', 'peb60')
-    check([])
+        roles.revoke('power_user', 'peb60')
+        check(['admin', 'facstaff'])
+        roles.revoke('admin', 'peb60')
+        check(['facstaff'])
+        roles.revoke('facstaff', 'peb60')
+        check([])
 
 
-def test_granted_by(db):
-    roles.grant('admin', 'Justice League', 'peb60')
+def test_granted_by(app, db):
+    with app.app_context():
+        roles.grant('admin', 'Justice League', 'peb60')
     assert roles.granted_by('admin', 'peb60') == 'Justice League'
     assert roles.granted_by('power_user', 'peb60') is None
 
 
-def test_list_all(db):
+def test_list_all(app, db):
     def check(role, expected):
         entities = {g['entity'] for g in roles.list_all(role)}
         assert entities == set(expected)
 
-    check('facstaff', [])
-    check('power_user', [])
+    with app.app_context():
+        check('facstaff', [])
+        check('power_user', [])
 
-    roles.grant('facstaff', 'Justice League', 'peb60')
-    check('facstaff', ['peb60'])
-    check('power_user', [])
+        roles.grant('facstaff', 'Justice League', 'peb60')
+        check('facstaff', ['peb60'])
+        check('power_user', [])
 
-    roles.grant('power_user', 'Justice League', 'jcc')
-    check('facstaff', ['peb60'])
-    check('power_user', ['jcc'])
+        roles.grant('power_user', 'Justice League', 'jcc')
+        check('facstaff', ['peb60'])
+        check('power_user', ['jcc'])
 
-    roles.grant('facstaff', 'Justice League', 'mjw271')
-    check('facstaff', ['peb60', 'mjw271'])
-    check('power_user', ['jcc'])
+        roles.grant('facstaff', 'Justice League', 'mjw271')
+        check('facstaff', ['peb60', 'mjw271'])
+        check('power_user', ['jcc'])
 
-    roles.revoke('facstaff', 'peb60')
-    check('facstaff', ['mjw271'])
-    check('power_user', ['jcc'])
+        roles.revoke('facstaff', 'peb60')
+        check('facstaff', ['mjw271'])
+        check('power_user', ['jcc'])
 
-    roles.revoke('facstaff', 'mjw271')
-    check('facstaff', [])
-    check('power_user', ['jcc'])
+        roles.revoke('facstaff', 'mjw271')
+        check('facstaff', [])
+        check('power_user', ['jcc'])
 
-    roles.revoke('power_user', 'jcc')
-    check('facstaff', [])
-    check('power_user', [])
+        roles.revoke('power_user', 'jcc')
+        check('facstaff', [])
+        check('power_user', [])
 
 
 def test_valid_roles(db):
@@ -94,7 +97,7 @@ def test_valid_roles(db):
     check(['role0', 'role1', 'role2'])
 
 
-def test_template_data(db):
+def test_template_data(app, db):
     roles.grant('role0', 'shrunk_test', 'entity0')
     roles.grant('role0', 'shrunk_test', 'entity1')
     roles.grant('role0', 'not_shrunk_test', 'entity2')
@@ -105,7 +108,8 @@ def test_template_data(db):
     assert not template['facstaff']
     assert len(template['grants']) == 2
 
-    roles.grant('admin', 'Justice League', 'shrunk_test')
+    with app.app_context():
+        roles.grant('admin', 'Justice League', 'shrunk_test')
 
     template = roles.template_data('role0', 'shrunk_test')
     assert template['admin']
@@ -135,7 +139,8 @@ def test_has_one_of(db):
     assert not roles.has_one_of(["fweuihiwf", "hash_slining_slasher", "bogus"], "entity0")
 
 
-def test_blacklisted(db, client):
-    roles.grant('blacklisted', 'shrunk_test', 'DEV_USER')
+def test_blacklisted(app, db, client):
+    with app.app_context():
+        roles.grant('blacklisted', 'shrunk_test', 'DEV_USER')
     with dev_login(client, 'user'):
         assert_status(client.get('/'), 403)

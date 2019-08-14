@@ -205,6 +205,11 @@ class ShrunkClient:
         else:
             return self.db.urls.count_documents({})
 
+    def get_url_id(self, short_url):
+        """ Get the ObjectId associated with the short url. """
+        resp = self.db.urls.find_one({'short_url': short_url})
+        return resp['_id'] if resp else None
+
     def create_short_url(self, long_url, short_url=None, netid=None, title=None):
         """Given a long URL, create a new short URL.
 
@@ -262,7 +267,7 @@ class ShrunkClient:
                 except pymongo.errors.DuplicateKeyError:
                     continue
 
-        return str(response.inserted_id)
+        return document['short_url']
 
     def modify_url(self, *, title=None, long_url=None, short_url=None, old_short_url):
         """Modifies an existing URL.
@@ -291,7 +296,10 @@ class ShrunkClient:
         if short_url is not None:
             new_doc['short_url'] = short_url
 
-        return self.db.urls.update_one({'short_url': old_short_url}, {'$set': new_doc})
+        try:
+            return self.db.urls.update_one({'short_url': old_short_url}, {'$set': new_doc})
+        except pymongo.errors.DuplicateKeyError:
+            raise BadShortURLException('That name already exists.')
 
     def is_owner_or_admin(self, short_url, request_netid):
         """ Returns True if request_netid is an admin, or if short_url exists and
@@ -320,8 +328,8 @@ class ShrunkClient:
         if not self.is_owner_or_admin(short_url, request_netid):
             raise AuthenticationException()
 
-        response = self.db.urls.find_one({'short_url': short_url})
-        if response is None:
+        link_id = self.get_url_id(short_url)
+        if link_id is None:
             raise NoSuchLinkException()
 
         return {
@@ -329,7 +337,7 @@ class ShrunkClient:
                 "nRemoved": self.db.urls.delete_one({"short_url": short_url}).deleted_count
             },
             "visitDataResponse": {
-                "nRemoved": self.db.visits.delete_many({"link_id": response['_id']}).deleted_count
+                "nRemoved": self.db.visits.delete_many({"link_id": link_id}).deleted_count
             }
         }
 
@@ -361,8 +369,8 @@ class ShrunkClient:
           - `first_time_visits`: new visits by users who haven't seen the link yet.
           - `all_visits`: the total visits per that month.
         """
-        resp = self.db.urls.find_one({'short_url': short_url})
-        aggregation = [aggregations.match_link_id(resp['_id'])] + \
+        link_id = self.get_url_id(short_url)
+        aggregation = [aggregations.match_link_id(link_id)] + \
             aggregations.daily_visits_aggregation
         return list(self.db.visits.aggregate(aggregation))
 
@@ -378,10 +386,7 @@ class ShrunkClient:
           The long URL, or None if the short URL does not exist.
         """
         result = self.get_url_info(short_url)
-        if result is not None:
-            return result["long_url"]
-        else:
-            return None
+        return result['long_url'] if result is not None else None
 
     def get_visits(self, short_url):
         """Returns all visit information to the given short URL.
@@ -392,8 +397,7 @@ class ShrunkClient:
         :Response:
           - A JSON-compatible Python dict containing the database response.
         """
-        response = self.db.urls.find_one({'short_url': short_url})
-        query = {'link_id': response['_id']}
+        query = {'link_id': self.get_url_id(short_url)}
         return SearchResults(self.db.visits.find(query), self.db.visits.count_documents(query))
 
     def get_num_visits(self, short_url):

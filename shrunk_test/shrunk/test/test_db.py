@@ -16,7 +16,7 @@ def insert_urls(db, long_urls, netid):
 
 
 def get_url(db, url):
-    return db.db.urls.find_one({'_id': url})
+    return db.db.urls.find_one({'short_url': url})
 
 
 # TODO add more testing in the case of blocked urls, already take ones, reserved words, banned user
@@ -150,15 +150,18 @@ def make_urls(db, num_visits, num_visits2):
 
 
 def test_visit2(db):
-    num_visits = 3
+    num_visits1 = 3
     num_visits2 = 4
-    url, url2 = make_urls(db, num_visits, num_visits2)
+    url1, url2 = make_urls(db, num_visits1, num_visits2)
 
-    visits = list(db.db.visits.find({"short_url": url}))
-    assert get_url(db, url)["visits"] == num_visits
-    assert len(visits) == num_visits
+    id1 = db.get_url_id(url1)
+    id2 = db.get_url_id(url2)
 
-    visits2 = list(db.db.visits.find({"short_url": url2}))
+    visits1 = list(db.db.visits.find({"link_id": id1}))
+    assert get_url(db, url1)["visits"] == num_visits1
+    assert len(visits1) == num_visits1
+
+    visits2 = list(db.db.visits.find({"link_id": id2}))
     assert get_url(db, url2)["visits"] == num_visits2
     assert len(visits2) == num_visits2
 
@@ -175,6 +178,8 @@ def test_delete_and_visit(db):
     num_visits = 3
     num_visits2 = 4
     url, url2 = make_urls(db, num_visits, num_visits2)
+    id1 = db.get_url_id(url)
+    id2 = db.get_url_id(url2)
 
     def assert_delete(deletion, url, visit):
         assert deletion["urlDataResponse"]["nRemoved"] == url
@@ -202,12 +207,12 @@ def test_delete_and_visit(db):
     assert get_url(db, url) is None
 
     # deleting a url should remove its visits
-    visits3 = list(db.db.visits.find({"short_url": url}))
+    visits3 = list(db.db.visits.find({"link_id": id1}))
     assert get_url(db, url) is None
     assert len(visits3) == 0
 
     # deleting one url shouldn't affect the visits of another
-    visits4 = list(db.db.visits.find({"short_url": url2}))
+    visits4 = list(db.db.visits.find({"link_id": id2}))
     assert get_url(db, url2)["visits"] == num_visits2
     assert len(visits4) == num_visits2
 
@@ -215,7 +220,7 @@ def test_delete_and_visit(db):
     assert_delete(db.delete_url(url2, "dude"), url=1, visit=num_visits2)
     assert get_url(db, url2) is None
 
-    visits5 = list(db.db.visits.find({"short_url": url2}))
+    visits5 = list(db.db.visits.find({"link_id": id2}))
     assert get_url(db, url2) is None
     assert len(visits5) == 0
 
@@ -252,12 +257,14 @@ def test_get_visits(db):
     num_visits2 = 4
     url, url2 = make_urls(db, num_visits, num_visits2)
     url3 = db.create_short_url('https://linux.org/third', netid='dude')
+    id1 = db.get_url_id(url)
+    id2 = db.get_url_id(url2)
 
-    expected_visits = {visit['_id'] for visit in db.db.visits.find({'short_url': url})}
-    expected_visits2 = {visit["_id"] for visit in db.db.visits.find({'short_url': url2})}
+    expected_visits = {visit['link_id'] for visit in db.db.visits.find({'link_id': id1})}
+    expected_visits2 = {visit["link_id"] for visit in db.db.visits.find({'link_id': id2})}
 
-    actual_visits = {visit['_id'] for visit in db.get_visits(url)}
-    actual_visits2 = {visit['_id'] for visit in db.get_visits(url2)}
+    actual_visits = {visit['link_id'] for visit in db.get_visits(url)}
+    actual_visits2 = {visit['link_id'] for visit in db.get_visits(url2)}
 
     assert expected_visits == actual_visits
     assert expected_visits2 == actual_visits2
@@ -341,7 +348,7 @@ def test_get_urls(db):
 
     user_urls = db.search(netid=uname)
     assert len(user_urls) == len(long_urls)
-    user_short_urls = {url['_id'] for url in user_urls}
+    user_short_urls = {url['short_url'] for url in user_urls}
 
     for user_url in user_urls:
         assert user_url['netid'] == uname
@@ -361,7 +368,7 @@ def test_search(db):
         assert title in {link['title'] for link in search_result}
 
     def assert_id(_id, search_result):
-        assert _id in {link['_id'] for link in db.search(query='LiNuX')}
+        assert _id in {link['short_url'] for link in db.search(query='LiNuX')}
 
     # match url or title
     assert_id(url, db.search(query="linux"))
@@ -374,7 +381,7 @@ def test_search(db):
     assert_id(url, db.search(query="LINUX"))
 
     # multiple in a result
-    result = {link["_id"] for link in db.search(query="org")}
+    result = {link["short_url"] for link in db.search(query="org")}
     assert url in result
     assert url2 in result
 
@@ -384,7 +391,7 @@ def test_search(db):
     assert "another" in result2
 
     # search by netid
-    result3 = {link["_id"] for link in db.search(query="shrunk_test")}
+    result3 = {link["short_url"] for link in db.search(query="shrunk_test")}
     assert url in result3
     assert url2 in result3
     assert url3 in result3
@@ -399,7 +406,7 @@ def test_search_netid(db):
         assert len(list(db.search(query=keyword, netid=netid))) == length
 
     def assert_search(keyword, netid, url):
-        assert list(db.search(query=keyword, netid=netid))[0]['_id'] == url
+        assert list(db.search(query=keyword, netid=netid))[0]['short_url'] == url
 
     # searches with netid should screen search results withought that netid
     assert_len(1, "test", "Billie Jean")
@@ -466,12 +473,12 @@ def test_pop_sort(db):
     db.visit(url1, '127.0.0.1', 'Test-User-Agent', 'http://example.com')
 
     results = db.search(sort=shrunk.client.SortOrder.POP_ASC).results
-    assert results[0]['_id'] == url1
-    assert results[1]['_id'] == url0
+    assert results[0]['short_url'] == url1
+    assert results[1]['short_url'] == url0
 
     results = db.search(sort=shrunk.client.SortOrder.POP_DESC).results
-    assert results[0]['_id'] == url0
-    assert results[1]['_id'] == url1
+    assert results[0]['short_url'] == url0
+    assert results[1]['short_url'] == url1
 
 
 def test_remove_admin(db):
@@ -484,13 +491,14 @@ def test_remove_admin(db):
     assert not db.is_organization_admin('test-org', 'test-admin')
 
 
-def test_may_manage_organization(db):
+def test_may_manage_organization(app, db):
     db.create_organization('test-org')
     db.add_organization_admin('test-org', 'test-admin')
     db.add_organization_member('test-org', 'test-member')
     assert db.may_manage_organization('test-org', 'test-admin') == 'admin'
     assert db.may_manage_organization('test-org', 'test-member') == 'member'
-    roles.grant('admin', 'test', 'test-admin', None)
+    with app.app_context():
+        roles.grant('admin', 'test', 'test-admin', None)
     assert db.may_manage_organization('test-org', 'test-admin') == 'site-admin'
     assert db.may_manage_organization('test-org', 'not-member') is False
     assert db.may_manage_organization('not-an-org', 'not-member') is False

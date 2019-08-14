@@ -68,9 +68,9 @@ def make_csv_for_links(client, links):
             ipaddr = visit['source_ip']
             visitor_id = client.get_visitor_id(ipaddr)
             location = client.get_geoip_location(ipaddr)
-            referer = get_referer_domain(visit) or 'unknown'
-            ua = visit.get('user_agent', 'unknown')
-            writer.writerow([visit['short_url'], visitor_id, location, referer, ua, visit['time']])
+            referer = get_referer_domain(visit) or 'Unknown'
+            ua = visit.get('user_agent', 'Unknown')
+            writer.writerow([link, visitor_id, location, referer, ua, visit['time']])
 
     return f.getvalue()
 
