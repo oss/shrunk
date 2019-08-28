@@ -16,6 +16,7 @@ docs_out/
 
 # Virtual environment
 venv/
+env/
 virtualenv/
 build/
 build
