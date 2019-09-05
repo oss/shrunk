@@ -7,6 +7,7 @@ import string
 import math
 import enum
 
+import flask
 import pymongo
 from pymongo.collection import ReturnDocument
 from pymongo.collation import Collation
@@ -113,17 +114,6 @@ class ShrunkClient:
     all URLs do not exceed eight characters.
     """
 
-    # TODO can we automatically get a list of endpoints from Flask?
-    RESERVED_WORDS = ["add", "login", "logout", "delete", "admin", "stats", "qr",
-                      "shrunk-login", "roles", "dev-user-login", "dev-admin-login",
-                      "dev-facstaff-login", "dev-power-login", "unauthorized", "link-visits-csv",
-                      "search-visits-csv", "useragent-stats", "referer-stats",
-                      "monthly-visits", "daily-visits", "edit", "geoip-json", "faq"
-                      "organizations", "create_organization", "delete_organization",
-                      "add_organization_member", "remove_organization_member",
-                      "manage_organization"]
-    """Reserved words that cannot be used as shortened urls."""
-
     def __init__(self, *, DB_HOST=None, DB_PORT=27017, DB_USERNAME=None, DB_PASSWORD=None,
                  DB_REPLSET=None, DB_NAME='shrunk', GEOLITE_PATH=None, TESTING=False, **config):
         """Create a new client connection.
@@ -161,6 +151,14 @@ class ShrunkClient:
         self.db.organization_members.create_index([('name', pymongo.ASCENDING),
                                                    ('netid', pymongo.ASCENDING)],
                                                   unique=True)
+
+    def url_is_reserved(self, url):
+        if url in flask.current_app.config.get('RESERVED_WORDS', []):
+            return True
+        for route in flask.current_app.url_map.iter_rules():
+            if url in str(route):
+                return True
+        return False
 
     def drop_database(self):
         if self._TESTING:
@@ -246,7 +244,7 @@ class ShrunkClient:
 
         if short_url:
             # Attempt to insert the custom URL
-            if short_url in ShrunkClient.RESERVED_WORDS:
+            if self.url_is_reserved(short_url):
                 raise ForbiddenNameException("That name is reserved.")
 
             try:
@@ -259,7 +257,7 @@ class ShrunkClient:
             while response is None:
                 try:
                     url = ShrunkClient._generate_unique_key()
-                    while url in ShrunkClient.RESERVED_WORDS:
+                    while self.url_is_reserved(url):
                         url = ShrunkClient._generate_unique_key()
 
                     document["short_url"] = url
@@ -285,7 +283,7 @@ class ShrunkClient:
         if self.is_blocked(long_url):
             raise ForbiddenDomainException('That URL is not allowed.')
 
-        if short_url in ShrunkClient.RESERVED_WORDS:
+        if short_url is not None and self.url_is_reserved(short_url):
             raise ForbiddenNameException('That name is reserved.')
 
         new_doc = {}

@@ -93,3 +93,7 @@ WTF_CSRF_ENABLED = True
 
 TESTING = False
 """enables some testing utilites. nameley for protecting against accidental db drops"""
+
+RESERVED_WORDS = []
+"""Words that cannot be used as shortened URLs. Names used as routes are automatically
+disallowed, and do not need to be added to this list."""

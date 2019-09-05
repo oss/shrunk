@@ -120,26 +120,28 @@ def test_add_alias_successfully(client):
         assert_in_resp(resp, 'customthing')
 
 
-def test_delete(db, client):
-    db.create_short_url('https://google.com', short_url='test0', netid='DEV_USER', title='test0')
-    db.create_short_url('https://yahoo.com', short_url='test1',
-                        netid='NOT_DEV_USER', title='test1')
+def test_delete(db, client, app):
+    with app.app_context():
+        db.create_short_url('https://google.com', short_url='test0',
+                            netid='DEV_USER', title='test0')
+        db.create_short_url('https://yahoo.com', short_url='test1',
+                            netid='NOT_DEV_USER', title='test1')
 
-    with dev_login(client, 'user'):
-        assert_ok(client.post('/delete', data={'short_url': 'test0'}))
-        with pytest.raises(AssertionError):
-            assert_in_resp(client.get('/'), 'google.com')
+        with dev_login(client, 'user'):
+            assert_ok(client.post('/delete', data={'short_url': 'test0'}))
+            with pytest.raises(AssertionError):
+                assert_in_resp(client.get('/'), 'google.com')
 
-    for role in ['user', 'power']:
-        with dev_login(client, role):
-            assert_status(client.post('/delete', data={'short_url': 'test1'}), 403)
-            assert db.search(query='test1').total_results == 1
+        for role in ['user', 'power']:
+            with dev_login(client, role):
+                assert_status(client.post('/delete', data={'short_url': 'test1'}), 403)
+                assert db.search(query='test1').total_results == 1
 
-    with dev_login(client, 'admin'):
-        assert_ok(client.post('/delete', data={'short_url': 'test1'}))
-        assert db.search(query='test1').total_results == 0
-        with pytest.raises(AssertionError):
-            assert_in_resp(client.get('/'), 'yahoo.com')
+        with dev_login(client, 'admin'):
+            assert_ok(client.post('/delete', data={'short_url': 'test1'}))
+            assert db.search(query='test1').total_results == 0
+            with pytest.raises(AssertionError):
+                assert_in_resp(client.get('/'), 'yahoo.com')
 
 
 def test_delete_no_url(client):
@@ -154,15 +156,18 @@ def test_delete_no_such_url(client):
 
 
 @pytest.fixture
-def short_url(db):
-    db.create_short_url('https://google.com', short_url='short1', title='google', netid='DEV_USER')
+def short_url(db, app):
+    with app.app_context():
+        db.create_short_url('https://google.com', short_url='short1',
+                            title='google', netid='DEV_USER')
     yield 'short1'
 
 
 @pytest.fixture
-def short_url_power(db):
-    db.create_short_url('https://google.com', short_url='short1',
-                        title='google', netid='DEV_PWR_USER')
+def short_url_power(db, app):
+    with app.app_context():
+        db.create_short_url('https://google.com', short_url='short1',
+                            title='google', netid='DEV_PWR_USER')
     yield 'short1'
 
 
@@ -270,22 +275,23 @@ def test_sortby(client, sortby):
         assert_ok(client.get(f'/?sortby={sortby}'))
 
 
-def test_search(db, client):
-    db.create_short_url('https://google.com', short_url='short1',
-                        title='lmao1', netid='DEV_USER')
+def test_search(db, client, app):
+    with app.app_context():
+        db.create_short_url('https://google.com', short_url='short1',
+                            title='lmao1', netid='DEV_USER')
 
-    def find(query, check, fmt='/?query={}'):
-        resp = client.get(fmt.format(query))
-        assert_ok(resp)
-        assert_in_resp(resp, check)
+        def find(query, check, fmt='/?query={}'):
+            resp = client.get(fmt.format(query))
+            assert_ok(resp)
+            assert_in_resp(resp, check)
 
-    with dev_login(client, 'user'):
-        find('lmao', 'lmao1')
-        find('google', 'google.com')
-        find('short1', 'short1')
+        with dev_login(client, 'user'):
+            find('lmao', 'lmao1')
+            find('google', 'google.com')
+            find('short1', 'short1')
 
-    with dev_login(client, 'admin'):
-        find('DEV', 'DEV', '/?links_set=GO!all&query={}')
+        with dev_login(client, 'admin'):
+            find('DEV', 'DEV', '/?links_set=GO!all&query={}')
 
 
 def test_all_urls(client, short_url_power):
@@ -298,30 +304,31 @@ def test_all_urls(client, short_url_power):
         assert_in_resp(client.get('/?links_set=GO!all'), short_url_power)
 
 
-def test_org_urls(db, client):
-    db.create_short_url('https://google.com', title='test0', netid='DEV_USER')
-    db.create_short_url('https://google.com', title='test1', netid='DEV_PWR_USER')
-    db.create_short_url('https://google.com', title='test2', netid='DEV_FACSTAFF')
+def test_org_urls(db, client, app):
+    with app.app_context():
+        db.create_short_url('https://google.com', title='test0', netid='DEV_USER')
+        db.create_short_url('https://google.com', title='test1', netid='DEV_PWR_USER')
+        db.create_short_url('https://google.com', title='test2', netid='DEV_FACSTAFF')
 
-    db.create_organization('test-org')
-    db.add_organization_member('test-org', 'DEV_USER')
-    db.add_organization_member('test-org', 'DEV_PWR_USER')
+        db.create_organization('test-org')
+        db.add_organization_member('test-org', 'DEV_USER')
+        db.add_organization_member('test-org', 'DEV_PWR_USER')
 
-    with dev_login(client, 'user'):
-        resp = client.get('/')
-        assert_ok(resp)
-        assert_in_resp(resp, 'test0')
-        with pytest.raises(AssertionError):
+        with dev_login(client, 'user'):
+            resp = client.get('/')
+            assert_ok(resp)
+            assert_in_resp(resp, 'test0')
+            with pytest.raises(AssertionError):
+                assert_in_resp(resp, 'test1')
+            with pytest.raises(AssertionError):
+                assert_in_resp(resp, 'test2')
+
+            resp = client.get('/?links_set=test-org')
+            assert_ok(resp)
+            assert_in_resp(resp, 'test0')
             assert_in_resp(resp, 'test1')
-        with pytest.raises(AssertionError):
-            assert_in_resp(resp, 'test2')
-
-        resp = client.get('/?links_set=test-org')
-        assert_ok(resp)
-        assert_in_resp(resp, 'test0')
-        assert_in_resp(resp, 'test1')
-        with pytest.raises(AssertionError):
-            assert_in_resp(resp, 'test2')
+            with pytest.raises(AssertionError):
+                assert_in_resp(resp, 'test2')
 
 
 def test_csv_link_0(db, client, short_url):
@@ -334,15 +341,17 @@ def test_csv_link_0(db, client, short_url):
         assert_in_resp(resp, 'test.referrer.com')
 
 
-def test_csv_link_1(db, client):
-    short = db.create_short_url('google.com', netid='DEV_USER')
-    db.visit(short, '127.0.0.1', 'Mozzarella Foxfire', 'https://referor.com')
-    db.visit(short, '196.168.1.1', 'Goggle Chrom', 'https://refuror.org')
+def test_csv_link_1(db, client, app):
+    with app.app_context():
+        short = db.create_short_url('google.com', netid='DEV_USER')
+        db.visit(short, '127.0.0.1', 'Mozzarella Foxfire', 'https://referor.com')
+        db.visit(short, '196.168.1.1', 'Goggle Chrom', 'https://refuror.org')
 
-    with dev_login(client, 'user'):
-        resp = client.get(f'/stat/csv/link?url={short}')
-        assert_ok(resp)
-        lines = str(resp.get_data(), 'utf8').split('\r\n')
+        with dev_login(client, 'user'):
+            resp = client.get(f'/stat/csv/link?url={short}')
+            assert_ok(resp)
+            lines = str(resp.get_data(), 'utf8').split('\r\n')
+
         assert len(lines) == 4
         assert lines[-1] == ''
 
@@ -350,11 +359,11 @@ def test_csv_link_1(db, client):
         if 'Chrom' in a:
             a, b = b, a
 
-            assert 'Mozzarella Foxfire' in a
-            assert 'referor.com' in a
+        assert 'Mozzarella Foxfire' in a
+        assert 'referor.com' in a
 
-            assert 'Goggle Chrom' in b
-            assert 'refuror.org' in b
+        assert 'Goggle Chrom' in b
+        assert 'refuror.org' in b
 
 
 def test_visits_csv_no_url(client):
@@ -363,36 +372,39 @@ def test_visits_csv_no_url(client):
         assert_status(client.get('/stat/csv/link?url='), 400)
 
 
-def test_visits_no_perm(db, client):
-    short = db.create_short_url('google.com', netid='shrunk_test')
-    with dev_login(client, 'user'):
-        assert_status(client.get(f'/stat/csv/link?url={short}'), 403)
+def test_visits_no_perm(db, client, app):
+    with app.app_context():
+        short = db.create_short_url('google.com', netid='shrunk_test')
+        with dev_login(client, 'user'):
+            assert_status(client.get(f'/stat/csv/link?url={short}'), 403)
 
 
-def test_visits_daily_no_perm(db, client):
-    short = db.create_short_url('google.com', netid='shrunk_test')
-    with dev_login(client, 'user'):
-        assert_status(client.get(f'/stat/visits/daily?url={short}'), 403)
+def test_visits_daily_no_perm(db, client, app):
+    with app.app_context():
+        short = db.create_short_url('google.com', netid='shrunk_test')
+        with dev_login(client, 'user'):
+            assert_status(client.get(f'/stat/visits/daily?url={short}'), 403)
 
 
-def test_search_visits_csv(db, client):
-    short0 = db.create_short_url('google.com', netid='shrunk_test')
-    db.visit(short0, '1.2.3.4', 'visitor0', 'referer')
-    db.visit(short0, '1.2.3.4', 'visitor1', 'referer')
-    short1 = db.create_short_url('yahoo.com', netid='shrunk_test')
-    db.visit(short1, '1.2.3.4', 'visitor1', 'referer')
-    short2 = db.create_short_url('bing.com', netid='shrunk_test')
-    db.visit(short2, '1.2.3.4', 'visitor2', 'referer')
+def test_search_visits_csv(db, client, app):
+    with app.app_context():
+        short0 = db.create_short_url('google.com', netid='shrunk_test')
+        db.visit(short0, '1.2.3.4', 'visitor0', 'referer')
+        db.visit(short0, '1.2.3.4', 'visitor1', 'referer')
+        short1 = db.create_short_url('yahoo.com', netid='shrunk_test')
+        db.visit(short1, '1.2.3.4', 'visitor1', 'referer')
+        short2 = db.create_short_url('bing.com', netid='shrunk_test')
+        db.visit(short2, '1.2.3.4', 'visitor2', 'referer')
 
-    def do_query(q, present, absent):
-        resp = client.get(f'/stat/csv/search?links_set=GO!all&query={q}')
-        assert_ok(resp)
-        print(resp.get_data())
-        for p in present:
-            assert_in_resp(resp, p)
-        for a in absent:
-            with pytest.raises(AssertionError):
-                assert_in_resp(resp, a)
+        def do_query(q, present, absent):
+            resp = client.get(f'/stat/csv/search?links_set=GO!all&query={q}')
+            assert_ok(resp)
+            print(resp.get_data())
+            for p in present:
+                assert_in_resp(resp, p)
+            for a in absent:
+                with pytest.raises(AssertionError):
+                    assert_in_resp(resp, a)
 
     with dev_login(client, 'admin'):
         do_query('google', ['visitor0', 'visitor1'], ['visitor2'])
@@ -583,12 +595,13 @@ def test_qr_ok(client, short_url):
         assert_ok(client.get(f'/qr?url={short_url}'))
 
 
-def test_redirect_no_protocol(db, client):
+def test_redirect_no_protocol(db, client, app):
     # The frontend normalizes all links to contain a protocol, but
     # app_decorate.py still contains code to handle a long url without
     # a protocol, so we might as well test it.
-    short_url = db.create_short_url('google.com')
-    assert_redirect(client.get(f'/{short_url}'), 'google.com')
+    with app.app_context():
+        short_url = db.create_short_url('google.com')
+        assert_redirect(client.get(f'/{short_url}'), 'google.com')
 
 
 def test_dev_logins_disabled(app, client):
