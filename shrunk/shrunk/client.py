@@ -720,26 +720,26 @@ class ShrunkClient:
         col.update_one({'name': name, 'members.netid': netid},
                        {'$set': {'members.$.is_admin': False}})
 
-    agg_members = [{'$match': {'name': name}},
-                   {'$unwind': 'members'}]
+    agg_members = lambda name: [{'$match': {'name': name}},
+                                {'$unwind': 'members'}]
     agg_count = [{'$count': 'count'}]
     agg_admins = [{'$match': {'is_admin': True}}]
     
     def count_organization_members(self, name):
         col = self.db.organizations
-        return col.aggregate(agg_members + agg_count)
+        return col.aggregate(agg_members(name) + agg_count)
 
     def get_organization_members(self, name):
         col = self.db.organizations
-        return col.aggregate(agg_members)
+        return col.aggregate(agg_members(name))
 
     def count_organization_admins(self, name):
         col = self.db.organizations
-        return col.aggregate(agg_members + agg_admins + agg_count)
+        return col.aggregate(agg_members(name) + agg_admins + agg_count)
 
     def get_organization_admins(self, name):
         col = self.db.organizations
-        return col.aggregate(agg_members + admins)
+        return col.aggregate(agg_members(name) + admins)
 
     def get_member_organizations(self, netid):
         col = self.db.organizations
@@ -747,7 +747,7 @@ class ShrunkClient:
 
     def get_admin_organizations(self, netid):
         col = self.db.organizations
-        return col.find({'members': {'$elemMatch': {'netid': netid, 'is_admin': True}}}
+        return col.find({'members': {'$elemMatch': {'netid': netid, 'is_admin': True}}},
                         projection={'members': False})
 
     def may_manage_organization(self, name, netid):
