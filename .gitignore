@@ -5,6 +5,7 @@
 # Secrets
 shrunk/config.py
 config.py
+config.py.test
 
 # Build artifacts and the like
 __pycache__

@@ -45,9 +45,6 @@ def create_app(config_path='config.py', **kwargs):
 
     # set up extensions
     csrf.ext.init_app(app)
-    if app.config.get('TESTING') and app.config.get('DISABLE_CSRF_PROTECTION'):
-        # We only allow CSRF protection to be disabled in testing mode.
-        app.config['WTF_CSRF_ENABLED'] = False
     assets.ext.init_app(app)
     sso.ext.init_app(app)
 

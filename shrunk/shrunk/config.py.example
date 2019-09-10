@@ -84,3 +84,12 @@ LDAP_QUERY_STR = "uid={}"
 
 LDAP_BASE_DN = ""
 """Base DN for the search."""
+
+DEV_LOGINS = False
+"""allow you to ligin as certain roles for testing purposes"""
+
+WTF_CSRF_ENABLED = True
+"""add sesion csrf protection. DISABLE FOR UNIT TESTING"""
+
+TESTING = False
+"""enables some testing utilites. nameley for protecting against accidental db drops"""
