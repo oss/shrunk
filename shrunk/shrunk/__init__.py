@@ -27,7 +27,7 @@ VERSION_TUPLE = (1, 0, 0)
 
 def create_app(config_path='config.py', **kwargs):
     app = app_decorate.ShrunkFlask(__name__)
-    app.config.from_pyfile(config_path, silent=True)
+    app.config.from_pyfile(config_path, silent=False)
     app.config.update(kwargs)
 
     # wsgi middleware
