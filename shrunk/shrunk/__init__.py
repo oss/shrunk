@@ -61,4 +61,9 @@ def create_app(config_path='config.py', **kwargs):
     def http404_not_found(e):
         return flask.render_template('errors/404_not_found.html'), 404
 
+    @app.before_request
+    def record_visit():
+        netid = flask.session['user']['netid'] if 'user' in flask.session else None
+        app.get_shrunk().record_visit(netid, flask.request.endpoint)
+
     return app

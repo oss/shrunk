@@ -750,6 +750,13 @@ class ShrunkClient:
             return 'member'
         return False
 
+    def record_visit(self, netid, endpoint):
+        self.db.endpoint_statistics.find_one_and_update(
+            {'endpoint': endpoint, 'netid': netid},
+            {'$set': {'endpoint': endpoint, 'netid': netid},
+             '$inc': {'count': 1}},
+            upsert=True)
+
     @staticmethod
     def _generate_unique_key():
         """Generates a unique key."""
