@@ -75,11 +75,13 @@ def test_count(db, app):
 def test_create(db, app):
     with app.app_context():
         roles.grant("blocked_url", "ltorvalds", "https://microsoft.com")
-        db.create_short_url("https://linux.org", netid="dude", title="title", short_url="custom-link")
+        db.create_short_url("https://linux.org", netid="dude", title="title",
+                            short_url="custom-link")
 
         # can't create a link that is blocked
         with pytest.raises(shrunk.client.ForbiddenDomainException):
-            db.create_short_url("https://microsoft.com/custom", netid="dude", short_url="custom-link2")
+            db.create_short_url("https://microsoft.com/custom", netid="dude",
+                                short_url="custom-link2")
 
         # can't use somone else's link
         with pytest.raises(shrunk.client.DuplicateIdException):

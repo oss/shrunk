@@ -4,98 +4,27 @@
 import datetime
 import random
 import string
-import math
-import enum
 
 import flask
 import pymongo
 from pymongo.collection import ReturnDocument
-from pymongo.collation import Collation
-import geoip2.errors
-import geoip2.database
 
-from . import roles
-from . import aggregations
-from .util.string import get_domain
+from .. import roles
+from .. import aggregations
+from ..util.string import get_domain
 
-
-class BadShortURLException(Exception):
-    """Raised when the there is an error with the requested short url"""
-
-
-class DuplicateIdException(BadShortURLException):
-    """Raised when trying to add a duplicate key to the database."""
+from .exceptions import BadShortURLException, DuplicateIdException, \
+    ForbiddenNameException, ForbiddenDomainException, AuthenticationException, \
+    NoSuchLinkException
+from .search import SortOrder, Pagination, SearchResults, SearchClient  # noqa: F401
+from .geoip import GeoipClient
+from .orgs import OrgsClient
 
 
-class ForbiddenNameException(BadShortURLException):
-    """Raised when trying to use a forbidden custom short URL."""
-
-
-class ForbiddenDomainException(Exception):
-    """Raised when trying to make a link to a forbidden domain"""
-
-
-class InvalidOperationException(Exception):
-    """Raised when performing an invalid operation."""
-
-
-class AuthenticationException(Exception):
-    """User is not authorized to do that"""
-
-
-class NoSuchLinkException(Exception):
-    """link was not found"""
-
-
-class SortOrder(enum.IntEnum):
-    TIME_DESC = 0
-    """Sort by creation time, descending."""
-
-    TIME_ASC = 1
-    """Sort by creation time, ascending."""
-
-    TITLE_ASC = 2
-    """Sort by title, alphabetically."""
-
-    TITLE_DESC = 3
-    """Sort by title, reverse-alphabetically."""
-
-    POP_ASC = 4
-    """Sort by popularity (total number of visits), ascending."""
-
-    POP_DESC = 5
-    """Sort by popularity (total number of visits), descending."""
-
-
-class Pagination:
-    def __init__(self, page, links_per_page):
-        self.page = page
-        self.links_per_page = links_per_page
-
-    def num_pages(self, total_results):
-        total_results = max(1, total_results)
-        return math.ceil(total_results / self.links_per_page)
-
-
-class SearchResults:
-    def __init__(self, results, total_results,
-                 page=None, begin_page=None, end_page=None, total_pages=None):
-        self.results = results
-        self.total_results = total_results
-        self.page = page
-        self.begin_page = begin_page
-        self.end_page = end_page
-        self.total_pages = total_pages
-
-    def __len__(self):
-        return len(self.results)
-
-    def __iter__(self):
-        return iter(self.results)
-
-
-class ShrunkClient:
-    """A class for database interactions."""
+class ShrunkClient(SearchClient, GeoipClient, OrgsClient):
+    """A class for database interactions. This class defines core
+    database-manipulation methods. Other methods are defined in the
+    mixins classes from which this class inherits."""
 
     ALPHABET = string.digits + string.ascii_lowercase
     """The alphabet used for encoding short urls."""
@@ -181,9 +110,6 @@ class ShrunkClient:
                                           authSource="admin", connect=False,
                                           replicaSet=self._DB_REPLSET)
         self.db = self._mongo[self._DB_NAME]
-
-    def _set_geoip(self, GEOLITE_PATH):
-        self._geoip = geoip2.database.Reader(GEOLITE_PATH)
 
     def count_links(self, netid=None):
         """Counts the number of created links.
@@ -411,95 +337,6 @@ class ShrunkClient:
         document = self.db.urls.find_one({"short_url": short_url})
         return document["visits"] if document else None
 
-    def search(self, *, query=None, netid=None, org=None, sort=None, pagination=None):
-        pipeline = []
-
-        if netid is not None:
-            pipeline.append({'$match': {'netid': netid}})
-
-        # if an org filter exists, we run the aggregation on the organization_members
-        # collection instead of the urls collection. But the output of this stage
-        # is just a bunch of URL documents, so the downstream stages don't know the
-        # difference.
-        if org is not None:
-            pipeline.append({'$match': {'name': org}})
-            pipeline.append({
-                '$lookup': {
-                    'from': 'urls',
-                    'localField': 'netid',
-                    'foreignField': 'netid',
-                    'as': 'urls'
-                }
-            })
-            pipeline.append({'$unwind': '$urls'})
-            pipeline.append({'$replaceRoot': {'newRoot': '$urls'}})
-
-        if query is not None:
-            match = {
-                '$regex': query,
-                '$options': 'i'
-            }
-
-            pipeline.append({
-                '$match': {
-                    '$or': [
-                        {'short_url': match},
-                        {'long_url': match},
-                        {'title': match},
-                        {'netid': match}
-                    ]
-                }
-            })
-
-        if sort is not None:
-            try:
-                sort = int(sort)
-            except ValueError:
-                raise IndexError('Invalid sort order.')
-
-            if sort == SortOrder.TIME_ASC:
-                sort_exp = {'timeCreated': 1}
-            elif sort == SortOrder.TIME_DESC:
-                sort_exp = {'timeCreated': -1}
-            elif sort == SortOrder.TITLE_ASC:
-                sort_exp = {'title': 1}
-            elif sort == SortOrder.TITLE_DESC:
-                sort_exp = {'title': -1}
-            elif sort == SortOrder.POP_ASC:
-                sort_exp = {'visits': 1}
-            elif sort == SortOrder.POP_DESC:
-                sort_exp = {'visits': -1}
-            else:
-                raise IndexError('Invalid sort order.')
-            pipeline.append({
-                '$sort': sort_exp
-            })
-
-        facet = {
-            'count': [{'$count': 'count'}],
-            'result': [{'$skip': 0}]  # because this can't be empty
-        }
-
-        if pagination is not None:
-            num_skip = (pagination.page - 1) * pagination.links_per_page
-            facet['result'] = [
-                {'$skip': num_skip},
-                {'$limit': pagination.links_per_page}
-            ]
-
-        pipeline.append({
-            '$facet': facet
-        })
-
-        if org is not None:
-            cur = next(self.db.organization_members.aggregate(pipeline, collation=Collation('en')))
-        else:
-            cur = next(self.db.urls.aggregate(pipeline, collation=Collation('en')))
-
-        result = cur['result']
-        count = cur['count'][0]['count'] if cur['count'] else 0
-        return SearchResults(result, count)
-
     def visit(self, short_url, source_ip, user_agent, referer):
         """Visits the given URL and logs visit information.
 
@@ -551,90 +388,6 @@ class ShrunkClient:
                                                    return_document=ReturnDocument.AFTER)
         return str(res['_id'])
 
-    def get_geoip_location(self, ipaddr):
-        """Gets a human-readable UTF-8 string describing the location of the given IP address.
-
-           :Parameters:
-             - `ipaddr`: a string containing an IPv4 address.
-
-           :Returns:
-             A string describing the geographic location location of the IP address,
-             or the string ``"unknown"`` if the location of the IP address cannot
-             be determined.
-        """
-
-        unk = 'unknown'
-
-        if ipaddr.startswith('172.31'):  # RUWireless (NB)
-            return 'Rutgers New Brunswick, New Jersey, United States'
-        elif ipaddr.startswith('172.27'):  # RUWireless (NWK)
-            return 'Rutgers Newark, New Jersey, United States'
-        # elif ipaddr.startswith('172.19'):  # CCF, but which campus?
-        elif ipaddr.startswith('172.24'):  # "Camden Computing Services"
-            return 'Rutgers Camden, New Jersey, United States'
-        elif ipaddr.startswith('172.'):
-            return 'New Jersey, United States'
-
-        try:
-            resp = self._geoip.city(ipaddr)
-
-            # some of city,state,country may be None; those will be filtered out below
-            city = resp.city.name
-            state = None
-            try:
-                state = resp.subdivisions.most_specific.name
-            except AttributeError:
-                pass
-            country = resp.country.name
-
-            components = [x for x in [city, state, country] if x]
-
-            if not components:
-                return unk
-
-            return ', '.join(components)
-        except geoip2.errors.AddressNotFoundError:
-            return unk
-
-    def get_geoip_json(self, url):
-        def not_null(field):
-            return [{'$match': {field: {'$exists': True, '$ne': None}}}]
-
-        def group_by(op):
-            return [{'$group': {'_id': op, 'value': {'$sum': 1}}}]
-
-        resp = self.db.urls.find_one({'short_url': url})
-        filter_us = [{'$match': {'country_code': 'US'}}]
-
-        rename_id = [
-            {'$addFields': {'code': '$_id'}},
-            {'$project': {'_id': 0}}
-        ]
-
-        aggregation = [
-            {'$match': {'link_id': resp['_id']}},
-            {'$facet': {
-                'us': filter_us + not_null('state_code') + group_by('$state_code') + rename_id,
-                'world': not_null('country_code') + group_by('$country_code') + rename_id
-            }}
-        ]
-
-        return next(self.db.visits.aggregate(aggregation))
-
-    def get_location_codes(self, ipaddr):
-        if ipaddr.startswith('172.'):
-            return 'NJ', 'US'
-        try:
-            resp = self._geoip.city(ipaddr)
-            country = resp.country.iso_code
-            try:
-                state = resp.subdivisions.most_specific.iso_code if country == 'US' else None
-            except AttributeError:
-                state = None
-            return state, country
-        except (AttributeError, geoip2.errors.AddressNotFoundError):
-            return None, None
-
     def may_view_url(self, url, netid):
         if roles.check('admin', netid):
             return True
@@ -661,94 +414,6 @@ class ShrunkClient:
 
         result = next(self.db.organization_members.aggregate(aggregation))
         return len(result['intersection']) != 0 if result else False
-
-    def create_organization(self, name):
-        col = self.db.organizations
-        rec_query = {'name': name}
-        rec_insert = {'name': name, 'timeCreated': datetime.datetime.now()}
-        res = col.find_one_and_update(rec_query, {'$setOnInsert': rec_insert}, upsert=True,
-                                      return_document=ReturnDocument.BEFORE)
-        # return false if organization already existed, otherwise true
-        return res is None
-
-    def delete_organization(self, name):
-        with self._mongo.start_session() as s:
-            s.start_transaction()
-            self.db.organization_members.delete_many({'name': name})
-            self.db.organizations.delete_one({'name': name})
-            s.commit_transaction()
-
-    def get_organization_info(self, name):
-        col = self.db.organizations
-        return col.find_one({'name': name})
-
-    def is_organization_member(self, name, netid):
-        col = self.db.organization_members
-        res = col.find_one({'name': name, 'netid': netid})
-        return bool(res)
-
-    def is_organization_admin(self, name, netid):
-        col = self.db.organization_members
-        res = col.find_one({'name': name, 'netid': netid})
-        return res['is_admin'] if res else False
-
-    def add_organization_member(self, name, netid, is_admin=False):
-        col = self.db.organization_members
-        rec = {'name': name, 'netid': netid}
-        rec_insert = {'name': name,
-                      'is_admin': is_admin,
-                      'netid': netid,
-                      'timeCreated': datetime.datetime.now()}
-        res = col.find_one_and_update(rec, {'$setOnInsert': rec_insert},
-                                      upsert=True, return_document=ReturnDocument.BEFORE)
-        return res is None
-
-    def add_organization_admin(self, name, netid):
-        self.add_organization_member(name, netid, is_admin=True)
-        return True
-
-    def remove_organization_member(self, name, netid):
-        col = self.db.organization_members
-        col.delete_one({'name': name, 'netid': netid})
-
-    def remove_organization_admin(self, name, netid):
-        col = self.db.organization_members
-        col.update_one({'name': name, 'netid': netid}, {'$set': {'is_admin': False}})
-
-    def count_organization_members(self, name):
-        col = self.db.organization_members
-        return col.count_documents({'name': name})
-
-    def get_organization_members(self, name):
-        col = self.db.organization_members
-        return col.find({'name': name})
-
-    def count_organization_admins(self, name):
-        col = self.db.organization_members
-        return col.count_documents({'name': name, 'is_admin': True})
-
-    def get_organization_admins(self, name):
-        col = self.db.organization_members
-        return col.find({'name': name, 'is_admin': True})
-
-    def get_member_organizations(self, netid):
-        col = self.db.organization_members
-        return col.find({'netid': netid})
-
-    def get_admin_organizations(self, netid):
-        col = self.db.organization_members
-        return col.find({'netid': netid, 'is_admin': True})
-
-    def may_manage_organization(self, name, netid):
-        if not self.get_organization_info(name):
-            return False
-        if roles.check('admin', netid):
-            return 'site-admin'
-        if self.is_organization_admin(name, netid):
-            return 'admin'
-        if self.is_organization_member(name, netid):
-            return 'member'
-        return False
 
     def record_visit(self, netid, endpoint):
         self.db.endpoint_statistics.find_one_and_update(
