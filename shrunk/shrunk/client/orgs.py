@@ -33,7 +33,7 @@ class OrgsClient:
 
     def is_organization_admin(self, name, netid):
         col = self.db.organizations
-        res = col.find_one({'name': name, 'members': {'$elemMatch': 
+        res = col.find_one({'name': name, 'members': {'$elemMatch':
                                                       {'netid': netid, 'is_admin': True}}})
         return bool(res)
 
@@ -51,12 +51,11 @@ class OrgsClient:
         if self.is_organization_member(name, netid):
             col = self.db.organizations
             match = {'name': name, 'members.netid': netid}
-            update = {"members.$.is_admin": true}
+            update = {"members.$.is_admin": True}
             res = col.update_one(match, update)
             return bool(res)
         else:
             return self.add_organization_member(name, netid, is_admin=True)
-            
 
     def remove_organization_member(self, name, netid):
         col = self.db.organizations
@@ -85,7 +84,7 @@ class OrgsClient:
 
     def count_organization_admins(self, name):
         return len(list(self.get_organization_admins(name)))
-    
+
     def get_organization_admins(self, name):
         col = self.db.organizations
         return col.aggregate(self.agg_members(name) + self.agg_admins)

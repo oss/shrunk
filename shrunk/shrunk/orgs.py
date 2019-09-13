@@ -140,7 +140,7 @@ def remove_org_member(netid_remover, client):
 
     if client.count_organization_admins(name) == 1:
         admins = client.get_organization_admins(name)
-        #since we just checked we can assume there is only one admin
+        # since we just checked we can assume there is only one admin
         if list(admins)[0]['netid'] == netid_removed:
             return flask.jsonify({'error': 'Cannot remove last administrator.'}), 400
     if not client.remove_organization_member(name, netid_removed):

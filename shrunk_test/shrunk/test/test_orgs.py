@@ -4,6 +4,7 @@ from fixtures import app, client  # noqa: F401
 from fixtures import dev_login
 from assertions import assert_ok, assert_status, assert_redirect, assert_in_resp
 
+
 def create_org(client, name):
     return client.post('/orgs/create', data={'name': name})
 
@@ -176,6 +177,7 @@ def test_remove_member_no_netid(client):
         assert_status(client.post('/orgs/remove_member', data=req), 400)
         req = {'name': 'test_org'}
         assert_status(client.post('/orgs/remove_member', data=req), 400)
+
 
 def test_add_admin(client):
     with dev_login(client, 'facstaff'):
