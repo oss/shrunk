@@ -68,10 +68,11 @@ class SearchClient:
         # difference.
         if org is not None:
             pipeline.append({'$match': {'name': org}})
+            pipeline.append({'$unwind': '$members'})
             pipeline.append({
                 '$lookup': {
                     'from': 'urls',
-                    'localField': 'netid',
+                    'localField': 'members.netid',
                     'foreignField': 'netid',
                     'as': 'urls'
                 }
@@ -137,7 +138,7 @@ class SearchClient:
         })
 
         if org is not None:
-            cur = next(self.db.organization_members.aggregate(pipeline, collation=Collation('en')))
+            cur = next(self.db.organizations.aggregate(pipeline, collation=Collation('en')))
         else:
             cur = next(self.db.urls.aggregate(pipeline, collation=Collation('en')))
 
