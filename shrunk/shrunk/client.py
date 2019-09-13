@@ -418,16 +418,17 @@ class ShrunkClient:
         if netid is not None:
             pipeline.append({'$match': {'netid': netid}})
 
-        # if an org filter exists, we run the aggregation on the organization_members
+        # if an org filter exists, we run the aggregation on the organizations
         # collection instead of the urls collection. But the output of this stage
         # is just a bunch of URL documents, so the downstream stages don't know the
         # difference.
         if org is not None:
             pipeline.append({'$match': {'name': org}})
+            pipeline.append({'$unwind': '$members'})
             pipeline.append({
                 '$lookup': {
                     'from': 'urls',
-                    'localField': 'netid',
+                    'localField': 'members.netid',
                     'foreignField': 'netid',
                     'as': 'urls'
                 }
@@ -493,7 +494,7 @@ class ShrunkClient:
         })
 
         if org is not None:
-            cur = next(self.db.organization_members.aggregate(pipeline, collation=Collation('en')))
+            cur = next(self.db.organizations.aggregate(pipeline, collation=Collation('en')))
         else:
             cur = next(self.db.urls.aggregate(pipeline, collation=Collation('en')))
 
@@ -660,7 +661,7 @@ class ShrunkClient:
             {'$project': {'owner_orgs': 0, 'viewer_orgs': 0}}
         ]
 
-        result = next(self.db.organization_members.aggregate(aggregation))
+        result = next(self.db.organizations.aggregate(aggregation))
         return len(result['intersection']) != 0 if result else False
 
     def create_organization(self, name):
@@ -686,22 +687,22 @@ class ShrunkClient:
 
     def is_organization_admin(self, name, netid):
         col = self.db.organizations
-        res = col.aggregate({'name': name, 'members': {'$elemMatch': 
-                                                       {'netid': netid, 'is_admin': True}}})
+        res = col.find_one({'name': name, 'members': {'$elemMatch': 
+                                                      {'netid': netid, 'is_admin': True}}})
         return bool(res)
 
     def add_organization_member(self, name, netid, is_admin=False):
+        '''returns false if user already exists'''
         col = self.db.organizations
-        rec = {'name': name}
-        rec_insert = {'name': name,
-                      'is_admin': is_admin,
-                      'netid': netid,
-                      'timeCreated': datetime.datetime.now()}
-        res = col.update_one(rec, {'members': {'$addToSet': rec_insert}})
-        return res is None
+        match = {'name': name, 'members': {'$not': {'$elemMatch': {'netid': netid}}}}
+        member = {'is_admin': is_admin,
+                  'netid': netid,
+                  'timeCreated': datetime.datetime.now()}
+        res = col.update_one(match, {'$addToSet': {'members': member}})
+        return res.modified_count != 0
 
     def add_organization_admin(self, name, netid):
-        if is_organization_member(name, netid):
+        if self.is_organization_member(name, netid):
             col = self.db.organizations
             match = {'name': name, 'members.netid': netid}
             update = {"members.$.is_admin": true}
@@ -713,33 +714,35 @@ class ShrunkClient:
 
     def remove_organization_member(self, name, netid):
         col = self.db.organizations
-        col.update_one({'name': name}, {'$pull': {'members': {'netid': netid}}})
+        res = col.update_one({'name': name}, {'$pull': {'members': {'netid': netid}}})
+        return res.modified_count == 1
 
     def remove_organization_admin(self, name, netid):
         col = self.db.organizations
-        col.update_one({'name': name, 'members.netid': netid},
-                       {'$set': {'members.$.is_admin': False}})
+        res = col.update_one({'name': name, 'members.netid': netid},
+                             {'$set': {'members.$.is_admin': False}})
+        return res.modified_count == 1
 
-    agg_members = lambda name: [{'$match': {'name': name}},
-                                {'$unwind': 'members'}]
-    agg_count = [{'$count': 'count'}]
+    def agg_members(self, name):
+        return [{'$match': {'name': name}},
+                {'$unwind': '$members'},
+                {'$replaceRoot': {'newRoot': '$members'}}]
+
     agg_admins = [{'$match': {'is_admin': True}}]
-    
+
     def count_organization_members(self, name):
-        col = self.db.organizations
-        return col.aggregate(agg_members(name) + agg_count)
+        return len(list(self.get_organization_members(name)))
 
     def get_organization_members(self, name):
         col = self.db.organizations
-        return col.aggregate(agg_members(name))
+        return col.aggregate(self.agg_members(name))
 
     def count_organization_admins(self, name):
-        col = self.db.organizations
-        return col.aggregate(agg_members(name) + agg_admins + agg_count)
-
+        return len(list(self.get_organization_admins(name)))
+    
     def get_organization_admins(self, name):
         col = self.db.organizations
-        return col.aggregate(agg_members(name) + admins)
+        return col.aggregate(self.agg_members(name) + self.agg_admins)
 
     def get_member_organizations(self, netid):
         col = self.db.organizations

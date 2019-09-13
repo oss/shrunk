@@ -116,11 +116,7 @@ def add_org_member(netid_grantor, client):
     if not ldap.is_valid_netid(netid_grantee):
         return flask.jsonify({'errors': {'netid': 'That NetID is not valid.'}}), 400
 
-    if admin:
-        res = client.add_organization_admin(name, netid_grantee)
-    else:
-        res = client.add_organization_member(name, netid_grantee)
-
+    res = client.add_organization_member(name, netid_grantee, is_admin=admin)
     if not res:
         return flask.jsonify({'errors': {'netid': 'Member already exists.'}}), 400
 
@@ -141,11 +137,12 @@ def remove_org_member(netid_remover, client):
     manage = client.may_manage_organization(name, netid_remover)
     if manage not in ['admin', 'site-admin'] and netid_removed != netid_remover:
         abort(403)
-    if client.count_organization_members(name) == 1:
-        return flask.jsonify({'error': 'Cannot remove last member.'}), 400
+
     if client.count_organization_admins(name) == 1:
         admins = client.get_organization_admins(name)
-        if netid_removed in map(lambda a: a['netid'], admins):
+        #since we just checked we can assume there is only one admin
+        if list(admins)[0]['netid'] == netid_removed:
             return flask.jsonify({'error': 'Cannot remove last administrator.'}), 400
-    client.remove_organization_member(name, netid_removed)
+    if not client.remove_organization_member(name, netid_removed):
+        return flask.jsonify({'error': 'User is not an organization member.'}), 404
     return flask.jsonify({'success': {}})

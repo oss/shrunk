@@ -4,7 +4,6 @@ from fixtures import app, client  # noqa: F401
 from fixtures import dev_login
 from assertions import assert_ok, assert_status, assert_redirect, assert_in_resp
 
-
 def create_org(client, name):
     return client.post('/orgs/create', data={'name': name})
 
@@ -144,10 +143,10 @@ def test_remove_member_no_such_org(client):
         assert_status(remove_member(client, 'test_org', 'DEV_USER'), 403)
 
 
-def test_remove_member_no_such_member(client):
+def test_remove_member_no_such_member(client, app):
     with dev_login(client, 'facstaff'):
         assert_ok(create_org(client, 'test_org'))
-        assert_status(remove_member(client, 'test_org', 'DEV_USER'), 400)
+        assert_status(remove_member(client, 'test_org', 'DEV_USER'), 404)
 
 
 def test_remove_member_no_perm(client):
@@ -177,13 +176,6 @@ def test_remove_member_no_netid(client):
         assert_status(client.post('/orgs/remove_member', data=req), 400)
         req = {'name': 'test_org'}
         assert_status(client.post('/orgs/remove_member', data=req), 400)
-
-
-def test_remove_last_member(client):
-    with dev_login(client, 'facstaff'):
-        assert_ok(create_org(client, 'test_org'))
-        assert_status(remove_member(client, 'test_org', 'DEV_FACSTAFF'), 400)
-
 
 def test_add_admin(client):
     with dev_login(client, 'facstaff'):
@@ -219,10 +211,9 @@ def test_remove_admin_no_perm(client):
         assert_status(remove_member(client, 'test_org', 'DEV_FACSTAFF'), 403)
 
 
-def test_remove_last_admin(client):
+def test_remove_last_admin(client, app):
     with dev_login(client, 'facstaff'):
         assert_ok(create_org(client, 'test_org'))
-        assert_ok(add_member(client, 'test_org', 'DEV_USER'))
         assert_status(remove_member(client, 'test_org', 'DEV_FACSTAFF'), 400)
 
 
