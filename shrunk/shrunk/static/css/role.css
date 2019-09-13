@@ -4,6 +4,9 @@
 }
 
 .comment {
+    overflow: visible;
+    white-space: normal;
+    text-overflow: unset;
     margin-bottom: 10px;
     resize: none;
 }
