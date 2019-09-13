@@ -77,9 +77,8 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient):
         self.db.visits.create_index([('link_id', pymongo.ASCENDING)])
         self.db.visitors.create_index([('ip', pymongo.ASCENDING)], unique=True)
         self.db.organizations.create_index([('name', pymongo.ASCENDING)], unique=True)
-        self.db.organization_members.create_index([('name', pymongo.ASCENDING),
-                                                   ('netid', pymongo.ASCENDING)],
-                                                  unique=True)
+        self.db.organizations.create_index([('members.name', pymongo.ASCENDING),
+                                            ('members.netid', pymongo.ASCENDING)])
 
     def url_is_reserved(self, url):
         if url in flask.current_app.config.get('RESERVED_WORDS', []):
@@ -95,7 +94,7 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient):
 
     def reset_database(self):
         if self._TESTING:
-            for col in ['grants', 'organization_members', 'organizations',
+            for col in ['grants', 'organizations',
                         'urls', 'visitors', 'visits']:
                 self.db[col].delete_many({})
 
@@ -412,7 +411,7 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient):
             {'$project': {'owner_orgs': 0, 'viewer_orgs': 0}}
         ]
 
-        result = next(self.db.organization_members.aggregate(aggregation))
+        result = next(self.db.organizations.aggregate(aggregation))
         return len(result['intersection']) != 0 if result else False
 
     def record_visit(self, netid, endpoint):
