@@ -91,6 +91,42 @@ def manage_org(netid, client):
     return flask.render_template('manage_organization.html', **kwargs)
 
 
+@bp.route('/stats', endpoint='stats', methods=['GET'])
+@require_login
+def org_stats(netid, client):
+    """ Render a page showing statistics for each user in the organization. """
+
+    name = flask.request.args.get('name')
+    if not name:
+        abort(400)
+    if not client.may_manage_organization(name, netid):
+        abort(403)
+    kwargs = {'name': name}
+    return flask.render_template('organization_stats.html', **kwargs)
+
+
+@bp.route('/stats_json', endpoint='stats_json', methods=['GET'])
+@require_login
+def org_stats(netid, client):
+    name = flask.request.args.get('name')
+    if not name:
+        abort(400)
+    if not client.may_manage_organization(name, netid):
+        abort(403)
+    return flask.jsonify(client.get_organization_stats(name))
+
+
+@bp.route('/geoip', endpoint='stats_geoip', methods=['GET'])
+@require_login
+def org_geoip(netid, client):
+    name = flask.request.args.get('name')
+    if not name:
+        abort(400)
+    if not client.may_manage_organization(name, netid):
+        abort(403)
+    return flask.jsonify(client.get_geoip_json_organization(name))
+
+
 @bp.route('/add_member', endpoint='add_member', methods=['POST'])
 @require_login
 def add_org_member(netid_grantor, client):

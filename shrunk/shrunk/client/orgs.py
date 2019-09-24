@@ -108,3 +108,75 @@ class OrgsClient:
         if self.is_organization_member(name, netid):
             return 'member'
         return False
+
+    def get_organization_stats(self, name):
+        pipeline = [
+            {'$match': {'name': name}},
+            {'$unwind': {'path': '$members'}},
+            {'$replaceRoot': {'newRoot': '$members'}},
+            {'$project': {'netid': 1}},
+            {'$lookup': {'from': 'urls',
+                         'localField': 'netid',
+                         'foreignField': 'netid',
+                         'as': 'links'}},
+            {'$addFields': {'total_visits': {'$sum': '$links.visits'},
+                            'unique_visits': {'$sum': '$links.unique_visits'}}},
+            {'$project': {'links': 0}}
+        ]
+
+        return list(self.db.organizations.aggregate(pipeline))
+
+    def get_geoip_json_organization(self, name):
+        def not_null(field):
+            return [{'$match': {field: {'$exists': True, '$ne': None}}}]
+
+        def group_by(op):
+            return [{'$group': {'_id': op, 'value': {'$sum': 1}}}]
+
+        filter_us = [{'$match': {'country_code': 'US'}}]
+
+        rename_id = [
+            {'$addFields': {'code': '$_id'}},
+            {'$project': {'_id': 0}}
+        ]
+
+        aggregation = [
+            {'$match': {'name': name}},
+            {'$unwind': '$members'},
+            {'$lookup': {
+                'from': 'urls',
+                'localField': 'members.netid',
+                'foreignField': 'netid',
+                'as': 'links'
+            }},
+            {'$unwind': '$links'},
+            {'$replaceRoot': {'newRoot': '$links'}},
+            {'$lookup': {
+                'from': 'visits',
+                'localField': '_id',
+                'foreignField': 'link_id',
+                'as': 'visits'
+            }},
+            {'$unwind': '$visits'},
+            {'$replaceRoot': {'newRoot': '$visits'}},
+            {'$facet': {
+                'us': filter_us + not_null('state_code') + group_by('$state_code') + rename_id,
+                'world': not_null('country_code') + group_by('$country_code') + rename_id
+            }}
+        ]
+
+        return next(self.db.organizations.aggregate(aggregation))
+
+    def get_location_codes(self, ipaddr):
+        if ipaddr.startswith('172.'):
+            return 'NJ', 'US'
+        try:
+            resp = self._geoip.city(ipaddr)
+            country = resp.country.iso_code
+            try:
+                state = resp.subdivisions.most_specific.iso_code if country == 'US' else None
+            except AttributeError:
+                state = None
+            return state, country
+        except (AttributeError, geoip2.errors.AddressNotFoundError):
+            return None, None

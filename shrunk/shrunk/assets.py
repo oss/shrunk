@@ -22,11 +22,12 @@ JS_BUNDLES = {
     'shrunk_qr': ['js/qrcode.js', 'js/shrunkqr.js'],
     # Why does 'shrunk_stats_' end in an underscore? Because uBlock likes to block
     # scripts whose name ends in 'stats.js'.
-    'shrunk_stats_': ['js/stats.js'],
+    'shrunk_stats_': ['js/stats_common.js', 'js/stats.js'],
     'shrunk_organizations': ['js/organizations.js', 'js/delete_organization.js',
                              'js/ajax_form.js'],
     'shrunk_manage_org': ['js/manage_organization.js', 'js/delete_organization.js',
                           'js/ajax_form.js'],
+    'shrunk_org_stats': ['js/stats_common.js', 'js/organization_stats.js']
 }
 
 for bundle_name, bundle_files in JS_BUNDLES.items():

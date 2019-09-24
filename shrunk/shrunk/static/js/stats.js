@@ -1,13 +1,5 @@
 $('#ad_blocker_message').remove();
 
-const MENU_ITEMS = [
-    'printChart',
-    'separator',
-    'downloadPNG',
-    'downloadJPEG',
-    'downloadSVG'
-];
-
 const url = (new URL(document.location)).searchParams.get('url');
 
 /* ===== visits chart ===== */
@@ -18,9 +10,6 @@ function date_of_id(_id) {
 
 $.getJSON('/stat/visits/daily?url=' + url,
 	  function (data) {
-	      const first_time_visits = data.reduce((acc, el) => acc + el.first_time_visits, 0);
-	      $('#first_time_visits').text(first_time_visits);
-
 	      Highcharts.chart('visits-container', {
 		  chart: {
 		      type: 'spline',
@@ -41,7 +30,7 @@ $.getJSON('/stat/visits/daily?url=' + url,
 		      spline: { marker: { enabled: true } }
 		  },
 		  series: [{
-		      name: 'First time visits',
+		      name: 'Unique visits',
 		      color: '#FCE2CC',
 		      data: data.map(el => [date_of_id(el._id), el.first_time_visits])
 		  }, {
@@ -54,37 +43,6 @@ $.getJSON('/stat/visits/daily?url=' + url,
 
 /* ===== choropleths of visitor locations ===== */
 
-function add_map(div_name, map_name, title, join, data) {
-    Highcharts.mapChart(div_name, {
-	chart: { map: map_name },
-	title: { text: title },
-	subtitle: { text: '(Logarithmic scale)' },
-	mapNavigation: { enabled: true },
-	exporting: {
-	    sourceWidth: 600,
-	    sourceHeight: 500,
-	    buttons: { contextButton: { menuItems: MENU_ITEMS } }
-	},
-	legend: {
-	    layout: 'vertical',
-	    align: 'left',
-	    verticalAlign: 'bottom'
-	},
-	colorAxis: {
-	    min: 1,
-	    type: 'logarithmic',
-	    minColor: '#FCE2CC',
-	    maxColor: '#FC580C'
-	},
-	series: [{
-	    data: data,
-	    joinBy: [join, 'code'],
-	    name: 'Visits',
-	    tooltip: { pointFormat: '{point.name}: {point.value}' }
-	}]
-    });
-}
-
 // Add both US and world maps
 $.getJSON('/stat/geoip?url=' + url,
 	  function (data) {
@@ -93,17 +51,6 @@ $.getJSON('/stat/geoip?url=' + url,
 	      add_map('world-map', 'custom/world', 'Worldwide visitors',
 		       'iso-a2', data['world']);
 	  });
-
-
-function show_us_map() {
-    document.getElementById('us-map').style.display = '';
-    document.getElementById('world-map').style.display = 'none';
-}
-
-function show_world_map() {
-    document.getElementById('us-map').style.display = 'none';
-    document.getElementById('world-map').style.display = '';
-}
 
 // Initially only display the US map
 show_us_map();

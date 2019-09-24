@@ -66,6 +66,14 @@
     </button>
   </div>
   {% endif %}
+
+  <form action="{{ url_for('orgs.stats') }}" method="get">
+    <input type="hidden" name="name" value="{{ name }}">
+    <button class="btn btn-outline-primary btn-no-border btn-no-background bg-light"
+	    type="submit" onclick="remove_self()">
+      <i class="fas fa-chart-line"></i> Statistics
+    </button>
+  </form>
 </div>
 
 {% if members %}

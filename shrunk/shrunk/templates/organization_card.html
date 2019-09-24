@@ -26,11 +26,19 @@
 	    </form>
 	    {% endif %}
 
+	    <form action="{{ url_for('orgs.stats') }}" method="get">
+	      <input type="hidden" name="name" value="{{ org['name'] }}">
+	      <button type="submit" title="Organization statistics"
+		      class="btn btn-outline-dark btn-no-border btn-round float-right">
+		<i class="fas fa-chart-line"></i>
+	      </button>
+	    </form>
+
 	    <form action="{{ url_for('orgs.manage') }}" method="get">
 	      <input type="hidden" name="name" value="{{ org['name'] }}">
 	      <button type="submit" title="Manage organization"
 		      class="btn btn-outline-dark btn-no-border btn-round float-right">
-		<i class="fas fa-user-friends"></i>
+		<i class="fas fa-tools"></i>
 	      </button>
 	    </form>
 	  </div>

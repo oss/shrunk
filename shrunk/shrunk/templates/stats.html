@@ -38,7 +38,7 @@
   <div class="col">
     <h3><a href="{{ url_info['long_url'] }}">{{ url_info["title"] }}</a></h3>
       <span style="margin-right: 10px">Total visits: {{ url_info["visits"] }}</span>
-      <span>First time visits: <span id="first_time_visits">Loading...</span></span>
+      <span>First time visits: {{ url_info["unique_visits"] }}</span>
       <div id="visits-container" style="min-width 310px; height: 400px; margin: 0 auto"></div>
     </ul>
   </div>

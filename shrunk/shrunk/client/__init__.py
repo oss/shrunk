@@ -376,8 +376,13 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient):
           The long URL corresponding to the short URL, or None if no such URL
           was found in the database.
         """
-        self.db.urls.update_one({'short_url': short_url}, {'$inc': {'visits': 1}})
         resp = self.db.urls.find_one({'short_url': short_url})
+        if not self.db.visits.find_one({'link_id': resp['_id'], 'source_ip': source_ip}):
+            self.db.urls.update_one({'short_url': short_url},
+                                    {'$inc': {'visits': 1, 'unique_visits': 1}})
+            pass
+        else:
+            self.db.urls.update_one({'short_url': short_url}, {'$inc': {'visits': 1}})
 
         state_code, country_code = self.get_location_codes(source_ip)
         self.db.visits.insert_one({
