@@ -64,6 +64,7 @@ def create_app(config_path='config.py', **kwargs):
     @app.before_request
     def record_visit():
         netid = flask.session['user']['netid'] if 'user' in flask.session else None
-        app.get_shrunk().record_visit(netid, flask.request.endpoint)
+        endpoint = flask.request.endpoint or 'error'
+        app.get_shrunk().record_visit(netid, endpoint)
 
     return app

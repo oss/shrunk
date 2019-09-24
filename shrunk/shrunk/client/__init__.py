@@ -321,6 +321,25 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient):
             "links": links
         }
 
+    def get_endpoint_stats(self):
+        """ Returns a summary of the information in the endpoint_statistics collection.
+        :Returns:
+          A list of dictionaries with the following fields:
+           - `endpoint`: the endpoint name
+           - `total_visits`: the total number of visits to the endpoint
+           - `unique visits`: the number of unique visits (by netid) to the endpoint
+        """
+
+        res = self.db.endpoint_statistics.aggregate([
+            {'$group': {
+                '_id': {'endpoint': '$endpoint'},
+                'total_visits': {'$sum': '$count'},
+                'unique_visits': {'$sum': 1}}},
+            {'$addFields': {'endpoint': '$_id.endpoint'}},
+            {'$project': {'_id': 0}}
+            ])
+        return list(res)
+
 
     def get_long_url(self, short_url):
         """Given a short URL, returns the long URL.

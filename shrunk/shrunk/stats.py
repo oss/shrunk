@@ -6,7 +6,7 @@ from werkzeug.exceptions import abort
 from . import util
 from .util import stat
 from .util import search
-from .decorators import require_login
+from .decorators import require_login, require_admin
 
 
 bp = flask.Blueprint('stat', __name__, url_prefix='/stat')
@@ -116,3 +116,17 @@ def search_visits_csv(netid, client):
 
     csv_output = stat.make_csv_for_links(client, map(lambda l: l['short_url'], links))
     return util.make_plaintext_response(csv_output, filename='visits-search.csv')
+
+
+@bp.route('/endpoint', endpoint='endpoint', methods=['GET'])
+@require_login
+@require_admin
+def endpoint_stats(netid, client):
+    return flask.render_template('endpoint_stats.html')
+
+
+@bp.route('/endpoint_json', endpoint='endpoint_json', methods=['GET'])
+@require_login
+@require_admin
+def endpoint_json(netid, client):
+    return flask.jsonify(client.get_endpoint_stats())

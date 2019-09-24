@@ -27,7 +27,8 @@ JS_BUNDLES = {
                              'js/ajax_form.js'],
     'shrunk_manage_org': ['js/manage_organization.js', 'js/delete_organization.js',
                           'js/ajax_form.js'],
-    'shrunk_org_stats': ['js/stats_common.js', 'js/organization_stats.js']
+    'shrunk_org_stats': ['js/stats_common.js', 'js/organization_stats.js'],
+    'shrunk_endpoint_stats': ['js/stats_common.js', 'js/endpoint_stats.js']
 }
 
 for bundle_name, bundle_files in JS_BUNDLES.items():
