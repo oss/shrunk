@@ -229,4 +229,5 @@ def admin_panel(netid, client):
 
     valid_roles = roles.valid_roles()
     roledata = [{'id': role, 'title': roles.form_text[role]['title']} for role in valid_roles]
-    return render_template('admin.html', roledata=roledata)
+    stats = client.get_admin_stats()
+    return render_template('admin.html', roledata=roledata, stats=stats)

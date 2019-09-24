@@ -297,6 +297,31 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient):
             aggregations.daily_visits_aggregation
         return list(self.db.visits.aggregate(aggregation))
 
+    def get_admin_stats(self):
+        """Get some basic stats about shunk overall
+        :Returns:
+         A dictionary with the folowing info
+          - `visits`: total amount of redirects shrunk has preformed
+          - `users`: the amount of users creating links
+          - `links`: the amount of links in shrunk
+        """
+        visits = self.db.visits.find().count()
+        links = self.db.urls.find().count()
+        users = self.db.urls.aggregate([
+            {"$group": {"_id": "$netid"}},
+            {"$count": "count"}
+        ])
+        try:
+            users = list(users)[0]["count"]
+        except:
+            users = 0
+        return {
+            "visits": visits,
+            "users": users,
+            "links": links
+        }
+
+
     def get_long_url(self, short_url):
         """Given a short URL, returns the long URL.
 
