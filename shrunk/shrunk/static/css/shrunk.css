@@ -474,6 +474,10 @@ nobr.shrunk-info > span {
     margin-right: 10px;
 }
 
+.admin-stats > b, span {
+    margin-right: 10px;
+}
+
 .card-shrunk {
     border: none;
     border-radius: 0;
