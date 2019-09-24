@@ -3,6 +3,7 @@
 import datetime
 
 from pymongo.collection import ReturnDocument
+import geoip2
 
 from .. import roles
 

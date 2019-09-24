@@ -308,17 +308,17 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient):
         visits = self.db.visits.find().count()
         links = self.db.urls.find().count()
         users = self.db.urls.aggregate([
-            {"$group": {"_id": "$netid"}},
-            {"$count": "count"}
+            {'$group': {'_id': '$netid'}},
+            {'$count': 'count'}
         ])
         try:
-            users = list(users)[0]["count"]
-        except:
+            users = list(users)[0]['count']
+        except (IndexError, KeyError):
             users = 0
         return {
-            "visits": visits,
-            "users": users,
-            "links": links
+            'visits': visits,
+            'users': users,
+            'links': links
         }
 
     def get_endpoint_stats(self):
@@ -339,7 +339,6 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient):
             {'$project': {'_id': 0}}
             ])
         return list(res)
-
 
     def get_long_url(self, short_url):
         """Given a short URL, returns the long URL.

@@ -107,7 +107,7 @@ def org_stats(netid, client):
 
 @bp.route('/stats_json', endpoint='stats_json', methods=['GET'])
 @require_login
-def org_stats(netid, client):
+def org_stats_json(netid, client):
     name = flask.request.args.get('name')
     if not name:
         abort(400)
