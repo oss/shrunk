@@ -305,8 +305,8 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient):
           - `users`: the amount of users creating links
           - `links`: the amount of links in shrunk
         """
-        visits = self.db.visits.find().count()
-        links = self.db.urls.find().count()
+        links = self.db.urls.count_documents({})
+        visits = self.db.visits.count_documents({})
         users = self.db.urls.aggregate([
             {'$group': {'_id': '$netid'}},
             {'$count': 'count'}
@@ -316,9 +316,9 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient):
         except (IndexError, KeyError):
             users = 0
         return {
+            'links': links,
             'visits': visits,
-            'users': users,
-            'links': links
+            'users': users
         }
 
     def get_endpoint_stats(self):
