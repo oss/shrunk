@@ -5,15 +5,19 @@
 from setuptools import setup
 
 require = [
-    'shrunk==1.0.3',
+    'shrunk==1.1.0',
     'pytest==5.0.0',
+    'flake8==3.7.7',
+    'pylint==2.3.1',
     'pytest-cov==2.7.1',
+    'mypy==0.711',
+    'autopep8==1.4.4',
     'beautifulsoup4==4.7.1'
 ]
 
 setup(
     name="shrunk_test",
-    version="1.0.3",
+    version="1.1.0",
     packages=["shrunk.test"],
     install_requires=require,
     package_dir={"shrunk_test": "test"},

@@ -28,12 +28,13 @@ require = [
     'geoip2==2.4.0',
     'uwsgidecorators==1.1.0',
     'httpagentparser==1.8.2',
-    'python-ldap==3.2.0'
+    'python-ldap==3.2.0',
+    'click==7.0'
 ]
 
 setup(
     name="shrunk",
-    version="1.0.3",
+    version="1.1.0",
     packages=["shrunk"],
     install_requires=require,
     package_dir={"shrunk": "shrunk"},

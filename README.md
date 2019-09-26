@@ -36,11 +36,14 @@ Features
 Distribution steps
 --------
 assuming you're in the root of the git repo
-1. git tag <your version> -m "some description/changelog"
-2. `rm -rf dist/ shrunk.egg-info`
-3. `python3 setup.py sdist` puts a tar in dist/
-4. `python3 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*` to upload to test pypi
-5. `python3 -m twine upload dist/*` to upload to pypi
+1. change the version in shrunk/setup.py and shrunk_test/setup.py
+2. `git tag <your version> -m "some description/changelog"`
+3. `cd shrunk/`
+4. `rm -rf dist/ shrunk.egg-info`
+5. `python3 setup.py sdist` puts a tar in dist/
+6. `python3 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*` to upload to test pypi
+7. `python3 -m twine upload dist/*` to upload to pypi
 WARNING: Don't use bdist_wheel. bdist_wheel refuses to exclude config.py,
 so if you have one in here for testing, it will package it and give our secret
 and privs out to the public
+WARNING: make sure config.py is not in the package
