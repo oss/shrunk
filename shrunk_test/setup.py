@@ -17,7 +17,7 @@ require = [
 
 setup(
     name="shrunk_test",
-    version="1.1.0",
+    version="1.1.1",
     packages=["shrunk.test"],
     install_requires=require,
     package_dir={"shrunk_test": "test"},

@@ -34,11 +34,11 @@ require = [
 
 setup(
     name="shrunk",
-    version="1.1.0",
+    version="1.1.1",
     packages=["shrunk"],
     install_requires=require,
     package_dir={"shrunk": "shrunk"},
-    package_data={"shrunk": ["util/*", "roles/*", "static/css/*", "static/img/*", "static/js/*",
+    package_data={"shrunk": ["util/*", "roles/*", "client/*", "static/css/*", "static/img/*", "static/js/*",
                              "static/scss/*", "static/out/*", "static/bootstrap/*",
                              "templates/*", "templates/errors/*", "../scripts/*"]},
     author="Rutgers Open System Solutions",
