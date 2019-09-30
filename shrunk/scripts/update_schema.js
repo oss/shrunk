@@ -38,6 +38,7 @@ shrunk.urls.find({}).forEach(function (doc) {
 
 // add the first time visits field to the urls collection
 print('[4/5] Counting first time visits...');
+shrunk.visits.createIndex({link_id: 1});
 shrunk.urls.find({}).forEach(function (doc) {
     let unique = shrunk.visits.aggregate([
 	{$match: {link_id: doc._id}},
