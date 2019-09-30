@@ -74,11 +74,15 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient):
 
     def _create_indexes(self):
         self.db.urls.create_index([('short_url', pymongo.ASCENDING)], unique=True)
+        self.db.urls.create_index([('netid', pymongo.ASCENDING)])
         self.db.visits.create_index([('link_id', pymongo.ASCENDING)])
         self.db.visitors.create_index([('ip', pymongo.ASCENDING)], unique=True)
         self.db.organizations.create_index([('name', pymongo.ASCENDING)], unique=True)
         self.db.organizations.create_index([('members.name', pymongo.ASCENDING),
                                             ('members.netid', pymongo.ASCENDING)])
+
+    def user_exists(self, netid):
+        return self.db.urls.count_documents({'netid': netid}) > 0
 
     def url_is_reserved(self, url):
         if url in flask.current_app.config.get('RESERVED_WORDS', []):

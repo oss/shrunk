@@ -21,11 +21,14 @@ def is_valid_netid(netid):
     try:
         conn.simple_bind_s(current_app.config['LDAP_BIND_DN'], current_app.config['LDAP_CRED'])
         query = current_app.config['LDAP_QUERY_STR'].format(netid)
-        res = conn.search_s(current_app.config['LDAP_BASE_DN'], ldap.SCOPE_SUBTREE, query)
+        res = conn.search_s(current_app.config['LDAP_BASE_DN'], ldap.SCOPE_ONELEVEL, query)
         if res:
             current_app.logger.debug(f'validated netid {netid}: {res}')
             return True
-        current_app.logger.debug(f'failed to validate netid {netid}')
+        current_app.logger.debug(f'failed to validate netid {netid} from LDAP')
+        if current_app.get_shrunk().user_exists(netid):
+            current_app.logger.debug(f'netid {netid} validated from DB')
+            return True
         return False
     except ldap.INVALID_CREDENTIALS:
         current_app.logger.error('could not bind to LDAP server!')
