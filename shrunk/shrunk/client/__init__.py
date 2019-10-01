@@ -310,7 +310,7 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient):
           - `links`: the amount of links in shrunk
         """
         links = self.db.urls.count_documents({})
-        visits = self.db.visits.count_documents({})
+        visits = self.db.visits.estimated_document_count()
         users = self.db.urls.aggregate([
             {'$group': {'_id': '$netid'}},
             {'$count': 'count'}
