@@ -12,29 +12,27 @@ except FileNotFoundError:
     readme_text = ""
 
 require = [
-    'Flask==1.0.3',
+    'Flask==1.1.1',
     'Flask-SSO==0.4.0',
     'Flask-Assets==0.12',
-    'Flask-WTF==0.14',
+    'Flask-WTF==0.14.2',
     'cssmin==0.2.0',
     'jsmin==2.2.2',
     'Jinja2==2.10.1',
-    'MarkupSafe==0.23',
-    'WTForms==2.0.1',
-    'Werkzeug==0.15.4',
-    'itsdangerous==0.24',
-    'pyasn1==0.1.7',
-    'pymongo==3.8.0',
-    'geoip2==2.4.0',
-    'uwsgidecorators==1.1.0',
-    'httpagentparser==1.8.2',
-    'python-ldap==3.2.0',
-    'click==7.0'
+    'MarkupSafe==1.1.1',
+    'WTForms==2.2.1',
+    'Werkzeug==0.16.0',
+    'itsdangerous==1.1.0',
+    'pymongo==3.9.0',
+    'geoip2==2.9.0',
+    'httpagentparser==1.9.0',
+    'click==7.0',
+    'python-ldap==3.2.0'
 ]
 
 setup(
     name="shrunk",
-    version="1.1.1",
+    version="1.1.2",
     packages=["shrunk"],
     install_requires=require,
     package_dir={"shrunk": "shrunk"},
