@@ -5,7 +5,7 @@ pipeline {
         stage('build python packages') {
             agent {
                 docker {
-                    image 'maguro.oss.rutgers.edu/library/pybuild:0.1'
+                    image 'harbor.oss.rutgers.edu/library/pybuild:0.1'
                 }
             }
 
