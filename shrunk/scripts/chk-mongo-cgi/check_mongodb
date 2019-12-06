@@ -103,7 +103,7 @@ case $command in
     memory) # stats for memory usage. (in Mb)
   # mongo gives it in Mb so thats what were working with
   setAuth
-  current=$(eval "mongo --eval  'db.serverStatus().mem.virtual' $auth --quiet $connect")
+  current=$(eval "mongo --eval  'db.serverStatus().mem.resident' $auth --quiet $connect")
 
    if [ $? -ne 0 ]
    then
