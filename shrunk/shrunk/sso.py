@@ -18,6 +18,9 @@ def login(user_info):
     logger = flask.current_app.logger
     types = user_info.get('employeeType').split(';')
     netid = user_info.get('netid')
+    twoFactorAuth = user_info.get('twoFactorAuth')
+    if not twoFactorAuth and flask.current_app.config['REQUIRE_2FA']:
+        return flask.render_template('help_no_2fa.html')
 
     def t(typ):  # pylint: disable=invalid-name
         return typ in types
