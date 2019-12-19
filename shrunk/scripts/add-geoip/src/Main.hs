@@ -19,19 +19,20 @@ data GeoIPData = GeoIPData { docId       :: ObjectId
 main :: IO ()
 main = do
   args <- getArgs
-  when (length args /= 2) $ usage >> exitFailure
+  when (length args /= 3) $ usage >> exitFailure
   conn <- connect . host $ args !! 0
   let run = access conn UnconfirmedWrites "shrunk"
   visits <- run getVisits
   geodb <- openGeoDB $ args !! 1
-  writeResult <- run . updateDocuments $ getAllGeoIPData geodb visits
+  let bufSz = read $ args !! 2
+  writeResult <- run . updateDocuments $ getAllGeoIPData bufSz geodb visits
   print writeResult
   close conn
 
 usage :: IO ()
 usage = do
   progName <- getProgName
-  putStrLn $ "usage: " ++ progName ++ " [db host] [geodb path]"
+  putStrLn $ "usage: " ++ progName ++ " [db host] [geodb path] [parBuffer buf size]"
 
 getVisits :: Action IO [Document]
 getVisits = find (select [] "visits") {project = ["_id" =: 1, "source_ip" =: 1]} >>= rest
@@ -46,8 +47,8 @@ getGeoIPData db doc = do
                    , countryCode = geoCountryISO geoResult
                    }
 
-getAllGeoIPData :: GeoDB -> [Document] -> [GeoIPData]
-getAllGeoIPData db = catMaybes . withStrategy (parBuffer 1000 rseq) . map (getGeoIPData db)
+getAllGeoIPData :: Int -> GeoDB -> [Document] -> [GeoIPData]
+getAllGeoIPData bufSz db = catMaybes . withStrategy (parBuffer bufSz rseq) . map (getGeoIPData db)
 
 updateDocuments :: [GeoIPData] -> Action IO WriteResult
 updateDocuments = updateMany "visits" . map mkUpdate
