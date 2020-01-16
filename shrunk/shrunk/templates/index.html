@@ -51,65 +51,7 @@
     </div>
   </div>
 
-  {# Sort dropdown menu #}
-  <div class="col col-md-auto">
-    <div class="dropdown">
-      <button class="btn btn-outline-primary dropdown-toggle btn-no-border btn-no-background bg-light"
-	      type="button" data-toggle="dropdown"
-	      aria-haspopup="true" aria-expanded="false">
-	{% if sortby == "0" %}
-	Newest first
-	{% elif sortby == "1" %}
-	Oldest first
-	{% elif sortby == "2" %}
-	A-Z
-	{% elif sortby == "3" %}
-	Z-A
-	{% elif sortby == "4" %}
-	Increasing visits
-	{% elif sortby == "5" %}
-	Decreasing visits
-	{% endif %}
-      </button>
-      <div class="dropdown-menu">
-	<a class="dropdown-item" href="javascript:change_sortby('0')">Newest first</a>
-	<a class="dropdown-item" href="javascript:change_sortby('1')">Oldest first</a>
-	<a class="dropdown-item" href="javascript:change_sortby('2')">A-Z</a>
-	<a class="dropdown-item" href="javascript:change_sortby('3')">Z-A</a>
-	<a class="dropdown-item" href="javascript:change_sortby('4')">Increasing visits</a>
-	<a class="dropdown-item" href="javascript:change_sortby('5')">Decreasing visits</a>
-      </div>
-    </div>
-  </div>
-
-  {# My Links/All Links dropdown menu #}
-  <div class="col col-md-auto">
-    <div class="dropdown">
-      <button class="btn btn-outline-primary btn-no-border btn-no-background dropdown-toggle bg-light"
-	      type="button" data-toggle="dropdown"
-	      aria-haspopup="true" aria-expanded="false">
-	{{ selected_links_set }}
-      </button>
-      <div class="dropdown-menu">
-	<a class="dropdown-item" href="javascript:change_links_set('GO!my')">My links</a>
-
-	{% if "admin" in roles %}
-	<a class="dropdown-item" href="javascript:change_links_set('GO!all')">All links</a>
-	{% endif %}
-
-	{% if orgs %}
-	<div class="dropdown-divider"></div>
-	{% for org in orgs %}
-	<a class="dropdown-item" href="javascript:change_links_set('{{ org['name'] }}')">
-	  {{ org['name'] }}
-	</a>
-	{% endfor %}
-	{% endif %}
-      </div>
-    </div>
-  </div>
-
-  <div class="col col-csv-download">
+  <div class="col text-right">
     <form action="{{ url_for('stat.search-csv') }}">
       <button type="submit"
 	      class="btn btn-outline-primary btn-no-border btn-no-background btn-csv-download bg-light">

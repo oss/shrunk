@@ -56,14 +56,6 @@ def render_index(netid, client, **kwargs):
     matching their search query are shown.
     """
 
-    def display_links_set(links_set):
-        """ Get a human-readable name for links_set. """
-        if links_set == 'GO!my':
-            return 'My links'
-        if links_set == 'GO!all':
-            return 'All links'
-        return links_set
-
     results = search.search(netid, client, request, session)
 
     kwargs.update({'begin_pages': results.begin_page,
@@ -72,7 +64,7 @@ def render_index(netid, client, **kwargs):
                    'page': results.page,
                    'links': list(results),
                    'linkserver_url': current_app.config['LINKSERVER_URL'],
-                   'selected_links_set': display_links_set(results.links_set),
+                   'selected_links_set': search.display_links_set(results.links_set),
                    'orgs': list(client.get_member_organizations(netid))})
     return render_template('index.html', **kwargs)
 

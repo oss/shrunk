@@ -7,6 +7,15 @@ from ..util import get_param
 from ..client import Pagination
 
 
+def display_links_set(links_set):
+    """ Get a human-readable name for links_set. """
+    if links_set == 'GO!my':
+        return 'My links'
+    if links_set == 'GO!all':
+        return 'All links'
+    return links_set
+
+
 def authorized_for_links_set(client, links_set, netid):
     """ Test whether the user is authorized to view links_set. """
     if roles.check('admin', netid):
