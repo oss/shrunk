@@ -35,14 +35,18 @@ class OrgsClient:
     def is_organization_admin(self, name, netid):
         col = self.db.organizations
         res = col.find_one({'name': name, 'members': {'$elemMatch':
-                                                      {'netid': netid, 'is_admin': True}}})
+                                                      {'netid': netid, 'is_admin': int(1)}}})
         return bool(res)
 
     def add_organization_member(self, name, netid, is_admin=False):
         '''returns false if user already exists'''
         col = self.db.organizations
         match = {'name': name, 'members': {'$not': {'$elemMatch': {'netid': netid}}}}
-        member = {'is_admin': is_admin,
+        # we store is_admin as an int so that we can use the bitwise xor operation
+        # to toggle it during update. this is because mongo somehow doesn't have a boolean
+        # $not operator that can be used during updates. yes, mongo really does
+        # suck /that/ much.
+        member = {'is_admin': int(is_admin),
                   'netid': netid,
                   'timeCreated': datetime.datetime.now()}
         res = col.update_one(match, {'$addToSet': {'members': member}})
@@ -52,7 +56,7 @@ class OrgsClient:
         if self.is_organization_member(name, netid):
             col = self.db.organizations
             match = {'name': name, 'members.netid': netid}
-            update = {"members.$.is_admin": True}
+            update = {"members.$.is_admin": int(1)}
             res = col.update_one(match, update)
             return bool(res)
         else:
@@ -66,7 +70,7 @@ class OrgsClient:
     def remove_organization_admin(self, name, netid):
         col = self.db.organizations
         res = col.update_one({'name': name, 'members.netid': netid},
-                             {'$set': {'members.$.is_admin': False}})
+                             {'$set': {'members.$.is_admin': int(0)}})
         return res.modified_count == 1
 
     def agg_members(self, name):
@@ -74,7 +78,7 @@ class OrgsClient:
                 {'$unwind': '$members'},
                 {'$replaceRoot': {'newRoot': '$members'}}]
 
-    agg_admins = [{'$match': {'is_admin': True}}]
+    agg_admins = [{'$match': {'is_admin': int(1)}}]
 
     def count_organization_members(self, name):
         return len(list(self.get_organization_members(name)))
@@ -96,7 +100,7 @@ class OrgsClient:
 
     def get_admin_organizations(self, netid):
         col = self.db.organizations
-        return col.find({'members': {'$elemMatch': {'netid': netid, 'is_admin': True}}},
+        return col.find({'members': {'$elemMatch': {'netid': netid, 'is_admin': int(1)}}},
                         projection={'members': False})
 
     def may_manage_organization(self, name, netid):
@@ -181,3 +185,8 @@ class OrgsClient:
             return state, country
         except (AttributeError, geoip2.errors.AddressNotFoundError):
             return None, None
+
+    def toggle_org_admin(self, org_name, member_netid):
+        self.db.organizations.update_one({'name': org_name},
+                                {'$bit': {'members.$[elem].is_admin': {'xor': int(1)}}},
+                                array_filters=[{'elem.netid': member_netid}])

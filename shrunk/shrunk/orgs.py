@@ -25,6 +25,23 @@ def list_orgs(netid, client):
     return flask.render_template('organizations.html', **kwargs)
 
 
+@bp.route('/toggle_admin', endpoint='toggle_admin', methods=['POST'])
+@require_login
+def toggle_admin(netid, client):
+    name = flask.request.form.get('name')
+    member_netid = flask.request.form.get('netid')
+    if not name or not member_netid:
+       abort(400)
+    manage = client.may_manage_organization(name, netid)
+    if manage not in ['admin', 'site-admin']:
+       abort(403)
+    client.toggle_org_admin(name, member_netid)
+    if client.count_organization_admins(name) == 0:
+        client.toggle_org_admin(name, member_netid)
+        return flask.jsonify({'error': 'Cannot remove last administrator.'}), 400
+    return flask.jsonify({'sucess': True})
+
+
 @bp.route('/create', endpoint='create', methods=['POST'])
 @require_login
 def create_org(netid, client):

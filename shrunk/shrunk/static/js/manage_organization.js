@@ -78,3 +78,26 @@ function remove_member_error(jqXHR) {
     const err = jQuery.parseJSON(jqXHR.responseText)['error'];
     $('#delete-member-message').text(err).css('color', 'red');
 }
+
+function revoke_admin(ev) {
+    var parent = ev.target.parentElement;
+    if (parent.tagName == 'BUTTON')
+	parent = parent.parentElement;
+    revoke_member_org_name = parent.querySelector('.org-name').value;
+    revoke_member_netid = parent.querySelector('.org-member-netid').value;
+    const req = {
+	'name': revoke_member_org_name,
+	'netid': revoke_member_netid
+    };
+    $.ajax({
+	type: 'POST',
+	url: '/orgs/toggle_admin',
+	data: req,
+	error: (jqXHR, textStatus, errorThrown) => revoke_admin_error(jqXHR),
+	success: () => location.reload()
+    });
+}
+
+function revoke_admin_error(jqXHR) {
+    $('#revoke-admin-modal').modal();
+}

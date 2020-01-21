@@ -4,7 +4,7 @@
       <div class="card-block">
 	<div class="row">
 	  <div class="col col-shrunk-info">
-	    <nobr class="shrunk-info">
+	    <span style="white-space: nowrap;">
 	      <span title="{{ member['netid'] }}" class="shrunk-card-name">
 		{{ member['netid'] }}
 	      </span>
@@ -13,7 +13,21 @@
 	      {% if member['is_admin'] %}
 	      <span title="User is an Administrator"><em>Administrator</em></span>
 	      {% endif %}
-	    </nobr>
+	      {% if user_is_admin %}
+	      <form action="{{ url_for('orgs.toggle_admin') }}" method="GET"
+		    class="form-inline" style="display: inline;">
+		<input type="hidden" class="org-name" value="{{ name }}">
+		<input type="hidden" class="org-member-netid" value="{{ member['netid'] }}">
+		<button type="button" class="btn btn-primary" onclick="revoke_admin(event)">
+		  {% if member['is_admin'] %}
+		  Revoke admin
+		  {% else %}
+		  Grant admin
+		  {% endif %}
+		</button>
+	      </form>
+	      {% endif %}
+            </span>
 	  </div>
 
 	  {% if user_is_admin %}
