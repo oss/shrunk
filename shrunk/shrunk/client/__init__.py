@@ -76,6 +76,7 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient):
         self.db.urls.create_index([('short_url', pymongo.ASCENDING)], unique=True)
         self.db.urls.create_index([('netid', pymongo.ASCENDING)])
         self.db.visits.create_index([('link_id', pymongo.ASCENDING)])
+        self.db.visits.create_index([('source_ip', pymongo.ASCENDING)])
         self.db.visitors.create_index([('ip', pymongo.ASCENDING)], unique=True)
         self.db.organizations.create_index([('name', pymongo.ASCENDING)], unique=True)
         self.db.organizations.create_index([('members.name', pymongo.ASCENDING),
@@ -340,7 +341,11 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient):
                 'total_visits': {'$sum': '$count'},
                 'unique_visits': {'$sum': 1}}},
             {'$addFields': {'endpoint': '$_id.endpoint'}},
-            {'$project': {'_id': 0}}
+            {'$project': {'_id': 0}},
+            {'$match': {'endpoint': {'$not': {'$eq': 'redirect_link'}}}},
+            {'$match': {'endpoint': {'$not': {'$eq': 'static'}}}},
+            {'$match': {'endpoint': {'$not': {'$eq': 'shrunk.render_index'}}}},
+            {'$match': {'endpoint': {'$not': {'$eq': 'shrunk.render_login'}}}}
             ])
         return list(res)
 
