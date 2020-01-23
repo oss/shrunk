@@ -22,6 +22,11 @@ def list_orgs(netid, client):
         'admin_orgs': list(map(org_info, client.get_admin_organizations(netid)))
     }
 
+    if roles.check('admin', netid):
+        kwargs['list_orgs'] = list(map(org_info, client.get_all_organizations()))
+    else:
+        kwargs['list_orgs'] = kwargs['member_orgs']
+
     return flask.render_template('organizations.html', **kwargs)
 
 

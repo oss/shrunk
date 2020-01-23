@@ -37,18 +37,23 @@
 
 <div class="row">
   <div class="col col-md-auto">
-    {% if not member_orgs %}
+    {% if not list_orgs %}
     <h2>You are not currently a member of any organizations.</h2>
     {% else %}
+    {% if "admin" in roles %}
+    <h2>Organizations currently active:</h2>
+    {% else %}
     <h2>You are currently a member of these organizations:</h2>
+    {% endif %}
     {% endif %}
   </div>
 </div>
 
-{% if member_orgs %}
+{% if list_orgs %}
 <div class="container">
-  {% for org in member_orgs %}
+  {% for org in list_orgs %}
   {% set is_org_admin = org in admin_orgs %}
+  {% set is_org_member = org in member_orgs %}
   {% include "organization_card.html" %}
   {% endfor %}
 </div>

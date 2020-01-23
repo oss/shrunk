@@ -12,6 +12,9 @@
 	      {% if is_org_admin %}
 	      <span title="User is an administrator"><em>Administrator</em></span>
 	      {% endif %}
+	      {% if "admin" in roles and is_org_member %}
+	      <span><em>Member</em></span>
+	      {% endif %}
 	    </nobr>
 	  </div>
 

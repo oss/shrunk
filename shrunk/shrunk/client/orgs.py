@@ -94,6 +94,10 @@ class OrgsClient:
         col = self.db.organizations
         return col.aggregate(self.agg_members(name) + self.agg_admins)
 
+    def get_all_organizations(self):
+        col = self.db.organizations
+        return col.find({}, projection={'members': False})
+
     def get_member_organizations(self, netid):
         col = self.db.organizations
         return col.find({'members.netid': netid}, projection={'members': False})
