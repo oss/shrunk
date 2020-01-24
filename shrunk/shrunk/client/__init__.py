@@ -19,9 +19,10 @@ from .exceptions import BadShortURLException, DuplicateIdException, \
 from .search import SortOrder, Pagination, SearchResults, SearchClient  # noqa: F401
 from .geoip import GeoipClient
 from .orgs import OrgsClient
+from .tracking import TrackingClient
 
 
-class ShrunkClient(SearchClient, GeoipClient, OrgsClient):
+class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
     """A class for database interactions. This class defines core
     database-manipulation methods. Other methods are defined in the
     mixins classes from which this class inherits."""
@@ -388,7 +389,7 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient):
         document = self.db.urls.find_one({"short_url": short_url})
         return document["visits"] if document else None
 
-    def visit(self, short_url, source_ip, user_agent, referer):
+    def visit(self, short_url, tracking_id, source_ip, user_agent, referer):
         """Visits the given URL and logs visit information.
 
         On visiting a URL, this is guaranteed to perform at least the following
@@ -404,16 +405,16 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient):
           was found in the database.
         """
         resp = self.db.urls.find_one({'short_url': short_url})
-        if not self.db.visits.find_one({'link_id': resp['_id'], 'source_ip': source_ip}):
+        if not self.db.visits.find_one({'link_id': resp['_id'], 'tracking_id': tracking_id}):
             self.db.urls.update_one({'short_url': short_url},
                                     {'$inc': {'visits': 1, 'unique_visits': 1}})
-            pass
         else:
             self.db.urls.update_one({'short_url': short_url}, {'$inc': {'visits': 1}})
 
         state_code, country_code = self.get_location_codes(source_ip)
         self.db.visits.insert_one({
             'link_id': resp['_id'],
+            'tracking_id': tracking_id,
             'source_ip': source_ip,
             'time': datetime.datetime.now(),
             'user_agent': user_agent,

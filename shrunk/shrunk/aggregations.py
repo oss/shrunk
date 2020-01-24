@@ -6,8 +6,8 @@ def match_link_id(link_id):
 
 
 # daily visits aggregations phases
-group_ips = {"$group": {
-    "_id": "$source_ip",
+group_tracking_ids = {"$group": {
+    "_id": "$tracking_id",
     "visits": {
         "$addToSet": "$$ROOT"
     }
@@ -104,7 +104,7 @@ clean_results = {"$project": {
 
 daily_visits_aggregation = [
     # mark the first_time_visits
-    group_ips, find_first, mark_unqiue, unwind_ips,
+    group_tracking_ids, find_first, mark_unqiue, unwind_ips,
     # break into days
     group_days,
     # sort

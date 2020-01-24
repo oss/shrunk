@@ -1,6 +1,6 @@
 import logging
 
-from flask import Flask, redirect, request, current_app
+from flask import Flask, redirect, request, current_app, session
 from werkzeug.exceptions import abort
 
 from . import roles
@@ -37,17 +37,24 @@ class ShrunkFlaskMini(Flask):
             if long_url is None:
                 abort(404)
             else:
-                client.visit(short_url, request.remote_addr,
+                tracking_id = request.cookies.get('shrunkid')
+                if not tracking_id:
+                    tracking_id = client.get_new_tracking_id()
+                client.visit(short_url,
+                             tracking_id,
+                             request.remote_addr,
                              request.headers.get('User-Agent'),
                              request.headers.get('Referer'))
                 # Check if a protocol exists
                 if '://' in long_url:
-                    return redirect(long_url)
+                    resp = redirect(long_url)
                 else:
                     # the DB doesn't seem to contain any links lacking a protocol,
                     # and a protocol is automatically added to any new links
                     # without one (cf. forms.py). So, can this be removed?
-                    return redirect(f'http://{long_url}')
+                    resp = redirect(f'http://{long_url}')
+                resp.set_cookie('shrunkid', tracking_id)
+                return resp
 
     def _init_logging(self):
         """ Sets up self.logger with default settings. """
