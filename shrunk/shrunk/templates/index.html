@@ -40,6 +40,13 @@
 		   onkeydown="send_request_keypress(event, ADD_LINK_FORM)">
 	    <div id="add-link-short_url-feedback" class="invalid-feedback"></div>
 	  </div>
+	  {% else %}
+	  <div class="row">
+	    <div class="col">
+	      <span>For information about creating custom short URLs, please see
+		<a href="/faq#power_user">the FAQ</a>.</span>
+	    </div>
+	  </div>
 	  {% endif %}
 
 	  <button id="add-link-button" class="btn btn-primary" type="button"
