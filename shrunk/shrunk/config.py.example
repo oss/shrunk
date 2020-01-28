@@ -67,6 +67,8 @@ production because it incurs substantial overhead."""
 ASSETS_DEBUG = False
 """Should be set to True for dev and False for prod."""
 
+SASS_BIN = '/usr/local/bin/scss'
+
 LDAP_VALIDATE_NETIDS = True
 """Whether NetIDs should be validated against the LDAP server defined below."""
 
