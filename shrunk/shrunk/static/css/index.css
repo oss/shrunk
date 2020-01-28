@@ -9,3 +9,23 @@
 .edit-link-modal-body {
     padding-top: 0;
 }
+
+.btn-qr {
+    width: 100%;
+}
+
+#qr-buttons {
+    width: 256px;
+}
+
+#qr-modal > .modal-dialog {
+    width: 16%;
+}
+
+.qr.modal-body {
+    margin: 0 auto;
+}
+
+#qr-buttons {
+    padding-top: 10px;
+}

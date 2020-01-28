@@ -123,24 +123,11 @@ def get_stats(netid, client):
     return render_template('stats.html', **kwargs)
 
 
-@bp.route('/qr', methods=['GET'])
+@bp.route('/print_qr', methods=['GET'])
 @require_login
 def qr_code(netid, client):
     """ Render a QR code for the given link. """
-
-    url = request.args.get('url')
-    if not url:
-        abort(400)
-
-    url_exists = client.get_long_url(url) is not None
-    kwargs = {
-        'url': url,
-        'url_exists': url_exists
-    }
-
-    if url_exists and 'print' in request.args:
-        return render_template('qr_print.html', **kwargs)
-    return render_template('qr.html', **kwargs)
+    return render_template('print_qr.html')
 
 
 @bp.route('/delete', methods=['POST'])

@@ -63,3 +63,38 @@ function change_sortby(sortby) {
 function change_links_set(new_set) {
     window.location.replace('/?links_set=' + new_set);
 }
+
+function show_qr_code(ev) {
+    var parent = ev.target.parentElement;
+    if (parent.tagName == 'BUTTON')
+	parent = parent.parentElement;
+    const short_url = parent.querySelector('.short-url').value;
+    const our_url = new URL(document.location);
+    const dest_url = our_url.origin + '/' + short_url;
+
+    const qr_div = document.getElementById('qr-code');
+    const qr = new QRCode(qr_div, dest_url);
+
+    $('#qr-url').html(short_url);
+
+    let download_btn = document.getElementById('qr_download');
+    download_btn.onclick = function() {
+	const img_tag = qr_div.getElementsByTagName('img')[0];
+	let download_link = document.createElement('a');
+	download_link.download = short_url + '.png';
+	download_link.href = img_tag.src;
+	document.body.appendChild(download_link);
+	download_link.click();
+    };
+    $('#qr-modal').modal('show');
+}
+
+function hide_qr_code() {
+    $('#qr-modal').modal('hide');
+    setTimeout(function() { $('#qr-code').empty() }, 1000);
+}
+
+function print_qr_code() {
+    const short_url = $('#qr-url').html();
+    window.open(new URL(document.location).origin + '/print_qr?url=' + short_url);
+}

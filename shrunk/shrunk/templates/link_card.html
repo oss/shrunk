@@ -53,9 +53,9 @@
 	    </form>
 	    {% endif %}
 
-	    <form action="/qr" method="get">
-	      <input type="hidden" name="url" value="{{ link['short_url'] }}">
-	      <button type="submit" title="Create QR code"
+	    <form>
+	      <input type="hidden" class="short-url" value="{{ link['short_url'] }}">
+	      <button type="button" title="Create QR code" onclick="show_qr_code(event)"
 		      class="btn btn-outline-dark btn-no-border btn-round float-right">
 		<i class="fas fa-qrcode"></i>
 	      </button>

@@ -18,7 +18,7 @@ ext.register('shrunk_css',
 
 JS_BUNDLES = {
     'shrunk_js': [],
-    'shrunk_index': ['js/index.js', 'js/ajax_form.js'],
+    'shrunk_index': ['js/qrcode.js', 'js/index.js', 'js/ajax_form.js'],
     'shrunk_qr': ['js/qrcode.js', 'js/shrunkqr.js'],
     # Why does 'shrunk_stats_' end in an underscore? Because uBlock likes to block
     # scripts whose name ends in 'stats.js'.

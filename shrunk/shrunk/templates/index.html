@@ -151,6 +151,34 @@
 
 <input type="hidden" id="link-delete-id">
 
+<div id="qr-modal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+	<h4 id="qr_title">QR code for <em id="qr-url"></em></h4>
+	<button type="button" class="close" onclick="hide_qr_code()" aria-label="Close">
+	  <span aria-hidden="true">&times;</span>
+	</button>
+      </div>
+
+      <div class="qr modal-body">
+	    <div id="qr-code"></div>
+
+	    <div id="qr-buttons" class="btn-group" role="group" aria-label="Print or download">
+	      <button type="button" class="btn btn-primary btn-qr" onclick="print_qr_code(event)">
+		Print
+	      </button>
+
+	      <button id="qr_download" type="button" class="btn btn-primary btn-qr">
+		Download
+	      </button>
+	    </div>
+	</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="link-delete-modal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
