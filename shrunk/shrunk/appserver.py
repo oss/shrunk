@@ -23,6 +23,7 @@ def logout():
         return redirect(url_for('shrunk.render_login'))
     user = session.pop('user')
     session.clear()
+    current_app.logger.info('logout')
     if current_app.config.get('DEV_LOGINS'):
         if user['netid'] in ['DEV_USER', 'DEV_FACSTAFF', 'DEV_PWR_USER', 'DEV_ADMIN']:
             return redirect(url_for('shrunk.render_login'))
@@ -86,6 +87,7 @@ def add_link(netid, client):
 
         try:
             shortened = client.create_short_url(**kwargs)
+            current_app.logger.info(f'add: {shortened} -> {kwargs["long_url"]}')
             short_url = '{}/{}'.format(current_app.config['LINKSERVER_URL'], shortened)
             return flask.jsonify({'success': {'short_url': short_url}})
         except BadShortURLException as ex:
@@ -109,6 +111,8 @@ def get_stats(netid, client):
     url = request.args.get('url')
     if not url:
         abort(400)
+
+    current_app.logger.info(f'stats: {url}')
 
     if not client.may_view_url(url, netid):
         abort(403)
@@ -138,9 +142,9 @@ def delete_link(netid, client):
 
     short_url = request.form.get('short_url')
     if not short_url:
-        current_app.logger.info(f'{netid} sends an invalid delete request')
+        current_app.logger.info('invalid delete request')
         abort(400)
-    current_app.logger.info(f'{netid} tries to delete {short_url}')
+    current_app.logger.info(f'delete: {short_url}')
 
     try:
         client.delete_url(short_url, netid)
@@ -166,6 +170,9 @@ def edit_link(netid, client):
         # The form has been validated---now do permissions checking
         kwargs = form.to_json()
         admin_or_power = roles.check('admin', netid) or roles.check('power_user', netid)
+
+        current_app.logger.info(f'edit {kwargs["old_short_url"]}: {kwargs["short_url"]} '
+                                + '-> {kwargs["long_url"]}')
 
         if not client.is_owner_or_admin(kwargs['old_short_url'], netid):
             abort(403)
@@ -210,4 +217,5 @@ def admin_panel(netid, client):
     valid_roles = roles.valid_roles()
     roledata = [{'id': role, 'title': roles.form_text[role]['title']} for role in valid_roles]
     stats = client.get_admin_stats()
+    current_app.logger.info('admin panel')
     return render_template('admin.html', roledata=roledata, stats=stats)
