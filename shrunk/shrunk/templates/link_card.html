@@ -19,6 +19,11 @@
 	      {% set full_link_name = link["title"] if link["title"] else link["short_url"] %}
 
 	      <span class="shrunk-card-name" title="{{ full_link_name }}">{{ link_name }}</span>
+
+	      {% if link['deleted'] %}
+	      <span><b style="color: red;">Deleted</b> by {{ link['deleted_by'] }}</span>
+	      {% endif %}
+
 	      {% set formatted_time = "Created: " + formattime(link["timeCreated"]) %}
 	      <span title="{{ formatted_time }}">{{ formatted_time }}</span>
 	      {% set formatted_visits = "Visits: " + (link["visits"] | string) %}
@@ -43,7 +48,7 @@
 	  </div>
 
 	  <div class="col-3 align-self-center">
-	    {% if netid == link['netid'] or 'admin' in roles %}
+	    {% if not link['deleted'] and (netid == link['netid'] or 'admin' in roles) %}
 	    <form>
 	      <input type="hidden" class="link-id" value="{{ link['short_url'] }}">
 	      <button type="button" title="Delete link" onclick="delete_link(event)"
@@ -69,7 +74,7 @@
 	      </button>
 	    </form>
 
-	    {% if netid == link['netid'] or 'admin' in roles %}
+	    {% if not link['deleted'] and (netid == link['netid'] or 'admin' in roles) %}
 	    <form>
 	      <input type="hidden" class="link-id" value="{{ link['short_url'] }}">
 	      <input type="hidden" class="link-title" value="{{ link['title'] }}">

@@ -56,7 +56,8 @@ def render_index(netid, client, **kwargs):
     matching their search query are shown.
     """
 
-    results = search.search(netid, client, request, session)
+    show_deleted = roles.check('admin', netid)
+    results = search.search(netid, client, request, session, show_deleted)
 
     kwargs.update({'begin_pages': results.begin_page,
                    'end_pages': results.end_page,

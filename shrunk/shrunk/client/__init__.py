@@ -166,7 +166,8 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
             "short_url": short_url,
             "long_url": long_url,
             "timeCreated": datetime.datetime.now(),
-            "visits": 0
+            "visits": 0,
+            "deleted": False
         }
         if netid is not None:
             document["netid"] = netid
@@ -261,14 +262,10 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
         if link_id is None:
             raise NoSuchLinkException()
 
-        return {
-            "urlDataResponse": {
-                "nRemoved": self.db.urls.delete_one({"short_url": short_url}).deleted_count
-            },
-            "visitDataResponse": {
-                "nRemoved": self.db.visits.delete_many({"link_id": link_id}).deleted_count
-            }
-        }
+        return self.db.urls.update_one({'short_url': short_url},
+                                       {'$set': {'deleted': True,
+                                                 'deleted_by': request_netid,
+                                                 'deleted_time': datetime.datetime.now()}})
 
     def get_url_info(self, short_url):
         """Given a short URL, return information about it.
@@ -362,7 +359,7 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
           The long URL, or None if the short URL does not exist.
         """
         result = self.get_url_info(short_url)
-        return result['long_url'] if result is not None else None
+        return result['long_url'] if result is not None and not result.get('deleted') else None
 
     def get_visits(self, short_url):
         """Returns all visit information to the given short URL.
