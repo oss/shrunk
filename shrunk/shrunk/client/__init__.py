@@ -139,6 +139,9 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
         resp = self.db.urls.find_one({'short_url': short_url})
         return resp['_id'] if resp else None
 
+    def is_phished(self, long_url):
+        return bool(self.db.phishTank.find_one({'url': long_url.rstrip()}))
+
     def create_short_url(self, long_url, short_url=None, netid=None, title=None):
         """Given a long URL, create a new short URL.
 
@@ -161,6 +164,10 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
         """
         if self.is_blocked(long_url):
             raise ForbiddenDomainException("That URL is not allowed.")
+
+        if self.is_phished(long_url):
+            flask.current_app.logger.warning(f'User is attempting to create black listed url: {long_url}')
+            raise ForbiddenDomainException('That URL is not allowed.')
 
         document = {
             "short_url": short_url,
@@ -213,6 +220,10 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
 
         if self.is_blocked(long_url):
             raise ForbiddenDomainException('That URL is not allowed.')
+
+        if self.is_phised(long_url):
+            flask.current_app.logger.warning(f'User is attempting to create black-listed url: {long_url}')
+            raise ForbiddenDomainException('That URL is not allowed')
 
         if short_url is not None and self.url_is_reserved(short_url):
             raise ForbiddenNameException('That name is reserved.')
