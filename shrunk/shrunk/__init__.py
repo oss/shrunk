@@ -1,8 +1,10 @@
 """ Shrunk, the official URL shortener of Rutgers University. """
 
-import flask
-from werkzeug.middleware.proxy_fix import ProxyFix
+import logging
 
+import flask
+from flask.logging import default_handler
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 # App-level stuff
 from . import app_decorate
@@ -25,10 +27,29 @@ VERSION_TUPLE = (1, 0, 0)
 """ The current version of Shrunk. """
 
 
+class RequestFormatter(logging.Formatter):
+    def format(self, record):
+        record.url = None
+        record.remote_addr = None
+        record.user = None
+        if flask.has_request_context():
+            record.url = flask.request.url
+            record.remote_addr = flask.request.remote_addr
+            if 'user' in flask.session:
+                record.user = flask.session['user']['netid']
+        return super().format(record)
+
+
 def create_app(config_path='config.py', **kwargs):
     app = app_decorate.ShrunkFlask(__name__)
     app.config.from_pyfile(config_path, silent=False)
     app.config.update(kwargs)
+
+    formatter = RequestFormatter(
+        '[%(asctime)s] [%(user)s@%(remote_addr)s] [%(url)s] %(levelname)s '
+        + 'in %(module)s: %(message)s'
+    )
+    default_handler.setFormatter(formatter)
 
     # wsgi middleware
     app.wsgi_app = ProxyFix(app.wsgi_app)

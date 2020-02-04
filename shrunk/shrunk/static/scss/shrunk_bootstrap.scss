@@ -18,7 +18,7 @@ $enable-shadows: false;
     &:not(:disabled):not(.disabled):active,
     &:not(:disabled):not(.disabled).active,
     .show > &.dropdown-toggle {
-	color: $primary-color;
-	background-color: rgba($primary-color, .5);
+        color: $primary-color;
+        background-color: rgba($primary-color, .5);
     }
 }

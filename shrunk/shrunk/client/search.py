@@ -56,7 +56,8 @@ class SearchResults:
 class SearchClient:
     """Mixin for search-related operations."""
 
-    def search(self, *, query=None, netid=None, org=None, sort=None, pagination=None):
+    def search(self, *, query=None, netid=None, org=None, sort=None, pagination=None,
+               show_deleted=False):
         pipeline = []
 
         if netid is not None:
@@ -120,6 +121,9 @@ class SearchClient:
             pipeline.append({
                 '$sort': sort_exp
             })
+
+        if not show_deleted:
+            pipeline.append({'$match': {'deleted': {'$ne': True}}})
 
         facet = {
             'count': [{'$count': 'count'}],

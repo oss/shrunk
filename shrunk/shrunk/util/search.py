@@ -46,7 +46,7 @@ def validate_page(page):
         return False
 
 
-def search(netid, client, request, session, should_paginate=True):
+def search(netid, client, request, session, show_deleted, should_paginate=True):
     old_query = session.get('query')
     query = get_param('query', request, session)
     old_links_set = session.get('links_set')
@@ -73,7 +73,8 @@ def search(netid, client, request, session, should_paginate=True):
             pagination = Pagination(page, flask.current_app.config['MAX_DISPLAY_LINKS'])
         else:
             pagination = None
-        p = functools.partial(client.search, sort=sort, pagination=pagination)
+        p = functools.partial(client.search, sort=sort, pagination=pagination,
+                              show_deleted=show_deleted)
 
         if links_set == 'GO!my':
             results = p(query=query, netid=netid)

@@ -19,7 +19,7 @@
 	  </div>
 
 	  <div class="col-3 align-self-center">
-	    {% if is_org_admin %}
+	    {% if is_org_admin or "admin" in roles %}
 	    <form>
 	      <input type="hidden" class="org-name" value="{{ org['name'] }}">
 	      <button type="button" title="Delete organization" onclick="delete_org_list(event)"

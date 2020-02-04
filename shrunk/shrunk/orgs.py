@@ -1,4 +1,5 @@
 import flask
+from flask import current_app
 from werkzeug.exceptions import abort
 
 from . import roles
@@ -27,6 +28,7 @@ def list_orgs(netid, client):
     else:
         kwargs['list_orgs'] = kwargs['member_orgs']
 
+    current_app.logger.info('list orgs')
     return flask.render_template('organizations.html', **kwargs)
 
 
@@ -44,6 +46,7 @@ def toggle_admin(netid, client):
     if client.count_organization_admins(name) == 0:
         client.toggle_org_admin(name, member_netid)
         return flask.jsonify({'error': 'Cannot remove last administrator.'}), 400
+    current_app.logger.info(f'toggle org-admin status of {member_netid} in {name}')
     return flask.jsonify({'sucess': True})
 
 
@@ -71,6 +74,7 @@ def create_org(netid, client):
         return flask.jsonify({'errors': err}), 400
 
     client.add_organization_admin(name, netid)
+    current_app.logger.info(f'create organization {name}')
     return flask.jsonify({'success': {'name': name}})
 
 
@@ -87,6 +91,7 @@ def delete_org(netid, client):
     if manage not in ['admin', 'site-admin']:
         abort(403)
     client.delete_organization(name)
+    current_app.logger.info(f'delete organization {name}')
     return flask.redirect(flask.url_for('orgs.list'))
 
 
@@ -110,6 +115,7 @@ def manage_org(netid, client):
         'manage': manage
     }
 
+    current_app.logger.info(f'manage organization {name}')
     return flask.render_template('manage_organization.html', **kwargs)
 
 
@@ -124,6 +130,7 @@ def org_stats(netid, client):
     if not client.may_manage_organization(name, netid):
         abort(403)
     kwargs = {'name': name}
+    current_app.logger.info(f'stats for organization {name}')
     return flask.render_template('organization_stats.html', **kwargs)
 
 
@@ -178,6 +185,7 @@ def add_org_member(netid_grantor, client):
     if not res:
         return flask.jsonify({'errors': {'netid': 'Member already exists.'}}), 400
 
+    current_app.logger.info(f'add member {netid_grantee} to {name}, admin={admin}')
     return flask.jsonify({'success': {}})
 
 
@@ -203,4 +211,5 @@ def remove_org_member(netid_remover, client):
             return flask.jsonify({'error': 'Cannot remove last administrator.'}), 400
     if not client.remove_organization_member(name, netid_removed):
         return flask.jsonify({'error': 'User is not an organization member.'}), 404
+    current_app.logger.info(f'remove member {netid_removed} from {name}')
     return flask.jsonify({'success': {}})
