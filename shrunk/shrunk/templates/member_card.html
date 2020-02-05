@@ -14,11 +14,17 @@
 	      <span title="User is an Administrator"><em>Administrator</em></span>
 	      {% endif %}
 	      {% if user_is_admin %}
-	      <form action="{{ url_for('orgs.toggle_admin') }}" method="GET"
-		    class="form-inline" style="display: inline;">
+	      <form class="form-inline" style="display: inline;">
 		<input type="hidden" class="org-name" value="{{ name }}">
 		<input type="hidden" class="org-member-netid" value="{{ member['netid'] }}">
-		<button type="button" class="btn btn-primary" onclick="revoke_admin(event)">
+		<input type="hidden" class="endpoint"
+		       {% if member['is_admin'] %}
+		       value="{{ url_for('orgs.remove_admin') }}"
+		       {% else %}
+		       value="{{ url_for('orgs.grant_admin') }}"
+		       {% endif %}
+		       />
+		<button type="button" class="btn btn-primary" onclick="toggle_admin(event)">
 		  {% if member['is_admin'] %}
 		  Revoke admin
 		  {% else %}
