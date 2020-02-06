@@ -91,7 +91,7 @@ function show_qr_code(ev) {
 
 function hide_qr_code() {
     $('#qr-modal').modal('hide');
-    setTimeout(function() { $('#qr-code').empty() }, 1000);
+    setTimeout(function() { $('#qr-code').empty() }, 200);
 }
 
 function print_qr_code() {
