@@ -222,7 +222,7 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
         if self.is_blocked(long_url):
             raise ForbiddenDomainException('That URL is not allowed.')
 
-        if self.is_phised(long_url):
+        if self.is_phished(long_url):
             flask.current_app.logger.warning(f'User is attempting to create black-listed url: {long_url}')
             raise ForbiddenDomainException('That URL is not allowed')
 
