@@ -19,13 +19,17 @@
 }
 
 #qr-modal > .modal-dialog {
-    width: 16%;
-}
-
-.qr.modal-body {
-    margin: 0 auto;
+    width: 290px;
 }
 
 #qr-buttons {
     padding-top: 10px;
+}
+
+#qr-buttons > button:first-child {
+    border-right: 1px solid rgba(244, 97, 124);
+}
+
+#qr-buttons > button:last-child {
+    border-left: 1px solid rgba(244, 97, 124);
 }
