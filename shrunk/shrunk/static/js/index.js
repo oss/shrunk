@@ -87,11 +87,13 @@ function show_qr_code(ev) {
 	download_link.click();
     };
     $('#qr-modal').modal('show');
+    $('#qr-modal').on('hidden.bs.modal', function() {
+	setTimeout(function() { $('#qr-code').empty() }, 200);
+    });
 }
 
 function hide_qr_code() {
     $('#qr-modal').modal('hide');
-    setTimeout(function() { $('#qr-code').empty() }, 200);
 }
 
 function print_qr_code() {
