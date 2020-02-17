@@ -32,7 +32,7 @@ require = [
 
 setup(
     name="shrunk",
-    version="1.2.0",
+    version="1.2.1",
     packages=["shrunk"],
     install_requires=require,
     package_dir={"shrunk": "shrunk"},
