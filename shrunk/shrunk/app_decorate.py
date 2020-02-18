@@ -121,16 +121,24 @@ class ShrunkFlask(ShrunkFlaskMini):
             'revoke_title': 'Revoke power user'
         })
 
+        def onblacklist(netid):
+            client = current_app.get_shrunk()
+            client.blacklist_user_links(netid)
+
+        def unblacklist(netid):
+            client = current_app.get_shrunk()
+            client.unblacklist_user_links(netid)
+
         roles.new('blacklisted', is_admin, is_valid_netid, custom_text={
             'title': 'Blacklisted Users',
             'grant_title': 'Blacklist a user:',
-            'grantee_text': 'User to blacklist',
+            'grantee_text': 'User to blacklist (and disable their links)',
             'grant_button': 'BLACKLIST',
             'revoke_title': 'Unblacklist a user',
             'revoke_button': 'UNBLACKLIST',
             'empty': 'There are currently no blacklisted users',
             'granted_by': 'blacklisted by'
-        })
+        }, oncreate=onblacklist, onrevoke=unblacklist)
 
         def onblock(url):
             domain = get_domain(url)

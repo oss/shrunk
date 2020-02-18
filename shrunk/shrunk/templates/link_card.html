@@ -20,7 +20,9 @@
 
 	      <span class="shrunk-card-name" title="{{ full_link_name }}">{{ link_name }}</span>
 
-	      {% if link['deleted'] %}
+	      {% if link['deleted'] and link['deleted_by'] == '!BLACKLISTED' %}
+	      <span><b style="color: red;">Blacklisted</b></span>
+	      {% elif link['deleted'] %}
 	      <span><b style="color: red;">Deleted</b> by {{ link['deleted_by'] }}</span>
 	      {% endif %}
 

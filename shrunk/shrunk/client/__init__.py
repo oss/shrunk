@@ -487,6 +487,23 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
              '$inc': {'count': 1}},
             upsert=True)
 
+    def blacklist_user_links(self, netid):
+        return self.db.urls.update_many({'netid': netid,
+                                         'deleted': {'$ne': True}},
+                                        {'$set': {'deleted': True,
+                                                  'deleted_by': '!BLACKLISTED',
+                                                  'deleted_time': datetime.datetime.now()}})
+
+    def unblacklist_user_links(self, netid):
+        return self.db.urls.update_many({'netid': netid,
+                                         'deleted': True,
+                                         'deleted_by': '!BLACKLISTED'},
+                                        {'$set': {'deleted': False},
+                                         '$unset': {
+                                             'deleted_by': 1,
+                                             'deleted_time': 1
+                                         }})
+
     @staticmethod
     def _generate_unique_key():
         """Generates a unique key."""
