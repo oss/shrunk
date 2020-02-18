@@ -1,7 +1,10 @@
+from flask import current_app
+
 # function hashes
 qualified_for = {}
 valid_entity_for = {}
 oncreate_for = {}
+onrevoke_for = {}
 form_text = {}
 # mongo coll to persist the roles data
 grants = None
@@ -33,7 +36,8 @@ def default_text(role):
 
 def new(role, qualifier_func, validator_func=lambda e: e != "",
         custom_text={},
-        oncreate=lambda e: "default"):
+        oncreate=lambda e: "default",
+        onrevoke=lambda e: "default"):
     """
     :Parameters:
     - `qualifier_func`: takes in a netid and returns wether or not a user is
@@ -50,6 +54,7 @@ def new(role, qualifier_func, validator_func=lambda e: e != "",
     qualified_for[role] = qualifier_func
     valid_entity_for[role] = validator_func
     oncreate_for[role] = oncreate
+    onrevoke_for[role] = onrevoke
 
 
 def grant(role, grantor, grantee, comment=''):
@@ -57,6 +62,7 @@ def grant(role, grantor, grantee, comment=''):
     if exists(role) and valid_entity_for[role](grantee):
         # guard against double insertions
         if not check(role, grantee):
+            current_app.logger.info(f'{grantor} grants role {role} to {grantee}')
             grants.insert_one({
                 "role": role,
                 "entity": grantee,
@@ -99,6 +105,9 @@ def list_all(role):
 
 def revoke(role, entity):
     """revoke role from entity"""
+    current_app.logger.info(f'revoking role {role} for {entity}')
+    if role in onrevoke_for:
+        onrevoke_for[role](entity)
     grants.delete_one({"role": role, "entity": entity})
 
 
