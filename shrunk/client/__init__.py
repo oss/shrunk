@@ -68,7 +68,13 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
         self._DB_HOST = DB_HOST
         self._DB_PORT = DB_PORT
         self._DB_REPLSET = DB_REPLSET
-        self.reconnect()
+
+        self._mongo = pymongo.MongoClient(self._DB_HOST, self._DB_PORT,
+                                          username=self._DB_USERNAME,
+                                          password=self._DB_PASSWORD,
+                                          authSource="admin", connect=False,
+                                          replicaSet=self._DB_REPLSET)
+        self.db = self._mongo[self._DB_NAME]
 
         self._create_indexes()
         self._set_geoip(GEOLITE_PATH)
@@ -103,18 +109,6 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
             for col in ['grants', 'organizations',
                         'urls', 'visitors', 'visits']:
                 self.db[col].delete_many({})
-
-    def reconnect(self):
-        """
-        mongoclient is not fork safe. this is used to create a new client
-        after potentially forking
-        """
-        self._mongo = pymongo.MongoClient(self._DB_HOST, self._DB_PORT,
-                                          username=self._DB_USERNAME,
-                                          password=self._DB_PASSWORD,
-                                          authSource="admin", connect=False,
-                                          replicaSet=self._DB_REPLSET)
-        self.db = self._mongo[self._DB_NAME]
 
     def count_links(self, netid=None):
         """Counts the number of created links.
