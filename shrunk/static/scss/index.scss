@@ -1,0 +1,36 @@
+@import 'main';
+
+#add-link-dropdown {
+    .dropdown-menu {
+	width: 250%;
+    }
+
+    .btn {
+	width: 100%;
+    }
+}
+
+#qr-modal > .btn-group {
+    width: 100% !important;
+}
+
+#qr-modal {
+    .modal-dialog {
+	width: auto;
+	max-width: 290px;
+    }
+
+    #qr-canvas {
+	display: block;
+    }
+
+    .btn-group {
+	width: 100%;
+
+	.btn {
+	    width: 50%;
+	    border-top-left-radius: 0;
+	    border-top-right-radius: 0;
+	}
+    }
+}
