@@ -1,0 +1,42 @@
+{% macro org_row(org, is_org_admin, is_org_member) %}
+  <div class="row org-row"
+       data-org-name="{{ org['name'] }}">
+  <div class="col-info">
+    <span class="row-title">{{ org['name'] }}</span>
+
+    <dl>
+      <dt>Created</dt>
+      <dd>{{ formattime(org['timeCreated']) }}</dd>
+
+      {% if is_org_admin %}
+	<dt class="no-colon">Administrator</dt>
+      {% endif %}
+
+      {% if "admin" in roles and is_org_member %}
+	<dt class="no-colon">Member</dt>
+      {% endif %}
+    </dl>
+  </div>
+
+  <div class="col-buttons">
+    {% if is_org_admin or "admin" in roles %}
+      <button type="button" title="Delete organization"
+	      class="btn btn-circle-danger delete-button">
+	      <i class="fas fa-trash"></i>
+      </button>
+    {% endif %}
+
+    <a type="submit" title="Organization statistics"
+       href="{{ url_for('orgs.stats', name=org['name']) }}"
+       class="btn btn-circle-dark">
+       <i class="fas fa-chart-line"></i>
+    </a>
+
+    <a type="submit" title="Manage organization"
+       href="{{ url_for('orgs.manage', name=org['name']) }}"
+       class="btn btn-circle-dark">
+       <i class="fas fa-tools"></i>
+    </a>
+  </div>
+</div>
+{% endmacro %}

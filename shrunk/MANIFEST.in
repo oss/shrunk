@@ -1,4 +1,0 @@
-exclude shrunk/config.py
-exclude shrunk/test-config.py
-exclude shrunk/config.py.test
-include shrunk/config.py.example

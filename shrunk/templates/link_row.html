@@ -1,0 +1,78 @@
+{% macro link_row(link) %}
+<div class="row link-row"
+     data-link-title="{{ link['title'] }}"
+     data-long-url="{{ link['long_url'] }}"
+     data-short-url="{{ link['short_url'] }}">
+  <div class="col-info">
+    <div class="row align-items-end flex-nowrap">
+      <div class="col-remaining ellipsize">
+	<span class="row-title" title="{{ link['title'] }}">{{ link['title'] }}</span>
+      </div>
+
+      <div class="col col-auto col-prop">
+	<dl>
+	  {% if link['deleted'] and link['deleted_by'] == '!BLACKLISTED' %}
+	    <dt class="deleted no-colon">Blacklisted</dt>
+	  {% elif link['deleted'] %}
+	    <dt class="deleted">Deleted by</dt>
+	    <dd>{{ link['deleted_by'] }}</dd>
+	  {% endif %}
+
+	  <dt>Created</dt>
+	  <dd>{{ formattime(link['timeCreated']) }}</dd>
+	  
+	  <dt>Visits</dt>
+	  <dd>{{ link['visits'] }}</dd>
+
+	  <dt>Owner</dt>
+	  <dd>{{ link['netid'] }}</dd>
+	</dl>
+      </div>
+    </div>
+
+    <div class="row flex-nowrap">
+      <div class="col ellipsize">
+	<span>
+	  <button type="button" class="btn btn-outline-dark btn-no-border copy-button"
+		  title="Copy short URL to clipboard">
+		  <i class="fas fa-copy"></i>
+	  </button>
+      {% set short_url = linkserver_url + '/' + link['short_url'] %}
+	  <a class="short-url" href="{{ short_url }}">{{ short_url }}</a>
+	  &rarr; {# right arrow #}
+	  <a class="shrunk-long-url" href="{{ link['long_url'] }}">{{ link['long_url'] }}</a>
+	</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-buttons">
+    {% if not link['deleted'] and (netid == link['netid'] or 'admin' in roles) %}
+    <button type="button" 
+	    class="btn btn-circle-danger delete-button"
+	    title="Delete link">
+      <i class="fas fa-trash"></i>
+    </button>
+    {% endif %}
+
+    <button type="button"
+	    class="btn btn-circle-dark qr-button"
+	    title="Create QR code">
+      <i class="fas fa-qrcode"></i>
+    </button>
+
+    <a title="Link visit statistics"
+       href="{{ url_for('shrunk.get_stats', url=link['short_url']) }}"
+       class="btn btn-circle-dark">
+       <i class="fas fa-chart-line"></i>
+    </a>
+
+    {% if not link['deleted'] and (netid == link['netid'] or 'admin' in roles) %}
+    <button type="button" title="Edit link"
+	    class="btn btn-circle-dark edit-button">
+      <i class="fas fa-pencil-alt"></i>
+    </button>
+    {% endif %}
+  </div>
+</div>
+{% endmacro %}
