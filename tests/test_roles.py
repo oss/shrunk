@@ -143,4 +143,4 @@ def test_blacklisted(app, db, client):
     with app.app_context():
         roles.grant('blacklisted', 'shrunk_test', 'DEV_USER')
     with dev_login(client, 'user'):
-        assert_status(client.get('/'), 403)
+        assert_status(client.get('/app/'), 403)

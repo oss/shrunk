@@ -9,34 +9,34 @@ DEV_ROLES = ['user', 'facstaff', 'power', 'admin']
 
 
 def test_index_logged_out(client):
-    assert_redirect(client.get('/'), 'shrunk-login')
+    assert_redirect(client.get('/'), 'app')
 
 
 @pytest.mark.parametrize('role', DEV_ROLES)
 def test_index_dev_logins(client, role):
     with dev_login(client, role):
-        assert_ok(client.get('/'))
+        assert_ok(client.get('/app/'))
 
 
 @pytest.mark.parametrize('role', DEV_ROLES)
 def test_dev_logins(client, role):
     try:
-        assert_redirect(client.get(f'/devlogins/{role}'), '/')
+        assert_redirect(client.get(f'/app/devlogins/{role}'), '/')
     finally:
-        assert_status(client.get(f'/logout'), 302)
+        assert_status(client.get('/app/logout'), 302)
 
 
-def test_delete(client):
-    assert_redirect(client.post('/delete'), 'shrunk-login')
+def test_delete(client, app):
+    assert_redirect(client.post('/app/delete'), 'shrunk-login')
 
 
 # We need to use '/admin/' instead of '/admin' here, because
 # '/admin' serves a 308 redirect to '/admin', which then serves
 # a 302 redirect to '/shrunk-login'.
 NO_500_ROUTES = [
-    '/admin/', '/faq', '/stats', '/logout', '/stat/visits/daily',
-    '/stat/geoip', '/stat/referer', '/stat/useragent', '/stat/csv/link',
-    '/stat/csv/search', '/orgs/'
+    '/app/admin/', '/app/faq', '/app/stats', '/app/logout', '/app/stat/visits/daily',
+    '/app/stat/geoip', '/app/stat/referer', '/app/stat/useragent', '/app/stat/csv/link',
+    '/app/stat/csv/search', '/app/orgs/'
 ]
 
 
@@ -48,14 +48,14 @@ def test_auth_no_500(client, route):
 
 
 def test_normal_login(client):
-    assert_ok(client.get('/shrunk-login'))
+    assert_ok(client.get('/app/shrunk-login'))
     with dev_login(client, 'user'):
-        assert_redirect(client.get('/shrunk-login'), '/')
+        assert_redirect(client.get('/app/shrunk-login'), '/')
 
 
 def test_admin_panel(client):
     with dev_login(client, 'admin'):
-        assert_ok(client.get('/admin/'))
+        assert_ok(client.get('/app/admin/'))
 
 
 def test_404(client):

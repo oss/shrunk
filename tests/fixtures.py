@@ -34,8 +34,8 @@ def client(app):
 
 @contextlib.contextmanager
 def dev_login(client, dev_login):
-    assert_status(client.get(f'/devlogins/{dev_login}'), 302)
+    assert_status(client.get(f'/app/devlogins/{dev_login}'), 302)
     try:
         yield
     finally:
-        assert_status(client.get('/logout'), 302)
+        assert_status(client.get('/app/logout'), 302)

@@ -18,13 +18,13 @@ def test_invalid_url(client, url):
             'title': 'testing'
         }
 
-        assert_in_resp(client.post('/add', data=req), 'Please enter a valid URL.')
+        assert_in_resp(client.post('/app/add', data=req), 'Please enter a valid URL.')
 
 
 def test_missing_title(client):
     with dev_login(client, 'user'):
         req = {'long_url': 'google.com'}
-        assert_in_resp(client.post('/add', data=req), 'Please enter a title.')
+        assert_in_resp(client.post('/app/add', data=req), 'Please enter a title.')
 
 
 def test_blocked_url(client):
@@ -34,7 +34,7 @@ def test_blocked_url(client):
             'long_url': 'https://lmao.foo.com/sus.php',
             'title': 'testing'
         }
-        assert_in_resp(client.post('/add', data=req), 'That URL is not allowed.')
+        assert_in_resp(client.post('/app/add', data=req), 'That URL is not allowed.')
 
 
 def test_add_successfully(client):
@@ -43,12 +43,12 @@ def test_add_successfully(client):
             'long_url': 'google.com',
             'title': 'testing'
         }
-        resp = client.post('/add', data=req)
+        resp = client.post('/app/add', data=req)
         assert resp.status_code == 200
         short_url = resp.get_json()['success']['short_url'].split('/')[-1]
         assert_redirect(client.get(f'/{short_url}'), 'google.com')
 
-        resp = client.get('/')
+        resp = client.get('/app/')
         assert_in_resp(resp, 'testing')
         assert_in_resp(resp, 'google.com')
 
@@ -59,7 +59,7 @@ def test_add_banned(client):
             'long_url': 'example.xxx',
             'title': 'example'
         }
-        assert_status(client.post('/add', data=req), 400)
+        assert_status(client.post('/app/add', data=req), 400)
 
 
 @pytest.mark.parametrize('alias,err',
@@ -73,12 +73,12 @@ def test_invalid_short_url(client, alias, err):
             'title': 'testing',
             'short_url': alias
         }
-        resp = client.post('/add', data=req)
+        resp = client.post('/app/add', data=req)
         assert_status(resp, 400)
         print(resp.get_data())
         assert_in_resp(resp, err)
 
-        resp = client.get('/')
+        resp = client.get('/app/')
         with pytest.raises(AssertionError):
             assert_in_resp(resp, 'nope.com')
 
@@ -90,9 +90,9 @@ def test_add_reserved_link(client):
             'title': 'testing',
             'short_url': 'admin'
         }
-        assert_in_resp(client.post('/add', data=req), 'That name is reserved.')
+        assert_in_resp(client.post('/app/add', data=req), 'That name is reserved.')
         with pytest.raises(AssertionError):
-            assert_in_resp(client.get('/'), 'google.com')
+            assert_in_resp(client.get('/app/'), 'google.com')
 
 
 def test_add_alias_no_perm(client):
@@ -102,7 +102,7 @@ def test_add_alias_no_perm(client):
             'title': 'testing',
             'short_url': 'customthing'
         }
-        assert_status(client.post('/add', data=req), 403)
+        assert_status(client.post('/app/add', data=req), 403)
 
 
 def test_add_alias_successfully(client):
@@ -112,8 +112,8 @@ def test_add_alias_successfully(client):
             'title': 'testing',
             'short_url': 'customthing'
         }
-        assert_ok(client.post('/add', data=req))
-        resp = client.get('/')
+        assert_ok(client.post('/app/add', data=req))
+        resp = client.get('/app/')
         assert_ok(resp)
         assert_in_resp(resp, 'google.com')
         assert_in_resp(resp, 'testing')
@@ -128,31 +128,31 @@ def test_delete(db, client, app):
                             netid='NOT_DEV_USER', title='test1')
 
         with dev_login(client, 'user'):
-            assert_ok(client.post('/delete', data={'short_url': 'test0'}))
+            assert_ok(client.post('/app/delete', data={'short_url': 'test0'}))
             with pytest.raises(AssertionError):
-                assert_in_resp(client.get('/'), 'google.com')
+                assert_in_resp(client.get('/app/'), 'google.com')
 
         for role in ['user', 'power']:
             with dev_login(client, role):
-                assert_status(client.post('/delete', data={'short_url': 'test1'}), 403)
+                assert_status(client.post('/app/delete', data={'short_url': 'test1'}), 403)
                 assert db.search(query='test1').total_results == 1
 
         with dev_login(client, 'admin'):
-            assert_ok(client.post('/delete', data={'short_url': 'test1'}))
+            assert_ok(client.post('/app/delete', data={'short_url': 'test1'}))
             assert db.search(query='test1').total_results == 0
             with pytest.raises(AssertionError):
-                assert_in_resp(client.get('/'), 'yahoo.com')
+                assert_in_resp(client.get('/app/'), 'yahoo.com')
 
 
 def test_delete_no_url(client):
     with dev_login(client, 'admin'):
-        assert_status(client.post('/delete'), 400)
-        assert_status(client.post('/delete', data={'short_url': ''}), 400)
+        assert_status(client.post('/app/delete'), 400)
+        assert_status(client.post('/app/delete', data={'short_url': ''}), 400)
 
 
 def test_delete_no_such_url(client):
     with dev_login(client, 'admin'):
-        assert_status(client.post('/delete', data={'short_url': 'does_not_exist'}), 400)
+        assert_status(client.post('/app/delete', data={'short_url': 'does_not_exist'}), 400)
 
 
 @pytest.fixture
@@ -180,7 +180,7 @@ def test_edit_invalid_url(client, short_url, url):
             'short_url': short_url,
             'old_short_url': short_url
         }
-        resp = client.post('/edit', data=req)
+        resp = client.post('/app/edit', data=req)
         assert_status(resp, 400)
         assert_in_resp(resp, 'Please enter a valid URL.')
 
@@ -193,7 +193,7 @@ def test_edit_no_title(client, short_url):
             'short_url': short_url,
             'old_short_url': short_url
         }
-        resp = client.post('/edit', data=req)
+        resp = client.post('/app/edit', data=req)
         assert_status(resp, 400)
         assert_in_resp(resp, 'Please enter a title.')
 
@@ -207,7 +207,7 @@ def test_edit_blocked(client, short_url):
             'short_url': short_url,
             'old_short_url': short_url
         }
-        resp = client.post('/edit', data=req)
+        resp = client.post('/app/edit', data=req)
         assert_status(resp, 400)
         assert_in_resp(resp, 'That URL is not allowed.')
 
@@ -220,9 +220,9 @@ def test_edit_successfully(client, short_url):
             'short_url': short_url,
             'old_short_url': short_url
         }
-        assert_ok(client.post('/edit', data=req))
+        assert_ok(client.post('/app/edit', data=req))
 
-        resp = client.get('/')
+        resp = client.get('/app/')
         assert_in_resp(resp, 'new-lmao')
         assert_in_resp(resp, 'facebook.com')
 
@@ -234,9 +234,9 @@ def test_edit_successfully(client, short_url):
             'short_url': f'new{short_url}',
             'old_short_url': short_url
         }
-        assert_status(client.post('/edit', data=req), 403)
+        assert_status(client.post('/app/edit', data=req), 403)
         with pytest.raises(AssertionError):
-            assert_in_resp(client.get('/'), f'new-{short_url}')
+            assert_in_resp(client.get('/app/'), f'new-{short_url}')
 
 
 def test_edit_power(client, short_url_power):
@@ -247,14 +247,14 @@ def test_edit_power(client, short_url_power):
             'short_url': 'admin',
             'old_short_url': short_url_power
         }
-        resp = client.post('/edit', data=req)
+        resp = client.post('/app/edit', data=req)
         assert_status(resp, 400)
         assert_in_resp(resp, 'That name is reserved.')
 
         req['short_url'] = f'new{short_url_power}'
-        assert_ok(client.post('/edit', data=req))
+        assert_ok(client.post('/app/edit', data=req))
 
-        resp = client.get('/')
+        resp = client.get('/app/')
         assert_in_resp(resp, f'new{short_url_power}')
 
 
@@ -266,13 +266,13 @@ def test_edit_no_perm(client, short_url):
             'short_url': 'admin',
             'old_short_url': short_url
         }
-        assert_status(client.post('/edit', data=req), 403)
+        assert_status(client.post('/app/edit', data=req), 403)
 
 
 @pytest.mark.parametrize('sortby', list(range(4)) + ['invalid'])
 def test_sortby(client, sortby):
     with dev_login(client, 'user'):
-        assert_ok(client.get(f'/?sortby={sortby}'))
+        assert_ok(client.get(f'/app/?sortby={sortby}'))
 
 
 def test_search(db, client, app):
@@ -280,7 +280,7 @@ def test_search(db, client, app):
         db.create_short_url('https://google.com', short_url='short1',
                             title='lmao1', netid='DEV_USER')
 
-        def find(query, check, fmt='/?query={}'):
+        def find(query, check, fmt='/app/?query={}'):
             resp = client.get(fmt.format(query))
             assert_ok(resp)
             assert_in_resp(resp, check)
@@ -291,17 +291,17 @@ def test_search(db, client, app):
             find('short1', 'short1')
 
         with dev_login(client, 'admin'):
-            find('DEV', 'DEV', '/?links_set=GO!all&query={}')
+            find('DEV', 'DEV', '/app/?links_set=GO!all&query={}')
 
 
 def test_all_urls(client, short_url_power):
     with dev_login(client, 'power'):
-        assert_in_resp(client.get('/'), short_url_power)
+        assert_in_resp(client.get('/app/'), short_url_power)
     with dev_login(client, 'user'):
         with pytest.raises(AssertionError):
-            assert_in_resp(client.get('/?links_set=GO!all'), short_url_power)
+            assert_in_resp(client.get('/app/?links_set=GO!all'), short_url_power)
     with dev_login(client, 'admin'):
-        assert_in_resp(client.get('/?links_set=GO!all'), short_url_power)
+        assert_in_resp(client.get('/app/?links_set=GO!all'), short_url_power)
 
 
 def test_org_urls(db, client, app):
@@ -315,7 +315,7 @@ def test_org_urls(db, client, app):
         db.add_organization_member('test-org', 'DEV_PWR_USER')
 
         with dev_login(client, 'user'):
-            resp = client.get('/')
+            resp = client.get('/app/')
             assert_ok(resp)
             assert_in_resp(resp, 'test0')
             with pytest.raises(AssertionError):
@@ -323,7 +323,7 @@ def test_org_urls(db, client, app):
             with pytest.raises(AssertionError):
                 assert_in_resp(resp, 'test2')
 
-            resp = client.get('/?links_set=test-org')
+            resp = client.get('/app/?links_set=test-org')
             assert_ok(resp)
             assert_in_resp(resp, 'test0')
             assert_in_resp(resp, 'test1')
@@ -335,7 +335,7 @@ def test_csv_link_0(db, client, short_url):
     db.visit(short_url, 'tracking_id', '127.0.0.1', 'Test-User-Agent', 'http://test.referrer.com')
 
     with dev_login(client, 'user'):
-        resp = client.get(f'/stat/csv/link?url={short_url}')
+        resp = client.get(f'/app/stat/csv/link?url={short_url}')
         assert_ok(resp)
         assert_in_resp(resp, 'Test-User-Agent')
         assert_in_resp(resp, 'test.referrer.com')
@@ -348,7 +348,7 @@ def test_csv_link_1(db, client, app):
         db.visit(short, 'tracking_id', '196.168.1.1', 'Goggle Chrom', 'https://refuror.org')
 
         with dev_login(client, 'user'):
-            resp = client.get(f'/stat/csv/link?url={short}')
+            resp = client.get(f'/app/stat/csv/link?url={short}')
             assert_ok(resp)
             lines = str(resp.get_data(), 'utf8').split('\r\n')
 
@@ -368,22 +368,22 @@ def test_csv_link_1(db, client, app):
 
 def test_visits_csv_no_url(client):
     with dev_login(client, 'admin'):
-        assert_status(client.get('/stat/csv/link'), 400)
-        assert_status(client.get('/stat/csv/link?url='), 400)
+        assert_status(client.get('/app/stat/csv/link'), 400)
+        assert_status(client.get('/app/stat/csv/link?url='), 400)
 
 
 def test_visits_no_perm(db, client, app):
     with app.app_context():
         short = db.create_short_url('google.com', netid='shrunk_test')
         with dev_login(client, 'user'):
-            assert_status(client.get(f'/stat/csv/link?url={short}'), 403)
+            assert_status(client.get(f'/app/stat/csv/link?url={short}'), 403)
 
 
 def test_visits_daily_no_perm(db, client, app):
     with app.app_context():
         short = db.create_short_url('google.com', netid='shrunk_test')
         with dev_login(client, 'user'):
-            assert_status(client.get(f'/stat/visits/daily?url={short}'), 403)
+            assert_status(client.get(f'/app/stat/visits/daily?url={short}'), 403)
 
 
 def test_search_visits_csv(db, client, app):
@@ -397,7 +397,7 @@ def test_search_visits_csv(db, client, app):
         db.visit(short2, 'tracking_id', '1.2.3.4', 'visitor2', 'referer')
 
         def do_query(q, present, absent):
-            resp = client.get(f'/stat/csv/search?links_set=GO!all&query={q}')
+            resp = client.get(f'/app/stat/csv/search?links_set=GO!all&query={q}')
             assert_ok(resp)
             print(resp.get_data())
             for p in present:
@@ -430,7 +430,7 @@ def test_geoip_json(db, client, short_url):
         expected['us'].sort(key=get_code)
         expected['world'].sort(key=get_code)
 
-        resp = client.get(f'/stat/geoip?url={short_url}')
+        resp = client.get(f'/app/stat/geoip?url={short_url}')
         assert_ok(resp)
 
         actual = resp.get_json()
@@ -442,38 +442,38 @@ def test_geoip_json(db, client, short_url):
 
 def test_geoip_json_no_url(client):
     with dev_login(client, 'user'):
-        assert_status(client.get('/stat/geoip'), 400)
+        assert_status(client.get('/app/stat/geoip'), 400)
 
 
 def test_geoip_json_unauthorized(client, short_url_power):
     with dev_login(client, 'user'):
-        assert_status(client.get(f'/stat/geoip?url={short_url_power}'), 403)
+        assert_status(client.get(f'/app/stat/geoip?url={short_url_power}'), 403)
 
 
 def test_stats_no_perm(client, short_url):
     with dev_login(client, 'facstaff'):
-        assert_status(client.get(f'/stats?url={short_url}'), 403)
+        assert_status(client.get(f'/app/stats?url={short_url}'), 403)
 
 
 def test_stats_ok(client, short_url):
     with dev_login(client, 'user'):
-        assert_ok(client.get(f'/stats?url={short_url}'))
+        assert_ok(client.get(f'/app/stats?url={short_url}'))
 
 
 def test_stats_no_url(client):
     with dev_login(client, 'user'):
-        assert_status(client.get('/stats'), 400)
-        assert_status(client.get('/stats?url='), 400)
+        assert_status(client.get('/app/stats'), 400)
+        assert_status(client.get('/app/stats?url='), 400)
 
 
 def test_stats_nonexistent_url(client):
     with dev_login(client, 'admin'):
-        assert_ok(client.get('/stats?url=does_not_exist'))
+        assert_ok(client.get('/app/stats?url=does_not_exist'))
 
 
 def test_useragent_stats(db, client, short_url):
     def check_stats(expected):
-        resp = client.get(f'/stat/useragent?url={short_url}')
+        resp = client.get(f'/app/stat/useragent?url={short_url}')
         assert_ok(resp)
         assert_json(resp, expected)
 
@@ -514,24 +514,24 @@ def test_useragent_stats_no_visit(db, client, short_url):
     })
 
     with dev_login(client, 'user'):
-        resp = client.get(f'/stat/useragent?url={short_url}')
+        resp = client.get(f'/app/stat/useragent?url={short_url}')
         assert_ok(resp)
         assert_json(resp, {'platform': {'Unknown': 1}, 'browser': {'Unknown': 1}})
 
 
 def test_useragent_stats_no_url(client):
     with dev_login(client, 'user'):
-        assert_status(client.get(f'/stat/useragent'), 400)
+        assert_status(client.get(f'/app/stat/useragent'), 400)
 
 
 def test_useragent_stats_unauthorized(client, short_url_power):
     with dev_login(client, 'user'):
-        assert_status(client.get(f'/stat/useragent?url={short_url_power}'), 403)
+        assert_status(client.get(f'/app/stat/useragent?url={short_url_power}'), 403)
 
 
 def test_referer_stats(db, client, short_url):
     def check_stats(expected):
-        resp = client.get(f'/stat/referer?url={short_url}')
+        resp = client.get(f'/app/stat/referer?url={short_url}')
         assert_ok(resp)
         assert_json(resp, expected)
 
@@ -565,14 +565,14 @@ def test_referer_stats_many(db, client, short_url):
                      f'https://{letter}.com')
         db.visit(short_url, 'tracking_id', '127.0.0.1', 'Test-User-Agent', 'https://f.com')
 
-        resp = client.get(f'/stat/referer?url={short_url}')
+        resp = client.get(f'/app/stat/referer?url={short_url}')
         assert_ok(resp)
         assert_json(resp, {f'{letter}.com': 2 for letter in 'abcde'})
 
 
 def test_referer_stats_unauthorized(client, short_url_power):
     with dev_login(client, 'user'):
-        assert_status(client.get(f'/stat/referer?url={short_url_power}'), 403)
+        assert_status(client.get(f'/app/stat/referer?url={short_url_power}'), 403)
 
 
 @pytest.mark.slow
@@ -580,7 +580,7 @@ def test_search_visits_csv_many(db, client, short_url):
     for _ in range(6001):
         db.visit(short_url, 'tracking_id', '127.0.0.1', 'Test-User-Agent', 'http://example.com')
     with dev_login(client, 'user'):
-        assert_status(client.get(f'/stat/csv/search?url={short_url}'), 400)
+        assert_status(client.get(f'/app/stat/csv/search?url={short_url}'), 400)
 
 
 def test_redirect_no_protocol(db, client, app):
@@ -595,6 +595,6 @@ def test_redirect_no_protocol(db, client, app):
 def test_dev_logins_disabled(app, client):
     try:
         app.config['DEV_LOGINS'] = False
-        assert_status(client.get('/devlogins/admin'), 403)
+        assert_status(client.get('/app/devlogins/admin'), 403)
     finally:
         app.config['DEV_LOGINS'] = True

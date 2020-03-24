@@ -10,7 +10,7 @@ from assertions import assert_ok, assert_in_resp, assert_status, assert_redirect
 @pytest.mark.parametrize('role', ['whitelisted'])
 def test_list(client, role):
     def check(expected):
-        resp = client.get(f'/roles/{role}/')
+        resp = client.get(f'/app/roles/{role}/')
         assert_ok(resp)
         all(assert_in_resp(resp, e) for e in expected)
 
@@ -40,7 +40,7 @@ def test_list(client, role):
 def test_grant(client, role):
     with dev_login(client, 'admin'):
         req = {'entity': 'DEV_USER', 'comment': 'Test comment'}
-        assert_status(client.post(f'/roles/{role}/', data=req), 302)
+        assert_status(client.post(f'/app/roles/{role}/grant', data=req), 302)
         assert roles.check(role, 'DEV_USER')
 
 
@@ -48,26 +48,26 @@ def test_grant(client, role):
 def test_grant_twice(client, role):
     with dev_login(client, 'admin'):
         req = {'entity': 'DEV_USER', 'comment': 'Test comment'}
-        assert_status(client.post(f'/roles/{role}/', data=req), 302)
-        assert_status(client.post(f'/roles/{role}/', data=req), 400)
+        assert_status(client.post(f'/app/roles/{role}/grant', data=req), 302)
+        assert_status(client.post(f'/app/roles/{role}/grant', data=req), 400)
 
 
 def test_grant_no_comment(client):
     with dev_login(client, 'admin'):
         req = {'entity': 'DEV_USER'}
-        assert_status(client.post('/roles/whitelisted/', data=req), 400)
+        assert_status(client.post('/app/roles/whitelisted/grant', data=req), 400)
 
 
 def test_grant_no_such_role(client):
     with dev_login(client, 'admin'):
         req = {'entity': 'DEV_USER'}
-        assert_status(client.post('/roles/no_such_role/', data=req), 302)
+        assert_status(client.post('/app/roles/no_such_role/grant', data=req), 302)
 
 
 def test_grant_invalid_entity(client):
     with dev_login(client, 'admin'):
         req = {'entity': 'not a valid url'}
-        assert_status(client.post('/roles/blocked_url/', data=req), 400)
+        assert_status(client.post('/app/roles/blocked_url/grant', data=req), 400)
 
 
 @pytest.mark.parametrize('role', ['whitelisted'])
@@ -77,7 +77,7 @@ def test_revoke(app, client, role):
     with dev_login(client, 'admin'):
         assert roles.check(role, 'DEV_USER')
         req = {'entity': 'DEV_USER'}
-        assert_status(client.post(f'/roles/{role}/revoke', data=req), 302)
+        assert_status(client.post(f'/app/roles/{role}/revoke', data=req), 302)
         assert not roles.check(role, 'DEV_USER')
 
 
@@ -86,21 +86,21 @@ def test_revoke_whitelist_no_perm(app, client):
         roles.grant('whitelisted', 'DEV_ADMIN', 'DEV_USER', None)
     with dev_login(client, 'power'):
         req = {'entity': 'DEV_USER'}
-        assert_status(client.post('/roles/whitelisted/revoke', data=req), 403)
+        assert_status(client.post('/app/roles/whitelisted/revoke', data=req), 403)
         assert roles.check('whitelisted', 'DEV_USER')
 
 
 def test_roles_no_session(client):
-    assert_redirect(client.get('/roles/whitelisted/'), '/')
+    assert_redirect(client.get('/app/roles/whitelisted/'), '/')
 
 
 def test_whitelist_no_perm(client):
     with dev_login(client, 'user'):
-        assert_status(client.get('/roles/whitelisted/'), 403)
+        assert_status(client.get('/app/roles/whitelisted/'), 403)
 
 
 def test_admin_blacklisted(app, client):
     with app.app_context():
         roles.grant('blacklisted', 'test', 'DEV_ADMIN', None)
     with dev_login(client, 'admin'):
-        assert_status(client.get('/admin/'), 403)
+        assert_status(client.get('/app/admin/'), 403)

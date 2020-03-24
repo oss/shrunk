@@ -12,7 +12,7 @@ DB_PORT = 27017
 
 DB_NAME = "shrunk_test"
 
-GEOLITE_PATH = "/usr/share/GeoIP/GeoLite2-City.mmdb"
+GEOLITE_PATH = "./GeoLite2-City.mmdb"
 """The path to the geolite geoip database."""
 
 SECRET_KEY = "something_secret"

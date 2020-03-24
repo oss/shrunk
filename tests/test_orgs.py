@@ -6,11 +6,11 @@ from assertions import assert_ok, assert_status, assert_redirect, assert_in_resp
 
 
 def create_org(client, name):
-    return client.post('/orgs/create', data={'name': name})
+    return client.post('/app/orgs/create', data={'name': name})
 
 
 def delete_org(client, name):
-    return client.post('/orgs/delete', data={'name': name})
+    return client.post('/app/orgs/delete', data={'name': name})
 
 
 def add_member(client, name, netid, is_admin=False):
@@ -19,12 +19,12 @@ def add_member(client, name, netid, is_admin=False):
         'netid': netid,
         'is_admin': 'true' if is_admin else 'false'
     }
-    return client.post('/orgs/add_member', data=req)
+    return client.post('/app/orgs/add_member', data=req)
 
 
 def remove_member(client, name, netid):
     req = {'name': name, 'netid': netid}
-    return client.post('/orgs/remove_member', data=req)
+    return client.post('/app/orgs/remove_member', data=req)
 
 
 def test_create_org(client):
@@ -34,7 +34,7 @@ def test_create_org(client):
 
 def test_create_org_no_name(client):
     with dev_login(client, 'facstaff'):
-        assert_status(client.post('/orgs/create', data={}), 400)
+        assert_status(client.post('/app/orgs/create', data={}), 400)
 
 
 @pytest.mark.parametrize('name', ['', '!@#$*#(', ','])
@@ -78,8 +78,8 @@ def test_delete_org_no_perm(client):
 
 def test_manage_org_no_name(client):
     with dev_login(client, 'facstaff'):
-        assert_status(client.get('/orgs/manage'), 400)
-        assert_status(client.get('/orgs/manage?name='), 400)
+        assert_status(client.get('/app/orgs/manage'), 400)
+        assert_status(client.get('/app/orgs/manage?name='), 400)
 
 
 def test_manage_org_no_perm(client):
@@ -87,7 +87,7 @@ def test_manage_org_no_perm(client):
         assert_ok(create_org(client, 'test_org'))
 
     with dev_login(client, 'user'):
-        assert_status(client.get('/orgs/manage?name=test_org'), 403)
+        assert_redirect(client.get('/app/orgs/manage?name=test_org'), 'orgs')
 
 
 def test_add_member(client):
@@ -96,7 +96,7 @@ def test_add_member(client):
         assert_ok(add_member(client, 'test_org', 'DEV_USER'))
 
     with dev_login(client, 'user'):
-        assert_ok(client.get('/orgs/manage?name=test_org'))
+        assert_ok(client.get('/app/orgs/manage?name=test_org'))
 
 
 def test_add_member_twice(client):
@@ -118,18 +118,18 @@ def test_add_member_no_name(client):
     with dev_login(client, 'facstaff'):
         assert_ok(create_org(client, 'test_org'))
         req = {'name': '', 'netid': 'DEV_USER'}
-        assert_status(client.post('/orgs/add_member', data=req), 400)
+        assert_status(client.post('/app/orgs/add_member', data=req), 400)
         req = {'netid': 'DEV_USER'}
-        assert_status(client.post('/orgs/add_member', data=req), 400)
+        assert_status(client.post('/app/orgs/add_member', data=req), 400)
 
 
 def test_add_member_no_netid(client):
     with dev_login(client, 'facstaff'):
         assert_ok(create_org(client, 'test_org'))
         req = {'name': 'test_org', 'netid': ''}
-        assert_status(client.post('/orgs/add_member', data=req), 400)
+        assert_status(client.post('/app/orgs/add_member', data=req), 400)
         req = {'name': 'test_org'}
-        assert_status(client.post('/orgs/add_member', data=req), 400)
+        assert_status(client.post('/app/orgs/add_member', data=req), 400)
 
 
 def test_remove_member(client):
@@ -164,9 +164,9 @@ def test_remove_member_no_name(client):
         assert_ok(create_org(client, 'test_org'))
         assert_ok(add_member(client, 'test_org', 'DEV_USER'))
         req = {'name': '', 'netid': 'DEV_USER'}
-        assert_status(client.post('/orgs/remove_member', data=req), 400)
+        assert_status(client.post('/app/orgs/remove_member', data=req), 400)
         req = {'netid': 'DEV_USER'}
-        assert_status(client.post('/orgs/remove_member', data=req), 400)
+        assert_status(client.post('/app/orgs/remove_member', data=req), 400)
 
 
 def test_remove_member_no_netid(client):
@@ -174,9 +174,9 @@ def test_remove_member_no_netid(client):
         assert_ok(create_org(client, 'test_org'))
         assert_ok(add_member(client, 'test_org', 'DEV_USER'))
         req = {'name': 'test_org', 'netid': ''}
-        assert_status(client.post('/orgs/remove_member', data=req), 400)
+        assert_status(client.post('/app/orgs/remove_member', data=req), 400)
         req = {'name': 'test_org'}
-        assert_status(client.post('/orgs/remove_member', data=req), 400)
+        assert_status(client.post('/app/orgs/remove_member', data=req), 400)
 
 
 def test_add_admin(client):
@@ -224,19 +224,19 @@ def test_list_orgs(client):
         assert_ok(create_org(client, 'org0'))
         assert_ok(add_member(client, 'org0', 'DEV_USER'))
 
-        resp = client.get('/orgs/')
+        resp = client.get('/app/orgs/')
         assert_ok(resp)
         assert_in_resp(resp, 'org0')
 
         assert_ok(create_org(client, 'org1'))
 
-        resp = client.get('/orgs/')
+        resp = client.get('/app/orgs/')
         assert_ok(resp)
         assert_in_resp(resp, 'org0')
         assert_in_resp(resp, 'org1')
 
     with dev_login(client, 'user'):
-        resp = client.get('/orgs/')
+        resp = client.get('/app/orgs/')
         assert_ok(resp)
         assert_in_resp(resp, 'org0')
         with pytest.raises(AssertionError):
