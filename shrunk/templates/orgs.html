@@ -19,16 +19,16 @@
 	<form class="px-4 py-3 needs-validation ajax-form"
 	      data-ajax-endpoint="{{ url_for('orgs.create') }}" novalidate>
 	  <div class="input-group">
-	    <input hidden type="text">
 	    <input type="text" class="form-control" name="name" placeholder="Organization Name"
 		   required="true" data-invalid-feedback="#create-org-name-feedback">
+	    <input hidden type="text">
 	    <div class="input-group-append">
 	      <button type="button" class="btn btn-primary">
 		Create
 	      </button>
 	    </div>
+	    <div class="invalid-feedback" id="create-org-name-feedback"></div>
 	  </div>
-	  <div class="invalid-feedback" id="create-org-name-feedback"></div>
 	</form>
       </div>
     </div>
