@@ -43,3 +43,10 @@ shrunk/shrunk/static/shrunk_*.js
 .coverage
 shrunk/shrunk/static/out
 *.egg-info
+
+node_modules/
+shrunk/static/dist/
+
+webpack-stats.json
+
+dist-newstyle
