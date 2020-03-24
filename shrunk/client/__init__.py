@@ -452,7 +452,7 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
             return True
 
         def match_netid(netid):
-            return [{'$match': {'netid': netid}}, {'$project': {'_id': 0, 'name': 1}}]
+            return [{'$match': {'members.netid': netid}}, {'$project': {'_id': 0, 'name': 1}}]
 
         info = self.get_url_info(url)
         if not info:
