@@ -6,6 +6,9 @@ from setuptools import Command, setup, find_packages
 from setuptools.command.build_py import build_py as _build_py
 
 
+VERSION = '1.3.0'
+
+
 class BuildWebpack(Command):
     description = 'build webpack assets'
 
@@ -37,6 +40,26 @@ class build_py(_build_py):
         return super().run()
 
 
+CMDCLASS = {
+        'build_py': build_py,
+        'build_webpack': BuildWebpack
+    }
+
+COMMAND_OPTIONS = {}
+
+
+try:
+    from sphinx.setup_command import BuildDoc
+    CMDCLASS['build_sphinx'] = BuildDoc
+    COMMAND_OPTIONS['build_sphinx'] = {
+        'project': ('setup.py', 'shrunk'),
+        'version': ('setup.py', VERSION),
+        'source_dir': ('setup.py', 'doc')
+    }
+except ImportError:
+    pass
+
+
 with open('pip.req', 'r') as f:
     requires = [line.rstrip() for line in f]
 
@@ -47,7 +70,7 @@ with open('README.md', 'r') as f:
 
 setup(
     name='shrunk',
-    version='1.3.0',
+    version=VERSION,
     packages=find_packages(),
     package_data={'shrunk': ['static/webpack-stats.json', 'static/dist/*', 'static/img/*',
                              'templates/*', 'templates/errors/*']},
@@ -67,8 +90,6 @@ setup(
         'Topic :: Utilities'
     ],
     url='https://github.com/oss/shrunk',
-    cmdclass={
-        'build_py': build_py,
-        'build_webpack': BuildWebpack
-    }
+    command_options=COMMAND_OPTIONS,
+    cmdclass=CMDCLASS
 )

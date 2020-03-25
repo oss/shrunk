@@ -51,7 +51,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'shrunk'
-copyright = '2019, Open System Solutions'
+copyright = '2020, Open System Solutions'
 author = 'Open System Solutions'
 
 # The version info for the project you're documenting, acts as replacement for

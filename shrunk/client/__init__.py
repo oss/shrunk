@@ -289,17 +289,15 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
 
     def get_daily_visits(self, short_url):
         """Given a short URL, return how many visits and new unique visiters it gets per month.
-
         :Parameters:
-          - `short_url`: A shortened URL
-
+        - `short_url`: A shortened URL
         :Returns:
-         An array, each of whose elements is a dict containing the data for one month.
-         The fields of each dict are:
-          - `_id`: a dict with keys for month and year.
-          - `first_time_visits`: new visits by users who haven't seen the link yet.
-          - `all_visits`: the total visits per that month.
+        An array, each of whose elements is a dict containing the data for one month. The fields of each dict are:
+        - `_id`: a dict with keys for month and year
+        - `first_time_visits`: new visits by users who haven't seen the link yet
+        - `all_visits`: the total visits per that month
         """
+
         link_id = self.get_url_id(short_url)
         aggregation = [aggregations.match_link_id(link_id)] + \
             aggregations.daily_visits_aggregation
@@ -308,10 +306,10 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
     def get_admin_stats(self):
         """Get some basic stats about shunk overall
         :Returns:
-         A dictionary with the folowing info
-          - `visits`: total amount of redirects shrunk has preformed
-          - `users`: the amount of users creating links
-          - `links`: the amount of links in shrunk
+        A dictionary with the folowing info
+        - `visits`: total amount of redirects shrunk has preformed
+        - `users`: the amount of users creating links
+        - `links`: the amount of links in shrunk
         """
         links = self.db.urls.count_documents({})
         visits = self.db.visits.estimated_document_count()
@@ -332,10 +330,10 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
     def get_endpoint_stats(self):
         """ Returns a summary of the information in the endpoint_statistics collection.
         :Returns:
-          A list of dictionaries with the following fields:
-           - `endpoint`: the endpoint name
-           - `total_visits`: the total number of visits to the endpoint
-           - `unique visits`: the number of unique visits (by netid) to the endpoint
+        A list of dictionaries with the following fields:
+        - `endpoint`: the endpoint name
+        - `total_visits`: the total number of visits to the endpoint
+        - `unique visits`: the number of unique visits (by netid) to the endpoint
         """
 
         res = self.db.endpoint_statistics.aggregate([

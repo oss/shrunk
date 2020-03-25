@@ -4,3 +4,4 @@ flake8
 pylint
 autopep8
 setuptools
+sphinx

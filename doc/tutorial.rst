@@ -12,19 +12,18 @@ without an exception::
 You will also need to have access to Shrunk's database. If you don't have access
 to an existing server, you can always run a copy of the database locally.
 
-Currently, Shrunk is backed by MongoDB. If you have `downloaded and installed
-<http://www.mongodb/org/display/DOCS/Getting+Started>`_ MongoDB, you can start a
-mongod in your system shell:
+Shrunk is backed by MongoDB. Install Mongo with your distro's package manager, and
+then start the database with:
 
-.. code-block:: bash
+.. parsed-literal::
 
-    $ mongod
+    \# systemctl enable --now mongo
 
 This starts MongoDB on localhost on the default port (port 27017).
 
 Connecting to the Database
 --------------------------
-We can use a ShrunkClient object to connect to the database::
+We can use a :py:class:`ShrunkClient` object to connect to the database::
 
     >>> from shrunk import ShrunkClient
     >>> client = ShrunkClient()

@@ -11,9 +11,11 @@ You can use `pip <http://pypi.python.org/pypi/pip>`_ to install shrunk::
 
     $ pip install shrunk
 
-To use a specific version of shrunk::
+To use a specific version of shrunk:
 
-    $ pip install shrunk==0.2.0
+.. parsed-literal::
+
+    $ pip install shrunk==\ |version|\
 
 You can also upgrade shrunk via pip::
 
@@ -21,10 +23,10 @@ You can also upgrade shrunk via pip::
 
 Installing from Source
 ----------------------
-You can install shrunk from source, which provides the latest features but may
+You can install Shrunk from source, which provides the latest features but may
 be unstable and is not suitable for the production server. Just clone the
 repository and use the Python installation command::
 
-    $ git clone git@github.com:oss/shrunk
+    $ git clone ssh://em-oss-phab@vault.phacility.com/diffusion/SRU/shrunk.git
     $ cd shrunk
-    $ python setup.py install
+    $ ./setup.py install
