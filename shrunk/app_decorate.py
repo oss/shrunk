@@ -145,10 +145,8 @@ class ShrunkFlask(ShrunkFlaskMini):
             urls = self.get_shrunk().db.urls
             self.logger.info(f'url {url} has been blocked. removing all urls with domain {domain}')
 
-            contains_domain = urls.find({'long_url': {
-                # . needs to be escaped in the domain because it is regex wildcard
-                '$regex': '%s*' % domain.replace('.', r'\.')
-            }})
+            # . needs to be escaped in the domain because it is regex wildcard
+            contains_domain = urls.find({'long_url': {'$regex': '%s*' % domain.replace('.', r'\.')}})
 
             matches_domain = [link for link in contains_domain
                               if get_domain(link['long_url']) == domain]
@@ -157,9 +155,19 @@ class ShrunkFlask(ShrunkFlaskMini):
                 + ', '.join(f'{l["_id"]} -> {l["long_url"]}' for l in matches_domain)
             self.logger.info(msg)
 
-            # XXX FIX THIS (disable only)
-            result = urls.delete_many({'_id': {'$in': [doc['_id'] for doc in matches_domain]}})
-            self.logger.info(f'block {url} delete many result: {result.raw_result}')
+            self.get_shrunk().block_urls(doc['_id'] for doc in matches_domain)
+
+        def unblock(url):
+            urls = self.get_shrunk().db.urls
+            domain = get_domain(url)
+            contains_domain = urls.find({
+                'long_url': {'$regex': '%s*' % domain.replace('.', r'\.')},
+                'deleted': True,
+                'deleted_by': '!BLOCKED'
+            })
+
+            matches_domain = [link for link in contains_domain if get_domain(link['long_url']) == domain]
+            self.get_shrunk().unblock_urls(doc['_id'] for doc in matches_domain)
 
         roles.new('blocked_url', is_admin, validate_url, custom_text={
             'title': 'Blocked URLs',
@@ -171,7 +179,7 @@ class ShrunkFlask(ShrunkFlaskMini):
             'revoke_button': 'UNBLOCK',
             'empty': 'There are currently no blocked URLs',
             'granted_by': 'Blocked by'
-        }, oncreate=onblock)
+        }, oncreate=onblock, onrevoke=unblock)
 
         roles.new('whitelisted', has_some_role(['admin', 'facstaff', 'power_user']),
                   is_valid_netid, custom_text={

@@ -498,6 +498,23 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
                                              'deleted_time': 1
                                          }})
 
+    def block_urls(self, ids):
+        return self.db.urls.update_many({'_id': {'$in': list(ids)},
+                                         'deleted': {'$ne': True}},
+                                        {'$set': {'deleted': True,
+                                                  'deleted_by': '!BLOCKED',
+                                                  'deleted_time': datetime.datetime.now()}})
+
+    def unblock_urls(self, ids):
+        return self.db.urls.update_many({'_id': {'$in': list(ids)},
+                                         'deleted': True,
+                                         'deleted_by': '!BLOCKED'},
+                                        {'$set': {'deleted': False},
+                                         '$unset': {
+                                             'deleted_by': 1,
+                                             'deleted_time': 1
+                                         }})
+
     @staticmethod
     def _generate_unique_key():
         """Generates a unique key."""

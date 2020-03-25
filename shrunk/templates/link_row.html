@@ -13,6 +13,8 @@
 	<dl>
 	  {% if link['deleted'] and link['deleted_by'] == '!BLACKLISTED' %}
 	    <dt class="deleted no-colon">Blacklisted</dt>
+          {% elif link['deleted'] and link['deleted_by'] == '!BLOCKED' %}
+	    <dt class="deleted no-colon">Blocked</dt>
 	  {% elif link['deleted'] %}
 	    <dt class="deleted">Deleted by</dt>
 	    <dd>{{ link['deleted_by'] }}</dd>
