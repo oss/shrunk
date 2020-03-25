@@ -2,4 +2,9 @@
 
 #add-member-dropdown {
     width: 200%;
+
+    .btn {
+        border-top-right-radius: $btn-border-radius;
+        border-bottom-right-radius: $btn-border-radius;
+    }
 }
