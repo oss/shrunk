@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import subprocess
+import fnmatch
 from setuptools import Command, setup, find_packages
 from setuptools.command.build_py import build_py as _build_py
 
@@ -25,6 +26,12 @@ class BuildWebpack(Command):
 
 
 class build_py(_build_py):
+    EXCLUDED = ['shrunk/config.py', 'shrunk/test-config.py']
+
+    def find_package_modules(self, package, package_dir):
+        modules = super().find_package_modules(package, package_dir)
+        return (mod for mod in modules if not any(fnmatch.fnmatchcase(mod[2], pat) for pat in self.EXCLUDED))
+
     def run(self):
         self.run_command('build_webpack')
         return super().run()
@@ -42,7 +49,8 @@ setup(
     name='shrunk',
     version='1.3.0',
     packages=find_packages(),
-    package_data={'shrunk': ['static/webpack-stats.json', 'static/dist/*', 'static/img/*', 'templates/*', 'templates/errors/*']},
+    package_data={'shrunk': ['static/webpack-stats.json', 'static/dist/*', 'static/img/*',
+                             'templates/*', 'templates/errors/*']},
     include_package_data=True,
     zip_safe=False,
     install_requires=requires,
