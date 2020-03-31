@@ -1,5 +1,6 @@
 # shrunk - Rutgers University URL Shortener
 
+
 class TrackingClient:
     """Mixin for user tracking-related operations."""
 

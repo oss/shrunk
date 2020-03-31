@@ -1,6 +1,8 @@
-from typing import Any, Callable
+from typing import Any, Callable, List, Optional, Iterable
 
 from flask import current_app, has_app_context
+
+from .. import schema
 
 # function hashes
 qualified_for = {}
@@ -69,98 +71,118 @@ def new(role: str,
     onrevoke_for[role] = onrevoke
 
 
-def grant(role, grantor, grantee, comment=''):
-    """gives a role to grantee and remembers who did it"""
+def grant(role: str, grantor: str, grantee: str, comment: Optional[str] = None) -> None:
+    """
+    Gives a role to grantee and remembers who did it
+
+    :param role: Role to grant
+    :param grantor: Identifier of entity granting role
+    :param grantee: Entity to which role should be granted
+    :param comment: Comment, if required
+
+    :raises InvalidEntity: If the entity fails validation
+    """
+
     if exists(role) and valid_entity_for[role](grantee):
         # guard against double insertions
         if not check(role, grantee):
             if has_app_context():
                 current_app.logger.info(f'{grantor} grants role {role} to {grantee}')
             grants.insert_one({
-                "role": role,
-                "entity": grantee,
-                "granted_by": grantor,
-                "comment": comment
+                'role': role,
+                'entity': grantee,
+                'granted_by': grantor,
+                'comment': comment if comment is not None else ''
             })
             if role in oncreate_for:
                 oncreate_for[role](grantee)
     else:
-        raise InvalidEntity()
+        raise InvalidEntity
 
 
-def check(role, entity):
-    """check if an entity has a role"""
+def check(role: str, entity: str) -> bool:
+    """Check whether an entity has a role"""
+
     return bool(grants.find_one({'role': role, 'entity': entity}))
 
 
-def has_one_of(roles, entity):
-    """check if an entity has atleast one of the roles int the list"""
+def has_one_of(roles: List[str], entity: str) -> bool:
+    """Check whether an entity has at least one of the roles in the list"""
+
     return any(check(role, entity) for role in roles)
 
 
-def get(entity):
-    """gives list of strings for all roles an entity has"""
-    entity_grants = grants.find({"entity": entity})
-    return [grant["role"] for grant in entity_grants]
+def get(entity: str) -> List[str]:
+    """Get a list of all the roles an entity has"""
+
+    entity_grants = grants.find({'entity': entity})
+    return [grant['role'] for grant in entity_grants]
 
 
-def granted_by(role, entity):
-    grant = grants.find_one({"role": role, "entity": entity})
+def granted_by(role: str, entity: str) -> Optional[str]:
+    """Determine who granted a role to an entity"""
+
+    grant = grants.find_one({'role': role, 'entity': entity})
     if not grant:
         return None
-    return grant["granted_by"]
+    return grant['granted_by']
 
 
-def list_all(role):
-    """list all entities with the role"""
-    return list(grants.find({"role": role}))
+def list_all(role: str) -> Iterable[schema.Grants]:
+    """Get all entities associated with the role"""
+
+    return grants.find({'role': role})
 
 
-def revoke(role, entity):
-    """revoke role from entity"""
+def revoke(role: str, entity: str) -> None:
+    """Revoke role from entity"""
+
     if has_app_context():
         current_app.logger.info(f'revoking role {role} for {entity}')
     if role in onrevoke_for:
         onrevoke_for[role](entity)
-    grants.delete_one({"role": role, "entity": entity})
+    grants.delete_one({'role': role, 'entity': entity})
 
 
-def template_data(role, netid, invalid=False):
-    """gets teplated data for lisiting entities with a role in the ui"""
+def template_data(role: str, netid: str, invalid: bool = False):
+    """Get templated data for lisiting entities with a role in the UI"""
     is_admin = check('admin', netid)
     grants = list_all(role)
     if not is_admin:
         grants = [g for g in grants if g['granted_by'] == netid]
     data = {
-        "role": role,
-        "grants": grants
+        'role': role,
+        'grants': grants
     }
     if invalid:
-        data["msg"] = form_text[role]["invalid"]
+        data['msg'] = form_text[role]['invalid']
     data.update(form_text[role])
     data['admin'] = is_admin
-    data['power_user'] = check("power_user", netid)
-    data['facstaff'] = check("facstaff", netid)
+    data['power_user'] = check('power_user', netid)
+    data['facstaff'] = check('facstaff', netid)
     return data
 
 
-def exists(role):
-    """check if a role is valid"""
+def exists(role: str) -> bool:
+    """Check whether a role exists"""
+
     return role in qualified_for
 
 
-def valid_roles():
-    """returns a list of valid roles"""
+def valid_roles() -> List[str]:
+    """Get a list of valid roles"""
+
     return list(qualified_for)
 
 
 def init(app, mongo_client=None, db_name='shrunk'):
-    """init the module, namely get a reference to db"""
+    """Init the module, namely get a reference to db"""
+
     if not mongo_client:
         mongo_client = app.get_shrunk()._mongo
         # this forces pymongo to connect instead of sitting on its hands and blocking
         # the server. idk why it behaves like this but if you remove the next like the
         # server does not respond. pymongo3.6 aug 2018
-        mongo_client.admin.command("ismaster")
+        mongo_client.admin.command('ismaster')
     global grants
     grants = mongo_client[db_name].grants

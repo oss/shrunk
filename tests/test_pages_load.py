@@ -1,8 +1,6 @@
 import pytest
 
-from fixtures import app, client, dev_login  # noqa: F401
-from fixtures import dev_login
-from assertions import assert_redirect, assert_status, assert_not_500, assert_ok
+from util import assert_redirect, assert_status, assert_not_500, assert_ok, dev_login
 
 
 DEV_ROLES = ['user', 'facstaff', 'power', 'admin']

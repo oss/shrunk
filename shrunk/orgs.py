@@ -38,10 +38,10 @@ def grant_admin(netid, client):
     name = flask.request.form.get('name')
     member_netid = flask.request.form.get('netid')
     if not name or not member_netid:
-       abort(400)
+        abort(400)
     manage = client.may_manage_organization(name, netid)
     if manage not in ['admin', 'site-admin']:
-       abort(403)
+        abort(403)
     client.grant_organization_admin(name, member_netid)
     current_app.logger.info(f'grant org-admin status to {member_netid} in {name}')
     return flask.jsonify({'ok': True})
@@ -56,7 +56,7 @@ def remove_admin(netid, client):
         abort(400)
     manage = client.may_manage_organization(name, netid)
     if manage not in ['admin', 'site-admin']:
-       abort(403)
+        abort(403)
     client.remove_organization_admin(name, member_netid)
     if client.count_organization_admins(name) == 0:
         client.grant_organization_admin(name, member_netid)
@@ -234,8 +234,12 @@ def remove_org_member(netid_remover, client):
         admins = client.get_organization_admins(name)
         # since we just checked we can assume there is only one admin
         if list(admins)[0]['netid'] == netid_removed:
-            return flask.jsonify({'ok': False, 'errors': [{'name': 'netid', 'error': 'Cannot remove last administrator.'}]}), 400
+            return flask.jsonify({'ok': False,
+                                  'errors': [{'name': 'netid',
+                                              'error': 'Cannot remove last administrator.'}]}), 400
     if not client.remove_organization_member(name, netid_removed):
-        return flask.jsonify({'ok': False, 'errors': [{'name': 'netid', 'error': 'User is not an organization member.'}]}), 404
+        return flask.jsonify({'ok': False,
+                              'errors': [{'name': 'netid',
+                                          'error': 'User is not an organization member.'}]}), 404
     current_app.logger.info(f'remove member {netid_removed} from {name}')
     return flask.jsonify({'ok': True})

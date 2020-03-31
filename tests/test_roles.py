@@ -7,9 +7,7 @@ import pytest
 
 from shrunk import roles
 
-from fixtures import app, db, client  # noqa: F401
-from fixtures import dev_login
-from assertions import assert_status
+from util import assert_status, dev_login
 
 
 def test_invalid(db):
@@ -115,28 +113,28 @@ def test_template_data(app, db):
     assert template['admin']
     assert not template['power_user']
     assert not template['facstaff']
-    assert len(template['grants']) == 3
+    assert len(list(template['grants'])) == 3
 
     template = roles.template_data('role0', 'shrunk_test', invalid=True)
     assert template['msg'] == 'invalid entity for role role0'
 
 
 def test_has_one_of(db):
-    roles.new("prole0", True)
-    roles.new("prole1", True)
+    roles.new('prole0', True)
+    roles.new('prole1', True)
     roles.grant('prole0', 'shrunk_test', 'entity0')
     roles.grant('prole1', 'shrunk_test', 'entity0')
     roles.grant('prole0', 'shrunk_test', 'entity1')
     roles.grant('prole1', 'shrunk_test', 'entity2')
 
-    assert roles.has_one_of(["prole0", "prole1", "bogus"], "entity0")
-    assert roles.has_one_of(["prole0", "prole1", "bogus"], "entity1")
-    assert not roles.has_one_of(["prole0", "bogus"], "entity2")
+    assert roles.has_one_of(['prole0', 'prole1', 'bogus'], 'entity0')
+    assert roles.has_one_of(['prole0', 'prole1', 'bogus'], 'entity1')
+    assert not roles.has_one_of(['prole0', 'bogus'], 'entity2')
 
-    assert roles.has_one_of(["prole0", "prole1", "bogus"], "entity2")
-    assert not roles.has_one_of(["prole1", "bogus"], "entity1")
+    assert roles.has_one_of(['prole0', 'prole1', 'bogus'], 'entity2')
+    assert not roles.has_one_of(['prole1', 'bogus'], 'entity1')
 
-    assert not roles.has_one_of(["fweuihiwf", "hash_slining_slasher", "bogus"], "entity0")
+    assert not roles.has_one_of(['fweuihiwf', 'hash_slining_slasher', 'bogus'], 'entity0')
 
 
 def test_blacklisted(app, db, client):

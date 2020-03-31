@@ -2,9 +2,7 @@ import pytest
 
 from shrunk import roles
 
-from fixtures import app, db, client  # noqa: F401
-from fixtures import dev_login
-from assertions import assert_ok, assert_in_resp, assert_status, assert_redirect
+from util import assert_ok, assert_in_resp, assert_status, assert_redirect, dev_login
 
 
 @pytest.mark.parametrize('role', ['whitelisted'])

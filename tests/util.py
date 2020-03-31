@@ -1,3 +1,6 @@
+import contextlib
+
+
 def assert_redirect(resp, location_pat):
     assert resp.status_code == 302
     assert location_pat in resp.headers['Location']
@@ -21,3 +24,12 @@ def assert_in_resp(resp, string):
 
 def assert_json(resp, expected):
     assert resp.get_json() == expected
+
+
+@contextlib.contextmanager
+def dev_login(client, dev_login):
+    assert_status(client.get(f'/app/devlogins/{dev_login}'), 302)
+    try:
+        yield
+    finally:
+        assert_status(client.get('/app/logout'), 302)

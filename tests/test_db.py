@@ -8,8 +8,6 @@ import pytest
 import shrunk.client
 import shrunk.roles as roles
 
-from fixtures import app, db  # noqa: F401
-
 
 def insert_urls(db, long_urls, netid):
     return [db.create_short_url(url, netid=netid) for url in long_urls]
@@ -27,8 +25,8 @@ def get_url(db, url):
 def test_urls(db, app):
     """ Puts and retrieves URLs from the database. """
     with app.app_context():
-        long_urls = ["foo.com", "bar.net", "báz7.edu.fr"]
-        short_urls = insert_urls(db, long_urls, "shrunk_test")
+        long_urls = ['foo.com', 'bar.net', 'báz7.edu.fr']
+        short_urls = insert_urls(db, long_urls, 'shrunk_test')
         results = [db.get_long_url(url) for url in short_urls]
         assert sorted(long_urls) == sorted(results)
 
@@ -36,13 +34,13 @@ def test_urls(db, app):
 def test_visit(db, app):
     """Tests logic when "visiting" a URL."""
     with app.app_context():
-        long_url = "http://www.foobar.net/index"
-        short_url = db.create_short_url(long_url, netid="shrunk_test")
+        long_url = 'http://www.foobar.net/index'
+        short_url = db.create_short_url(long_url, netid='shrunk_test')
         assert short_url is not None
 
         hits = 4
         for _ in range(hits):
-            db.visit(short_url, "tracking_id", "127.0.0.1", "tester", "https://test.com")
+            db.visit(short_url, 'tracking_id', '127.0.0.1', 'tester', 'https://test.com')
         assert db.get_num_visits(short_url) == hits
 
 
@@ -61,99 +59,99 @@ def test_172_geoip(db):
 
 
 def test_count(db, app):
-    "Test to see if links are counted correctly"
+    """Test to see if links are counted correctly"""
 
     with app.app_context():
-        insert_urls(db, ["aa.com", "bb.com"], "alice")
-        insert_urls(db, ["cc.com", "dd.com", "ee.com"], "bob")
+        insert_urls(db, ['aa.com', 'bb.com'], 'alice')
+        insert_urls(db, ['cc.com', 'dd.com', 'ee.com'], 'bob')
 
-        assert db.count_links(netid="alice") == 2
-        assert db.count_links(netid="bob") == 3
+        assert db.count_links(netid='alice') == 2
+        assert db.count_links(netid='bob') == 3
         assert db.count_links() == 5
 
 
 def test_create(db, app):
     with app.app_context():
-        roles.grant("blocked_url", "ltorvalds", "https://microsoft.com")
-        db.create_short_url("https://linux.org", netid="dude", title="title",
-                            short_url="custom-link")
+        roles.grant('blocked_url', 'ltorvalds', 'https://microsoft.com')
+        db.create_short_url('https://linux.org', netid='dude', title='title',
+                            short_url='custom-link')
 
         # can't create a link that is blocked
         with pytest.raises(shrunk.client.ForbiddenDomainException):
-            db.create_short_url("https://microsoft.com/custom", netid="dude",
-                                short_url="custom-link2")
+            db.create_short_url('https://microsoft.com/custom', netid='dude',
+                                short_url='custom-link2')
 
         # can't use somone else's link
         with pytest.raises(shrunk.client.DuplicateIdException):
-            db.create_short_url("https://lmao.com/custom", netid="dude", short_url="custom-link")
+            db.create_short_url('https://lmao.com/custom', netid='dude', short_url='custom-link')
 
         with pytest.raises(shrunk.client.ForbiddenNameException):
-            db.create_short_url("https://lmao.com/custom", netid="dude", short_url="shrunk-login")
+            db.create_short_url('https://lmao.com/custom', netid='dude', short_url='shrunk-login')
 
 
 def test_modify(db, app):
-    """ Make sure modifing the url sets the new info properly. """
+    """Make sure modifing the url sets the new info properly."""
     with app.app_context():
-        roles.grant("blocked_url", "ltorvalds", "https://microsoft.com")
-        url = db.create_short_url("https://linux.org", netid="dude", title="title")
-        db.create_short_url("https://linux.org/custom", netid="dude", short_url="custom-link")
-        db.create_short_url("https://linux.org/custom4", netid="dude", short_url="custom-link4")
+        roles.grant('blocked_url', 'ltorvalds', 'https://microsoft.com')
+        url = db.create_short_url('https://linux.org', netid='dude', title='title')
+        db.create_short_url('https://linux.org/custom', netid='dude', short_url='custom-link')
+        db.create_short_url('https://linux.org/custom4', netid='dude', short_url='custom-link4')
 
         def modify(**newargs):
             args = {
-                "old_short_url": url,
-                "long_url": "https://linux.org"
+                'old_short_url': url,
+                'long_url': 'https://linux.org'
             }
             args.update(newargs)
             return db.modify_url(**args)
 
         # can't edit to blocked urls
         with pytest.raises(shrunk.client.ForbiddenDomainException):
-            modify(long_url="https://microsoft.com")
+            modify(long_url='https://microsoft.com')
 
         with pytest.raises(shrunk.client.ForbiddenDomainException):
-            modify(long_url="https://ComL3te-MeSs.mIcroSoft.cOm/of-AllofTh3m/4.aspx")
+            modify(long_url='https://ComL3te-MeSs.mIcroSoft.cOm/of-AllofTh3m/4.aspx')
 
         # can't edit to a reserved word
         with pytest.raises(shrunk.client.ForbiddenNameException):
-            modify(short_url="logout")
+            modify(short_url='logout')
 
         # can't edit to an already taken short url
         with pytest.raises(shrunk.client.BadShortURLException):
-            modify(short_url="custom-link")
+            modify(short_url='custom-link')
 
         # all new information should be set
-        modify(title="new-title", long_url="https://linux.org/other-page.html")
+        modify(title='new-title', long_url='https://linux.org/other-page.html')
         new_url = get_url(db, url)
-        assert new_url["title"] == "new-title"
-        assert new_url["long_url"] == "https://linux.org/other-page.html"
+        assert new_url['title'] == 'new-title'
+        assert new_url['long_url'] == 'https://linux.org/other-page.html'
 
 
 def test_is_owner_or_admin(db, app):
     """test utility function to see if somone can modify a url"""
 
     with app.app_context():
-        url = db.create_short_url("https://linux.org", netid="dude")
+        url = db.create_short_url('https://linux.org', netid='dude')
         print(url)
-        roles.grants.insert_one({"role": "admin", "entity": "dnolen", "granted_by": "rhickey"})
+        roles.grants.insert_one({'role': 'admin', 'entity': 'dnolen', 'granted_by': 'rhickey'})
 
-        assert db.is_owner_or_admin(url, "dude")
-        assert db.is_owner_or_admin(url, "dnolen")
-        assert not db.is_owner_or_admin(url, "bgates")
+        assert db.is_owner_or_admin(url, 'dude')
+        assert db.is_owner_or_admin(url, 'dnolen')
+        assert not db.is_owner_or_admin(url, 'bgates')
 
         # nonexistent url
-        assert db.is_owner_or_admin("hogwash", "dnolen")
-        assert not db.is_owner_or_admin("hogwash", "dude")
+        assert db.is_owner_or_admin('hogwash', 'dnolen')
+        assert not db.is_owner_or_admin('hogwash', 'dude')
 
 
 def make_urls(db, num_visits, num_visits2):
-    url = db.create_short_url("https://linux.org", netid="dude")
-    url2 = db.create_short_url("https://linux.org/other", netid="dude")
+    url = db.create_short_url('https://linux.org', netid='dude')
+    url2 = db.create_short_url('https://linux.org/other', netid='dude')
     for _ in range(num_visits):
-        db.visit(url, "tracking_id", "127.0.0.1", "tester", "https://test.com")
+        db.visit(url, 'tracking_id', '127.0.0.1', 'tester', 'https://test.com')
 
     for _ in range(num_visits2):
-        db.visit(url2, "tracking_id", "127.0.0.1", "tester", "https://test.com")
+        db.visit(url2, 'tracking_id', '127.0.0.1', 'tester', 'https://test.com')
     return url, url2
 
 
@@ -166,29 +164,28 @@ def test_visit2(db, app):
         id1 = db.get_url_id(url1)
         id2 = db.get_url_id(url2)
 
-        visits1 = list(db.db.visits.find({"link_id": id1}))
-        assert get_url(db, url1)["visits"] == num_visits1
+        visits1 = list(db.db.visits.find({'link_id': id1}))
+        assert get_url(db, url1)['visits'] == num_visits1
         assert len(visits1) == num_visits1
 
-        visits2 = list(db.db.visits.find({"link_id": id2}))
-        assert get_url(db, url2)["visits"] == num_visits2
+        visits2 = list(db.db.visits.find({'link_id': id2}))
+        assert get_url(db, url2)['visits'] == num_visits2
         assert len(visits2) == num_visits2
 
 
 def test_delete_and_visit(db, app):
     with app.app_context():
         """test utility function to see if somone can modify a url"""
-        roles.grants.insert_one({"role": "admin", "entity": "dnolen", "granted_by": "rhickey"})
+        roles.grants.insert_one({'role': 'admin', 'entity': 'dnolen', 'granted_by': 'rhickey'})
         roles.grants.insert_one({
-            "role": "power_user",
-            "netid": "power_user",
-            "added_by": "Justice League"
+            'role': 'power_user',
+            'netid': 'power_user',
+            'added_by': 'Justice League'
         })
 
         num_visits = 3
         num_visits2 = 4
         url, url2 = make_urls(db, num_visits, num_visits2)
-        id1 = db.get_url_id(url)
         id2 = db.get_url_id(url2)
 
         def assert_delete(deletion):
@@ -196,61 +193,61 @@ def test_delete_and_visit(db, app):
 
         # only owner or admin can delete not power_user or user
         with pytest.raises(shrunk.client.AuthenticationException):
-            db.delete_url(url, "user")
-        assert get_url(db, url)["visits"] == num_visits
+            db.delete_url(url, 'user')
+        assert get_url(db, url)['visits'] == num_visits
 
         # power
         with pytest.raises(shrunk.client.AuthenticationException):
-            db.delete_url(url, "power_user")
-        assert get_url(db, url)["visits"] == num_visits
+            db.delete_url(url, 'power_user')
+        assert get_url(db, url)['visits'] == num_visits
 
         # cant delete nonexistent link
         with pytest.raises(shrunk.client.NoSuchLinkException):
-            db.delete_url("reasons-to-use-windows", "dnolen")
+            db.delete_url('reasons-to-use-windows', 'dnolen')
 
         # admin
-        assert_delete(db.delete_url(url, "dnolen"))
+        assert_delete(db.delete_url(url, 'dnolen'))
 
         # deleting a url will remove it from urls
         assert get_url(db, url) is None
 
         # deleting one url shouldn't affect the visits of another
-        visits4 = list(db.db.visits.find({"link_id": id2}))
-        assert get_url(db, url2)["visits"] == num_visits2
+        visits4 = list(db.db.visits.find({'link_id': id2}))
+        assert get_url(db, url2)['visits'] == num_visits2
         assert len(visits4) == num_visits2
 
         # owner can delete their own link
-        assert_delete(db.delete_url(url2, "dude"))
+        assert_delete(db.delete_url(url2, 'dude'))
         assert get_url(db, url2) is None
 
 
 def test_get_url_info(db, app):
     with app.app_context():
-        url = db.create_short_url("https://linux.org", netid="dude", title="my link")
+        url = db.create_short_url('https://linux.org', netid='dude', title='my link')
 
         # returns info with keys
         url_info = db.get_url_info(url)
-        assert url_info["timeCreated"] is not None
-        assert url_info["title"] is not None
-        assert url_info["long_url"] is not None
-        assert url_info["netid"] is not None
-        assert url_info["visits"] is not None
-        assert url_info["_id"] is not None
+        assert url_info['timeCreated'] is not None
+        assert url_info['title'] is not None
+        assert url_info['long_url'] is not None
+        assert url_info['netid'] is not None
+        assert url_info['visits'] is not None
+        assert url_info['_id'] is not None
 
         # nonexistent is None
-        url_info2 = db.get_url_info("hogwash")
+        url_info2 = db.get_url_info('hogwash')
         assert url_info2 is None
 
 
 def test_get_long_url(db, app):
     with app.app_context():
-        url = db.create_short_url("https://linux.org", netid="dude")
+        url = db.create_short_url('https://linux.org', netid='dude')
 
         # gives long url
-        assert db.get_long_url(url) == "https://linux.org"
+        assert db.get_long_url(url) == 'https://linux.org'
 
         # nonexistent is None
-        assert db.get_long_url("hogwash") is None
+        assert db.get_long_url('hogwash') is None
 
 
 def test_get_visits(db, app):
@@ -263,7 +260,7 @@ def test_get_visits(db, app):
         id2 = db.get_url_id(url2)
 
         expected_visits = {visit['link_id'] for visit in db.db.visits.find({'link_id': id1})}
-        expected_visits2 = {visit["link_id"] for visit in db.db.visits.find({'link_id': id2})}
+        expected_visits2 = {visit['link_id'] for visit in db.db.visits.find({'link_id': id2})}
 
         actual_visits = {visit['link_id'] for visit in db.get_visits(url)}
         actual_visits2 = {visit['link_id'] for visit in db.get_visits(url2)}
@@ -283,7 +280,7 @@ def test_get_num_visits(db, app):
         num_visits2 = 4
         url, url2 = make_urls(db, num_visits, num_visits2)
 
-        url3 = db.create_short_url("https://linux.org/third", netid="dude")
+        url3 = db.create_short_url('https://linux.org/third', netid='dude')
 
         assert db.get_num_visits(url) == num_visits
         assert db.get_num_visits(url2) == num_visits2
@@ -292,7 +289,7 @@ def test_get_num_visits(db, app):
         assert db.get_num_visits(url3) == 0
 
         # nonexistent should be None
-        assert db.get_num_visits("hogwash") is None
+        assert db.get_num_visits('hogwash') is None
 
 
 def test_get_all_urls(db, app):
@@ -307,12 +304,12 @@ def test_get_all_urls(db, app):
 
 def assert_visit(visit, all_visits, first_time, month=None, year=None):
     """util for testing monthly aggregation"""
-    assert visit["all_visits"] == all_visits
-    assert visit["first_time_visits"] == first_time
+    assert visit['all_visits'] == all_visits
+    assert visit['first_time_visits'] == first_time
     if month:
-        assert visit["_id"]["month"] == month
+        assert visit['_id']['month'] == month
     if year:
-        assert visit["_id"]["year"] == year
+        assert visit['_id']['year'] == year
 
 
 def test_get_daily_visits(db, app):
@@ -321,15 +318,15 @@ def test_get_daily_visits(db, app):
         num_visits2 = 4
         url, url2 = make_urls(db, num_visits, num_visits2)
 
-        url3 = db.create_short_url("https://linux.org/third", netid="dude")
-        db.create_short_url("https://linux.org/fifth", netid="dude")
+        url3 = db.create_short_url('https://linux.org/third', netid='dude')
+        db.create_short_url('https://linux.org/fifth', netid='dude')
 
         visits = list(db.get_daily_visits(url))
         visits2 = list(db.get_daily_visits(url2))
         # exists but no visits
         visits3 = list(db.get_daily_visits(url3))
         # does not exist
-        visits4 = list(db.get_daily_visits("hogwash"))
+        visits4 = list(db.get_daily_visits('hogwash'))
 
         assert len(visits) == 1  # only one months worth of visits
         assert len(visits2) == 1
@@ -365,10 +362,10 @@ def test_get_urls(db, app):
 def test_search(db, app):
     with app.app_context():
         def shortURL(url, title):
-            return db.create_short_url(url, netid="shrunk_test", title=title)
-        url = shortURL("https://linux.org", "one")
-        url2 = shortURL("https://thing.org", "other")
-        url3 = shortURL("https://thing.com", "another")
+            return db.create_short_url(url, netid='shrunk_test', title=title)
+        url = shortURL('https://linux.org', 'one')
+        url2 = shortURL('https://thing.org', 'other')
+        url3 = shortURL('https://thing.com', 'another')
 
         def assert_title(title, search_result):
             assert title in {link['title'] for link in search_result}
@@ -377,27 +374,27 @@ def test_search(db, app):
             assert _id in {link['short_url'] for link in db.search(query='LiNuX')}
 
         # match url or title
-        assert_id(url, db.search(query="linux"))
-        assert_title("one", db.search(query="one"))
+        assert_id(url, db.search(query='linux'))
+        assert_title('one', db.search(query='one'))
 
         # case insensitive
-        assert_title("one", db.search(query="oNe"))
-        assert_title("one", db.search(query="ONE"))
-        assert_id(url, db.search(query="LiNuX"))
-        assert_id(url, db.search(query="LINUX"))
+        assert_title('one', db.search(query='oNe'))
+        assert_title('one', db.search(query='ONE'))
+        assert_id(url, db.search(query='LiNuX'))
+        assert_id(url, db.search(query='LINUX'))
 
         # multiple in a result
-        result = {link["short_url"] for link in db.search(query="org")}
+        result = {link['short_url'] for link in db.search(query='org')}
         assert url in result
         assert url2 in result
 
         # multiple in title
-        result2 = {link["title"] for link in db.search(query="otHer")}
-        assert "other" in result2
-        assert "another" in result2
+        result2 = {link['title'] for link in db.search(query='otHer')}
+        assert 'other' in result2
+        assert 'another' in result2
 
         # search by netid
-        result3 = {link["short_url"] for link in db.search(query="shrunk_test")}
+        result3 = {link['short_url'] for link in db.search(query='shrunk_test')}
         assert url in result3
         assert url2 in result3
         assert url3 in result3
@@ -405,8 +402,8 @@ def test_search(db, app):
 
 def test_search_netid(db, app):
     with app.app_context():
-        url = db.create_short_url("https://test.com", netid="Billie Jean", title="title")
-        url2 = db.create_short_url("https://test.com", netid="Knott MyLova", title="title")
+        url = db.create_short_url('https://test.com', netid='Billie Jean', title='title')
+        url2 = db.create_short_url('https://test.com', netid='Knott MyLova', title='title')
 
         def assert_len(length, keyword, netid=None):
             assert len(list(db.search(query=keyword, netid=netid))) == length
@@ -415,25 +412,25 @@ def test_search_netid(db, app):
             assert list(db.search(query=keyword, netid=netid))[0]['short_url'] == url
 
         # searches with netid should screen search results withought that netid
-        assert_len(1, "test", "Billie Jean")
-        assert_len(1, "test", "Knott MyLova")
+        assert_len(1, 'test', 'Billie Jean')
+        assert_len(1, 'test', 'Knott MyLova')
 
-        assert_len(1, "title", "Billie Jean")
-        assert_len(1, "title", "Knott MyLova")
+        assert_len(1, 'title', 'Billie Jean')
+        assert_len(1, 'title', 'Knott MyLova')
 
         # searches without netid should have both
-        assert_len(2, "test")
-        assert_len(2, "title")
+        assert_len(2, 'test')
+        assert_len(2, 'title')
 
         # users should get their own links
-        assert_search("test", "Billie Jean", url)
-        assert_search("title", "Billie Jean", url)
+        assert_search('test', 'Billie Jean', url)
+        assert_search('title', 'Billie Jean', url)
 
-        assert_search("test", "Knott MyLova", url2)
-        assert_search("title", "Knott MyLova", url2)
+        assert_search('test', 'Knott MyLova', url2)
+        assert_search('title', 'Knott MyLova', url2)
 
 
-@pytest.mark.parametrize('ip,state_exp,country_exp', [
+@pytest.mark.parametrize(('ip', 'state_exp', 'country_exp'), [
     ('66.249.88.21', None, 'US'),
     ('165.230.224.67', 'NJ', 'US'),
     ('34.201.163.243', 'VA', 'US'),
@@ -447,7 +444,7 @@ def test_get_location_codes(db, ip, state_exp, country_exp):
     assert country_exp == country_act
 
 
-@pytest.mark.parametrize('ip,suffix', [
+@pytest.mark.parametrize(('ip', 'suffix'), [
     ('66.249.88.21', 'United States'),
     ('165.230.224.67', 'New Jersey, United States'),
     ('34.201.163.243', 'Ashburn, Virginia, United States'),

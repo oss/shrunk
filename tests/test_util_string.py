@@ -5,7 +5,7 @@ import pytest
 from shrunk.util.string import get_domain, validate_url, formattime
 
 
-@pytest.mark.parametrize('url,domain', [
+@pytest.mark.parametrize(('url', 'domain'), [
     ('test.com', 'test.com'),
     ('https://test.com', 'test.com'),
     ('https://test.com/test.php', 'test.com'),

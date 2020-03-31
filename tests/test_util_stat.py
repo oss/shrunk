@@ -10,15 +10,14 @@ import pytest
 from shrunk.util.stat import get_referer_domain, make_csv_for_links, \
     get_human_readable_referer_domain, get_browser_platform
 
-from fixtures import app, db  # noqa: F401
 
-
-@pytest.mark.parametrize('url,expected', [('https://google.com', 'google.com'),
-                                          ('https://sld.google.com/abc', 'sld.google.com'),
-                                          ('https://my.si.te:80', 'my.si.te'),
-                                          ('https://www.example.com/pa/th/', 'example.com'),
-                                          ('https://t.co/link', 'Twitter'),
-                                          ('android-app://com.linkedin.android', 'LinkedIn App')])
+@pytest.mark.parametrize(('url', 'expected'),
+                         [('https://google.com', 'google.com'),
+                          ('https://sld.google.com/abc', 'sld.google.com'),
+                          ('https://my.si.te:80', 'my.si.te'),
+                          ('https://www.example.com/pa/th/', 'example.com'),
+                          ('https://t.co/link', 'Twitter'),
+                          ('android-app://com.linkedin.android', 'LinkedIn App')])
 def test_get_human_readable_referer_domain(url, expected):
     assert get_human_readable_referer_domain({'referer': url}) == expected
 
@@ -85,14 +84,12 @@ def test_make_geoip_csv(db, app):
         assert sorted(expected['world'], key=get_code) == sorted(actual['world'], key=get_code)
 
 
-@pytest.mark.parametrize('useragent,platform', [
-    ('Mozilla/5.0 (X11; U; OpenBSD amd64; en-US; rv:1.9.0.1) Gecko/2008081402 Firefox/3.0.1',
-     ('Firefox', 'OpenBSD')),
+@pytest.mark.parametrize(('useragent', 'platform'), [
+    ('Mozilla/5.0 (X11; U; OpenBSD amd64; en-US; rv:1.9.0.1) Gecko/2008081402 Firefox/3.0.1', ('Firefox', 'OpenBSD')),
     ('Mozilla/5.0 (X11; FreeBSD i686) Firefox/3.6', ('Firefox', 'FreeBSD')),
-    ('Mozilla/5.0 (X11; U; NetBSD i386; en-US; rv:1.8) Gecko/20060104 Firefox/1.5',
-     ('Firefox', 'NetBSD')),
+    ('Mozilla/5.0 (X11; U; NetBSD i386; en-US; rv:1.8) Gecko/20060104 Firefox/1.5', ('Firefox', 'NetBSD')),
     ('Mozilla/5.0 (X11; Linux x86_64; rv:60.0) Gecko/20100101 Firefox/60.0', ('Firefox', 'Linux')),
-    ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.82 Safari/537.36 Vivaldi/2.3.1440.41', ('Vivaldi', 'Windows'))
-])
+    ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) ' +
+     'Chrome/72.0.3626.82 Safari/537.36 Vivaldi/2.3.1440.41', ('Vivaldi', 'Windows'))])
 def test_get_browser_platform(useragent, platform):
     assert get_browser_platform(useragent) == platform

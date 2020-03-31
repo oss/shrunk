@@ -117,7 +117,7 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
         self._mongo = pymongo.MongoClient(self._DB_HOST, self._DB_PORT,
                                           username=self._DB_USERNAME,
                                           password=self._DB_PASSWORD,
-                                          authSource="admin", connect=False,
+                                          authSource='admin', connect=False,
                                           replicaSet=self._DB_REPLSET)
         self.db = self._mongo[self._DB_NAME]
 
@@ -215,33 +215,33 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
         """
 
         if self.is_blocked(long_url):
-            raise ForbiddenDomainException("That URL is not allowed.")
+            raise ForbiddenDomainException('That URL is not allowed.')
 
         if self.is_phished(long_url):
             flask.current_app.logger.warning(f'User is attempting to create black listed url: {long_url}')
             raise ForbiddenDomainException('That URL is not allowed.')
 
         document = {
-            "short_url": short_url,
-            "long_url": long_url,
-            "timeCreated": datetime.datetime.now(),
-            "visits": 0,
-            "deleted": False
+            'short_url': short_url,
+            'long_url': long_url,
+            'timeCreated': datetime.datetime.now(),
+            'visits': 0,
+            'deleted': False
         }
         if netid is not None:
-            document["netid"] = netid
+            document['netid'] = netid
         if title is not None:
-            document["title"] = title
+            document['title'] = title
 
         if short_url:
             # Attempt to insert the custom URL
             if self.url_is_reserved(short_url):
-                raise ForbiddenNameException("That name is reserved.")
+                raise ForbiddenNameException('That name is reserved.')
 
             try:
                 response = self.db.urls.insert_one(document)
             except pymongo.errors.DuplicateKeyError:
-                raise DuplicateIdException("That name already exists.")
+                raise DuplicateIdException('That name already exists.')
         else:
             # Generate a unique key and update MongoDB
             response = None
@@ -251,7 +251,7 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
                     while self.url_is_reserved(url):
                         url = ShrunkClient._generate_unique_key()
 
-                    document["short_url"] = url
+                    document['short_url'] = url
                     response = self.db.urls.insert_one(document)
                 except pymongo.errors.DuplicateKeyError:
                     continue
@@ -417,8 +417,8 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
           visited, or None if the URL does not exist in the database.
         """
 
-        document = self.db.urls.find_one({"short_url": short_url})
-        return document["visits"] if document else None
+        document = self.db.urls.find_one({'short_url': short_url})
+        return document['visits'] if document else None
 
     def visit(self, short_url: str, tracking_id: Optional[str],
               source_ip: str, user_agent: Optional[str], referer: Optional[str]) -> None:
@@ -466,8 +466,8 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
         """
 
         return bool(roles.grants.find_one({
-            "role": "blocked_url",
-            "entity": {"$regex": "%s*" % get_domain(long_url)}
+            'role': 'blocked_url',
+            'entity': {'$regex': '%s*' % get_domain(long_url)}
         }))
 
     def get_visitor_id(self, ipaddr: str) -> str:

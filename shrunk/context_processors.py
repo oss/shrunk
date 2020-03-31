@@ -7,7 +7,7 @@ from .util import search
 
 
 def _add_search_params():
-    """ Passes search parameters (query, links_set, sortby, page) to every template. """
+    """Passes search parameters (query, links_set, sortby, page) to every template."""
     d = {k: flask.session[k]
          for k in ['query', 'links_set', 'sortby', 'page']
          if k in flask.session}
@@ -17,7 +17,7 @@ def _add_search_params():
 
 
 def _add_user_info():
-    """ Passes user info (netid, roles) to every template. """
+    """Passes user info (netid, roles) to every template."""
     try:
         netid = flask.session['user']['netid']
         return {'netid': netid, 'roles': roles.get(netid)}
@@ -26,7 +26,7 @@ def _add_user_info():
 
 
 def _add_orgs():
-    """ Passes organizations to every template. """
+    """Passes organizations to every template."""
     try:
         netid = flask.session['user']['netid']
         client = flask.current_app.get_shrunk()
@@ -35,7 +35,7 @@ def _add_orgs():
         else:
             orgs = client.get_member_organizations(netid)
         return {'orgs': orgs}
-    except:
+    except KeyError:
         return {}
 
 

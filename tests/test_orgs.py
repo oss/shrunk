@@ -1,8 +1,6 @@
 import pytest
 
-from fixtures import app, client  # noqa: F401
-from fixtures import dev_login
-from assertions import assert_ok, assert_status, assert_redirect, assert_in_resp
+from util import assert_ok, assert_status, assert_redirect, assert_in_resp, dev_login
 
 
 def create_org(client, name):

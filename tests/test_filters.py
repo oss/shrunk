@@ -5,8 +5,6 @@ import pytest
 from shrunk.filters import StopValidation, url_reject_regex, url_restrict_regex, \
     ensure_protocol, strip_protocol, strip_whitespace
 
-from fixtures import app, db, client  # noqa: F401
-
 
 class DummyField:
     def __init__(self, data):
@@ -34,23 +32,26 @@ def test_url_restrict_regex():
         filt(None, DummyField('xyz'))
 
 
-@pytest.mark.parametrize('url,expected', [('http://example.com', 'http://example.com'),
-                                          ('https://example.com', 'https://example.com'),
-                                          ('example.com', 'http://example.com')])
+@pytest.mark.parametrize(('url', 'expected'), [
+    ('http://example.com', 'http://example.com'),
+    ('https://example.com', 'https://example.com'),
+    ('example.com', 'http://example.com')])
 def test_ensure_protocol(url, expected):
     assert ensure_protocol(url) == expected
 
 
-@pytest.mark.parametrize('url,expected', [('http://example.com', 'example.com'),
-                                          ('https://example.com', 'example.com'),
-                                          ('example.com', 'example.com')])
+@pytest.mark.parametrize(('url', 'expected'), [
+    ('http://example.com', 'example.com'),
+    ('https://example.com', 'example.com'),
+    ('example.com', 'example.com')])
 def test_strip_protocol(url, expected):
     assert strip_protocol(url) == expected
 
 
-@pytest.mark.parametrize('inp,expected', [('     ', ''),
-                                          (' abc ', 'abc'),
-                                          ('\tabc\n', 'abc'),
-                                          ('\r\nabc cd ef \t ', 'abc cd ef')])
+@pytest.mark.parametrize(('inp', 'expected'), [
+    ('     ', ''),
+    (' abc ', 'abc'),
+    ('\tabc\n', 'abc'),
+    ('\r\nabc cd ef \t ', 'abc cd ef')])
 def test_strip_whitespace(inp, expected):
     assert strip_whitespace(inp) == expected

@@ -1,6 +1,6 @@
 import logging
 
-from flask import Flask, redirect, request, current_app, session
+from flask import Flask, redirect, request, current_app
 from werkzeug.exceptions import abort
 
 from . import roles

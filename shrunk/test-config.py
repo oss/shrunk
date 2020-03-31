@@ -4,24 +4,24 @@ Configuration options for shrunk. This is an example file; modify this and save
 it as config.py.
 """
 
-DB_HOST = "localhost"
+DB_HOST = 'localhost'
 """The host machine for the database."""
 
 DB_PORT = 27017
 """The database's port on the host machine."""
 
-DB_NAME = "shrunk_test"
+DB_NAME = 'shrunk_test'
 
-GEOLITE_PATH = "./GeoLite2-City.mmdb"
+GEOLITE_PATH = './GeoLite2-City.mmdb'
 """The path to the geolite geoip database."""
 
-SECRET_KEY = "something_secret"
+SECRET_KEY = 'something_secret'
 """A secret key for Flask."""
 
-SHRUNK_URL = "http://localhost:6000"
+SHRUNK_URL = 'http://localhost:6000'
 """The public URL for shrunk."""
 
-LINKSERVER_URL = "http://localhost:6000"
+LINKSERVER_URL = 'http://localhost:6000'
 """The public URL for the link server."""
 
 DUAL_SERVER = False
@@ -29,24 +29,24 @@ DUAL_SERVER = False
 server. The default setting is False, which assumes that a separate server
 handles the links."""
 
-USER_WHITELIST = ["jcc", "mjw271", "peb60"]
+USER_WHITELIST = ['jcc', 'mjw271', 'peb60']
 """These users are always permitted to login (i.e. they can't be blacklisted)
 and are automatically admins."""
 
 SSO_ATTRIBUTE_MAP = {
-    "SHIB_UID_1": (True, "netid"),
-    # "SHIB_UID_2": (True, "uid2"),
-    "SHIB_UID_3": (True, "employeeType"),
+    'SHIB_UID_1': (True, 'netid'),
+    # 'SHIB_UID_2': (True, 'uid2'),
+    'SHIB_UID_3': (True, 'employeeType'),
 }
 """Map SSO attributes to session keys"""
 
 SSO_LOGIN_URL = '/login'
 """URL for local shibboleth login"""
 
-LOG_FORMAT = "%(levelname)s %(asctime)s: %(message)s [in %(pathname)s:%(lineno)d]"
+LOG_FORMAT = '%(levelname)s %(asctime)s: %(message)s [in %(pathname)s:%(lineno)d]'
 """The format for the logger."""
 
-LOG_FILENAME = "shrunk.log"
+LOG_FILENAME = 'shrunk.log'
 """The name of the log file."""
 
 MAX_DISPLAY_LINKS = 50

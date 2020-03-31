@@ -19,7 +19,7 @@ bp = Blueprint('shrunk', __name__, url_prefix='/app')
 @bp.route('/logout')
 def logout():
     """ Clears the user's session and sends them to Shibboleth to finish logging out. """
-    if "user" not in session:
+    if 'user' not in session:
         return redirect(url_for('shrunk.render_login'))
     user = session.pop('user')
     session.clear()
@@ -189,7 +189,6 @@ def edit_link(netid, client):
             return flask.jsonify({'ok': False,
                                   'errors': [{'name': 'short_url', 'error': str(ex)}]}), 400
     else:
-        resp = {'errors': {}}
         return flask.jsonify({
             'ok': False,
             'errors': [{'name': name, 'error': form.errors.get(name)}
@@ -201,15 +200,16 @@ def edit_link(netid, client):
 @bp.route('/faq', methods=['GET'])
 @require_login
 def faq(netid, client):
-    """ Render the FAQ. """
-    return render_template("faq.html")
+    """Render the FAQ."""
+    return render_template('faq.html')
 
 
 @bp.route('/admin/')
 @require_login
 @require_admin
 def admin_panel(netid, client):
-    """Renders the administrator panel.
+    """
+    Renders the administrator panel.
 
     This displays an administrator panel with navigation links to the admin
     controls.

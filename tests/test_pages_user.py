@@ -5,12 +5,10 @@ import pytest
 
 import shrunk.roles as roles
 
-from fixtures import app, db, client  # noqa: F401
-from fixtures import dev_login
-from assertions import assert_redirect, assert_status, assert_ok, assert_in_resp, assert_json
+from util import assert_redirect, assert_status, assert_ok, assert_in_resp, assert_json, dev_login
 
 
-@pytest.mark.parametrize('url', ['ay', '', 'longerrrr', '$%*#$%*(',]) # '012'])
+@pytest.mark.parametrize('url', ['ay', '', 'longerrrr', '$%*#$%*('])
 def test_invalid_url(client, url):
     with dev_login(client, 'user'):
         req = {
@@ -62,10 +60,10 @@ def test_add_banned(client):
         assert_status(client.post('/app/add', data=req), 400)
 
 
-@pytest.mark.parametrize('alias,err',
-                         [('a', 'Custom alias length must'),
-                          ('aaaaaaaaaaaaaaaaaaaa', 'Custom alias length must'),
-                          ('!@#$%^', 'Custom alias must consist')])
+@pytest.mark.parametrize(('alias', 'err'), [
+    ('a', 'Custom alias length must'),
+    ('aaaaaaaaaaaaaaaaaaaa', 'Custom alias length must'),
+    ('!@#$%^', 'Custom alias must consist')])
 def test_invalid_short_url(client, alias, err):
     with dev_login(client, 'user'):
         req = {
@@ -155,7 +153,7 @@ def test_delete_no_such_url(client):
         assert_status(client.post('/app/delete', data={'short_url': 'does_not_exist'}), 400)
 
 
-@pytest.fixture
+@pytest.fixture()
 def short_url(db, app):
     with app.app_context():
         db.create_short_url('https://google.com', short_url='short1',
@@ -163,7 +161,7 @@ def short_url(db, app):
     yield 'short1'
 
 
-@pytest.fixture
+@pytest.fixture()
 def short_url_power(db, app):
     with app.app_context():
         db.create_short_url('https://google.com', short_url='short1',
@@ -171,7 +169,7 @@ def short_url_power(db, app):
     yield 'short1'
 
 
-@pytest.mark.parametrize('url', ['ay', '', 'longerrrr', '$%*#$%*(']) # '012'])
+@pytest.mark.parametrize('url', ['ay', '', 'longerrrr', '$%*#$%*('])
 def test_edit_invalid_url(client, short_url, url):
     with dev_login(client, 'user'):
         req = {
