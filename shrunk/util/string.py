@@ -1,11 +1,15 @@
 import re
+import datetime
 
 
-def get_domain(long_url):
+def get_domain(long_url: str) -> str:
     """
-    takes in a url and gets the top level domain
-    eg https://lmao-d.f.foo.rutgers.edu/lmao.php?thing=true becomes rutgers.edu
+    Takes in a url and gets the top level domain,
+    e.g. ``https://lmao-d.f.foo.rutgers.edu/lmao.php?thing=true`` becomes ``rutgers.edu``
+
+    :param long_url: The URL from which to extract the domain
     """
+
     protocol_location = long_url.find("://")
     base_url = long_url[(protocol_location + 3):]  # Strip any protocol
     if protocol_location < 0:
@@ -25,12 +29,14 @@ def get_domain(long_url):
     return match.group().lower() if match else domain
 
 
-def formattime(datetime):
-    """Utility function for formatting datetimes.
-
-    This formats datetimes to look like "Nov 19 2015".
+def formattime(dt: datetime.datetime) -> str:
     """
-    return datetime.strftime("%b %d %Y")
+    Utility function for formatting datetimes.
+
+    :param dt: The datetime to format
+    :returns: A string in the format of "Nov 19 2015"
+    """
+    return dt.strftime("%b %d %Y")
 
 
 ip_middle_octet = r"(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5]))"
@@ -121,13 +127,9 @@ regex = re.compile(
 pattern = re.compile(regex)
 
 
-def validate_url(value):
+def validate_url(value: str) -> bool:
     """
     stolen from python-validators
-    Return whether or not given value is a valid URL.
-
-    If the value is valid URL this function returns ``True``, otherwise
-    :class:`~validators.utils.ValidationFailure`.
 
     This validator is based on the wonderful `URL validator of dperini`_.
 
@@ -146,7 +148,7 @@ def validate_url(value):
         True
 
         >>> url('http://foobar.d')
-        ValidationFailure(func=url, ...)
+        False
 
     .. versionadded:: 0.2
 
@@ -171,7 +173,12 @@ def validate_url(value):
 
         Removed unused ``public`` parameter.
 
+    .. versionchanged:: 1.3.0
+
+        Return ``False`` instead of raising an exception.
+
     :param value: URL address string to validate
+    :returns: Whether or not the URL was valid
     """
 
-    return pattern.match(value)
+    return pattern.match(value) is not None

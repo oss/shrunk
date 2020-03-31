@@ -3,6 +3,7 @@
 """Application forms for shrunk."""
 
 import re
+from typing import List
 
 from wtforms import Form, StringField, validators, ValidationError
 
@@ -24,7 +25,7 @@ class LinkForm(Form):
         validators.DataRequired('Please enter a title.')
     ])
 
-    banned_regexes = []
+    banned_regexes: List[re.Pattern] = []
 
     def __init__(self, form, banned_regexes):
         super().__init__(form)

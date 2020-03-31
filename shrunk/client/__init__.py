@@ -1,16 +1,20 @@
 # shrunk - Rutgers University URL Shortener
 
-"""Database-level interactions for shrunk. """
+"""Database-level interactions for shrunk."""
 import datetime
 import random
 import string
+from typing import Optional, TypedDict, Iterable, Final
 
 import flask
 import pymongo
 from pymongo.collection import ReturnDocument
+from pymongo.results import UpdateResult
+from bson.objectid import ObjectId
 
 from .. import roles
 from .. import aggregations
+from .. import schema
 from ..util.string import get_domain
 
 from .exceptions import BadShortURLException, DuplicateIdException, \
@@ -22,42 +26,83 @@ from .orgs import OrgsClient
 from .tracking import TrackingClient
 
 
+class DateSpec(TypedDict):
+    day: int
+    month: int
+    year: int
+
+
+class DailyVisits(TypedDict):
+    _id: DateSpec
+    """The date to which these data pertain."""
+
+    first_time_visits: int
+    """The number of first-time visitors on this date."""
+
+    all_visits: int
+    """The total number of visits up to this date."""
+
+
+class AdminStats(TypedDict):
+    visits: int
+    """The total number of redirects Shrunk has performed"""
+
+    users: int
+    """The total number of distinct users that have created links"""
+
+    links: int
+    """The total number of URLs shortened"""
+
+
+class EndpointStats(TypedDict):
+    endpoint: str
+    """The endpoint name."""
+
+    total_visits: int
+    """The total number of requests to the endpoint."""
+
+    unique_visits: int
+    """The number of unique (by NetID) requests to the endpoint."""
+
+
 class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
     """A class for database interactions. This class defines core
     database-manipulation methods. Other methods are defined in the
     mixins classes from which this class inherits."""
 
-    ALPHABET = string.digits + string.ascii_lowercase
+    ALPHABET: Final = string.digits + string.ascii_lowercase
     """The alphabet used for encoding short urls."""
 
-    URL_MIN = 46656
+    URL_MIN: Final = 46656
     """The shortest allowable URL.
 
     This is the value of '1000' in the URL base encoding. Guarantees that all
     URLs are at least four characters long.
     """
 
-    URL_MAX = 2821109907455
+    URL_MAX: Final = 2821109907455
     """The longest allowable URL.
 
     This is the value of 'zzzzzzzz' in the URL base encoding. Guarantees that
     all URLs do not exceed eight characters.
     """
 
-    def __init__(self, *, DB_HOST=None, DB_PORT=27017, DB_USERNAME=None, DB_PASSWORD=None,
-                 DB_REPLSET=None, DB_NAME='shrunk', GEOLITE_PATH=None, TESTING=False, **config):
-        """Create a new client connection.
-
-        This client uses MongoDB.
-
-        :Parameters:
-          - `DB_HOST` (optional): the hostname to connect to; defaults to "localhost"
-          - `DB_PORT` (optional): the port to connect to on the server; defaults to 27017
-          - `GEOLITE_PATH` (optional): path to geolite ip database
-          - `DB_USERNAME` (OPTIONAL): username to login to database
-          - `DB_PASSWORD` (OPTIONAL): password to login to database
-          - `test_client` (optional): a mock client to use for testing
-            the database default if not present
+    def __init__(self, *,
+                 DB_HOST: Optional[str] = None,
+                 DB_PORT: Optional[int] = 27017,
+                 DB_USERNAME: Optional[str] = None,
+                 DB_PASSWORD: Optional[str] = None,
+                 DB_REPLSET: Optional[str] = None,
+                 DB_NAME: str = 'shrunk',
+                 GEOLITE_PATH: Optional[str] = None,
+                 TESTING: bool = False,
+                 **config):
+        """
+        :param DB_HOST: the hostname to connect to; defaults to ``"localhost"``
+        :param DB_PORT: the port to connect to on the server; defaults to 27017
+        :param GEOLITE_PATH: path to geolite ip database
+        :param DB_USERNAME: username to login to database
+        :param DB_PASSWORD: password to login to database
         """
 
         self._DB_NAME = DB_NAME
@@ -89,10 +134,20 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
         self.db.organizations.create_index([('members.name', pymongo.ASCENDING),
                                             ('members.netid', pymongo.ASCENDING)])
 
-    def user_exists(self, netid):
+    def user_exists(self, netid: str) -> bool:
+        """Check whether there exist any links belonging to a user.
+
+        :param netid: The user's NetID
+        """
+
         return self.db.urls.count_documents({'netid': netid}) > 0
 
-    def url_is_reserved(self, url):
+    def url_is_reserved(self, url: str) -> bool:
+        """Check whether a string is a reserved word that cannot be used as a short url.
+
+        :param url: the prospective short url
+        """
+
         if url in flask.current_app.config.get('RESERVED_WORDS', []):
             return True
         for route in flask.current_app.url_map.iter_rules():
@@ -100,62 +155,65 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
                 return True
         return False
 
-    def drop_database(self):
+    def drop_database(self) -> None:
         if self._TESTING:
             self._mongo.drop_database(self._DB_NAME)
 
-    def reset_database(self):
+    def reset_database(self) -> None:
         if self._TESTING:
             for col in ['grants', 'organizations',
                         'urls', 'visitors', 'visits']:
                 self.db[col].delete_many({})
 
-    def count_links(self, netid=None):
+    def count_links(self, netid: Optional[str] = None) -> int:
         """Counts the number of created links.
 
         Gives a count on the number of created links for the given NetID. If no
         specific user is specified, this returns a global count for all users.
 
-        :Parameters:
-          - `netid` (optional): Specify a NetID to count their links; if None,
-            finds a global count
-
-        :Returns:
-          A nonnegative integer.
+        :param netid:
+          if `netid` is not `None`, count the links belonging to the specified user; otherwise,
+          count the total number of links finds a global count
         """
-        if netid:
-            return self.db.urls.count_documents({"netid": netid})
-        else:
-            return self.db.urls.count_documents({})
 
-    def get_url_id(self, short_url):
-        """ Get the ObjectId associated with the short url. """
+        if netid is not None:
+            return self.db.urls.count_documents({'netid': netid})
+        return self.db.urls.count_documents({})
+
+    def get_url_id(self, short_url: str) -> Optional[ObjectId]:
+        """Get the ``_id`` field associated with the short url.
+
+        :param short_url: a short url
+
+        :returns:
+          An :py:class:`~bson.objectid.ObjectId` if the short url exists, or None otherwise.
+        """
+
         resp = self.db.urls.find_one({'short_url': short_url})
         return resp['_id'] if resp else None
 
-    def is_phished(self, long_url):
+    def is_phished(self, long_url: str) -> bool:
+        """Check whether the given long url is present in the phishing blacklist."""
+
         return bool(self.db.phishTank.find_one({'url': long_url.rstrip()}))
 
-    def create_short_url(self, long_url, short_url=None, netid=None, title=None):
-        """Given a long URL, create a new short URL.
+    def create_short_url(self, long_url: str, short_url: Optional[str] = None,
+                         netid: Optional[str] = None, title: Optional[str] = None) -> str:
+        """Randomly create a new short URL and updates the database.
 
-        Randomly creates a new short URL and updates the Shrunk database.
+        :param long_url: The original URL to shrink.
+        :param short_url: A custom name for the short URL. A random one is generated if none is specified.
+        :param netid: The creator of this URL.
+        :param title: A descriptive title for this URL.
 
-        :Parameters:
-          - `long_url`: The original URL to shrink.
-          - `short_url` (optional): A custom name for the short URL. A random
-            one is generated if none is specified.
-          - `netid` (optional): The creator of this URL.
-          - `title` (optional): A descriptive title for this URL.
-
-        :Returns:
+        :returns:
           The shortened URL.
 
-        :Raises:
-          - ForbiddenNameException: if the requested name is a reserved word or
+        :raises ForbiddenNameException: If the requested name is a reserved word or
             has been banned by an administrator
-          - DuplicateIdException: if the requested name is already taken
+        :raises DuplicateIdException: If the requested name is already taken
         """
+
         if self.is_blocked(long_url):
             raise ForbiddenDomainException("That URL is not allowed.")
 
@@ -198,25 +256,25 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
                 except pymongo.errors.DuplicateKeyError:
                     continue
 
-        return document['short_url']
+        return str(document['short_url'])
 
-    def modify_url(self, *, title=None, long_url=None, short_url=None, old_short_url):
+    def modify_url(self, *, title: Optional[str] = None, long_url: Optional[str] = None,
+                   short_url: Optional[str] = None, old_short_url: str) -> UpdateResult:
         """Modifies an existing URL.
 
-        Edits the values of the url `short_url` and replaces them with the
+        Edits the values of the url `old_short_url` and replaces them with the
         values specified in the keyword arguments.
 
-        :Parameters:
-          - `title`: The new title
-          - `long_url`: The new long url
-          - `short_url`: The new short url (may be same as old_short_url)
-          - `old_short_url`: The old short url
+        :param title: The new title
+        :param long_url: The new long url
+        :param short_url: The new short url (may be same as old_short_url)
+        :param old_short_url: The old short url
         """
 
-        if self.is_blocked(long_url):
+        if long_url is not None and self.is_blocked(long_url):
             raise ForbiddenDomainException('That URL is not allowed.')
 
-        if self.is_phished(long_url):
+        if long_url is not None and self.is_phished(long_url):
             flask.current_app.logger.warning(f'User is attempting to create black-listed url: {long_url}')
             raise ForbiddenDomainException('That URL is not allowed')
 
@@ -236,29 +294,28 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
         except pymongo.errors.DuplicateKeyError:
             raise BadShortURLException('That name already exists.')
 
-    def is_owner_or_admin(self, short_url, request_netid):
-        """ Returns True if request_netid is an admin, or if short_url exists and
+    def is_owner_or_admin(self, short_url: str, request_netid: str) -> bool:
+        """Returns True if request_netid is an admin, or if short_url exists and
             request_netid is the owner of short_url. """
         if roles.check('admin', request_netid):
             return True
         info = self.get_url_info(short_url)
-        return info and info['netid'] == request_netid
+        return info is not None and info['netid'] == request_netid
 
-    def delete_url(self, short_url, request_netid):
+    def delete_url(self, short_url: str, request_netid: str) -> UpdateResult:
         """Given a short URL, delete it from the database.
 
         This deletes all information associated with the short URL and wipes all
         appropriate databases.
 
-        :Parameters:
-          - `short_url`: The shortened URL to dete.
-          - `request_netid`: The netid of the user requesting to delete a link
+        :param short_url: The shortened URL to dete.
+        :param request_netid: The netid of the user requesting to delete a link
 
-        :Returns:
+        :returns:
           A response in JSON detailing the effect of the database operations.
-        :Throws:
-          AuthenticationException if the user cant edit
-          NoSuchLinkException if url doesn't exist
+
+        :raises AuthenticationException: If the user cannot edit the url
+        :raises NoSuchLinkException: If the url does not exist
         """
         if not self.is_owner_or_admin(short_url, request_netid):
             raise AuthenticationException()
@@ -272,44 +329,26 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
                                                  'deleted_by': request_netid,
                                                  'deleted_time': datetime.datetime.now()}})
 
-    def get_url_info(self, short_url):
+    def get_url_info(self, short_url: str) -> Optional[schema.URLs]:
         """Given a short URL, return information about it.
 
-        This returns a dictionary containing the following fields:
-          - long_url : The original unshrunk URL
-          - timeCreated: The time the URL was created, expressed as an ISODate
-            instance
-          - netid : If it exists, the creator of the shortened URL
-          - visits : The number of visits to this URL
-
-        :Parameters:
-          - `short_url`: A shortened URL
+        :param short_url: A shortened URL
         """
-        return self.db.urls.find_one({"short_url": short_url})
+        return self.db.urls.find_one({'short_url': short_url})
 
-    def get_daily_visits(self, short_url):
-        """Given a short URL, return how many visits and new unique visiters it gets per month.
-        :Parameters:
-        - `short_url`: A shortened URL
-        :Returns:
-        An array, each of whose elements is a dict containing the data for one month. The fields of each dict are:
-        - `_id`: a dict with keys for month and year
-        - `first_time_visits`: new visits by users who haven't seen the link yet
-        - `all_visits`: the total visits per that month
+    def get_daily_visits(self, short_url: str) -> Iterable[DailyVisits]:
+        """Given a short URL, return how many visits and new unique visitors it gets per day.
+
+        :param short_url: A shortened URL
         """
 
         link_id = self.get_url_id(short_url)
         aggregation = [aggregations.match_link_id(link_id)] + \
             aggregations.daily_visits_aggregation
-        return list(self.db.visits.aggregate(aggregation))
+        return self.db.visits.aggregate(aggregation)
 
-    def get_admin_stats(self):
-        """Get some basic stats about shunk overall
-        :Returns:
-        A dictionary with the folowing info
-        - `visits`: total amount of redirects shrunk has preformed
-        - `users`: the amount of users creating links
-        - `links`: the amount of links in shrunk
+    def get_admin_stats(self) -> AdminStats:
+        """Get some basic overall stats about Shrunk
         """
         links = self.db.urls.count_documents({})
         visits = self.db.visits.estimated_document_count()
@@ -327,16 +366,10 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
             'users': users
         }
 
-    def get_endpoint_stats(self):
-        """ Returns a summary of the information in the endpoint_statistics collection.
-        :Returns:
-        A list of dictionaries with the following fields:
-        - `endpoint`: the endpoint name
-        - `total_visits`: the total number of visits to the endpoint
-        - `unique visits`: the number of unique visits (by netid) to the endpoint
-        """
+    def get_endpoint_stats(self) -> Iterable[EndpointStats]:
+        """Summarizes of the information in the endpoint_statistics collection."""
 
-        res = self.db.endpoint_statistics.aggregate([
+        return self.db.endpoint_statistics.aggregate([
             {'$group': {
                 '_id': {'endpoint': '$endpoint'},
                 'total_visits': {'$sum': '$count'},
@@ -348,62 +381,65 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
             {'$match': {'endpoint': {'$not': {'$eq': 'shrunk.render_index'}}}},
             {'$match': {'endpoint': {'$not': {'$eq': 'shrunk.render_login'}}}}
             ])
-        return list(res)
 
-    def get_long_url(self, short_url):
+    def get_long_url(self, short_url: str) -> Optional[str]:
         """Given a short URL, returns the long URL.
 
         Performs a case-insensitive search for the corresponding long URL.
 
-        :Parameters:
-          - `short_url`: A shortened URL
+        :param short_url: A shortened URL
 
-        :Returns:
+        :returns:
           The long URL, or None if the short URL does not exist.
         """
         result = self.get_url_info(short_url)
         return result['long_url'] if result is not None and not result.get('deleted') else None
 
-    def get_visits(self, short_url):
+    def get_visits(self, short_url: str):
         """Returns all visit information to the given short URL.
 
-        :Parameters:
-          - `short_url`: A shortened URL
+        :param short_url: A shortened URL
 
-        :Response:
+        :returns:
           - A JSON-compatible Python dict containing the database response.
         """
+
         query = {'link_id': self.get_url_id(short_url)}
         return SearchResults(self.db.visits.find(query), self.db.visits.count_documents(query))
 
-    def get_num_visits(self, short_url):
+    def get_num_visits(self, short_url: str) -> int:
         """Given a short URL, return the number of visits.
 
-        :Parameters:
-          - `short_url`: A shortened URL
+        :param short_url: A shortened URL
 
-        :Returns:
+        :returns:
           A nonnegative integer indicating the number of times the URL has been
           visited, or None if the URL does not exist in the database.
         """
+
         document = self.db.urls.find_one({"short_url": short_url})
         return document["visits"] if document else None
 
-    def visit(self, short_url, tracking_id, source_ip, user_agent, referer):
+    def visit(self, short_url: str, tracking_id: Optional[str],
+              source_ip: str, user_agent: Optional[str], referer: Optional[str]) -> None:
         """Visits the given URL and logs visit information.
 
         On visiting a URL, this is guaranteed to perform at least the following
-        side effects if the URL is valid:
+        side effects if the short URL is valid:
 
           - Increment the hit counter
           - Log the visitor
 
         If the URL is invalid, no side effects will occur.
 
-        :Returns:
-          The long URL corresponding to the short URL, or None if no such URL
-          was found in the database.
+        :param short_url: The short URL visited
+        :param tracking_id: The contents of the visitor's tracking cookie, if any
+        :param source_ip: The client's IP address
+        :param user_agent: The client's user agent
+        :param referer: The client's referer
+
         """
+
         resp = self.db.urls.find_one({'short_url': short_url})
         if not self.db.visits.find_one({'link_id': resp['_id'], 'tracking_id': tracking_id}):
             self.db.urls.update_one({'short_url': short_url},
@@ -423,21 +459,24 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
             'country_code': country_code
         })
 
-    def is_blocked(self, long_url):
-        """checks if a url is blocked"""
+    def is_blocked(self, long_url: str) -> bool:
+        """Check whether a url is blocked in the database.
+
+        :param long_url: The long url to query
+        """
+
         return bool(roles.grants.find_one({
             "role": "blocked_url",
             "entity": {"$regex": "%s*" % get_domain(long_url)}
         }))
 
-    def get_visitor_id(self, ipaddr):
+    def get_visitor_id(self, ipaddr: str) -> str:
         """Gets a unique, opaque identifier for an IP address.
 
-           :Parameters:
-             - `ipaddr`: a string containing an IPv4 address.
+        :param ipaddr: a string containing an IPv4 address.
 
-           :Returns:
-             A hexadecimal string which uniquely identifies the given IP address.
+        :returns:
+          A hexadecimal string which uniquely identifies the given IP address.
         """
         rec = {'ip': str(ipaddr)}
         res = self.db.visitors.find_one_and_update(rec, {'$setOnInsert': {'ip': str(ipaddr)}},
@@ -445,7 +484,13 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
                                                    return_document=ReturnDocument.AFTER)
         return str(res['_id'])
 
-    def may_view_url(self, url, netid):
+    def may_view_url(self, url: str, netid: str) -> bool:
+        """Check whether the specified user may view the specified url.
+
+        :param url: The url
+        :param netid: The user's NetID
+        """
+
         if roles.check('admin', netid):
             return True
 
@@ -472,21 +517,21 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
         result = next(self.db.organizations.aggregate(aggregation))
         return len(result['intersection']) != 0 if result else False
 
-    def record_visit(self, netid, endpoint):
-        self.db.endpoint_statistics.find_one_and_update(
+    def record_visit(self, netid: str, endpoint: str):
+        return self.db.endpoint_statistics.find_one_and_update(
             {'endpoint': endpoint, 'netid': netid},
             {'$set': {'endpoint': endpoint, 'netid': netid},
              '$inc': {'count': 1}},
             upsert=True)
 
-    def blacklist_user_links(self, netid):
+    def blacklist_user_links(self, netid: str) -> UpdateResult:
         return self.db.urls.update_many({'netid': netid,
                                          'deleted': {'$ne': True}},
                                         {'$set': {'deleted': True,
                                                   'deleted_by': '!BLACKLISTED',
                                                   'deleted_time': datetime.datetime.now()}})
 
-    def unblacklist_user_links(self, netid):
+    def unblacklist_user_links(self, netid: str) -> UpdateResult:
         return self.db.urls.update_many({'netid': netid,
                                          'deleted': True,
                                          'deleted_by': '!BLACKLISTED'},
@@ -496,14 +541,14 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
                                              'deleted_time': 1
                                          }})
 
-    def block_urls(self, ids):
+    def block_urls(self, ids) -> UpdateResult:
         return self.db.urls.update_many({'_id': {'$in': list(ids)},
                                          'deleted': {'$ne': True}},
                                         {'$set': {'deleted': True,
                                                   'deleted_by': '!BLOCKED',
                                                   'deleted_time': datetime.datetime.now()}})
 
-    def unblock_urls(self, ids):
+    def unblock_urls(self, ids) -> UpdateResult:
         return self.db.urls.update_many({'_id': {'$in': list(ids)},
                                          'deleted': True,
                                          'deleted_by': '!BLOCKED'},
@@ -514,28 +559,29 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
                                          }})
 
     @staticmethod
-    def _generate_unique_key():
+    def _generate_unique_key() -> str:
         """Generates a unique key."""
+
         return ShrunkClient._base_encode(random.randint(ShrunkClient.URL_MIN,
                                                         ShrunkClient.URL_MAX))
 
     @staticmethod
-    def _base_encode(integer):
+    def _base_encode(integer: int) -> str:
         """Encodes an integer into our arbitrary link alphabet.
 
         Given an integer, convert it to base-36. Letters are case-insensitive;
         this function uses uppercase arbitrarily.
 
-        :Parameters:
-          - `integer`: An integer.
+        :param integer: An integer.
 
-        :Returns:
-          A string composed of characters from ShrunkClient.ALPHABET.
-          """
+        :returns:
+          A string composed of characters from :py:attr:`ShrunkClient.ALPHABET`.
+        """
+
         length = len(ShrunkClient.ALPHABET)
         result = []
         while integer != 0:
             result.append(ShrunkClient.ALPHABET[integer % length])
             integer //= length
 
-        return "".join(reversed(result))
+        return ''.join(reversed(result))

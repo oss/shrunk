@@ -25,7 +25,7 @@ def daily_visits(netid, client):
     if not client.may_view_url(url, netid):
         abort(403)
     visits = client.get_daily_visits(url)
-    return flask.jsonify(visits)
+    return flask.jsonify(list(visits))
 
 
 @bp.route('/geoip', endpoint='geoip', methods=['GET'])
@@ -132,4 +132,4 @@ def endpoint_stats(netid, client):
 @require_login
 @require_admin
 def endpoint_json(netid, client):
-    return flask.jsonify(client.get_endpoint_stats())
+    return flask.jsonify(list(client.get_endpoint_stats()))

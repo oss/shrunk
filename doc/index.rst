@@ -12,11 +12,23 @@ Shrunk is written by Rutgers `Open System Solutions <http://oss.rutgers.edu>`_.
 :doc:`installation`
   How to install shrunk on a machine.
 
-:doc:`tutorial`
-  Quickly learn to shrink URLs and access link data.
+:doc:`backend_tutorial`
+  Basics of Shrunk backend development.
 
-:doc:`API <api/index>`
+:doc:`frontend_tutorial`
+  Basics of Shrunk frontend development.
+
+:doc:`API <api/shrunk>`
   Browse the official Shrunk API.
+
+.. toctree::
+   :maxdepth: 1
+
+   installation
+   backend_tutorial
+   frontend_tutorial
+   packaging
+   API <api/shrunk>
 
 Issues
 ------
@@ -27,16 +39,3 @@ Contributing
 ------------
 Shrunk is open source software. You can find the official project page `on
 Phacility <https://em-oss-phab.phacility.com/diffusion/SRU/>`_.
-
-Indices and tables
-==================
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
-.. toctree::
-   :maxdepth: 1
-
-   installation
-   tutorial
-   API <api/index>

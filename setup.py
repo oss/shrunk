@@ -8,6 +8,8 @@ from setuptools.command.build_py import build_py as _build_py
 
 VERSION = '1.3.0'
 
+AUTHOR = 'Rutgers Open System Solutions'
+
 
 class BuildWebpack(Command):
     description = 'build webpack assets'
@@ -77,7 +79,7 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=requires,
-    author='Rutgers Open System Solutions',
+    author=AUTHOR,
     author_email='oss@oss.rutgers.edu',
     description='Rutgers University URL Shortener',
     long_description=readme,

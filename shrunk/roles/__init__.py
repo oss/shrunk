@@ -1,3 +1,5 @@
+from typing import Any, Callable
+
 from flask import current_app, has_app_context
 
 # function hashes
@@ -7,7 +9,7 @@ oncreate_for = {}
 onrevoke_for = {}
 form_text = {}
 # mongo coll to persist the roles data
-grants = None
+grants: Any = None
 
 
 class NotQualified(Exception):
@@ -18,35 +20,45 @@ class InvalidEntity(Exception):
     pass
 
 
-def default_text(role):
-    """ gives the default text that apears in a role menu"""
+def default_text(role: str):
+    """Gives the default text that apears in a role menu"""
+
     return {
-        "title": role,
-        "invalid": "invalid entity for role " + role,
-        "grant_title": "Grant " + role,
-        "grantee_text": "Grantee",
-        "grant_button": "GRANT",
-        "revoke_title": "Revoke " + role,
-        "revoke_button": "REVOKE",
-        "empty": "there is currently nothing with the role " + role,
-        "granted_by": "granted by",
-        "allow_comment": False
+        'title': role,
+        'invalid': f'invalid entity for role {role}',
+        'grant_title': f'Grant {role}',
+        'grantee_text': 'Grantee',
+        'grant_button': 'GRANT',
+        'revoke_title': f'Revoke {role}',
+        'revoke_button': 'REVOKE',
+        'empty': f'there is currently nothing with the role {role}',
+        'granted_by': 'granted by',
+        'allow_comment': False
     }
 
 
-def new(role, qualifier_func, validator_func=lambda e: e != "",
+def new(role: str,
+        qualifier_func: Callable[[str], bool],
+        validator_func: Callable[[str], bool] = lambda e: e != '',
         custom_text={},
-        oncreate=lambda e: "default",
-        onrevoke=lambda e: "default"):
+        oncreate: Callable[[str], None] = lambda _: None,
+        onrevoke: Callable[[str], None] = lambda _: None) -> None:
     """
-    :Parameters:
-    - `qualifier_func`: takes in a netid and returns wether or not a user is
-    qualified to add to a specific role.
-    - `validator func`: takes in an entity (like netid or link) and returns
-    if its valid for a role. for example it could take a link like 'htp://fuz'
-    and say its not a valid link
-    - `custom_text`: custom text to show on the form. see default_text source for options
-    - `oncreate`: callback for extra logic when granting a role. eg remove a users links on ban
+    :param role: Role name
+
+    :param qualifier_func:
+      takes in a netid and returns whether or not a user is qualified to add to a specific role.
+
+    :param validator_func:
+      takes in an entity (like netid or link) and returns whether it's valid for a role. for
+      example, it could take a link like ``htp://fuz1`` and say it's not a valid link
+
+    :param custom_text: custom text to show on the form. see :py:func:`default_text` source for options
+
+    :param oncreate: callback for extra logic when granting a role, e.g. remove a user's links on ban
+
+    :param onrevoke:
+      callback for extra logic when revoking a role, e.g. reenabling a user's link when they are unbanned
     """
     text = default_text(role)
     text.update(custom_text)

@@ -40,8 +40,17 @@ class OrgsClient:
                                                        'is_admin': True}}})
         return bool(res)
 
-    def add_organization_member(self, name, netid, is_admin=False):
-        '''returns false if user already exists'''
+    def add_organization_member(self, name: str, netid: str, is_admin: bool = False) -> bool:
+        """Add a member to an organization.
+
+        :Parameters:
+          - `name`: the name of the organization
+          - `netid`: the NetID of the user to add
+          - `is_admin`: whether the new user should be an organization-level administrator
+
+        :Returns:
+          True if the database was modified, false otherwise.
+        """
         col = self.db.organizations
         match = {'name': name, 'members': {'$not': {'$elemMatch': {'netid': netid}}}}
         member = {'is_admin': bool(is_admin),
@@ -53,8 +62,7 @@ class OrgsClient:
     def add_organization_admin(self, name, netid):
         if self.is_organization_member(name, netid):
             return self.set_org_admin(name, netid)
-        else:
-            return self.add_organization_member(name, netid, is_admin=True)
+        return self.add_organization_member(name, netid, is_admin=True)
 
     def remove_organization_member(self, name, netid):
         col = self.db.organizations
@@ -163,21 +171,6 @@ class OrgsClient:
         ]
 
         return next(self.db.organizations.aggregate(aggregation))
-
-    def get_location_codes(self, ipaddr):
-        if ipaddr.startswith('172.'):
-            return 'NJ', 'US'
-        try:
-            resp = self._geoip.city(ipaddr)
-            country = resp.country.iso_code
-            try:
-                state = resp.subdivisions.most_specific.iso_code if country == 'US' else None
-            except AttributeError:
-                state = None
-            return state, country
-        except (AttributeError, geoip2.errors.AddressNotFoundError):
-            return None, None
-
 
     def set_organization_admin(self, org_name, member_netid, is_admin):
         return self.db.organizations.update_one({'name': org_name},

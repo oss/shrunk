@@ -26,6 +26,7 @@ class SortOrder(enum.IntEnum):
     """Sort by popularity (total number of visits), descending."""
 
 
+# TODO: this is a good candidate for a @dataclass when/if we move to python 3.7
 class Pagination:
     def __init__(self, page, links_per_page):
         self.page = page

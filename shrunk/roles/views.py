@@ -1,7 +1,9 @@
-""" Sets up handlers for the following routes:
-     * GET  /roles/<role>/
-     * POST /roles/<role>/
-     * POST /roles/<role>/revoke """
+"""
+Sets up handlers for the following routes:
+ - ``GET  /app/roles/<role>/``
+ - ``POST /app/roles/<role>/``
+ - ``POST /app/roles/<role>/revoke``
+"""
 
 
 import flask

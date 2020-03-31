@@ -1,5 +1,7 @@
 # shrunk - Rutgers University URL Shortener
 
+from typing import Optional, Tuple
+
 import geoip2.errors
 import geoip2.database
 
@@ -10,7 +12,7 @@ class GeoipClient:
     def _set_geoip(self, GEOLITE_PATH):
         self._geoip = geoip2.database.Reader(GEOLITE_PATH)
 
-    def get_geoip_location(self, ipaddr):
+    def get_geoip_location(self, ipaddr: str) -> str:
         """Gets a human-readable UTF-8 string describing the location of the given IP address.
 
            :Parameters:
@@ -80,7 +82,7 @@ class GeoipClient:
 
         return next(self.db.visits.aggregate(aggregation))
 
-    def get_location_codes(self, ipaddr):
+    def get_location_codes(self, ipaddr: str) -> Tuple[Optional[str], Optional[str]]:
         if ipaddr.startswith('172.'):
             return 'NJ', 'US'
         try:

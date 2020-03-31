@@ -1,7 +1,10 @@
 pytest
 pytest-cov
 flake8
+flake8-quotes
 pylint
 autopep8
 setuptools
+mypy
 sphinx
+sphinx-autodoc-typehints
