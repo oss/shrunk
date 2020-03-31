@@ -229,7 +229,7 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
             'visits': 0,
             'deleted': False,
             'creator_ip': creator_ip
-	}
+        }
         if netid is not None:
             document['netid'] = netid
         if title is not None:
