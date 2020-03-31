@@ -197,8 +197,8 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
 
         return bool(self.db.phishTank.find_one({'url': long_url.rstrip()}))
 
-    def create_short_url(self, long_url: str, short_url: Optional[str] = None,
-                         netid: Optional[str] = None, title: Optional[str] = None) -> str:
+    def create_short_url(self, *, long_url: str, short_url: Optional[str] = None,
+                         netid: Optional[str] = None, title: Optional[str] = None, creator_ip: str) -> str:
         """Randomly create a new short URL and updates the database.
 
         :param long_url: The original URL to shrink.
@@ -226,8 +226,9 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
             'long_url': long_url,
             'timeCreated': datetime.datetime.now(),
             'visits': 0,
-            'deleted': False
-        }
+            'deleted': False,
+            'creator_ip': creator_ip
+	}
         if netid is not None:
             document['netid'] = netid
         if title is not None:
