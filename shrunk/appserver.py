@@ -86,7 +86,7 @@ def add_link(netid, client):
             abort(403)
 
         try:
-            shortened = client.create_short_url(**kwargs)
+            shortened = client.create_short_url(creator_ip=request.remote_addr,**kwargs)
             current_app.logger.info(f'add: {shortened} -> {kwargs["long_url"]}')
             short_url = '{}/{}'.format(current_app.config['LINKSERVER_URL'], shortened)
             return flask.jsonify({'ok': True, 'success': {'short_url': short_url}})

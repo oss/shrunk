@@ -136,7 +136,7 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
     def is_phished(self, long_url):
         return bool(self.db.phishTank.find_one({'url': long_url.rstrip()}))
 
-    def create_short_url(self, long_url, short_url=None, netid=None, title=None):
+    def create_short_url(self, long_url, short_url=None, netid=None, title=None, creator_ip=None):
         """Given a long URL, create a new short URL.
 
         Randomly creates a new short URL and updates the Shrunk database.
@@ -169,6 +169,7 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
             "timeCreated": datetime.datetime.now(),
             "visits": 0,
             "deleted": False
+	    "creator_ip": creator_ip
         }
         if netid is not None:
             document["netid"] = netid
@@ -194,7 +195,7 @@ class ShrunkClient(SearchClient, GeoipClient, OrgsClient, TrackingClient):
                         url = ShrunkClient._generate_unique_key()
 
                     document["short_url"] = url
-                    response = self.db.urls.insert_one(document)
+		    response = self.db.urls.insert_one(document)
                 except pymongo.errors.DuplicateKeyError:
                     continue
 
