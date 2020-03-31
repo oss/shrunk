@@ -163,7 +163,7 @@ particular unit test file by simply executing::
 
 To run all the tests, you can use::
 
-  $ pytest tests
+  $ pytest
 
 Some of the tests can take a long time to complete. To ignore these
 tests, you can pass the ``-m 'not slow'`` option on the pytest command
