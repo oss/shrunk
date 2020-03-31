@@ -316,7 +316,6 @@ def assert_visit(visit, all_visits, first_time, month=None, year=None):
 
 
 def test_get_daily_visits(db, app):
-    # XXX finish making this work
     with app.app_context():
         num_visits = 3
         num_visits2 = 4
@@ -325,12 +324,12 @@ def test_get_daily_visits(db, app):
         url3 = db.create_short_url("https://linux.org/third", netid="dude")
         db.create_short_url("https://linux.org/fifth", netid="dude")
 
-        visits = db.get_daily_visits(url)
-        visits2 = db.get_daily_visits(url2)
+        visits = list(db.get_daily_visits(url))
+        visits2 = list(db.get_daily_visits(url2))
         # exists but no visits
-        visits3 = db.get_daily_visits(url3)
+        visits3 = list(db.get_daily_visits(url3))
         # does not exist
-        visits4 = db.get_daily_visits("hogwash")
+        visits4 = list(db.get_daily_visits("hogwash"))
 
         assert len(visits) == 1  # only one months worth of visits
         assert len(visits2) == 1
