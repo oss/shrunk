@@ -23,10 +23,6 @@ from . import sso
 from .webpack_loader import WebpackLoader
 
 
-VERSION_TUPLE = (1, 0, 0)
-""" The current version of Shrunk. """
-
-
 class RequestFormatter(logging.Formatter):
     def format(self, record):
         record.url = None
