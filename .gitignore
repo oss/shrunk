@@ -46,7 +46,6 @@ shrunk/shrunk/static/out
 
 node_modules/
 shrunk/static/dist/
-
 webpack-stats.json
-
 dist-newstyle
+.mypy_cache/
