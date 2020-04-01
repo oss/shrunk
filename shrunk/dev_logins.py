@@ -4,8 +4,6 @@
 import flask
 from werkzeug.exceptions import abort
 
-from . import roles
-
 
 bp = flask.Blueprint('devlogins', __name__, url_prefix='/app/devlogins')
 
@@ -22,8 +20,8 @@ def mk_dev_login(netid, role):
             'all_users': '0',
             'sortby': '0'
         })
-        if role is not None and not roles.check(role, netid):
-            roles.grant(role, 'Justice League', netid)
+        if role is not None and not flask.current_app.get_shrunk().check_role(role, netid):
+            flask.current_app.get_shrunk().grant_role(role, 'Justice League', netid)
         return flask.redirect(flask.url_for('shrunk.render_index'))
     return view
 

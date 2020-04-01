@@ -7,7 +7,7 @@ from typing import List
 
 from wtforms import Form, StringField, validators, ValidationError
 
-from .filters import strip_whitespace, ensure_protocol
+from .filters import ensure_protocol
 
 
 SHORT_URL_REGEX_VALIDATOR = validators.Regexp('^[a-zA-Z0-9_.,-]*$',
@@ -16,12 +16,12 @@ letters, and the characters ", . _ -".')
 
 
 class LinkForm(Form):
-    long_url = StringField('URL', filters=[strip_whitespace, ensure_protocol], validators=[
+    long_url = StringField('URL', filters=[str.strip, ensure_protocol], validators=[
         validators.DataRequired('You need a link to shrink!'),
         validators.URL(require_tld=True, message='Please enter a valid URL.')
     ])
 
-    title = StringField('Title', filters=[strip_whitespace], validators=[
+    title = StringField('Title', filters=[str.strip], validators=[
         validators.DataRequired('Please enter a title.')
     ])
 
@@ -39,7 +39,7 @@ class LinkForm(Form):
 
 
 class AddLinkForm(LinkForm):
-    short_url = StringField('Custom Alias', filters=[strip_whitespace], validators=[
+    short_url = StringField('Custom Alias', filters=[str.strip], validators=[
         validators.Length(min=5, max=16, message="""Custom alias length must be \
 between %(min)d and %(max)d characters."""),
         SHORT_URL_REGEX_VALIDATOR,
@@ -55,7 +55,7 @@ between %(min)d and %(max)d characters."""),
 
 
 class EditLinkForm(LinkForm):
-    short_url = StringField('Custom Alias', filters=[strip_whitespace], validators=[
+    short_url = StringField('Custom Alias', filters=[str.strip], validators=[
         validators.Length(min=5, max=16, message="""Custom alias length must be
             between %(min)d and %(max)d characters."""),
         SHORT_URL_REGEX_VALIDATOR

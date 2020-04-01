@@ -2,7 +2,6 @@ import functools
 
 import flask
 
-from .. import roles
 from ..util import get_param
 from ..client import Pagination
 
@@ -18,7 +17,7 @@ def display_links_set(links_set):
 
 def authorized_for_links_set(client, links_set, netid):
     """ Test whether the user is authorized to view links_set. """
-    if roles.check('admin', netid):
+    if client.check_role('admin', netid):
         return True
     if links_set == 'GO!my':
         return True

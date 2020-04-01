@@ -57,6 +57,9 @@ class SearchResults:
 class SearchClient:
     """Mixin for search-related operations."""
 
+    def __init__(self, **kwargs):
+        pass
+
     def search(self, *, query=None, netid=None, org=None, sort=None, pagination=None,
                show_deleted=False):
         pipeline = []

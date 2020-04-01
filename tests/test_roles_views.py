@@ -1,12 +1,10 @@
 import pytest
 
-from shrunk import roles
-
 from util import assert_ok, assert_in_resp, assert_status, assert_redirect, dev_login
 
 
 @pytest.mark.parametrize('role', ['whitelisted'])
-def test_list(client, role):
+def test_list(client, role, db):
     def check(expected):
         resp = client.get(f'/app/roles/{role}/')
         assert_ok(resp)
@@ -15,31 +13,31 @@ def test_list(client, role):
     with dev_login(client, 'admin'):
         check([])
 
-        roles.grant(role, 'DEV_ADMIN', 'DEV_USER', None)
+        db.grant_role(role, 'DEV_ADMIN', 'DEV_USER', None)
         check(['DEV_USER'])
 
-        roles.grant(role, 'DEV_ADMIN', 'DEV_FACSTAFF', None)
+        db.grant_role(role, 'DEV_ADMIN', 'DEV_FACSTAFF', None)
         check(['DEV_USER', 'DEV_FACSTFAFF'])
 
-        roles.grant(role, 'DEV_ADMIN', 'DEV_PWR_USER', None)
+        db.grant_role(role, 'DEV_ADMIN', 'DEV_PWR_USER', None)
         check(['DEV_USER', 'DEV_FACSTFAFF', 'DEV_PWR_USER'])
 
-        roles.revoke(role, 'DEV_FACSTAFF')
+        db.revoke_role(role, 'DEV_FACSTAFF')
         check(['DEV_USER', 'DEV_PWR_USER'])
 
-        roles.revoke(role, 'DEV_USER')
+        db.revoke_role(role, 'DEV_USER')
         check(['DEV_PWR_USER'])
 
-        roles.revoke(role, 'DEV_PWR_USER')
+        db.revoke_role(role, 'DEV_PWR_USER')
         check([])
 
 
 @pytest.mark.parametrize('role', ['whitelisted'])
-def test_grant(client, role):
+def test_grant(client, role, db):
     with dev_login(client, 'admin'):
         req = {'entity': 'DEV_USER', 'comment': 'Test comment'}
         assert_status(client.post(f'/app/roles/{role}/grant', data=req), 302)
-        assert roles.check(role, 'DEV_USER')
+        assert db.check_role(role, 'DEV_USER')
 
 
 @pytest.mark.parametrize('role', ['whitelisted'])
@@ -69,23 +67,23 @@ def test_grant_invalid_entity(client):
 
 
 @pytest.mark.parametrize('role', ['whitelisted'])
-def test_revoke(app, client, role):
+def test_revoke(app, client, role, db):
     with app.app_context():
-        roles.grant(role, 'DEV_ADMIN', 'DEV_USER', None)
+        db.grant_role(role, 'DEV_ADMIN', 'DEV_USER', None)
     with dev_login(client, 'admin'):
-        assert roles.check(role, 'DEV_USER')
+        assert db.check_role(role, 'DEV_USER')
         req = {'entity': 'DEV_USER'}
         assert_status(client.post(f'/app/roles/{role}/revoke', data=req), 302)
-        assert not roles.check(role, 'DEV_USER')
+        assert not db.check_role(role, 'DEV_USER')
 
 
-def test_revoke_whitelist_no_perm(app, client):
+def test_revoke_whitelist_no_perm(app, client, db):
     with app.app_context():
-        roles.grant('whitelisted', 'DEV_ADMIN', 'DEV_USER', None)
+        db.grant_role('whitelisted', 'DEV_ADMIN', 'DEV_USER', None)
     with dev_login(client, 'power'):
         req = {'entity': 'DEV_USER'}
         assert_status(client.post('/app/roles/whitelisted/revoke', data=req), 403)
-        assert roles.check('whitelisted', 'DEV_USER')
+        assert db.check_role('whitelisted', 'DEV_USER')
 
 
 def test_roles_no_session(client):
@@ -97,8 +95,8 @@ def test_whitelist_no_perm(client):
         assert_status(client.get('/app/roles/whitelisted/'), 403)
 
 
-def test_admin_blacklisted(app, client):
+def test_admin_blacklisted(app, client, db):
     with app.app_context():
-        roles.grant('blacklisted', 'test', 'DEV_ADMIN', None)
+        db.grant_role('blacklisted', 'test', 'DEV_ADMIN', None)
     with dev_login(client, 'admin'):
         assert_status(client.get('/app/admin/'), 403)

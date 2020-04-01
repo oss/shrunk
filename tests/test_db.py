@@ -6,7 +6,7 @@ Unit tests for the database.
 import pytest
 
 import shrunk.client
-import shrunk.roles as roles
+import shrunk.client.exceptions
 
 
 def insert_urls(db, long_urls, netid):
@@ -72,27 +72,27 @@ def test_count(db, app):
 
 def test_create(db, app):
     with app.app_context():
-        roles.grant('blocked_url', 'ltorvalds', 'https://microsoft.com')
+        db.grant_role('blocked_url', 'ltorvalds', 'https://microsoft.com')
         db.create_short_url('https://linux.org', netid='dude', title='title',
                             short_url='custom-link')
 
         # can't create a link that is blocked
-        with pytest.raises(shrunk.client.ForbiddenDomainException):
+        with pytest.raises(shrunk.client.exceptions.ForbiddenDomainException):
             db.create_short_url('https://microsoft.com/custom', netid='dude',
                                 short_url='custom-link2')
 
         # can't use somone else's link
-        with pytest.raises(shrunk.client.DuplicateIdException):
+        with pytest.raises(shrunk.client.exceptions.DuplicateIdException):
             db.create_short_url('https://lmao.com/custom', netid='dude', short_url='custom-link')
 
-        with pytest.raises(shrunk.client.ForbiddenNameException):
+        with pytest.raises(shrunk.client.exceptions.ForbiddenNameException):
             db.create_short_url('https://lmao.com/custom', netid='dude', short_url='shrunk-login')
 
 
 def test_modify(db, app):
     """Make sure modifing the url sets the new info properly."""
     with app.app_context():
-        roles.grant('blocked_url', 'ltorvalds', 'https://microsoft.com')
+        db.grant_role('blocked_url', 'ltorvalds', 'https://microsoft.com')
         url = db.create_short_url('https://linux.org', netid='dude', title='title')
         db.create_short_url('https://linux.org/custom', netid='dude', short_url='custom-link')
         db.create_short_url('https://linux.org/custom4', netid='dude', short_url='custom-link4')
@@ -106,18 +106,18 @@ def test_modify(db, app):
             return db.modify_url(**args)
 
         # can't edit to blocked urls
-        with pytest.raises(shrunk.client.ForbiddenDomainException):
+        with pytest.raises(shrunk.client.exceptions.ForbiddenDomainException):
             modify(long_url='https://microsoft.com')
 
-        with pytest.raises(shrunk.client.ForbiddenDomainException):
+        with pytest.raises(shrunk.client.exceptions.ForbiddenDomainException):
             modify(long_url='https://ComL3te-MeSs.mIcroSoft.cOm/of-AllofTh3m/4.aspx')
 
         # can't edit to a reserved word
-        with pytest.raises(shrunk.client.ForbiddenNameException):
+        with pytest.raises(shrunk.client.exceptions.ForbiddenNameException):
             modify(short_url='logout')
 
         # can't edit to an already taken short url
-        with pytest.raises(shrunk.client.BadShortURLException):
+        with pytest.raises(shrunk.client.exceptions.BadShortURLException):
             modify(short_url='custom-link')
 
         # all new information should be set
@@ -133,7 +133,7 @@ def test_is_owner_or_admin(db, app):
     with app.app_context():
         url = db.create_short_url('https://linux.org', netid='dude')
         print(url)
-        roles.grants.insert_one({'role': 'admin', 'entity': 'dnolen', 'granted_by': 'rhickey'})
+        db.db.grants.insert_one({'role': 'admin', 'entity': 'dnolen', 'granted_by': 'rhickey'})
 
         assert db.is_owner_or_admin(url, 'dude')
         assert db.is_owner_or_admin(url, 'dnolen')
@@ -176,8 +176,8 @@ def test_visit2(db, app):
 def test_delete_and_visit(db, app):
     with app.app_context():
         """test utility function to see if somone can modify a url"""
-        roles.grants.insert_one({'role': 'admin', 'entity': 'dnolen', 'granted_by': 'rhickey'})
-        roles.grants.insert_one({
+        db.db.grants.insert_one({'role': 'admin', 'entity': 'dnolen', 'granted_by': 'rhickey'})
+        db.db.grants.insert_one({
             'role': 'power_user',
             'netid': 'power_user',
             'added_by': 'Justice League'
@@ -192,17 +192,17 @@ def test_delete_and_visit(db, app):
             assert deletion.modified_count == 1
 
         # only owner or admin can delete not power_user or user
-        with pytest.raises(shrunk.client.AuthenticationException):
+        with pytest.raises(shrunk.client.exceptions.AuthenticationException):
             db.delete_url(url, 'user')
         assert get_url(db, url)['visits'] == num_visits
 
         # power
-        with pytest.raises(shrunk.client.AuthenticationException):
+        with pytest.raises(shrunk.client.exceptions.AuthenticationException):
             db.delete_url(url, 'power_user')
         assert get_url(db, url)['visits'] == num_visits
 
         # cant delete nonexistent link
-        with pytest.raises(shrunk.client.NoSuchLinkException):
+        with pytest.raises(shrunk.client.exceptions.NoSuchLinkException):
             db.delete_url('reasons-to-use-windows', 'dnolen')
 
         # admin
@@ -323,15 +323,13 @@ def test_get_daily_visits(db, app):
 
         visits = list(db.get_daily_visits(url))
         visits2 = list(db.get_daily_visits(url2))
-        # exists but no visits
-        visits3 = list(db.get_daily_visits(url3))
-        # does not exist
-        visits4 = list(db.get_daily_visits('hogwash'))
+        visits3 = list(db.get_daily_visits(url3))  # exists but no visits
+        with pytest.raises(shrunk.client.exceptions.NoSuchLinkException):
+            db.get_daily_visits('hogwash')
 
         assert len(visits) == 1  # only one months worth of visits
         assert len(visits2) == 1
         assert len(visits3) == 0  # no months
-        assert len(visits4) == 0
 
         assert_visit(visits[0], num_visits, first_time=1)
         assert_visit(visits2[0], num_visits2, first_time=1)
@@ -502,7 +500,7 @@ def test_may_manage_organization(app, db):
     assert db.may_manage_organization('test-org', 'test-admin') == 'admin'
     assert db.may_manage_organization('test-org', 'test-member') == 'member'
     with app.app_context():
-        roles.grant('admin', 'test', 'test-admin', None)
+        db.grant_role('admin', 'test', 'test-admin', None)
     assert db.may_manage_organization('test-org', 'test-admin') == 'site-admin'
     assert db.may_manage_organization('test-org', 'not-member') is False
     assert db.may_manage_organization('not-an-org', 'not-member') is False

@@ -4,7 +4,6 @@ import flask
 from werkzeug.exceptions import abort
 
 from . import util
-from . import roles
 from .util import stat
 from .util import search
 from .decorators import require_login, require_admin
@@ -109,7 +108,7 @@ def search_visits_csv(netid, client):
     """ Get CSV-formatted data describing (anonymized) visitors to the current
         search results. """
 
-    show_deleted = roles.check('admin', netid)
+    show_deleted = client.check_role('admin', netid)
     links = list(search.search(netid, client, flask.request, flask.session,
                                should_paginate=False, show_deleted=show_deleted))
     total_visits = sum(map(lambda l: l['visits'], links))

@@ -5,140 +5,140 @@ Unit tests for roles system.
 
 import pytest
 
-from shrunk import roles
+from shrunk.client.exceptions import InvalidEntity
 
 from util import assert_status, dev_login
 
 
 def test_invalid(db):
-    with pytest.raises(roles.InvalidEntity):
-        roles.grant('root', 'Justice League', 'peb60')
+    with pytest.raises(InvalidEntity):
+        db.grant_role('root', 'Justice League', 'peb60')
 
 
 def test_get(app, db):
     def check(expected):
-        assert sorted(roles.get('peb60')) == sorted(expected)
+        assert sorted(db.get_roles('peb60')) == sorted(expected)
 
     with app.app_context():
         check([])
-        roles.grant('admin', 'Justice League', 'peb60')
+        db.grant_role('admin', 'Justice League', 'peb60')
         check(['admin'])
-        roles.grant('power_user', 'Justice League', 'peb60')
+        db.grant_role('power_user', 'Justice League', 'peb60')
         check(['admin', 'power_user'])
-        roles.grant('facstaff', 'Justice League', 'peb60')
+        db.grant_role('facstaff', 'Justice League', 'peb60')
         check(['admin', 'power_user', 'facstaff'])
 
-        roles.revoke('power_user', 'peb60')
+        db.revoke_role('power_user', 'peb60')
         check(['admin', 'facstaff'])
-        roles.revoke('admin', 'peb60')
+        db.revoke_role('admin', 'peb60')
         check(['facstaff'])
-        roles.revoke('facstaff', 'peb60')
+        db.revoke_role('facstaff', 'peb60')
         check([])
 
 
 def test_granted_by(app, db):
     with app.app_context():
-        roles.grant('admin', 'Justice League', 'peb60')
-    assert roles.granted_by('admin', 'peb60') == 'Justice League'
-    assert roles.granted_by('power_user', 'peb60') is None
+        db.grant_role('admin', 'Justice League', 'peb60')
+    assert db.role_granted_by('admin', 'peb60') == 'Justice League'
+    assert db.role_granted_by('power_user', 'peb60') is None
 
 
 def test_list_all(app, db):
     def check(role, expected):
-        entities = {g['entity'] for g in roles.list_all(role)}
+        entities = {g['entity'] for g in db.list_all_entities(role)}
         assert entities == set(expected)
 
     with app.app_context():
         check('facstaff', [])
         check('power_user', [])
 
-        roles.grant('facstaff', 'Justice League', 'peb60')
+        db.grant_role('facstaff', 'Justice League', 'peb60')
         check('facstaff', ['peb60'])
         check('power_user', [])
 
-        roles.grant('power_user', 'Justice League', 'jcc')
+        db.grant_role('power_user', 'Justice League', 'jcc')
         check('facstaff', ['peb60'])
         check('power_user', ['jcc'])
 
-        roles.grant('facstaff', 'Justice League', 'mjw271')
+        db.grant_role('facstaff', 'Justice League', 'mjw271')
         check('facstaff', ['peb60', 'mjw271'])
         check('power_user', ['jcc'])
 
-        roles.revoke('facstaff', 'peb60')
+        db.revoke_role('facstaff', 'peb60')
         check('facstaff', ['mjw271'])
         check('power_user', ['jcc'])
 
-        roles.revoke('facstaff', 'mjw271')
+        db.revoke_role('facstaff', 'mjw271')
         check('facstaff', [])
         check('power_user', ['jcc'])
 
-        roles.revoke('power_user', 'jcc')
+        db.revoke_role('power_user', 'jcc')
         check('facstaff', [])
         check('power_user', [])
 
 
 def test_valid_roles(db):
     def check(expected):
-        valid = roles.valid_roles()
+        valid = db.valid_roles()
         assert all(r in valid for r in expected)
 
     def true(_):
         return True
 
-    roles.new('role0', true)
+    db.new_role('role0', true)
     check(['role0'])
 
-    roles.new('role1', true)
+    db.new_role('role1', true)
     check(['role0', 'role1'])
 
-    roles.new('role2', true)
+    db.new_role('role2', true)
     check(['role0', 'role1', 'role2'])
 
 
 def test_template_data(app, db):
-    roles.grant('role0', 'shrunk_test', 'entity0')
-    roles.grant('role0', 'shrunk_test', 'entity1')
-    roles.grant('role0', 'not_shrunk_test', 'entity2')
+    db.grant_role('role0', 'shrunk_test', 'entity0')
+    db.grant_role('role0', 'shrunk_test', 'entity1')
+    db.grant_role('role0', 'not_shrunk_test', 'entity2')
 
-    template = roles.template_data('role0', 'shrunk_test')
+    template = db.role_template_data('role0', 'shrunk_test')
     assert not template['admin']
     assert not template['power_user']
     assert not template['facstaff']
     assert len(template['grants']) == 2
 
     with app.app_context():
-        roles.grant('admin', 'Justice League', 'shrunk_test')
+        db.grant_role('admin', 'Justice League', 'shrunk_test')
 
-    template = roles.template_data('role0', 'shrunk_test')
+    template = db.role_template_data('role0', 'shrunk_test')
     assert template['admin']
     assert not template['power_user']
     assert not template['facstaff']
     assert len(list(template['grants'])) == 3
 
-    template = roles.template_data('role0', 'shrunk_test', invalid=True)
+    template = db.role_template_data('role0', 'shrunk_test', invalid=True)
     assert template['msg'] == 'invalid entity for role role0'
 
 
 def test_has_one_of(db):
-    roles.new('prole0', True)
-    roles.new('prole1', True)
-    roles.grant('prole0', 'shrunk_test', 'entity0')
-    roles.grant('prole1', 'shrunk_test', 'entity0')
-    roles.grant('prole0', 'shrunk_test', 'entity1')
-    roles.grant('prole1', 'shrunk_test', 'entity2')
+    db.new_role('prole0', True)
+    db.new_role('prole1', True)
+    db.grant_role('prole0', 'shrunk_test', 'entity0')
+    db.grant_role('prole1', 'shrunk_test', 'entity0')
+    db.grant_role('prole0', 'shrunk_test', 'entity1')
+    db.grant_role('prole1', 'shrunk_test', 'entity2')
 
-    assert roles.has_one_of(['prole0', 'prole1', 'bogus'], 'entity0')
-    assert roles.has_one_of(['prole0', 'prole1', 'bogus'], 'entity1')
-    assert not roles.has_one_of(['prole0', 'bogus'], 'entity2')
+    assert db.has_some_role(['prole0', 'prole1', 'bogus'], 'entity0')
+    assert db.has_some_role(['prole0', 'prole1', 'bogus'], 'entity1')
+    assert not db.has_some_role(['prole0', 'bogus'], 'entity2')
 
-    assert roles.has_one_of(['prole0', 'prole1', 'bogus'], 'entity2')
-    assert not roles.has_one_of(['prole1', 'bogus'], 'entity1')
+    assert db.has_some_role(['prole0', 'prole1', 'bogus'], 'entity2')
+    assert not db.has_some_role(['prole1', 'bogus'], 'entity1')
 
-    assert not roles.has_one_of(['fweuihiwf', 'hash_slining_slasher', 'bogus'], 'entity0')
+    assert not db.has_some_role(['fweuihiwf', 'hash_slining_slasher', 'bogus'], 'entity0')
 
 
 def test_blacklisted(app, db, client):
     with app.app_context():
-        roles.grant('blacklisted', 'shrunk_test', 'DEV_USER')
+        db.grant_role('blacklisted', 'shrunk_test', 'DEV_USER')
     with dev_login(client, 'user'):
         assert_status(client.get('/app/'), 403)

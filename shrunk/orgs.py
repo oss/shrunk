@@ -2,7 +2,6 @@ import flask
 from flask import current_app
 from werkzeug.exceptions import abort
 
-from . import roles
 from .util import ldap
 from .decorators import require_login
 
@@ -23,7 +22,7 @@ def list_orgs(netid, client):
         'admin_orgs': list(map(org_info, client.get_admin_organizations(netid)))
     }
 
-    if roles.check('admin', netid):
+    if client.check_role('admin', netid):
         kwargs['list_orgs'] = list(map(org_info, client.get_all_organizations()))
     else:
         kwargs['list_orgs'] = kwargs['member_orgs']
@@ -72,7 +71,7 @@ def create_org(netid, client):
         should be given in the parameter 'name'. The creating user will
         automatically be made a member of the organization. """
 
-    if not roles.check('facstaff', netid) and not roles.check('admin', netid):
+    if not client.check_role('facstaff', netid) and not client.check_role('admin', netid):
         abort(403)
 
     name = flask.request.form.get('name')

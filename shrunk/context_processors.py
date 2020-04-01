@@ -2,7 +2,6 @@
 
 import flask
 
-from . import roles
 from .util import search
 
 
@@ -20,7 +19,7 @@ def _add_user_info():
     """Passes user info (netid, roles) to every template."""
     try:
         netid = flask.session['user']['netid']
-        return {'netid': netid, 'roles': roles.get(netid)}
+        return {'netid': netid, 'roles': flask.current_app.get_shrunk().get_roles(netid)}
     except KeyError:
         return {}
 
@@ -30,7 +29,7 @@ def _add_orgs():
     try:
         netid = flask.session['user']['netid']
         client = flask.current_app.get_shrunk()
-        if roles.check('admin', netid):
+        if client.check_role('admin', netid):
             orgs = client.get_all_organizations()
         else:
             orgs = client.get_member_organizations(netid)

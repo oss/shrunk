@@ -4,8 +4,6 @@ import flask
 import flask_sso
 from werkzeug.exceptions import abort
 
-from . import roles
-
 ext = flask_sso.SSO()
 
 
@@ -15,6 +13,7 @@ def login(user_info):
         should be allowed to access Shrunk, and possibly grant roles. The
         roles system must be initialized before this function is called. """
 
+    client = flask.current_app.get_shrunk()
     logger = flask.current_app.logger
     types = user_info.get('employeeType').split(';')
     netid = user_info.get('netid')
@@ -33,8 +32,8 @@ def login(user_info):
     fac_staff = t('FACULTY') or t('STAFF')
 
     # get info from ACLs
-    is_blacklisted = roles.check('blacklisted', netid)
-    is_whitelisted = roles.check('whitelisted', netid)
+    is_blacklisted = client.check_role('blacklisted', netid)
+    is_whitelisted = client.check_role('whitelisted', netid)
     is_config_whitelisted = netid in flask.current_app.config['USER_WHITELIST']
 
     # now make decisions regarding whether the user can login, and what privs they should get
@@ -47,12 +46,12 @@ def login(user_info):
 
     # config-whitelisted users are automatically made admins
     if is_config_whitelisted:
-        roles.grant('admin', 'Justice League', netid)
+        client.grant_role('admin', 'Justice League', netid)
 
     # (if not blacklisted) facstaff can always login, but we need to grant a role
     # so the rest of the app knows what privs to give the user
     if fac_staff:
-        roles.grant('facstaff', 'shibboleth', netid)
+        client.grant_role('facstaff', 'shibboleth', netid)
 
     # now determine whether to allow login
     if not (is_config_whitelisted or fac_staff or is_whitelisted):

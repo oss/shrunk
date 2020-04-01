@@ -3,8 +3,6 @@ import operator
 
 import pytest
 
-import shrunk.roles as roles
-
 from util import assert_redirect, assert_status, assert_ok, assert_in_resp, assert_json, dev_login
 
 
@@ -25,9 +23,9 @@ def test_missing_title(client):
         assert_in_resp(client.post('/app/add', data=req), 'Please enter a title.')
 
 
-def test_blocked_url(client):
+def test_blocked_url(db, client):
     with dev_login(client, 'user'):
-        roles.grant('blocked_url', 'anti-foo-man', 'https://foo.com')
+        db.grant_role('blocked_url', 'anti-foo-man', 'https://foo.com')
         req = {
             'long_url': 'https://lmao.foo.com/sus.php',
             'title': 'testing'
@@ -196,8 +194,8 @@ def test_edit_no_title(client, short_url):
         assert_in_resp(resp, 'Please enter a title.')
 
 
-def test_edit_blocked(client, short_url):
-    roles.grant('blocked_url', 'anti-foo-man', 'https://foo.com')
+def test_edit_blocked(db, client, short_url):
+    db.grant_role('blocked_url', 'anti-foo-man', 'https://foo.com')
     with dev_login(client, 'user'):
         req = {
             'long_url': 'https://lmao.foo.com/sus.php',

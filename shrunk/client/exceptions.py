@@ -25,3 +25,7 @@ class AuthenticationException(Exception):
 
 class NoSuchLinkException(Exception):
     """Link was not found"""
+
+
+class InvalidEntity(Exception):
+    """Entity not valid for role"""

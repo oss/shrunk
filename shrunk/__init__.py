@@ -15,7 +15,7 @@ from . import appserver
 from . import orgs
 from . import dev_logins
 from . import stats
-from .roles import views
+from . import roles
 
 # Extensions
 from . import csrf
@@ -57,8 +57,8 @@ def create_app(config_path='config.py', **kwargs):
     app.register_blueprint(appserver.bp)
     app.register_blueprint(orgs.bp)
     app.register_blueprint(dev_logins.bp)
-    app.register_blueprint(views.bp)
     app.register_blueprint(stats.bp)
+    app.register_blueprint(roles.bp)
 
     # set up extensions
     csrf.ext.init_app(app)

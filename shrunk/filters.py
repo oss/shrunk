@@ -83,8 +83,3 @@ def strip_protocol(url: str) -> str:
     """
 
     return url.replace('http://', '', 1).replace('https://', '', 1)
-
-
-def strip_whitespace(s):
-    """Removes whitespace from the input string."""
-    return s.strip()

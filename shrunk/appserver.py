@@ -1,15 +1,22 @@
 """ Sets up the Flask application for the main web server. """
 
 import flask
-from flask import Blueprint, make_response, request, redirect, session, \
-    render_template, current_app, url_for
+from flask import (Blueprint,
+                   make_response,
+                   request,
+                   redirect,
+                   session,
+                   render_template,
+                   current_app,
+                   url_for)
 from werkzeug.exceptions import abort
 
-from . import roles
 from . import forms
 from .util import search
-from .client import BadShortURLException, ForbiddenDomainException, \
-    AuthenticationException, NoSuchLinkException
+from .client.exceptions import (BadShortURLException,
+                                ForbiddenDomainException,
+                                AuthenticationException,
+                                NoSuchLinkException)
 from .decorators import require_login, require_admin
 
 
@@ -57,7 +64,7 @@ def render_index(netid, client, **kwargs):
     matching their search query are shown.
     """
 
-    show_deleted = roles.check('admin', netid)
+    show_deleted = client.check_role('admin', netid)
     results = search.search(netid, client, request, session, show_deleted)
 
     kwargs.update({'begin_pages': results.begin_page,
@@ -80,7 +87,7 @@ def add_link(netid, client):
     if form.validate():
         kwargs = form.to_json()
         kwargs['netid'] = netid
-        admin_or_power = roles.check('admin', netid) or roles.check('power_user', netid)
+        admin_or_power = client.has_some_role(['admin', 'power_user'], netid)
 
         if kwargs['short_url'] and not admin_or_power:
             abort(403)
@@ -167,7 +174,7 @@ def edit_link(netid, client):
     if form.validate():
         # The form has been validated---now do permissions checking
         kwargs = form.to_json()
-        admin_or_power = roles.check('admin', netid) or roles.check('power_user', netid)
+        admin_or_power = client.has_some_role(['admin', 'power_user'], netid)
 
         current_app.logger.info(f'edit {kwargs["old_short_url"]}: {kwargs["short_url"]} '
                                 + '-> {kwargs["long_url"]}')
@@ -215,8 +222,8 @@ def admin_panel(netid, client):
     controls.
     """
 
-    valid_roles = roles.valid_roles()
-    roledata = [{'id': role, 'title': roles.form_text[role]['title']} for role in valid_roles]
+    valid_roles = client.valid_roles()
+    roledata = [{'id': role, 'title': client.role_form_text(role)['title']} for role in valid_roles]
     stats = client.get_admin_stats()
     current_app.logger.info('admin panel')
     return render_template('admin.html', roledata=roledata, stats=stats)

@@ -2,8 +2,11 @@ import re
 
 import pytest
 
-from shrunk.filters import StopValidation, url_reject_regex, url_restrict_regex, \
-    ensure_protocol, strip_protocol, strip_whitespace
+from shrunk.filters import (StopValidation,
+                            url_reject_regex,
+                            url_restrict_regex,
+                            ensure_protocol,
+                            strip_protocol)
 
 
 class DummyField:
@@ -46,12 +49,3 @@ def test_ensure_protocol(url, expected):
     ('example.com', 'example.com')])
 def test_strip_protocol(url, expected):
     assert strip_protocol(url) == expected
-
-
-@pytest.mark.parametrize(('inp', 'expected'), [
-    ('     ', ''),
-    (' abc ', 'abc'),
-    ('\tabc\n', 'abc'),
-    ('\r\nabc cd ef \t ', 'abc cd ef')])
-def test_strip_whitespace(inp, expected):
-    assert strip_whitespace(inp) == expected

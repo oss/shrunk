@@ -3,7 +3,6 @@ import logging
 from flask import Flask, redirect, request, current_app
 from werkzeug.exceptions import abort
 
-from . import roles
 from .client import ShrunkClient
 from .util.string import validate_url, get_domain, formattime
 from .util.ldap import is_valid_netid
@@ -96,40 +95,37 @@ class ShrunkFlask(ShrunkFlaskMini):
             ShrunkFlaskMini._init_shrunk_client must be called before
             this function. """
 
-        # Initialize the roles module.
-        roles.init(self, db_name=self.config.get('DB_NAME', 'shrunk'))
-
         # Create an entry for each role.
         self._add_roles()
 
     def _add_roles(self):
+        client = self.get_shrunk()
+
         def has_some_role(rs):
             def check(netid):
                 for r in rs:
-                    if not roles.exists(r):
+                    if not client.role_exists(r):
                         current_app.logger.error(f'has_some_role: role {r} does not exist')
-                return any(roles.check(r, netid) for r in rs)
+                return any(client.check_role(r, netid) for r in rs)
             return check
 
         is_admin = has_some_role(['admin'])
 
-        roles.new('admin', is_admin, is_valid_netid, custom_text={'title': 'Admins'})
+        client.new_role('admin', is_admin, is_valid_netid, custom_text={'title': 'Admins'})
 
-        roles.new('power_user', is_admin, is_valid_netid, custom_text={
+        client.new_role('power_user', is_admin, is_valid_netid, custom_text={
             'title': 'Power Users',
             'grant_title': 'Grant power user',
             'revoke_title': 'Revoke power user'
         })
 
         def onblacklist(netid):
-            client = current_app.get_shrunk()
             client.blacklist_user_links(netid)
 
         def unblacklist(netid):
-            client = current_app.get_shrunk()
             client.unblacklist_user_links(netid)
 
-        roles.new('blacklisted', is_admin, is_valid_netid, custom_text={
+        client.new_role('blacklisted', is_admin, is_valid_netid, custom_text={
             'title': 'Blacklisted Users',
             'grant_title': 'Blacklist a user:',
             'grantee_text': 'User to blacklist (and disable their links)',
@@ -142,7 +138,7 @@ class ShrunkFlask(ShrunkFlaskMini):
 
         def onblock(url):
             domain = get_domain(url)
-            urls = self.get_shrunk().db.urls
+            urls = client.db.urls
             self.logger.info(f'url {url} has been blocked. removing all urls with domain {domain}')
 
             # . needs to be escaped in the domain because it is regex wildcard
@@ -155,10 +151,10 @@ class ShrunkFlask(ShrunkFlaskMini):
                 + ', '.join(f'{l["_id"]} -> {l["long_url"]}' for l in matches_domain)
             self.logger.info(msg)
 
-            self.get_shrunk().block_urls(doc['_id'] for doc in matches_domain)
+            client.block_urls(doc['_id'] for doc in matches_domain)
 
         def unblock(url):
-            urls = self.get_shrunk().db.urls
+            urls = client.db.urls
             domain = get_domain(url)
             contains_domain = urls.find({
                 'long_url': {'$regex': '%s*' % domain.replace('.', r'\.')},
@@ -167,9 +163,9 @@ class ShrunkFlask(ShrunkFlaskMini):
             })
 
             matches_domain = [link for link in contains_domain if get_domain(link['long_url']) == domain]
-            self.get_shrunk().unblock_urls(doc['_id'] for doc in matches_domain)
+            client.unblock_urls(doc['_id'] for doc in matches_domain)
 
-        roles.new('blocked_url', is_admin, validate_url, custom_text={
+        client.new_role('blocked_url', is_admin, validate_url, custom_text={
             'title': 'Blocked URLs',
             'invalid': 'Bad URL',
             'grant_title': 'Block a URL:',
@@ -181,19 +177,19 @@ class ShrunkFlask(ShrunkFlaskMini):
             'granted_by': 'Blocked by'
         }, oncreate=onblock, onrevoke=unblock)
 
-        roles.new('whitelisted', has_some_role(['admin', 'facstaff', 'power_user']),
-                  is_valid_netid, custom_text={
-                      'title': 'Whitelisted Users',
-                      'grant_title': 'Whitelist a user',
-                      'grantee_text': 'User to whitelist',
-                      'grant_button': 'WHITELIST',
-                      'revoke_title': 'Remove a user from the whitelist',
-                      'revoke_button': 'UNWHITELIST',
-                      'empty': 'You have not whitelisted any users',
-                      'granted_by': 'Whitelisted by',
-                      'allow_comment': True,
-                      'comment_prompt': 'Describe why the user has been granted access to Go.'
-                  })
+        client.new_role('whitelisted', has_some_role(['admin', 'facstaff', 'power_user']),
+                        is_valid_netid, custom_text={
+                            'title': 'Whitelisted Users',
+                            'grant_title': 'Whitelist a user',
+                            'grantee_text': 'User to whitelist',
+                            'grant_button': 'WHITELIST',
+                            'revoke_title': 'Remove a user from the whitelist',
+                            'revoke_button': 'UNWHITELIST',
+                            'empty': 'You have not whitelisted any users',
+                            'granted_by': 'Whitelisted by',
+                            'allow_comment': True,
+                            'comment_prompt': 'Describe why the user has been granted access to Go.'
+                        })
 
-        roles.new('facstaff', is_admin, is_valid_netid,
-                  custom_text={'title': 'Faculty or Staff Member'})
+        client.new_role('facstaff', is_admin, is_valid_netid,
+                        custom_text={'title': 'Faculty or Staff Member'})

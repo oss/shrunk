@@ -9,7 +9,7 @@ import geoip2.database
 class GeoipClient:
     """Mixin for geoip database-related operations."""
 
-    def _set_geoip(self, GEOLITE_PATH):
+    def __init__(self, *, GEOLITE_PATH, **kwargs):
         self._geoip = geoip2.database.Reader(GEOLITE_PATH)
 
     def get_geoip_location(self, ipaddr: str) -> str:

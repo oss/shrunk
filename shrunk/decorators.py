@@ -5,8 +5,6 @@ import functools
 import flask
 from werkzeug.exceptions import abort
 
-from . import roles
-
 
 def require_qualified(func):
     """
@@ -15,14 +13,15 @@ def require_qualified(func):
     """
     @functools.wraps(func)
     def wrapper(role, *args, **kwargs):
+        client = flask.current_app.get_shrunk()
         logger = flask.current_app.logger
-        if not roles.exists(role):
+        if not client.role_exists(role):
             logger.error(f'require_qualified: role {role} does not exist')
             return flask.redirect(flask.url_for('shrunk.render_index'))
         if 'user' not in flask.session:
             return flask.redirect(flask.url_for('shrunk.render_index'))
         netid = flask.session['user']['netid']
-        if roles.qualified_for[role](netid):
+        if client.is_qualified_for_role(role, netid):
             logger.debug(f'require_qualified: user {netid} authorized for role {role}')
             new_args = [role] + list(args)
             return func(*new_args, **kwargs)
@@ -35,15 +34,15 @@ def require_login(func):
     """decorator to check if user is logged in"""
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
+        client = flask.current_app.get_shrunk()
         logger = flask.current_app.logger
         if 'user' not in flask.session or 'netid' not in flask.session['user']:
             logger.debug(f'require_login: user not logged in')
             return flask.redirect(flask.url_for('shrunk.render_login'))
         netid = flask.session['user']['netid']
-        if roles.check('blacklisted', netid):
+        if client.check_role('blacklisted', netid):
             logger.warning(f'require_login: user {netid} is blacklisted')
             abort(403)
-        client = flask.current_app.get_shrunk()
         return func(netid, client, *args, **kwargs)
     return wrapper
 
@@ -52,9 +51,10 @@ def require_admin(func):
     """decorator to check if user is an admin"""
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
+        client = flask.current_app.get_shrunk()
         logger = flask.current_app.logger
         netid = flask.session['user']['netid']
-        if not roles.check('admin', netid):
+        if not client.check_role('admin', netid):
             logger.warning(f'require_admin: user {netid} is not an admin')
             abort(403)
         logger.debug(f'require_admin: user {netid} authorized for admin')
