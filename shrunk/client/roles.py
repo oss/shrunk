@@ -2,7 +2,7 @@ from typing import Callable, Optional, List, Iterable, Dict
 
 from flask import current_app, has_app_context
 
-from .. import schema
+# from .. import schema
 from .exceptions import InvalidEntity
 
 
@@ -116,7 +116,7 @@ class RolesClient:
         grant = self.db.grants.find_one({'role': role, 'entity': entity})
         return grant['granted_by'] if grant else None
 
-    def list_all_entities(self, role: str) -> Iterable[schema.Grants]:
+    def list_all_entities(self, role: str):  # -> Iterable[schema.Grants]:
         """Get all entities associated with the role"""
 
         return self.db.grants.find({'role': role})

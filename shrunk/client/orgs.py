@@ -5,7 +5,7 @@ from typing import Optional, Union
 
 from pymongo.collection import ReturnDocument, UpdateResult
 
-from .. import schema
+# from .. import schema
 
 
 class OrgsClient:
@@ -25,7 +25,7 @@ class OrgsClient:
     def delete_organization(self, name: str) -> None:
         self.db.organizations.delete_one({'name': name})
 
-    def get_organization_info(self, name: str) -> Optional[schema.Organizations]:
+    def get_organization_info(self, name: str):  # -> Optional[schema.Organizations]:
         col = self.db.organizations
         return col.find_one({'name': name})
 

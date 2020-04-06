@@ -2,7 +2,7 @@
 import datetime
 import random
 import string
-from typing import Optional, TypedDict, Iterable, Final
+from typing import Optional, Iterable  # , Final, TypedDict
 
 import flask
 import pymongo
@@ -11,7 +11,7 @@ from pymongo.results import UpdateResult
 from bson.objectid import ObjectId
 
 from .. import aggregations
-from .. import schema
+# from .. import schema
 from ..util.string import get_domain
 
 from .exceptions import BadShortURLException, DuplicateIdException, \
@@ -20,43 +20,43 @@ from .exceptions import BadShortURLException, DuplicateIdException, \
 from .search import SearchResults
 
 
-class DateSpec(TypedDict):
-    day: int
-    month: int
-    year: int
+# class DateSpec(TypedDict):
+#     day: int
+#     month: int
+#     year: int
 
 
-class DailyVisits(TypedDict):
-    _id: DateSpec
-    """The date to which these data pertain."""
+# class DailyVisits(TypedDict):
+#     _id: DateSpec
+#     """The date to which these data pertain."""
 
-    first_time_visits: int
-    """The number of first-time visitors on this date."""
+#     first_time_visits: int
+#     """The number of first-time visitors on this date."""
 
-    all_visits: int
-    """The total number of visits up to this date."""
-
-
-class AdminStats(TypedDict):
-    visits: int
-    """The total number of redirects Shrunk has performed"""
-
-    users: int
-    """The total number of distinct users that have created links"""
-
-    links: int
-    """The total number of URLs shortened"""
+#     all_visits: int
+#     """The total number of visits up to this date."""
 
 
-class EndpointStats(TypedDict):
-    endpoint: str
-    """The endpoint name."""
+# class AdminStats(TypedDict):
+#     visits: int
+#     """The total number of redirects Shrunk has performed"""
 
-    total_visits: int
-    """The total number of requests to the endpoint."""
+#     users: int
+#     """The total number of distinct users that have created links"""
 
-    unique_visits: int
-    """The number of unique (by NetID) requests to the endpoint."""
+#     links: int
+#     """The total number of URLs shortened"""
+
+
+# class EndpointStats(TypedDict):
+#     endpoint: str
+#     """The endpoint name."""
+
+#     total_visits: int
+#     """The total number of requests to the endpoint."""
+
+#     unique_visits: int
+#     """The number of unique (by NetID) requests to the endpoint."""
 
 
 class BaseClient:
@@ -64,17 +64,17 @@ class BaseClient:
     database-manipulation methods. Other methods are defined in the
     mixins classes from which this class inherits."""
 
-    ALPHABET: Final = string.digits + string.ascii_lowercase
+    ALPHABET = string.digits + string.ascii_lowercase
     """The alphabet used for encoding short urls."""
 
-    URL_MIN: Final = 46656
+    URL_MIN = 46656
     """The shortest allowable URL.
 
     This is the value of '1000' in the URL base encoding. Guarantees that all
     URLs are at least four characters long.
     """
 
-    URL_MAX: Final = 2821109907455
+    URL_MAX = 2821109907455
     """The longest allowable URL.
 
     This is the value of 'zzzzzzzz' in the URL base encoding. Guarantees that
@@ -318,14 +318,14 @@ class BaseClient:
                                                  'deleted_by': request_netid,
                                                  'deleted_time': datetime.datetime.now()}})
 
-    def get_url_info(self, short_url: str) -> Optional[schema.URLs]:
+    def get_url_info(self, short_url: str):  # -> Optional[schema.URLs]:
         """Given a short URL, return information about it.
 
         :param short_url: A shortened URL
         """
         return self.db.urls.find_one({'short_url': short_url})
 
-    def get_daily_visits(self, short_url: str) -> Iterable[DailyVisits]:
+    def get_daily_visits(self, short_url: str):  # -> Iterable[DailyVisits]:
         """Given a short URL, return how many visits and new unique visitors it gets per day.
 
         :param short_url: A shortened URL
@@ -340,7 +340,7 @@ class BaseClient:
         aggregation = [aggregations.match_link_id(link_id)] + aggregations.daily_visits_aggregation
         return self.db.visits.aggregate(aggregation)
 
-    def get_admin_stats(self) -> AdminStats:
+    def get_admin_stats(self):  # -> AdminStats:
         """Get some basic overall stats about Shrunk
         """
         links = self.db.urls.count_documents({})
@@ -359,7 +359,7 @@ class BaseClient:
             'users': users
         }
 
-    def get_endpoint_stats(self) -> Iterable[EndpointStats]:
+    def get_endpoint_stats(self):  # -> Iterable[EndpointStats]:
         """Summarizes of the information in the endpoint_statistics collection."""
 
         return self.db.endpoint_statistics.aggregate([

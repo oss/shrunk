@@ -25,7 +25,7 @@ class LinkForm(Form):
         validators.DataRequired('Please enter a title.')
     ])
 
-    banned_regexes: List[re.Pattern] = []
+    banned_regexes = []
 
     def __init__(self, form, banned_regexes):
         super().__init__(form)
