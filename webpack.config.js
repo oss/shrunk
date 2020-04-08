@@ -13,12 +13,13 @@ function make_config(env) {
 		chunks: 'all'
 	    },
 	    
-	    runtimeChunk: {
-		name: entrypoint => `runtime-${entrypoint.name}`
-	    }
+	    // runtimeChunk: {
+		//name: entrypoint => `runtime-${entrypoint.name}`
+	    //}
 	},
 	
 	entry: {
+            style: './shrunk/static/ts/style.ts',
 	    index: './shrunk/static/ts/index.ts',
 	    stats: './shrunk/static/ts/stats.ts',
 	    orgs: './shrunk/static/ts/orgs.ts',
@@ -28,7 +29,7 @@ function make_config(env) {
 	    faq: './shrunk/static/ts/faq.ts',
 	    role: './shrunk/static/ts/role.ts',
 	    org_stats: './shrunk/static/ts/org_stats.ts',
-	    endpoint_stats: './shrunk/static/ts/endpoint_stats.ts',
+	    admin_stats: './shrunk/static/ts/admin_stats.ts',
 	    error: './shrunk/static/ts/error.ts'
 	},
 

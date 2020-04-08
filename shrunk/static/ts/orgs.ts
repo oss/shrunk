@@ -1,7 +1,10 @@
 import * as $ from 'jquery';
+
+import './ajax_form';
+
+import './style';
 import 'bootstrap';
 import '../scss/orgs.scss';
-import './ajax_form';
 
 $('.delete-button').click((event) => {
     const org_name = $(event.target).closest('.org-row').attr('data-org-name') as string;

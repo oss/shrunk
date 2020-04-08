@@ -1,7 +1,10 @@
 import * as $ from 'jquery';
+
+import './ajax_form';
+
+import './style';
 import 'bootstrap';
 import '../scss/manage_org.scss';
-import './ajax_form';
 
 $('.remove-member-button').click((event) => {
     const member_netid = $(event.target).closest('.member-row').attr('data-member-netid') as string;

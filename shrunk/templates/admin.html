@@ -28,7 +28,7 @@
 </div>
 
 <div class="container rows-container">
-  {{ admin_row(url_for('stat.endpoint'), 'Endpoint statistics') }}
+  {{ admin_row(url_for('stat.admin'), 'Admin statistics') }}
 
   {% for role in roledata %}
     {{ admin_row(url_for('roles.list', role=role['id']), role['title']) }}

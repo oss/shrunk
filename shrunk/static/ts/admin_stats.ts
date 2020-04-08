@@ -1,8 +1,12 @@
 import * as $ from 'jquery';
-import 'bootstrap';
-import '../scss/endpoint_stats.scss';
 import * as Highcharts from 'highcharts';
-import { MENU_ITEMS } from './stats_common';
+
+import { MapDatum, MENU_ITEMS, add_map } from './stats_common';
+import { get_us_map, get_world_map } from './maps';
+
+// See comment in index.ts
+import 'bootstrap';
+import '../scss/admin_stats.scss';
 
 interface DataItem {
     endpoint: string;
@@ -46,3 +50,12 @@ $.getJSON($('#endpoints').attr('data-endpoint-stats-endpoint') as string,
 	      }]
           })
          );
+
+$.getJSON($('#endpoints').attr('data-endpoint-geoip-endpoint') as string,
+          (data: { us: MapDatum[]; world: MapDatum[] }) => {
+              Promise.all([get_us_map(), get_world_map()])
+                  .then(([us_map, world_map]) => {
+                      add_map('us-map', us_map, 'US visitors', 'postal-code', data.us);
+                      add_map('world-map', world_map, 'Worldwide visitors', 'iso-a2', data.world);
+                  })
+          });

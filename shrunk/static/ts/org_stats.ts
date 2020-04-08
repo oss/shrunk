@@ -1,8 +1,12 @@
 import * as $ from 'jquery';
+import * as Highcharts from 'highcharts';
+
+import { MapDatum, MENU_ITEMS, add_map } from './stats_common';
+import { get_us_map, get_world_map } from './maps';
+
+// See comment in index.ts
 import 'bootstrap';
 import '../scss/org_stats.scss';
-import * as Highcharts from 'highcharts';
-import { MapDatum, MENU_ITEMS, add_map } from './stats_common';
 
 interface MemberStatsDatum {
     netid: string;
@@ -48,9 +52,9 @@ $.getJSON($('#endpoints').attr('data-stats-json-endpoint') as string,
 
 $.getJSON($('#endpoints').attr('data-geoip-endpoint') as string,
           (data: { us: MapDatum[]; world: MapDatum[] }) => {
-              const us_map = require('@highcharts/map-collection/countries/us/us-all.geo.json');
-              const world_map = require('@highcharts/map-collection/custom/world.geo.json');
-
-              add_map('us-map', us_map, 'US visitors', 'postal-code', data.us);
-              add_map('world-map', world_map, 'Worldwide visitors', 'iso-a2', data.world);
+              Promise.all([get_us_map(), get_world_map()])
+                  .then(([us_map, world_map]) => {
+                      add_map('us-map', us_map, 'US visitors', 'postal-code', data.us);
+                      add_map('world-map', world_map, 'Worldwide visitors', 'iso-a2', data.world);
+                  })
           });

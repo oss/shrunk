@@ -35,30 +35,7 @@
 
   <div class="row">
     <div class="col">
-      <nav>
-	<div class="nav nav-tabs" role="tablist">
-	  <a class="nav-item nav-link active" id="us-tab" data-toggle="tab" role="tab"
-	     aria-controls="us-panel" aria-selected="true" href="#us-panel">
-	    US
-	  </a>
-
-	  <a class="nav-item nav-link" id="world-tab" data-toggle="tab" role="tab"
-	     aria-controls="world-panel" aria-selected="false" href="#world-panel">
-	    World
-	  </a>
-	</div>
-      </nav>
-
-      <div class="tab-content">
-	<div class="tab-pane fade show active" id="us-panel" role="tabpanel"
-	     aria-labelledby="us-tab">
-	  <div id="us-map" style="min-width 310px; height: 500px; margin: 0 auto"></div>
-	</div>
-
-	<div class="tab-pane fade" id="world-panel" role="tabpanel" aria-labelledby="world-tab">
-	  <div id="world-map" style="min-width 310px; height: 500px; margin: 0 auto"></div>
-	</div>
-      </div>
+      {% include "maps_row.html" %}
     </div>
   </div>
 
@@ -96,6 +73,7 @@
 </div>
 {% endif %}
 
+{{ bundle('style') }}
 {{ bundle('stats') }}
 
 {% endblock %}

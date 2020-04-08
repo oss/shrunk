@@ -1,8 +1,14 @@
 import * as $ from 'jquery';
+import { toDataURL } from 'qrcode';
+
+import './ajax_form';
+
+// We don't import './style' here because webpack for some reason refuses to split the
+// chunk and produces a huge index.css file containing all of bootstrap. Instead, we
+// have a separate webpack entrypoint for './style' that we include in the index.html
+// template.
 import 'bootstrap';
 import '../scss/index.scss';
-import { toDataURL } from 'qrcode';
-import './ajax_form';
 
 // Configure copy button
 

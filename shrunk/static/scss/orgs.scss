@@ -1,4 +1,6 @@
-@import 'main';
+@import 'config';
+@import '~bootstrap/scss/functions';
+@import '~bootstrap/scss/variables';
 
 #create-org-dropdown {
     .dropdown-menu {

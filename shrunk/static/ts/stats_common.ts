@@ -1,4 +1,3 @@
-// import * as Highcharts from 'highcharts';
 import * as Highmaps from 'highcharts/highmaps';
 
 export const MENU_ITEMS = [

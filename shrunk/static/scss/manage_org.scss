@@ -1,4 +1,6 @@
-@import 'main';
+@import 'config';
+@import '~bootstrap/scss/functions.scss';
+@import '~bootstrap/scss/variables.scss';
 
 #add-member-dropdown {
     width: 200%;
