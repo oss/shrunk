@@ -6,7 +6,7 @@ from setuptools import Command, setup, find_packages
 from setuptools.command.build_py import build_py as _build_py
 
 
-VERSION = '1.3.1'
+VERSION = '1.3.2'
 
 AUTHOR = 'Rutgers Open System Solutions'
 

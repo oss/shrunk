@@ -7,13 +7,13 @@ db = cli.shrunk
 
 
 def new_tracking_id():
-    oid = db.tracking_ids.insert({})
-    return str(oid)
+    oid = db.tracking_ids.insert_one({})
+    return str(oid.inserted_id)
 
 
 def add_tracking_id(source_ip, tracking_id):
-    db.visits.update({'source_ip': source_ip},
-                     {'$set': {'tracking_id': tracking_id}})
+    db.visits.update_one({'source_ip': source_ip},
+                         {'$set': {'tracking_id': tracking_id}})
 
 
 for visitor in db.visits.aggregate([{'$project': {'source_ip': 1}},
