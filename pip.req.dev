@@ -9,3 +9,4 @@ mypy
 sphinx
 sphinx-autodoc-typehints
 twine
+watchdog
