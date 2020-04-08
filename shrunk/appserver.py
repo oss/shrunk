@@ -73,8 +73,7 @@ def render_index(netid, client, **kwargs):
                    'page': results.page,
                    'links': list(results),
                    'linkserver_url': current_app.config['LINKSERVER_URL'],
-                   'selected_links_set': search.display_links_set(results.links_set),
-                   'orgs': list(client.get_member_organizations(netid))})
+                   'selected_links_set': search.display_links_set(results.links_set)})
     return render_template('index.html', **kwargs)
 
 

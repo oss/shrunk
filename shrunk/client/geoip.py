@@ -57,14 +57,13 @@ class GeoipClient:
         except geoip2.errors.AddressNotFoundError:
             return unk
 
-    def get_geoip_json(self, url):
+    def _geoip_aggregation(self):
         def not_null(field):
             return [{'$match': {field: {'$exists': True, '$ne': None}}}]
 
         def group_by(op):
             return [{'$group': {'_id': op, 'value': {'$sum': 1}}}]
 
-        resp = self.db.urls.find_one({'short_url': url})
         filter_us = [{'$match': {'country_code': 'US'}}]
 
         rename_id = [
@@ -72,14 +71,20 @@ class GeoipClient:
             {'$project': {'_id': 0}}
         ]
 
-        aggregation = [
-            {'$match': {'link_id': resp['_id']}},
+        return [
             {'$facet': {
                 'us': filter_us + not_null('state_code') + group_by('$state_code') + rename_id,
                 'world': not_null('country_code') + group_by('$country_code') + rename_id
             }}
         ]
 
+    def get_geoip_json(self, url):
+        resp = self.db.urls.find_one({'short_url': url})
+        aggregation = [{'$match': {'link_id': resp['_id']}}] + self._geoip_aggregation()
+        return next(self.db.visits.aggregate(aggregation))
+
+    def get_admin_geoip_json(self):
+        aggregation = self._geoip_aggregation()
         return next(self.db.visits.aggregate(aggregation))
 
     def get_location_codes(self, ipaddr: str) -> Tuple[Optional[str], Optional[str]]:

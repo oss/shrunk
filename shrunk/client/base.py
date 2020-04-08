@@ -362,18 +362,19 @@ class BaseClient:
     def get_endpoint_stats(self):  # -> Iterable[EndpointStats]:
         """Summarizes of the information in the endpoint_statistics collection."""
 
+        def ignore_endpoint(endpoint: str):
+            return {'$match': {'endpoint': {'$not': {'$eq': endpoint}}}}
+
+        IGNORE_ENDPOINTS = ['redirect_link', 'static', 'redirect_to_real_index', 'shrunk.render_index',
+                            'shrunk.render_login']
+
         return self.db.endpoint_statistics.aggregate([
             {'$group': {
                 '_id': {'endpoint': '$endpoint'},
                 'total_visits': {'$sum': '$count'},
                 'unique_visits': {'$sum': 1}}},
             {'$addFields': {'endpoint': '$_id.endpoint'}},
-            {'$project': {'_id': 0}},
-            {'$match': {'endpoint': {'$not': {'$eq': 'redirect_link'}}}},
-            {'$match': {'endpoint': {'$not': {'$eq': 'static'}}}},
-            {'$match': {'endpoint': {'$not': {'$eq': 'shrunk.render_index'}}}},
-            {'$match': {'endpoint': {'$not': {'$eq': 'shrunk.render_login'}}}}
-            ])
+            {'$project': {'_id': 0}}] + [ignore_endpoint(ep) for ep in IGNORE_ENDPOINTS])
 
     def get_long_url(self, short_url: str) -> Optional[str]:
         """Given a short URL, returns the long URL.

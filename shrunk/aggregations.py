@@ -108,4 +108,5 @@ daily_visits_aggregation = [
     # break into days
     group_days,
     # sort
-    make_sortable, chronological_sort, clean_results]
+    make_sortable, chronological_sort, clean_results
+]

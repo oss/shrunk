@@ -38,6 +38,13 @@ def get_geoip_json(netid, client):
     return flask.jsonify(client.get_geoip_json(url))
 
 
+@bp.route('/admin_geoip', endpoint='admin_geoip', methods=['GET'])
+@require_login
+@require_admin
+def admin_geoip(netid, client):
+    return flask.jsonify(client.get_admin_geoip_json())
+
+
 # TODO: probably store parsed and normalized referer data
 # in mongo, so we can replace this with a (much faster)
 # aggregation.
@@ -120,14 +127,14 @@ def search_visits_csv(netid, client):
     return util.make_plaintext_response(csv_output, filename='visits-search.csv')
 
 
-@bp.route('/endpoint', endpoint='endpoint', methods=['GET'])
+@bp.route('/admin', endpoint='admin', methods=['GET'])
 @require_login
 @require_admin
 def endpoint_stats(netid, client):
-    return flask.render_template('endpoint_stats.html')
+    return flask.render_template('admin_stats.html')
 
 
-@bp.route('/endpoint_json', endpoint='endpoint_json', methods=['GET'])
+@bp.route('/endpoint', endpoint='endpoint', methods=['GET'])
 @require_login
 @require_admin
 def endpoint_json(netid, client):
