@@ -3,7 +3,7 @@
 import datetime
 
 import pymongo
-from pymongo import UpdateOne
+from pymongo import UpdateMany
 
 cli = pymongo.MongoClient('localhost', 27017)
 db = cli.shrunk
@@ -16,7 +16,7 @@ def new_tracking_id():
 
 def add_tracking_id(source_ip):
     tracking_id = new_tracking_id()
-    return UpdateOne({'source_ip': source_ip}, {'$set': {'tracking_id': tracking_id}})
+    return UpdateMany({'source_ip': source_ip}, {'$set': {'tracking_id': tracking_id}})
 
 
 def main():
@@ -28,16 +28,17 @@ def main():
     for i in range((num + block_size - 1) // block_size):
         begin = block_size * i
         end = min(block_size * (i + 1), num)
-        reqs = [add_tracking_id(visitor) for visitor in visitors[begin:end]]
+        reqs = [add_tracking_id(visitor['_id']) for visitor in visitors[begin:end]]
         db.visits.bulk_write(reqs)
 
         end = datetime.datetime.now()
         delta = end - timestamp
         timestamp = end
         records_per_second = block_size / delta.total_seconds()
-        remaining_records = num - i - 1
+        records_done = block_size * (i + 1)
+        remaining_records = num - records_done
         seconds_remaining = datetime.timedelta(seconds = remaining_records / records_per_second)
-        print(f'done with record {block_size*(i+1)} out of {num} ({100 * (i + 1) / num}%) ({records_per_second} records/s) (eta: {seconds_remaining})')
+        print(f'done with record {records_done} out of {num} ({100 * records_done / num}%) ({records_per_second} records/s) (eta: {seconds_remaining})')
 
 
 if __name__ == '__main__':
