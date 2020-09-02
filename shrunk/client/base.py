@@ -321,6 +321,17 @@ class BaseClient:
                                                  'deleted_by': request_netid,
                                                  'deleted_time': datetime.datetime.now()}})
 
+    def clear_visits(self, short_url: str, request_netid: str) -> None:
+        if not self.is_owner_or_admin(short_url, request_netid):
+            raise AuthenticationException()
+
+        link_id = self.get_url_id(short_url)
+        if link_id is None:
+            raise NoSuchLinkException
+
+        self.db.visits.delete_many({'link_id': link_id})
+        self.db.urls.update_one({'_id': link_id}, {'$set': {'visits': 0, 'unique_visits': 0}})
+
     def get_url_info(self, short_url: str):  # -> Optional[schema.URLs]:
         """Given a short URL, return information about it.
 

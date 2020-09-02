@@ -163,6 +163,30 @@ def delete_link(netid, client):
     return flask.jsonify({'ok': True}), 200
 
 
+@bp.route('/clear_visits', methods=['POST'])
+@require_login
+def clear_link_visits(netid, client):
+    """Clears all visit data associated with a link."""
+
+    short_url = request.form.get('short_url')
+    if not short_url:
+        current_app.logger.info('invalid clear visits request')
+        return flask.jsonify({'ok': False,
+                              'errors': [{'name': 'short_url', 'error': 'not present'}]}), 400
+    current_app.logger.info(f'clear visits: {short_url}')
+
+    try:
+        client.clear_visits(short_url, netid)
+    except AuthenticationException:
+        return flask.jsonify({'ok': False,
+                              'errors': [{'name': 'short_url', 'error': 'not authorized'}]}), 403
+    except NoSuchLinkException:
+        return flask.jsonify({'ok': False,
+                              'errors': [{'name': 'short_url', 'error': 'does not exist'}]}), 400
+
+    return flask.jsonify({'ok': True}), 200
+
+
 @bp.route('/edit', methods=['POST'])
 @require_login
 def edit_link(netid, client):
