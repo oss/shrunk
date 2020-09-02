@@ -1,6 +1,7 @@
 // See comment in index.ts
 import 'bootstrap';
 import '../scss/stats.scss';
+import './ajax_form';
 
 import * as Highcharts from 'highcharts';
 import * as $ from 'jquery';
@@ -138,4 +139,10 @@ $.getJSON($('#endpoints').attr('data-useragent-endpoint') as string, (json) => {
 
   make_pie_chart('browser-stats', 'Browser Statistics', browsers);
   make_pie_chart('platform-stats', 'Platform Statistics', platforms);
+});
+
+$('.clear-visits-button').click((event) => {
+  const short_url = $('#endpoints').attr('data-short-url') as string;
+  $('#clear-visits-short-url').val(short_url);
+  $('#clear-visits-modal').modal();
 });

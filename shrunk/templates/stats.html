@@ -4,14 +4,20 @@
 <div hidden id="endpoints" data-visits-daily-endpoint="{{ url_for('stat.daily_visits', url=short_url) }}"
   data-geoip-endpoint="{{ url_for('stat.geoip', url=short_url) }}"
   data-referer-endpoint="{{ url_for('stat.referer', url=short_url) }}"
-  data-useragent-endpoint="{{ url_for('stat.useragent', url=short_url) }}"></div>
+  data-useragent-endpoint="{{ url_for('stat.useragent', url=short_url) }}" data-short-url="{{ short_url }}"></div>
 
 <div class="row row-controls">
-  <div class="col col-auto">
+  <div class="col-auto mr-auto">
     <h2 style="display: inline-block">Visit statistics for <em>{{ short_url }}</em></h2>
   </div>
 
-  <div class="col text-right">
+  <div class="col-auto">
+    <button class="btn btn-outline-primary btn-no-border btn-no-background bg-light clear-visits-button" type="button">
+      <i class="fas fa-times"></i> Clear visits
+    </button>
+  </div>
+
+  <div class="col-auto">
     <form action="{{ url_for('stat.link-csv') }}">
       <input type="hidden" name="url" value="{{ short_url }}">
       <button type="submit" class="btn btn-outline-primary btn-no-border btn-no-background btn-csv-download bg-light"
@@ -72,6 +78,37 @@
   </div>
 </div>
 {% endif %}
+
+{# The clear visits modal #}
+<div id="clear-visits-modal" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4>Clear link visits</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        Are you sure you want to permanently delete all visit data associated with this link?
+        This operation cannot be undone.
+
+        <form class="ajax-form" data-ajax-endpoint="{{ url_for('shrunk.clear_link_visits') }}">
+          <input id="clear-visits-short-url" type="hidden" name="short_url" value="">
+          <button type="button" class="btn btn-primary float-right">
+            Delete
+          </button>
+        </form>
+
+        <button type="button" class="btn btn-secondary float-right" data-dismiss="modal">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 {{ bundle('style') }}
 {{ bundle('stats') }}
