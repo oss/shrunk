@@ -1,9 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div hidden id="endpoints"
-     data-endpoint-stats-endpoint="{{ url_for('stat.endpoint') }}"
-     data-endpoint-geoip-endpoint="{{ url_for('stat.admin_geoip') }}"></div>
+<div hidden id="endpoints" data-endpoint-stats-endpoint="{{ url_for('stat.endpoint') }}"
+  data-endpoint-geoip-endpoint="{{ url_for('stat.admin_geoip') }}"></div>
 
 <div class="row row-controls">
   <div class="col col-auto">

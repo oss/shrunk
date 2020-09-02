@@ -1,11 +1,10 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div hidden id="endpoints"
-     data-visits-daily-endpoint="{{ url_for('stat.daily_visits', url=short_url) }}"
-     data-geoip-endpoint="{{ url_for('stat.geoip', url=short_url) }}"
-     data-referer-endpoint="{{ url_for('stat.referer', url=short_url) }}"
-     data-useragent-endpoint="{{ url_for('stat.useragent', url=short_url) }}"></div>
+<div hidden id="endpoints" data-visits-daily-endpoint="{{ url_for('stat.daily_visits', url=short_url) }}"
+  data-geoip-endpoint="{{ url_for('stat.geoip', url=short_url) }}"
+  data-referer-endpoint="{{ url_for('stat.referer', url=short_url) }}"
+  data-useragent-endpoint="{{ url_for('stat.useragent', url=short_url) }}"></div>
 
 <div class="row row-controls">
   <div class="col col-auto">
@@ -15,8 +14,9 @@
   <div class="col text-right">
     <form action="{{ url_for('stat.link-csv') }}">
       <input type="hidden" name="url" value="{{ short_url }}">
-      <button type="submit" class="btn btn-outline-primary btn-no-border btn-no-background btn-csv-download bg-light" {% if not url_info or not url_info["visits"] %} disabled {% endif %}>
-	<i class="fas fa-download"></i> Export visit data as CSV
+      <button type="submit" class="btn btn-outline-primary btn-no-border btn-no-background btn-csv-download bg-light"
+        {% if not url_info or not url_info["visits"] %} disabled {% endif %}>
+        <i class="fas fa-download"></i> Export visit data as CSV
       </button>
     </form>
   </div>
@@ -29,7 +29,7 @@
       <h3><a href="{{ url_info['long_url'] }}">{{ url_info["title"] }}</a></h3>
       <span style="margin-right: 10px">Total visits: {{ url_info["visits"] }}</span>
       <span>First time visits: {{ url_info["unique_visits"] }}</span>
-      <div id="visits-container" style="min-width 310px; height: 400px; margin: 0 auto"></div>
+      <div id="visits-container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
     </div>
   </div>
 
@@ -42,19 +42,19 @@
   <div class="row row-pie-charts">
     <div class="col col-4">
       <div class="pie-div" height="191" id="browser-stats">
-	<canvas id="browser-canvas"></canvas>
+        <canvas id="browser-canvas"></canvas>
       </div>
     </div>
 
     <div class="col col-4">
       <div class="pie-div" id="platform-stats">
-	<canvas id="platform-canvas"></canvas>
+        <canvas id="platform-canvas"></canvas>
       </div>
     </div>
 
     <div class="col col-4">
       <div class="pie-div" id="referer-stats">
-	<canvas id="referer-canvas"></canvas>
+        <canvas id="referer-canvas"></canvas>
       </div>
     </div>
   </div>

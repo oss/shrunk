@@ -189,7 +189,7 @@ class ShrunkFlask(ShrunkFlaskMini):
                             'granted_by': 'Whitelisted by',
                             'allow_comment': True,
                             'comment_prompt': 'Describe why the user has been granted access to Go.'
-                        })
+        })
 
         client.new_role('facstaff', is_admin, is_valid_netid,
                         custom_text={'title': 'Faculty or Staff Member'})

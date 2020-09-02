@@ -1,38 +1,35 @@
 {% macro member_row(org_name, member) %}
-  <div class="row member-row"
-       data-org-name="{{ org_name }}"
-       data-member-netid="{{ member['netid'] }}"
-       data-member-is-admin="{{ member['is_admin'] }}">
-       <div class="col-info">
-	   <span title="{{ member['netid'] }}" class="row-title">
-	     {{ member['netid'] }}
-	   </span>
+<div class="row member-row" data-org-name="{{ org_name }}" data-member-netid="{{ member['netid'] }}"
+	data-member-is-admin="{{ member['is_admin'] }}">
+	<div class="col-info">
+		<span title="{{ member['netid'] }}" class="row-title">
+			{{ member['netid'] }}
+		</span>
 
-	   <dl>
-	     <dt>Added</dt>
-	     <dd>{{ formattime(member['timeCreated']) }}</dd>
+		<dl>
+			<dt>Added</dt>
+			<dd>{{ formattime(member['timeCreated']) }}</dd>
 
-	     {% if member['is_admin'] %}
-	       <dt class="no-colon">Administrator</dt>
-	     {% endif %}
-	   </dl>
-       </div>
+			{% if member['is_admin'] %}
+			<dt class="no-colon">Administrator</dt>
+			{% endif %}
+		</dl>
+	</div>
 
-       {% if user_is_admin %}
-	 <div class="col-buttons">
-	   <button type="button" title="Remove member"
-		   class="btn btn-circle-danger remove-member-button">
-		   <i class="fas fa-times-circle"></i>
-	   </button>
+	{% if user_is_admin %}
+	<div class="col-buttons">
+		<button type="button" title="Remove member" class="btn btn-circle-danger remove-member-button">
+			<i class="fas fa-times-circle"></i>
+		</button>
 
-	   <button type="button" class="btn btn-outline-primary toggle-admin-button">
-	     {% if member['is_admin'] %}
-	       Revoke admin
-	     {% else %}
-	       Grant admin
-	     {% endif %}
-	   </button>
-	 </div>
-       {% endif %}
-  </div>
+		<button type="button" class="btn btn-outline-primary toggle-admin-button">
+			{% if member['is_admin'] %}
+			Revoke admin
+			{% else %}
+			Grant admin
+			{% endif %}
+		</button>
+	</div>
+	{% endif %}
+</div>
 {% endmacro %}

@@ -18,7 +18,8 @@ class WebpackLoader:
             try:
                 self._set_up_watcher(app)
             except ImportError:
-                app.logger.error('watchdog not found. run pip install watchdog to monitor webpack-stats.json for changes.')
+                app.logger.error(
+                    'watchdog not found. run pip install watchdog to monitor webpack-stats.json for changes.')
 
     def _set_up_watcher(self, app) -> None:
         from watchdog.observers import Observer

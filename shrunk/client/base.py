@@ -533,7 +533,7 @@ class BaseClient:
                                          '$unset': {
                                              'deleted_by': 1,
                                              'deleted_time': 1
-                                         }})
+                                        }})
 
     def block_urls(self, ids) -> UpdateResult:
         return self.db.urls.update_many({'_id': {'$in': list(ids)},
@@ -550,7 +550,7 @@ class BaseClient:
                                          '$unset': {
                                              'deleted_by': 1,
                                              'deleted_time': 1
-                                         }})
+                                        }})
 
     @classmethod
     def _generate_unique_key(cls) -> str:

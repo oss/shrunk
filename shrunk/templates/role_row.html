@@ -3,26 +3,26 @@
   <div class="col-info">
     <div class="row align-items-end flex-nowrap">
       <div class="col-remaining ellipsize">
-	<span class="row-title" title="{{ grant['entity'] }}">{{ grant['entity'] }}</span>
+        <span class="row-title" title="{{ grant['entity'] }}">{{ grant['entity'] }}</span>
       </div>
 
       <div class="col-auto col-prop">
-	<dl>
-	  <dt>{{ granted_by }}</dt>
-	  <dd>{{ grant['granted_by'] }}</dd>
-	</dl>
+        <dl>
+          <dt>{{ granted_by }}</dt>
+          <dd>{{ grant['granted_by'] }}</dd>
+        </dl>
       </div>
     </div>
 
     {% if grant.get('comment') %}
-      <div class="row">
-	<div class="col col-auto">
-	  <dl>
-	    <dt>Comment</dt>
-	    <dd>{{ grant['comment'] }}</dd>
-	  </dl>
-	</div>
+    <div class="row">
+      <div class="col col-auto">
+        <dl>
+          <dt>Comment</dt>
+          <dd>{{ grant['comment'] }}</dd>
+        </dl>
       </div>
+    </div>
     {% endif %}
   </div>
 
@@ -31,7 +31,7 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="entity" value="{{ grant['entity'] }}">
       <button type="submit" class="btn btn-outline-primary">
-	{{ revoke_button }}
+        {{ revoke_button }}
       </button>
     </form>
   </div>

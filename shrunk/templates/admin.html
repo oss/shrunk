@@ -1,9 +1,9 @@
 {% macro admin_row(href, title) %}
-  <div class="row">
-    <div class="col">
-      <h3><a href="{{ href }}" class="title">{{ title }}</a></h3>
-    </div>
+<div class="row">
+  <div class="col">
+    <h3><a href="{{ href }}" class="title">{{ title }}</a></h3>
   </div>
+</div>
 {% endmacro %}
 
 {% extends "base.html" %}
@@ -14,7 +14,7 @@
     <h2>Administrator Controls</h2>
     <dl>
       <dt class="bold no-colon">Statistics</dt>
-      
+
       <dt>Links</dt>
       <dd>{{ stats['links'] }}</dd>
 
@@ -31,7 +31,7 @@
   {{ admin_row(url_for('stat.admin'), 'Admin statistics') }}
 
   {% for role in roledata %}
-    {{ admin_row(url_for('roles.list', role=role['id']), role['title']) }}
+  {{ admin_row(url_for('roles.list', role=role['id']), role['title']) }}
   {% endfor %}
 </div>
 
