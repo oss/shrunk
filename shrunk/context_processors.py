@@ -6,9 +6,9 @@ from .util import search
 
 
 def _add_search_params():
-    """Passes search parameters (query, links_set, sortby, page) to every template."""
+    """Passes search parameters (query, links_set, sortby, page, show_expired_links) to every template."""
     d = {k: flask.session[k]
-         for k in ['query', 'links_set', 'sortby', 'page']
+         for k in ['query', 'links_set', 'sortby', 'page', 'show_expired_links']
          if k in flask.session}
     if 'links_set' in flask.session:
         d['selected_links_set'] = search.display_links_set(flask.session['links_set'])

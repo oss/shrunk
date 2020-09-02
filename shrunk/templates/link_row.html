@@ -1,6 +1,6 @@
 {% macro link_row(link) %}
 <div class="row link-row" data-link-title="{{ link['title'] }}" data-long-url="{{ link['long_url'] }}"
-  data-short-url="{{ link['short_url'] }}">
+  data-short-url="{{ link['short_url'] }}" data-expiration-time="{{ link['expiration_time'] }}">
   <div class="col-info">
     <div class="row align-items-end flex-nowrap">
       <div class="col-remaining ellipsize">
@@ -18,8 +18,21 @@
           <dd>{{ link['deleted_by'] }}</dd>
           {% endif %}
 
+          {% if link['expiration_time'] and current_time >= link['expiration_time'] %}
+          <dt class="deleted no-colon">Expired</dt>
+          {% endif %}
+
           <dt>Created</dt>
           <dd>{{ formattime(link['timeCreated']) }}</dd>
+
+          {% if link['expiration_time'] %}
+          {% if link['expiration_time'] and current_time >= link['expiration_time'] %}
+          <dt>Expired at</dt>
+          {% else %}
+          <dt>Expires at</dt>
+          {% endif %}
+          <dd>{{ formatdatetime(link['expiration_time']) }}</dd>
+          {% endif %}
 
           <dt>Visits</dt>
           <dd>{{ link['visits'] }}</dd>

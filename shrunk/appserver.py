@@ -1,5 +1,7 @@
 """ Sets up the Flask application for the main web server. """
 
+import datetime
+
 import flask
 from flask import (Blueprint,
                    make_response,
@@ -73,6 +75,7 @@ def render_index(netid, client, **kwargs):
                    'page': results.page,
                    'links': list(results),
                    'linkserver_url': current_app.config['LINKSERVER_URL'],
+                   'current_time': datetime.datetime.now(),
                    'selected_links_set': search.display_links_set(results.links_set)})
     return render_template('index.html', **kwargs)
 
@@ -106,7 +109,7 @@ def add_link(netid, client):
         return flask.jsonify({
             'ok': False,
             'errors': [{'name': name, 'error': form.errors.get(name)}
-                       for name in ['title', 'long_url', 'short_url']
+                       for name in ['title', 'long_url', 'short_url', 'expiration_time']
                        if form.errors.get(name)]
         }), 400
 

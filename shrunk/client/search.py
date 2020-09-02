@@ -2,6 +2,7 @@
 
 import enum
 import math
+import datetime
 
 from pymongo.collation import Collation
 
@@ -61,7 +62,7 @@ class SearchClient:
         pass
 
     def search(self, *, query=None, netid=None, org=None, sort=None, pagination=None,
-               show_deleted=False):
+               show_deleted=False, show_expired=False):
         pipeline = []
 
         if netid is not None:
@@ -128,6 +129,13 @@ class SearchClient:
 
         if not show_deleted:
             pipeline.append({'$match': {'deleted': {'$ne': True}}})
+
+        if not show_expired:
+            now = datetime.datetime.now()
+            pipeline.append({'$match': {'$or': [
+                {'expiration_time': None},
+                {'expiration_time': {'$gte': now}}
+            ]}})
 
         facet = {
             'count': [{'$count': 'count'}],

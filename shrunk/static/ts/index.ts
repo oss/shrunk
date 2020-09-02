@@ -5,9 +5,18 @@ import './ajax_form';
 // we include in the index.html template.
 import 'bootstrap';
 import '../scss/index.scss';
+import 'flatpickr';
+import 'tempusdominus-bootstrap-4';
 
 import * as $ from 'jquery';
 import {toDataURL} from 'qrcode';
+
+($('.expiration-time-input') as any).datetimepicker({
+  icons: {
+    time: 'fa fa-clock',
+  },
+});
+
 
 // Configure copy button
 
@@ -76,11 +85,17 @@ $('.edit-button').click((event) => {
   const link_title = ancestor.attr('data-link-title')!;
   const long_url = ancestor.attr('data-long-url')!;
   const short_url = ancestor.attr('data-short-url')!;
+  const expiration_time = ancestor.attr('data-expiration-time')!;
 
   $('#edit-modal .modal-header > h4').html(`Editing <em>${short_url}</em>`);
   $('#edit-modal input[name=old_short_url]').val(short_url);
   $('#edit-modal input[name=title]').val(link_title);
   $('#edit-modal input[name=long_url]').val(long_url);
   $('#edit-modal input[name=short_url]').val(short_url);
+  if (expiration_time !== 'None') {
+    $('#edit-modal input[name=expiration_time]').val(expiration_time);
+  } else {
+    $('#edit-modal input[name=expiration_time]').val('');
+  }
   $('#edit-modal').modal();
 });

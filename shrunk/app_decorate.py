@@ -4,7 +4,7 @@ from flask import Flask, redirect, request, current_app
 from werkzeug.exceptions import abort
 
 from .client import ShrunkClient
-from .util.string import validate_url, get_domain, formattime
+from .util.string import validate_url, get_domain, formattime, formatdatetime
 from .util.ldap import is_valid_netid
 
 
@@ -84,8 +84,9 @@ class ShrunkFlask(ShrunkFlaskMini):
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
 
-        # Allow formattime() to be called in templates.
+        # Allow formattime() and formatdatetime() to be called in templates.
         self.jinja_env.globals.update(formattime=formattime)
+        self.jinja_env.globals.update(formatdatetime=formatdatetime)
 
         # Set up roles system.
         self.before_first_request(self._init_roles)

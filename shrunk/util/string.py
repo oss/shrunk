@@ -39,6 +39,16 @@ def formattime(dt: datetime.datetime) -> str:
     return dt.strftime('%b %d %Y')
 
 
+def formatdatetime(dt: datetime.datetime) -> str:
+    """
+    Utility function for formatting datetimes that may contain both date and time parts.
+
+    :pparam dt: The datetime to format
+    :returns: A string in the format of "Sep 01 2020 04:24 PM"
+    """
+    return dt.strftime('%b %d %Y %I:%M %p')
+
+
 ip_middle_octet = r'(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5]))'
 ip_last_octet = r'(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))'
 
