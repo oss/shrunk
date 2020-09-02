@@ -15,6 +15,18 @@
 					{{ selected_links_set }}
 				</button>
 				<div class="dropdown-menu">
+					{% if show_expired_links %}
+					<a class="dropdown-item" href="?show_expired_links=false">
+						Hide expired links
+					</a>
+					{% else %}
+					<a class="dropdown-item" href="?show_expired_links=true">
+						Show expired links
+					</a>
+					{% endif %}
+
+					<div class="dropdown-divider"></div>
+
 					<a class="dropdown-item" href="?links_set=GO!my">
 						My links
 					</a>

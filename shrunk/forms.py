@@ -5,7 +5,7 @@
 import re
 from typing import List
 
-from wtforms import Form, StringField, validators, ValidationError
+from wtforms import Form, StringField, validators, ValidationError, DateTimeField
 
 from .filters import ensure_protocol
 
@@ -23,6 +23,10 @@ class LinkForm(Form):
 
     title = StringField('Title', filters=[str.strip], validators=[
         validators.DataRequired('Please enter a title.')
+    ])
+
+    expiration_time = DateTimeField('Expiration Time', format='%m/%d/%Y %I:%M %p', validators=[
+        validators.Optional(strip_whitespace=False),
     ])
 
     banned_regexes = []
@@ -50,7 +54,7 @@ between %(min)d and %(max)d characters."""),
         super().__init__(form, banned_regexes)
 
     def to_json(self):
-        fields = ['long_url', 'title', 'short_url']
+        fields = ['long_url', 'title', 'short_url', 'expiration_time']
         return {field: getattr(self, field).data for field in fields}
 
 
@@ -68,5 +72,5 @@ class EditLinkForm(LinkForm):
 
     def to_json(self):
         """Exports the form"s fields into a JSON-compatible dictionary."""
-        fields = ['long_url', 'title', 'short_url', 'old_short_url']
+        fields = ['long_url', 'title', 'short_url', 'old_short_url', 'expiration_time']
         return {field: getattr(self, field).data for field in fields}

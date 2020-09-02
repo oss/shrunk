@@ -50,10 +50,12 @@ def search(netid, client, request, session, show_deleted, should_paginate=True):
     query = get_param('query', request, session)
     old_links_set = session.get('links_set')
     links_set = get_param('links_set', request, session, default='GO!my')
+    old_show_expired_links = session.get('show_expired_links', False)
+    show_expired_links = get_param('show_expired_links', request, session, processor=lambda x: x == 'true')
     sort = get_param('sortby', request, session, default='0',
                      validator=lambda x: x in map(str, range(6)))
     page = int(get_param('page', request, session, default='1', validator=validate_page))
-    if query != old_query or links_set != old_links_set:
+    if query != old_query or links_set != old_links_set or show_expired_links != old_show_expired_links:
         page = 1
 
     # links_set determines which set of links we show the user.
@@ -73,7 +75,7 @@ def search(netid, client, request, session, show_deleted, should_paginate=True):
         else:
             pagination = None
         p = functools.partial(client.search, sort=sort, pagination=pagination,
-                              show_deleted=show_deleted)
+                              show_deleted=show_deleted, show_expired=show_expired_links)
 
         if links_set == 'GO!my':
             results = p(query=query, netid=netid)

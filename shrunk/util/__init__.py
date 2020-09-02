@@ -8,7 +8,7 @@ def make_plaintext_response(data, *, status=200, filename=None):
     return make_response((data, status, headers))
 
 
-def get_param(name, request, session, *, default=None, validator=None):
+def get_param(name, request, session, *, default=None, validator=None, processor=None):
     """ Get a parameter. First try the request args, then the session,
         then use the default. Store the final value of the parameter
         in the session. Optionally apply a validator to the parameter,
@@ -21,5 +21,7 @@ def get_param(name, request, session, *, default=None, validator=None):
     if validator and not validator(param):
         param = default
     if param is not None:
+        if processor is not None:
+            param = processor(param)
         session[name] = param
     return param

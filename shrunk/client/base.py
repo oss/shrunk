@@ -186,7 +186,7 @@ class BaseClient:
 
     def create_short_url(self, long_url: str, short_url: Optional[str] = None,
                          netid: Optional[str] = None, title: Optional[str] = None,
-                         creator_ip: Optional[str] = None) -> str:
+                         creator_ip: Optional[str] = None, expiration_time: Optional[datetime.datetime] = None) -> str:
         """Randomly create a new short URL and updates the database.
 
         :param long_url: The original URL to shrink.
@@ -221,6 +221,8 @@ class BaseClient:
             document['netid'] = netid
         if title is not None:
             document['title'] = title
+        if expiration_time is not None:
+            document['expiration_time'] = expiration_time
 
         if short_url:
             # Attempt to insert the custom URL
@@ -248,7 +250,7 @@ class BaseClient:
         return str(document['short_url'])
 
     def modify_url(self, *, title: Optional[str] = None, long_url: Optional[str] = None,
-                   short_url: Optional[str] = None, old_short_url: str) -> UpdateResult:
+                   short_url: Optional[str] = None, expiration_time: Optional[str] = None, old_short_url: str) -> UpdateResult:
         """Modifies an existing URL.
 
         Edits the values of the url `old_short_url` and replaces them with the
@@ -277,6 +279,7 @@ class BaseClient:
             new_doc['long_url'] = long_url
         if short_url is not None:
             new_doc['short_url'] = short_url
+        new_doc['expiration_time'] = expiration_time
 
         try:
             return self.db.urls.update_one({'short_url': old_short_url}, {'$set': new_doc})
@@ -387,7 +390,23 @@ class BaseClient:
           The long URL, or None if the short URL does not exist.
         """
         result = self.get_url_info(short_url)
-        return result['long_url'] if result is not None and not result.get('deleted') else None
+
+        # Fail if the link does not exist
+        if result is None:
+            return None
+
+        # Fail if the link exists in the database but has been deleted
+        if result.get('deleted'):
+            return None
+
+        # Fail if the link exists but has expired
+        expiration_time = result.get('expiration_time')
+        current_time = datetime.datetime.now()
+        if expiration_time and current_time >= expiration_time:
+            return None
+
+        # Link exists and is valid; return its long URL
+        return result['long_url']
 
     def get_visits(self, short_url: str):
         """Returns all visit information to the given short URL.
