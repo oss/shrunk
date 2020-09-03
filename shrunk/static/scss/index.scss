@@ -1,10 +1,10 @@
 #add-link-dropdown {
     .dropdown-menu {
-	width: 250%;
+        width: 250%;
     }
 
     .btn {
-	width: 100%;
+        width: 100%;
     }
 }
 
@@ -14,27 +14,35 @@
     }
 }
 
-#qr-modal > .btn-group {
-    width: 100% !important;
+.edit-link-title {
+    overflow-x: auto;
+    padding-right: 10px;
+    white-space: nowrap;
 }
 
 #qr-modal {
     .modal-dialog {
-	width: auto;
-	max-width: 290px;
+	    width: auto;
+	    max-width: 290px;
+    }
+
+    #qr_title {
+        overflow-x: auto;
+        padding-right: 5px;
+        white-space: nowrap;
     }
 
     #qr-canvas {
-	display: block;
+	    display: block;
     }
 
     .btn-group {
-	width: 100%;
+        width: 100%;
+    }
 
 	.btn {
 	    width: 50%;
 	    border-top-left-radius: 0;
 	    border-top-right-radius: 0;
 	}
-    }
 }

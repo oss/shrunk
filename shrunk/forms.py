@@ -14,6 +14,10 @@ SHORT_URL_REGEX_VALIDATOR = validators.Regexp('^[a-zA-Z0-9_.,-]*$',
                                               message='Custom alias must consist of numbers, \
 letters, and the characters ", . _ -".')
 
+MIN_CUSTOM_ALIAS_LENGTH = 5
+
+MAX_CUSTOM_ALIAS_LENGTH = 60
+
 
 class LinkForm(Form):
     long_url = StringField('URL', filters=[str.strip, ensure_protocol], validators=[
@@ -44,7 +48,7 @@ class LinkForm(Form):
 
 class AddLinkForm(LinkForm):
     short_url = StringField('Custom Alias', filters=[str.strip], validators=[
-        validators.Length(min=5, max=16, message="""Custom alias length must be \
+        validators.Length(min=MIN_CUSTOM_ALIAS_LENGTH, max=MAX_CUSTOM_ALIAS_LENGTH, message="""Custom alias length must be \
 between %(min)d and %(max)d characters."""),
         SHORT_URL_REGEX_VALIDATOR,
         validators.Optional(strip_whitespace=False)
@@ -60,7 +64,7 @@ between %(min)d and %(max)d characters."""),
 
 class EditLinkForm(LinkForm):
     short_url = StringField('Custom Alias', filters=[str.strip], validators=[
-        validators.Length(min=5, max=16, message="""Custom alias length must be
+        validators.Length(min=MIN_CUSTOM_ALIAS_LENGTH, max=MAX_CUSTOM_ALIAS_LENGTH, message="""Custom alias length must be
             between %(min)d and %(max)d characters."""),
         SHORT_URL_REGEX_VALIDATOR
     ])
