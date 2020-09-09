@@ -60,7 +60,7 @@ def test_add_banned(client):
 
 @pytest.mark.parametrize(('alias', 'err'), [
     ('a', 'Custom alias length must'),
-    ('aaaaaaaaaaaaaaaaaaaa', 'Custom alias length must'),
+    (70 * 'a', 'Custom alias length must'),
     ('!@#$%^', 'Custom alias must consist')])
 def test_invalid_short_url(client, alias, err):
     with dev_login(client, 'user'):

@@ -429,7 +429,7 @@ def test_search_netid(db, app):
 
 
 @pytest.mark.parametrize(('ip', 'state_exp', 'country_exp'), [
-    ('66.249.88.21', None, 'US'),
+    ('66.249.88.21', 'CA', 'US'),
     ('165.230.224.67', 'NJ', 'US'),
     ('34.201.163.243', 'VA', 'US'),
     ('35.168.234.184', 'VA', 'US'),

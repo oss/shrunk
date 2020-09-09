@@ -4,7 +4,7 @@ Configuration options for shrunk. This is an example file; modify this and save
 it as config.py.
 """
 
-DB_HOST = 'localhost'
+DB_HOST = 'mongo'
 """The host machine for the database."""
 
 DB_PORT = 27017

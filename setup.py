@@ -31,7 +31,7 @@ class BuildWebpack(Command):
 
 
 class build_py(_build_py):
-    EXCLUDED = ['shrunk/config.py', 'shrunk/test-config.py']
+    EXCLUDED = ['shrunk/config.py']
 
     def find_package_modules(self, package, package_dir):
         modules = super().find_package_modules(package, package_dir)

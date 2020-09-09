@@ -26,7 +26,7 @@ build
 *.log
 
 # Big files
-*GeoLite2-City.mmdb
+# *GeoLite2-City.mmdb
 
 runappserver.py
 

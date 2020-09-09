@@ -1,0 +1,37 @@
+image: alpine:latest
+
+services:
+  - mongo
+
+cache:
+  paths:
+    - node_modules/
+
+build:
+  stage: build
+  script:
+    - apk add npm python3-dev py3-pip gcc musl-dev openldap-dev libffi-dev openssl-dev
+    - npm install
+    - pip3 install -r pip.req
+    - pip3 install -r pip.req.dev
+    - python3 setup.py bdist_wheel
+  artifacts:
+    paths:
+      - dist/shrunk-*.whl
+
+test:
+  stage: test
+  dependencies:
+    - build
+  script:
+    - apk add npm python3-dev py3-pip py3-setuptools gcc musl-dev openldap-dev libffi-dev openssl-dev
+    # - pip3 install -r pip.req.dev
+    - cp shrunk/test-config.py /tmp/test-config.py
+    - mkdir /usr/share/GeoIP
+    - cp GeoLite2-City.mmdb /usr/share/GeoIP/GeoLite2-City.mmdb
+    - pip3 install pytest pytest-cov
+    - pip3 install dist/shrunk-*.whl
+    - pytest --junitxml=pytest.xml
+  artifacts:
+    reports:
+      junit: pytest.xml
