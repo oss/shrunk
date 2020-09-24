@@ -1,0 +1,75 @@
+{% extends "base.html"%}
+{% block content %}
+<div class="login-box container">
+  <div class="row">
+    <div class="col">
+      <span id="title">go.rutgers.edu</span>
+    </div>
+  </div>
+
+  <div class="pb-5 row">
+    <div class="col">
+      <span id="subtitle">The official Rutgers URL shortener</span>
+    </div>
+  </div>
+
+  <div class="pb-4 row">
+    <div class="col">
+      <span id="facstaff">You'll need to be a Rutgers faculty or staff member to access this site.</span>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col">
+      <form action="{{ shib_login }}" method="GET">
+        <button type="submit" class="btn btn-primary btn-block">
+          Login with CAS
+        </button>
+      </form>
+    </div>
+  </div>
+
+  {% if dev %}
+  <div class="row justify-content-center">
+    <div class="col">
+      <form action="{{ url_for('devlogins.user') }}" method="GET">
+        <button type="submit" class="btn btn-primary btn-block">
+          DevUser Login
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col">
+      <form action="{{ url_for('devlogins.facstaff') }}" method="GET">
+        <button type="submit" class="btn btn-primary btn-block">
+          DevFacstaff Login
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col">
+      <form action="{{ url_for('devlogins.power') }}" method="GET">
+        <button type="submit" class="btn btn-primary btn-block">
+          DevPowerUser Login
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col">
+      <form action="{{ url_for('devlogins.admin') }}" method="GET">
+        <button type="submit" class="btn btn-primary btn-block">
+          DevAdmin Login
+        </button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

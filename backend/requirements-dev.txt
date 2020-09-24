@@ -1,0 +1,12 @@
+pytest
+pytest-cov
+flake8
+flake8-quotes
+pylint
+autopep8
+setuptools
+wheel
+mypy
+sphinx
+sphinx-autodoc-typehints
+twine

@@ -3,9 +3,7 @@
 *~
 
 # Secrets
-shrunk/config.py
-config.py
-config.py.test
+backend/shrunk/config.py
 
 # Build artifacts and the like
 __pycache__
@@ -49,3 +47,6 @@ shrunk/static/dist/
 webpack-stats.json
 dist-newstyle
 .mypy_cache/
+.pytest_cache/
+.vscode/
+frontend/.cache

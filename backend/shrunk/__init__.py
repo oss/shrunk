@@ -1,0 +1,241 @@
+""" Shrunk, the official URL shortener of Rutgers University. """
+
+import logging
+import base64
+from typing import Any
+
+import flask
+from flask import Flask, current_app, render_template, redirect, request
+from flask.logging import default_handler
+from werkzeug.routing import BaseConverter
+from werkzeug.middleware.proxy_fix import ProxyFix
+from bson import ObjectId
+from backports import datetime_fromisoformat
+
+# Blueprints
+from . import views
+from . import dev_logins
+from .api import link, org, role, search, admin
+
+# Extensions
+from . import sso
+
+from .util.ldap import is_valid_netid
+from .client import ShrunkClient
+from .util.string import validate_url, get_domain
+
+
+class ObjectIdConverter(BaseConverter):
+    """URL converter for BSON object IDs, which we commonly use
+    as canonical IDs for objects."""
+
+    def to_python(self, value: str) -> ObjectId:
+        return ObjectId(value)
+
+    def to_url(self, value: ObjectId) -> str:
+        return str(value)
+
+
+class Base32Converter(BaseConverter):
+    """URL converter to handle base32-encoded strings. This is useful
+    since Apache apparently has problems with urlencoded-slashes."""
+
+    def to_python(self, value: str) -> str:
+        return str(base64.b32decode(bytes(value, 'utf8')), 'utf8')
+
+    def to_url(self, value: str) -> str:
+        return str(base64.b32encode(bytes(value, 'utf8')), 'utf8')
+
+
+class RequestFormatter(logging.Formatter):
+    def format(self, record: Any) -> str:
+        record.url = None
+        record.remote_addr = None
+        record.user = None
+        if flask.has_request_context():
+            record.url = flask.request.url
+            record.remote_addr = flask.request.remote_addr
+            if 'user' in flask.session:
+                record.user = flask.session['user']['netid']
+        return super().format(record)
+
+
+def _init_logging() -> None:
+    """Sets up self.logger with default settings."""
+    formatter = logging.Formatter(current_app.config['LOG_FORMAT'])
+    handler = logging.FileHandler(current_app.config['LOG_FILENAME'])
+    handler.setLevel(logging.INFO)
+    handler.setFormatter(formatter)
+    current_app.logger.addHandler(handler)
+    current_app.logger.setLevel(logging.INFO)
+
+
+def _init_shrunk_client() -> None:
+    """Connect to the database specified in self.config.
+    self.logger must be initialized before this function is called."""
+    current_app.client = ShrunkClient(**current_app.config)
+
+
+def _init_roles() -> None:
+    client: ShrunkClient = current_app.client
+
+    def is_admin(netid: str) -> bool:
+        return client.roles.has('admin', netid)
+
+    client.roles.create('admin', is_admin, is_valid_netid, custom_text={'title': 'Admins'})
+
+    client.roles.create('power_user', is_admin, is_valid_netid, custom_text={
+        'title': 'Power Users',
+        'grant_title': 'Grant power user',
+        'revoke_title': 'Revoke power user'
+    })
+
+    def onblacklist(netid: str) -> None:
+        client.links.blacklist_user_links(netid)
+
+    def unblacklist(netid: str) -> None:
+        client.links.unblacklist_user_links(netid)
+
+    client.roles.create('blacklisted', is_admin, is_valid_netid, custom_text={
+        'title': 'Blacklisted Users',
+        'grant_title': 'Blacklist a user:',
+        'grantee_text': 'User to blacklist (and disable their links)',
+        'grant_button': 'BLACKLIST',
+        'revoke_title': 'Unblacklist a user',
+        'revoke_button': 'UNBLACKLIST',
+        'empty': 'There are currently no blacklisted users',
+        'granted_by': 'blacklisted by'
+    }, oncreate=onblacklist, onrevoke=unblacklist)
+
+    def onblock(url: str) -> None:
+        domain = get_domain(url)
+        urls = client.db.urls
+        current_app.logger.info(f'url {url} has been blocked. removing all urls with domain {domain}')
+
+        # . needs to be escaped in the domain because it is regex wildcard
+        contains_domain = urls.find({'long_url': {'$regex': '%s*' % domain.replace('.', r'\.')}})
+
+        matches_domain = [link for link in contains_domain
+                          if get_domain(link['long_url']) == domain]
+
+        msg = 'deleting links: ' \
+            + ', '.join(f'{l["_id"]} -> {l["long_url"]}' for l in matches_domain)
+        current_app.logger.info(msg)
+
+        client.links.block_urls(list(doc['_id'] for doc in matches_domain))
+
+    def unblock(url: str) -> None:
+        urls = client.db.urls
+        domain = get_domain(url)
+        contains_domain = urls.find({
+            'long_url': {'$regex': '%s*' % domain.replace('.', r'\.')},
+            'deleted': True,
+            'deleted_by': '!BLOCKED'
+        })
+
+        matches_domain = [link for link in contains_domain if get_domain(link['long_url']) == domain]
+        client.links.unblock_urls(list(doc['_id'] for doc in matches_domain))
+
+    client.roles.create('blocked_url', is_admin, validate_url, custom_text={
+        'title': 'Blocked URLs',
+        'invalid': 'Bad URL',
+        'grant_title': 'Block a URL:',
+        'grantee_text': 'URL to block',
+        'grant_button': 'BLOCK',
+        'revoke_title': 'Unblock a URL',
+        'revoke_button': 'UNBLOCK',
+        'empty': 'There are currently no blocked URLs',
+        'granted_by': 'Blocked by'
+    }, oncreate=onblock, onrevoke=unblock)
+
+    client.roles.create('whitelisted',
+                        lambda netid: client.roles.has_some(['admin', 'facstaff', 'power_user'], netid),
+                        is_valid_netid, custom_text={
+                            'title': 'Whitelisted Users',
+                            'grant_title': 'Whitelist a user',
+                            'grantee_text': 'User to whitelist',
+                            'grant_button': 'WHITELIST',
+                            'revoke_title': 'Remove a user from the whitelist',
+                            'revoke_button': 'UNWHITELIST',
+                            'empty': 'You have not whitelisted any users',
+                            'granted_by': 'Whitelisted by',
+                            'allow_comment': True,
+                            'comment_prompt': 'Describe why the user has been granted access to Go.'
+                        })
+
+    client.roles.create('facstaff', is_admin, is_valid_netid,
+                        custom_text={'title': 'Faculty or Staff Member'})
+
+
+def create_app(config_path: str = 'config.py', **kwargs: Any) -> Flask:
+    # Backport the datetime.datetime.fromisoformat method. Can be removed
+    # once we update to Python 3.7+.
+    datetime_fromisoformat.MonkeyPatch.patch_fromisoformat()
+
+    app = Flask(__name__, static_url_path='/app/static')
+    app.config.from_pyfile(config_path, silent=False)
+    app.config.update(kwargs)
+
+    formatter = RequestFormatter(
+        '[%(asctime)s] [%(user)s@%(remote_addr)s] [%(url)s] %(levelname)s '
+        + 'in %(module)s: %(message)s'
+    )
+    default_handler.setFormatter(formatter)
+
+    # install url converters
+    app.url_map.converters['ObjectId'] = ObjectIdConverter
+    app.url_map.converters['b32'] = Base32Converter
+
+    # call initialization functions
+    app.before_first_request(_init_logging)
+    app.before_first_request(_init_shrunk_client)
+    app.before_first_request(_init_roles)
+
+    # wsgi middleware
+    app.wsgi_app = ProxyFix(app.wsgi_app)  # type: ignore
+
+    # set up blueprints
+    app.register_blueprint(views.bp)
+    if app.config.get('DEV_LOGINS', False) is True:
+        app.register_blueprint(dev_logins.bp)
+    app.register_blueprint(link.bp)
+    app.register_blueprint(org.bp)
+    app.register_blueprint(role.bp)
+    app.register_blueprint(search.bp)
+    app.register_blueprint(admin.bp)
+
+    # set up extensions
+    sso.ext.init_app(app)
+
+    # redirect / to /app
+    @app.route('/', methods=['GET'])
+    def _redirect_to_real_index() -> Any:
+        return redirect('/app')
+
+    # serve redirects
+    @app.route('/<alias>', methods=['GET'])
+    def _serve_redirect(alias: str) -> Any:
+        client: ShrunkClient = current_app.client
+        long_url = client.links.get_long_url(alias)
+        if long_url is None:
+            return render_template('404.html')
+        tracking_id = request.cookies.get('shrunkid') or client.tracking.get_new_id()
+        client.links.visit(alias,
+                           tracking_id,
+                           request.remote_addr,
+                           request.headers.get('User-Agent'),
+                           request.headers.get('Referer'))
+        if '://' not in long_url:
+            long_url = f'http://{long_url}'
+        response = redirect(long_url)
+        if request.headers.get('DNT', '0') == '0':
+            response.set_cookie('shrunkid', tracking_id)
+        return response
+
+    @app.before_request
+    def _record_visit() -> None:
+        netid = flask.session['user']['netid'] if 'user' in flask.session else None
+        endpoint = flask.request.endpoint or 'error'
+        current_app.client.record_visit(netid, endpoint)
+
+    return app
