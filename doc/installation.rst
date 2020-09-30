@@ -27,6 +27,6 @@ You can install Shrunk from source, which provides the latest features but may
 be unstable and is not suitable for the production server. Just clone the
 repository and use the Python installation command::
 
-    $ git clone ssh://em-oss-phab@vault.phacility.com/diffusion/SRU/shrunk.git
+    $ git clone git@gitlab.rutgers.edu:MaCS/OSS/shrunk.git ( via ssh)
     $ cd shrunk
     $ ./setup.py install
