@@ -77,7 +77,7 @@ class LinksClient:
             return False
         return self.db.grants.find_one({
             'role': 'blocked_url',
-            'entity': {'$regex': '%s*' % domain}
+            'entity': {'$regex': '%s*' % domain},
         }) is not None
 
     def id_of_alias(self, alias: str) -> Optional[ObjectId]:
@@ -198,7 +198,7 @@ class LinksClient:
                           {'$group': {'_id': '$country_code', 'value': {'$sum': 1}}},
                           {'$addFields': {'code': '$_id'}},
                           {'$project': {'_id': 0}}],
-            }
+            },
         })
         return next(self.db.visits.aggregate(aggregation))
 
@@ -322,7 +322,7 @@ class LinksClient:
         visits = self.db.visits.estimated_document_count()
         users = self.db.urls.aggregate([
             {'$group': {'_id': '$netid'}},
-            {'$count': 'count'}
+            {'$count': 'count'},
         ])
         try:
             users = list(users)[0]['count']
@@ -331,7 +331,7 @@ class LinksClient:
         return {
             'links': links,
             'visits': visits,
-            'users': users
+            'users': users,
         }
 
     def get_endpoint_stats(self) -> List[Any]:
@@ -435,7 +435,7 @@ class LinksClient:
             'user_agent': user_agent,
             'referer': referer,
             'state_code': state_code,
-            'country_code': country_code
+            'country_code': country_code,
         })
 
     def get_visitor_id(self, ipaddr: str) -> str:

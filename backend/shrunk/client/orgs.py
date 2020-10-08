@@ -74,7 +74,7 @@ class OrgsClient:
     def create_member(self, org_id: ObjectId, netid: str, is_admin: bool = False) -> bool:
         match = {
             '_id': org_id,
-            'members': {'$not': {'$elemMatch': {'netid': netid}}}
+            'members': {'$not': {'$elemMatch': {'netid': netid}}},
         }
 
         update = {
@@ -83,8 +83,8 @@ class OrgsClient:
                     'netid': netid,
                     'is_admin': is_admin,
                     'timeCreated': datetime.now(timezone.utc),
-                }
-            }
+                },
+            },
         }
 
         result = self.db.organizations.update_one(match, update)
@@ -124,7 +124,7 @@ class OrgsClient:
                          'as': 'links'}},
             {'$addFields': {'total_visits': {'$sum': '$links.visits'},
                             'unique_visits': {'$sum': '$links.unique_visits'}}},
-            {'$project': {'links': 0}}
+            {'$project': {'links': 0}},
         ]
 
         return list(self.db.organizations.aggregate(pipeline))
@@ -140,7 +140,7 @@ class OrgsClient:
 
         rename_id = [
             {'$addFields': {'code': '$_id'}},
-            {'$project': {'_id': 0}}
+            {'$project': {'_id': 0}},
         ]
 
         aggregation = [
@@ -150,7 +150,7 @@ class OrgsClient:
                 'from': 'urls',
                 'localField': 'members.netid',
                 'foreignField': 'netid',
-                'as': 'links'
+                'as': 'links',
             }},
             {'$unwind': '$links'},
             {'$replaceRoot': {'newRoot': '$links'}},
@@ -158,14 +158,14 @@ class OrgsClient:
                 'from': 'visits',
                 'localField': '_id',
                 'foreignField': 'link_id',
-                'as': 'visits'
+                'as': 'visits',
             }},
             {'$unwind': '$visits'},
             {'$replaceRoot': {'newRoot': '$visits'}},
             {'$facet': {
                 'us': filter_us + not_null('state_code') + group_by('$state_code') + rename_id,
-                'world': not_null('country_code') + group_by('$country_code') + rename_id
-            }}
+                'world': not_null('country_code') + group_by('$country_code') + rename_id,
+            }},
         ]
 
         return next(self.db.organizations.aggregate(aggregation))

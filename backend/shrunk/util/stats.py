@@ -16,7 +16,7 @@ REFERER_MAPPING = {
     'reddit.com': 'Reddit',
     'com.google.android.googlequicksearchbox': 'Android Search',
     'com.google.android.gm': 'GMail App',
-    'com.linkedin.android': 'LinkedIn App'
+    'com.linkedin.android': 'LinkedIn App',
 }
 
 
@@ -61,7 +61,7 @@ def get_human_readable_browser(browser: str) -> str:
     mapping = {
         'Androidbrowser': 'Android Browser',
         'Chromeios': 'Chrome',
-        'Msedge': 'Microsoft Edge'
+        'Msedge': 'Microsoft Edge',
     }
 
     return mapping.get(browser.title(), browser)
@@ -72,7 +72,7 @@ def get_human_readable_platform(platform: str) -> str:
         'Chromeos': 'ChromeOS',
         'Iphone': 'iPhone',
         'Ipad': 'iPad',
-        'Macintosh': 'Mac'
+        'Macintosh': 'Mac',
     }
 
     return mapping.get(platform.title(), platform)

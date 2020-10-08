@@ -4,7 +4,7 @@ Jinja2==2.11.2
 MarkupSafe==1.1.1
 Werkzeug==1.0.1
 itsdangerous==1.1.0
-pymongo==3.11.1
+pymongo==3.11.0
 geoip2==3.0.0
 httpagentparser==1.9.0
 click==7.0

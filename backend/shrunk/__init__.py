@@ -87,7 +87,7 @@ def _init_roles() -> None:
     client.roles.create('power_user', is_admin, is_valid_netid, custom_text={
         'title': 'Power Users',
         'grant_title': 'Grant power user',
-        'revoke_title': 'Revoke power user'
+        'revoke_title': 'Revoke power user',
     })
 
     def onblacklist(netid: str) -> None:
@@ -104,7 +104,7 @@ def _init_roles() -> None:
         'revoke_title': 'Unblacklist a user',
         'revoke_button': 'UNBLACKLIST',
         'empty': 'There are currently no blacklisted users',
-        'granted_by': 'blacklisted by'
+        'granted_by': 'blacklisted by',
     }, oncreate=onblacklist, onrevoke=unblacklist)
 
     def onblock(url: str) -> None:
@@ -115,11 +115,10 @@ def _init_roles() -> None:
         # . needs to be escaped in the domain because it is regex wildcard
         contains_domain = urls.find({'long_url': {'$regex': '%s*' % domain.replace('.', r'\.')}})
 
-        matches_domain = [link for link in contains_domain
-                          if get_domain(link['long_url']) == domain]
+        matches_domain = [link for link in contains_domain if get_domain(link['long_url']) == domain]
 
         msg = 'deleting links: ' \
-            + ', '.join(f'{l["_id"]} -> {l["long_url"]}' for l in matches_domain)
+            + ', '.join(f'{link["_id"]} -> {link["long_url"]}' for link in matches_domain)
         current_app.logger.info(msg)
 
         client.links.block_urls(list(doc['_id'] for doc in matches_domain))
@@ -130,7 +129,7 @@ def _init_roles() -> None:
         contains_domain = urls.find({
             'long_url': {'$regex': '%s*' % domain.replace('.', r'\.')},
             'deleted': True,
-            'deleted_by': '!BLOCKED'
+            'deleted_by': '!BLOCKED',
         })
 
         matches_domain = [link for link in contains_domain if get_domain(link['long_url']) == domain]
@@ -145,7 +144,7 @@ def _init_roles() -> None:
         'revoke_title': 'Unblock a URL',
         'revoke_button': 'UNBLOCK',
         'empty': 'There are currently no blocked URLs',
-        'granted_by': 'Blocked by'
+        'granted_by': 'Blocked by',
     }, oncreate=onblock, onrevoke=unblock)
 
     client.roles.create('whitelisted',
@@ -160,7 +159,7 @@ def _init_roles() -> None:
                             'empty': 'You have not whitelisted any users',
                             'granted_by': 'Whitelisted by',
                             'allow_comment': True,
-                            'comment_prompt': 'Describe why the user has been granted access to Go.'
+                            'comment_prompt': 'Describe why the user has been granted access to Go.',
                         })
 
     client.roles.create('facstaff', is_admin, is_valid_netid,
@@ -178,7 +177,7 @@ def create_app(config_path: str = 'config.py', **kwargs: Any) -> Flask:
 
     formatter = RequestFormatter(
         '[%(asctime)s] [%(user)s@%(remote_addr)s] [%(url)s] %(levelname)s '
-        + 'in %(module)s: %(message)s'
+        + 'in %(module)s: %(message)s',
     )
     default_handler.setFormatter(formatter)
 

@@ -51,8 +51,8 @@ class SearchClient:
                         {'long_url': match},
                         {'title': match},
                         {'aliases.alias': match},
-                    ]
-                }
+                    ],
+                },
             })
 
         # Sort results.

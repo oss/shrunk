@@ -47,31 +47,31 @@ export const EditLinkModal: React.FC<Props> = (props) => {
             onCancel={() => { form.resetFields(); props.onCancel(); }}>
             <Form form={form} layout={'vertical'} initialValues={initialValues}>
                 <Form.Item
-                    label="Title"
-                    name="title"
+                    label='Title'
+                    name='title'
                     rules={[{ required: true, message: 'Please input a title.' }]}>
-                    <Input placeholder="Title" />
+                    <Input placeholder='Title' />
                 </Form.Item>
 
                 <Form.Item
-                    label="Long URL"
-                    name="long_url"
+                    label='Long URL'
+                    name='long_url'
                     rules={[
                         { required: true, message: 'Please input a URL.' },
                         { type: 'url', message: 'Please enter a valid URL.' },
                         { validator: serverValidateLongUrl },
                     ]}>
-                    <Input placeholder="Long URL" prefix={<LinkOutlined className="site-from-item-icon" />} />
+                    <Input placeholder='Long URL' prefix={<LinkOutlined className='site-from-item-icon' />} />
                 </Form.Item>
 
-                <Form.Item label="Expiration time" name='expiration_time'>
+                <Form.Item label='Expiration time' name='expiration_time'>
                     <DatePicker
-                        format="YYYY-MM-DD HH:mm:ss"
+                        format='YYYY-MM-DD HH:mm:ss'
                         disabledDate={current => current && current < moment().startOf('day')}
                         showTime={{ defaultValue: moment(props.linkInfo.expiration_time) }} />
                 </Form.Item>
 
-                <Form.List name="aliases">
+                <Form.List name='aliases'>
                     {(fields, { add, remove }) => (
                         <div className='fix-alias-remove-button'>
                             {fields.map((field, index) => (
@@ -86,24 +86,24 @@ export const EditLinkModal: React.FC<Props> = (props) => {
                                             { max: 60, message: 'Alias may be no longer than 60 characters.' },
                                             {
                                                 pattern: /^[a-zA-Z0-9_.,-]*$/,
-                                                message: 'Alias may consist only of numbers, letters, and the punctuation marks “.,-_”.'
+                                                message: 'Alias may consist only of numbers, letters, and the punctuation marks “.,-_”.',
                                             },
                                             { validator: serverValidateAlias },
                                         ]}>
-                                        <Input disabled={!mayEditAliases} placeholder="Alias" />
+                                        <Input disabled={!mayEditAliases} placeholder='Alias' />
                                     </Form.Item>
 
                                     <Form.Item
                                         label={index === 0 ? 'Description' : ''}
                                         name={[field.name, 'description']}
                                         fieldKey={field.fieldKey}>
-                                        <Input disabled={!mayEditAliases} placeholder="Description" />
+                                        <Input disabled={!mayEditAliases} placeholder='Description' />
                                     </Form.Item>
 
                                     {!mayEditAliases ? <></> :
                                         <Button
                                             disabled={fields.length === 1}
-                                            type="text"
+                                            type='text'
                                             icon={<MinusCircleOutlined />}
                                             onClick={() => remove(field.name)} />}
                                 </Space>
@@ -112,7 +112,7 @@ export const EditLinkModal: React.FC<Props> = (props) => {
                             {!mayEditAliases ? <></> :
                                 <Form.Item>
                                     <Button
-                                        type="dashed"
+                                        type='dashed'
                                         onClick={() => { add(); }}
                                         block>
                                         <PlusOutlined /> Add an alias

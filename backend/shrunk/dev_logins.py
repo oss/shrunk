@@ -21,7 +21,7 @@ def mk_dev_login(netid: str, role: Optional[str]) -> Any:
         session.update({
             'user': {'netid': netid},
             'all_users': '0',
-            'sortby': '0'
+            'sortby': '0',
         })
         if role is not None and not current_app.client.roles.has(role, netid):
             current_app.client.roles.grant(role, 'Justice League', netid)

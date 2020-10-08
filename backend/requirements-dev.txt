@@ -2,7 +2,11 @@ pytest
 pytest-cov
 flake8
 flake8-quotes
+flake8-commas
+flake8-formatter-junit-xml
 pylint
+pylint_flask
+pylint_junit
 autopep8
 setuptools
 wheel

@@ -87,10 +87,10 @@ export class Shrunk extends React.Component<Props, State> {
                     <Header className='header'>
                         <div className='logo'>
                             <Link to='/dash'>
-                                <img alt="Rutgers" src="/app/static/img/RU_LOGOTYPE_REVWHITE.png" width="175px" />
+                                <img alt='Rutgers' src='/app/static/img/RU_LOGOTYPE_REVWHITE.png' width='175px' />
                             </Link>
                         </div>
-                        <Menu theme="dark" mode='horizontal' selectedKeys={this.state.selectedKeys}>
+                        <Menu theme='dark' mode='horizontal' selectedKeys={this.state.selectedKeys}>
                             <Menu.Item key='dash'>
                                 <NavLink to='/dash' className='nav-text'>Dashboard</NavLink>
                             </Menu.Item>

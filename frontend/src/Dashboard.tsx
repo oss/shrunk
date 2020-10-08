@@ -158,7 +158,7 @@ export class Dashboard extends React.Component<Props, State> {
                 editModalState: {
                     ...this.state.editModalState,
                     linkInfo: null,
-                }
+                },
             })
         }, 500);
     }
@@ -185,7 +185,7 @@ export class Dashboard extends React.Component<Props, State> {
                 qrModalState: {
                     ...this.state.qrModalState,
                     linkInfo: null,
-                }
+                },
             })
         }, 500);
     }

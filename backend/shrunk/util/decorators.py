@@ -17,7 +17,7 @@ def require_login(func: Any) -> Any:
         client = current_app.client
         logger = current_app.logger
         if 'user' not in session or 'netid' not in session['user']:
-            logger.debug(f'require_login: user not logged in')
+            logger.debug('require_login: user not logged in')
             return redirect(url_for('shrunk.login'))
         netid = session['user']['netid']
         if client.roles.has('blacklisted', netid):

@@ -43,7 +43,7 @@ shrunk/shrunk/static/out
 *.egg-info
 
 node_modules/
-shrunk/static/dist/
+backend/shrunk/static/dist/
 webpack-stats.json
 dist-newstyle
 .mypy_cache/

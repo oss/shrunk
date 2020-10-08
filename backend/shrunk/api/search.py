@@ -46,7 +46,7 @@ SEARCH_SCHEMA = {
                     },
                     'required': ['set', 'org'],
                 },
-            ]
+            ],
         },
 
         # Whether to show expired links. Required.

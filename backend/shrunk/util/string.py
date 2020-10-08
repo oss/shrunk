@@ -112,7 +112,7 @@ regex = re.compile(
     # fragment
     r'(?:#\S*)?'
     r'$',
-    re.UNICODE | re.IGNORECASE
+    re.UNICODE | re.IGNORECASE,
 )
 
 pattern = re.compile(regex)

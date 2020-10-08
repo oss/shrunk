@@ -30,7 +30,7 @@ def index() -> Any:
     shrunk_params = json.dumps({
         'netid': session['user']['netid'],
         'userPrivileges': [role for role in ['facstaff', 'power_user', 'admin']
-                           if client.roles.has(role, netid)]
+                           if client.roles.has(role, netid)],
     })
     shrunk_params = str(base64.b64encode(bytes(shrunk_params, 'utf8')), 'utf8')
 

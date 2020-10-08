@@ -51,7 +51,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
 
         const create_link_resp = await fetch('/api/v1/link', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(create_link_req)
+            body: JSON.stringify(create_link_req),
         }).then(resp => resp.json());
 
         const link_id: string = create_link_resp.id;
@@ -118,7 +118,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
                                                     { max: 60, message: 'Alias may be no longer than 60 characters.' },
                                                     {
                                                         pattern: /^[a-zA-Z0-9_.,-]*$/,
-                                                        message: 'Alias may consist only of numbers, letters, and the punctuation marks “.,-_”.'
+                                                        message: 'Alias may consist only of numbers, letters, and the punctuation marks “.,-_”.',
                                                     },
                                                     { validator: serverValidateAlias },
                                                 ]}>

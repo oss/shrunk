@@ -2,7 +2,7 @@ import React from 'react';
 import { Row, Col, Button, Popconfirm, Spin, Dropdown, Form, Input, Checkbox, Tooltip } from 'antd';
 import {
     ExclamationCircleFilled, DeleteOutlined, PlusCircleFilled,
-    LineChartOutlined, CloseOutlined, UpOutlined, DownOutlined
+    LineChartOutlined, CloseOutlined, UpOutlined, DownOutlined,
 } from '@ant-design/icons';
 import { RouteComponentProps } from 'react-router';
 import { Link, withRouter } from 'react-router-dom';
