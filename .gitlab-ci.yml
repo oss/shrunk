@@ -1,37 +1,110 @@
-image: alpine:latest
+stages:
+  - lint
+  - frontend_build
+  - backend_build
+  # - test
 
-services:
-  - mongo
-
-cache:
-  paths:
-    - node_modules/
-
-build:
-  stage: build
+eslint:
+  stage: lint
+  image: alpine:latest
+  needs: []
   script:
-    - apk add npm python3-dev py3-pip gcc musl-dev openldap-dev libffi-dev openssl-dev
+    - apk add npm
+    - cd frontend
     - npm install
-    - pip3 install -r pip.req
-    - pip3 install -r pip.req.dev
+    - npx eslint --format=junit src > ../eslint.xml || exit 0
+  artifacts:
+    reports:
+      junit: eslint.xml
+
+pylint:
+  stage: lint
+  image: alpine:latest
+  needs: []
+  script:
+    - apk add python3-dev py3-pip gcc musl-dev openldap-dev libffi-dev openssl-dev
+    - pip3 install -r backend/requirements.txt
+    - pip3 install -r backend/requirements-dev.txt
+    - pylint --exit-zero --output-format=junit backend/shrunk > pylint.xml
+  artifacts:
+    reports:
+      junit: pylint.xml
+
+mypy:
+  stage: lint
+  image: alpine:latest
+  needs: []
+  script:
+    - apk add python3-dev py3-pip gcc musl-dev openldap-dev libffi-dev openssl-dev
+    - pip3 install -r backend/requirements.txt
+    - pip3 install -r backend/requirements-dev.txt
+    - mypy --junit-xml=./mypy.xml backend/shrunk || exit 0
+  artifacts:
+    reports:
+      junit: mypy.xml
+
+flake8:
+  stage: lint
+  image: alpine:latest
+  needs: []
+  script:
+    - apk add python3-dev py3-pip gcc musl-dev openldap-dev libffi-dev openssl-dev
+    - pip3 install -r backend/requirements.txt
+    - pip3 install -r backend/requirements-dev.txt
+    - flake8 --exit-zero --format=junit-xml backend/shrunk > flake8.xml
+  artifacts:
+    reports:
+      junit: flake8.xml
+
+frontend_build:
+  stage: frontend_build
+  image: alpine:latest
+  needs: []
+  script:
+    - apk add npm util-linux
+    - cd frontend
+    - npm install
+    - npm run build
+  artifacts:
+    paths:
+      - frontend/dist/*
+
+backend_build:
+  stage: backend_build
+  image: alpine:latest
+  needs:
+    - frontend_build
+  script:
+    - apk add python3-dev py3-pip gcc musl-dev openldap-dev libffi-dev openssl-dev
+    - pip3 install -r backend/requirements.txt
+    - pip3 install -r backend/requirements-dev.txt
+    - mkdir backend/shrunk/static/dist
+    - cp frontend/dist/* backend/shrunk/static/dist
+    - rm -f backend/shrunk/static/dist/index.html backend/shrunk/templates/index.html
+    - cp frontend/dist/index.html backend/shrunk/templates/index.html
+    - cd backend
     - python3 setup.py bdist_wheel
   artifacts:
     paths:
-      - dist/shrunk-*.whl
+      - backend/dist/shrunk-*.whl
 
-test:
-  stage: test
-  dependencies:
-    - build
-  script:
-    - apk add npm python3-dev py3-pip py3-setuptools gcc musl-dev openldap-dev libffi-dev openssl-dev
-    # - pip3 install -r pip.req.dev
-    - cp shrunk/test-config.py /tmp/test-config.py
-    - mkdir /usr/share/GeoIP
-    - cp GeoLite2-City.mmdb /usr/share/GeoIP/GeoLite2-City.mmdb
-    - pip3 install pytest pytest-cov
-    - pip3 install dist/shrunk-*.whl
-    - pytest --junitxml=pytest.xml
-  artifacts:
-    reports:
-      junit: pytest.xml
+# pytest:
+#   stage: test
+#   image: alpine:latest
+#   needs:
+#     - backend_build
+#   services:
+#     - mongo
+#   script:
+#     - apk add python3-dev py3-pip gcc musl-dev openldap-dev libffi-dev openssl-dev
+#     - pip3 install -r backend/requirements.txt
+#     - pip3 install -r backend/requirements-dev.txt
+#     - cp backend/shrunk/test-config.py /tmp/test-config.py
+#     - mkdir /usr/share/GeoIP
+#     - cp backend/GeoLite2-City.mmdb /usr/share/GeoIP/GeoLite2-City.mmdb
+#     - pip3 install backend/dist/shrunk-*.whl
+#     - cd backend
+#     - pytest --junitxml=../pytest.xml 
+#   artifacts:
+#     reports:
+#       junit: pytest.xml
