@@ -45,7 +45,8 @@ def get_role_entities(netid: str, client: ShrunkClient, role_name: str) -> Any:
     return jsonify({'entities':
                     [{'entity': entity['entity'],
                       'granted_by': entity['granted_by'],
-                      'comment': entity.get('comment')}
+                      'comment': entity.get('comment'),
+                      'time_granted': entity['time_granted'].isoformat() if 'time_granted' in entity else None}
                      for entity in entities]})
 
 

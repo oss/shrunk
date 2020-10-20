@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import Callable, Optional, List, Dict, Any
 
 from flask import current_app, has_app_context
@@ -92,6 +93,7 @@ class RolesClient:
                     'entity': grantee,
                     'granted_by': grantor,
                     'comment': comment if comment is not None else '',
+                    'time_granted': datetime.now(timezone.utc),
                 })
                 if role in self.oncreate_for:
                     self.oncreate_for[role](grantee)

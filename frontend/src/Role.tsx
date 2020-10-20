@@ -2,6 +2,7 @@ import React from 'react';
 import { Row, Col, Spin, Button, Popconfirm, Form, Input } from 'antd';
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import base32 from 'hi-base32';
+import moment from 'moment';
 
 export interface Props {
     userPrivileges: Set<string>;
@@ -26,6 +27,7 @@ interface EntityInfo {
     entity: string;
     granted_by: string;
     comment: string | null;
+    time_granted: Date | null;
 }
 
 const GrantForm: React.FC<{
@@ -100,6 +102,12 @@ const EntityRow: React.FC<{
                     <Row>
                         <Col span={24}>
                             <span><em>Comment:</em>&nbsp;{props.info.comment}</span>
+                        </Col>
+                    </Row>}
+                {props.info.time_granted === null ? <></> :
+                    <Row>
+                        <Col span={24}>
+                            <span><em>Date granted:</em>&nbsp;{moment(props.info.time_granted).format('DD MMM YYYY')}</span>
                         </Col>
                     </Row>}
             </Col>
