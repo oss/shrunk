@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 import random
 import string
 import re
+import requests
 from typing import Optional, List, Set, Any, Dict, cast
 
 from flask import current_app
@@ -80,6 +81,13 @@ class LinksClient:
             'entity': {'$regex': '%s*' % domain},
         }) is not None
 
+    def redirects_to_blocked_url(self, long_url: str) -> bool:
+        """Follows the url to check whether it redirects to a blocked url.
+        :param long_url: The long url to query
+        """
+        redirected_url = requests.head(long_url, allow_redirects=True).url
+        return self.long_url_is_blocked(redirected_url)
+
     def id_of_alias(self, alias: str) -> Optional[ObjectId]:
         """Get the ``_id`` field associated with the short url.
         :param short_url: a short url
@@ -94,6 +102,9 @@ class LinksClient:
                netid: str,
                creator_ip: str) -> ObjectId:
         if self.long_url_is_blocked(long_url):
+            raise BadLongURLException
+
+        if self.redirects_to_blocked_url(long_url):
             raise BadLongURLException
 
         document = {
@@ -118,6 +129,9 @@ class LinksClient:
                long_url: Optional[str] = None,
                expiration_time: Optional[datetime] = None) -> None:
         if long_url is not None and self.long_url_is_blocked(long_url):
+            raise BadLongURLException
+
+        if long_url is not None and self.redirects_to_blocked_url(long_url):
             raise BadLongURLException
 
         if title is None and long_url is None and expiration_time is None:
