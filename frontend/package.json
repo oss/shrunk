@@ -4,7 +4,8 @@
   "description": "Rutgers University URL Shortener",
   "scripts": {
     "build": "npx parcel build --no-source-maps --no-content-hash --public-url=./static/dist/ src/index.html",
-    "watch": "npx parcel watch --public-url=./static/dist/ src/index.html"
+    "watch": "npx parcel watch --public-url=./static/dist/ src/index.html",
+    "doc": "npx typedoc --out docs src --mode modules --excludeExternals --ignoreCompilerErrors"
   },
   "dependencies": {
     "@ant-design/icons": "^4.2.2",
@@ -40,6 +41,7 @@
     "less": "^3.12.2",
     "less-loader": "^7.0.1",
     "parcel": "^1.12.4",
+    "typedoc": "^0.19.2",
     "typescript": "^4.0.3"
   },
   "author": "Rutgers University Open System Solutions",

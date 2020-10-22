@@ -1,4 +1,5 @@
-from datetime import datetime, timezone
+"""Implements the :py:class:`RolesClient` class."""
+
 from typing import Callable, Optional, List, Dict, Any
 
 from flask import current_app, has_app_context
@@ -10,6 +11,8 @@ __all__ = ['RolesClient']
 
 
 class RolesClient:
+    """This class implements the Shrunk roles system."""
+
     def __init__(self, *, db: pymongo.database.Database):
         self.db = db
         self.qualified_for: Dict[str, Callable[[str], bool]] = {}
@@ -20,7 +23,10 @@ class RolesClient:
 
     @staticmethod
     def _default_text(role: str) -> Any:
-        """Gives the default text that apears in a role menu"""
+        """Get the default text that apears in a role menu.
+
+        :param role: Role name
+        """
         return {
             'title': role,
             'invalid': f'invalid entity for role {role}',
@@ -42,22 +48,18 @@ class RolesClient:
                custom_text: Any = None,
                oncreate: Callable[[str], None] = lambda _: None,
                onrevoke: Callable[[str], None] = lambda _: None) -> None:
-        """
+        """Create a new role.
+
         :param role: Role name
-
         :param qualifier_func:
-        takes in a netid and returns whether or not a user is qualified to add to a specific role.
-
+            takes in a netid and returns whether or not a user is qualified to add to a specific role.
         :param validator_func:
-        takes in an entity (like netid or link) and returns whether it's valid for a role. for
-        example, it could take a link like ``htp://fuz1`` and say it's not a valid link
-
+            takes in an entity (like netid or link) and returns whether it's valid for a role. for
+            example, it could take a link like ``htp://fuz1`` and say it's not a valid link
         :param custom_text: custom text to show on the form. see :py:func:`_default_text` source for options
-
         :param oncreate: callback for extra logic when granting a role, e.g. remove a user's links on ban
-
         :param onrevoke:
-        callback for extra logic when revoking a role, e.g. reenabling a user's link when they are unbanned
+            callback for extra logic when revoking a role, e.g. reenabling a user's link when they are unbanned
         """
 
         custom_text = custom_text or {}
@@ -70,7 +72,10 @@ class RolesClient:
         self.onrevoke_for[role] = onrevoke
 
     def exists(self, role: str) -> bool:
-        """Check whether a role exists."""
+        """Check whether a role exists.
+
+        :param role: Role name
+        """
         return role in self.oncreate_for
 
     def grant(self, role: str, grantor: str, grantee: str, comment: Optional[str] = None) -> None:
@@ -101,6 +106,11 @@ class RolesClient:
             raise InvalidEntity
 
     def revoke(self, role: str, entity: str) -> None:
+        """Revoe a role from an entity
+
+        :param role: Role name
+        :param entity: The entity
+        """
         if has_app_context():
             current_app.logger.info(f'revoking role {role} for {entity}')
         if role in self.onrevoke_for:
@@ -108,24 +118,53 @@ class RolesClient:
         self.db.grants.delete_one({'role': role, 'entity': entity})
 
     def has(self, role: str, entity: str) -> bool:
-        """Check whether an entity has a role"""
+        """Check whether an entity has a role
+
+        :param role: Role name
+        :param entity: The entity
+        """
         return self.db.grants.find_one({'role': role, 'entity': entity}) is not None
 
     def has_some(self, roles: List[str], entity: str) -> bool:
-        """Check whether an entity has at least one of the roles in the list"""
+        """Check whether an entity has at least one of the roles in the list
+
+        :param roles: The roles to check
+        :param entity: The entity
+        """
         return any(self.has(role, entity) for role in roles)
 
     def get_role_names(self) -> List[Any]:
+        """Get name and display name of all roles
+
+        :returns: A list of objects of the form
+
+        .. code-block:: json
+
+           { "name": "string", "display_name": "string" }
+        """
         return [{'name': name, 'display_name': info['title']}
                 for (name, info) in self.form_text.items()]
 
     def get_role_entities(self, role: str) -> List[Any]:
+        """Get all entities having the given role
+
+        :param role: Role name
+        """
         return list(self.db.grants.find({'role': role}))
 
     def get_role_text(self, role: str) -> Any:
+        """Get the form text for a given role
+
+        :param role: Role name
+        """
         return self.form_text[role]
 
     def is_valid_entity_for(self, role: str, entity: str) -> bool:
+        """Check whether an entity is valid for a role
+
+        :param role: Role name
+        :param entity: The entity
+        """
         if role in self.valid_entity_for:
             return self.valid_entity_for[role](entity)
         return True

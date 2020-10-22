@@ -15,6 +15,7 @@ module.exports = {
         'jsx-quotes': ['error', 'prefer-single'],
         'curly': ['error', 'all'],
         'comma-dangle': ['error', 'always-multiline'],
+        'eol-last': ['error', 'always'],
         'no-unused-vars': [
             'error', { 'argsIgnorePattern': '^_', 'varsIgnorePattern': '^_' },
         ],

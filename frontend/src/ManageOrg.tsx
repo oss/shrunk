@@ -1,3 +1,8 @@
+/**
+ * Implements the [[ManageOrg]] component
+ * @packageDocumentation
+ */
+
 import React from 'react';
 import { Row, Col, Button, Popconfirm, Spin, Dropdown, Form, Input, Checkbox, Tooltip } from 'antd';
 import {
@@ -12,35 +17,60 @@ import { MemberInfo, OrgInfo, getOrgInfo } from './api/Org';
 import { OrgAdminTag } from './OrgCommon';
 import './Base.less';
 import './ManageOrg.less';
+import { serverValidateNetId } from './Validators';
 
+/**
+ * Props for the [[ManageOrg]] component
+ * @interface
+ */
 export type Props = RouteComponentProps<{ id: string }> & {
+    /**
+     * The user's NetID
+     * @property
+     */
     userNetid: string;
+
+    /**
+     * The user's privileges. Used to determine which operations the
+     * user may perform on the org
+     * @property
+     */
     userPrivileges: Set<string>;
 }
 
+/**
+ * State for the [[ManageOrg]] component
+ * @interface
+ */
 interface State {
+    /**
+     * The [[OrgInfo]] of the org
+     * @property
+     */
     orgInfo: OrgInfo | null;
+
+    /**
+     * The number of org admins. Used to enforce the requirement that the last
+     * admin of an org not be deleted
+     * @property
+     */
     adminsCount: number;
+
+    /**
+     * Whether the add member dropdown is visible
+     * @property
+     */
     addMemberFormVisible: boolean;
 }
 
+/**
+ * The [[AddMemberForm]] component implements a dropdown form used to add a member to an org
+ * @param props The props
+ */
 const AddMemberForm: React.FC<{
     isAdmin: boolean,
     onCreate: (netid: string, is_admin: boolean) => Promise<void>,
 }> = (props) => {
-    const serverValidateNetid = async (_rule: any, value: string): Promise<void> => {
-        if (!value) {
-            return;
-        }
-        const result = await fetch('/api/v1/org/validate_netid', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ netid: value }),
-        }).then(resp => resp.json());
-        if (!result['valid']) {
-            throw new Error(result['reason']);
-        }
-    };
     const onFinish = async (values: { netid: string, is_admin: boolean }) => await props.onCreate(values.netid, values.is_admin);
     return (
         <div className='dropdown-form'>
@@ -53,7 +83,7 @@ const AddMemberForm: React.FC<{
                         name='netid'
                         rules={[
                             { required: true, message: 'Please input a NetID.' },
-                            { validator: serverValidateNetid }]}>
+                            { validator: serverValidateNetId }]}>
                         <Input placeholder='NetID' />
                     </Form.Item>
 
@@ -71,6 +101,10 @@ const AddMemberForm: React.FC<{
     );
 }
 
+/**
+ * The [[MemberRow]] component displays the data pertaining to one member of an org
+ * @param props The props
+ */
 const MemberRow: React.FC<{
     isAdmin: boolean,
     adminsCount: number,
@@ -132,6 +166,11 @@ const MemberRow: React.FC<{
     );
 }
 
+/**
+ * The [[ManageOrgInner]] component implements the manage org view. It is wrapped
+ * with `withRouter` to provide the [[ManageOrg]] component.
+ * @class
+ */
 class ManageOrgInner extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
@@ -152,12 +191,22 @@ class ManageOrgInner extends React.Component<Props, State> {
         }
     }
 
+    /**
+     * Query the server for information about the current org and then update state
+     * @method
+     */
     refreshOrgInfo = async (): Promise<void> => {
         const orgInfo = await getOrgInfo(this.props.match.params.id);
         const adminsCount = orgInfo.members.filter(member => member.is_admin).length;
         this.setState({ orgInfo, adminsCount });
     }
 
+    /**
+     * Execute API requests to add a user to the org, then refresh org info
+     * @method
+     * @param netid The NetID of the user to add
+     * @param is_admin Whether the newly added user should be an org admin
+     */
     onAddMember = async (netid: string, is_admin: boolean): Promise<void> => {
         await fetch(`/api/v1/org/${this.props.match.params.id}/member/${netid}`, { method: 'PUT' });
         if (is_admin) {
@@ -171,11 +220,22 @@ class ManageOrgInner extends React.Component<Props, State> {
         await this.refreshOrgInfo();
     }
 
+    /**
+     * Execute API requests to remove a user from the org, then refresh org info
+     * @method
+     * @param netid The NetID of the user to remove
+     */
     onDeleteMember = async (netid: string): Promise<void> => {
         await fetch(`/api/v1/org/${this.props.match.params.id}/member/${netid}`, { method: 'DELETE' });
         await this.refreshOrgInfo();
     }
 
+    /**
+     * Execute API requests to grant or revoke org admin permissions from a user
+     * @method
+     * @param netid The NetID of the user on which to operate
+     * @param admin Whether the user is an org admin
+     */
     onChangeAdmin = async (netid: string, admin: boolean): Promise<void> => {
         await fetch(`/api/v1/org/${this.props.match.params.id}/member/${netid}`, {
             method: 'PATCH',
@@ -185,11 +245,20 @@ class ManageOrgInner extends React.Component<Props, State> {
         await this.refreshOrgInfo();
     }
 
+    /**
+     * Execute API requests to remove the current user from the org, then navigate
+     * to the `/orgs` page
+     * @method
+     */
     leaveOrg = async (): Promise<void> => {
         await fetch(`/api/v1/org/${this.props.match.params.id}/member/${this.props.userNetid}`, { method: 'DELETE' });
         this.props.history.push('/orgs');
     }
 
+    /**
+     * Execute API requests to delete the org, then navigate to the `/orgs` page
+     * @method
+     */
     deleteOrg = async (): Promise<void> => {
         await fetch(`/api/v1/org/${this.props.match.params.id}`, { method: 'DELETE' });
         this.props.history.push('/orgs');
@@ -270,4 +339,8 @@ class ManageOrgInner extends React.Component<Props, State> {
     }
 }
 
+/**
+ * The [[ManageOrg]] component is just the [[ManageOrgInner]] component
+ * wrapped with `withRouter`
+ */
 export const ManageOrg = withRouter(ManageOrgInner);

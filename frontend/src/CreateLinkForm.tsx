@@ -1,3 +1,8 @@
+/**
+ * Implements the [[CreateLinkForm]] component.
+ * @packageDocumentation
+ */
+
 import React from 'react';
 import moment from 'moment';
 import { Form, Input, Button, DatePicker, Space, Tooltip } from 'antd';
@@ -7,6 +12,10 @@ import { serverValidateAlias, serverValidateLongUrl } from './Validators';
 import './Base.less';
 import './FixAliasRemoveButton.less';
 
+/**
+ * Displays a label with the text "Alias" and a tooltip with extended help text
+ * @param _props Props
+ */
 const AliasLabel: React.FC = (_props) => {
     const aliasHelp = `
         You are now able to create multiple aliases for each shortened URL. For example, you may
@@ -19,26 +28,75 @@ const AliasLabel: React.FC = (_props) => {
     );
 }
 
+/**
+ * The final values of the create link form
+ * @interface
+ */
 interface CreateLinkFormValues {
+    /**
+     * The link title
+     * @property
+     */
     title: string;
+
+    /**
+     * The long URL
+     * @property
+     */
     long_url: string;
+
+    /**
+     * The expiration time. Absent if the link has no expiration time
+     * @property
+     */
     expiration_time?: moment.Moment;
+
+    /**
+     * The link's aliases. The `alias` field of an array element is absent
+     * if the alias should be generated randomly by the server
+     * @property
+     */
     aliases: { alias?: string, description: string }[];
 }
 
+/**
+ * Props for the [[CreateLinkForm]] component
+ * @interface
+ */
 export interface Props {
+    /** The user's privileges. Used to determine whether the user is allowed
+     * to set custom aliases
+     * @property
+     */
     userPrivileges: Set<string>;
+
+    /**
+     * Callback called after the user submits the form and the new link is created
+     * @property
+     */
     onFinish: () => Promise<void>;
 }
 
+/**
+ * State for the [[CreateLinkForm]] component
+ * @interface
+ */
 interface State { }
 
+/**
+ * The [[CreateLinkForm]] component allows the user to create a new link
+ * @class
+ */
 export class CreateLinkForm extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {};
     }
 
+    /**
+     * Executes API requests to create a new link and then calls the `onFinish` callback
+     * @param values The values from the form
+     */
     createLink = async (values: CreateLinkFormValues): Promise<void> => {
         const create_link_req: Record<string, string> = {
             title: values.title,

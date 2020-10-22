@@ -4,27 +4,13 @@ Packaging and distribution
 Packaging
 ---------
 
-.. important::
+Creating a Shrunk package requires building the frontend bundle using `parcel <https://parceljs.org/>`_, copying the
+results of that operation to the appropriate location in the ``backend/shrunk/static`` directory,
+and then creating a Python package using `setuptools <https://pypi.org/project/setuptools/>`_.
 
-   Make sure you've set up your shrunk virtual envirnoment before building! (:ref:`shrunk-venv`)
-
-.. important::
-
-   Make sure you've set up the node environment before building! (:ref:`npm`)
-
-Shrunk is packaged using `setuptools <https://pypi.org/project/setuptools/>`_. All the steps
-necessary to build shrunk are described in ``setup.py``. Before building Shrunk, you should
-update the :py:data:`VERSION` constant in that module. You can then build shrunk by executing::
-
-  $ ./setup.py bdist_wheel
-
-this command will execute :ref:`webpack` to build static assets and then package our python code,
-templates, and compiled assets together in a ``.whl`` file located in the ``./dist`` directory.
-
-.. warning::
-
-   Don't use ``sdist``. ``sdist`` will not run Webpack, which can result in the static assets being missing or
-   out-of-date.
+Generally we do not build Shrunk packages manually due to the complexity of this process. Instead, the CI
+pipeline automatically builds a package for every push. You can get the package from a pipeline run by
+looking at the artifacts for the ``backend_build`` job on GitLab and downloading the output ``.whl`` file.
 
 Distribution
 ------------

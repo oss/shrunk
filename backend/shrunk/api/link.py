@@ -1,4 +1,4 @@
-"""This module implements API endpoints under /link."""
+"""Implements API endpoints under ``/api/link``"""
 
 from datetime import datetime
 from typing import Any, Optional, Dict
@@ -10,6 +10,7 @@ from werkzeug.exceptions import abort
 from shrunk.client import ShrunkClient
 from shrunk.client.exceptions import ShrunkException, BadLongURLException, BadAliasException
 from shrunk.util.stats import get_human_readable_referer_domain, browser_stats_from_visits
+from shrunk.util.ldap import is_valid_netid
 from shrunk.util.decorators import require_login, request_schema
 
 __all__ = ['bp']
@@ -24,9 +25,8 @@ CREATE_LINK_SCHEMA = {
     'type': 'object',
     'required': ['title', 'long_url'],
     'properties': {
-        'title': {'type': 'string'},  # , 'minLength': 1},
-        'long_url': {'type': 'string'},  # , 'format': 'uri'},
-        # 'expiration_time': {'type': 'string', 'format': 'date-time'},
+        'title': {'type': 'string'},
+        'long_url': {'type': 'string'},
     },
 }
 
@@ -35,6 +35,30 @@ CREATE_LINK_SCHEMA = {
 @request_schema(CREATE_LINK_SCHEMA)
 @require_login
 def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
+    """``POST /api/link``
+
+    Create a new link. Returns id of created link or errors. Request format:
+
+    .. code-block:: json
+
+       { "title": "string", "long_url": "string" }
+
+    Success response format:
+
+    .. code-block:: json
+
+       { "id": "string" }
+
+    Error response format:
+
+    .. code-block:: json
+
+       { "errors": ["long_url"] }
+
+    :param netid:
+    :param client:
+    :param req:
+    """
     if 'expiration_time' in req:
         expiration_time: Optional[datetime] = datetime.fromisoformat(req['expiration_time'])
     else:
@@ -51,6 +75,18 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
 @bp.route('/validate_alias/<b32:alias>', methods=['GET'])
 @require_login
 def validate_alias(_netid: str, client: ShrunkClient, alias: str) -> Any:
+    """``GET /api/validate_alias/<b32:alias>``
+
+    Validate an alias. This endpoint is used for form validation in the frontend. Response format:
+
+    .. code-block:: json
+
+       { "valid": "boolean", "reason?": "string" }
+
+    :param netid:
+    :param client:
+    :param alias:
+    """
     valid = not client.links.alias_is_reserved(alias)
     response: Dict[str, Any] = {'valid': valid}
     if not valid:
@@ -61,6 +97,18 @@ def validate_alias(_netid: str, client: ShrunkClient, alias: str) -> Any:
 @bp.route('/validate_long_url/<b32:long_url>', methods=['GET'])
 @require_login
 def validate_long_url(_netid: str, client: ShrunkClient, long_url: str) -> Any:
+    """``GET /api/validate_long_url/<b32:long_url>``
+
+    Validate a long URL. This endpoint is used for form validation in the frontend. Response format:
+
+    .. code-block:: json
+
+       { "valid": "boolean", "reason?": "string" }
+
+    :param netid:
+    :param client:
+    :param long_url:
+    """
     valid = not client.links.long_url_is_blocked(long_url)
     response: Dict[str, Any] = {'valid': valid}
     if not valid:
@@ -71,6 +119,14 @@ def validate_long_url(_netid: str, client: ShrunkClient, long_url: str) -> Any:
 @bp.route('/<ObjectId:link_id>', methods=['GET'])
 @require_login
 def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
+    """``GET /api/link/<link_id>``
+
+    Get information about a link. Basically just returns the Mongo document.
+
+    :param netid:
+    :param client:
+    :param link_id:
+    """
     if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
         abort(403)
     try:
@@ -102,6 +158,7 @@ MODIFY_LINK_SCHEMA = {
         'title': {'type': 'string', 'minLength': 1},
         'long_url': {'type': 'string', 'format': 'uri'},
         'expiration_time': {'type': ['string', 'null'], 'format': 'date-time'},
+        'owner': {'type': 'string', 'minLength': 1},
     },
 }
 
@@ -110,15 +167,35 @@ MODIFY_LINK_SCHEMA = {
 @request_schema(MODIFY_LINK_SCHEMA)
 @require_login
 def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -> Any:
+    """``PATCH /api/link/<link_id>``
+
+    Modify an existing link. Returns 204 on success or 403 on error. Request format:
+
+    .. code-block:: json
+
+       { "title?": "string", "long_url?": "string", "expiration_time?": "string | null" }
+
+    Properties present in the request will be set. Properties missing from the request will not
+    be modified. If ``"expiration_time"`` is present and set to ``null``, the effect is to remove
+    the link's expiration time.
+
+    :param netid:
+    :param client:
+    :param req:
+    :param link_id:
+    """
     if 'expiration_time' in req and req['expiration_time'] is not None:
         req['expiration_time'] = datetime.fromisoformat(req['expiration_time'])
     if not client.roles.has('admin', netid) and not client.links.is_owner(link_id, netid):
         abort(403)
+    if 'owner' in req and not is_valid_netid(req['owner']):
+        abort(400)
     try:
         client.links.modify(link_id,
                             title=req.get('title'),
                             long_url=req.get('long_url'),
-                            expiration_time=req.get('expiration_time'))
+                            expiration_time=req.get('expiration_time'),
+                            owner=req.get('owner'))
         if 'expiration_time' in req and req['expiration_time'] is None:
             client.links.remove_expiration_time(link_id)
     except ShrunkException:
@@ -129,6 +206,14 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
 @bp.route('/<ObjectId:link_id>', methods=['DELETE'])
 @require_login
 def delete_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
+    """``DELETE /api/<link_id>``
+
+    Delete a link. Returns 204 on success and 403 on error.
+
+    :param netid:
+    :param client:
+    :param link_id:
+    """
     if not client.roles.has('admin', netid) and not client.links.is_owner(link_id, netid):
         abort(403)
     try:
@@ -141,6 +226,14 @@ def delete_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
 @bp.route('/<ObjectId:link_id>/clear_visits', methods=['POST'])
 @require_login
 def post_clear_visits(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
+    """``POST /link/<link_id>/clear_visits``
+
+    Delete all visit data from a link. Returns 204 on success 4xx on error.
+
+    :param netid:
+    :param client:
+    :param link_id:
+    """
     if not client.roles.has('admin', netid) and not client.links.is_owner(link_id, netid):
         abort(403)
     try:
@@ -151,6 +244,11 @@ def post_clear_visits(netid: str, client: ShrunkClient, link_id: ObjectId) -> An
 
 
 def anonymize_visit(client: ShrunkClient, visit: Any) -> Any:
+    """Anonymize a visit by replacing its source IP with an opaque visitor ID.
+
+    :param client:
+    :param visit:
+    """
     return {
         'link_id': str(visit['link_id']),
         'alias': visit['alias'],
@@ -166,6 +264,27 @@ def anonymize_visit(client: ShrunkClient, visit: Any) -> Any:
 @bp.route('/<ObjectId:link_id>/visits', methods=['GET'])
 @require_login
 def get_link_visits(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
+    """``GET /api/link/<link_id>/visits``
+
+    Get anonymized visit data associated with a link. Response format:
+
+    .. code-block:: json
+
+       { "visits": [ {
+           "link_id": "string",
+           "alias": "string",
+           "visitor_id": "string",
+           "user_agent": "string",
+           "referer": "string",
+           "state_code": "string",
+           "country_code": "string",
+           "time": "date-time"
+       } ] }
+
+    :param netid:
+    :param client:
+    :param link_id:
+    """
     if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
         abort(403)
     visits = client.links.get_visits(link_id)
@@ -176,6 +295,18 @@ def get_link_visits(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
 @bp.route('/<ObjectId:link_id>/stats', methods=['GET'])
 @require_login
 def get_link_overall_stats(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
+    """``GET /api/link/<link_id>/stats``
+
+    Get overall stats associated with a link. Response format:
+
+    .. code-block:: json
+
+       { "total_visits": "number", "unique_visits": "number" }
+
+    :param netid:
+    :param client:
+    :param link_id:
+    """
     if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
         abort(403)
     stats = client.links.get_overall_visits(link_id)
@@ -185,6 +316,22 @@ def get_link_overall_stats(netid: str, client: ShrunkClient, link_id: ObjectId) 
 @bp.route('/<ObjectId:link_id>/stats/visits', methods=['GET'])
 @require_login
 def get_link_visit_stats(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
+    """``GET /api/link/<link_id>/stats/visits``
+
+    Get daily visits information associated with a link. Response format:
+
+    .. code-block:: json
+
+       { "visits": [ {
+           "_id": { "year": "number", "month": "number", "day": "number" },
+           "all_visits": "number",
+           "first_time_visits": "number"
+       } ] }
+
+    :param netid:
+    :param client:
+    :param link_id:
+    """
     if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
         abort(403)
     visits = client.links.get_daily_visits(link_id)
@@ -194,6 +341,24 @@ def get_link_visit_stats(netid: str, client: ShrunkClient, link_id: ObjectId) ->
 @bp.route('/<ObjectId:link_id>/stats/geoip', methods=['GET'])
 @require_login
 def get_link_geoip_stats(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
+    """``GET /api/link/<link_id>/stats/geoip``
+
+    Get GeoIP stats associated with a link. Response format:
+
+    .. code-block:: json
+
+       {
+         "us": [ { "code": "string", "value": "number" } ],
+         "world": [ { "code": "string", "value": "number" } ]
+       }
+
+    where the value of ``"code"`` is an ISO country or subdivison code and the value of ``"value"`` is the
+    number of visits in that geographic region.
+
+    :param netid:
+    :param client:
+    :param link_id:
+    """
     if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
         abort(403)
     geoip = client.links.get_geoip_stats(link_id)
@@ -203,6 +368,22 @@ def get_link_geoip_stats(netid: str, client: ShrunkClient, link_id: ObjectId) ->
 @bp.route('/<ObjectId:link_id>/stats/browser', methods=['GET'])
 @require_login
 def get_link_browser_stats(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
+    """``GET /api/link/<link_id>/stats/browser``
+
+    Get stats about browsers and referers of visitors. Response format:
+
+    .. code-block:: json
+
+       {
+         "browsers": [ { "name": "string", "y": "number" } ],
+         "platforms": [ { "name": "string", "y": "number" } ],
+         "referers": [ { "name": "string", "y": "number" } ]
+       }
+
+    :param netid:
+    :param client:
+    :param link_id:
+    """
     if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
         abort(403)
     visits = client.links.get_visits(link_id)
@@ -228,6 +409,32 @@ CREATE_ALIAS_SCHEMA = {
 @request_schema(CREATE_ALIAS_SCHEMA)
 @require_login
 def create_alias(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -> Any:
+    """``POST /api/link/<link_id>/alias``
+
+    Create a new alias for a link. Returns the created alias or an error. Request format:
+
+    .. code-block:: json
+
+       { "alias?": "string", "description?": "string" }
+
+    If the ``"alias"`` field is omitted, the server will generate a random alias. If the ``"description"`` field is
+    omitted, it will default to the empty string. Success response format:
+
+    .. code-block:: json
+
+       { "alias": "string" }
+
+    Error response format:
+
+    .. code-block:: json
+
+       { "errors": ["alias"] }
+
+    :param netid:
+    :param client:
+    :param req:
+    :param link_id:
+    """
     # Check that netid is able to modify link_id
     if not client.roles.has('admin', netid) and not client.links.is_owner(link_id, netid):
         abort(403)
@@ -249,6 +456,15 @@ def create_alias(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) 
 @bp.route('/<ObjectId:link_id>/alias/<alias>', methods=['DELETE'])
 @require_login
 def delete_alias(netid: str, client: ShrunkClient, link_id: ObjectId, alias: str) -> Any:
+    """``DELETE /api/link/<link_id>/alias/<alias>``
+
+    Delete an alias. Returns 204 on success or 4xx on error.
+
+    :param netid:
+    :param client:
+    :param link_id:
+    :param alias:
+    """
     if not client.roles.has('admin', netid) and not client.links.is_owner(link_id, netid):
         abort(403)
     client.links.delete_alias(link_id, alias)
@@ -258,6 +474,15 @@ def delete_alias(netid: str, client: ShrunkClient, link_id: ObjectId, alias: str
 @bp.route('/<ObjectId:link_id>/alias/<alias>/visits', methods=['GET'])
 @require_login
 def get_alias_visits(netid: str, client: ShrunkClient, link_id: ObjectId, alias: str) -> Any:
+    """``GET /api/link/<link_id>/alias/<alias>/visits``
+
+    Get anonymized visits for an alias. For response format, see :py:func:`get_link_visits`.
+
+    :param netid:
+    :param client:
+    :param link_id:
+    :param alias:
+    """
     if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
         abort(403)
     visits = client.links.get_visits(link_id, alias)
@@ -268,6 +493,15 @@ def get_alias_visits(netid: str, client: ShrunkClient, link_id: ObjectId, alias:
 @bp.route('/<ObjectId:link_id>/alias/<alias>/stats', methods=['GET'])
 @require_login
 def get_alias_overall_stats(netid: str, client: ShrunkClient, link_id: ObjectId, alias: str) -> Any:
+    """``GET /api/link/<link_id>/alias/<alias>/stats``
+
+    Get number of total and unique visits to an alias. For response format, see :py:func:`get_link_overall_stats`.
+
+    :param netid:
+    :param client:
+    :param link_id:
+    :param alias:
+    """
     if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
         abort(403)
     stats = client.links.get_overall_visits(link_id, alias)
@@ -277,6 +511,15 @@ def get_alias_overall_stats(netid: str, client: ShrunkClient, link_id: ObjectId,
 @bp.route('/<ObjectId:link_id>/alias/<alias>/stats/visits', methods=['GET'])
 @require_login
 def get_alias_visit_stats(netid: str, client: ShrunkClient, link_id: ObjectId, alias: str) -> Any:
+    """``GET /api/link/<link_id>/alias/<alias>/stats/visits``
+
+    Get visit statistics for an alias. For response format, see :py:func:`get_alias_visit_stats`.
+
+    :param netid:
+    :param client:
+    :param link_id:
+    :param alias:
+    """
     if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
         abort(403)
     visits = client.links.get_daily_visits(link_id, alias)
@@ -286,6 +529,15 @@ def get_alias_visit_stats(netid: str, client: ShrunkClient, link_id: ObjectId, a
 @bp.route('/<ObjectId:link_id>/alias/<alias>/stats/geoip', methods=['GET'])
 @require_login
 def get_alias_geoip_stats(netid: str, client: ShrunkClient, link_id: ObjectId, alias: str) -> Any:
+    """``GET /api/link/<link_id>/alias/<alias>/stats/geoip``
+
+    Get GeoIP statistics for an alias. For response format, see :py:func:`get_link_geoip_stats`.
+
+    :param netid:
+    :param client:
+    :param link_id:
+    :param alias:
+    """
     if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
         abort(403)
     geoip = client.links.get_geoip_stats(link_id, alias)
@@ -295,6 +547,15 @@ def get_alias_geoip_stats(netid: str, client: ShrunkClient, link_id: ObjectId, a
 @bp.route('/<ObjectId:link_id>/alias/<alias>/stats/browser', methods=['GET'])
 @require_login
 def get_alias_browser_stats(netid: str, client: ShrunkClient, link_id: ObjectId, alias: str) -> Any:
+    """``GET /api/link/<link_id>/alias/<alias>/stats/browser``
+
+    Get stats about browsers and referers of visitors. For response format, see :py:func:`get_link_browser_stats`.
+
+    :param netid:
+    :param client:
+    :param link_id:
+    :param alias:
+    """
     if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
         abort(403)
     visits = client.links.get_visits(link_id, alias)

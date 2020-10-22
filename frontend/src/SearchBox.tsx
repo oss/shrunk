@@ -1,23 +1,94 @@
+/**
+ * Implements the search box and advanced search controls
+ * @packageDocumentation
+ */
+
 import React, { useState } from 'react';
-import { Form, Input, Button, Dropdown, Select, Radio, Checkbox } from 'antd';
+import { Form, Input, Button, Dropdown, Select, Radio, Checkbox, DatePicker } from 'antd';
 import { SettingOutlined, SearchOutlined } from '@ant-design/icons';
 
+/**
+ * The type of the `set` parameter in the search query.
+ * @type
+ */
 export type SearchSet = { set: 'user' | 'all' } | { set: 'org', org: string };
 
+/**
+ * The type of a search query
+ * @interface
+ */
 export interface SearchQuery {
+    /**
+     * The query string (optional)
+     * @property
+     */
     query?: string;
+
+    /**
+     * The set of links to search (c.f. [[SearchSet]])
+     * @property
+     */
     set: SearchSet;
+
+    /**
+     * Whether to show expired links
+     * @property
+    */
     show_expired_links: boolean;
+
+    /** Whether to show deleted links
+     * @property
+     */
     show_deleted_links: boolean;
+
+    /**
+     * The sort order and key
+     * @property
+     */
     sort: { key: string, order: string };
+
+    /**
+     * The beginning of the time range to search
+     * @property
+     */
+    begin_time: moment.Moment | null;
+
+    /**
+     * The end of the time range to search
+     * @property
+     */
+    end_time: moment.Moment | null;
 }
 
+/**
+ * Props for the [[SearchBox]] component
+ * @interface
+ */
 export interface Props {
+    /**
+     * The user's privileges, used to determine whether the user may use the "all links" set
+     * @property
+     */
     userPrivileges: Set<string>;
+
+    /**
+     * The names of the orgs of which the user is a member, used to display the list of
+     * available link sets
+     * @property 
+     */
     userOrgNames: string[];
+
+    /**
+     * Callback called when the user executes a new search query
+     * @property
+     */
     setQuery: (newQuery: SearchQuery) => Promise<void>;
 }
 
+/**
+ * The [[SearchBox]] component allows the user to enter and execute a search query
+ * @param props The props
+ */
 export const SearchBox: React.FC<Props> = (props) => {
     const isAdmin = props.userPrivileges.has('admin');
     const sortOptions = [
@@ -32,6 +103,8 @@ export const SearchBox: React.FC<Props> = (props) => {
     const [showDeleted, setShowDeleted] = useState(false);
     const [sortKey, setSortKey] = useState('created_time');
     const [sortOrder, setSortOrder] = useState('descending');
+    const [beginTime, setBeginTime] = useState<moment.Moment | null>(null);
+    const [endTime, setEndTime] = useState<moment.Moment | null>(null);
 
     const dropdown = (
         <div className='dropdown-form'>
@@ -64,6 +137,9 @@ export const SearchBox: React.FC<Props> = (props) => {
                     </Form.Item>}
                 <Form.Item name='sortKey' label='Sort by'>
                     <Select value={sortKey} onChange={setSortKey}>
+                        <Select.Option value='relevance'>
+                            Relevance
+                        </Select.Option>
                         <Select.Option value='created_time'>
                             Time created
                         </Select.Option>
@@ -82,6 +158,12 @@ export const SearchBox: React.FC<Props> = (props) => {
                         options={sortOptions}
                         optionType='button' />
                 </Form.Item>
+                <Form.Item name='beginTime' label='Created after'>
+                    <DatePicker format='YYYY-MM-DD' value={beginTime} onChange={setBeginTime} />
+                </Form.Item>
+                <Form.Item name='endTime' label='Created before'>
+                    <DatePicker format='YYYY-MM-DD' value={endTime} onChange={setEndTime} />
+                </Form.Item>
             </Form>
         </div>
     );
@@ -98,6 +180,8 @@ export const SearchBox: React.FC<Props> = (props) => {
             show_expired_links: showExpired,
             show_deleted_links: showDeleted,
             sort: { key: sortKey, order: sortOrder },
+            begin_time: beginTime === null ? null : beginTime.startOf('day'),
+            end_time: endTime === null ? null : endTime.startOf('day'),
         };
 
         if (query !== '') {

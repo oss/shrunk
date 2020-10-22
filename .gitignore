@@ -50,3 +50,4 @@ dist-newstyle
 .pytest_cache/
 .vscode/
 frontend/.cache
+frontend/docs

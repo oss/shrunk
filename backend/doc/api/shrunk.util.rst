@@ -4,6 +4,14 @@ shrunk.util package
 Submodules
 ----------
 
+shrunk.util.decorators module
+-----------------------------
+
+.. automodule:: shrunk.util.decorators
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 shrunk.util.ldap module
 -----------------------
 
@@ -12,18 +20,10 @@ shrunk.util.ldap module
    :undoc-members:
    :show-inheritance:
 
-shrunk.util.search module
--------------------------
+shrunk.util.stats module
+------------------------
 
-.. automodule:: shrunk.util.search
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-shrunk.util.stat module
------------------------
-
-.. automodule:: shrunk.util.stat
+.. automodule:: shrunk.util.stats
    :members:
    :undoc-members:
    :show-inheritance:
@@ -35,7 +35,6 @@ shrunk.util.string module
    :members:
    :undoc-members:
    :show-inheritance:
-
 
 Module contents
 ---------------

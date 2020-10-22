@@ -1,27 +1,101 @@
+/**
+ * Implements the [[EditLinkModal]] component
+ * @packageDocumentation
+ */
+
 import React from 'react';
 import moment from 'moment';
 import { Modal, Form, Input, Button, DatePicker, Space } from 'antd';
 import { LinkOutlined, PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
 
 import { LinkInfo } from './LinkInfo';
-import { serverValidateAlias, serverValidateLongUrl } from './Validators';
+import { serverValidateAlias, serverValidateLongUrl, serverValidateNetId } from './Validators';
 import './FixAliasRemoveButton.less';
 
+/**
+ * The final values of the edit link form
+ * @interface
+ */
 export interface EditLinkFormValues {
+    /**
+     * The new title
+     * @property
+     */
     title: string;
+
+    /**
+     * The new long URL
+     * @property
+     */
     long_url: string;
+
+    /**
+     * The new expiration time, or `null` if the expiration time should
+     * be cleared
+     * @property
+     */
     expiration_time: moment.Moment | null;
+
+    /**
+     * The new owner of the link.
+     * @property
+     */
+    owner: string;
+
+    /**
+     * The new aliases
+     * @property
+     */
     aliases: { alias: string, description: string }[];
 }
 
+/**
+ * Props of the [[EditLinkModal]] component
+ * @interface
+ */
 export interface Props {
+    /**
+     * Whether the modal is visible
+     * @property
+     */
     visible: boolean;
+
+    /**
+     * The user's privileges, used to determine whether the user
+     * may create custom aliases
+     * @property
+     */
     userPrivileges: Set<string>;
+
+    /**
+     * The original [[LinkInfo]] of the link to edit
+     * @property
+     */
     linkInfo: LinkInfo;
+
+    /**
+     * Callback that will be called when the user clicks the "ok" button
+     * @property
+     */
     onOk: (values: EditLinkFormValues) => void;
+
+    /**
+     * Callback that will be called when the user closes the modal without
+     * saving their changes
+     * @property
+     */
     onCancel: () => void;
 }
 
+/**
+ * The [[EditLinkModal]] component allows the user to edit a link's information. The user may
+ *   * Change the title
+ *   * Change the long URL
+ *   * Change or remove the link's expiration time
+ *   * Add, remove, or update aliases. If the user has the `"power_user"` privilege, the user may
+ *     set the text of the alias
+ * @param props The props
+ */
 export const EditLinkModal: React.FC<Props> = (props) => {
     const [form] = Form.useForm();
     const mayEditAliases = props.userPrivileges.has('power_user') || props.userPrivileges.has('admin');
@@ -69,6 +143,15 @@ export const EditLinkModal: React.FC<Props> = (props) => {
                         format='YYYY-MM-DD HH:mm:ss'
                         disabledDate={current => current && current < moment().startOf('day')}
                         showTime={{ defaultValue: moment(props.linkInfo.expiration_time) }} />
+                </Form.Item>
+
+                <Form.Item
+                    label='Owner'
+                    name='owner'
+                    rules={[
+                        { validator: serverValidateNetId },
+                    ]}>
+                    <Input placeholder='Link owner' />
                 </Form.Item>
 
                 <Form.List name='aliases'>

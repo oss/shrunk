@@ -18,11 +18,7 @@ def mk_dev_login(netid: str, role: Optional[str]) -> Any:
             abort(403)
 
         current_app.logger.info(f'successful dev login with netid {netid}')
-        session.update({
-            'user': {'netid': netid},
-            'all_users': '0',
-            'sortby': '0',
-        })
+        session.update({'user': {'netid': netid}})
         if role is not None and not current_app.client.roles.has(role, netid):
             current_app.client.roles.grant(role, 'Justice League', netid)
         return redirect(url_for('shrunk.index'))

@@ -1,3 +1,8 @@
+/**
+ * Implemens the org statistics view
+ * @packageDocumentation
+ */
+
 import React from 'react';
 import { Spin, Row, Col } from 'antd';
 import Highcharts from 'highcharts';
@@ -6,16 +11,46 @@ import HighchartsReact from 'highcharts-react-official';
 import { OrgInfo } from './api/Org';
 import { GeoipStats, MENU_ITEMS, GeoipChart } from './StatsCommon';
 
+/**
+ * Props for the [[OrgStats]] component
+ * @interface
+ */
 export interface Props {
+    /**
+     * ID of the org
+     * @property
+     */
     id: string;
 }
 
+/**
+ * Visit statistics for one user's links
+ * @interface 
+ */
 interface VisitDatum {
+    /**
+     * The user's NetID
+     * @property
+     */
     netid: string;
+
+    /**
+     * The total number of visits to the user's links
+     * @property
+     */
     total_visits: number;
+
+    /**
+     * The total number of unique visits to the user's links
+     * @property
+     */
     unique_visits: number;
 }
 
+/**
+ * The [[VisitsChart]] component displays a bar graph of number of visits per NetID
+ * @param props The props
+ */
 const VisitsChart: React.FC<{ visitStats: VisitDatum[] | null }> = (props) => {
     if (props.visitStats === null) {
         return (<Spin />);
@@ -52,12 +87,34 @@ const VisitsChart: React.FC<{ visitStats: VisitDatum[] | null }> = (props) => {
     return (<HighchartsReact highcharts={Highcharts} options={options} />);
 }
 
+/**
+ * State for the [[OrgStats]] component
+ * @interface
+ */
 interface State {
+    /**
+     * The [[OrgInfo]] of the current org
+     * @property
+     */
     info: OrgInfo | null;
+
+    /**
+     * Consists of one [[VisitDatum]] for each member of the org
+     * @property
+     */
     visitStats: VisitDatum[] | null;
+
+    /**
+     * Contains GeoIP statistics for all links belonging to the org
+     * @property
+     */
     geoipStats: GeoipStats | null;
 }
 
+/**
+ * The [[OrgStats]] component implements the org statistics view
+ * @class
+ */
 export class OrgStats extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
@@ -78,6 +135,10 @@ export class OrgStats extends React.Component<Props, State> {
         }
     }
 
+    /**
+     * Execute API requests to fech org info, then update state
+     * @method
+     */
     refreshOrgInfo = async (): Promise<void> => {
         const infoPromise = await fetch(`/api/v1/org/${this.props.id}`)
             .then(resp => resp.json())
