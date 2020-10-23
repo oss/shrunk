@@ -3,10 +3,10 @@ from datetime import datetime, timezone
 import random
 import string
 import re
-import requests
 from typing import Optional, List, Set, Any, Dict, cast
 
 from flask import current_app
+import requests
 import pymongo
 from pymongo.collection import ReturnDocument
 from pymongo.results import UpdateResult
@@ -54,6 +54,7 @@ class LinksClient:
         self.geoip = geoip
         self.reserved_words = RESERVED_WORDS
         self.banned_regexes = [re.compile(regex, re.IGNORECASE) for regex in BANNED_REGEXES]
+        self.redirect_check_timeout = REDIRECT_CHECK_TIMEOUT
 
     def alias_is_reserved(self, alias: str) -> bool:
         """Check whether a string is a reserved word that cannot be used as a short url.
@@ -85,7 +86,7 @@ class LinksClient:
         """Follows the url to check whether it redirects to a blocked url.
         :param long_url: The long url to query
         """
-        redirected_url = requests.head(long_url, allow_redirects=True).url
+        redirected_url = requests.head(long_url, allow_redirects=True, timeout=).url
         return self.long_url_is_blocked(redirected_url)
 
     def id_of_alias(self, alias: str) -> Optional[ObjectId]:

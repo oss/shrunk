@@ -60,6 +60,8 @@ MAX_VISITS_FOR_CSV = 6000
 
 BANNED_REGEXES = [r'\.xxx']
 
+REDIRECT_CHECK_TIMEOUT = 0.5
+
 ASSETS_AUTO_BUILD = False
 """Whether to recompile assets dynamically. This should be set to False for
 production because it incurs substantial overhead."""
