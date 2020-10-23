@@ -49,7 +49,8 @@ class LinksClient:
                  db: pymongo.database.Database,
                  geoip: GeoipClient,
                  RESERVED_WORDS: Set[str],
-                 BANNED_REGEXES: List[str]):
+                 BANNED_REGEXES: List[str],
+                 REDIRECT_CHECK_TIMEOUT: float):
         self.db = db
         self.geoip = geoip
         self.reserved_words = RESERVED_WORDS
@@ -86,7 +87,7 @@ class LinksClient:
         """Follows the url to check whether it redirects to a blocked url.
         :param long_url: The long url to query
         """
-        redirected_url = requests.head(long_url, allow_redirects=True, timeout=).url
+        redirected_url = requests.head(long_url, allow_redirects=True, timeout=self.redirect_check_timeout).url
         return self.long_url_is_blocked(redirected_url)
 
     def id_of_alias(self, alias: str) -> Optional[ObjectId]:
