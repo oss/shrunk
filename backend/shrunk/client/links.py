@@ -87,7 +87,10 @@ class LinksClient:
         """Follows the url to check whether it redirects to a blocked url.
         :param long_url: The long url to query
         """
-        redirected_url = requests.head(long_url, allow_redirects=True, timeout=self.redirect_check_timeout).url
+        try:
+            redirected_url = requests.head(long_url, allow_redirects=True, timeout=self.redirect_check_timeout).url
+        except requests.exceptions.RequestException:
+            return False
         return self.long_url_is_blocked(redirected_url)
 
     def id_of_alias(self, alias: str) -> Optional[ObjectId]:
