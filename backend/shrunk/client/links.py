@@ -6,6 +6,7 @@ import re
 from typing import Optional, List, Set, Any, Dict, cast
 
 from flask import current_app
+import requests
 import pymongo
 from pymongo.collection import ReturnDocument
 from pymongo.results import UpdateResult
@@ -48,11 +49,13 @@ class LinksClient:
                  db: pymongo.database.Database,
                  geoip: GeoipClient,
                  RESERVED_WORDS: Set[str],
-                 BANNED_REGEXES: List[str]):
+                 BANNED_REGEXES: List[str],
+                 REDIRECT_CHECK_TIMEOUT: float):
         self.db = db
         self.geoip = geoip
         self.reserved_words = RESERVED_WORDS
         self.banned_regexes = [re.compile(regex, re.IGNORECASE) for regex in BANNED_REGEXES]
+        self.redirect_check_timeout = REDIRECT_CHECK_TIMEOUT
 
     def alias_is_reserved(self, alias: str) -> bool:
         """Check whether a string is a reserved word that cannot be used as a short url.
@@ -80,6 +83,16 @@ class LinksClient:
             'entity': {'$regex': '%s*' % domain},
         }) is not None
 
+    def redirects_to_blocked_url(self, long_url: str) -> bool:
+        """Follows the url to check whether it redirects to a blocked url.
+        :param long_url: The long url to query
+        """
+        try:
+            redirected_url = requests.head(long_url, allow_redirects=True, timeout=self.redirect_check_timeout).url
+        except requests.exceptions.RequestException:
+            return False
+        return self.long_url_is_blocked(redirected_url)
+
     def id_of_alias(self, alias: str) -> Optional[ObjectId]:
         """Get the ``_id`` field associated with the short url.
         :param short_url: a short url
@@ -94,6 +107,9 @@ class LinksClient:
                netid: str,
                creator_ip: str) -> ObjectId:
         if self.long_url_is_blocked(long_url):
+            raise BadLongURLException
+
+        if self.redirects_to_blocked_url(long_url):
             raise BadLongURLException
 
         document = {
@@ -118,6 +134,9 @@ class LinksClient:
                long_url: Optional[str] = None,
                expiration_time: Optional[datetime] = None) -> None:
         if long_url is not None and self.long_url_is_blocked(long_url):
+            raise BadLongURLException
+
+        if long_url is not None and self.redirects_to_blocked_url(long_url):
             raise BadLongURLException
 
         if title is None and long_url is None and expiration_time is None:

@@ -27,6 +27,7 @@ class ShrunkClient:
                  GEOLITE_PATH: Optional[str] = None,
                  RESERVED_WORDS: Optional[Set[str]] = None,
                  BANNED_REGEXES: Optional[List[str]] = None,
+                 REDIRECT_CHECK_TIMEOUT: Optional[float] = 0.5,
                  **_kwargs: Any):
         self.conn = pymongo.MongoClient(DB_HOST, DB_PORT, username=DB_USERNAME,
                                         password=DB_PASSWORD, authSource='admin',
@@ -37,7 +38,8 @@ class ShrunkClient:
         self.geoip = GeoipClient(GEOLITE_PATH=GEOLITE_PATH)
         self.links = LinksClient(db=self.db, geoip=self.geoip,
                                  RESERVED_WORDS=RESERVED_WORDS or set(),
-                                 BANNED_REGEXES=BANNED_REGEXES or [])
+                                 BANNED_REGEXES=BANNED_REGEXES or [],
+                                 REDIRECT_CHECK_TIMEOUT=REDIRECT_CHECK_TIMEOUT or 0.5)
         self.roles = RolesClient(db=self.db)
         self.tracking = TrackingClient(db=self.db)
         self.orgs = OrgsClient(db=self.db)
