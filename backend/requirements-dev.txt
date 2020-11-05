@@ -1,8 +1,10 @@
 pytest
 pytest-cov
+coverage
 flake8
 flake8-quotes
 flake8-commas
+flake8-pytest-style
 flake8-formatter-junit-xml
 pylint
 pylint_flask

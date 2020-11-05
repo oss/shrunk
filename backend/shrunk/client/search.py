@@ -75,7 +75,8 @@ class SearchClient:
         elif query['sort']['key'] == 'relevance':
             sort_key = 'text_search_score'
         else:
-            assert False  # should never happen
+            # This should never happen
+            raise RuntimeError(f'Bad sort key {query["sort"]["key"]}')
         pipeline.append({'$sort': {sort_key: sort_order}})
 
         # Add is_expired field

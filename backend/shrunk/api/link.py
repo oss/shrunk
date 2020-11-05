@@ -8,7 +8,9 @@ from bson import ObjectId
 from werkzeug.exceptions import abort
 
 from shrunk.client import ShrunkClient
-from shrunk.client.exceptions import ShrunkException, BadLongURLException, BadAliasException
+from shrunk.client.exceptions import (BadLongURLException,
+                                      BadAliasException,
+                                      NoSuchObjectException)
 from shrunk.util.stats import get_human_readable_referer_domain, browser_stats_from_visits
 from shrunk.util.ldap import is_valid_netid
 from shrunk.util.decorators import require_login, request_schema
@@ -23,10 +25,12 @@ MAX_ALIAS_LENGTH = 60
 
 CREATE_LINK_SCHEMA = {
     'type': 'object',
+    'additionalProperties': False,
     'required': ['title', 'long_url'],
     'properties': {
-        'title': {'type': 'string'},
-        'long_url': {'type': 'string'},
+        'title': {'type': 'string', 'minLength': 1},
+        'long_url': {'type': 'string', 'minLength': 1},
+        'expiration_time': {'type': 'string', 'format': 'date-time'},
     },
 }
 
@@ -67,31 +71,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
         link_id = client.links.create(req['title'], req['long_url'], expiration_time, netid, request.remote_addr)
     except BadLongURLException:
         return jsonify({'errors': ['long_url']}), 400
-    except ShrunkException:
-        abort(400)
     return jsonify({'id': str(link_id)})
-
-
-@bp.route('/validate_alias/<b32:alias>', methods=['GET'])
-@require_login
-def validate_alias(_netid: str, client: ShrunkClient, alias: str) -> Any:
-    """``GET /api/validate_alias/<b32:alias>``
-
-    Validate an alias. This endpoint is used for form validation in the frontend. Response format:
-
-    .. code-block:: json
-
-       { "valid": "boolean", "reason?": "string" }
-
-    :param netid:
-    :param client:
-    :param alias:
-    """
-    valid = not client.links.alias_is_reserved(alias)
-    response: Dict[str, Any] = {'valid': valid}
-    if not valid:
-        response['reason'] = 'That alias is not allowed.'
-    return jsonify(response)
 
 
 @bp.route('/validate_long_url/<b32:long_url>', methods=['GET'])
@@ -127,13 +107,12 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     :param client:
     :param link_id:
     """
-    if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
-        abort(403)
     try:
         info = client.links.get_link_info(link_id)
-    except ShrunkException:
+    except NoSuchObjectException:
         abort(404)
-
+    if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
+        abort(403)
     if not client.roles.has('admin', netid):
         if info['deleted']:
             abort(404)
@@ -146,7 +125,10 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     # Get rid of types that cannot safely be passed to jsonify
     json_info = {
         '_id': str(info['_id']),
+        'title': info['title'],
+        'long_url': info['long_url'],
         'aliases': aliases,
+        'deleted': info.get('deleted', False),
     }
 
     return jsonify(json_info)
@@ -154,6 +136,7 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
 
 MODIFY_LINK_SCHEMA = {
     'type': 'object',
+    'additionalProperties': False,
     'properties': {
         'title': {'type': 'string', 'minLength': 1},
         'long_url': {'type': 'string', 'format': 'uri'},
@@ -186,6 +169,10 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
     """
     if 'expiration_time' in req and req['expiration_time'] is not None:
         req['expiration_time'] = datetime.fromisoformat(req['expiration_time'])
+    try:
+        client.links.get_link_info(link_id)
+    except NoSuchObjectException:
+        abort(404)
     if not client.roles.has('admin', netid) and not client.links.is_owner(link_id, netid):
         abort(403)
     if 'owner' in req and not is_valid_netid(req['owner']):
@@ -198,8 +185,8 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
                             owner=req.get('owner'))
         if 'expiration_time' in req and req['expiration_time'] is None:
             client.links.remove_expiration_time(link_id)
-    except ShrunkException:
-        abort(403)
+    except BadLongURLException:
+        abort(400)
     return '', 204
 
 
@@ -214,12 +201,13 @@ def delete_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     :param client:
     :param link_id:
     """
+    try:
+        client.links.get_link_info(link_id)
+    except NoSuchObjectException:
+        abort(404)
     if not client.roles.has('admin', netid) and not client.links.is_owner(link_id, netid):
         abort(403)
-    try:
-        client.links.delete(link_id, netid)
-    except ShrunkException:
-        abort(403)
+    client.links.delete(link_id, netid)
     return '', 204
 
 
@@ -234,12 +222,13 @@ def post_clear_visits(netid: str, client: ShrunkClient, link_id: ObjectId) -> An
     :param client:
     :param link_id:
     """
+    try:
+        client.links.get_link_info(link_id)
+    except NoSuchObjectException:
+        abort(404)
     if not client.roles.has('admin', netid) and not client.links.is_owner(link_id, netid):
         abort(403)
-    try:
-        client.links.clear_visits(link_id)
-    except ShrunkException:
-        abort(404)
+    client.links.clear_visits(link_id)
     return '', 204
 
 
@@ -393,6 +382,7 @@ def get_link_browser_stats(netid: str, client: ShrunkClient, link_id: ObjectId) 
 
 CREATE_ALIAS_SCHEMA = {
     'type': 'object',
+    'additionalProperties': False,
     'properties': {
         'alias': {
             'type': 'string',
@@ -446,11 +436,31 @@ def create_alias(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) 
     try:
         alias = client.links.create_or_modify_alias(link_id, req.get('alias'), req.get('description', ''))
     except BadAliasException:
-        return jsonify({'errors': ['alias']}), 400
-    except ShrunkException:
         abort(400)
 
     return jsonify({'alias': alias})
+
+
+@bp.route('/validate_alias/<b32:alias>', methods=['GET'])
+@require_login
+def validate_alias(_netid: str, client: ShrunkClient, alias: str) -> Any:
+    """``GET /api/validate_alias/<b32:alias>``
+
+    Validate an alias. This endpoint is used for form validation in the frontend. Response format:
+
+    .. code-block:: json
+
+       { "valid": "boolean", "reason?": "string" }
+
+    :param netid:
+    :param client:
+    :param alias:
+    """
+    valid = not client.links.alias_is_reserved(alias)
+    response: Dict[str, Any] = {'valid': valid}
+    if not valid:
+        response['reason'] = 'That alias is not allowed.'
+    return jsonify(response)
 
 
 @bp.route('/<ObjectId:link_id>/alias/<alias>', methods=['DELETE'])

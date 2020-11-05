@@ -2,14 +2,16 @@
 
 import logging
 import base64
+import binascii
 from typing import Any
 
 import flask
 from flask import Flask, current_app, render_template, redirect, request
 from flask.logging import default_handler
-from werkzeug.routing import BaseConverter
+from werkzeug.routing import BaseConverter, ValidationError
 from werkzeug.middleware.proxy_fix import ProxyFix
 from bson import ObjectId
+import bson.errors
 from backports import datetime_fromisoformat
 
 # Blueprints
@@ -30,7 +32,10 @@ class ObjectIdConverter(BaseConverter):
     as canonical IDs for objects."""
 
     def to_python(self, value: str) -> ObjectId:
-        return ObjectId(value)
+        try:
+            return ObjectId(value)
+        except bson.errors.InvalidId as e:
+            raise ValidationError from e
 
     def to_url(self, value: ObjectId) -> str:
         return str(value)
@@ -41,7 +46,10 @@ class Base32Converter(BaseConverter):
     since Apache apparently has problems with urlencoded-slashes."""
 
     def to_python(self, value: str) -> str:
-        return str(base64.b32decode(bytes(value, 'utf8')), 'utf8')
+        try:
+            return str(base64.b32decode(bytes(value, 'utf8')), 'utf8')
+        except binascii.Error as e:
+            raise ValidationError from e
 
     def to_url(self, value: str) -> str:
         return str(base64.b32encode(bytes(value, 'utf8')), 'utf8')
@@ -145,7 +153,7 @@ def _init_roles() -> None:
         'revoke_button': 'UNBLOCK',
         'empty': 'There are currently no blocked URLs',
         'granted_by': 'Blocked by',
-    }, oncreate=onblock, onrevoke=unblock)
+    }, process_entity=get_domain, oncreate=onblock, onrevoke=unblock)
 
     client.roles.create('whitelisted',
                         lambda netid: client.roles.has_some(['admin', 'facstaff', 'power_user'], netid),
@@ -217,8 +225,14 @@ def create_app(config_path: str = 'config.py', **kwargs: Any) -> Flask:
         client: ShrunkClient = current_app.client
         long_url = client.links.get_long_url(alias)
         if long_url is None:
-            return render_template('404.html')
+            return render_template('404.html'), 404
+
+        # Get or generate a tracking id
         tracking_id = request.cookies.get('shrunkid') or client.tracking.get_new_id()
+        if request.headers.get('DNT', '0') != '0':
+            # If DNT is set, generate a unique ID for each visit
+            tracking_id = client.tracking.get_new_id()
+
         client.links.visit(alias,
                            tracking_id,
                            request.remote_addr,
@@ -227,8 +241,11 @@ def create_app(config_path: str = 'config.py', **kwargs: Any) -> Flask:
         if '://' not in long_url:
             long_url = f'http://{long_url}'
         response = redirect(long_url)
+
+        # Make sure we don't set the tracking ID cookie if DNT is set
         if request.headers.get('DNT', '0') == '0':
             response.set_cookie('shrunkid', tracking_id)
+
         return response
 
     @app.before_request

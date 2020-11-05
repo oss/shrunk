@@ -16,6 +16,7 @@ bp = Blueprint('org', __name__, url_prefix='/api/v1/org')
 
 LIST_ORGS_SCHEMA = {
     'type': 'object',
+    'additionalProperties': False,
     'required': ['which'],
     'properties': {
         'which': {
@@ -76,6 +77,7 @@ def get_orgs(netid: str, client: ShrunkClient, req: Any) -> Any:
 
 CREATE_ORG_SCHEMA = {
     'type': 'object',
+    'additionalProperties': False,
     'required': ['name'],
     'properties': {
         'name': {
@@ -164,6 +166,7 @@ def get_org(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
 
 VALIDATE_NAME_SCHEMA = {
     'type': 'object',
+    'additionalProperties': False,
     'required': ['name'],
     'properties': {
         'name': {'type': 'string'},
@@ -202,6 +205,7 @@ def validate_org_name(_netid: str, client: ShrunkClient, req: Any) -> Any:
 
 VALIDATE_NETID_SCHEMA = {
     'type': 'object',
+    'additionalProperties': False,
     'required': ['netid'],
     'properties': {
         'netid': {'type': 'string'},
@@ -321,7 +325,7 @@ def delete_org_member(netid: str, client: ShrunkClient, org_id: ObjectId, member
 
 MODIFY_ORG_MEMBER_SCHEMA = {
     'type': 'object',
-    'required': [],
+    'additionalProperties': False,
     'properties': {
         'is_admin': {'type': 'boolean'},
     },

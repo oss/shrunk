@@ -122,6 +122,7 @@ def validate_role_entity(netid: str, client: ShrunkClient, role_name: str, entit
 
 PUT_ROLE_ENTITY_SCHEMA = {
     'type': 'object',
+    'additionalProperties': False,
     'properties': {
         'comment': {'type': 'string'},
     },
