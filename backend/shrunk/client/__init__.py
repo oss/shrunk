@@ -83,11 +83,14 @@ class ShrunkClient:
             # estimated_document_count() is MUCH faster than count_documents({})
             num_links = self.db.urls.estimated_document_count()
             num_visits = self.db.visits.estimated_document_count()
-            num_users = next(self.db.urls.aggregate([
-                {'$project': {'netid': 1}},
-                {'$group': {'_id': '$netid'}},
-                {'$count': 'count'},
-            ]))['count']
+            try:
+                num_users = next(self.db.urls.aggregate([
+                    {'$project': {'netid': 1}},
+                    {'$group': {'_id': '$netid'}},
+                    {'$count': 'count'},
+                ]))['count']
+            except StopIteration:
+                num_users = 0
         elif begin is not None and end is not None:
             def match_range(field_name: str) -> Any:
                 return {'$and': [
@@ -96,12 +99,15 @@ class ShrunkClient:
                 ]}
             num_links = self.db.urls.count_documents(match_range('timeCreated'))
             num_visits = self.db.visits.count_documents(match_range('time'))
-            num_users = next(self.db.urls.aggregate([
-                {'$match': match_range('timeCreated')},
-                {'$project': {'netid': 1}},
-                {'$group': {'_id': '$netid'}},
-                {'$count': 'count'},
-            ]))['count']
+            try:
+                num_users = next(self.db.urls.aggregate([
+                    {'$match': match_range('timeCreated')},
+                    {'$project': {'netid': 1}},
+                    {'$group': {'_id': '$netid'}},
+                    {'$count': 'count'},
+                ]))['count']
+            except StopIteration:
+                num_users = 0
         else:
             raise ValueError(f'Invalid input begin={begin} end={end}')
 

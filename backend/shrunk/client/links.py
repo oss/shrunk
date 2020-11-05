@@ -78,10 +78,11 @@ class LinksClient:
         domain = get_domain(long_url)
         if not domain:
             return False
-        return self.db.grants.find_one({
-            'role': 'blocked_url',
-            'entity': {'$regex': '%s*' % domain},
-        }) is not None
+        return [] != list(self.db.grants.aggregate([
+            {'$match': {'role': 'blocked_url'}},
+            {'$addFields': {'idx': {'$indexOfCP': ['$entity', domain]}}},
+            {'$match': {'idx': {'$ne': -1}}},
+        ]))
 
     def redirects_to_blocked_url(self, long_url: str) -> bool:
         """Follows the url to check whether it redirects to a blocked url.
@@ -197,7 +198,6 @@ class LinksClient:
     def get_daily_visits(self, link_id: ObjectId, alias: Optional[str] = None) -> List[Any]:
         """Given a short URL, return how many visits and new unique visitors it gets per day.
         :param short_url: A shortened URL
-        :raises NoSuchLinkException: If the given short URL does not exist
         """
 
         if alias is None:

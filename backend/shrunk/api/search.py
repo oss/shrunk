@@ -15,7 +15,8 @@ bp = Blueprint('search', __name__, url_prefix='/api/v1/search')
 
 SEARCH_SCHEMA = {
     'type': 'object',
-    'required': ['set', 'show_expired_links', 'sort'],
+    'additionalProperties': False,
+    'required': ['set', 'show_expired_links', 'show_deleted_links', 'sort'],
     'properties': {
         # The search query. May be omitted to show all links.
         'query': {'type': 'string'},
@@ -28,6 +29,7 @@ SEARCH_SCHEMA = {
             'oneOf': [
                 {
                     'type': 'object',
+                    'additionalProperties': False,
                     'required': ['set'],
                     'properties': {
                         'set': {
@@ -38,6 +40,7 @@ SEARCH_SCHEMA = {
                 },
                 {
                     'type': 'object',
+                    'additionalProperties': False,
                     'required': ['set', 'org'],
                     'properties': {
                         'set': {
@@ -53,11 +56,15 @@ SEARCH_SCHEMA = {
         # Whether to show expired links. Required.
         'show_expired_links': {'type': 'boolean'},
 
+        # Whether to show deleted links. Required.
+        'show_deleted_links': {'type': 'boolean'},
+
         # Sorting parameters. Required.
         #  * sort.key may be one of 'created_time', 'title', or 'visits'.
         #  * sort.order may be one of 'ascending' or 'descending'.
         'sort': {
             'type': 'object',
+            'additionalProperties': False,
             'required': ['key', 'order'],
             'properties': {
                 'key': {
@@ -74,6 +81,7 @@ SEARCH_SCHEMA = {
         # Pagination parameters. May be omitted to return all links.
         'pagination': {
             'type': 'object',
+            'additionalProperties': False,
             'required': ['skip', 'limit'],
             'properties': {
                 'skip': {'type': 'integer', 'minimum': 0},

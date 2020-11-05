@@ -16,9 +16,11 @@ bp = Blueprint('admin', __name__, url_prefix='/api/v1/admin')
 
 OVERVIEW_STATS_SCHEMA = {
     'type': 'object',
+    'additionalProperties': False,
     'properties': {
         'range': {
             'type': 'object',
+            'additionalProperties': False,
             'required': ['begin', 'end'],
             'properties': {
                 'begin': {'type': 'string', 'format': 'date-time'},

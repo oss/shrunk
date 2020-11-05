@@ -1,5 +1,6 @@
 """Implements the :py:class:`RolesClient` class."""
 
+from datetime import datetime, timezone
 from typing import Callable, Optional, List, Dict, Any
 
 from flask import current_app, has_app_context
@@ -16,6 +17,7 @@ class RolesClient:
     def __init__(self, *, db: pymongo.database.Database):
         self.db = db
         self.qualified_for: Dict[str, Callable[[str], bool]] = {}
+        self.process_entity: Dict[str, Callable[[str], str]] = {}
         self.valid_entity_for: Dict[str, Callable[[str], bool]] = {}
         self.oncreate_for: Dict[str, Callable[[str], None]] = {}
         self.onrevoke_for: Dict[str, Callable[[str], None]] = {}
@@ -47,8 +49,10 @@ class RolesClient:
                validator_func: Callable[[str], bool] = lambda e: e != '',
                custom_text: Any = None,
                oncreate: Callable[[str], None] = lambda _: None,
-               onrevoke: Callable[[str], None] = lambda _: None) -> None:
-        """Create a new role.
+               onrevoke: Callable[[str], None] = lambda _: None,
+               process_entity: Callable[[str], str] = lambda e: e) -> None:
+        """
+        :param role: Role name
 
         :param role: Role name
         :param qualifier_func:
@@ -60,6 +64,8 @@ class RolesClient:
         :param oncreate: callback for extra logic when granting a role, e.g. remove a user's links on ban
         :param onrevoke:
             callback for extra logic when revoking a role, e.g. reenabling a user's link when they are unbanned
+        :param process_entity:
+            callback to transform entity before it's inserted into the db
         """
 
         custom_text = custom_text or {}
@@ -67,6 +73,7 @@ class RolesClient:
         text.update(custom_text)
         self.form_text[role] = text
         self.qualified_for[role] = qualifier_func
+        self.process_entity[role] = process_entity
         self.valid_entity_for[role] = validator_func
         self.oncreate_for[role] = oncreate
         self.onrevoke_for[role] = onrevoke
@@ -91,6 +98,9 @@ class RolesClient:
         """
 
         if self.exists(role) and self.is_valid_entity_for(role, grantee):
+            if role in self.process_entity:
+                grantee = self.process_entity[role](grantee)
+
             # guard against double insertions
             if not self.has(role, grantee):
                 self.db.grants.insert_one({

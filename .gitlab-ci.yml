@@ -3,6 +3,7 @@ stages:
   - docs
   - frontend_build
   - backend_build
+  - test
 
 eslint:
   stage: lint
@@ -25,7 +26,7 @@ pylint:
     - apk add python3-dev py3-pip gcc musl-dev openldap-dev libffi-dev openssl-dev
     - pip3 install -r backend/requirements.txt
     - pip3 install -r backend/requirements-dev.txt
-    - pylint --exit-zero --output-format=junit backend/shrunk > pylint.xml
+    - pylint --exit-zero --output-format=junit backend/shrunk backend/tests/*.py > pylint.xml
   artifacts:
     reports:
       junit: pylint.xml
@@ -38,7 +39,7 @@ mypy:
     - apk add python3-dev py3-pip gcc musl-dev openldap-dev libffi-dev openssl-dev
     - pip3 install -r backend/requirements.txt
     - pip3 install -r backend/requirements-dev.txt
-    - mypy --junit-xml=./mypy.xml backend/shrunk || exit 0
+    - mypy --junit-xml=./mypy.xml backend/shrunk backend/tests || exit 0
   artifacts:
     reports:
       junit: mypy.xml
@@ -51,7 +52,7 @@ flake8:
     - apk add python3-dev py3-pip gcc musl-dev openldap-dev libffi-dev openssl-dev
     - pip3 install -r backend/requirements.txt
     - pip3 install -r backend/requirements-dev.txt
-    - flake8 --exit-zero --format=junit-xml backend/shrunk > flake8.xml
+    - flake8 --exit-zero --format=junit-xml backend/shrunk backend/tests > flake8.xml
   artifacts:
     reports:
       junit: flake8.xml
@@ -114,3 +115,26 @@ backend_build:
   artifacts:
     paths:
       - backend/dist/shrunk-*.whl
+
+pytest:
+  stage: test
+  image: alpine:latest
+  needs:
+    - backend_build
+  services:
+    - mongo
+  script:
+    - apk add python3-dev py3-pip gcc musl-dev openldap-dev libffi-dev openssl-dev
+    - pip3 install -r backend/requirements-dev.txt
+    # - cp backend/shrunk/ci-test-config.py /tmp/test-config.py
+    - export SHRUNK_CONFIG_PATH=$(pwd)/backend/shrunk/ci-test-config.py
+    - mkdir /usr/share/GeoIP
+    - cp backend/GeoLite2-City.mmdb /usr/share/GeoIP/GeoLite2-City.mmdb
+    - pip3 install backend/dist/shrunk-*.whl
+    - cd backend
+    - pytest --junitxml=../pytest.xml --cov=shrunk --cov-report=term-missing tests
+    - coverage xml
+  artifacts:
+    reports:
+      junit: pytest.xml
+      cobertura: backend/coverage.xml
