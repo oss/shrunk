@@ -1,3 +1,8 @@
+/**
+ * Implements the [[LinkRow]] component
+ * @packageDocumentation
+ */
+
 import React from 'react';
 import { Row, Col, Button, Popconfirm, Tooltip, Tag } from 'antd';
 import { CopyFilled, DeleteOutlined, LineChartOutlined, EditOutlined, QrcodeOutlined, ExclamationCircleFilled } from '@ant-design/icons';
@@ -8,21 +13,59 @@ import moment from 'moment';
 import { LinkInfo } from './LinkInfo';
 import './LinkRow.less';
 
+/**
+ * Props for the [[LinkRow]] component
+ * @interface
+ */
 export interface Props {
+    /**
+     * [[LinkInfo]] of the link to display
+     * @property
+     */
     linkInfo: LinkInfo;
+
+    /**
+     * Callback called when the edit modal should be displayed
+     * @property
+     */
     showEditModal: (linkInfo: LinkInfo) => void;
+
+    /**
+     * Callback called when the QR modal should be displayed
+     * @property
+     */
     showQrModal: (linkInfo: LinkInfo) => void;
+
+    /**
+     * Callback called when the search results should be refreshed
+     * (e.g. after link is updated)
+     * @property
+     */
     refreshResults: () => void;
 }
 
+/**
+ * State for the [[LinkRow]] component
+ * @interface
+ */
 export interface State { }
 
+/**
+ * The [[LinkRow]] component displays the information for a single link
+ * on the dashboard. It provides buttons for editing and deleting the link,
+ * and viewing link stats or QR codes
+ * @class
+ */
 export class LinkRow extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {};
     }
 
+    /**
+     * Execute API requests to delete the link, then refresh search results
+     * @method
+     */
     confirmDelete = async (): Promise<void> => {
         await fetch(`/api/v1/link/${this.props.linkInfo.id}`, { method: 'DELETE' });
         await this.props.refreshResults();

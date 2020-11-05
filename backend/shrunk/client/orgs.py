@@ -1,3 +1,5 @@
+"""Implements the :py:class:`OrgsClient` class."""
+
 from typing import Optional, Any, List, cast
 from datetime import datetime, timezone
 
@@ -9,15 +11,29 @@ __all__ = ['OrgsClient']
 
 
 class OrgsClient:
-    """Mixin for organization-related operations."""
+    """This class implements all orgs-related functionality."""
 
     def __init__(self, *, db: pymongo.database.Database):
         self.db = db
 
     def get_org(self, org_id: ObjectId) -> Optional[Any]:
+        """Get information about a given org
+
+        :param org_id: The org ID to query
+        :returns: The Mongo document for the org, or ``None`` if no org
+          exists with the provided ID
+        """
         return self.db.organizations.find_one({'_id': org_id})
 
     def get_orgs(self, netid: str, only_member_orgs: bool) -> List[Any]:
+        """Get a list of orgs
+
+        :param netid: The NetID of the requesting user
+        :param only_member_orgs: Whether or not to only return orgs of which
+          the requesting user is a member
+        :returns: See :py:func:`shrunk.api.org.get_orgs` for the format
+          of the return value
+        """
         aggregation: List[Any] = []
         if only_member_orgs:
             aggregation.append({'$match': {'members.netid': netid}})
@@ -47,6 +63,12 @@ class OrgsClient:
         return list(self.db.organizations.aggregate(aggregation))
 
     def create(self, org_name: str) -> Optional[ObjectId]:
+        """Create a new org
+
+        :param org_name: The name of the org to create
+        :returns: The ID of the newly-created org, or ``None`` if an error
+          occurred
+        """
         try:
             result = self.db.organizations.insert_one({
                 'name': org_name,
@@ -57,10 +79,19 @@ class OrgsClient:
         return result.inserted_id
 
     def validate_name(self, org_name: str) -> bool:
+        """Check whether a given name may be used as an org name
+
+        :param org_name: The org name
+        """
         result = self.db.organizations.find_one({'name': org_name})
         return result is None
 
     def delete(self, org_id: ObjectId) -> bool:
+        """Delete an org
+
+        :param org_id: The org ID
+        :returns: Whether the org was successfully deleted
+        """
         result = self.db.organizations.delete_one({'_id': org_id})
         return cast(int, result.deleted_count) == 1
 

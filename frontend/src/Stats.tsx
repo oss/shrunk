@@ -1,3 +1,8 @@
+/**
+ * Implements the link stats view
+ * @packageDocumentation
+ */
+
 import React from 'react';
 import { Row, Col, Spin, Select, Button, Popconfirm } from 'antd';
 import { DownloadOutlined, ExclamationCircleFilled, CloseOutlined } from '@ant-design/icons';
@@ -10,45 +15,162 @@ import { downloadVisitsCsv } from './Csv';
 
 import './Base.less';
 
+/**
+ * Props for the [[Stats]] component
+ * @interface
+ */
 export interface Props {
+    /**
+     * The ID of the link
+     * @property
+     */
     id: string;
 }
 
+/**
+ * General summary statistics
+ * @interface
+ */
 interface OverallStats {
+    /**
+     * The total number of visits to the link
+     * @property
+     */
     total_visits: number;
+
+    /**
+     * The number of unique visits to the link
+     * @property
+     */
     unique_visits: number;
 }
 
+/**
+ * Data for one day worth of visits to a link
+ * @interface
+ */
 interface VisitDatum {
+    /**
+     * The date, represented as year/month/day numbers
+     * @property
+     */
     _id: { year: number, month: number, day: number };
+
+    /**
+     * The total number of visits on the date
+     * @property
+     */
     all_visits: number;
+
+    /**
+     * The number of first-time visits on the date
+     * @property
+     */
     first_time_visits: number;
 }
 
+/**
+ * Time-series visit statistics
+ * @property
+ */
 interface VisitStats {
+    /**
+     * A [[VisitDatum]] for every day in the link's history
+     * @property
+     */
     visits: VisitDatum[];
 }
 
+/**
+ * Data for one slice of a pie chart
+ * @interface
+ */
 interface PieDatum {
+    /**
+     * The name of the slice
+     * @property
+     */
     name: string;
+
+    /**
+     * The value of the slice
+     * @property
+     */
     y: number;
 }
 
+/**
+ * Data pertaining to browsers and referers of visitors
+ * @interface
+ */
 interface BrowserStats {
+    /**
+     * Data for the browser name pie chart
+     * @property
+     */
     browsers: PieDatum[];
+
+    /**
+     * Data for the platform name pie chart
+     * @property
+     */
     platforms: PieDatum[];
+
+    /**
+     * Data for the referer pie chart
+     * @property
+     */
     referers: PieDatum[];
 }
 
+/**
+ * State for the [[Stats]] component
+ * @interface
+ */
 interface State {
+    /**
+     * List of all aliases for the current link
+     * @property
+     */
     allAliases: AliasInfo[];
+
+    /**
+     * The alias for which stats should be displayed, or `null` to display
+     * aggregate stats for all aliases
+     * @property
+     */
     selectedAlias: string | null;
+
+    /**
+     * The [[OverallStats]] for the current link/alias
+     * @property
+     */
     overallStats: OverallStats | null;
+
+    /**
+     * The [[VisitStats]] for the current link/alias
+     * @property
+     */
     visitStats: VisitStats | null;
+
+    /**
+     * The [[GeoipStats]] for the current link/alias
+     * @property
+     */
     geoipStats: GeoipStats | null;
+
+    /**
+     * The [[BrowserStats]] for the current link/property
+     * @property
+     */
     browserStats: BrowserStats | null;
 }
 
+/**
+ * The [[VisitsChart]] component displays a line graph of total visits and unique
+ * visits over time
+ * @param props The props
+ */
 const VisitsChart: React.FC<{ visitStats: VisitStats | null }> = (props) => {
     if (props.visitStats === null) {
         return (<Spin />);
@@ -82,6 +204,10 @@ const VisitsChart: React.FC<{ visitStats: VisitStats | null }> = (props) => {
     return (<HighchartsReact highcharts={Highcharts} options={options} />);
 }
 
+/**
+ * The colors for each browser name
+ * @constant
+ */
 const BROWSER_COLORS: Map<string, string> = new Map([
     ['Firefox', 'rgba(244,199,133,1.0)'],
     ['Chrome', 'rgba(200,240,97,1.0)'],
@@ -93,6 +219,10 @@ const BROWSER_COLORS: Map<string, string> = new Map([
 ]);
 
 // TODO: iOS, *BSD, etc?
+/**
+ * The colors for each platform name
+ * @constant
+ */
 const PLATFORM_COLORS: Map<string, string> = new Map([
     ['Linux', 'rgba(216,171,36,1.0)'],
     ['Windows', 'rgba(129,238,208,1.0)'],
@@ -101,6 +231,10 @@ const PLATFORM_COLORS: Map<string, string> = new Map([
     ['Unknown', 'rgba(80,80,80,0.2)'],
 ]);
 
+/**
+ * The colors for each referer
+ * @constant
+ */
 const REFERER_COLORS: Map<string, string> = new Map([
     ['Facebook', 'rgba(0,75,150,1.0)'],
     ['Twitter', 'rgba(147,191,241,1.0)'],
@@ -109,6 +243,10 @@ const REFERER_COLORS: Map<string, string> = new Map([
     ['Unknown', 'rgba(80,80,80,0.2)'],
 ]);
 
+/**
+ * The [[PieChart]] component displays a pie chart given an array of [[PieDatum]]
+ * @param props The props
+ */
 const PieChart: React.FC<{ title: string, data: PieDatum[] }> = (props) => {
     const options = {
         chart: {
@@ -140,6 +278,11 @@ const PieChart: React.FC<{ title: string, data: PieDatum[] }> = (props) => {
     return (<HighchartsReact highcharts={Highcharts} options={options} />);
 };
 
+/**
+ * The [[BrowserCharts]] component displays a pie chart for each series of data
+ * contained in the [[BrowserStats]] object
+ * @param props The props
+ */
 const BrowserCharts: React.FC<{ browserStats: BrowserStats | null }> = (props) => {
     if (props.browserStats === null) {
         return (<Spin />);
@@ -167,6 +310,12 @@ const BrowserCharts: React.FC<{ browserStats: BrowserStats | null }> = (props) =
     );
 }
 
+/**
+ * The [[Stats]] component implements the link stats view. It allows the user
+ * to optionally select an alias, then displays visit stats, GeoIP stats, User-Agent stats,
+ * and referer stats
+ * @class
+ */
 export class Stats extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
@@ -195,6 +344,10 @@ export class Stats extends React.Component<Props, State> {
         }
     }
 
+    /**
+     * Execute API requests to get link info for the current link ID, then update state
+     * @method
+     */
     updateLinkInfo = async (): Promise<void> => {
         const linkInfo = await fetch(`/api/v1/link/${this.props.id}`).then(resp => resp.json()) as LinkInfo;
         const aliases = linkInfo.aliases.filter(alias => !alias.deleted);
@@ -208,6 +361,11 @@ export class Stats extends React.Component<Props, State> {
         });
     }
 
+    /**
+     * Execute API requests to fetch all stats for the current link and alias, then update
+     * state
+     * @method
+     */
     updateStats = async (): Promise<void> => {
         const baseApiPath = this.state.selectedAlias === null ?
             `/api/v1/link/${this.props.id}/stats` :
@@ -228,6 +386,11 @@ export class Stats extends React.Component<Props, State> {
         await Promise.all([overallPromise, visitsPromise, geoipPromise, browsersPromise]);
     }
 
+    /**
+     * Set the alias and then update stats
+     * @method
+     * @param alias The name of an alias, or a number to select all aliases (stupid hack why did I even do that?)
+     */
     setAlias = async (alias: number | string): Promise<void> => {
         if (typeof alias === 'number') {
             this.setState({ selectedAlias: null });
@@ -238,10 +401,18 @@ export class Stats extends React.Component<Props, State> {
         await this.updateStats();
     }
 
+    /**
+     * Prompt the user to download a CSV file of visits to the selected alias
+     * @method
+     */
     downloadCsv = async (): Promise<void> => {
         await downloadVisitsCsv(this.props.id, this.state.selectedAlias);
     }
 
+    /**
+     * Execute API requests to clear visit data associated with a link
+     * @method
+     */
     clearVisitData = async (): Promise<void> => {
         await fetch(`/api/v1/link/${this.props.id}/clear_visits`, { method: 'POST' });
         await this.updateStats();
@@ -261,7 +432,7 @@ export class Stats extends React.Component<Props, State> {
                     <Col span={8} className='btn-col'>
                         <Popconfirm
                             placement='bottom'
-                            title='Are you sure you want to clear visit data? This operation cannot be undone.'
+                            title='Are you sure you want to clear all visit data associated with this link? This operation cannot be undone.'
                             onConfirm={this.clearVisitData}
                             icon={<ExclamationCircleFilled style={{ color: 'red' }} />}>
                             <Button danger>

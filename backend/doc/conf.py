@@ -39,7 +39,8 @@ autodoc_member_order = 'bysource'
 
 autodoc_default_options = {
     'undoc-members': True,
-    'private-members': True
+    'private-members': True,
+    'ignore-module-all': True,
 }
 
 intersphinx_mapping = {

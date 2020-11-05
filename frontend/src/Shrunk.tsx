@@ -1,3 +1,8 @@
+/**
+ * Implements the [[Shrunk]] component
+ * @packageDocumentation
+ */
+
 import React from 'react';
 import { HashRouter, Switch, Route, Redirect, Link, NavLink } from 'react-router-dom';
 import { createBrowserHistory, Location } from 'history';
@@ -18,26 +23,69 @@ import { Faq } from './Faq';
 import './antd_themed.less';
 import './Shrunk.less';
 
+/**
+ * Properties of the [[Shrunk]] component.
+ * @interface
+ */
 export interface Props {
+    /**
+     * NetID of the user.
+     * @property
+     */
     netid: string;
+
+    /**
+     * Width of the siders in the layout.
+     * @property
+     */
     siderWidth: number;
+
+    /**
+     * A set of the user's privileges.
+     * @property
+     */
     userPrivileges: Set<string>;
 }
 
+/**
+ * State of the [[Shrunk]] component.
+ * @interface
+ */
 interface State {
-    dropdownVisible: boolean;
+    /**
+     * Whether the "Admin" tab should be shown in the top navbar. This is
+     * determined based on the user's privileges.
+     * @property
+     */
     showAdminTab: boolean;
+
+    /**
+     * Whether the "Whitelist" tab should be shown in the top navbar. This is
+     * determined based on the user's privileges.
+     * @property
+     */
     showWhitelistTab: boolean;
+
+    /**
+     * This determines which tabs in the navbar are highlighted. This is determined
+     * based on the active route.
+     * @property
+     */
     selectedKeys: Array<string>;
 }
 
+/**
+ * The [[Shrunk]] component is the root component of the application. It is
+ * responsible for setting up the root-level layout, the router, and managing
+ * navigation between views.
+ * @class
+ */
 export class Shrunk extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         const showAdminTab = this.props.userPrivileges.has('admin');
         const showWhitelistTab = !showAdminTab && this.props.userPrivileges.has('facstaff');
         this.state = {
-            dropdownVisible: false,
             showAdminTab,
             showWhitelistTab,
             selectedKeys: ['dashboard'],
@@ -50,6 +98,11 @@ export class Shrunk extends React.Component<Props, State> {
         history.listen(({ location }) => this.setSelectedKeysFromLocation(location));
     }
 
+    /**
+     * Sets the active tabs in the navbar based on the current view.
+     * @method
+     * @param location The location given by the history.listen event
+     */
     setSelectedKeysFromLocation = (location: Location): void => {
         const route = location.hash;
         let key: string | null = null;
@@ -74,10 +127,6 @@ export class Shrunk extends React.Component<Props, State> {
         }
 
         this.setState({ selectedKeys: [key] });
-    }
-
-    handleVisibleChange = (flag: boolean): void => {
-        this.setState({ dropdownVisible: flag });
     }
 
     render(): React.ReactNode {

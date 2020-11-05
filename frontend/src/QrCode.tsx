@@ -1,3 +1,8 @@
+/**
+ * Implements the QR code modal
+ * @packageDocumentation
+ */
+
 import React from 'react';
 import { Modal, Row, Col, Select, Space, Button } from 'antd';
 import QRCodeReact from 'qrcode.react';
@@ -5,18 +10,59 @@ import QRCodeReact from 'qrcode.react';
 import { LinkInfo } from './LinkInfo';
 import './QrCode.less';
 
+/**
+ * Props for the [[QrCodeModal]] component
+ * @interface
+ */
 export interface Props {
+    /**
+     * Whether the modal is vilible
+     * @property
+     */
     visible: boolean;
+
+    /**
+     * The [[LinkInfo]] of the link for which to display QR codes
+     * @property
+     */
     linkInfo: LinkInfo;
+
+    /**
+     * The width of the QR code
+     * @property
+     */
     width: number;
+
+    /**
+     * Callback called when the modal is closed
+     * @property
+     */
     onCancel: () => void;
 }
 
+/**
+ * State for the [[QrCodeModal]] component
+ * @interface
+ */
 export interface State {
+    /**
+     * The currently selected alias
+     * @property
+     */
     selectedAlias: string | null;
+
+    /**
+     * The short URL (e.g. `https://go.rutgers.edu/<alias>`) corresponding to
+     * the currently selected alias
+     * @property
+     */
     selectedShortUrl: string | null;
 }
 
+/**
+ * The [[QrCodeModal]] component implements the QR code modal as used on the dashboard
+ * @class
+ */
 export class QrCodeModal extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
@@ -36,6 +82,10 @@ export class QrCodeModal extends React.Component<Props, State> {
         }
     }
 
+    /**
+     * Set the currently active alias to the first alias of the link
+     * @method
+     */
     resetAlias = (): void => {
         const linkInfo = this.props.linkInfo;
         if (linkInfo === null || linkInfo.aliases.length === 0) {
@@ -45,6 +95,11 @@ export class QrCodeModal extends React.Component<Props, State> {
         this.setAlias(linkInfo.aliases[0].alias);
     }
 
+    /**
+     * Update the selected alias and selected short URL
+     * @method
+     * @param alias The new alias
+     */
     setAlias = (alias: string): void => {
         this.setState({
             selectedAlias: alias,
@@ -52,6 +107,10 @@ export class QrCodeModal extends React.Component<Props, State> {
         });
     }
 
+    /**
+     * Get a data URL of the QR code image
+     * @method
+     */
     getQrDataUrl = (): string => {
         const canvasCol = document.getElementsByClassName('qrcode-canvas');
         if (canvasCol.length === 0) {
@@ -62,6 +121,10 @@ export class QrCodeModal extends React.Component<Props, State> {
         return canvas.toDataURL('image/png');
     }
 
+    /**
+     * Open a popup window containing the QR code and prompt the user to print it
+     * @method
+     */
     onPrint = (): void => {
         const popup = window.open();
         if (popup === null) {
@@ -79,6 +142,10 @@ export class QrCodeModal extends React.Component<Props, State> {
         popup.print();
     }
 
+    /**
+     * Prompt the user to download the QR code for the selected alias
+     * @method
+     */
     onDownload = (): void => {
         const dlLink = document.createElement('a');
         dlLink.download = `${this.state.selectedAlias}.png`;

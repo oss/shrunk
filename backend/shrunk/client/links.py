@@ -132,23 +132,36 @@ class LinksClient:
                link_id: ObjectId, *,
                title: Optional[str] = None,
                long_url: Optional[str] = None,
-               expiration_time: Optional[datetime] = None) -> None:
+               expiration_time: Optional[datetime] = None,
+               owner: Optional[str] = None) -> None:
         if long_url is not None and self.long_url_is_blocked(long_url):
             raise BadLongURLException
 
-        if long_url is not None and self.redirects_to_blocked_url(long_url):
-            raise BadLongURLException
-
-        if title is None and long_url is None and expiration_time is None:
+        if title is None and long_url is None and expiration_time is None and owner is None:
             return
+
+        link_info = self.get_link_info(link_id)
+
         fields: Dict[str, Any] = {}
+        update: Dict[str, Any] = {'$set': fields}
+
         if title is not None:
             fields['title'] = title
         if long_url is not None:
             fields['long_url'] = long_url
         if expiration_time is not None:
             fields['expiration_time'] = expiration_time
-        result = self.db.urls.update_one({'_id': link_id}, {'$set': fields})
+        if owner is not None:
+            fields['netid'] = owner
+            update['$push'] = {
+                'ownership_transfer_history': {
+                    'from': link_info['netid'],
+                    'to': owner,
+                    'timestamp': datetime.now(timezone.utc),
+                },
+            }
+
+        result = self.db.urls.update_one({'_id': link_id}, update)
         if result.matched_count != 1:
             raise NoSuchObjectException
 

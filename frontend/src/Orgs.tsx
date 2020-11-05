@@ -1,3 +1,8 @@
+/**
+ * Implements the orgs list view
+ * @packageDocumentation
+ */
+
 import React from 'react';
 import { Row, Col, Checkbox, Popconfirm, Button, Dropdown, Form, Input } from 'antd';
 import { Link } from 'react-router-dom';
@@ -9,16 +14,47 @@ import { OrgAdminTag, OrgMemberTag } from './OrgCommon';
 
 import './Base.less';
 
+/**
+ * Props for the [[Orgs]] component
+ * @interface
+ */
 export interface Props {
+    /**
+     * The user's privileges
+     * @property
+     */
     userPrivileges: Set<string>;
 }
 
+/**
+ * State for the [[Orgs]] component
+ * @interface
+ */
 interface State {
+    /**
+     * Whether to show all orgs or just orgs of which the user is a member. Option only
+     * available to admins
+     * @property
+     */
     showAll: boolean;
+
+    /**
+     * Contains an [[OrgInfo]] for each org to be displayed
+     * @property
+     */
     orgs: OrgInfo[];
+
+    /**
+     * Whether the create org dropdown is visible
+     * @property
+     */
     createOrgFormVisible: boolean;
 }
 
+/**
+ * The [[CreateOrgForm]] component provides a dropdown form to create a new org
+ * @param props The props
+ */
 const CreateOrgForm: React.FC<{ onCreate: (name: string) => Promise<void> }> = (props) => {
     const serverValidateOrgName = async (_rule: any, value: string): Promise<void> => {
         if (!value) {
@@ -59,6 +95,10 @@ const CreateOrgForm: React.FC<{ onCreate: (name: string) => Promise<void> }> = (
     );
 }
 
+/**
+ * The [[OrgRow]] component displays information pertaining to one org
+ * @param props The props
+ */
 const OrgRow: React.FC<{
     showAll: boolean,
     orgInfo: OrgInfo,
@@ -97,6 +137,10 @@ const OrgRow: React.FC<{
     );
 }
 
+/**
+ * The [[Orgs]] component implements the orgs list view
+ * @class
+ */
 export class Orgs extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
@@ -117,17 +161,31 @@ export class Orgs extends React.Component<Props, State> {
         }
     }
 
+    /**
+     * Execute API requests to get list of org info, then update state
+     * @method
+     */
     refreshOrgs = async (): Promise<void> => {
         await listOrgs(this.state.showAll ? 'all' : 'user')
             .then(orgs => this.setState({ orgs }));
     }
 
+    /**
+     * Execute API requests to create a new org, then refresh org info 
+     * @method
+     * @param name The name of the org to be created
+     */
     onCreateOrg = async (name: string): Promise<void> => {
         await createOrg(name);
         this.setState({ createOrgFormVisible: false });
         await this.refreshOrgs();
     }
 
+    /**
+     * Execute API requests to delete an org, then refresh org info
+     * @method
+     * @param id The ID of the org to delete
+     */
     onDeleteOrg = async (id: string): Promise<void> => {
         await deleteOrg(id);
         await this.refreshOrgs();

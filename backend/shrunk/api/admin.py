@@ -1,3 +1,5 @@
+"""Implements API endpoints under ``/api/admin``"""
+
 from typing import Any
 from datetime import datetime
 
@@ -31,6 +33,24 @@ OVERVIEW_STATS_SCHEMA = {
 @request_schema(OVERVIEW_STATS_SCHEMA)
 @require_login
 def get_overview_stats(netid: str, client: ShrunkClient, req: Any) -> Any:
+    """``POST /api/stats/overview``
+
+    Returns some Shrunk-wide stats. Takes optional start end end times. Request format:
+
+    .. code-block:: json
+
+       { "range?": { "begin": "date-time", "end": "date-time" } }
+
+    Response format:
+
+    .. code-block:: json
+
+       { "links": "number", "visits": "number", "users": "number" }
+
+    :param netid:
+    :param client:
+    :param req:
+    """
     if not client.roles.has('admin', netid):
         abort(403)
     if 'range' in req:
@@ -45,6 +65,17 @@ def get_overview_stats(netid: str, client: ShrunkClient, req: Any) -> Any:
 @bp.route('/stats/endpoint', methods=['GET'])
 @require_login
 def get_endpoint_stats(netid: str, client: ShrunkClient) -> Any:
+    """``GET /api/stats/endpoint``
+
+    Returns visit statistics for each Flask endpoint. Response format:
+
+    .. code-block:: json
+
+       { "stats": [ { "endpoint": "string", "total_visits": "number", "unique_visits": "number" } ] }
+
+    :param netid:
+    :param client:
+    """
     if not client.roles.has('admin', netid):
         abort(403)
     stats = client.endpoint_stats()

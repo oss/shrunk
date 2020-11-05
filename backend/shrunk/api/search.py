@@ -1,5 +1,6 @@
-"""This module implements API endpoints under /search."""
+"""Implements endpoints under ``/api/search``"""
 
+from datetime import datetime
 from typing import Any
 
 from flask import Blueprint, jsonify
@@ -27,16 +28,17 @@ SEARCH_SCHEMA = {
             'oneOf': [
                 {
                     'type': 'object',
+                    'required': ['set'],
                     'properties': {
                         'set': {
                             'type': 'string',
                             'enum': ['user', 'all'],
                         },
                     },
-                    'required': ['set'],
                 },
                 {
                     'type': 'object',
+                    'required': ['set', 'org'],
                     'properties': {
                         'set': {
                             'type': 'string',
@@ -44,7 +46,6 @@ SEARCH_SCHEMA = {
                         },
                         'org': {'type': 'string'},
                     },
-                    'required': ['set', 'org'],
                 },
             ],
         },
@@ -57,27 +58,37 @@ SEARCH_SCHEMA = {
         #  * sort.order may be one of 'ascending' or 'descending'.
         'sort': {
             'type': 'object',
+            'required': ['key', 'order'],
             'properties': {
                 'key': {
                     'type': 'string',
-                    'enum': ['created_time', 'title', 'visits'],
+                    'enum': ['created_time', 'title', 'visits', 'relevance'],
                 },
                 'order': {
                     'type': 'string',
                     'enum': ['ascending', 'descending'],
                 },
             },
-            'required': ['key', 'order'],
         },
 
         # Pagination parameters. May be omitted to return all links.
         'pagination': {
             'type': 'object',
+            'required': ['skip', 'limit'],
             'properties': {
                 'skip': {'type': 'integer', 'minimum': 0},
                 'limit': {'type': 'integer', 'minimum': 1},
             },
-            'required': ['skip', 'limit'],
+        },
+
+        'begin_time': {
+            'type': 'string',
+            'format': 'date-time',
+        },
+
+        'end_time': {
+            'type': 'string',
+            'format': 'date-time',
         },
     },
 }
@@ -87,7 +98,60 @@ SEARCH_SCHEMA = {
 @request_schema(SEARCH_SCHEMA)
 @require_login
 def post_search(netid: str, client: ShrunkClient, req: Any) -> Any:
-    """Execute a search query."""
+    """``POST /api/search``
+
+    Execute a search query. Request format:
+
+    .. code-block:: json
+
+       {
+         "query?": "string",
+         "set": {
+           "set": "'user' | 'all' | 'org'",
+           "org?": "string"
+         },
+         "show_expired_links": "boolean",
+         "show_deleted_links": "boolean",
+         "sort": {
+           "key": "'created_time' | 'title' | 'visits' | 'relevance'",
+           "order": "'ascending' | 'descending'"
+         },
+         "pagination?": {
+           "skip": "number",
+           "limit": "number"
+         },
+         "begin_time?": "date-time",
+         "end_time?": "date-time"
+       }
+
+    Response format:
+
+    .. code-block:: json
+
+       {
+          "count": "number",
+          "results": [ {
+            "id": "string",
+            "title": "string",
+            "long_url": "string",
+            "created_time": "date-time",
+            "expiration_time": "date-time | null",
+            "visits": "number",
+            "unique_visits": "number",
+            "owner": "string",
+            "aliases": [ { "alias": "string", "deleted": "boolean" } ],
+            "is_expired": "boolean",
+            "deletion_info?": {
+              "deleted_by": "string",
+              "deleted_time": "date-time"
+            }
+          } ]
+       }
+
+    :param netid:
+    :param client:
+    :param req:
+    """
     is_admin = client.roles.has('admin', netid)
 
     # Must be admin to view all links.
@@ -101,6 +165,12 @@ def post_search(netid: str, client: ShrunkClient, req: Any) -> Any:
     # Must be admin or member of organization to view its links.
     if req['set']['set'] == 'org' and not (is_admin or client.orgs.is_member(req['set']['org'], netid)):
         abort(403)
+
+    if 'begin_time' in req:
+        req['begin_time'] = datetime.fromisoformat(req['begin_time'])
+
+    if 'end_time' in req:
+        req['end_time'] = datetime.fromisoformat(req['end_time'])
 
     result = client.search.execute(netid, req)
     return jsonify(result)

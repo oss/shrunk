@@ -1,9 +1,18 @@
+/**
+ * Implements the [[Faq]] component
+ * @packageDocumentation
+ */
 import React from 'react';
 import { Row, Col } from 'antd';
 import { Link } from 'react-router-dom';
 
 import './Faq.less';
 
+/**
+ * The [[Faq]] component is just a static FAQ page
+ * @function
+ * @param _props Props
+ */
 export const Faq: React.FC = (_props) => {
     return (
         <div className='faq'>

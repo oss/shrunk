@@ -18,15 +18,14 @@ class GeoipClient:
             self._geoip = geoip2.database.Reader(GEOLITE_PATH)
 
     def get_geoip_location(self, ipaddr: str) -> str:
-        """Gets a human-readable UTF-8 string describing the location of the given IP address.
+        """Gets a human-readable string describing the location of the given IP address.
 
-           :Parameters:
-             - `ipaddr`: a string containing an IPv4 address.
+        :param ipaddr: a string containing an IPv4 address.
 
-           :Returns:
-             A string describing the geographic location location of the IP address,
-             or the string ``"unknown"`` if the location of the IP address cannot
-             be determined.
+        :returns:
+          A string describing the geographic location location of the IP address,
+          or the string ``"unknown"`` if the location of the IP address cannot
+          be determined.
         """
 
         unk = 'unknown'

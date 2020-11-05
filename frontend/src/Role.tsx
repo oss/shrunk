@@ -1,14 +1,37 @@
+/**
+ * Implements the [[Role]] component
+ * @packageDocumentation
+ */
+
 import React from 'react';
 import { Row, Col, Spin, Button, Popconfirm, Form, Input } from 'antd';
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import base32 from 'hi-base32';
 import moment from 'moment';
 
+/**
+ * Props for the [[Role]] component
+ * @interface
+ */
 export interface Props {
+    /**
+     * The user's privileges, used to determine whether the user is allowed
+     * to edit the present role
+     * @property
+     */
     userPrivileges: Set<string>;
+
+    /**
+     * The role's name (internal identifier, not the display name)
+     * @property
+     */
     name: string;
 }
 
+/**
+ * A role's display text as fetched from the backend
+ * @interface
+ */
 interface RoleText {
     title: string;
     invalid: string;
@@ -23,13 +46,38 @@ interface RoleText {
     comment_prompt: string;
 }
 
+/**
+ * Entity information as fetched from the backend
+ * @interface
+ */
 interface EntityInfo {
+    /**
+     * The name of the entity
+     * @property
+     */
     entity: string;
+
+    /**
+     * The NetID of the user who granted the role to the entity
+     * @property
+     */
     granted_by: string;
+
+    /**
+     * The comment, or `null` if not present
+     * @property
+     */
     comment: string | null;
     time_granted: Date | null;
 }
 
+/**
+ * The [[GrantForm]] component allows the user to grant a role to a new entity.
+ * It performs async input validation and executes the API query to grant the role
+ * after the user submits the form
+ * @function
+ * @param props Props
+ */
 const GrantForm: React.FC<{
     role: string,
     roleText: RoleText,
@@ -80,6 +128,12 @@ const GrantForm: React.FC<{
     );
 }
 
+/**
+ * The [[EntityRow]] component displays one row in the listing of entities.
+ * It provides a delete button which removes the entity from the role
+ * @function
+ * @param props Props
+ */
 const EntityRow: React.FC<{
     roleText: RoleText,
     info: EntityInfo,
@@ -126,12 +180,36 @@ const EntityRow: React.FC<{
     );
 }
 
+/**
+ * State for the [[Role]] component
+ * @interface
+ */
 interface State {
+    /**
+     * Whether the user has permission to view this role. If `false`, an error message
+     * is displayed
+     * @property
+     */
     hasPermission: boolean;
+
+    /**
+     * The display text for the role
+     * @property
+     */
     roleText: RoleText | null;
+
+    /**
+     * The entities that have the role
+     * @property
+     */
     entities: EntityInfo[] | null;
 }
 
+/**
+ * The [[Role]] component allows the user to view, add, and delete entities with
+ * a particular role
+ * @class
+ */
 export class Role extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
@@ -154,6 +232,11 @@ export class Role extends React.Component<Props, State> {
         }
     }
 
+    /**
+     * Determine whether the user has permission to view/edit the given
+     * role based on the role name and the user's permissions
+     * @method
+     */
     updateHasPermission = (): void => {
         let hasPermission = false;
 
@@ -168,22 +251,40 @@ export class Role extends React.Component<Props, State> {
         this.setState({ hasPermission });
     }
 
+    /**
+     * Fetch the role text and role entities from the backend
+     * @method
+     */
     updateRoleInfo = async (): Promise<void> => {
         const updateText = this.updateRoleText();
         const updateEntities = this.updateRoleEntities();
         await Promise.all([updateText, updateEntities]);
     }
 
+    /**
+     * Fetch the role text from the backend
+     * @method
+     */
     updateRoleText = async (): Promise<void> => {
         const result = await fetch(`/api/v1/role/${this.props.name}/text`).then(resp => resp.json());
         this.setState({ roleText: result['text'] as RoleText });
     }
 
+    /**
+     * Fetch the role entities from the backend
+     * @method
+     */
     updateRoleEntities = async (): Promise<void> => {
         const result = await fetch(`/api/v1/role/${this.props.name}/entity`).then(resp => resp.json());
         this.setState({ entities: result['entities'] as EntityInfo[] });
     }
 
+    /**
+     * Execute API requests to grant the role to a new entity
+     * @method
+     * @param entity The entity to which to grant the role
+     * @param comment The comment
+     */
     onGrant = async (entity: string, comment: string): Promise<void> => {
         const encodedEntity = base32.encode(entity);
         await fetch(`/api/v1/role/${this.props.name}/entity/${encodedEntity}`, {
@@ -194,6 +295,11 @@ export class Role extends React.Component<Props, State> {
         await this.updateRoleEntities();
     }
 
+    /**
+     * Execute API requests to revoke a role from an entity
+     * @method
+     * @param entity The entity from which to revoke the role
+     */
     onRevoke = async (entity: string): Promise<void> => {
         const encodedEntity = base32.encode(entity);
         await fetch(`/api/v1/role/${this.props.name}/entity/${encodedEntity}`, { method: 'DELETE' });

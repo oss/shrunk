@@ -4,6 +4,14 @@ shrunk.client package
 Submodules
 ----------
 
+shrunk.client.aggregations module
+---------------------------------
+
+.. automodule:: shrunk.client.aggregations
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 shrunk.client.exceptions module
 -------------------------------
 
@@ -20,10 +28,26 @@ shrunk.client.geoip module
    :undoc-members:
    :show-inheritance:
 
+shrunk.client.links module
+--------------------------
+
+.. automodule:: shrunk.client.links
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 shrunk.client.orgs module
 -------------------------
 
 .. automodule:: shrunk.client.orgs
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+shrunk.client.roles module
+--------------------------
+
+.. automodule:: shrunk.client.roles
    :members:
    :undoc-members:
    :show-inheritance:
@@ -43,7 +67,6 @@ shrunk.client.tracking module
    :members:
    :undoc-members:
    :show-inheritance:
-
 
 Module contents
 ---------------

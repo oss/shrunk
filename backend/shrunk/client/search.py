@@ -1,3 +1,5 @@
+"""Implements the :py:class:`SearchClient` class."""
+
 from typing import Any, List
 from datetime import datetime, timezone
 
@@ -8,10 +10,19 @@ __all__ = ['SearchClient']
 
 
 class SearchClient:
+    """This class executes search queries."""
+
     def __init__(self, *, db: pymongo.database.Database):
         self.db = db
 
-    def execute(self, user_netid: str, query: Any) -> Any:
+    def execute(self, user_netid: str, query: Any) -> Any:  # pylint: disable=too-many-branches
+        """Execute a search query
+
+        :param user_netid: The NetID of the user performing the search
+        :param query: The search query. See :py:mod:`shrunk.api.search` for
+          the search query format
+        """
+
         # We're going to build up an aggregation pipeline based on the submitted query.
         # This pipeline will be executed on the organizations collection if set.set == 'org',
         # or on the urls collection otherwise.
@@ -40,20 +51,18 @@ class SearchClient:
 
         # Filter based on search string, if provided.
         if 'query' in query:
-            match = {
-                '$regex': query['query'],
-                '$options': 'i',  # case insensitive
-            }
-
-            pipeline.append({
+            pipeline += [{
                 '$match': {
-                    '$or': [
-                        {'long_url': match},
-                        {'title': match},
-                        {'aliases.alias': match},
-                    ],
+                    '$text': {
+                        '$search': query['query'],
+                    },
                 },
-            })
+            },
+            {
+                '$addFields': {
+                    'text_search_score': {'$meta': 'textScore'},
+                },
+            }]
 
         # Sort results.
         sort_order = 1 if query['sort']['order'] == 'ascending' else -1
@@ -63,6 +72,8 @@ class SearchClient:
             sort_key = 'title'
         elif query['sort']['key'] == 'visits':
             sort_key = 'visits'
+        elif query['sort']['key'] == 'relevance':
+            sort_key = 'text_search_score'
         else:
             assert False  # should never happen
         pipeline.append({'$sort': {sort_key: sort_order}})
@@ -85,6 +96,12 @@ class SearchClient:
 
         if not query.get('show_expired_links', False):
             pipeline.append({'$match': {'is_expired': False}})
+
+        if 'begin_time' in query:
+            pipeline.append({'$match': {'timeCreated': {'$gte': query['begin_time']}}})
+
+        if 'end_time' in query:
+            pipeline.append({'$match': {'timeCreated': {'$lte': query['end_time']}}})
 
         # Pagination.
         facet = {

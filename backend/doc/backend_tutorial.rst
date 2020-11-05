@@ -8,14 +8,14 @@ Setting up your Shrunk dev environment
 
 First, clone the git repo to a local directory::
 
-  $ git clone ssh://em-oss-phab@vault.phacility.com/diffusion/SRU/shrunk.git
+  $ git clone git@gitlab.rutgers.edu:MaCS/OSS/shrunk.git 
 
 ``cd`` into the repository, create a new virtual environment, and install the Python dependencies::
 
   $ virtualenv venv
   $ source venv/bin/activate
-  $ pip install -r pip.req
-  $ pip install -r pip.req.dev
+  $ pip install -r backend/requirements.txt
+  $ pip install -r backend/requirements-dev.txt
 
 Setting up Mongo
 ----------------
@@ -47,7 +47,7 @@ Running Shrunk
    Make sure you've activated your virtual environment before attempting these steps!
 
 To run Shrunk for development, you should execute the ``flask run``
-command from the root of the git repo. Before executing this command,
+command from the ``backend`` directory in the repo. Before executing this command,
 you need to set up a few environment variables::
 
   $ export FLASK_APP=shrunk
@@ -57,6 +57,7 @@ you need to set up a few environment variables::
 
 and then execute the app::
 
+  $ cd backend
   $ flask run
 
 You should see a line of the form ``* Running on
@@ -110,7 +111,9 @@ that we wouldn't otherwise see until runtime.
 Linters and checkers
 --------------------
 
-Before committing code, you should ideally run ``mypy`` and at least one of ``pylint`` or ``flake8``.
+Before committing code, you should ideally run ``mypy``, ``pylint``, and ``flake8``.
+These linters will be run by the CI pipeline, but it's nice to catch issues before pushing.
+Regardless, make sure your code passes linting before merging it into ``master``.
 
 ``pylint``
 ~~~~~~~~~~
