@@ -11,10 +11,10 @@ Getting started
 
 First set up a virtual environment and install the python dependencies with:
 
-    $ virtualenv --no-site-packages --python="python3" venv
+    $ virtualenv venv
     $ source venv/bin/activate
-    $ pip install -r pip.req
-    $ pip install -r pip.req.dev
+    $ pip install -r backend/requirements.txt
+    $ pip install -r backend/requirements-dev.txt
 
 Then build the HTML documentation with
 
