@@ -18,9 +18,10 @@ First set up a virtual environment and install the python dependencies with:
 
 Then build the HTML documentation with
 
+    $ cd backend
     $ ./setup.py build_sphinx
 
-This will place the Shrunk developer manual in `./build/sphinx/html`. Open the file
+This will place the Shrunk developer manual in `./backend/build/sphinx/html`. Open the file
 `index.html` in that directory and start reading the tutorials linked therein! 
 
 Features

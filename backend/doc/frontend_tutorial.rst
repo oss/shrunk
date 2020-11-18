@@ -12,7 +12,7 @@ by executing::
 
   $ npm i
 
-in the root of the git repo. This will install the dependencies specified in ``package-lock.json``.
+in the ``frontend`` directory. This will install the dependencies specified in ``package-lock.json``.
 
 Jinja2
 ------
