@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { Row, Col, Button, Popconfirm, Tooltip, Tag } from 'antd';
-import { CopyFilled, DeleteOutlined, LineChartOutlined, EditOutlined, QrcodeOutlined, ExclamationCircleFilled } from '@ant-design/icons';
+import { CopyFilled, DeleteOutlined, LineChartOutlined, EditOutlined, QrcodeOutlined, ExclamationCircleFilled, TeamOutlined } from '@ant-design/icons';
 import CopyToClipboard from 'react-copy-to-clipboard';
 import { Link } from 'react-router-dom';
 import moment from 'moment';
@@ -71,6 +71,10 @@ export class LinkRow extends React.Component<Props, State> {
         await this.props.refreshResults();
     }
 
+    requestEditAccess = async (): Promise<void> => {
+        await fetch(`/api/v1/link/${this.props.linkInfo.id}/request_edit_access`, { method: 'POST' });
+    }
+
     render(): React.ReactNode {
         const isLinkDeleted = this.props.linkInfo.deletion_info !== null;
         const isLinkExpired = this.props.linkInfo.is_expired;
@@ -87,6 +91,7 @@ export class LinkRow extends React.Component<Props, State> {
 
                             {isLinkDeleted ? <Tag color='red'>Deleted</Tag> : <></>}
                             {isLinkExpired ? <Tag color='gray'>Expired</Tag> : <></>}
+                            {!this.props.linkInfo.may_edit ? <Tag color='gray'>View-only</Tag> : <></>}
 
                             <span className='info'>
                                 Owner: {this.props.linkInfo.owner}
@@ -134,7 +139,7 @@ export class LinkRow extends React.Component<Props, State> {
                 </Col>
 
                 <Col span={4} className='btn-col'>
-                    {isLinkDeleted ? <></> :
+                    {isLinkDeleted || !this.props.linkInfo.may_edit ? <></> :
                         <Button type='text' icon={<EditOutlined />} onClick={_ev => this.props.showEditModal(this.props.linkInfo)} />}
                     <Button type='text'>
                         <Link to={`/stats/${this.props.linkInfo.id}`}>
@@ -142,7 +147,7 @@ export class LinkRow extends React.Component<Props, State> {
                         </Link>
                     </Button>
                     <Button type='text' icon={<QrcodeOutlined />} onClick={_ev => this.props.showQrModal(this.props.linkInfo)} />
-                    {isLinkDeleted ? <></> :
+                    {isLinkDeleted || !this.props.linkInfo.may_edit ? <></> :
                         <Popconfirm
                             placement='top'
                             title='Are you sure you want to delete this link?'
@@ -150,6 +155,16 @@ export class LinkRow extends React.Component<Props, State> {
                             icon={<ExclamationCircleFilled style={{ color: 'red' }} />}>
                             <Button danger type='text' icon={<DeleteOutlined />} />
                         </Popconfirm>}
+                    {this.props.linkInfo.may_edit ? <></> :
+                        <Popconfirm
+                            placement='top'
+                            title='Request access to edit this link?'
+                            onConfirm={this.requestEditAccess}>
+                            <Tooltip title='Request edit access'>
+                                <Button type='text' icon={<TeamOutlined />} />
+                            </Tooltip>
+                        </Popconfirm>
+                    }
                 </Col>
             </Row >
         );

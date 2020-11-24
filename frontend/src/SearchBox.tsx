@@ -6,12 +6,13 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, Dropdown, Select, Radio, Checkbox, DatePicker } from 'antd';
 import { SettingOutlined, SearchOutlined } from '@ant-design/icons';
+import { OrgInfo } from './api/Org';
 
 /**
  * The type of the `set` parameter in the search query.
  * @type
  */
-export type SearchSet = { set: 'user' | 'all' } | { set: 'org', org: string };
+export type SearchSet = { set: 'user' | 'shared' | 'all' } | { set: 'org', org: string };
 
 /**
  * The type of a search query
@@ -72,11 +73,11 @@ export interface Props {
     userPrivileges: Set<string>;
 
     /**
-     * The names of the orgs of which the user is a member, used to display the list of
+     * The orgs of which the user is a member, used to display the list of
      * available link sets
      * @property 
      */
-    userOrgNames: string[];
+    userOrgs: OrgInfo[];
 
     /**
      * Callback called when the user executes a new search query
@@ -114,13 +115,16 @@ export const SearchBox: React.FC<Props> = (props) => {
                         <Select.Option value={0}>
                             <em>My links</em>
                         </Select.Option>
+                        <Select.Option value={2}>
+                            <em>Shared with me</em>
+                        </Select.Option>
                         {!isAdmin ? <></> :
                             <Select.Option value={1}>
                                 <em>All links</em>
                             </Select.Option>}
-                        {props.userOrgNames.map(name =>
-                            <Select.Option key={name} value={name}>
-                                {name}
+                        {props.userOrgs.map(info =>
+                            <Select.Option key={info.id} value={info.id}>
+                                {info.name}
                             </Select.Option>)}
                     </Select>
                 </Form.Item>
@@ -173,7 +177,9 @@ export const SearchBox: React.FC<Props> = (props) => {
             { set: 'user' } :
             org === 1 ?
                 { set: 'all' } :
-                { set: 'org', org: org as string };
+                org === 2 ?
+                    { set: 'shared' } :
+                    { set: 'org', org: org as string };
 
         const searchQuery: SearchQuery = {
             set: searchSet,

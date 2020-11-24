@@ -4,6 +4,7 @@ from typing import Any
 import functools
 
 from flask import current_app, redirect, url_for, request, session
+from flask_mailman import Mail
 from werkzeug.exceptions import abort
 import jsonschema
 
@@ -24,6 +25,14 @@ def require_login(func: Any) -> Any:
             logger.warning(f'require_login: user {netid} is blacklisted')
             abort(403)
         return func(netid, client, *args, **kwargs)
+    return wrapper
+
+
+def require_mail(func: Any) -> Any:
+    @functools.wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        mail: Mail = current_app.mail
+        return func(mail, *args, **kwargs)
     return wrapper
 
 

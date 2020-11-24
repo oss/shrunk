@@ -62,6 +62,7 @@ class ShrunkClient:
         self.db.organizations.create_index([('name', pymongo.ASCENDING)], unique=True)
         self.db.organizations.create_index([('members.name', pymongo.ASCENDING),
                                             ('members.netid', pymongo.ASCENDING)])
+        self.db.access_requests.create_index([('token', pymongo.ASCENDING)], unique=True)
 
     def user_exists(self, netid: str) -> bool:
         """Check whether there exist any links belonging to a user.

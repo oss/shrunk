@@ -44,6 +44,11 @@ export interface DeletionInfo {
   deleted_time: Date;
 }
 
+export interface SharingInfo {
+  id: string;
+  type: 'netid' | 'org';
+}
+
 /**
  * Information describing a single link
  * @interface
@@ -60,4 +65,5 @@ export interface LinkInfo {
   unique_visits: number;
   owner: string;
   aliases: AliasInfo[];
+  may_edit: boolean;
 }

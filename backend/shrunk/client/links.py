@@ -3,15 +3,18 @@ from datetime import datetime, timezone
 import random
 import string
 import re
+import secrets
 from typing import Optional, List, Set, Any, Dict, cast
 
-from flask import current_app
+from flask import current_app, url_for
+from flask_mailman import Mail
 import requests
 import pymongo
 from pymongo.collection import ReturnDocument
 from pymongo.results import UpdateResult
 from bson.objectid import ObjectId
 
+from shrunk.util.ldap import query_given_name
 from shrunk.util.string import get_domain
 from . import aggregations
 
@@ -513,6 +516,146 @@ class LinksClient:
                                  {'$set': {'deleted': False},
                                   '$unset': {'deleted_by': 1,
                                              'deleted_time': 1}})
+
+    def request_edit_access(self, mail: Mail, link_id: ObjectId, requesting_netid: str) -> None:
+        token = secrets.token_bytes(16)
+        self.db.access_requests.insert_one({
+            'token': token,
+            'link_id': link_id,
+            'requesting_netid': requesting_netid,
+            'state': 'pending',
+            'created_at': datetime.now(timezone.utc),
+            'resolved_at': None,
+        })
+
+        link_info = self.get_link_info(link_id)
+
+        owner_netid: str = link_info['netid']
+        owner_given_name = query_given_name(owner_netid)
+        accept_url = url_for('shrunk.accept_access_request', token=token, _external=True)
+        deny_url = url_for('shrunk.deny_access_request', token=token, _external=True)
+
+        plaintext_message = f"""Dear {owner_given_name},
+
+You are recieving this message because the user {requesting_netid} has requested
+access to edit your link "{link_info['title']}".
+
+You may follow the following link to accept the request:
+    {accept_url}
+
+or the following link to deny the request:
+    {deny_url}
+
+Please do not reply to this email. You may direct any questions to oss@oss.rutgers.edu.
+"""
+
+        html_message = f"""
+<!DOCTYPE html>
+<html lang="en-US">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <style>
+            * {{
+                font-family: Arial, sans-serif;
+            }}
+
+            .requesting-user {{
+                font-weight: bold;
+            }}
+
+            .btn {{
+                display: block;
+                padding: 10px;
+                width: 200px;
+                text-align: center;
+                color: white;
+                font-weight: bold;
+                text-decoration: none;
+                border-radius: 3px;
+                transition: background-color 0.3s ease-in-out;
+            }}
+
+            .btn.accept {{
+                background-color: #139702;
+            }}
+
+            .btn.deny {{
+                background-color: #cc0033;
+            }}
+
+            .btn.accept:hover {{
+                background-color: #18df02;
+            }}
+
+            .btn.deny:hover {{
+                background-color: #ff0040;
+            }}
+
+            .btn:last-of-type {{
+                margin-top: 7px;
+            }}
+        </style>
+    </head>
+    <body>
+        <p>Dear {owner_netid},</p>
+
+        <p>You are recieving this message because the user <span class="requesting-user">{requesting_netid}</span>
+        has requested access to edit your link &ldquo;{link_info['title']}&rdquo;. Please use the buttons
+        below to accept or deny the request.</p>
+
+        <div>
+            <a class="btn accept" href="{accept_url}">Accept request</a>
+            <a class="btn deny" href="{deny_url}">Deny request</a>
+        </div>
+
+        <p>Please do not reply to this email. You may direct any questions to
+        <a href="mailto:oss@oss.rutgers.edu">oss@oss.rutgers.edu</a>.</p>
+    </body>
+</html>
+"""
+
+        mail.send_mail(
+            subject=f'{requesting_netid} is requesting edit access to "{link_info["title"]}"',
+            body=plaintext_message,
+            html_message=html_message,
+            from_email='noreply@go.rutgers.edu',
+            recipient_list=[f'{owner_netid}@rutgers.edu'],
+        )
+
+    def check_access_request_permission(self, token: bytes, netid: str) -> bool:
+        request = self.db.access_requests.find_one({'token': token})
+        if request is None:
+            raise NoSuchObjectException
+        link_info = self.get_link_info(request['link_id'])
+        return cast(bool, link_info['netid'] == netid and request['state'] == 'pending')
+
+    def accept_access_request(self, token: bytes) -> None:
+        request = self.db.access_requests.find_one({'token': token})
+        if request is None:
+            raise NoSuchObjectException
+        if request['state'] != 'pending':
+            return
+        self.db.access_requests.update_one(
+            {'token': request['token']},
+            {'$set': {
+                'state': 'accepted',
+                'resolved_at': datetime.now(timezone.utc),
+            }})
+        # TODO actually do the stuff to grant access lol
+
+    def deny_access_request(self, token: bytes) -> None:
+        request = self.db.access_requests.find_one({'token': token})
+        if request is None:
+            raise NoSuchObjectException
+        if request['state'] != 'pending':
+            return
+        self.db.access_requests.update_one(
+            {'token': request['token']},
+            {'$set': {
+                'state': 'denied',
+                'resolved_at': datetime.now(timezone.utc),
+            }})
 
     @classmethod
     def _generate_unique_key(cls) -> str:

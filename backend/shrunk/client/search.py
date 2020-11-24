@@ -31,23 +31,26 @@ class SearchClient:
         # Filter the appropriate links set.
         if query['set']['set'] == 'user':  # search within `user_netid`'s links
             pipeline.append({'$match': {'netid': user_netid}})
-        elif query['set']['set'] == 'org':  # search within the given org
-            # Since set.set == 'org', we're going to run `pipeline` against the
-            # organizations collection. However, the output of the pipeline stages
-            # in this branch is just a collection of URL documents, so later stages
-            # in the pipeline won't know the difference.
+        elif query['set']['set'] == 'shared':
+            # If the set is 'shared', the pipeline will be executed against the 'organizations'
+            # collection instead of the 'urls' collection.
             pipeline += [
-                {'$match': {'name': query['set']['org']}},  # match org name
-                {'$unwind': '$members'},  # get org members
-                {'$lookup': {  # join members with urls
+                {'$match': {'members.netid': user_netid} },
+                {'$lookup': {
                     'from': 'urls',
-                    'localField': 'members.netid',
-                    'foreignField': 'netid',
-                    'as': 'urls',
+                    'localField': '_id',
+                    'foreignField': 'viewers._id',
+                    'as': 'shared_urls',
                 }},
-                {'$unwind': '$urls'},
-                {'$replaceRoot': {'newRoot': '$urls'}},
+                {'$unwind': '$shared_urls'},
+                {'$replaceRoot': {'newRoot': '$shared_urls'}},
+                {'$unionWith': {
+                    'coll': 'urls',
+                    'pipeline': [{'$match': {'viewers._id': user_netid}}],
+                }},
             ]
+        elif query['set']['set'] == 'org':  # search within the given org
+            pipeline.append({'$match': {'viewers.type': 'org', 'viewers._id': query['set']['org']}})
 
         # Filter based on search string, if provided.
         if 'query' in query:
@@ -118,7 +121,7 @@ class SearchClient:
 
         # Execute the query. Make sure we use the 'en' collation so strings
         # are sorted properly (e.g. wrt case and punctuation).
-        if query['set']['set'] == 'org':
+        if query['set']['set'] == 'shared':
             cursor = self.db.organizations.aggregate(pipeline, collation=Collation('en'))
         else:
             cursor = self.db.urls.aggregate(pipeline, collation=Collation('en'))
@@ -146,6 +149,7 @@ class SearchClient:
                 'owner': res['netid'],
                 'aliases': [alias for alias in res['aliases'] if is_alias_visible(alias)],
                 'is_expired': res['is_expired'],
+                'may_edit': False,
             }
 
             if res.get('deleted'):

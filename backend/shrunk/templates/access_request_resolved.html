@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="login-box container">
+    <div class="row">
+        <div class="col">
+            <h1>{{ message }}</h1>
+            Click <a href="{{ url_for('shrunk.index') }}">here</a> if you wish to continue to Go;
+            otherwise, you may close this window.
+        </div>
+    </div>
+</div>
+{% endblock %}

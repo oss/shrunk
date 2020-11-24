@@ -3,11 +3,13 @@
 import logging
 import base64
 import binascii
+import codecs
 from typing import Any
 
 import flask
 from flask import Flask, current_app, render_template, redirect, request
 from flask.logging import default_handler
+from flask_mailman import Mail
 from werkzeug.routing import BaseConverter, ValidationError
 from werkzeug.middleware.proxy_fix import ProxyFix
 from bson import ObjectId
@@ -53,6 +55,20 @@ class Base32Converter(BaseConverter):
 
     def to_url(self, value: str) -> str:
         return str(base64.b32encode(bytes(value, 'utf8')), 'utf8')
+
+
+class HexTokenConverter(BaseConverter):
+    def to_python(self, value: str) -> bytes:
+        try:
+            token = codecs.decode(bytes(value, 'utf8'), encoding='hex')
+        except binascii.Error as e:
+            raise ValidationError from e
+        if len(token) != 16:
+            raise ValidationError(f'Token should be 16 bytes in length')
+        return token
+
+    def to_url(self, value: bytes) -> str:
+        return str(codecs.encode(value, encoding='hex'), 'utf8')
 
 
 class RequestFormatter(logging.Formatter):
@@ -192,6 +208,7 @@ def create_app(config_path: str = 'config.py', **kwargs: Any) -> Flask:
     # install url converters
     app.url_map.converters['ObjectId'] = ObjectIdConverter
     app.url_map.converters['b32'] = Base32Converter
+    app.url_map.converters['hex_token'] = HexTokenConverter
 
     # call initialization functions
     app.before_first_request(_init_logging)
@@ -213,6 +230,9 @@ def create_app(config_path: str = 'config.py', **kwargs: Any) -> Flask:
     app.register_blueprint(alert.bp)
 
     # set up extensions
+    mail = Mail()
+    mail.init_app(app)
+    app.mail = mail
     sso.ext.init_app(app)
 
     # redirect / to /app

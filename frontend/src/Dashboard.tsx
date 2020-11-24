@@ -7,7 +7,7 @@ import React from 'react';
 import { Row, Col, Pagination, Spin, Dropdown, Button } from 'antd';
 import { PlusCircleFilled } from '@ant-design/icons';
 
-import { listOrgs } from './api/Org';
+import { listOrgs, OrgInfo } from './api/Org';
 import { SearchQuery, SearchBox } from './SearchBox';
 import { LinkRow } from './LinkRow';
 import { LinkInfo } from './LinkInfo';
@@ -34,7 +34,7 @@ export interface State {
      * advanced search settings menu.
      * @property
      */
-    userOrgNames: string[] | null;
+    userOrgs: OrgInfo[] | null;
 
     /**
      * An array of [[LinkInfo]] objects for the current search results.
@@ -111,7 +111,7 @@ export class Dashboard extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {
-            userOrgNames: null,
+            userOrgs: null,
             linkInfo: null,
             linksPerPage: 10,
             query: {
@@ -147,8 +147,8 @@ export class Dashboard extends React.Component<Props, State> {
      * @method
      */
     fetchUserOrgs = async (): Promise<void> => {
-        const orgs = await listOrgs('user');
-        this.setState({ userOrgNames: orgs.map(org => org.name) });
+        const userOrgs = await listOrgs('user');
+        this.setState({ userOrgs });
     }
 
     /**
@@ -399,10 +399,10 @@ export class Dashboard extends React.Component<Props, State> {
                     </Col>
 
                     <Col span={16} className='vertical-center-col'>
-                        {this.state.userOrgNames === null ? <></> :
+                        {this.state.userOrgs === null ? <></> :
                             <SearchBox
                                 userPrivileges={this.props.userPrivileges}
-                                userOrgNames={this.state.userOrgNames}
+                                userOrgs={this.state.userOrgs}
                                 setQuery={this.setQuery} />}
                     </Col>
 

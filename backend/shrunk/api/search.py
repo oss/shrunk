@@ -5,6 +5,8 @@ from typing import Any
 
 from flask import Blueprint, jsonify
 from werkzeug.exceptions import abort
+from bson import ObjectId
+import bson.errors
 
 from shrunk.client import ShrunkClient
 from shrunk.util.decorators import require_login, request_schema
@@ -34,7 +36,7 @@ SEARCH_SCHEMA = {
                     'properties': {
                         'set': {
                             'type': 'string',
-                            'enum': ['user', 'all'],
+                            'enum': ['user', 'shared', 'all'],
                         },
                     },
                 },
@@ -115,7 +117,7 @@ def post_search(netid: str, client: ShrunkClient, req: Any) -> Any:
        {
          "query?": "string",
          "set": {
-           "set": "'user' | 'all' | 'org'",
+           "set": "'user' | 'shared' | 'all' | 'org'",
            "org?": "string"
          },
          "show_expired_links": "boolean",
@@ -171,8 +173,13 @@ def post_search(netid: str, client: ShrunkClient, req: Any) -> Any:
         abort(403)
 
     # Must be admin or member of organization to view its links.
-    if req['set']['set'] == 'org' and not (is_admin or client.orgs.is_member(req['set']['org'], netid)):
-        abort(403)
+    if req['set']['set'] == 'org':
+        try:
+            req['set']['org'] = ObjectId(req['set']['org'])
+        except bson.errors.InvalidId:
+            abort(400)
+        if not is_admin and not client.orgs.is_member(req['set']['org'], netid):
+            abort(403)
 
     if 'begin_time' in req:
         req['begin_time'] = datetime.fromisoformat(req['begin_time'])
