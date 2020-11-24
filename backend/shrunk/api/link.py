@@ -5,12 +5,14 @@ from typing import Any, Optional, Dict
 
 from flask import Blueprint, jsonify, request
 from bson import ObjectId
+import bson
 from werkzeug.exceptions import abort
 
 from shrunk.client import ShrunkClient
 from shrunk.client.exceptions import (BadLongURLException,
                                       BadAliasException,
-                                      NoSuchObjectException)
+                                      NoSuchObjectException,
+                                      InvalidAcl)
 from shrunk.util.stats import get_human_readable_referer_domain, browser_stats_from_visits
 from shrunk.util.ldap import is_valid_netid
 from shrunk.util.decorators import require_login, request_schema
@@ -23,6 +25,15 @@ MIN_ALIAS_LENGTH = 5
 
 MAX_ALIAS_LENGTH = 60
 
+ACL_ENTRY_SCHEMA = {
+    'type': 'object',
+    'required': ['_id', 'type']
+    'properties' : {
+        '_id': {'type': 'string'},
+        'type': {'type': 'string', 'enum': ['org', 'user']}
+    }
+}
+
 CREATE_LINK_SCHEMA = {
     'type': 'object',
     'additionalProperties': False,
@@ -31,6 +42,8 @@ CREATE_LINK_SCHEMA = {
         'title': {'type': 'string', 'minLength': 1},
         'long_url': {'type': 'string', 'minLength': 1},
         'expiration_time': {'type': 'string', 'format': 'date-time'},
+        'editors': {'type': 'array', 'items': ACL_ENTRY_SCHEMA},
+        'viewers': {'type': 'array', 'items': ACL_ENTRY_SCHEMA},
     },
 }
 
@@ -68,7 +81,18 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
     else:
         expiration_time = None
     try:
-        link_id = client.links.create(req['title'], req['long_url'], expiration_time, netid, request.remote_addr)
+        def str2ObjectId(acl):
+            return [{'_id': ObjectId(entry['_id'], 'type': entry['type'])}
+                    if entry['type'] == 'org'
+                    else entry
+                    for entry in acl]
+        req['editors'] = str2ObjectId(req['editors'])
+        req['viewers'] = str2ObjectId(req['viewers'])
+    except bson.errors.InvalidId as e:
+        return jsonify({'errors': ['type org requires _id to be an ObjectId: ' + str(e)]}, 400)
+    try:
+        link_id = client.links.create(req['title'], req['long_url'], expiration_time, netid,
+                                      request.remote_addr, viewers=req['viewers'], editors=req['editors'])
     except BadLongURLException:
         return jsonify({'errors': ['long_url']}), 400
     return jsonify({'id': link_id})
@@ -173,7 +197,7 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
         client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
-    if not client.roles.has('admin', netid) and not client.links.is_owner(link_id, netid):
+    if not client.roles.has('admin', netid) and not client.links.may_edit(link_id, netid):
         abort(403)
     if 'owner' in req and not is_valid_netid(req['owner']):
         abort(400)
@@ -187,6 +211,60 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
             client.links.remove_expiration_time(link_id)
     except BadLongURLException:
         abort(400)
+    return '', 204
+
+
+MODIFY_ACL_SCHEMA = {
+    'type': 'object',
+    'additionalProperties': False,
+    'requried': ['entry', 'acl', 'action'],
+    'properties': {
+        'entry': ACL_ENTRY_SCHEMA,
+        'acl': {'type': 'string', 'enum': ['editors', 'viewers']},
+        'action': {'type': 'string', 'enum': ['add', 'remove']}
+    },
+}
+
+
+@bp.route('/<ObjectId:link_id>/acl', methods=['PATCH'])
+@request_schema(MODIFY_ACL_SCHEMA)
+@require_login
+def modify_acl(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -> Any:
+    """``PATCH /api/link/<link_id>``
+
+    Modify an existing link's acl. Returns 204 on success or 403 on error. Request format:
+
+    .. code-block:: json
+
+       { "target_id": "string", "acl": "editors | viewers", "action": "add | remove" }
+
+    Properties present in the request will be set. Properties missing from the request will not
+    be modified. If ``"expiration_time"`` is present and set to ``null``, the effect is to remove
+    the link's expiration time.
+
+    :param netid:
+    :param client:
+    :param req:
+    :param link_id:
+    """
+    try:
+        client.links.get_link_info(link_id)
+    except NoSuchObjectException:
+        abort(404)
+    if not client.roles.has('admin', netid) and not client.links.may_edit(link_id, netid):
+        abort(403)
+    try:
+        if req['entry']['type'] == 'org':
+            req['entry']['_id'] = ObjectId(req['entry']['_id'])
+    except bson.errros.InvalidId as e:
+        return jsonify({'errors': ['org entry requires _id to be ObjectId: ' + str(e)]}, 400)
+    try:
+        client.links.modify_acl(link_id,
+                                req['entry'],
+                                req['action'] == 'add',
+                                req['acl'])
+    except InvalidAcl:
+        return jsonify({'errors': ['invalid acl']}
     return '', 204
 
 

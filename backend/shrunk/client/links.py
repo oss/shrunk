@@ -13,12 +13,14 @@ from pymongo.results import UpdateResult
 from bson.objectid import ObjectId
 
 from shrunk.util.string import get_domain
+from shrunk.util.ldap import is_valid_netid()
 from . import aggregations
 
 from .geoip import GeoipClient
 from .exceptions import (NoSuchObjectException,
                          BadAliasException,
-                         BadLongURLException)
+                         BadLongURLException,
+                         InvalidACL)
 
 __all__ = ['LinksClient']
 
@@ -50,12 +52,14 @@ class LinksClient:
                  geoip: GeoipClient,
                  RESERVED_WORDS: Set[str],
                  BANNED_REGEXES: List[str],
-                 REDIRECT_CHECK_TIMEOUT: float):
+                 REDIRECT_CHECK_TIMEOUT: float
+                 other_clients: Any):
         self.db = db
         self.geoip = geoip
         self.reserved_words = RESERVED_WORDS
         self.banned_regexes = [re.compile(regex, re.IGNORECASE) for regex in BANNED_REGEXES]
         self.redirect_check_timeout = REDIRECT_CHECK_TIMEOUT
+        self.other_clients = other_clients
 
     def alias_is_reserved(self, alias: str) -> bool:
         """Check whether a string is a reserved word that cannot be used as a short url.
@@ -106,12 +110,24 @@ class LinksClient:
                long_url: str,
                expiration_time: Optional[datetime],
                netid: str,
-               creator_ip: str) -> ObjectId:
+               creator_ip: str,
+               viewers: List[Dict[str, Any]]=[],
+               editors: List[Dict[str, Any]]=[]) -> ObjectId:
         if self.long_url_is_blocked(long_url):
             raise BadLongURLException
 
         if self.redirects_to_blocked_url(long_url):
             raise BadLongURLException
+
+        for acl in ['viewers', 'editors']:
+            members = {'viewers': viewers, 'editors': editors}[acl]
+            for member in members:
+                target = member['_id']
+                mtype = member['type']
+                if (mtype == 'user' and not is_valid_netid(target)) or \
+                   (mtype == 'org'  and not self.other_clients.orgs.get_org(target)):
+                    raise NotUserOrOrg(f'can\'t add {mtype} {target} to {acl}')
+
 
         document = {
             'title': title,
@@ -124,6 +140,8 @@ class LinksClient:
             'expiration_time': expiration_time,
             'netid': netid,
             'aliases': [],
+            'viewers': viewers,
+            'editors': editors,
         }
 
         result = self.db.urls.insert_one(document)
@@ -165,6 +183,40 @@ class LinksClient:
         result = self.db.urls.update_one({'_id': link_id}, update)
         if result.matched_count != 1:
             raise NoSuchObjectException
+
+    def assert_valid_acl_entry(acl, entry):
+        target = entry['_id']
+        mtype = entry['type']
+        if (mtype == 'user' and not is_valid_netid(target)) or \
+           (mtype == 'org'  and not self.other_clients.orgs.get_org(target)):
+            raise NotUserOrOrg(f'can\'t add {mtype} {target} to {acl}')
+
+    def modify_acl(self,
+                   link_id: ObjectId,
+                   entry: Dict[str, Any],
+                   add: bool,
+                   acl: str):
+        # make sure we don't add a dupe if they already have the perm
+        operator = '$addToSet'
+        if not add:
+            operator = '$pull'
+        acls = ['editors', 'viewers']
+        if acl not in acls:
+            raise InvalidACL('acl to modify must be in ' + str(acls))
+        self.assert_valid_acl_entry(acl, entry)
+        target = entry['_id']
+        mtype = entry['type']
+        if (mtype == 'user' and not is_valid_netid(target)) or \
+           (mtype == 'org'  and not self.other_clients.orgs.get_org(target)):
+
+        change = {acl: entry}
+
+        # editors always have view permission
+        if acl == 'editors':
+            change['viewers']: entry
+
+        self.db.urls.update_one({'_id': link_id},
+                                {operator: change})
 
     def clear_visits(self, link_id: ObjectId) -> None:
         self.db.visits.delete_many({'link_id': link_id})
@@ -326,26 +378,25 @@ class LinksClient:
         result = self.db.urls.find_one({'_id': link_id, 'netid': netid})
         return result is not None
 
+    def may_edit(self, link_id: ObjectId, netid: str) -> bool:
+        orgs = self.other_clients.orgs.get_orgs(netid, True)
+        orgs = [org['name'] for org in orgs]
+        result = self.db.urls.find_one({'$or': [
+            {'_id': link_id, 'netid':   netid}, # owner
+            {'_id': link_id, 'editors': netid}, # shared
+            {'_id': link_id, 'editors': {'$in': orgs}} # shared with org
+        ]})
+        return result is not None
+
     def may_view(self, link_id: ObjectId, netid: str) -> bool:
-        # First check if the user owns the link
-        if self.is_owner(link_id, netid):
-            return True
-
-        # Otherwise, check if the user and the link's owner share any organizations.
-        owner_netid = self.get_owner(link_id)
-
-        def match_netid(netid: str) -> Any:
-            return [{'$match': {'members.netid': netid}}, {'$project': {'_id': 0, 'name': 1}}]
-
-        result = next(self.db.organizations.aggregate([
-            {'$facet': {
-                'owner_orgs': match_netid(owner_netid),
-                'viewer_orgs': match_netid(netid),
-            }},
-            {'$project': {'intersection': {'$setIntersection': ['$owner_orgs', '$viewer_orgs']}}},
-            {'$project': {'owner_orgs': 0, 'viewer_orgs': 0}},
-        ]))
-        return len(result['intersection']) != 0 if result is not None else False
+        orgs = self.other_clients.orgs.get_orgs(netid, True)
+        orgs = [org['name'] for org in orgs]
+        result = self.db.urls.find({'$or': [
+            {'_id': link_id, 'netid': netid}, # owner
+            {'_id': link_id, 'viewers': netid}, # shared
+            {'_id': link_id, 'viewers': {'$in': orgs}} # shared with org
+        ]})
+        return result is not None
 
     def get_admin_stats(self) -> Any:
         """Get some basic overall stats about Shrunk

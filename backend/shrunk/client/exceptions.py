@@ -1,6 +1,6 @@
 """Database-related exceptions."""
 
-__all__ = ['ShrunkException', 'NoSuchObjectException', 'BadAliasException', 'BadLongURLException', 'InvalidEntity']
+__all__ = ['ShrunkException', 'NoSuchObjectException', 'BadAliasException', 'BadLongURLException', 'InvalidEntity', 'InvalidACL']
 
 
 class ShrunkException(Exception):
@@ -21,3 +21,9 @@ class BadLongURLException(ShrunkException):
 
 class InvalidEntity(ShrunkException):
     """Raised when an entity is not valid for a role."""
+
+class InvalidACL(ShrunkException, ValueError):
+    """Raised when somone tries to modify an ACL that doesn't exist"""
+
+class NotUserOrOrg(shrunkException, ValueError):
+    """raised if a viewer was not an org or netid"""
