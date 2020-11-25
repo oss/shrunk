@@ -570,3 +570,66 @@ def test_visits(client: Client) -> None:  # pylint: disable=too-many-statements
 
         # Get the stats for alias1. Check that we have 2 visits and 2 unique visits
         assert_visits(f'/api/v1/link/{link_id}/alias/{alias1}/stats', 2, 2)
+
+def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-statements
+    """This test simulates the process of creating a link with ACL options and testing if the permissions works"""
+
+    with dev_login(client, 'user'):
+        def check_create(body):
+            resp = client.post('/api/v1/link', json=body)
+            if 'errors' in resp.json:
+                return resp.json, resp.status_code
+            link_id = resp.json['id']
+            resp = client.get(f'/api/v1/link/{link_id}')
+            return resp.json, resp.status_code
+
+        # make sure Editors are viewers
+        link, status = check_create({
+            'title': 'title',
+            'long_url': 'https://example.com',
+            'editors': [{'_id': 'DEV_ADMIN', 'type': 'user'}]
+        })
+        assert 200 <= status < 300
+        assert len(link['viewers']) == 1
+
+        # viewer not editor
+        link, status = check_create({
+            'title': 'title',
+            'long_url': 'https://example.com',
+            'viewers': [{'_id': 'DEV_ADMIN', 'type': 'user'}]
+        })
+        assert 200 <= status < 300
+        assert len(link['editors']) == 0
+
+        # deduplicate
+        link, status = check_create({
+            'title': 'title',
+            'long_url': 'https://example.com',
+            'viewers': [{'_id': 'DEV_ADMIN', 'type': 'user'},
+                        {'_id': 'DEV_ADMIN', 'type': 'user'}]
+        })
+        assert 200 <= status < 300
+        assert len(link['viewers']) == 1
+        
+        # orgs must be objectid
+        link, status = check_create({
+            'title': 'title',
+            'long_url': 'https://example.com',
+            'viewers': [{'_id': 'DEV_ADMIN', 'type': 'org'}]
+        })
+        assert 200 <= status < 300
+        assert isinstance(link, list)
+        
+        # orgs disallows invalid org
+        link, status = check_create({
+            'title': 'title',
+            'long_url': 'https://example.com',
+            'viewers': [{'_id': '5fbed163b7202e4c33f01a93', 'type': 'org'}]
+        })
+        assert 200 <= status < 300
+        assert isinstance(link, list)
+        # org allows valid org
+        
+# test update_acl
+# test delete acl
+# test modify acl

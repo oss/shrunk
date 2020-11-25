@@ -12,7 +12,8 @@ from shrunk.client import ShrunkClient
 from shrunk.client.exceptions import (BadLongURLException,
                                       BadAliasException,
                                       NoSuchObjectException,
-                                      InvalidAcl)
+                                      InvalidACL,
+                                      NotUserOrOrg)
 from shrunk.util.stats import get_human_readable_referer_domain, browser_stats_from_visits
 from shrunk.util.ldap import is_valid_netid
 from shrunk.util.decorators import require_login, request_schema
@@ -27,7 +28,7 @@ MAX_ALIAS_LENGTH = 60
 
 ACL_ENTRY_SCHEMA = {
     'type': 'object',
-    'required': ['_id', 'type']
+    'required': ['_id', 'type'],
     'properties' : {
         '_id': {'type': 'string'},
         'type': {'type': 'string', 'enum': ['org', 'user']}
@@ -76,13 +77,20 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
     :param client:
     :param req:
     """
+    if 'editors' not in req:
+        req['editors'] = []
+    if 'viewers' not in req:
+        req['viewers'] = []
+        
     if 'expiration_time' in req:
         expiration_time: Optional[datetime] = datetime.fromisoformat(req['expiration_time'])
     else:
         expiration_time = None
+
+    # convert _id to objectid for orgs in acls
     try:
         def str2ObjectId(acl):
-            return [{'_id': ObjectId(entry['_id'], 'type': entry['type'])}
+            return [{'_id': ObjectId(entry['_id']), 'type': entry['type']}
                     if entry['type'] == 'org'
                     else entry
                     for entry in acl]
@@ -90,12 +98,33 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
         req['viewers'] = str2ObjectId(req['viewers'])
     except bson.errors.InvalidId as e:
         return jsonify({'errors': ['type org requires _id to be an ObjectId: ' + str(e)]}, 400)
+
+    # deduplicate
+    def dedupe(acl):
+        ids = set()
+        result = []
+        for entry in acl:
+            if entry['_id'] not in ids:
+                result.append(entry)
+                ids.add(entry['_id'])
+        return result
+    req['editors'] = dedupe(req['editors'])
+    req['viewers'] = dedupe(req['viewers'])
+
+    # make sure editors also have viewer permissions
+    viewer_ids = {viewer['_id'] for viewer in req['viewers']}
+    for editor in req['editors']:
+        if editor['_id'] not in viewer_ids:
+            viewer_ids.add(editor['_id'])
+            req['viewers'].append(editor)
     try:
         link_id = client.links.create(req['title'], req['long_url'], expiration_time, netid,
                                       request.remote_addr, viewers=req['viewers'], editors=req['editors'])
     except BadLongURLException:
         return jsonify({'errors': ['long_url']}), 400
-    return jsonify({'id': link_id})
+    except NotUserOrOrg as e:
+        return jsonify({'errors': [str(e)]}), 400
+    return jsonify({'id': str(link_id)})
 
 
 @bp.route('/validate_long_url/<b32:long_url>', methods=['GET'])
@@ -153,6 +182,8 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         'long_url': info['long_url'],
         'aliases': aliases,
         'deleted': info.get('deleted', False),
+        'editors': info['editors'],
+        'viewers': info['viewers']
     }
 
     return jsonify(json_info)
@@ -229,18 +260,17 @@ MODIFY_ACL_SCHEMA = {
 @bp.route('/<ObjectId:link_id>/acl', methods=['PATCH'])
 @request_schema(MODIFY_ACL_SCHEMA)
 @require_login
-def modify_acl(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -> Any:
+def modify_acl(netid: str, client: ShrunkClient,
+               req: Any, link_id: ObjectId) -> Any:
     """``PATCH /api/link/<link_id>``
 
-    Modify an existing link's acl. Returns 204 on success or 403 on error. Request format:
+    Modify an existing link's acl. Returns 204 on success or 403 on error.
+    Request format:
 
     .. code-block:: json
 
-       { "target_id": "string", "acl": "editors | viewers", "action": "add | remove" }
-
-    Properties present in the request will be set. Properties missing from the request will not
-    be modified. If ``"expiration_time"`` is present and set to ``null``, the effect is to remove
-    the link's expiration time.
+       { "target_id": "string", "acl": "editors | viewers",
+       "action": "add | remove" }
 
     :param netid:
     :param client:
@@ -251,20 +281,23 @@ def modify_acl(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) ->
         client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
-    if not client.roles.has('admin', netid) and not client.links.may_edit(link_id, netid):
+    if not client.roles.has('admin', netid) and \
+       not client.links.may_edit(link_id, netid):
         abort(403)
     try:
         if req['entry']['type'] == 'org':
             req['entry']['_id'] = ObjectId(req['entry']['_id'])
-    except bson.errros.InvalidId as e:
-        return jsonify({'errors': ['org entry requires _id to be ObjectId: ' + str(e)]}, 400)
+    except bson.errors.InvalidId as e:
+        return jsonify({
+            'errors': ['org entry requires _id to be ObjectId: ' + str(e)]
+        }, 400)
     try:
         client.links.modify_acl(link_id,
                                 req['entry'],
                                 req['action'] == 'add',
                                 req['acl'])
-    except InvalidAcl:
-        return jsonify({'errors': ['invalid acl']}
+    except InvalidACL:
+        return jsonify({'errors': ['invalid acl']})
     return '', 204
 
 

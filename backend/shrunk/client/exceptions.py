@@ -25,5 +25,5 @@ class InvalidEntity(ShrunkException):
 class InvalidACL(ShrunkException, ValueError):
     """Raised when somone tries to modify an ACL that doesn't exist"""
 
-class NotUserOrOrg(shrunkException, ValueError):
+class NotUserOrOrg(ShrunkException, ValueError):
     """raised if a viewer was not an org or netid"""

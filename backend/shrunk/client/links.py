@@ -13,14 +13,15 @@ from pymongo.results import UpdateResult
 from bson.objectid import ObjectId
 
 from shrunk.util.string import get_domain
-from shrunk.util.ldap import is_valid_netid()
+from shrunk.util.ldap import is_valid_netid
 from . import aggregations
 
 from .geoip import GeoipClient
 from .exceptions import (NoSuchObjectException,
                          BadAliasException,
                          BadLongURLException,
-                         InvalidACL)
+                         InvalidACL,
+                         NotUserOrOrg)
 
 __all__ = ['LinksClient']
 
@@ -52,7 +53,7 @@ class LinksClient:
                  geoip: GeoipClient,
                  RESERVED_WORDS: Set[str],
                  BANNED_REGEXES: List[str],
-                 REDIRECT_CHECK_TIMEOUT: float
+                 REDIRECT_CHECK_TIMEOUT: float,
                  other_clients: Any):
         self.db = db
         self.geoip = geoip
@@ -111,8 +112,12 @@ class LinksClient:
                expiration_time: Optional[datetime],
                netid: str,
                creator_ip: str,
-               viewers: List[Dict[str, Any]]=[],
-               editors: List[Dict[str, Any]]=[]) -> ObjectId:
+               viewers: List[Dict[str, Any]]=None,
+               editors: List[Dict[str, Any]]=None) -> ObjectId:
+        if viewers is None:
+            viewers = []
+        if editors is None:
+            editors = []
         if self.long_url_is_blocked(long_url):
             raise BadLongURLException
 
@@ -122,11 +127,7 @@ class LinksClient:
         for acl in ['viewers', 'editors']:
             members = {'viewers': viewers, 'editors': editors}[acl]
             for member in members:
-                target = member['_id']
-                mtype = member['type']
-                if (mtype == 'user' and not is_valid_netid(target)) or \
-                   (mtype == 'org'  and not self.other_clients.orgs.get_org(target)):
-                    raise NotUserOrOrg(f'can\'t add {mtype} {target} to {acl}')
+                self.assert_valid_acl_entry(acl, member)
 
 
         document = {
@@ -184,12 +185,12 @@ class LinksClient:
         if result.matched_count != 1:
             raise NoSuchObjectException
 
-    def assert_valid_acl_entry(acl, entry):
+    def assert_valid_acl_entry(self, acl, entry):
         target = entry['_id']
         mtype = entry['type']
         if (mtype == 'user' and not is_valid_netid(target)) or \
            (mtype == 'org'  and not self.other_clients.orgs.get_org(target)):
-            raise NotUserOrOrg(f'can\'t add {mtype} {target} to {acl}')
+            raise NotUserOrOrg(f'{target} is not a valid {mtype}. can\'t addto {acl}')
 
     def modify_acl(self,
                    link_id: ObjectId,
@@ -204,11 +205,6 @@ class LinksClient:
         if acl not in acls:
             raise InvalidACL('acl to modify must be in ' + str(acls))
         self.assert_valid_acl_entry(acl, entry)
-        target = entry['_id']
-        mtype = entry['type']
-        if (mtype == 'user' and not is_valid_netid(target)) or \
-           (mtype == 'org'  and not self.other_clients.orgs.get_org(target)):
-
         change = {acl: entry}
 
         # editors always have view permission
