@@ -11,6 +11,7 @@ from .orgs import OrgsClient
 from .tracking import TrackingClient
 from .roles import RolesClient
 from .links import LinksClient
+from .alerts import AlertsClient
 
 __all__ = ['ShrunkClient']
 
@@ -46,6 +47,7 @@ class ShrunkClient:
         self.tracking = TrackingClient(db=self.db)
         self.orgs = OrgsClient(db=self.db)
         self.search = SearchClient(db=self.db)
+        self.alerts = AlertsClient(db=self.db)
 
     def _ensure_indexes(self) -> None:
         self.db.urls.create_index([('aliases.alias', pymongo.ASCENDING)])

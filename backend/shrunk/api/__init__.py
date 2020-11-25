@@ -1,3 +1,3 @@
-from . import link, org, role, search, admin
+from . import link, org, role, search, admin, alert
 
-__all__ = ['link', 'org', 'role', 'search', 'admin']
+__all__ = ['link', 'org', 'role', 'search', 'admin', 'alert']
