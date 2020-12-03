@@ -657,6 +657,19 @@ Please do not reply to this email. You may direct any questions to oss@oss.rutge
                 'resolved_at': datetime.now(timezone.utc),
             }})
 
+    def get_pending_access_requests(self, netid: str) -> List[Any]:
+        return list(self.db.urls.aggregate([
+            {'$match': {'netid': netid}},
+            {'$lookup': {
+                'from': 'access_requests',
+                'localField': '_id',
+                'foreignField': 'link_id',
+                'as': 'request',
+            }},
+            {'$unwind': '$request'},
+            {'$match': {'request.state': 'pending'}},
+        ]))
+
     @classmethod
     def _generate_unique_key(cls) -> str:
         """Generates a unique key."""

@@ -19,7 +19,7 @@ from backports import datetime_fromisoformat
 # Blueprints
 from . import views
 from . import dev_logins
-from .api import link, org, role, search, admin, alert
+from . import api
 
 # Extensions
 from . import sso
@@ -64,7 +64,7 @@ class HexTokenConverter(BaseConverter):
         except binascii.Error as e:
             raise ValidationError from e
         if len(token) != 16:
-            raise ValidationError(f'Token should be 16 bytes in length')
+            raise ValidationError('Token should be 16 bytes in length')
         return token
 
     def to_url(self, value: bytes) -> str:
@@ -222,12 +222,13 @@ def create_app(config_path: str = 'config.py', **kwargs: Any) -> Flask:
     app.register_blueprint(views.bp)
     if app.config.get('DEV_LOGINS', False) is True:
         app.register_blueprint(dev_logins.bp)
-    app.register_blueprint(link.bp)
-    app.register_blueprint(org.bp)
-    app.register_blueprint(role.bp)
-    app.register_blueprint(search.bp)
-    app.register_blueprint(admin.bp)
-    app.register_blueprint(alert.bp)
+    app.register_blueprint(api.link.bp)
+    app.register_blueprint(api.org.bp)
+    app.register_blueprint(api.role.bp)
+    app.register_blueprint(api.search.bp)
+    app.register_blueprint(api.admin.bp)
+    app.register_blueprint(api.alert.bp)
+    app.register_blueprint(api.request.bp)
 
     # set up extensions
     mail = Mail()

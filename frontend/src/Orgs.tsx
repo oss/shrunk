@@ -105,7 +105,7 @@ const OrgRow: React.FC<{
     onDelete: (id: string) => Promise<void>
 }> = (props) => {
     return (
-        <Row className='primary-row' >
+        <Row className='primary-row'>
             <Col span={20}>
                 <span className='title'>{props.orgInfo.name}</span>
                 {props.orgInfo.is_admin ? <OrgAdminTag title='You are an administrator of this organization.' /> : <></>}

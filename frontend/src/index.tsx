@@ -7,6 +7,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import Cookies from 'js-cookie';
+// import io from 'socket.io-client';
 
 import { Shrunk } from './Shrunk';
 
@@ -47,6 +48,9 @@ const loadShrunkParams = () => {
 }
 
 const shrunkParams = loadShrunkParams();
+
+// const sock = io();
+// sock.on('connect', () => console.log('connected'));
 
 ReactDOM.render(<Shrunk
     siderWidth={200}
