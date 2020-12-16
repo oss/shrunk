@@ -59,7 +59,14 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
 
     .. code-block:: json
 
-       { "title": "string", "long_url": "string" }
+       { "title": "string", "long_url": "string",
+         "expiration_time": "2020-11-11T11:11:11Z",
+         "editors": [<ACL_ENTRY>], "viewers": [<ACL_ENTRY>]}
+
+    an ACL entry looks like. for orgs the id must be a valid bson ObjectId
+
+    .. code-block:: json
+       {_id: "netid|org_id", "type": "org|user"}
 
     Success response format:
 
@@ -81,7 +88,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
         req['editors'] = []
     if 'viewers' not in req:
         req['viewers'] = []
-        
+
     if 'expiration_time' in req:
         expiration_time: Optional[datetime] = datetime.fromisoformat(req['expiration_time'])
     else:
@@ -97,7 +104,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
         req['editors'] = str2ObjectId(req['editors'])
         req['viewers'] = str2ObjectId(req['viewers'])
     except bson.errors.InvalidId as e:
-        return jsonify({'errors': ['type org requires _id to be an ObjectId: ' + str(e)]}, 400)
+        return jsonify({'errors': ['type org requires _id to be an ObjectId: ' + str(e)]}), 400
 
     # deduplicate
     def dedupe(acl):
@@ -269,8 +276,13 @@ def modify_acl(netid: str, client: ShrunkClient,
 
     .. code-block:: json
 
-       { "target_id": "string", "acl": "editors | viewers",
-       "action": "add | remove" }
+       { "action": "add|remove", "entry": <ACL_ENTRY>,
+         "acl": "editors|viewers" }
+
+    an ACL entry looks like. for orgs the id must be a valid bson ObjectId
+
+    .. code-block:: json
+       { "_id": "netid|org_id", "type": "org|user" }
 
     :param netid:
     :param client:

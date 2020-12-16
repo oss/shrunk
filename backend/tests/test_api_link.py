@@ -574,14 +574,15 @@ def test_visits(client: Client) -> None:  # pylint: disable=too-many-statements
 def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-statements
     """This test simulates the process of creating a link with ACL options and testing if the permissions works"""
 
-    with dev_login(client, 'user'):
+    with dev_login(client, 'facstaff'):
         def check_create(body):
             resp = client.post('/api/v1/link', json=body)
             if 'errors' in resp.json:
                 return resp.json, resp.status_code
             link_id = resp.json['id']
+            status = resp.status_code
             resp = client.get(f'/api/v1/link/{link_id}')
-            return resp.json, resp.status_code
+            return resp.json, status
 
         # make sure Editors are viewers
         link, status = check_create({
@@ -610,26 +611,127 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
         })
         assert 200 <= status < 300
         assert len(link['viewers']) == 1
-        
+
         # orgs must be objectid
         link, status = check_create({
             'title': 'title',
             'long_url': 'https://example.com',
             'viewers': [{'_id': 'DEV_ADMIN', 'type': 'org'}]
         })
-        assert 200 <= status < 300
-        assert isinstance(link, list)
-        
+        assert status == 400
+        assert 'errors' in link
+
         # orgs disallows invalid org
         link, status = check_create({
             'title': 'title',
             'long_url': 'https://example.com',
             'viewers': [{'_id': '5fbed163b7202e4c33f01a93', 'type': 'org'}]
         })
-        assert 200 <= status < 300
-        assert isinstance(link, list)
+        assert status == 400
+        assert 'errors' in link
+
         # org allows valid org
-        
-# test update_acl
-# test delete acl
-# test modify acl
+        resp = client.post('/api/v1/org', json={
+            'name': 'testorg11'
+        })
+        assert 200 <= resp.status_code <= 300
+        _id = resp.json['id']
+
+        link, status = check_create({
+            'title': 'title',
+            'long_url': 'https://example.com',
+            'viewers': [{'_id': _id, 'type': 'org'}]
+        })
+        assert 200 <= status <= 300
+        assert len(link['viewers']) == 2
+        assert len(link['editors']) == 2
+
+def test_update_link_acl(client: Client) -> None:  # pylint: disable=too-many-statements
+    """This test simulates the process of creating a link with ACL options and testing if the permissions works"""
+
+    with dev_login(client, 'facstaff'):
+        resp = client.post('/api/v1/link', json={
+            'title': 'title',
+            'long_url': 'https://example.com'
+        })
+        assert 200 <= resp.status_code <= 300
+        link_id = resp.json['id']
+
+        def mod_acl(action, entry, acl):
+            resp = client.get(f'/api/v1/link/{link_id}/acl', json={
+                'action': action, 'acl': acl,
+                'entry': entry
+            })
+            if resp.status_code >= 400:
+                return resp.json, resp.status_code
+            status = resp.status_code
+            resp = client.get(f'/api/v1/link/{link_id}')
+            return resp.json, status
+
+        person = {'_id': 'roofus', 'type': 'user'}
+        inv_org = {'_id': 'not_obj_id', 'type': 'org'}
+        inv_org2 = {'_id': '5fbed163b7202e4c33f01a93', 'type': 'org'}
+
+        # add viewer
+        link, status = mod_acl('add', person, 'viewers')
+        assert 200 <= status <= 300
+        assert len(link['viewers']) == 2
+        # remove viewer works
+        link, status = mod_acl('remove', person, 'viewers')
+        assert 200 <= status <= 300
+        assert len(link['viewers']) == 1
+        # assert correct one is removed
+        assert link['viewers'][0]['_id'] == 'DEV_FACSTAFF'
+
+        # add editor adds viewer
+        link, status = mod_acl('add', person, 'editors')
+        assert 200 <= status <= 300
+        assert len(link['editors']) == 2
+        assert len(link['viewers']) == 2
+        # remove viewer removes editor
+        link, status = mod_acl('remove', person, 'viewers')
+        assert 200 <= status <= 300
+        assert len(link['viewers']) == 1
+        assert len(link['editors']) == 1
+
+        # remove editor doesn't remove viewer
+        mod_acl('add', person, 'editors')
+        link, status = mod_acl('remove', person, 'editors')
+        assert 200 <= status <= 300
+        assert len(link['viewers']) == 2
+        assert len(link['editors']) == 1
+        mod_acl('remove', person, 'viewers')
+
+        # remove nonexistant doesn't throw exception
+        link, status = mod_acl('remove', person, 'editors')
+        assert status < 500
+        assert len(link['viewers']) == 1
+        assert len(link['editors']) == 1
+
+        # add org invalid id rejected
+        link, status = mod_acl('add', inv_org, 'viewers')
+        assert status == 400
+        assert len(link['viewers']) == 1
+        assert len(link['editors']) == 1
+
+        link, status = mod_acl('add', inv_org2, 'viewers')
+        assert status == 400
+        assert len(link['viewers']) == 1
+        assert len(link['editors']) == 1
+
+
+        # add valid org
+        resp = client.post('/api/v1/org', json={
+            'name': 'testorg11'
+        })
+        assert 200 <= resp.status_code <= 300
+        org_id = resp.json['id']
+        link, status = mod_acl('add', {'_id': org_id, 'type': 'org'}, 'viewers')
+        assert 200 <= status <= 300
+        assert len(link['viewers']) == 2
+        assert len(link['editors']) == 1
+
+# test deletelink acl
+# test modifylink acl
+# test viewstats acl
+# other link operations

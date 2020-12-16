@@ -387,7 +387,7 @@ class LinksClient:
     def may_view(self, link_id: ObjectId, netid: str) -> bool:
         orgs = self.other_clients.orgs.get_orgs(netid, True)
         orgs = [org['name'] for org in orgs]
-        result = self.db.urls.find({'$or': [
+        result = self.db.urls.find_one({'$or': [
             {'_id': link_id, 'netid': netid}, # owner
             {'_id': link_id, 'viewers': netid}, # shared
             {'_id': link_id, 'viewers': {'$in': orgs}} # shared with org
