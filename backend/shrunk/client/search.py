@@ -131,15 +131,15 @@ class SearchClient:
                 return not alias['deleted']
 
             if res.get('expiration_time'):
-                expiration_time = res['expiration_time'].isoformat()
+                expiration_time = res['expiration_time']
             else:
                 expiration_time = None
 
             prepared = {
-                'id': str(res['_id']),
+                'id': res['_id'],
                 'title': res['title'],
                 'long_url': res['long_url'],
-                'created_time': res['timeCreated'].isoformat(),
+                'created_time': res['timeCreated'],
                 'expiration_time': expiration_time,
                 'visits': res['visits'],
                 'unique_visits': res.get('unique_visits', 0),
@@ -151,7 +151,7 @@ class SearchClient:
             if res.get('deleted'):
                 prepared['deletion_info'] = {
                     'deleted_by': res['deleted_by'],
-                    'deleted_time': res['deleted_time'].isoformat(),
+                    'deleted_time': res['deleted_time'],
                 }
 
             return prepared

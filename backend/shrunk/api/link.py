@@ -71,7 +71,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
         link_id = client.links.create(req['title'], req['long_url'], expiration_time, netid, request.remote_addr)
     except BadLongURLException:
         return jsonify({'errors': ['long_url']}), 400
-    return jsonify({'id': str(link_id)})
+    return jsonify({'id': link_id})
 
 
 @bp.route('/validate_long_url/<b32:long_url>', methods=['GET'])
@@ -124,7 +124,7 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
 
     # Get rid of types that cannot safely be passed to jsonify
     json_info = {
-        '_id': str(info['_id']),
+        '_id': info['_id'],
         'title': info['title'],
         'long_url': info['long_url'],
         'aliases': aliases,
@@ -239,14 +239,14 @@ def anonymize_visit(client: ShrunkClient, visit: Any) -> Any:
     :param visit:
     """
     return {
-        'link_id': str(visit['link_id']),
+        'link_id': visit['link_id'],
         'alias': visit['alias'],
         'visitor_id': client.links.get_visitor_id(visit['source_ip']),
         'user_agent': visit.get('user_agent', 'Unknown'),
         'referer': get_human_readable_referer_domain(visit),
         'state_code': visit.get('state_code', 'Unknown') if visit.get('country_code') == 'US' else 'Unknown',
         'country_code': visit.get('country_code', 'Unknown'),
-        'time': str(visit['time']),
+        'time': visit['time'],
     }
 
 
