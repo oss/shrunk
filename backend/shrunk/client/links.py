@@ -644,7 +644,7 @@ Please do not reply to this email. You may direct any questions to oss@oss.rutge
             'type': 'netid',
         }
         self.db.urls.update_one({'_id': request['link_id']},
-                                {'$addToSet': {'viewers': user, 'editors': user}}) 
+                                {'$addToSet': {'viewers': user, 'editors': user}})
         self.db.access_requests.update_one(
             {'token': request['token']},
             {'$set': {

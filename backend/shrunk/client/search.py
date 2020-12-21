@@ -16,7 +16,7 @@ class SearchClient:
         self.db = db
         self.client = client
 
-    def execute(self, user_netid: str, query: Any) -> Any:  # pylint: disable=too-many-branches
+    def execute(self, user_netid: str, query: Any) -> Any:  # pylint: disable=too-many-branches,too-many-statements
         """Execute a search query
 
         :param user_netid: The NetID of the user performing the search
