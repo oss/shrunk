@@ -1,3 +1,8 @@
+/**
+ * Implements the [[PendingRequests]] component
+ * @packageDocumentation
+ */
+
 import React from 'react';
 import { Row, Col, Modal, Button } from 'antd';
 import moment from 'moment';
@@ -5,14 +10,46 @@ import moment from 'moment';
 import './Base.less';
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 
+/**
+ * Data describing a pending access request
+ * @interface
+ */
 export interface PendingRequest {
+    /**
+     * ID of the link to which access has been requested
+     * @property
+     */
     link_id: string;
+
+    /**
+     * Title of the link
+     * @property
+     */
     title: string;
+
+    /**
+     * The request token, used to identify the request to the server
+     * @property
+     */
     request_token: string;
+
+    /**
+     * The NetID that made the request
+     * @property
+     */
     requesting_netid: string;
+
+    /**
+     * The time at which the request was made
+     * @property
+     */
     request_time: Date;
 }
 
+/**
+ * The [[PendingRequestRow]] component displays one row in the pending requests list
+ * @param props Props
+ */
 const PendingRequestRow: React.FC<{
     singletonRow: boolean,
     request: PendingRequest,
@@ -56,13 +93,35 @@ const PendingRequestRow: React.FC<{
     );
 }
 
+/**
+ * Props for the [[PendingRequests]] component
+ * @interface
+ */
 export interface Props { }
 
+/**
+ * State for the [[PendingRequests]] component
+ * @interface
+ */
 interface State {
+    /**
+     * List of pending requests, or null
+     * @property
+     */
     pendingRequests: Array<PendingRequest> | null;
+
+    /**
+     * True if the modal has been closed by the user
+     * @property
+     */
     hidden: boolean;
 }
 
+/**
+ * The [[PendingRequests]] component is responsible for displaying a list
+ * of pending requests to the user and allowing them to accept or deny the requests
+ * @class
+*/
 export class PendingRequests extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
@@ -76,6 +135,10 @@ export class PendingRequests extends React.Component<Props, State> {
         await this.updatePendingRequests();
     }
 
+    /**
+     * Fetch the list of pending requests from the server
+     * @method
+     */
     updatePendingRequests = async (): Promise<void> => {
         const pendingRequests = await fetch('/api/v1/request/pending')
             .then(resp => resp.json());
@@ -87,11 +150,21 @@ export class PendingRequests extends React.Component<Props, State> {
         });
     }
 
+    /**
+     * Execute API requests to accept a request
+     * @method
+     * @param request_token The request token
+     */
     acceptRequest = async (request_token: string): Promise<void> => {
         await fetch(`/api/v1/request/resolve/${request_token}/accept`);
         await this.updatePendingRequests();
     }
 
+    /**
+     * Execute API requests to deny a request
+     * @method
+     * @param request_token The request token
+     */
     denyRequest = async (request_token: string): Promise<void> => {
         await fetch(`/api/v1/request/resolve/${request_token}/deny`);
         await this.updatePendingRequests();

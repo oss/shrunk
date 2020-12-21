@@ -80,6 +80,8 @@ export class LinkRow extends React.Component<Props, State> {
         const isLinkExpired = this.props.linkInfo.is_expired;
         const titleClassName = isLinkDeleted || isLinkExpired ? 'title deleted' : 'title';
 
+        console.log(this.props.linkInfo.may_edit);
+
         return (
             <Row className='primary-row' style={{ alignItems: 'center' }}>
                 <Col span={20}>

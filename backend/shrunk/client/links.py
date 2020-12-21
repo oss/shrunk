@@ -350,6 +350,9 @@ class LinksClient:
         ]))
         return len(result['intersection']) != 0 if result is not None else False
 
+    def may_edit(self, _link_id: ObjectId, _netid: str) -> bool:
+        return False  # TODO: merge with Mickey's codoe
+
     def get_admin_stats(self) -> Any:
         """Get some basic overall stats about Shrunk
         """
@@ -636,13 +639,18 @@ Please do not reply to this email. You may direct any questions to oss@oss.rutge
             raise NoSuchObjectException
         if request['state'] != 'pending':
             return
+        user = {
+            '_id': request['requesting_netid'],
+            'type': 'netid',
+        }
+        self.db.urls.update_one({'_id': request['link_id']},
+                                {'$addToSet': {'viewers': user, 'editors': user}}) 
         self.db.access_requests.update_one(
             {'token': request['token']},
             {'$set': {
                 'state': 'accepted',
                 'resolved_at': datetime.now(timezone.utc),
             }})
-        # TODO actually do the stuff to grant access lol
 
     def deny_access_request(self, token: bytes) -> None:
         request = self.db.access_requests.find_one({'token': token})

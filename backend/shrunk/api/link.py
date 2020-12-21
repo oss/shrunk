@@ -130,7 +130,7 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         'long_url': info['long_url'],
         'aliases': aliases,
         'deleted': info.get('deleted', False),
-        'may_edit': False,
+        'may_edit': client.links.may_edit(info['_id'], netid),
     }
 
     return jsonify(json_info)
@@ -242,8 +242,8 @@ def post_request_edit(netid: str, client: ShrunkClient, mail: Mail, link_id: Obj
         client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
-    if not client.roles.has('admin', netid) and not False:
-        abort(403)  # TODO permissions checking etc (kinda relies on mickey)
+    if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
+        abort(403)
     client.links.request_edit_access(mail, link_id, netid)
     return '', 204
 

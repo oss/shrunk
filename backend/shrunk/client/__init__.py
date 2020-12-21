@@ -46,7 +46,7 @@ class ShrunkClient:
         self.roles = RolesClient(db=self.db)
         self.tracking = TrackingClient(db=self.db)
         self.orgs = OrgsClient(db=self.db)
-        self.search = SearchClient(db=self.db)
+        self.search = SearchClient(db=self.db, client=self)
         self.alerts = AlertsClient(db=self.db)
 
     def _ensure_indexes(self) -> None:

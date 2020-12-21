@@ -12,8 +12,9 @@ __all__ = ['SearchClient']
 class SearchClient:
     """This class executes search queries."""
 
-    def __init__(self, *, db: pymongo.database.Database):
+    def __init__(self, *, db: pymongo.database.Database, client: Any):
         self.db = db
+        self.client = client
 
     def execute(self, user_netid: str, query: Any) -> Any:  # pylint: disable=too-many-branches
         """Execute a search query
@@ -149,7 +150,7 @@ class SearchClient:
                 'owner': res['netid'],
                 'aliases': [alias for alias in res['aliases'] if is_alias_visible(alias)],
                 'is_expired': res['is_expired'],
-                'may_edit': False,
+                'may_edit': self.client.links.may_edit(res['_id'], user_netid),
             }
 
             if res.get('deleted'):
