@@ -35,6 +35,10 @@ You should now check that mongodb is running. You can do this by executing the m
 If you get a prompt, everything is good. Now you can go ask someone for a dump of the Shrunk database
 and ``mongorestore`` it so that you have some data to work with.
 
+Setting up Configs
+------------------
+Create your own config file (or copy ``backend/shrunk/config.py.example``) in `backend/`.
+
 Running Shrunk
 --------------
 
@@ -48,14 +52,14 @@ Running Shrunk
 
 To run Shrunk for development, you should execute the ``flask run``
 command from the ``backend`` directory in the repo. Before executing this command,
-you need to set up a few environment variables::
+you need to set up a few environment variables. Note that you'll need to export these variables every time you open up a new shell::
 
   $ export FLASK_APP=shrunk
   $ export FLASK_DEBUG=true
   $ export FLASK_ENV=dev
   $ export WERKZEUG_DEBUG_PIN=off
 
-and then execute the app::
+Finally, execute the app::
 
   $ cd backend
   $ flask run
