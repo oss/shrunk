@@ -67,11 +67,6 @@ def get_orgs(netid: str, client: ShrunkClient, req: Any) -> Any:
     if req['which'] == 'all' and not client.roles.has('admin', netid):
         abort(403)
     orgs = client.orgs.get_orgs(netid, req['which'] == 'user')
-    for org in orgs:
-        org['id'] = str(org['id'])
-        org['timeCreated'] = org['timeCreated'].isoformat()
-        for member in org['members']:
-            member['timeCreated'] = member['timeCreated'].isoformat()
     return jsonify({'orgs': orgs})
 
 
@@ -118,7 +113,7 @@ def post_org(netid: str, client: ShrunkClient, req: Any) -> Any:
     if org_id is None:
         abort(409)
     client.orgs.create_member(org_id, netid, is_admin=True)
-    return jsonify({'id': str(org_id)})
+    return jsonify({'id': org_id})
 
 
 @bp.route('/<ObjectId:org_id>', methods=['DELETE'])
@@ -154,11 +149,8 @@ def get_org(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
     org = client.orgs.get_org(org_id)
     if org is None:
         abort(404)
-    org['id'] = str(org['_id'])
+    org['id'] = org['_id']
     del org['_id']
-    org['timeCreated'] = org['timeCreated'].isoformat()
-    for member in org['members']:
-        member['timeCreated'] = member['timeCreated'].isoformat()
     org['is_member'] = any(member['netid'] == netid for member in org['members'])
     org['is_admin'] = any(member['netid'] == netid and member['is_admin'] for member in org['members'])
     return jsonify(org)

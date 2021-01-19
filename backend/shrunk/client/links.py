@@ -482,7 +482,7 @@ class LinksClient:
         res = self.db.visitors.find_one_and_update(rec, {'$setOnInsert': {'ip': str(ipaddr)}},
                                                    upsert=True,
                                                    return_document=ReturnDocument.AFTER)
-        return str(res['_id'])
+        return res['_id']
 
     def blacklist_user_links(self, netid: str) -> UpdateResult:
         return self.db.urls.update_many({'netid': netid,
