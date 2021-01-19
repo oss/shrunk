@@ -18,6 +18,7 @@ Documentation
 -------------
 
 To build the documentation for the frontend, run::
+
   $ npm run doc
 
 The documentation will have been placed in ``frontend/docs``. Open the ``index.html`` file there to read the documentation!
@@ -25,6 +26,7 @@ The documentation will have been placed in ``frontend/docs``. Open the ``index.h
 Running the Frontend
 --------------------
 Run the following command in `frontend` in a separate terminal:
+
    $ npm run watch
 
 Now go to 127.0.0.1:5000 in your web browser, and you should be greeted with the go.rutgers.edu login page.

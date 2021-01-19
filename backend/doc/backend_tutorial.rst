@@ -59,6 +59,12 @@ you need to set up a few environment variables. Note that you'll need to export 
   $ export FLASK_ENV=dev
   $ export WERKZEUG_DEBUG_PIN=off
 
+Here's a one-liner so you don't have to type all of those separately:
+
+  $ export FLASK_APP=shrunk && export FLASK_DEBUG=true && export FLASK_ENV=dev && export WERKZEUG_DEBUG_PIN=off
+
+You'll also likely have to copy the GeoLite2 file in ``backend/`` to your ``/usr/share/GeoIP`` directory.
+
 Finally, execute the app::
 
   $ cd backend
