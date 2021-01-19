@@ -7,24 +7,32 @@ Uses MongoDB. Python code targets **Python 3.6**.
 
 ## Getting started
 
-First, clone this repository to a local directory:
-$ git clone https://gitlab.rutgers.edu/MaCS/OSS/shrunk.git # via http
+First, if you haven't already, [add an SSH key to your GitLab account](https://docs.gitlab.com/ee/ssh/#common-steps-for-generating-an-ssh-key-pair). Then, clone this repository (via ssh) to a local directory:
+
+    $ git clone git@gitlab.rutgers.edu:MaCS/OSS/shrunk.git
 
 ### Backend
 
+Note: Prior to beginning the main installation of Shrunk, WSL2 (Windows Subsystem for Linux) users will likely need to [install additional packages first](https://stackoverflow.com/a/4768467/13026376).
+
 Set up a virtual environment for the backend and install the python dependencies with:
-$ cd backend/
-$ virtualenv --no-site-packages --python="python3" venv
-$ source venv/bin/activate
-$ pip install -r requirements.txt
-$ pip install -r requirements-dev.txt
+
+    $ cd backend/
+    $ virtualenv --no-site-packages --python="python3" venv
+    $ source venv/bin/activate
+    $ pip install -r requirements.txt
+    $ pip install -r requirements-dev.txt
 
 Then build the HTML documentation with
 
     $ ./setup.py build_sphinx
 
 This will place the Shrunk developer manual in `./build/sphinx/html`. Open the file
-`index.html` in that directory and start reading the tutorials linked therein! Be sure to set up the frontend and the backend by reading the tutorials in order to get the web app running.
+`index.html` in that directory to learn how to finish setting up the backend and setting up the frontend by reading the tutorials linked therein!
+
+### Docs
+
+The backend docs are written with reStructuredText. Here's a [cheatsheat](https://docutils.sourceforge.io/docs/user/rst/quickref.html) to quickly get started with it.
 
 ## Features
 
