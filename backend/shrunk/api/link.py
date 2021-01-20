@@ -61,13 +61,13 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
 
        { "title": "string", "long_url": "string",
          "expiration_time": "2020-11-11T11:11:11Z",
-         "editors": [<ACL_ENTRY>], "viewers": [<ACL_ENTRY>]}
+         "editors": ["<ACL_ENTRY>"], "viewers": ["<ACL_ENTRY>"]}
 
     an ACL entry looks like. for orgs the id must be a valid bson ObjectId
 
     .. code-block:: json
 
-       {_id: "netid|org_id", "type": "org|user"}
+       {"_id": "netid|org_id", "type": "org|user"}
 
     Success response format:
 
@@ -277,7 +277,7 @@ def modify_acl(netid: str, client: ShrunkClient,
 
     .. code-block:: json
 
-       { "action": "add|remove", "entry": <ACL_ENTRY>,
+       { "action": "add|remove", "entry": "<ACL_ENTRY>",
          "acl": "editors|viewers" }
 
     an ACL entry looks like. for orgs the id must be a valid bson ObjectId
