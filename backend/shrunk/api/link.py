@@ -66,6 +66,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
     an ACL entry looks like. for orgs the id must be a valid bson ObjectId
 
     .. code-block:: json
+
        {_id: "netid|org_id", "type": "org|user"}
 
     Success response format:
@@ -282,6 +283,7 @@ def modify_acl(netid: str, client: ShrunkClient,
     an ACL entry looks like. for orgs the id must be a valid bson ObjectId
 
     .. code-block:: json
+
        { "_id": "netid|org_id", "type": "org|user" }
 
     :param netid:
