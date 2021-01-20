@@ -1,6 +1,7 @@
 import time
 import base64
 from datetime import datetime, timezone, timedelta
+import random
 
 import pytest
 from werkzeug.test import Client
@@ -643,8 +644,8 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
             'viewers': [{'_id': _id, 'type': 'org'}]
         })
         assert 200 <= status <= 300
-        assert len(link['viewers']) == 2
-        assert len(link['editors']) == 2
+        assert len(link['viewers']) == 1
+        assert len(link['editors']) == 0
 
 def test_update_link_acl(client: Client) -> None:  # pylint: disable=too-many-statements
     """This test simulates the process of creating a link with ACL options and testing if the permissions works"""
@@ -658,10 +659,11 @@ def test_update_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
         link_id = resp.json['id']
 
         def mod_acl(action, entry, acl):
-            resp = client.get(f'/api/v1/link/{link_id}/acl', json={
+            resp = client.patch(f'/api/v1/link/{link_id}/acl', json={
                 'action': action, 'acl': acl,
                 'entry': entry
             })
+            print(resp.json)
             if resp.status_code >= 400:
                 return resp.json, resp.status_code
             status = resp.status_code
@@ -669,55 +671,65 @@ def test_update_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
             return resp.json, status
 
         person = {'_id': 'roofus', 'type': 'user'}
+        person2 = {'_id': 'doofus', 'type': 'user'}
         inv_org = {'_id': 'not_obj_id', 'type': 'org'}
         inv_org2 = {'_id': '5fbed163b7202e4c33f01a93', 'type': 'org'}
 
         # add viewer
         link, status = mod_acl('add', person, 'viewers')
         assert 200 <= status <= 300
-        assert len(link['viewers']) == 2
+        assert len(link['viewers']) == 1
+        assert len(link['editors']) == 0
+
+        # duplicates should be ignored
+        link, status = mod_acl('add', person, 'viewers')
+        assert 200 <= status <= 300
+        assert len(link['viewers']) == 1
+        assert len(link['editors']) == 0
+
+
         # remove viewer works
+        mod_acl('add', person2, 'viewers')
         link, status = mod_acl('remove', person, 'viewers')
         assert 200 <= status <= 300
         assert len(link['viewers']) == 1
+        assert len(link['editors']) == 0
         # assert correct one is removed
-        assert link['viewers'][0]['_id'] == 'DEV_FACSTAFF'
+        assert link['viewers'][0]['_id'] == person2['_id']
+        mod_acl('remove', person2, 'viewers')
 
         # add editor adds viewer
         link, status = mod_acl('add', person, 'editors')
         assert 200 <= status <= 300
-        assert len(link['editors']) == 2
-        assert len(link['viewers']) == 2
+        assert len(link['editors']) == 1
+        assert len(link['viewers']) == 1
         # remove viewer removes editor
         link, status = mod_acl('remove', person, 'viewers')
         assert 200 <= status <= 300
-        assert len(link['viewers']) == 1
-        assert len(link['editors']) == 1
+        assert len(link['viewers']) == 0
+        assert len(link['editors']) == 0
 
         # remove editor doesn't remove viewer
         mod_acl('add', person, 'editors')
         link, status = mod_acl('remove', person, 'editors')
         assert 200 <= status <= 300
-        assert len(link['viewers']) == 2
-        assert len(link['editors']) == 1
+        assert len(link['viewers']) == 1
+        assert len(link['editors']) == 0
         mod_acl('remove', person, 'viewers')
 
         # remove nonexistant doesn't throw exception
         link, status = mod_acl('remove', person, 'editors')
         assert status < 500
-        assert len(link['viewers']) == 1
-        assert len(link['editors']) == 1
+        assert len(link['viewers']) == 0
+        assert len(link['editors']) == 0
+        mod_acl('remove', person, 'viewers')
 
         # add org invalid id rejected
         link, status = mod_acl('add', inv_org, 'viewers')
         assert status == 400
-        assert len(link['viewers']) == 1
-        assert len(link['editors']) == 1
 
         link, status = mod_acl('add', inv_org2, 'viewers')
         assert status == 400
-        assert len(link['viewers']) == 1
-        assert len(link['editors']) == 1
 
 
         # add valid org
@@ -728,10 +740,139 @@ def test_update_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
         org_id = resp.json['id']
         link, status = mod_acl('add', {'_id': org_id, 'type': 'org'}, 'viewers')
         assert 200 <= status <= 300
-        assert len(link['viewers']) == 2
-        assert len(link['editors']) == 1
+        assert len(link['viewers']) == 1
+        assert len(link['editors']) == 0
 
-# test deletelink acl
-# test modifylink acl
-# test viewstats acl
-# other link operations
+        _, status = mod_acl('remove', {'_id': org_id, 'type': 'org'}, 'viewers')
+        assert 200 <= status <= 300
+
+        # add owner doesn't actually add them to the list
+
+        link, status = mod_acl('add', {'_id': 'DEV_FACSTAFF', 'type': 'user'}, 'editors')
+        assert 200 <= status <= 300
+        assert len(link['viewers']) == 0
+        assert len(link['editors']) == 0
+
+def test_acl(client: Client) -> None: # pylint: disable=too-many-statements
+    link_id = ''
+    alias = ''
+    with dev_login(client, 'admin'):
+        # create org
+        resp = client.post('/api/v1/org', json={
+            'name': 'testorg12'
+        })
+        assert 200 <= resp.status_code <= 300
+        org_id = resp.json['id']
+
+        # add whitelisted to it
+        netid = 'DEV_FACSTAFF' # todo, no whitelisted dev login
+        resp = client.put(f'/api/v1/org/{org_id}/member/{netid}')
+        assert 200 <= resp.status_code <= 300
+
+        # create link with editor: user, viewer: org
+        resp = client.post('/api/v1/link', json={
+            'title': 'testlink2333',
+            'long_url': 'https://example.com',
+            'editors': [{'_id': 'DEV_USER', 'type': 'user'}],
+            'viewers': [{'_id': org_id, 'type': 'org'}]
+        })
+        assert 200 <= resp.status_code <= 300
+        link_id = resp.json['id']
+
+        resp = client.post(f'/api/v1/link/{link_id}/alias', json={})
+        assert 200 <= resp.status_code <= 300
+        alias = resp.json['alias']
+
+        resp = client.get(f'/api/v1/link/{link_id}')
+        print(resp.json)
+
+    permissions_table = [
+        {'user': 'user', # editor
+         'delete': False,
+         'delete_alias': False,
+         'clear_visits': False,
+
+         'update_url': True,
+         'update_acl': True,
+         'create_alias': True,
+
+         'get': True,
+         'view_stats': True,
+         'view_alias_stats': True
+        },
+        {'user': 'facstaff', # viewer (shared through org)
+         'delete': False,
+         'delete_alias': False,
+         'clear_visits': False,
+
+         'update_url': False,
+         'update_acl': False,
+         'create_alias': False,
+
+         'get': True,
+         'view_stats': True,
+         'view_alias_stats': True
+        },
+        {'user': 'power', # not shared
+         'delete': False,
+         'delete_alias': False,
+         'clear_visits': False,
+
+         'update_url': False,
+         'update_acl': False,
+         'create_alias': False,
+
+         'get': False,
+         'view_stats': False,
+         'view_alias_stats': False
+        }
+    ]
+
+    def assert_access(desired, code):
+        if desired:
+            assert 200 <= code <= 300
+        else:
+            assert code == 403
+
+
+    for user in permissions_table:
+        print(user['user'])
+
+        with dev_login(client, user['user']):
+            resp = client.delete(f'/api/v1/link/{link_id}')
+            assert resp.status_code == 403
+
+            resp = client.post(f'/api/v1/link/{link_id}/clear_visits')
+            assert resp.status_code == 403
+
+            resp = client.delete(f'/api/v1/link/{link_id}/alias/{alias}')
+            assert resp.status_code == 403
+
+            resp = client.patch(f'/api/v1/link/{link_id}', json={
+                'long_url': 'https://example.com?rand=' + str(random.randrange(0, 1000))
+            })
+            assert_access(user['update_url'], resp.status_code)
+
+            resp = client.patch(f'/api/v1/link/{link_id}/acl', json={
+                'entry': {
+                    '_id': 'roofus' + str(random.randrange(0, 1000)),
+                    'type': 'user'
+                },
+                'acl': 'viewers',
+                'action': 'add'
+            })
+            assert_access(user['update_acl'], resp.status_code)
+
+            resp = client.post(f'/api/v1/link/{link_id}/alias', json={})
+            assert_access(user['create_alias'], resp.status_code)
+
+            resp = client.get(f'/api/v1/link/{link_id}')
+            assert_access(user['get'], resp.status_code)
+
+            for endpoint in ['stats', 'stats/browser', 'stats/geoip', 'stats/visits', 'visits']:
+                resp = client.get(f'/api/v1/link/{link_id}/{endpoint}')
+                assert_access(user['view_stats'], resp.status_code)
+
+            for endpoint in ['stats', 'stats/browser', 'stats/geoip', 'stats/visits', 'visits']:
+                resp = client.get(f'/api/v1/link/{link_id}/alias/{alias}/{endpoint}')
+                assert_access(user['view_alias_stats'], resp.status_code)

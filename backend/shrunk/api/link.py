@@ -302,14 +302,17 @@ def modify_acl(netid: str, client: ShrunkClient,
     except bson.errors.InvalidId as e:
         return jsonify({
             'errors': ['org entry requires _id to be ObjectId: ' + str(e)]
-        }, 400)
+        }), 400
     try:
         client.links.modify_acl(link_id,
                                 req['entry'],
                                 req['action'] == 'add',
-                                req['acl'])
+                                req['acl'],
+                                netid)
     except InvalidACL:
         return jsonify({'errors': ['invalid acl']})
+    except NotUserOrOrg as e:
+        return jsonify({'errors': ['not user or org: ' + str(e)]}), 400
     return '', 204
 
 
@@ -549,7 +552,7 @@ def create_alias(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) 
     :param link_id:
     """
     # Check that netid is able to modify link_id
-    if not client.roles.has('admin', netid) and not client.links.is_owner(link_id, netid):
+    if not client.roles.has('admin', netid) and not client.links.may_edit(link_id, netid):
         abort(403)
 
     # If a custom URL is specified, check that user has power_user or admin role.

@@ -196,7 +196,12 @@ class LinksClient:
                    link_id: ObjectId,
                    entry: Dict[str, Any],
                    add: bool,
-                   acl: str):
+                   acl: str,
+                   owner: str):
+        # dont modify if they are owner
+        if entry['_id'] == owner:
+            return
+
         # make sure we don't add a dupe if they already have the perm
         operator = '$addToSet'
         if not add:
@@ -208,8 +213,11 @@ class LinksClient:
         change = {acl: entry}
 
         # editors always have view permission
-        if acl == 'editors':
-            change['viewers']: entry
+        if acl == 'editors' and add:
+            change['viewers'] = entry
+
+        if acl == 'viewers' and not add:
+            change['editors'] = entry
 
         self.db.urls.update_one({'_id': link_id},
                                 {operator: change})
@@ -376,21 +384,21 @@ class LinksClient:
 
     def may_edit(self, link_id: ObjectId, netid: str) -> bool:
         orgs = self.other_clients.orgs.get_orgs(netid, True)
-        orgs = [org['name'] for org in orgs]
+        orgs = [org['id'] for org in orgs]
         result = self.db.urls.find_one({'$or': [
             {'_id': link_id, 'netid':   netid}, # owner
-            {'_id': link_id, 'editors': netid}, # shared
-            {'_id': link_id, 'editors': {'$in': orgs}} # shared with org
+            {'_id': link_id, 'editors': {'$elemMatch': {'_id': netid}}}, # shared
+            {'_id': link_id, 'editors': {'$elemMatch': {'_id': {'$in': orgs}}}} # shared with org
         ]})
         return result is not None
 
     def may_view(self, link_id: ObjectId, netid: str) -> bool:
         orgs = self.other_clients.orgs.get_orgs(netid, True)
-        orgs = [org['name'] for org in orgs]
+        orgs = [org['id'] for org in orgs]
         result = self.db.urls.find_one({'$or': [
             {'_id': link_id, 'netid': netid}, # owner
-            {'_id': link_id, 'viewers': netid}, # shared
-            {'_id': link_id, 'viewers': {'$in': orgs}} # shared with org
+            {'_id': link_id, 'viewers': {'$elemMatch': {'_id': netid}}}, # shared
+            {'_id': link_id, 'viewers': {'$elemMatch': {'_id': {'$in': orgs}}}} # shared with org
         ]})
         return result is not None
 
