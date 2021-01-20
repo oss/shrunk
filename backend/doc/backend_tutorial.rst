@@ -20,7 +20,7 @@ First, clone the git repo to a local directory::
 Setting up Mongo
 ----------------
 
-First, install mongodb. On CentOS, this can be accomplished by following the official `instructions <https://docs.mongodb.com/manual/tutorial/install-mongodb-on-red-hat/>`__.
+First, install MongoDB. Shrunk uses MongoDB v4.x. On CentOS, this can be accomplished by following the official `instructions <https://docs.mongodb.com/manual/tutorial/install-mongodb-on-red-hat/>`__.
 
 After you have installed mongodb, start and enable it with:
 
@@ -37,7 +37,7 @@ and ``mongorestore`` it so that you have some data to work with.
 
 Setting up Configs
 ------------------
-Create your own config file (or copy ``backend/shrunk/config.py.example``) in `backend/`.
+Create your own config file (or copy ``backend/shrunk/config.py.example``) in ``backend/``. For development purposes, you'll want to set ``DEV_LOGINS = True``.
 
 Running Shrunk
 --------------
@@ -74,6 +74,18 @@ You should see a line of the form ``* Running on
 http://127.0.0.1:5000/ (Press CTRL+C to quit)``. At this point, you
 should be able to point your browser at that URL and see the Shrunk
 login page.
+
+Common Errors
+--------------
+Don't forget to import the GeoIP database.
+
+Be sure to create your own config file.
+
+Don't forget to restore a copy of the database.
+
+(for development only) If logging in leads to a blank page, the set_cookie may be blocked. Try setting the ``secure`` parameter to ``False`` in set_cookie in ``views.py``.
+
+Make sure all symlinks are working. There are two soft links, one for ``backend/shrunk/static/dist``, and one for ``frontend/dist/index.html``.
 
 Shrunk coding and style guidelines
 ----------------------------------
