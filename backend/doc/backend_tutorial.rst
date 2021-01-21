@@ -6,7 +6,7 @@ Backend development tutorial
 Setting up your Shrunk dev environment
 --------------------------------------
 
-First, clone the git repo to a local directory::
+First, clone the git repo to a local directory (via ssh)::
 
   $ git clone git@gitlab.rutgers.edu:MaCS/OSS/shrunk.git 
 
@@ -20,7 +20,7 @@ First, clone the git repo to a local directory::
 Setting up Mongo
 ----------------
 
-First, install MongoDB. Shrunk uses MongoDB v4.x. On CentOS, this can be accomplished by following the official `instructions <https://docs.mongodb.com/manual/tutorial/install-mongodb-on-red-hat/>`__.
+Now, install MongoDB. Shrunk uses MongoDB v4.x. On CentOS, this can be accomplished by following the official `instructions <https://docs.mongodb.com/manual/tutorial/install-mongodb-on-red-hat/>`__.
 
 After you have installed mongodb, start and enable it with:
 
@@ -38,6 +38,10 @@ and ``mongorestore`` it so that you have some data to work with.
 Setting up Configs
 ------------------
 Create your own config file (or copy ``backend/shrunk/config.py.example``) in ``backend/``. For development purposes, you'll want to set ``DEV_LOGINS = True``.
+
+Setting up GeoIP
+----------------
+You'll also likely have to copy the GeoLite2 file in ``backend/`` to your ``/usr/share/GeoIP`` directory.
 
 Running Shrunk
 --------------
@@ -63,8 +67,6 @@ Here's a one-liner so you don't have to type all of those separately:
 
   $ export FLASK_APP=shrunk && export FLASK_DEBUG=true && export FLASK_ENV=dev && export WERKZEUG_DEBUG_PIN=off
 
-You'll also likely have to copy the GeoLite2 file in ``backend/`` to your ``/usr/share/GeoIP`` directory.
-
 Finally, execute the app::
 
   $ cd backend
@@ -86,6 +88,8 @@ Don't forget to restore a copy of the database.
 (for development only) If logging in leads to a blank page, the set_cookie may be blocked. Try setting the ``secure`` parameter to ``False`` in set_cookie in ``views.py``.
 
 Make sure all symlinks are working. There are two soft links, one for ``backend/shrunk/static/dist``, and one for ``frontend/dist/index.html``.
+
+Make sure your MongoDB version >=4.0.
 
 Shrunk coding and style guidelines
 ----------------------------------
