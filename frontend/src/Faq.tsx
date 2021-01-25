@@ -74,7 +74,7 @@ export const Faq: React.FC = (_props) => {
             <Row>
                 <Col>
                     <h1>How can I use the organizations feature?</h1>
-                    <p>To create a new organization, navigate to the <Link to='/orgs'>Organizations </Link>
+                    <p>Only faculty and staff members are able to create a new organization. To do so, navigate to the <Link to='/orgs'>Organizations </Link>
                     page and click the &ldquo;Create an Organization&rdquo; button. You will automatically be made
                     an administrator of the newly created organization. Once the organization has been
                     created, you may navigate to its management page and use the &ldquo;Add a Member&rdquo; button

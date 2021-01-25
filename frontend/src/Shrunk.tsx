@@ -22,6 +22,7 @@ import { OrgStats } from './OrgStats';
 import { Faq } from './Faq';
 import './antd_themed.less';
 import './Shrunk.less';
+import { PendingAlerts } from './alerts/PendingAlerts';
 
 /**
  * Properties of the [[Shrunk]] component.
@@ -72,6 +73,12 @@ interface State {
      * @property
      */
     selectedKeys: Array<string>;
+
+    /**
+     * The alerts which need to be displayed to the user, in increasing order.
+     * @property
+     */
+    pendingAlerts: Array<string>;
 }
 
 /**
@@ -89,13 +96,25 @@ export class Shrunk extends React.Component<Props, State> {
             showAdminTab,
             showWhitelistTab,
             selectedKeys: ['dashboard'],
+            pendingAlerts: [],
         };
     }
 
-    componentDidMount(): void {
+    async componentDidMount(): Promise<void> {
+        await this.updatePendingAlerts();
         const history = createBrowserHistory();
         this.setSelectedKeysFromLocation(history.location);
         history.listen(({ location }) => this.setSelectedKeysFromLocation(location));
+    }
+
+    /**
+     * Fetches list of pending alerts from backend and updates state.
+     * @method
+     */
+    updatePendingAlerts = async (): Promise<void> => {
+        await fetch(`/api/v1/alert/${this.props.netid}`)
+            .then(resp => resp.json())
+            .then(json => this.setState({ pendingAlerts: json.pending_alerts as Array<string> }));
     }
 
     /**
@@ -173,6 +192,7 @@ export class Shrunk extends React.Component<Props, State> {
                                 margin: 0,
                                 minHeight: 280,
                             }}>
+                            {this.state.pendingAlerts === [] ? <></> : <PendingAlerts netid={this.props.netid} pendingAlerts={this.state.pendingAlerts} />}
                             <Switch>
                                 <Route exact path='/'>
                                     <Redirect to='/dash' />

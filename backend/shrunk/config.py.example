@@ -90,13 +90,13 @@ LDAP_BASE_DN = ""
 """Base DN for the search."""
 
 DEV_LOGINS = False
-"""allow you to ligin as certain roles for testing purposes"""
+"""allow you to login as certain roles for testing purposes"""
 
 WTF_CSRF_ENABLED = True
 """add sesion csrf protection. DISABLE FOR UNIT TESTING"""
 
 TESTING = False
-"""enables some testing utilites. nameley for protecting against accidental db drops"""
+"""enables some testing utilites. Namely for protecting against accidental db drops"""
 
 RESERVED_WORDS = []
 """Words that cannot be used as shortened URLs. Names used as routes are automatically

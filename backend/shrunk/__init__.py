@@ -17,7 +17,7 @@ from backports import datetime_fromisoformat
 # Blueprints
 from . import views
 from . import dev_logins
-from .api import link, org, role, search, admin
+from .api import link, org, role, search, admin, alert
 
 # Extensions
 from . import sso
@@ -210,6 +210,7 @@ def create_app(config_path: str = 'config.py', **kwargs: Any) -> Flask:
     app.register_blueprint(role.bp)
     app.register_blueprint(search.bp)
     app.register_blueprint(admin.bp)
+    app.register_blueprint(alert.bp)
 
     # set up extensions
     sso.ext.init_app(app)
