@@ -8,6 +8,7 @@ from typing import Any
 
 import flask
 from flask import Flask, current_app, render_template, redirect, request
+from flask.json import JSONEncoder
 from flask.logging import default_handler
 from flask_mailman import Mail
 from werkzeug.routing import BaseConverter, ValidationError
@@ -55,6 +56,15 @@ class Base32Converter(BaseConverter):
 
     def to_url(self, value: str) -> str:
         return str(base64.b32encode(bytes(value, 'utf8')), 'utf8')
+
+class ShrunkEncoder(JSONEncoder):
+    def default(self, o):
+        if isinstance(o, ObjectId):
+            return str(o)
+        if isinstance(o, datetime.datetime):
+            return o.isoformat()
+        return JSONEncoder.default(self, o)
+
 
 
 class HexTokenConverter(BaseConverter):
@@ -198,6 +208,8 @@ def create_app(config_path: str = 'config.py', **kwargs: Any) -> Flask:
     app = Flask(__name__, static_url_path='/app/static')
     app.config.from_pyfile(config_path, silent=False)
     app.config.update(kwargs)
+
+    app.json_encoder = ShrunkEncoder
 
     formatter = RequestFormatter(
         '[%(asctime)s] [%(user)s@%(remote_addr)s] [%(url)s] %(levelname)s '

@@ -42,7 +42,8 @@ class ShrunkClient:
         self.links = LinksClient(db=self.db, geoip=self.geoip,
                                  RESERVED_WORDS=RESERVED_WORDS or set(),
                                  BANNED_REGEXES=BANNED_REGEXES or [],
-                                 REDIRECT_CHECK_TIMEOUT=REDIRECT_CHECK_TIMEOUT or 0.5)
+                                 REDIRECT_CHECK_TIMEOUT=REDIRECT_CHECK_TIMEOUT or 0.5,
+                                 other_clients=self)
         self.roles = RolesClient(db=self.db)
         self.tracking = TrackingClient(db=self.db)
         self.orgs = OrgsClient(db=self.db)

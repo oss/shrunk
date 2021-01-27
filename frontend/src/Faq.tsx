@@ -85,6 +85,12 @@ export const Faq: React.FC = (_props) => {
                     select the organization whose links you would like to view.</p>
                 </Col>
             </Row>
+                      <Row>
+                <Col>
+                  <h1>What access does somone have when I make them a viewer or editor?</h1>
+                  <img src="/app/static/img/friendly_permissions.png" />
+                </Col>
+            </Row>
         </div >
     );
 }
