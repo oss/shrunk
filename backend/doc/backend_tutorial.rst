@@ -6,7 +6,7 @@ Backend development tutorial
 Setting up your Shrunk dev environment
 --------------------------------------
 
-First, clone the git repo to a local directory::
+First, clone the git repo to a local directory (via ssh)::
 
   $ git clone git@gitlab.rutgers.edu:MaCS/OSS/shrunk.git 
 
@@ -20,7 +20,7 @@ First, clone the git repo to a local directory::
 Setting up Mongo
 ----------------
 
-First, install mongodb. On CentOS, this can be accomplished by following the official `instructions <https://docs.mongodb.com/manual/tutorial/install-mongodb-on-red-hat/>`__.
+Now, install MongoDB. Shrunk uses MongoDB v4.x. On CentOS, this can be accomplished by following the official `instructions <https://docs.mongodb.com/manual/tutorial/install-mongodb-on-red-hat/>`__.
 
 After you have installed mongodb, start and enable it with:
 
@@ -35,6 +35,14 @@ You should now check that mongodb is running. You can do this by executing the m
 If you get a prompt, everything is good. Now you can go ask someone for a dump of the Shrunk database
 and ``mongorestore`` it so that you have some data to work with.
 
+Setting up Configs
+------------------
+Create your own config file (or copy ``backend/shrunk/config.py.example``) in ``backend/``. For development purposes, you'll want to set ``DEV_LOGINS = True``.
+
+Setting up GeoIP
+----------------
+You'll also likely have to copy the GeoLite2 file in ``backend/`` to your ``/usr/share/GeoIP`` directory.
+
 Running Shrunk
 --------------
 
@@ -48,14 +56,18 @@ Running Shrunk
 
 To run Shrunk for development, you should execute the ``flask run``
 command from the ``backend`` directory in the repo. Before executing this command,
-you need to set up a few environment variables::
+you need to set up a few environment variables. Note that you'll need to export these variables every time you open up a new shell::
 
   $ export FLASK_APP=shrunk
   $ export FLASK_DEBUG=true
   $ export FLASK_ENV=dev
   $ export WERKZEUG_DEBUG_PIN=off
 
-and then execute the app::
+Here's a one-liner so you don't have to type all of those separately:
+
+  $ export FLASK_APP=shrunk && export FLASK_DEBUG=true && export FLASK_ENV=dev && export WERKZEUG_DEBUG_PIN=off
+
+Finally, execute the app::
 
   $ cd backend
   $ flask run
@@ -64,6 +76,20 @@ You should see a line of the form ``* Running on
 http://127.0.0.1:5000/ (Press CTRL+C to quit)``. At this point, you
 should be able to point your browser at that URL and see the Shrunk
 login page.
+
+Common Errors
+--------------
+Don't forget to import the GeoIP database.
+
+Be sure to create your own config file.
+
+Don't forget to restore a copy of the database.
+
+(for development only) If logging in leads to a blank page, the set_cookie may be blocked. Try setting the ``secure`` parameter to ``False`` in set_cookie in ``views.py``.
+
+Make sure all symlinks are working. There are two soft links, one for ``backend/shrunk/static/dist``, and one for ``frontend/dist/index.html``.
+
+Make sure your MongoDB version >=4.0.
 
 Shrunk coding and style guidelines
 ----------------------------------

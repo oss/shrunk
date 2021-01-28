@@ -18,7 +18,7 @@
 # -- Project information -----------------------------------------------------
 
 author = 'Open System Solutions'
-copyright = f'2020, {author}'
+copyright = f'2021, {author}'
 
 
 # -- General configuration ---------------------------------------------------

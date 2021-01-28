@@ -40,7 +40,7 @@ def index() -> Any:
     shrunk_params = str(base64.b64encode(bytes(shrunk_params, 'utf8')), 'utf8')
 
     resp = make_response(render_template('index.html'))
-    resp.set_cookie('shrunk_params', shrunk_params, secure=True, samesite='Strict')
+    resp.set_cookie('shrunk_params', shrunk_params, secure=True, samesite='Strict') # set secure=False for development
     return resp
 
 
