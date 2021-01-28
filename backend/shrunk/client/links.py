@@ -405,9 +405,6 @@ class LinksClient:
         ]})
         return result is not None
 
-    def may_edit(self, _link_id: ObjectId, _netid: str) -> bool:
-        return False  # TODO: merge with Mickey's codoe
-
     def get_admin_stats(self) -> Any:
         """Get some basic overall stats about Shrunk
         """
