@@ -3,22 +3,28 @@ from datetime import datetime, timezone
 import random
 import string
 import re
+import secrets
 from typing import Optional, List, Set, Any, Dict, cast
 
-from flask import current_app
+from flask import current_app, url_for
+from flask_mailman import Mail
 import requests
 import pymongo
 from pymongo.collection import ReturnDocument
 from pymongo.results import UpdateResult
 from bson.objectid import ObjectId
 
+from shrunk.util.ldap import query_given_name
 from shrunk.util.string import get_domain
+from shrunk.util.ldap import is_valid_netid
 from . import aggregations
 
 from .geoip import GeoipClient
 from .exceptions import (NoSuchObjectException,
                          BadAliasException,
-                         BadLongURLException)
+                         BadLongURLException,
+                         InvalidACL,
+                         NotUserOrOrg)
 
 __all__ = ['LinksClient']
 
@@ -50,12 +56,14 @@ class LinksClient:
                  geoip: GeoipClient,
                  RESERVED_WORDS: Set[str],
                  BANNED_REGEXES: List[str],
-                 REDIRECT_CHECK_TIMEOUT: float):
+                 REDIRECT_CHECK_TIMEOUT: float,
+                 other_clients: Any):
         self.db = db
         self.geoip = geoip
         self.reserved_words = RESERVED_WORDS
         self.banned_regexes = [re.compile(regex, re.IGNORECASE) for regex in BANNED_REGEXES]
         self.redirect_check_timeout = REDIRECT_CHECK_TIMEOUT
+        self.other_clients = other_clients
 
     def alias_is_reserved(self, alias: str) -> bool:
         """Check whether a string is a reserved word that cannot be used as a short url.
@@ -106,12 +114,24 @@ class LinksClient:
                long_url: str,
                expiration_time: Optional[datetime],
                netid: str,
-               creator_ip: str) -> ObjectId:
+               creator_ip: str,
+               viewers: List[Dict[str, Any]]=None,
+               editors: List[Dict[str, Any]]=None) -> ObjectId:
+        if viewers is None:
+            viewers = []
+        if editors is None:
+            editors = []
         if self.long_url_is_blocked(long_url):
             raise BadLongURLException
 
         if self.redirects_to_blocked_url(long_url):
             raise BadLongURLException
+
+        for acl in ['viewers', 'editors']:
+            members = {'viewers': viewers, 'editors': editors}[acl]
+            for member in members:
+                self.assert_valid_acl_entry(acl, member)
+
 
         document = {
             'title': title,
@@ -124,6 +144,8 @@ class LinksClient:
             'expiration_time': expiration_time,
             'netid': netid,
             'aliases': [],
+            'viewers': viewers,
+            'editors': editors,
         }
 
         result = self.db.urls.insert_one(document)
@@ -165,6 +187,43 @@ class LinksClient:
         result = self.db.urls.update_one({'_id': link_id}, update)
         if result.matched_count != 1:
             raise NoSuchObjectException
+
+    def assert_valid_acl_entry(self, acl, entry):
+        target = entry['_id']
+        mtype = entry['type']
+        if (mtype == 'user' and not is_valid_netid(target)) or \
+           (mtype == 'org'  and not self.other_clients.orgs.get_org(target)):
+            raise NotUserOrOrg(f'{target} is not a valid {mtype}. can\'t addto {acl}')
+
+    def modify_acl(self,
+                   link_id: ObjectId,
+                   entry: Dict[str, Any],
+                   add: bool,
+                   acl: str,
+                   owner: str):
+        # dont modify if they are owner
+        if entry['_id'] == owner:
+            return
+
+        # make sure we don't add a dupe if they already have the perm
+        operator = '$addToSet'
+        if not add:
+            operator = '$pull'
+        acls = ['editors', 'viewers']
+        if acl not in acls:
+            raise InvalidACL('acl to modify must be in ' + str(acls))
+        self.assert_valid_acl_entry(acl, entry)
+        change = {acl: entry}
+
+        # editors always have view permission
+        if acl == 'editors' and add:
+            change['viewers'] = entry
+
+        if acl == 'viewers' and not add:
+            change['editors'] = entry
+
+        self.db.urls.update_one({'_id': link_id},
+                                {operator: change})
 
     def clear_visits(self, link_id: ObjectId) -> None:
         self.db.visits.delete_many({'link_id': link_id})
@@ -326,26 +385,25 @@ class LinksClient:
         result = self.db.urls.find_one({'_id': link_id, 'netid': netid})
         return result is not None
 
+    def may_edit(self, link_id: ObjectId, netid: str) -> bool:
+        orgs = self.other_clients.orgs.get_orgs(netid, True)
+        orgs = [org['id'] for org in orgs]
+        result = self.db.urls.find_one({'$or': [
+            {'_id': link_id, 'netid':   netid}, # owner
+            {'_id': link_id, 'editors': {'$elemMatch': {'_id': netid}}}, # shared
+            {'_id': link_id, 'editors': {'$elemMatch': {'_id': {'$in': orgs}}}} # shared with org
+        ]})
+        return result is not None
+
     def may_view(self, link_id: ObjectId, netid: str) -> bool:
-        # First check if the user owns the link
-        if self.is_owner(link_id, netid):
-            return True
-
-        # Otherwise, check if the user and the link's owner share any organizations.
-        owner_netid = self.get_owner(link_id)
-
-        def match_netid(netid: str) -> Any:
-            return [{'$match': {'members.netid': netid}}, {'$project': {'_id': 0, 'name': 1}}]
-
-        result = next(self.db.organizations.aggregate([
-            {'$facet': {
-                'owner_orgs': match_netid(owner_netid),
-                'viewer_orgs': match_netid(netid),
-            }},
-            {'$project': {'intersection': {'$setIntersection': ['$owner_orgs', '$viewer_orgs']}}},
-            {'$project': {'owner_orgs': 0, 'viewer_orgs': 0}},
-        ]))
-        return len(result['intersection']) != 0 if result is not None else False
+        orgs = self.other_clients.orgs.get_orgs(netid, True)
+        orgs = [org['id'] for org in orgs]
+        result = self.db.urls.find_one({'$or': [
+            {'_id': link_id, 'netid': netid}, # owner
+            {'_id': link_id, 'viewers': {'$elemMatch': {'_id': netid}}}, # shared
+            {'_id': link_id, 'viewers': {'$elemMatch': {'_id': {'$in': orgs}}}} # shared with org
+        ]})
+        return result is not None
 
     def get_admin_stats(self) -> Any:
         """Get some basic overall stats about Shrunk
@@ -482,7 +540,7 @@ class LinksClient:
         res = self.db.visitors.find_one_and_update(rec, {'$setOnInsert': {'ip': str(ipaddr)}},
                                                    upsert=True,
                                                    return_document=ReturnDocument.AFTER)
-        return str(res['_id'])
+        return res['_id']
 
     def blacklist_user_links(self, netid: str) -> UpdateResult:
         return self.db.urls.update_many({'netid': netid,
@@ -513,6 +571,164 @@ class LinksClient:
                                  {'$set': {'deleted': False},
                                   '$unset': {'deleted_by': 1,
                                              'deleted_time': 1}})
+
+    def request_edit_access(self, mail: Mail, link_id: ObjectId, requesting_netid: str) -> None:
+        token = secrets.token_bytes(16)
+        self.db.access_requests.insert_one({
+            'token': token,
+            'link_id': link_id,
+            'requesting_netid': requesting_netid,
+            'state': 'pending',
+            'created_at': datetime.now(timezone.utc),
+            'resolved_at': None,
+        })
+
+        link_info = self.get_link_info(link_id)
+
+        owner_netid: str = link_info['netid']
+        owner_given_name = query_given_name(owner_netid)
+        accept_url = url_for('shrunk.accept_access_request', token=token, _external=True)
+        deny_url = url_for('shrunk.deny_access_request', token=token, _external=True)
+
+        plaintext_message = f"""Dear {owner_given_name},
+
+You are recieving this message because the user {requesting_netid} has requested
+access to edit your link "{link_info['title']}".
+
+You may follow the following link to accept the request:
+    {accept_url}
+
+or the following link to deny the request:
+    {deny_url}
+
+Please do not reply to this email. You may direct any questions to oss@oss.rutgers.edu.
+"""
+
+        html_message = f"""
+<!DOCTYPE html>
+<html lang="en-US">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <style>
+            * {{
+                font-family: Arial, sans-serif;
+            }}
+
+            .requesting-user {{
+                font-weight: bold;
+            }}
+
+            .btn {{
+                display: block;
+                padding: 10px;
+                width: 200px;
+                text-align: center;
+                color: white;
+                font-weight: bold;
+                text-decoration: none;
+                border-radius: 3px;
+                transition: background-color 0.3s ease-in-out;
+            }}
+
+            .btn.accept {{
+                background-color: #139702;
+            }}
+
+            .btn.deny {{
+                background-color: #cc0033;
+            }}
+
+            .btn.accept:hover {{
+                background-color: #18df02;
+            }}
+
+            .btn.deny:hover {{
+                background-color: #ff0040;
+            }}
+
+            .btn:last-of-type {{
+                margin-top: 7px;
+            }}
+        </style>
+    </head>
+    <body>
+        <p>Dear {owner_netid},</p>
+
+        <p>You are recieving this message because the user <span class="requesting-user">{requesting_netid}</span>
+        has requested access to edit your link &ldquo;{link_info['title']}&rdquo;. Please use the buttons
+        below to accept or deny the request.</p>
+
+        <div>
+            <a class="btn accept" href="{accept_url}">Accept request</a>
+            <a class="btn deny" href="{deny_url}">Deny request</a>
+        </div>
+
+        <p>Please do not reply to this email. You may direct any questions to
+        <a href="mailto:oss@oss.rutgers.edu">oss@oss.rutgers.edu</a>.</p>
+    </body>
+</html>
+"""
+
+        mail.send_mail(
+            subject=f'{requesting_netid} is requesting edit access to "{link_info["title"]}"',
+            body=plaintext_message,
+            html_message=html_message,
+            from_email='noreply@go.rutgers.edu',
+            recipient_list=[f'{owner_netid}@rutgers.edu'],
+        )
+
+    def check_access_request_permission(self, token: bytes, netid: str) -> bool:
+        request = self.db.access_requests.find_one({'token': token})
+        if request is None:
+            raise NoSuchObjectException
+        link_info = self.get_link_info(request['link_id'])
+        return cast(bool, link_info['netid'] == netid and request['state'] == 'pending')
+
+    def accept_access_request(self, token: bytes) -> None:
+        request = self.db.access_requests.find_one({'token': token})
+        if request is None:
+            raise NoSuchObjectException
+        if request['state'] != 'pending':
+            return
+        user = {
+            '_id': request['requesting_netid'],
+            'type': 'netid',
+        }
+        self.db.urls.update_one({'_id': request['link_id']},
+                                {'$addToSet': {'viewers': user, 'editors': user}})
+        self.db.access_requests.update_one(
+            {'token': request['token']},
+            {'$set': {
+                'state': 'accepted',
+                'resolved_at': datetime.now(timezone.utc),
+            }})
+
+    def deny_access_request(self, token: bytes) -> None:
+        request = self.db.access_requests.find_one({'token': token})
+        if request is None:
+            raise NoSuchObjectException
+        if request['state'] != 'pending':
+            return
+        self.db.access_requests.update_one(
+            {'token': request['token']},
+            {'$set': {
+                'state': 'denied',
+                'resolved_at': datetime.now(timezone.utc),
+            }})
+
+    def get_pending_access_requests(self, netid: str) -> List[Any]:
+        return list(self.db.urls.aggregate([
+            {'$match': {'netid': netid}},
+            {'$lookup': {
+                'from': 'access_requests',
+                'localField': '_id',
+                'foreignField': 'link_id',
+                'as': 'request',
+            }},
+            {'$unwind': '$request'},
+            {'$match': {'request.state': 'pending'}},
+        ]))
 
     @classmethod
     def _generate_unique_key(cls) -> str:

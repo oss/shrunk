@@ -42,11 +42,12 @@ class ShrunkClient:
         self.links = LinksClient(db=self.db, geoip=self.geoip,
                                  RESERVED_WORDS=RESERVED_WORDS or set(),
                                  BANNED_REGEXES=BANNED_REGEXES or [],
-                                 REDIRECT_CHECK_TIMEOUT=REDIRECT_CHECK_TIMEOUT or 0.5)
+                                 REDIRECT_CHECK_TIMEOUT=REDIRECT_CHECK_TIMEOUT or 0.5,
+                                 other_clients=self)
         self.roles = RolesClient(db=self.db)
         self.tracking = TrackingClient(db=self.db)
         self.orgs = OrgsClient(db=self.db)
-        self.search = SearchClient(db=self.db)
+        self.search = SearchClient(db=self.db, client=self)
         self.alerts = AlertsClient(db=self.db)
 
     def _ensure_indexes(self) -> None:
@@ -62,6 +63,7 @@ class ShrunkClient:
         self.db.organizations.create_index([('name', pymongo.ASCENDING)], unique=True)
         self.db.organizations.create_index([('members.name', pymongo.ASCENDING),
                                             ('members.netid', pymongo.ASCENDING)])
+        self.db.access_requests.create_index([('token', pymongo.ASCENDING)], unique=True)
 
     def user_exists(self, netid: str) -> bool:
         """Check whether there exist any links belonging to a user.

@@ -65,7 +65,7 @@ export const Faq: React.FC = (_props) => {
             <Row>
                 <Col>
                     <h1>What is the organizations feature?</h1>
-                    <p>The organizations feature allows a group of users to view each other&rsquo;s links.
+                    <p>The organizations feature is a collaborative tool allows a group of users to view each other&rsquo;s links.
                     For example, users working together on a project may want to be able to see
                     each other&rsquo;s links.</p>
                 </Col>
@@ -83,6 +83,12 @@ export const Faq: React.FC = (_props) => {
                     <p>To view the links created by members of an organization,
                     click the &ldquo;My Links&rdquo; dropdown next to the search bar, and
                     select the organization whose links you would like to view.</p>
+                </Col>
+            </Row>
+                      <Row>
+                <Col>
+                  <h1>What access does somone have when I make them a viewer or editor?</h1>
+                  <img src="/app/static/img/friendly_permissions.png" />
                 </Col>
             </Row>
         </div >

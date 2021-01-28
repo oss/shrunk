@@ -1,9 +1,19 @@
+/**
+ * Implements the [[Orgsv2AlertNewUser]] and [[Orgsv2AlertCurrentUser]] components.
+ * @packageDocumentation
+ */
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 
 import { Alert } from './PendingAlerts';
 
+/**
+ * Alert regarding Orgsv2 shown to a user who is _not_ yet a member of any organizations.
+ * @param props The props
+ */
 const NewUser: React.FC<{ closePopup: () => Promise<void> }> = (props) => {
+    // TODO fill this out once all the Orgsv2 features are finalized
     return (
         <>
             <p>Put some explanation here</p>
@@ -17,7 +27,12 @@ export const Orgsv2AlertNewUser: Alert = {
     body: NewUser,
 };
 
+/**
+ * Alert regarding Orgsv2 shown to a user who _is_ a member of some organization.
+ * @param props The props
+ */
 const CurrentUser: React.FC<{ closePopup: () => Promise<void> }> = (props) => {
+    // TODO fill this out once all the Orgsv2 features are finalized
     return (
         <>
             You can now

@@ -148,7 +148,8 @@ disable=print-statement,
         too-few-public-methods,
         too-many-instance-attributes,
         too-many-public-methods,
-        duplicate-code
+        duplicate-code,
+        unsubscriptable-object # pylint has a bug with Python 3.9 where it complains about e.g. Option[T]
         
 
 # Enable the message, report, category or checker with the given id(s). You can

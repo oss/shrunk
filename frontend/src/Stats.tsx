@@ -164,6 +164,12 @@ interface State {
      * @property
      */
     browserStats: BrowserStats | null;
+
+    /**
+     * Whether the user may edit the link
+     * @property
+     */
+    mayEdit: boolean | null;
 }
 
 /**
@@ -326,6 +332,7 @@ export class Stats extends React.Component<Props, State> {
             visitStats: null,
             geoipStats: null,
             browserStats: null,
+            mayEdit: null,
         };
     }
 
@@ -358,6 +365,7 @@ export class Stats extends React.Component<Props, State> {
         this.setState({
             allAliases: aliases,
             selectedAlias: null,
+            mayEdit: linkInfo.may_edit,
         });
     }
 
@@ -430,15 +438,16 @@ export class Stats extends React.Component<Props, State> {
                     </Col>
 
                     <Col span={8} className='btn-col'>
-                        <Popconfirm
-                            placement='bottom'
-                            title='Are you sure you want to clear all visit data associated with this link? This operation cannot be undone.'
-                            onConfirm={this.clearVisitData}
-                            icon={<ExclamationCircleFilled style={{ color: 'red' }} />}>
-                            <Button danger>
-                                <CloseOutlined /> Clear visit data
+                        {!this.state.mayEdit ? <></> :
+                            <Popconfirm
+                                placement='bottom'
+                                title='Are you sure you want to clear all visit data associated with this link? This operation cannot be undone.'
+                                onConfirm={this.clearVisitData}
+                                icon={<ExclamationCircleFilled style={{ color: 'red' }} />}>
+                                <Button danger>
+                                    <CloseOutlined /> Clear visit data
                             </Button>
-                        </Popconfirm>
+                            </Popconfirm>}
 
                         <Button onClick={this.downloadCsv}>
                             <DownloadOutlined /> Download visits as CSV

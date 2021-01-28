@@ -3,11 +3,15 @@
 import logging
 import base64
 import binascii
+import codecs
+import datetime
 from typing import Any
 
 import flask
 from flask import Flask, current_app, render_template, redirect, request
+from flask.json import JSONEncoder
 from flask.logging import default_handler
+from flask_mailman import Mail
 from werkzeug.routing import BaseConverter, ValidationError
 from werkzeug.middleware.proxy_fix import ProxyFix
 from bson import ObjectId
@@ -17,7 +21,7 @@ from backports import datetime_fromisoformat
 # Blueprints
 from . import views
 from . import dev_logins
-from .api import link, org, role, search, admin, alert
+from . import api
 
 # Extensions
 from . import sso
@@ -53,6 +57,29 @@ class Base32Converter(BaseConverter):
 
     def to_url(self, value: str) -> str:
         return str(base64.b32encode(bytes(value, 'utf8')), 'utf8')
+
+class ShrunkEncoder(JSONEncoder):
+    def default(self, o):
+        if isinstance(o, ObjectId):
+            return str(o)
+        if isinstance(o, datetime.datetime):
+            return o.isoformat()
+        return JSONEncoder.default(self, o)
+
+
+
+class HexTokenConverter(BaseConverter):
+    def to_python(self, value: str) -> bytes:
+        try:
+            token = codecs.decode(bytes(value, 'utf8'), encoding='hex')
+        except binascii.Error as e:
+            raise ValidationError from e
+        if len(token) != 16:
+            raise ValidationError('Token should be 16 bytes in length')
+        return token
+
+    def to_url(self, value: bytes) -> str:
+        return str(codecs.encode(value, encoding='hex'), 'utf8')
 
 
 class RequestFormatter(logging.Formatter):
@@ -183,6 +210,8 @@ def create_app(config_path: str = 'config.py', **kwargs: Any) -> Flask:
     app.config.from_pyfile(config_path, silent=False)
     app.config.update(kwargs)
 
+    app.json_encoder = ShrunkEncoder
+
     formatter = RequestFormatter(
         '[%(asctime)s] [%(user)s@%(remote_addr)s] [%(url)s] %(levelname)s '
         + 'in %(module)s: %(message)s',
@@ -192,6 +221,7 @@ def create_app(config_path: str = 'config.py', **kwargs: Any) -> Flask:
     # install url converters
     app.url_map.converters['ObjectId'] = ObjectIdConverter
     app.url_map.converters['b32'] = Base32Converter
+    app.url_map.converters['hex_token'] = HexTokenConverter
 
     # call initialization functions
     app.before_first_request(_init_logging)
@@ -205,14 +235,18 @@ def create_app(config_path: str = 'config.py', **kwargs: Any) -> Flask:
     app.register_blueprint(views.bp)
     if app.config.get('DEV_LOGINS', False) is True:
         app.register_blueprint(dev_logins.bp)
-    app.register_blueprint(link.bp)
-    app.register_blueprint(org.bp)
-    app.register_blueprint(role.bp)
-    app.register_blueprint(search.bp)
-    app.register_blueprint(admin.bp)
-    app.register_blueprint(alert.bp)
+    app.register_blueprint(api.link.bp)
+    app.register_blueprint(api.org.bp)
+    app.register_blueprint(api.role.bp)
+    app.register_blueprint(api.search.bp)
+    app.register_blueprint(api.admin.bp)
+    app.register_blueprint(api.alert.bp)
+    app.register_blueprint(api.request.bp)
 
     # set up extensions
+    mail = Mail()
+    mail.init_app(app)
+    app.mail = mail
     sso.ext.init_app(app)
 
     # redirect / to /app
