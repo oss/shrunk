@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Any, Optional, Dict
 
 from flask import Blueprint, jsonify, request
+from flask_mailman import Mail
 from bson import ObjectId
 import bson
 from werkzeug.exceptions import abort
@@ -16,7 +17,7 @@ from shrunk.client.exceptions import (BadLongURLException,
                                       NotUserOrOrg)
 from shrunk.util.stats import get_human_readable_referer_domain, browser_stats_from_visits
 from shrunk.util.ldap import is_valid_netid
-from shrunk.util.decorators import require_login, request_schema
+from shrunk.util.decorators import require_login, require_mail, request_schema
 
 __all__ = ['bp']
 
@@ -357,6 +358,20 @@ def post_clear_visits(netid: str, client: ShrunkClient, link_id: ObjectId) -> An
     if not client.roles.has('admin', netid) and not client.links.is_owner(link_id, netid):
         abort(403)
     client.links.clear_visits(link_id)
+    return '', 204
+
+
+@bp.route('/<ObjectId:link_id>/request_edit_access', methods=['POST'])
+@require_mail
+@require_login
+def post_request_edit(netid: str, client: ShrunkClient, mail: Mail, link_id: ObjectId) -> Any:
+    try:
+        client.links.get_link_info(link_id)
+    except NoSuchObjectException:
+        abort(404)
+    if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
+        abort(403)
+    client.links.request_edit_access(mail, link_id, netid)
     return '', 204
 
 

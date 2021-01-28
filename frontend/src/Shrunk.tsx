@@ -23,6 +23,7 @@ import { Faq } from './Faq';
 import './antd_themed.less';
 import './Shrunk.less';
 import { PendingAlerts } from './alerts/PendingAlerts';
+import { PendingRequests } from './PendingRequests';
 
 /**
  * Properties of the [[Shrunk]] component.
@@ -193,6 +194,7 @@ export class Shrunk extends React.Component<Props, State> {
                                 minHeight: 280,
                             }}>
                             {this.state.pendingAlerts === [] ? <></> : <PendingAlerts netid={this.props.netid} pendingAlerts={this.state.pendingAlerts} />}
+                            <PendingRequests />
                             <Switch>
                                 <Route exact path='/'>
                                     <Redirect to='/dash' />

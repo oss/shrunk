@@ -34,7 +34,10 @@ pylint:
   needs: []
   script:
     - python -V
-    - pip install pylint pylint_flask pylint_junit
+    - apt-get update
+    - apt-get install -y gcc libldap-common libldap2-dev libsasl2-dev
+    - pip install pylint pylint_flask pylint_junit pytest
+    - pip install -r backend/requirements.txt
     - pylint --exit-zero --output-format=junit backend/shrunk backend/tests/*.py > pylint.xml
   artifacts:
     reports:
