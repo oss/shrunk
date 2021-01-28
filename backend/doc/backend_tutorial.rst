@@ -148,16 +148,20 @@ Regardless, make sure your code passes linting before merging it into ``master``
 It can complain about tons of stuff, including code-style and correctness issues.
 You can run ``pylint`` on the shrunk codebase with::
 
-  $ pylint ./shrunk
+  $ pylint ./backend
+
+If you don't have the ``pylint`` package installed, try:
+
+  $ python -m pylint backend/
 
 ``flake8``
 ~~~~~~~~~~
 
 `flake8 <https://pypi.org/project/flake8/>`__ is a style-checker for python code.
-It has some overlap with ``pylint``, but is generally much less verbose and consequentally
+It has some overlap with ``pylint``, but is much less verbose and consequentally
 less annoying. You can run ``flake8`` on the shrunk codebase with::
 
-  $ flake8 ./shrunk
+  $ flake8 backend/
 
 ``mypy``
 ~~~~~~~~
@@ -166,7 +170,7 @@ less annoying. You can run ``flake8`` on the shrunk codebase with::
 we use to check our :ref:`python-type-annotations`. You can run ``mypy`` on the shrunk
 codebase with::
 
-  $ mypy ./shrunk
+  $ mypy backend/
 
 Unit testing
 ------------
@@ -177,22 +181,13 @@ we try to keep unit test coverage at around 90% or better. Whenever
 you add or modify functionality, you should extend or update the unit
 tests as appropriate.
 
-To run the unit tests, you should first install the shrunk package in
-`editable mode
-<https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`__
-by executing the following command from the root of the git repository
-(with your virtual environment active!)::
+You can run a particular unit test file by simply executing (from inside ``backend/``)::
 
-  $ pip install -e .
+  $ python -m pytest tests/test_X.py
 
-After you've installed shrunk in editable mode, you can run a
-particular unit test file by simply executing::
+To run all the tests, you can use (from inside ``backend/``)::
 
-  $ pytest tests/test_X.py
-
-To run all the tests, you can use::
-
-  $ pytest
+  $ python -m pytest
 
 Some of the tests can take a long time to complete. To ignore these
 tests, you can pass the ``-m 'not slow'`` option on the pytest command
