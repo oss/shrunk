@@ -1,8 +1,9 @@
 """This module contains basic endpoints."""
 
+import base64
 from typing import Any
 import json
-import base64
+import os
 
 from flask import (Blueprint,
                    redirect,
@@ -39,8 +40,10 @@ def index() -> Any:
     })
     shrunk_params = str(base64.b64encode(bytes(shrunk_params, 'utf8')), 'utf8')
 
+    secure_cookie=True if os.environ["FLASK_ENV"] == "prod" else False # True if prod, False if dev
+
     resp = make_response(render_template('index.html'))
-    resp.set_cookie('shrunk_params', shrunk_params, secure=True, samesite='Strict') # set secure=False for development
+    resp.set_cookie('shrunk_params', shrunk_params, secure=secure_cookie, samesite='Strict')
     return resp
 
 
