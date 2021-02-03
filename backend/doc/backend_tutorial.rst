@@ -35,6 +35,12 @@ You should now check that mongodb is running. You can do this by executing the m
 If you get a prompt, everything is good. Now you can go ask someone for a dump of the Shrunk database
 and ``mongorestore`` it so that you have some data to work with.
 
+After running mongorestore, you'll have to update the database since the data format was changed. So inside ``backend/``, if you have ``npx`` installed, run:
+
+  $ npx migrate-mongo up
+
+And you should be good to go!
+
 Setting up Configs
 ------------------
 Create your own config file (or copy ``backend/shrunk/config.py.example``) in ``backend/``. For development purposes, you'll want to set ``DEV_LOGINS = True``.
