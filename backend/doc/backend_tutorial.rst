@@ -87,6 +87,8 @@ Common Errors
 --------------
 Don't forget to import the GeoIP database.
 
+(Note for MacOs users: After the Catalina update, you can no longer write to root directory using command line (meaning you cannot mkdir /usr/share/GeoIp). Instead you can go to config.py and set GEOLITE_PATH to where the GeoLite2-City.mmdb is currently located on your local computer.)
+
 Be sure to create your own config file.
 
 Don't forget to restore a copy of the database.
