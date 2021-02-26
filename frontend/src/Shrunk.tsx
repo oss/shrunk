@@ -19,18 +19,22 @@ const { SubMenu } = Menu;
 const { Header, Content, Footer, Sider } = Layout;
 
 import { Dashboard } from "./pages/Dashboard";
-import { Stats } from "./Stats";
 import { Admin } from "./pages/Admin";
+import { Orgs } from "./pages/Orgs";
+import { Faq } from "./pages/Faq";
+
+import { Stats } from "./pages/subpages/Stats";
 import { AdminStats } from "./admin/AdminStats";
 import { Role } from "./admin/Role";
-import { Orgs } from "./Orgs";
-import { ManageOrg } from "./ManageOrg";
-import { OrgStats } from "./OrgStats";
-import { Faq } from "./pages/Faq";
+import { ManageOrg } from "./pages/subpages/ManageOrg";
+import { OrgStats } from "./pages/subpages/OrgStats";
+
+import { PendingAlerts } from "./alerts/PendingAlerts";
+import { PendingRequests } from "./components/PendingRequests";
+import { CreateLinkForm } from "./components/CreateLinkForm";
+
 import "./antd_themed.less";
 import "./Shrunk.less";
-import { PendingAlerts } from "./alerts/PendingAlerts";
-import { PendingRequests } from "./PendingRequests";
 
 /**
  * Properties of the [[Shrunk]] component.
@@ -138,7 +142,11 @@ export class Shrunk extends React.Component<Props, State> {
   setSelectedKeysFromLocation = (location: Location): void => {
     const route = location.hash;
     let key: string | null = null;
-    if (route.startsWith("#/dash") || route.startsWith("#/stats")) {
+    if (
+      route.startsWith("#/dash") ||
+      route.startsWith("#/stats") ||
+      route.startsWith("#/create")
+    ) {
       key = "dash";
     } else if (route.startsWith("#/orgs")) {
       key = "orgs";
@@ -292,6 +300,15 @@ export class Shrunk extends React.Component<Props, State> {
                     />
                   )}
                 />
+
+                {/* <Route exact path="/create">
+                  <CreateLinkForm
+                    userPrivileges={this.props.userPrivileges}
+                    onFinish={() => {
+                      history.
+                    }}
+                  />
+                </Route> */}
 
                 {!this.state.showAdminTab ? (
                   <></>

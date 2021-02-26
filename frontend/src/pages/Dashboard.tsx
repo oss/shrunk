@@ -4,16 +4,17 @@
  */
 
 import React from "react";
+import { Link } from "react-router-dom";
 import { Row, Col, Pagination, Spin, Dropdown, Button } from "antd";
 import { PlusCircleFilled } from "@ant-design/icons";
 
 import { listOrgs, OrgInfo } from "../api/Org";
-import { SearchQuery, SearchBox } from "../SearchBox";
-import { LinkRow } from "../LinkRow";
-import { LinkInfo } from "../LinkInfo";
-import { QrCodeModal } from "../QrCode";
-import { EditLinkModal, EditLinkFormValues } from "../EditLinkModal";
-import { CreateLinkForm } from "../CreateLinkForm";
+import { SearchQuery, SearchBox } from "../components/SearchBox";
+import { LinkRow } from "../components/LinkRow";
+import { LinkInfo } from "../components/LinkInfo";
+import { QrCodeModal } from "../components/QrCode";
+import { EditLinkModal, EditLinkFormValues } from "../components/EditLinkModal";
+import { CreateLinkForm } from "../components/CreateLinkForm";
 
 import "./Dashboard.less";
 
@@ -443,7 +444,7 @@ export class Dashboard extends React.Component<Props, State> {
           </Col>
 
           <Col span={4} className="btn-col">
-            <Dropdown
+            {/* <Dropdown
               overlay={
                 <CreateLinkForm
                   userPrivileges={this.props.userPrivileges}
@@ -459,11 +460,13 @@ export class Dashboard extends React.Component<Props, State> {
               }
               placement="bottomRight"
               trigger={["click"]}
-            >
-              <Button type="primary">
+            > */}
+            <Button type="primary">
+              <Link to="/create">
                 <PlusCircleFilled /> Shrink a Link
-              </Button>
-            </Dropdown>
+              </Link>
+            </Button>
+            {/* </Dropdown> */}
           </Col>
         </Row>
 
