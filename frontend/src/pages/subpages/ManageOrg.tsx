@@ -25,15 +25,14 @@ import {
   UpOutlined,
   DownOutlined,
 } from "@ant-design/icons";
-import { RouteComponentProps } from "react-router";
-import { Link, withRouter } from "react-router-dom";
+import { Link, RouteComponentProps, withRouter } from "react-router-dom";
 import moment from "moment";
 
 import { MemberInfo, OrgInfo, getOrgInfo } from "../../api/Org";
 import { OrgAdminTag } from "./OrgCommon";
 import "../../Base.less";
 import "./ManageOrg.less";
-import { serverValidateNetId } from "../../components/Validators";
+import { serverValidateNetId } from "../../Validators";
 
 /**
  * Props for the [[ManageOrg]] component

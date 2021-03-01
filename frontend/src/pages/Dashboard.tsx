@@ -14,7 +14,7 @@ import { LinkRow } from "../components/LinkRow";
 import { LinkInfo } from "../components/LinkInfo";
 import { QrCodeModal } from "../components/QrCode";
 import { EditLinkModal, EditLinkFormValues } from "../components/EditLinkModal";
-import { CreateLinkForm } from "../components/CreateLinkForm";
+// import { CreateLinkForm } from "../components/CreateLinkForm";
 
 import "./Dashboard.less";
 
@@ -82,6 +82,12 @@ export interface State {
   totalLinks: number;
 
   /**
+   * The current state of the create link form
+   * @property
+   */
+  createLinkState: { visible: boolean };
+
+  /**
    * The current state of the edit modal.
    * @property
    */
@@ -128,6 +134,9 @@ export class Dashboard extends React.Component<Props, State> {
       totalLinks: 0,
       currentPage: 1,
       currentOffset: 0,
+      createLinkState: {
+        visible: false,
+      },
       editModalState: {
         visible: false,
         linkInfo: null,
@@ -462,7 +471,7 @@ export class Dashboard extends React.Component<Props, State> {
               trigger={["click"]}
             > */}
             <Button type="primary">
-              <Link to="/create">
+              <Link to="/dash/create">
                 <PlusCircleFilled /> Shrink a Link
               </Link>
             </Button>

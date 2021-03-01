@@ -13,8 +13,8 @@ import {
   QuestionCircleOutlined,
 } from "@ant-design/icons";
 
-import { serverValidateAlias, serverValidateLongUrl } from "./Validators";
-import "./Base.less";
+import { serverValidateAlias, serverValidateLongUrl } from "../Validators";
+import "../Base.less";
 import "./FixAliasRemoveButton.less";
 
 /**

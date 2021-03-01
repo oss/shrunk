@@ -1,5 +1,5 @@
 /**
- * Implemens the org statistics view
+ * Implements the org statistics view
  * @packageDocumentation
  */
 

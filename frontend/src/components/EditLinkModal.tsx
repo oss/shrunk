@@ -17,7 +17,7 @@ import {
   serverValidateAlias,
   serverValidateLongUrl,
   serverValidateNetId,
-} from "./Validators";
+} from "../Validators";
 import "./FixAliasRemoveButton.less";
 
 /**

@@ -31,7 +31,7 @@ import { OrgStats } from "./pages/subpages/OrgStats";
 
 import { PendingAlerts } from "./alerts/PendingAlerts";
 import { PendingRequests } from "./components/PendingRequests";
-import { CreateLinkForm } from "./components/CreateLinkForm";
+import { CreateLink } from "./pages/subpages/CreateLinkPage";
 
 import "./antd_themed.less";
 import "./Shrunk.less";
@@ -142,11 +142,7 @@ export class Shrunk extends React.Component<Props, State> {
   setSelectedKeysFromLocation = (location: Location): void => {
     const route = location.hash;
     let key: string | null = null;
-    if (
-      route.startsWith("#/dash") ||
-      route.startsWith("#/stats") ||
-      route.startsWith("#/create")
-    ) {
+    if (route.startsWith("#/dash") || route.startsWith("#/stats")) {
       key = "dash";
     } else if (route.startsWith("#/orgs")) {
       key = "orgs";
@@ -263,6 +259,10 @@ export class Shrunk extends React.Component<Props, State> {
                   <Dashboard userPrivileges={this.props.userPrivileges} />
                 </Route>
 
+                <Route exact path="/dash/create">
+                  <CreateLink userPrivileges={this.props.userPrivileges} />
+                </Route>
+
                 <Route
                   exact
                   path="/stats/:id"
@@ -300,15 +300,6 @@ export class Shrunk extends React.Component<Props, State> {
                     />
                   )}
                 />
-
-                {/* <Route exact path="/create">
-                  <CreateLinkForm
-                    userPrivileges={this.props.userPrivileges}
-                    onFinish={() => {
-                      history.
-                    }}
-                  />
-                </Route> */}
 
                 {!this.state.showAdminTab ? (
                   <></>
