@@ -12,7 +12,7 @@ First, clone the git repo to a local directory (via ssh)::
 
 ``cd`` into the repository, create a new virtual environment, and install the Python dependencies::
 
-  $ virtualenv venv
+  $ python -m venv venv
   $ source venv/bin/activate
   $ pip install -r backend/requirements.txt
   $ pip install -r backend/requirements-dev.txt
@@ -93,9 +93,14 @@ Be sure to create your own config file.
 
 Don't forget to restore a copy of the database.
 
-(for development only) If logging in leads to a blank page, the set_cookie may be blocked. Try setting the ``secure`` parameter to ``False`` in set_cookie in ``views.py``.
+If you are seeing blank pages, make sure all symlinks are working. There are two soft links, one for ``backend/shrunk/static/dist``, and one for ``frontend/dist/index.html``.
 
-Make sure all symlinks are working. There are two soft links, one for ``backend/shrunk/static/dist``, and one for ``frontend/dist/index.html``.
+To create the symbolic link:
+
+  $ cd backend/shrunk/static
+  $ ln -s ../../../frontend/dist
+
+(for development only) If logging in still leads to a blank page, the set_cookie may be blocked. Try setting the ``secure`` parameter to ``False`` in set_cookie in ``views.py``.
 
 Make sure your MongoDB version >=4.0.
 
