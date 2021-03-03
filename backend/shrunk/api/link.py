@@ -599,7 +599,7 @@ def validate_alias(_netid: str, client: ShrunkClient, alias: str) -> Any:
     :param client:
     :param alias:
     """
-    valid = not client.links.alias_is_reserved(alias)
+    valid = not client.links.alias_is_not_allowed(alias)
     response: Dict[str, Any] = {'valid': valid}
     if not valid:
         response['reason'] = 'That alias is not allowed.'

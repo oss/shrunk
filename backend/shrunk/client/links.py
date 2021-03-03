@@ -65,12 +65,23 @@ class LinksClient:
         self.redirect_check_timeout = REDIRECT_CHECK_TIMEOUT
         self.other_clients = other_clients
 
+    def alias_is_not_allowed(self, alias: str) -> bool:
+        """Check whether a string is allowed to be used as a short url"""
+        if alias in self.reserved_words or self.alias_is_duplicate(alias):
+            return True
+        return False
+
     def alias_is_reserved(self, alias: str) -> bool:
         """Check whether a string is a reserved word that cannot be used as a short url.
         :param url: the prospective short url."""
         if alias in self.reserved_words:
             return True
         return any(alias in str(route) for route in current_app.url_map.iter_rules())
+    
+    def alias_is_duplicate(self, alias: str) -> bool:
+        """Check whether the given alias already exists"""
+        result = self.db.urls.find_one({'aliases.alias': alias})
+        return True if result is not None else False
 
     def _long_url_is_phished(self, long_url: str) -> bool:
         """Check whether the given long url is present in the phishing blacklist."""
