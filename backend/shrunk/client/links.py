@@ -67,7 +67,7 @@ class LinksClient:
 
     def alias_is_not_allowed(self, alias: str) -> bool:
         """Check whether a string is allowed to be used as a short url"""
-        if alias in self.reserved_words or self.alias_is_duplicate(alias):
+        if self.alias_is_reserved(alias) or self.alias_is_duplicate(alias):
             return True
         return False
 
@@ -81,6 +81,8 @@ class LinksClient:
     def alias_is_duplicate(self, alias: str) -> bool:
         """Check whether the given alias already exists"""
         result = self.db.urls.find_one({'aliases.alias': alias})
+        if(result is not None and result['deleted'] == True):
+            return False
         return True if result is not None else False
 
     def _long_url_is_phished(self, long_url: str) -> bool:

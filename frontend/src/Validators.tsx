@@ -20,7 +20,7 @@ export const serverValidateAlias = async (_rule: any, value: string): Promise<vo
     }
     const result = await fetch(`/api/v1/link/validate_alias/${base32.encode(value)}`)
         .then(resp => resp.json());
-    if (!result.valid) {
+    if (!result.valid && value.length >= 5) {
         throw new Error(result.reason);
     }
 }
