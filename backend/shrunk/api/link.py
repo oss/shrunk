@@ -602,7 +602,7 @@ def validate_alias(_netid: str, client: ShrunkClient, alias: str) -> Any:
     valid = not client.links.alias_is_not_allowed(alias)
     response: Dict[str, Any] = {'valid': valid}
     if not valid:
-        response['reason'] = 'That alias is not allowed.'
+        response['reason'] = 'That alias cannot be used.'
     return jsonify(response)
 
 
