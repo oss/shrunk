@@ -9,7 +9,7 @@ import { Modal, Form, Input, Button, DatePicker, Space } from 'antd';
 import { LinkOutlined, PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
 
 import { LinkInfo } from './LinkInfo';
-import { serverValidateAlias, serverValidateLongUrl, serverValidateNetId } from './Validators';
+import { serverValidateReservedAlias, serverValidateDuplicateAlias, serverValidateLongUrl, serverValidateNetId } from './Validators';
 import './FixAliasRemoveButton.less';
 
 /**
@@ -171,7 +171,8 @@ export const EditLinkModal: React.FC<Props> = (props) => {
                                                 pattern: /^[a-zA-Z0-9_.,-]*$/,
                                                 message: 'Alias may consist only of numbers, letters, and the punctuation marks “.,-_”.',
                                             },
-                                            { validator: serverValidateAlias },
+                                            { validator: serverValidateReservedAlias },
+                                            { validator: serverValidateDuplicateAlias },
                                         ]}>
                                         <Input disabled={!mayEditAliases} placeholder='Alias' />
                                     </Form.Item>

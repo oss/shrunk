@@ -8,7 +8,7 @@ import moment from 'moment';
 import { Form, Input, Button, DatePicker, Space, Tooltip } from 'antd';
 import { LinkOutlined, MinusCircleOutlined, PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 
-import { serverValidateAlias, serverValidateLongUrl } from './Validators';
+import { serverValidateReservedAlias, serverValidateDuplicateAlias, serverValidateLongUrl } from './Validators';
 import './Base.less';
 import './FixAliasRemoveButton.less';
 
@@ -178,7 +178,8 @@ export class CreateLinkForm extends React.Component<Props, State> {
                                                         pattern: /^[a-zA-Z0-9_.,-]*$/,
                                                         message: 'Alias may consist only of numbers, letters, and the punctuation marks “.,-_”.',
                                                     },
-                                                    { validator: serverValidateAlias },
+                                                    { validator: serverValidateReservedAlias },
+                                                    { validator: serverValidateDuplicateAlias },
                                                 ]}>
                                                 <Input placeholder='Alias' />
                                             </Form.Item>}

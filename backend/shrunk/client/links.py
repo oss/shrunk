@@ -65,12 +65,6 @@ class LinksClient:
         self.redirect_check_timeout = REDIRECT_CHECK_TIMEOUT
         self.other_clients = other_clients
 
-    def alias_is_not_allowed(self, alias: str) -> bool:
-        """Check whether a string is allowed to be used as a short url"""
-        if self.alias_is_reserved(alias) or self.alias_is_duplicate(alias):
-            return True
-        return False
-
     def alias_is_reserved(self, alias: str) -> bool:
         """Check whether a string is a reserved word that cannot be used as a short url.
         :param url: the prospective short url."""
@@ -365,12 +359,15 @@ class LinksClient:
                                          {'$set': {
                                              'aliases.$.deleted': False,
                                              'aliases.$.description': description}})
+        print("undelete the alias?")
         if result.modified_count == 1:
+            print("modified alias")
             return alias
 
         # Otherwise, try to insert the alias. First check whether it already exsits.
         result = self.db.urls.find_one({'aliases.alias': alias})
         if result is not None:
+            "alias already exists"
             raise BadAliasException
 
         # Create the alias.
@@ -380,6 +377,7 @@ class LinksClient:
                                         'alias': alias,
                                         'description': description,
                                         'deleted': False}}})
+        print("updated?")
         return alias
 
     def delete_alias(self, link_id: ObjectId, alias: str) -> None:

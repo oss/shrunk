@@ -67,7 +67,14 @@ export class LinkRow extends React.Component<Props, State> {
      * @method
      */
     confirmDelete = async (): Promise<void> => {
+        // Delete link
         await fetch(`/api/v1/link/${this.props.linkInfo.id}`, { method: 'DELETE' });
+        
+        // Delete alias link
+        var alias_name;
+        {this.props.linkInfo.aliases.map(alias => { alias_name = `${alias.alias}`;})}
+        await fetch(`/api/v1/link/${this.props.linkInfo.id}/alias/${alias_name}`, { method: 'DELETE' });
+
         await this.props.refreshResults();
     }
 
