@@ -172,7 +172,6 @@ export const EditLinkModal: React.FC<Props> = (props) => {
                                                 message: 'Alias may consist only of numbers, letters, and the punctuation marks “.,-_”.',
                                             },
                                             { validator: serverValidateReservedAlias },
-                                            { validator: serverValidateDuplicateAlias },
                                         ]}>
                                         <Input disabled={!mayEditAliases} placeholder='Alias' />
                                     </Form.Item>

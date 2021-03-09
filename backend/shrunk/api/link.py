@@ -601,7 +601,7 @@ def validate_reserved_alias(_netid: str, client: ShrunkClient, alias: str) -> An
     """
     valid = not client.links.alias_is_reserved(alias)
     response: Dict[str, Any] = {'valid': valid}
-    print(response)
+    
     if not valid:
         response['reason'] = 'That alias cannot be used.'
     return jsonify(response)
@@ -623,7 +623,7 @@ def validate_duplicate_alias(_netid: str, client: ShrunkClient, alias: str) -> A
     """
     valid = not client.links.alias_is_duplicate(alias)
     response: Dict[str, Any] = {'valid': valid}
-    print(response)
+
     if not valid:
         response['reason'] = 'That alias already exists.'
     return jsonify(response)

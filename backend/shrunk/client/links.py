@@ -74,9 +74,16 @@ class LinksClient:
     
     def alias_is_duplicate(self, alias: str) -> bool:
         """Check whether the given alias already exists"""
+
+        # check to see that alias is not being used
         result = self.db.urls.find_one({'aliases.alias': alias})
-        if(result is not None and result['deleted'] == True):
-            return False
+
+        # Check if that alias is deleted
+        if result is not None:
+            for alias_info in result['aliases']:
+                if alias_info['deleted'] == True:
+                    return False
+
         return True if result is not None else False
 
     def _long_url_is_phished(self, long_url: str) -> bool:
@@ -351,6 +358,7 @@ class LinksClient:
         if alias is None:
             return self.create_random_alias(link_id, description)
 
+        # If alias is reserved word
         if self.alias_is_reserved(alias):
             raise BadAliasException
 
@@ -359,15 +367,12 @@ class LinksClient:
                                          {'$set': {
                                              'aliases.$.deleted': False,
                                              'aliases.$.description': description}})
-        print("undelete the alias?")
+
         if result.modified_count == 1:
-            print("modified alias")
             return alias
 
-        # Otherwise, try to insert the alias. First check whether it already exsits.
-        result = self.db.urls.find_one({'aliases.alias': alias})
-        if result is not None:
-            "alias already exists"
+        # Otherwise, try to insert the alias. First check whether it already exists.
+        if self.alias_is_duplicate(alias):
             raise BadAliasException
 
         # Create the alias.
@@ -377,7 +382,6 @@ class LinksClient:
                                         'alias': alias,
                                         'description': description,
                                         'deleted': False}}})
-        print("updated?")
         return alias
 
     def delete_alias(self, link_id: ObjectId, alias: str) -> None:

@@ -119,7 +119,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
             if (alias.alias !== undefined) {
                 create_alias_req.alias = alias.alias;
             }
-
+            console.log("trying to create an alias")
             await fetch(`/api/v1/link/${link_id}/alias`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
