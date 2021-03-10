@@ -463,7 +463,8 @@ class LinksClient:
         return result
 
     def get_link_info_by_alias(self, alias: str) -> Any:
-        return self.db.urls.find_one({'aliases.alias': alias})
+        return self.db.urls.find_one({'$and':[{'aliases.alias' : alias, 'aliases.deleted' : False}]})
+
 
     def get_long_url(self, alias: str) -> Optional[str]:
         """Given a short URL, returns the long URL.
@@ -476,6 +477,7 @@ class LinksClient:
           The long URL, or None if the short URL does not exist.
         """
         result = self.get_link_info_by_alias(alias)
+        print(result)
 
         # Fail if the link does not exist
         if result is None:
