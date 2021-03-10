@@ -1,0 +1,18 @@
+@import "../Base.less";
+
+.primary-row {
+  .alias {
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &.deleted {
+      color: lightgray;
+      text-decoration: line-through;
+      a {
+        color: lightgray;
+      }
+    }
+  }
+}
