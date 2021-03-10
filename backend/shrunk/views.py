@@ -40,7 +40,10 @@ def index() -> Any:
     })
     shrunk_params = str(base64.b64encode(bytes(shrunk_params, 'utf8')), 'utf8')
 
-    secure_cookie=True if os.environ["FLASK_ENV"] == "prod" else False # True if prod, False if dev
+    secure_cookie = True # if FLASK_ENV var exists and it equals "dev" then set it to false.
+    if "FLASK_ENV" in os.environ:
+        if os.environ.get("FLASK_ENV") == "dev":
+            secure_cookie = False
 
     resp = make_response(render_template('index.html'))
     resp.set_cookie('shrunk_params', shrunk_params, secure=secure_cookie, samesite='Strict')
