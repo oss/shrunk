@@ -3,38 +3,30 @@
  * @packageDocumentation
  */
 
-import React from "react";
-import {
-  HashRouter,
-  Switch,
-  Route,
-  Redirect,
-  Link,
-  NavLink,
-} from "react-router-dom";
-import { createBrowserHistory, Location } from "history";
-import { Layout, Menu } from "antd";
+import React from 'react';
+import { HashRouter, Switch, Route, Redirect, Link, NavLink } from 'react-router-dom';
+import { createBrowserHistory, Location } from 'history';
+import { Layout, Menu } from 'antd';
 
 const { SubMenu } = Menu;
 const { Header, Content, Footer, Sider } = Layout;
 
-import { Dashboard } from "./pages/Dashboard";
-import { Admin } from "./pages/Admin";
-import { Orgs } from "./pages/Orgs";
-import { Faq } from "./pages/Faq";
+import { Dashboard } from './pages/Dashboard';
+import { Admin } from './pages/Admin';
+import { Orgs } from './pages/Orgs';
+import { Faq } from './pages/Faq';
 
-import { Stats } from "./pages/subpages/Stats";
-import { AdminStats } from "./admin/AdminStats";
-import { Role } from "./admin/Role";
-import { ManageOrg } from "./pages/subpages/ManageOrg";
-import { OrgStats } from "./pages/subpages/OrgStats";
+import { Stats } from './pages/subpages/Stats';
+import { AdminStats } from './admin/AdminStats';
+import { Role } from './admin/Role';
+import { ManageOrg } from './pages/subpages/ManageOrg';
+import { OrgStats } from './pages/subpages/OrgStats';
 
-import { PendingAlerts } from "./alerts/PendingAlerts";
-import { PendingRequests } from "./components/PendingRequests";
-import { CreateLink } from "./pages/subpages/CreateLinkPage";
+import { PendingAlerts } from './alerts/PendingAlerts';
+import { PendingRequests } from './components/PendingRequests';
 
-import "./antd_themed.less";
-import "./Shrunk.less";
+import './antd_themed.less';
+import './Shrunk.less';
 
 /**
  * Properties of the [[Shrunk]] component.
@@ -102,13 +94,12 @@ interface State {
 export class Shrunk extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    const showAdminTab = this.props.userPrivileges.has("admin");
-    const showWhitelistTab =
-      !showAdminTab && this.props.userPrivileges.has("facstaff");
+    const showAdminTab = this.props.userPrivileges.has('admin');
+    const showWhitelistTab = !showAdminTab && this.props.userPrivileges.has('facstaff');
     this.state = {
       showAdminTab,
       showWhitelistTab,
-      selectedKeys: ["dashboard"],
+      selectedKeys: ['dashboard'],
       pendingAlerts: [],
     };
   }
@@ -117,9 +108,7 @@ export class Shrunk extends React.Component<Props, State> {
     await this.updatePendingAlerts();
     const history = createBrowserHistory();
     this.setSelectedKeysFromLocation(history.location);
-    history.listen(({ location }) =>
-      this.setSelectedKeysFromLocation(location)
-    );
+    history.listen(({ location }) => this.setSelectedKeysFromLocation(location));
   }
 
   /**
@@ -129,9 +118,7 @@ export class Shrunk extends React.Component<Props, State> {
   updatePendingAlerts = async (): Promise<void> => {
     await fetch(`/api/v1/alert/${this.props.netid}`)
       .then((resp) => resp.json())
-      .then((json) =>
-        this.setState({ pendingAlerts: json.pending_alerts as Array<string> })
-      );
+      .then((json) => this.setState({ pendingAlerts: json.pending_alerts as Array<string> }));
   };
 
   /**
@@ -142,20 +129,20 @@ export class Shrunk extends React.Component<Props, State> {
   setSelectedKeysFromLocation = (location: Location): void => {
     const route = location.hash;
     let key: string | null = null;
-    if (route.startsWith("#/dash") || route.startsWith("#/stats")) {
-      key = "dash";
-    } else if (route.startsWith("#/orgs")) {
-      key = "orgs";
-    } else if (route.startsWith("#/admin")) {
-      key = "admin";
-    } else if (route.startsWith("#/roles")) {
+    if (route.startsWith('#/dash') || route.startsWith('#/stats')) {
+      key = 'dash';
+    } else if (route.startsWith('#/orgs')) {
+      key = 'orgs';
+    } else if (route.startsWith('#/admin')) {
+      key = 'admin';
+    } else if (route.startsWith('#/roles')) {
       if (this.state.showWhitelistTab) {
-        key = "whitelist";
+        key = 'whitelist';
       } else {
-        key = "admin";
+        key = 'admin';
       }
-    } else if (route.startsWith("#/faq")) {
-      key = "faq";
+    } else if (route.startsWith('#/faq')) {
+      key = 'faq';
     }
 
     if (key === null) {
@@ -172,18 +159,10 @@ export class Shrunk extends React.Component<Props, State> {
           <Header className="header">
             <div className="logo">
               <Link to="/dash">
-                <img
-                  alt="Rutgers"
-                  src="/app/static/img/RU_LOGOTYPE_REVWHITE.png"
-                  width="175px"
-                />
+                <img alt="Rutgers" src="/app/static/img/RU_LOGOTYPE_REVWHITE.png" width="175px" />
               </Link>
             </div>
-            <Menu
-              theme="dark"
-              mode="horizontal"
-              selectedKeys={this.state.selectedKeys}
-            >
+            <Menu theme="dark" mode="horizontal" selectedKeys={this.state.selectedKeys}>
               <Menu.Item key="dash">
                 <NavLink to="/dash" className="nav-text">
                   Dashboard
@@ -217,11 +196,7 @@ export class Shrunk extends React.Component<Props, State> {
                   FAQ
                 </NavLink>
               </Menu.Item>
-              <SubMenu
-                key="user"
-                title={this.props.netid}
-                style={{ float: "right" }}
-              >
+              <SubMenu key="user" title={this.props.netid} style={{ float: 'right' }}>
                 <Menu.Item key="logout">
                   <a href="/app/logout">Logout</a>
                 </Menu.Item>
@@ -229,10 +204,7 @@ export class Shrunk extends React.Component<Props, State> {
             </Menu>
           </Header>
           <Layout>
-            <Sider
-              width={this.props.siderWidth}
-              style={{ background: "white" }}
-            />
+            <Sider width={this.props.siderWidth} style={{ background: 'white' }} />
             <Content
               className="main-content"
               style={{
@@ -241,14 +213,7 @@ export class Shrunk extends React.Component<Props, State> {
                 minHeight: 280,
               }}
             >
-              {this.state.pendingAlerts === [] ? (
-                <></>
-              ) : (
-                <PendingAlerts
-                  netid={this.props.netid}
-                  pendingAlerts={this.state.pendingAlerts}
-                />
-              )}
+              {this.state.pendingAlerts === [] ? <></> : <PendingAlerts netid={this.props.netid} pendingAlerts={this.state.pendingAlerts} />}
               <PendingRequests />
               <Switch>
                 <Route exact path="/">
@@ -259,47 +224,23 @@ export class Shrunk extends React.Component<Props, State> {
                   <Dashboard userPrivileges={this.props.userPrivileges} />
                 </Route>
 
-                <Route exact path="/dash/create">
-                  <CreateLink userPrivileges={this.props.userPrivileges} />
-                </Route>
-
-                <Route
-                  exact
-                  path="/stats/:id"
-                  render={(props) => <Stats id={props.match.params.id} />}
-                />
+                <Route exact path="/stats/:id" render={(props) => <Stats id={props.match.params.id} />} />
 
                 <Route exact path="/orgs">
                   <Orgs userPrivileges={this.props.userPrivileges} />
                 </Route>
 
                 <Route exact path="/orgs/:id/manage">
-                  <ManageOrg
-                    userNetid={this.props.netid}
-                    userPrivileges={this.props.userPrivileges}
-                  />
+                  <ManageOrg userNetid={this.props.netid} userPrivileges={this.props.userPrivileges} />
                 </Route>
 
-                <Route
-                  exact
-                  path="/orgs/:id/stats"
-                  render={(props) => <OrgStats id={props.match.params.id} />}
-                />
+                <Route exact path="/orgs/:id/stats" render={(props) => <OrgStats id={props.match.params.id} />} />
 
                 <Route exact path="/faq">
                   <Faq />
                 </Route>
 
-                <Route
-                  exact
-                  path="/roles/:name"
-                  render={(props) => (
-                    <Role
-                      userPrivileges={this.props.userPrivileges}
-                      name={props.match.params.name}
-                    />
-                  )}
-                />
+                <Route exact path="/roles/:name" render={(props) => <Role userPrivileges={this.props.userPrivileges} name={props.match.params.name} />} />
 
                 {!this.state.showAdminTab ? (
                   <></>
@@ -315,14 +256,10 @@ export class Shrunk extends React.Component<Props, State> {
                 )}
               </Switch>
             </Content>
-            <Sider
-              width={this.props.siderWidth}
-              style={{ background: "white" }}
-            />
+            <Sider width={this.props.siderWidth} style={{ background: 'white' }} />
           </Layout>
-          <Footer style={{ textAlign: "center", color: "#f0f0f0" }}>
-            &copy;{new Date().getFullYear()}&mdash;Rutgers, The State University
-            of New Jersey&mdash;Questions? Bugs? Contact us:&nbsp;
+          <Footer style={{ textAlign: 'center', color: '#f0f0f0' }}>
+            &copy;{new Date().getFullYear()}&mdash;Rutgers, The State University of New Jersey&mdash;Questions? Bugs? Contact us:&nbsp;
             <a href="mailto:oss@oss.rutgers.edu">oss@oss.rutgers.edu</a>
           </Footer>
         </Layout>

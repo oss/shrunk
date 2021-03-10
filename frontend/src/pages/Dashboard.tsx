@@ -3,20 +3,20 @@
  * @packageDocumentation
  */
 
-import React from "react";
-import { Link } from "react-router-dom";
-import { Row, Col, Pagination, Spin, Dropdown, Button } from "antd";
-import { PlusCircleFilled } from "@ant-design/icons";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { Row, Col, Pagination, Spin, Dropdown, Button } from 'antd';
+import { PlusCircleFilled } from '@ant-design/icons';
 
-import { listOrgs, OrgInfo } from "../api/Org";
-import { SearchQuery, SearchBox } from "../components/SearchBox";
-import { LinkRow } from "../components/LinkRow";
-import { LinkInfo } from "../components/LinkInfo";
-import { QrCodeModal } from "../components/QrCode";
-import { EditLinkModal, EditLinkFormValues } from "../components/EditLinkModal";
-// import { CreateLinkForm } from "../components/CreateLinkForm";
+import { listOrgs, OrgInfo } from '../api/Org';
+import { SearchQuery, SearchBox } from '../components/SearchBox';
+import { LinkRow } from '../components/LinkRow';
+import { LinkInfo } from '../components/LinkInfo';
+import { QrCodeModal } from '../components/QrCode';
+import { EditLinkModal, EditLinkFormValues } from '../components/EditLinkModal';
+import { CreateLinkForm } from '../components/CreateLinkForm';
 
-import "./Dashboard.less";
+import './Dashboard.less';
 
 /**
  * Props for the [[Dashboard]] component.
@@ -123,10 +123,10 @@ export class Dashboard extends React.Component<Props, State> {
       linkInfo: null,
       linksPerPage: 10,
       query: {
-        set: { set: this.props.userPrivileges.has("admin") ? "all" : "user" },
+        set: { set: this.props.userPrivileges.has('admin') ? 'all' : 'user' },
         show_expired_links: false,
         show_deleted_links: false,
-        sort: { key: "created_time", order: "descending" },
+        sort: { key: 'created_time', order: 'descending' },
         begin_time: null,
         end_time: null,
       },
@@ -158,7 +158,7 @@ export class Dashboard extends React.Component<Props, State> {
    * @method
    */
   fetchUserOrgs = async (): Promise<void> => {
-    const userOrgs = await listOrgs("user");
+    const userOrgs = await listOrgs('user');
     this.setState({ userOrgs });
   };
 
@@ -188,7 +188,7 @@ export class Dashboard extends React.Component<Props, State> {
    */
   setPage = async (newPage: number): Promise<void> => {
     if (this.state.query === null) {
-      throw new Error("attempted to set page with this.state.query === null");
+      throw new Error('attempted to set page with this.state.query === null');
     }
 
     const skip = (newPage - 1) * this.state.linksPerPage;
@@ -247,10 +247,10 @@ export class Dashboard extends React.Component<Props, State> {
       req.end_time = query.end_time.format();
     }
 
-    const result = await fetch("/api/v1/search", {
-      method: "POST",
+    const result = await fetch('/api/v1/search', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(req),
     }).then((resp) => resp.json());
@@ -358,7 +358,7 @@ export class Dashboard extends React.Component<Props, State> {
   doEditLink = async (values: EditLinkFormValues): Promise<void> => {
     const oldLinkInfo = this.state.editModalState.linkInfo;
     if (oldLinkInfo === null) {
-      throw new Error("oldLinkInfo should not be null");
+      throw new Error('oldLinkInfo should not be null');
     }
 
     // Create the request to edit title, long_url, and expiration_time
@@ -383,8 +383,8 @@ export class Dashboard extends React.Component<Props, State> {
 
     promises.push(
       fetch(`/api/v1/link/${oldLinkInfo.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(patch_req),
       })
     );
@@ -401,7 +401,7 @@ export class Dashboard extends React.Component<Props, State> {
       if (!newAliases.has(alias)) {
         promises.push(
           fetch(`/api/v1/link/${oldLinkInfo.id}/alias/${alias}`, {
-            method: "DELETE",
+            method: 'DELETE',
           })
         );
       }
@@ -416,8 +416,8 @@ export class Dashboard extends React.Component<Props, State> {
       if (isNew || isDescriptionChanged) {
         promises.push(
           fetch(`/api/v1/link/${oldLinkInfo.id}/alias`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               alias,
               description: info.description,
@@ -453,7 +453,7 @@ export class Dashboard extends React.Component<Props, State> {
           </Col>
 
           <Col span={4} className="btn-col">
-            {/* <Dropdown
+            <Dropdown
               overlay={
                 <CreateLinkForm
                   userPrivileges={this.props.userPrivileges}
@@ -468,14 +468,12 @@ export class Dashboard extends React.Component<Props, State> {
                 this.setState({ createLinkDropdownVisible: flag })
               }
               placement="bottomRight"
-              trigger={["click"]}
-            > */}
-            <Button type="primary">
-              <Link to="/dash/create">
+              trigger={['click']}
+            >
+              <Button type="primary">
                 <PlusCircleFilled /> Shrink a Link
-              </Link>
-            </Button>
-            {/* </Dropdown> */}
+              </Button>
+            </Dropdown>
           </Col>
         </Row>
 
