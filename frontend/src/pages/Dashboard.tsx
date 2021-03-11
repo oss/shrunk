@@ -4,7 +4,6 @@
  */
 
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { Row, Col, Pagination, Spin, Dropdown, Button } from 'antd';
 import { PlusCircleFilled } from '@ant-design/icons';
 
@@ -14,6 +13,7 @@ import { LinkRow } from '../components/LinkRow';
 import { LinkInfo } from '../components/LinkInfo';
 import { QrCodeModal } from '../components/QrCode';
 import { EditLinkModal, EditLinkFormValues } from '../components/EditLinkModal';
+import { ShareLinkModal } from '../components/ShareLinkModal';
 import { CreateLinkForm } from '../components/CreateLinkForm';
 
 import './Dashboard.less';
@@ -94,6 +94,12 @@ export interface State {
   editModalState: { visible: boolean; linkInfo: LinkInfo | null };
 
   /**
+   * The current state of the share link modal.
+   * @property
+   */
+  shareLinkModalState: { visible: boolean; linkInfo: LinkInfo | null };
+
+  /**
    * The current state of the QR code modal.
    * @property
    */
@@ -138,6 +144,10 @@ export class Dashboard extends React.Component<Props, State> {
         visible: false,
       },
       editModalState: {
+        visible: false,
+        linkInfo: null,
+      },
+      shareLinkModalState: {
         visible: false,
         linkInfo: null,
       },
@@ -313,6 +323,32 @@ export class Dashboard extends React.Component<Props, State> {
   };
 
   /**
+   * Displays the share link modal
+   * @method
+   * @param linkInfo The [[LinkInfo]] of the link to edit
+   */
+  showShareLinkModal = (linkInfo: LinkInfo): void => {
+    this.setState({
+      shareLinkModalState: {
+        visible: true,
+        linkInfo,
+      },
+    });
+  };
+
+  /** Hides the share link modal
+   * @method
+   */
+  hideShareLinkModal = (): void => {
+    this.setState({
+      shareLinkModalState: {
+        ...this.state.shareLinkModalState,
+        visible: false,
+      },
+    });
+  };
+
+  /**
    * Show the QR code modal
    * @method
    * @param linkInfo The [[LinkInfo]] of the link for which to generate QR codes
@@ -432,6 +468,51 @@ export class Dashboard extends React.Component<Props, State> {
     await this.refreshResults();
   };
 
+  /**
+   * TODO: Executes API requests to update the people the link is shared with
+   * @param values The form values from the edit link form
+   * @throws Error if the value of `this.state.editModalState.linkInfo` is `null`
+   */
+  /*
+   doShareLink = async (values: EditLinkFormValues): Promise<void> => {
+    const oldLinkInfo = this.state.editModalState.linkInfo;
+
+    const promises = [];
+
+    promises.push(
+      fetch(`/api/v1/link/${oldLinkInfo.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch_req),
+      })
+    );
+
+
+    // Create/update aliases
+    for (const [alias, info] of newAliases.entries()) {
+      const isNew = !oldAliases.has(alias);
+      const isDescriptionChanged =
+        oldAliases.has(alias) &&
+        info.description !== oldAliases.get(alias)?.description;
+      if (isNew || isDescriptionChanged) {
+        promises.push(
+          fetch(`/api/v1/link/${oldLinkInfo.id}/alias`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              alias,
+              description: info.description,
+            }),
+          })
+        );
+      }
+    }
+
+    // Await all the requests and refresh search results
+    await Promise.all(promises);
+    await this.refreshResults();
+  };*/
+
   render(): React.ReactNode {
     return (
       <>
@@ -486,6 +567,7 @@ export class Dashboard extends React.Component<Props, State> {
                 key={linkInfo.id}
                 linkInfo={linkInfo}
                 showEditModal={this.showEditModal}
+                showShareLinkModal={this.showShareLinkModal}
                 showQrModal={this.showQrModal}
                 refreshResults={this.refreshResults}
               />
@@ -514,6 +596,18 @@ export class Dashboard extends React.Component<Props, State> {
               this.hideEditModal();
             }}
             onCancel={this.hideEditModal}
+          />
+        )}
+
+        {this.state.shareLinkModalState.linkInfo === null ? (
+          <></>
+        ) : (
+          <ShareLinkModal
+            visible={this.state.shareLinkModalState.visible}
+            userPrivileges={this.props.userPrivileges}
+            linkInfo={this.state.shareLinkModalState.linkInfo}
+            onOk={async () => this.hideShareLinkModal()}
+            onCancel={this.hideShareLinkModal}
           />
         )}
 
