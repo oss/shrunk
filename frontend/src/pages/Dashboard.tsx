@@ -94,10 +94,14 @@ export interface State {
   editModalState: { visible: boolean; linkInfo: LinkInfo | null };
 
   /**
-   * The current state of the share link modal.
+   * The current state of the share link modal. Contains the editors and viewers.
    * @property
    */
-  shareLinkModalState: { visible: boolean; linkInfo: LinkInfo | null };
+  shareLinkModalState: {
+    visible: boolean;
+    editors: [{ _id: String; type: String }] | null;
+    viewers: [{ _id: String; type: String }] | null;
+  };
 
   /**
    * The current state of the QR code modal.
@@ -149,7 +153,8 @@ export class Dashboard extends React.Component<Props, State> {
       },
       shareLinkModalState: {
         visible: false,
-        linkInfo: null,
+        editors: null,
+        viewers: null,
       },
       qrModalState: {
         visible: false,
@@ -323,15 +328,25 @@ export class Dashboard extends React.Component<Props, State> {
   };
 
   /**
-   * Displays the share link modal
+   * Retrieves viewer/editor data for a link, reorganizes it in a displayable manner, and displays the share link modal
    * @method
-   * @param linkInfo The [[LinkInfo]] of the link to edit
+   * @param linkInfo The [[LinkInfo]] of the link to manage sharing
    */
-  showShareLinkModal = (linkInfo: LinkInfo): void => {
+  showShareLinkModal = async (linkInfo: LinkInfo): Promise<void> => {
+    const sharingInfo = await fetch(`/api/v1/link/${linkInfo.id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }).then((resp) => resp.json());
+    console.log(sharingInfo);
+    // rows: {id, type, perms}
+
     this.setState({
       shareLinkModalState: {
         visible: true,
-        linkInfo,
+        editors: sharingInfo.editors,
+        viewers: sharingInfo.viewers,
       },
     });
   };
@@ -599,13 +614,14 @@ export class Dashboard extends React.Component<Props, State> {
           />
         )}
 
-        {this.state.shareLinkModalState.linkInfo === null ? (
+        {!this.state.shareLinkModalState.visible ? (
           <></>
         ) : (
           <ShareLinkModal
             visible={this.state.shareLinkModalState.visible}
             userPrivileges={this.props.userPrivileges}
-            linkInfo={this.state.shareLinkModalState.linkInfo}
+            editors={this.state.shareLinkModalState.editors}
+            viewers={this.state.shareLinkModalState.viewers}
             onOk={async () => this.hideShareLinkModal()}
             onCancel={this.hideShareLinkModal}
           />
