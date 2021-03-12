@@ -3,22 +3,22 @@
  * @packageDocumentation
  */
 
-import React from "react";
-import moment from "moment";
-import { Modal, Form, Input, Button, DatePicker, Space } from "antd";
+import React from 'react';
+import moment from 'moment';
+import { Modal, Form, Input, Button, DatePicker, Space } from 'antd';
 import {
   LinkOutlined,
   PlusOutlined,
   MinusCircleOutlined,
-} from "@ant-design/icons";
+} from '@ant-design/icons';
 
-import { LinkInfo } from "./LinkInfo";
+import { LinkInfo } from './LinkInfo';
 import {
   serverValidateAlias,
   serverValidateLongUrl,
   serverValidateNetId,
-} from "../Validators";
-import "./FixAliasRemoveButton.less";
+} from '../Validators';
+import './FixAliasRemoveButton.less';
 
 /**
  * The final values of the edit link form
@@ -107,7 +107,7 @@ export interface Props {
 export const EditLinkModal: React.FC<Props> = (props) => {
   const [form] = Form.useForm();
   const mayEditAliases =
-    props.userPrivileges.has("power_user") || props.userPrivileges.has("admin");
+    props.userPrivileges.has('power_user') || props.userPrivileges.has('admin');
   const initialValues: any = {
     ...props.linkInfo,
     expiration_time:
@@ -132,11 +132,11 @@ export const EditLinkModal: React.FC<Props> = (props) => {
         props.onCancel();
       }}
     >
-      <Form form={form} layout={"vertical"} initialValues={initialValues}>
+      <Form form={form} layout={'vertical'} initialValues={initialValues}>
         <Form.Item
           label="Title"
           name="title"
-          rules={[{ required: true, message: "Please input a title." }]}
+          rules={[{ required: true, message: 'Please input a title.' }]}
         >
           <Input placeholder="Title" />
         </Form.Item>
@@ -145,8 +145,8 @@ export const EditLinkModal: React.FC<Props> = (props) => {
           label="Long URL"
           name="long_url"
           rules={[
-            { required: true, message: "Please input a URL." },
-            { type: "url", message: "Please enter a valid URL." },
+            { required: true, message: 'Please input a URL.' },
+            { type: 'url', message: 'Please enter a valid URL.' },
             { validator: serverValidateLongUrl },
           ]}
         >
@@ -160,7 +160,7 @@ export const EditLinkModal: React.FC<Props> = (props) => {
           <DatePicker
             format="YYYY-MM-DD HH:mm:ss"
             disabledDate={(current) =>
-              current && current < moment().startOf("day")
+              current && current < moment().startOf('day')
             }
             showTime={{ defaultValue: moment(props.linkInfo.expiration_time) }}
           />
@@ -180,27 +180,27 @@ export const EditLinkModal: React.FC<Props> = (props) => {
               {fields.map((field, index) => (
                 <Space
                   key={field.key}
-                  style={{ display: "flex", marginBottom: 8 }}
+                  style={{ display: 'flex', marginBottom: 8 }}
                   align="start"
                 >
                   <Form.Item
-                    label={index === 0 ? "Alias" : ""}
-                    name={[field.name, "alias"]}
+                    label={index === 0 ? 'Alias' : ''}
+                    name={[field.name, 'alias']}
                     fieldKey={field.fieldKey}
                     rules={[
-                      { required: true, message: "Please enter an alias." },
+                      { required: true, message: 'Please enter an alias.' },
                       {
                         min: 5,
-                        message: "Alias may be no shorter than 5 characters.",
+                        message: 'Alias may be no shorter than 5 characters.',
                       },
                       {
                         max: 60,
-                        message: "Alias may be no longer than 60 characters.",
+                        message: 'Alias may be no longer than 60 characters.',
                       },
                       {
                         pattern: /^[a-zA-Z0-9_.,-]*$/,
                         message:
-                          "Alias may consist only of numbers, letters, and the punctuation marks “.,-_”.",
+                          'Alias may consist only of numbers, letters, and the punctuation marks “.,-_”.',
                       },
                       { validator: serverValidateAlias },
                     ]}
@@ -209,8 +209,8 @@ export const EditLinkModal: React.FC<Props> = (props) => {
                   </Form.Item>
 
                   <Form.Item
-                    label={index === 0 ? "Description" : ""}
-                    name={[field.name, "description"]}
+                    label={index === 0 ? 'Description' : ''}
+                    name={[field.name, 'description']}
                     fieldKey={field.fieldKey}
                   >
                     <Input

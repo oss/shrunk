@@ -361,6 +361,18 @@ export class Dashboard extends React.Component<Props, State> {
         visible: false,
       },
     });
+
+    // We set a timeout for this to prevent the contents of the modal
+    // from changing while the modal-close animation is still in progress.
+    setTimeout(() => {
+      this.setState({
+        shareLinkModalState: {
+          ...this.state.shareLinkModalState,
+          editors: null,
+          viewers: null,
+        },
+      });
+    }, 500);
   };
 
   /**

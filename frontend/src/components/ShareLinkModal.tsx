@@ -4,15 +4,24 @@
  */
 
 import React from 'react';
-import { Modal, Form, Input, Button, Radio, Space, Table, Tag } from 'antd';
-import { FormInstance } from 'antd/lib/form';
 import {
-  LinkOutlined,
-  PlusOutlined,
-  MinusCircleOutlined,
-} from '@ant-design/icons';
+  Col,
+  Modal,
+  Form,
+  Input,
+  Button,
+  Radio,
+  Row,
+  Select,
+  Space,
+  Table,
+  Tag,
+} from 'antd';
+import { FormInstance } from 'antd/lib/form';
+import { PlusCircleOutlined, MinusCircleOutlined } from '@ant-design/icons';
 
 import { LinkInfo } from './LinkInfo';
+import { OrgInfo, listOrgs } from '../api/Org';
 import { serverValidateLongUrl, serverValidateNetId } from '../Validators';
 
 /**
@@ -92,6 +101,25 @@ export interface State {
    * @property
    */
   isLoading: boolean;
+
+  /**
+   * Whether to show all orgs or just orgs of which the user is a member. Option only
+   * available to admins
+   * @property
+   */
+  showAll: boolean;
+
+  /**
+   * Contains an [[OrgInfo]] for each org to be displayed
+   * @property
+   */
+  orgs: OrgInfo[];
+
+  /**
+   * The list of organizations for the editor/viewer dropdown
+   * @property
+   */
+  options: { label: string; value: string }[];
 }
 
 /**
@@ -145,7 +173,28 @@ export class ShareLinkModal extends React.Component<Props, State> {
     this.state = {
       addNetIDOrOrg: 'netid',
       isLoading: false,
+      showAll: false,
+      orgs: [],
+      options: [],
     };
+  }
+
+  /**
+   * Execute API requests to get list of org info, then update state
+   * @method
+   */
+  refreshOrgs = async (): Promise<void> => {
+    await listOrgs(this.state.showAll ? 'all' : 'user').then((orgs) =>
+      this.setState({ orgs })
+    );
+  };
+
+  async componentDidMount(): Promise<void> {
+    await this.refreshOrgs();
+    var options = this.state.orgs.map((org) => {
+      return { label: org.name, value: org.id }; // or set var option =
+    });
+    this.setState({ options: options });
   }
 
   // convertSharingData = (editors: String[], viewers: String[]) => {
@@ -155,50 +204,80 @@ export class ShareLinkModal extends React.Component<Props, State> {
   render(): React.ReactNode {
     return (
       <Modal
-        destroyOnClose
+        // destroyOnClose
+        // maskClosable
         visible={this.props.visible}
         title="Share link"
+        okText="Done"
+        okType="ghost"
+        cancelButtonProps={{ style: { display: 'none' } }}
         onOk={() => {
-          this.formRef.current!.validateFields().then((values) => {
-            this.formRef.current!.resetFields(); // CALL /api/v1/link/<id>/acl modify_acl function
-            // this.props.onOk(values as EditLinkFormValues);
-          });
+          this.formRef.current!.resetFields();
+          this.props.onCancel();
+          // CALL /api/v1/link/<id>/acl modify_acl function
         }}
         onCancel={() => {
           this.formRef.current!.resetFields();
           this.props.onCancel();
         }}
       >
+        {/* <Space direction="vertical"> */}
         <Table columns={this.tableColumns} />
         <Form
           ref={this.formRef}
-          layout={'vertical'}
+          // layout={'vertical'}
           // initialValues={initialValues}
         >
-          <Space>
-            Add
-            <Radio.Group
-              onChange={(e) => this.setState({ addNetIDOrOrg: e.target.value })}
-              defaultValue="netid"
-              buttonStyle="solid"
-            >
-              <Radio.Button value="netid">NetID</Radio.Button>
-              <Radio.Button value="org">Organization</Radio.Button>
-            </Radio.Group>
-            :
+          <Space direction="vertical">
+            <Space>
+              Add
+              <Radio.Group
+                onChange={(e) =>
+                  this.setState({ addNetIDOrOrg: e.target.value })
+                }
+                defaultValue="netid"
+                buttonStyle="solid"
+              >
+                <Radio.Button value="netid">NetID</Radio.Button>
+                <Radio.Button value="org">Organization</Radio.Button>
+              </Radio.Group>
+              :
+            </Space>
+            <Space>
+              {this.state.addNetIDOrOrg == 'netid' ? (
+                <Form.Item
+                  name="netid"
+                  rules={[{ validator: serverValidateNetId }]}
+                >
+                  <Input placeholder="NetID" />
+                </Form.Item>
+              ) : (
+                <Form.Item name="organization">
+                  <Select placeholder="Select an organization" allowClear>
+                    {this.state.orgs.map((org, index) => (
+                      <Select.Option value={org.id} key={index}>
+                        {org.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              )}
+              <Form.Item name="permission_level" initialValue="viewer">
+                <Select>
+                  <Select.Option value="viewer">Viewer</Select.Option>
+                  <Select.Option value="editor">Editor</Select.Option>
+                </Select>
+              </Form.Item>
+              <Form.Item>
+                <Button type="primary" onSubmit={() => {}}>
+                  <PlusCircleOutlined />
+                  Share
+                </Button>
+              </Form.Item>
+            </Space>
           </Space>
-          {this.state.addNetIDOrOrg == 'netid' ? (
-            <Form.Item
-              // label="NetID"
-              name="netid"
-              rules={[{ validator: serverValidateNetId }]}
-            >
-              <Input placeholder="NetID" />
-            </Form.Item>
-          ) : (
-            <></>
-          )}
         </Form>
+        {/* </Space> */}
       </Modal>
     );
   }

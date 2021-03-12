@@ -14,16 +14,20 @@ import base32 from 'hi-base32';
  * @throws Error if the alias is not allowed
  */
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export const serverValidateAlias = async (_rule: any, value: string): Promise<void> => {
-    if (!value) {
-        return;
-    }
-    const result = await fetch(`/api/v1/link/validate_alias/${base32.encode(value)}`)
-        .then(resp => resp.json());
-    if (!result.valid) {
-        throw new Error(result.reason);
-    }
-}
+export const serverValidateAlias = async (
+  _rule: any,
+  value: string
+): Promise<void> => {
+  if (!value) {
+    return;
+  }
+  const result = await fetch(
+    `/api/v1/link/validate_alias/${base32.encode(value)}`
+  ).then((resp) => resp.json());
+  if (!result.valid) {
+    throw new Error(result.reason);
+  }
+};
 
 /**
  * Check whether a long URL is allowed
@@ -33,16 +37,20 @@ export const serverValidateAlias = async (_rule: any, value: string): Promise<vo
  * @throws Error if the long URL is not allowed
  */
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export const serverValidateLongUrl = async (_rule: any, value: string): Promise<void> => {
-    if (!value) {
-        return;
-    }
-    const result = await fetch(`/api/v1/link/validate_long_url/${base32.encode(value)}`)
-        .then(resp => resp.json());
-    if (!result.valid) {
-        throw new Error(result.reason);
-    }
-}
+export const serverValidateLongUrl = async (
+  _rule: any,
+  value: string
+): Promise<void> => {
+  if (!value) {
+    return;
+  }
+  const result = await fetch(
+    `/api/v1/link/validate_long_url/${base32.encode(value)}`
+  ).then((resp) => resp.json());
+  if (!result.valid) {
+    throw new Error(result.reason);
+  }
+};
 
 /**
  * Check whether a NetID is valid
@@ -52,16 +60,19 @@ export const serverValidateLongUrl = async (_rule: any, value: string): Promise<
  * @throws [[Error]] if the NetID is invalid
  */
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export const serverValidateNetId = async (_rule: any, value: string): Promise<void> => {
-    if (!value) {
-        return;
-    }
-    const result = await fetch('/api/v1/org/validate_netid', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ netid: value }),
-    }).then(resp => resp.json());
-    if (!result.valid) {
-        throw new Error(result.reason);
-    }
-}
+export const serverValidateNetId = async (
+  _rule: any,
+  value: string
+): Promise<void> => {
+  if (!value) {
+    return;
+  }
+  const result = await fetch('/api/v1/org/validate_netid', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ netid: value }),
+  }).then((resp) => resp.json());
+  if (!result.valid) {
+    throw new Error(result.reason);
+  }
+};
