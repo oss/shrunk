@@ -203,7 +203,6 @@ export class LinkRow extends React.Component<Props, State> {
               <LineChartOutlined />
             </Link>
           </Button>
-
           <Button
             type="text"
             icon={<QrcodeOutlined />}
