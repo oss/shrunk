@@ -75,14 +75,8 @@ class LinksClient:
     def alias_is_duplicate(self, alias: str) -> bool:
         """Check whether the given alias already exists"""
 
-        # check to see that alias is not being used
-        result = self.db.urls.find_one({'aliases.alias': alias})
-
-        # Check if that alias is deleted
-        if result is not None:
-            for alias_info in result['aliases']:
-                if alias_info['deleted'] == True:
-                    return False
+        # check to see if the alias is already being used
+        result = self.db.urls.find_one({'$and':[{'aliases.alias' : alias, 'aliases.deleted' : False}]})
 
         return True if result is not None else False
 
