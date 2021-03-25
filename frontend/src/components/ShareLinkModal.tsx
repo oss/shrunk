@@ -63,13 +63,8 @@ export interface Props {
    * List of people/organizations who can edit the link
    * @property
    */
-  editors: [{ _id: String; type: String }] | null;
-
-  /**
-   * List of people/organizations who can view the link
-   * @property
-   */
-  viewers: [{ _id: String; type: String }] | null;
+  netids: Array<{ _id: String; type: String; permission: String }>;
+  orgs: Array<{ _id: String; type: String; permission: String }>;
 
   /**
    * Callback that will be called when the user clicks the "ok" button
@@ -141,7 +136,7 @@ export class ShareLinkModal extends React.Component<Props, State> {
       dataIndex: 'type',
       render: (type: String) => (
         <>
-          <Tag color={type == 'netid' ? 'red' : 'yellow'}>{type}</Tag>
+          <Tag color={type == 'org' ? '#C70000' : 'red'}>{type}</Tag>
         </>
       ),
     },
@@ -150,7 +145,7 @@ export class ShareLinkModal extends React.Component<Props, State> {
       dataIndex: 'permission',
       render: (permission: String) => (
         <>
-          <Tag color={permission == 'editor' ? 'red' : 'yellow'}>
+          <Tag color={permission == 'editor' ? '#C70000' : 'red'}>
             {permission}
           </Tag>
         </>
@@ -179,6 +174,14 @@ export class ShareLinkModal extends React.Component<Props, State> {
     };
   }
 
+  async componentDidMount(): Promise<void> {
+    await this.refreshOrgs();
+    var options = this.state.orgs.map((org) => {
+      return { label: org.name, value: org.id };
+    });
+    this.setState({ options: options });
+  }
+
   /**
    * Execute API requests to get list of org info, then update state
    * @method
@@ -189,23 +192,13 @@ export class ShareLinkModal extends React.Component<Props, State> {
     );
   };
 
-  async componentDidMount(): Promise<void> {
-    await this.refreshOrgs();
-    var options = this.state.orgs.map((org) => {
-      return { label: org.name, value: org.id }; // or set var option =
-    });
-    this.setState({ options: options });
+  addPeople(values: any) {
+    console.log('values: ', values);
   }
-
-  // convertSharingData = (editors: String[], viewers: String[]) => {
-
-  // }
 
   render(): React.ReactNode {
     return (
       <Modal
-        // destroyOnClose
-        // maskClosable
         visible={this.props.visible}
         title="Share link"
         okText="Done"
@@ -221,13 +214,8 @@ export class ShareLinkModal extends React.Component<Props, State> {
           this.props.onCancel();
         }}
       >
-        {/* <Space direction="vertical"> */}
-        <Table columns={this.tableColumns} />
-        <Form
-          ref={this.formRef}
-          // layout={'vertical'}
-          // initialValues={initialValues}
-        >
+        <Table columns={this.tableColumns} dataSource={this.props.netids} />
+        <Form ref={this.formRef} onFinish={this.addPeople}>
           <Space direction="vertical">
             <Space>
               Add
@@ -269,7 +257,7 @@ export class ShareLinkModal extends React.Component<Props, State> {
                 </Select>
               </Form.Item>
               <Form.Item>
-                <Button type="primary" onSubmit={() => {}}>
+                <Button type="primary" htmlType="submit">
                   <PlusCircleOutlined />
                   Share
                 </Button>
@@ -277,7 +265,6 @@ export class ShareLinkModal extends React.Component<Props, State> {
             </Space>
           </Space>
         </Form>
-        {/* </Space> */}
       </Modal>
     );
   }

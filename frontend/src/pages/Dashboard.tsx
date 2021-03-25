@@ -19,6 +19,10 @@ import { CreateLinkForm } from '../components/CreateLinkForm';
 import './Dashboard.less';
 
 /**
+ *
+ */
+
+/**
  * Props for the [[Dashboard]] component.
  * @interface
  */
@@ -94,13 +98,13 @@ export interface State {
   editModalState: { visible: boolean; linkInfo: LinkInfo | null };
 
   /**
-   * The current state of the share link modal. Contains the editors and viewers.
+   * The current state of the share link modal. Contains the netids and orgs.
    * @property
    */
   shareLinkModalState: {
     visible: boolean;
-    editors: [{ _id: String; type: String }] | null;
-    viewers: [{ _id: String; type: String }] | null;
+    netids: Array<{ _id: String; type: String; permission: String }>;
+    orgs: Array<{ _id: String; type: String; permission: String }>;
   };
 
   /**
@@ -153,8 +157,8 @@ export class Dashboard extends React.Component<Props, State> {
       },
       shareLinkModalState: {
         visible: false,
-        editors: null,
-        viewers: null,
+        netids: [],
+        orgs: [],
       },
       qrModalState: {
         visible: false,
@@ -333,22 +337,47 @@ export class Dashboard extends React.Component<Props, State> {
    * @param linkInfo The [[LinkInfo]] of the link to manage sharing
    */
   showShareLinkModal = async (linkInfo: LinkInfo): Promise<void> => {
+    /**
+     * '_id': info['_id'],
+        'title': info['title'],
+        'long_url': info['long_url'],
+        'aliases': aliases,
+        'deleted': info.get('deleted', False),
+        'editors': info['editors'],
+        'viewers': info['viewers']
+     */
     const sharingInfo = await fetch(`/api/v1/link/${linkInfo.id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
     }).then((resp) => resp.json());
-    console.log(sharingInfo);
-    // rows: {id, type, perms}
+
+    var netids: Array<{ _id: String; type: String; permission: String }> = [];
+    var orgs = [];
+    for (var i = 0; i < sharingInfo.editors.length; i++) {
+      if (sharingInfo.editors[i].type === 'netid')
+        netids.push({
+          _id: sharingInfo.editors[i]._id,
+          type: 'netid',
+          permission: 'editor',
+        });
+      else if (sharingInfo.editors[i].type === 'org')
+        orgs.push({
+          _id: sharingInfo.editors[i]._id,
+          type: 'org',
+          permission: 'editor',
+        });
+    }
 
     this.setState({
       shareLinkModalState: {
         visible: true,
-        editors: sharingInfo.editors,
-        viewers: sharingInfo.viewers,
+        netids: netids,
+        orgs: [],
       },
     });
+    console.log(this.state.shareLinkModalState.netids);
   };
 
   /** Hides the share link modal
@@ -368,8 +397,8 @@ export class Dashboard extends React.Component<Props, State> {
       this.setState({
         shareLinkModalState: {
           ...this.state.shareLinkModalState,
-          editors: null,
-          viewers: null,
+          netids: [],
+          orgs: [],
         },
       });
     }, 500);
@@ -496,49 +525,46 @@ export class Dashboard extends React.Component<Props, State> {
   };
 
   /**
-   * TODO: Executes API requests to update the people the link is shared with
+   * TODO: Executes API request to add people the link is shared with
    * @param values The form values from the edit link form
    * @throws Error if the value of `this.state.editModalState.linkInfo` is `null`
    */
-  /*
-   doShareLink = async (values: EditLinkFormValues): Promise<void> => {
-    const oldLinkInfo = this.state.editModalState.linkInfo;
+  doShareLinkWithPeople = async (values: any): Promise<void> => {
+    console.log(values);
+    // const oldLinkInfo = this.state.editModalState.linkInfo;
 
-    const promises = [];
+    // const promises = [];
 
-    promises.push(
-      fetch(`/api/v1/link/${oldLinkInfo.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(patch_req),
-      })
-    );
-
+    // fetch(`/api/v1/link/${oldLinkInfo.id}`, {
+    //   method: 'PATCH',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify(patch_req),
+    // });
 
     // Create/update aliases
-    for (const [alias, info] of newAliases.entries()) {
-      const isNew = !oldAliases.has(alias);
-      const isDescriptionChanged =
-        oldAliases.has(alias) &&
-        info.description !== oldAliases.get(alias)?.description;
-      if (isNew || isDescriptionChanged) {
-        promises.push(
-          fetch(`/api/v1/link/${oldLinkInfo.id}/alias`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              alias,
-              description: info.description,
-            }),
-          })
-        );
-      }
-    }
+    // for (const [alias, info] of newAliases.entries()) {
+    //   const isNew = !oldAliases.has(alias);
+    //   const isDescriptionChanged =
+    //     oldAliases.has(alias) &&
+    //     info.description !== oldAliases.get(alias)?.description;
+    //   if (isNew || isDescriptionChanged) {
+    //     promises.push(
+    //       fetch(`/api/v1/link/${oldLinkInfo.id}/alias`, {
+    //         method: 'POST',
+    //         headers: { 'Content-Type': 'application/json' },
+    //         body: JSON.stringify({
+    //           alias,
+    //           description: info.description,
+    //         }),
+    //       })
+    //     );
+    //   }
+    // }
 
     // Await all the requests and refresh search results
-    await Promise.all(promises);
-    await this.refreshResults();
-  };*/
+    // await Promise.all(promises);
+    // await this.refreshResults();
+  };
 
   render(): React.ReactNode {
     return (
@@ -632,9 +658,14 @@ export class Dashboard extends React.Component<Props, State> {
           <ShareLinkModal
             visible={this.state.shareLinkModalState.visible}
             userPrivileges={this.props.userPrivileges}
-            editors={this.state.shareLinkModalState.editors}
-            viewers={this.state.shareLinkModalState.viewers}
-            onOk={async () => this.hideShareLinkModal()}
+            netids={this.state.shareLinkModalState.netids}
+            orgs={this.state.shareLinkModalState.orgs}
+            // onAdd={async (values: any) =>
+            //   await this.doShareLinkWithPeople(values)
+            // }
+            onOk={async (values) => {
+              this.hideShareLinkModal();
+            }}
             onCancel={this.hideShareLinkModal}
           />
         )}
