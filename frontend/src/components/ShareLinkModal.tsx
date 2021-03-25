@@ -35,11 +35,6 @@ export interface EditLinkFormValues {
   aliases: { alias: string; description: string }[];
 }
 
-export interface SharingTable {
-  data: [{ _id: String; type: String; permission: String }];
-  // readonly columns: [{ _id: String; type: String; permission: String }];
-}
-
 /**
  * Props of the [[ShareLinkModal]] component
  * @interface
@@ -62,7 +57,7 @@ export interface Props {
    * List of netids/organizations who can edit the link
    * @property
    */
-  people: Array<{ _id: String; type: String; permission: String }>;
+  people: Array<{ _id: string; type: string; permission: string }>;
 
   /**
    * Callback that will be called when the user clicks the "ok" button
@@ -87,7 +82,7 @@ export interface State {
    * Equals "netid" when user is adding a netid, "org" when user is adding an org
    * @property
    */
-  addNetIDOrOrg: String;
+  addNetIDOrOrg: string;
 
   /**
    * True when Modal is fetching data.
@@ -132,7 +127,7 @@ export class ShareLinkModal extends React.Component<Props, State> {
     {
       title: 'Type',
       dataIndex: 'type',
-      render: (type: String) => (
+      render: (type: string) => (
         <>
           <Tag color={type == 'org' ? '#C70000' : 'red'}>{type}</Tag>
         </>
@@ -141,7 +136,7 @@ export class ShareLinkModal extends React.Component<Props, State> {
     {
       title: 'Permission',
       dataIndex: 'permission',
-      render: (permission: String) => (
+      render: (permission: string) => (
         <>
           <Tag color={permission == 'editor' ? '#C70000' : 'red'}>
             {permission}

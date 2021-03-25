@@ -103,7 +103,7 @@ export interface State {
    */
   shareLinkModalState: {
     visible: boolean;
-    people: Array<{ _id: String; type: String; permission: String }>;
+    people: Array<{ _id: string; type: string; permission: string }>;
   };
 
   /**
@@ -342,7 +342,7 @@ export class Dashboard extends React.Component<Props, State> {
       },
     }).then((resp) => resp.json());
 
-    var people: Array<{ _id: String; type: String; permission: String }> = [];
+    var people: Array<{ _id: string; type: string; permission: string }> = [];
     for (var i = 0; i < sharingInfo.editors.length; i++) {
       if (sharingInfo.editors[i].type === 'netid')
         people.push({
@@ -375,6 +375,15 @@ export class Dashboard extends React.Component<Props, State> {
           permission: 'viewer',
         });
     }
+
+    // sort the list of entities:
+    // first sorts by permission (editor > viewer), then by type (org > netid), then alphabetically by id
+    people.sort(
+      (person1, person2) =>
+        person1.permission.localeCompare(person2.permission) ||
+        person2.type.localeCompare(person1.type) ||
+        person1._id.localeCompare(person2._id)
+    );
 
     this.setState({
       shareLinkModalState: {
