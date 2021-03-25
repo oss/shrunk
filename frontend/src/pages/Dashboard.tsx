@@ -103,8 +103,7 @@ export interface State {
    */
   shareLinkModalState: {
     visible: boolean;
-    netids: Array<{ _id: String; type: String; permission: String }>;
-    orgs: Array<{ _id: String; type: String; permission: String }>;
+    people: Array<{ _id: String; type: String; permission: String }>;
   };
 
   /**
@@ -157,8 +156,7 @@ export class Dashboard extends React.Component<Props, State> {
       },
       shareLinkModalState: {
         visible: false,
-        netids: [],
-        orgs: [],
+        people: [],
       },
       qrModalState: {
         visible: false,
@@ -337,15 +335,6 @@ export class Dashboard extends React.Component<Props, State> {
    * @param linkInfo The [[LinkInfo]] of the link to manage sharing
    */
   showShareLinkModal = async (linkInfo: LinkInfo): Promise<void> => {
-    /**
-     * '_id': info['_id'],
-        'title': info['title'],
-        'long_url': info['long_url'],
-        'aliases': aliases,
-        'deleted': info.get('deleted', False),
-        'editors': info['editors'],
-        'viewers': info['viewers']
-     */
     const sharingInfo = await fetch(`/api/v1/link/${linkInfo.id}`, {
       method: 'GET',
       headers: {
@@ -353,31 +342,47 @@ export class Dashboard extends React.Component<Props, State> {
       },
     }).then((resp) => resp.json());
 
-    var netids: Array<{ _id: String; type: String; permission: String }> = [];
-    var orgs = [];
+    var people: Array<{ _id: String; type: String; permission: String }> = [];
     for (var i = 0; i < sharingInfo.editors.length; i++) {
       if (sharingInfo.editors[i].type === 'netid')
-        netids.push({
+        people.push({
           _id: sharingInfo.editors[i]._id,
           type: 'netid',
           permission: 'editor',
         });
       else if (sharingInfo.editors[i].type === 'org')
-        orgs.push({
+        people.push({
           _id: sharingInfo.editors[i]._id,
           type: 'org',
           permission: 'editor',
         });
     }
 
+    for (var i = 0; i < sharingInfo.viewers.length; i++) {
+      if (
+        sharingInfo.viewers[i].type === 'netid' &&
+        !people.some((person) => person._id === sharingInfo.viewers[i]._id) // don't show a person as a viewer if they're already an editor
+      )
+        people.push({
+          _id: sharingInfo.viewers[i]._id,
+          type: 'netid',
+          permission: 'viewer',
+        });
+      else if (sharingInfo.viewers[i].type === 'org')
+        people.push({
+          _id: sharingInfo.viewers[i]._id,
+          type: 'org',
+          permission: 'viewer',
+        });
+    }
+
     this.setState({
       shareLinkModalState: {
         visible: true,
-        netids: netids,
-        orgs: [],
+        people: people,
       },
     });
-    console.log(this.state.shareLinkModalState.netids);
+    console.log(this.state.shareLinkModalState.people);
   };
 
   /** Hides the share link modal
@@ -397,8 +402,7 @@ export class Dashboard extends React.Component<Props, State> {
       this.setState({
         shareLinkModalState: {
           ...this.state.shareLinkModalState,
-          netids: [],
-          orgs: [],
+          people: [],
         },
       });
     }, 500);
@@ -658,14 +662,11 @@ export class Dashboard extends React.Component<Props, State> {
           <ShareLinkModal
             visible={this.state.shareLinkModalState.visible}
             userPrivileges={this.props.userPrivileges}
-            netids={this.state.shareLinkModalState.netids}
-            orgs={this.state.shareLinkModalState.orgs}
+            people={this.state.shareLinkModalState.people}
             // onAdd={async (values: any) =>
             //   await this.doShareLinkWithPeople(values)
             // }
-            onOk={async (values) => {
-              this.hideShareLinkModal();
-            }}
+            onOk={this.hideShareLinkModal}
             onCancel={this.hideShareLinkModal}
           />
         )}

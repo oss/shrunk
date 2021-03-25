@@ -20,9 +20,8 @@ import {
 import { FormInstance } from 'antd/lib/form';
 import { PlusCircleOutlined, MinusCircleOutlined } from '@ant-design/icons';
 
-import { LinkInfo } from './LinkInfo';
 import { OrgInfo, listOrgs } from '../api/Org';
-import { serverValidateLongUrl, serverValidateNetId } from '../Validators';
+import { serverValidateNetId } from '../Validators';
 
 /**
  * The final values of the edit link form
@@ -60,11 +59,10 @@ export interface Props {
   userPrivileges: Set<string>;
 
   /**
-   * List of people/organizations who can edit the link
+   * List of netids/organizations who can edit the link
    * @property
    */
-  netids: Array<{ _id: String; type: String; permission: String }>;
-  orgs: Array<{ _id: String; type: String; permission: String }>;
+  people: Array<{ _id: String; type: String; permission: String }>;
 
   /**
    * Callback that will be called when the user clicks the "ok" button
@@ -214,24 +212,37 @@ export class ShareLinkModal extends React.Component<Props, State> {
           this.props.onCancel();
         }}
       >
-        <Table columns={this.tableColumns} dataSource={this.props.netids} />
+        <Table
+          columns={this.tableColumns}
+          dataSource={this.props.people}
+          locale={{ emptyText: 'This link is not shared with anyone.' }}
+          pagination={{
+            total: this.props.people.length > 0 ? this.props.people.length : 1, // always shows pagination
+          }}
+        />
         <Form ref={this.formRef} onFinish={this.addPeople}>
-          <Space direction="vertical">
-            <Space>
-              Add
-              <Radio.Group
-                onChange={(e) =>
-                  this.setState({ addNetIDOrOrg: e.target.value })
-                }
-                defaultValue="netid"
-                buttonStyle="solid"
-              >
-                <Radio.Button value="netid">NetID</Radio.Button>
-                <Radio.Button value="org">Organization</Radio.Button>
-              </Radio.Group>
-              :
-            </Space>
-            <Space>
+          <Row gutter={8}>
+            <Col span={14}>
+              <Space>
+                Add
+                <Radio.Group
+                  onChange={(e) =>
+                    this.setState({ addNetIDOrOrg: e.target.value })
+                  }
+                  defaultValue="netid"
+                  buttonStyle="solid"
+                >
+                  <Radio.Button value="netid">NetID</Radio.Button>
+                  <Radio.Button value="org">Organization</Radio.Button>
+                </Radio.Group>
+                :
+                <Col flex="auto" />
+              </Space>
+            </Col>
+          </Row>
+
+          <Row>
+            <Col span={12}>
               {this.state.addNetIDOrOrg == 'netid' ? (
                 <Form.Item
                   name="netid"
@@ -250,20 +261,24 @@ export class ShareLinkModal extends React.Component<Props, State> {
                   </Select>
                 </Form.Item>
               )}
+            </Col>
+            <Col span={6}>
               <Form.Item name="permission_level" initialValue="viewer">
                 <Select>
                   <Select.Option value="viewer">Viewer</Select.Option>
                   <Select.Option value="editor">Editor</Select.Option>
                 </Select>
               </Form.Item>
+            </Col>
+            <Col span={6}>
               <Form.Item>
                 <Button type="primary" htmlType="submit">
                   <PlusCircleOutlined />
                   Share
                 </Button>
               </Form.Item>
-            </Space>
-          </Space>
+            </Col>
+          </Row>
         </Form>
       </Modal>
     );
