@@ -24,16 +24,26 @@ import { OrgInfo, listOrgs } from '../api/Org';
 import { serverValidateNetId } from '../Validators';
 
 /**
- * The final values of the edit link form
- * @interface
+ * The final values of the share link form
+ * @type
  */
-export interface EditLinkFormValues {
+export type Entity = {
   /**
-   * The new aliases
+   * The id of the entity the link is shared with
    * @property
    */
-  aliases: { alias: string; description: string }[];
-}
+  _id: string;
+  /**
+   * The type of entity the link is shared with (netid/org)
+   * @property
+   */
+  type: string;
+  /**
+   * The permission of the entity the link is shared with (viewer/editor)
+   * @property
+   */
+  permission: string;
+};
 
 /**
  * Props of the [[ShareLinkModal]] component
@@ -57,13 +67,18 @@ export interface Props {
    * List of netids/organizations who can edit the link
    * @property
    */
-  people: Array<{ _id: string; type: string; permission: string }>;
+  people: Array<Entity>;
+
+  /**
+   * Callback that will be called when user shares link with an entity
+   */
+  onAddEntity: (values: Entity) => void;
 
   /**
    * Callback that will be called when the user clicks the "ok" button
    * @property
    */
-  onOk: (values: EditLinkFormValues) => void;
+  onOk: () => void;
 
   /**
    * Callback that will be called when the user closes the modal without
@@ -129,7 +144,7 @@ export class ShareLinkModal extends React.Component<Props, State> {
       dataIndex: 'type',
       render: (type: string) => (
         <>
-          <Tag color={type == 'org' ? '#C70000' : 'red'}>{type}</Tag>
+          <Tag color={type == 'org' ? '#cc0033' : 'red'}>{type}</Tag>
         </>
       ),
     },
@@ -138,7 +153,7 @@ export class ShareLinkModal extends React.Component<Props, State> {
       dataIndex: 'permission',
       render: (permission: string) => (
         <>
-          <Tag color={permission == 'editor' ? '#C70000' : 'red'}>
+          <Tag color={permission == 'editor' ? '#cc0033' : 'red'}>
             {permission}
           </Tag>
         </>
@@ -185,10 +200,6 @@ export class ShareLinkModal extends React.Component<Props, State> {
     );
   };
 
-  addPeople(values: any) {
-    console.log('values: ', values);
-  }
-
   render(): React.ReactNode {
     return (
       <Modal
@@ -200,7 +211,6 @@ export class ShareLinkModal extends React.Component<Props, State> {
         onOk={() => {
           this.formRef.current!.resetFields();
           this.props.onCancel();
-          // CALL /api/v1/link/<id>/acl modify_acl function
         }}
         onCancel={() => {
           this.formRef.current!.resetFields();
@@ -210,13 +220,14 @@ export class ShareLinkModal extends React.Component<Props, State> {
         <Table
           columns={this.tableColumns}
           dataSource={this.props.people}
+          rowKey="_id"
           locale={{ emptyText: 'This link is not shared with anyone.' }}
           pagination={{
             total: this.props.people.length > 0 ? this.props.people.length : 1, // always shows pagination
           }}
         />
-        <Form ref={this.formRef} onFinish={this.addPeople}>
-          <Row gutter={8}>
+        <Form ref={this.formRef} onFinish={this.props.onAddEntity}>
+          <Row gutter={[8, 15]}>
             <Col span={14}>
               <Space>
                 Add
@@ -241,12 +252,23 @@ export class ShareLinkModal extends React.Component<Props, State> {
               {this.state.addNetIDOrOrg == 'netid' ? (
                 <Form.Item
                   name="netid"
-                  rules={[{ validator: serverValidateNetId }]}
+                  rules={[
+                    { required: true, message: 'Please enter a valid NetID.' },
+                    { validator: serverValidateNetId },
+                  ]}
                 >
                   <Input placeholder="NetID" />
                 </Form.Item>
               ) : (
-                <Form.Item name="organization">
+                <Form.Item
+                  name="organization"
+                  rules={[
+                    {
+                      required: true,
+                      message: 'Please select an organization.',
+                    },
+                  ]}
+                >
                   <Select placeholder="Select an organization" allowClear>
                     {this.state.orgs.map((org, index) => (
                       <Select.Option value={org.id} key={index}>
@@ -258,10 +280,10 @@ export class ShareLinkModal extends React.Component<Props, State> {
               )}
             </Col>
             <Col span={6}>
-              <Form.Item name="permission_level" initialValue="viewer">
+              <Form.Item name="permission" initialValue="viewers">
                 <Select>
-                  <Select.Option value="viewer">Viewer</Select.Option>
-                  <Select.Option value="editor">Editor</Select.Option>
+                  <Select.Option value="viewers">Viewer</Select.Option>
+                  <Select.Option value="editors">Editor</Select.Option>
                 </Select>
               </Form.Item>
             </Col>

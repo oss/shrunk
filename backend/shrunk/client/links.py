@@ -191,9 +191,9 @@ class LinksClient:
     def assert_valid_acl_entry(self, acl, entry):
         target = entry['_id']
         mtype = entry['type']
-        if (mtype == 'user' and not is_valid_netid(target)) or \
+        if (mtype == 'netid' and not is_valid_netid(target)) or \
            (mtype == 'org'  and not self.other_clients.orgs.get_org(target)):
-            raise NotUserOrOrg(f'{target} is not a valid {mtype}. can\'t addto {acl}')
+            raise NotUserOrOrg(f'{target} is not a valid {mtype}. can\'t add to {acl}')
 
     def modify_acl(self,
                    link_id: ObjectId,
@@ -204,7 +204,6 @@ class LinksClient:
         # dont modify if they are owner
         if entry['_id'] == owner:
             return
-
         # make sure we don't add a dupe if they already have the perm
         operator = '$addToSet'
         if not add:
@@ -592,7 +591,7 @@ class LinksClient:
 
         plaintext_message = f"""Dear {owner_given_name},
 
-You are recieving this message because the user {requesting_netid} has requested
+You are receiving this message because the user {requesting_netid} has requested
 access to edit your link "{link_info['title']}".
 
 You may follow the following link to accept the request:
@@ -655,7 +654,7 @@ Please do not reply to this email. You may direct any questions to oss@oss.rutge
     <body>
         <p>Dear {owner_netid},</p>
 
-        <p>You are recieving this message because the user <span class="requesting-user">{requesting_netid}</span>
+        <p>You are receiving this message because the user <span class="requesting-user">{requesting_netid}</span>
         has requested access to edit your link &ldquo;{link_info['title']}&rdquo;. Please use the buttons
         below to accept or deny the request.</p>
 

@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+
 import { Row, Col, Pagination, Spin, Dropdown, Button } from 'antd';
 import { PlusCircleFilled } from '@ant-design/icons';
 
@@ -103,7 +104,8 @@ export interface State {
    */
   shareLinkModalState: {
     visible: boolean;
-    people: Array<{ _id: string; type: string; permission: string }>;
+    entities: Array<{ _id: string; type: string; permission: string }>;
+    linkInfo: LinkInfo | null;
   };
 
   /**
@@ -156,7 +158,8 @@ export class Dashboard extends React.Component<Props, State> {
       },
       shareLinkModalState: {
         visible: false,
-        people: [],
+        entities: [],
+        linkInfo: null,
       },
       qrModalState: {
         visible: false,
@@ -341,17 +344,18 @@ export class Dashboard extends React.Component<Props, State> {
         'Content-Type': 'application/json',
       },
     }).then((resp) => resp.json());
+    console.log(sharingInfo);
 
-    var people: Array<{ _id: string; type: string; permission: string }> = [];
+    var entities: Array<{ _id: string; type: string; permission: string }> = [];
     for (var i = 0; i < sharingInfo.editors.length; i++) {
       if (sharingInfo.editors[i].type === 'netid')
-        people.push({
+        entities.push({
           _id: sharingInfo.editors[i]._id,
           type: 'netid',
           permission: 'editor',
         });
       else if (sharingInfo.editors[i].type === 'org')
-        people.push({
+        entities.push({
           _id: sharingInfo.editors[i]._id,
           type: 'org',
           permission: 'editor',
@@ -361,15 +365,15 @@ export class Dashboard extends React.Component<Props, State> {
     for (var i = 0; i < sharingInfo.viewers.length; i++) {
       if (
         sharingInfo.viewers[i].type === 'netid' &&
-        !people.some((person) => person._id === sharingInfo.viewers[i]._id) // don't show a person as a viewer if they're already an editor
+        !entities.some((entity) => entity._id === sharingInfo.viewers[i]._id) // don't show a person as a viewer if they're already an editor
       )
-        people.push({
+        entities.push({
           _id: sharingInfo.viewers[i]._id,
           type: 'netid',
           permission: 'viewer',
         });
       else if (sharingInfo.viewers[i].type === 'org')
-        people.push({
+        entities.push({
           _id: sharingInfo.viewers[i]._id,
           type: 'org',
           permission: 'viewer',
@@ -378,20 +382,21 @@ export class Dashboard extends React.Component<Props, State> {
 
     // sort the list of entities:
     // first sorts by permission (editor > viewer), then by type (org > netid), then alphabetically by id
-    people.sort(
-      (person1, person2) =>
-        person1.permission.localeCompare(person2.permission) ||
-        person2.type.localeCompare(person1.type) ||
-        person1._id.localeCompare(person2._id)
-    );
+    // people.sort(
+    //   (person1, person2) =>
+    //     person1.permission.localeCompare(person2.permission) ||
+    //     person2.type.localeCompare(person1.type) ||
+    //     person1._id.localeCompare(person2._id)
+    // );
 
     this.setState({
       shareLinkModalState: {
         visible: true,
-        people: people,
+        entities: entities,
+        linkInfo: linkInfo,
       },
     });
-    console.log(this.state.shareLinkModalState.people);
+    // console.log(this.state.shareLinkModalState.entities);
   };
 
   /** Hides the share link modal
@@ -411,7 +416,8 @@ export class Dashboard extends React.Component<Props, State> {
       this.setState({
         shareLinkModalState: {
           ...this.state.shareLinkModalState,
-          people: [],
+          entities: [],
+          linkInfo: null,
         },
       });
     }, 500);
@@ -542,40 +548,39 @@ export class Dashboard extends React.Component<Props, State> {
    * @param values The form values from the edit link form
    * @throws Error if the value of `this.state.editModalState.linkInfo` is `null`
    */
-  doShareLinkWithPeople = async (values: any): Promise<void> => {
-    console.log(values);
-    // const oldLinkInfo = this.state.editModalState.linkInfo;
+  doShareLinkWithEntity = async (values: any): Promise<void> => {
+    const oldLinkInfo = this.state.shareLinkModalState.linkInfo;
+    if (oldLinkInfo === null) {
+      throw new Error('oldLinkInfo should not be null');
+    }
 
-    // const promises = [];
+    // Create the request to add to ACL
+    const patch_req: Record<string, string | Record<string, string>> = {};
+    const entry: Record<string, string> = {};
 
-    // fetch(`/api/v1/link/${oldLinkInfo.id}`, {
-    //   method: 'PATCH',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(patch_req),
-    // });
+    patch_req.action = 'add';
 
-    // Create/update aliases
-    // for (const [alias, info] of newAliases.entries()) {
-    //   const isNew = !oldAliases.has(alias);
-    //   const isDescriptionChanged =
-    //     oldAliases.has(alias) &&
-    //     info.description !== oldAliases.get(alias)?.description;
-    //   if (isNew || isDescriptionChanged) {
-    //     promises.push(
-    //       fetch(`/api/v1/link/${oldLinkInfo.id}/alias`, {
-    //         method: 'POST',
-    //         headers: { 'Content-Type': 'application/json' },
-    //         body: JSON.stringify({
-    //           alias,
-    //           description: info.description,
-    //         }),
-    //       })
-    //     );
-    //   }
-    // }
+    // building entry value in request body
+    if (values.hasOwnProperty('netid')) {
+      entry._id = values.netid;
+      entry.type = 'netid';
+    } else if (values.hasOwnProperty('organization')) {
+      entry._id = values.organization;
+      entry.type = 'org';
+    } else {
+      throw new Error('Invalid entity.');
+    }
 
-    // Await all the requests and refresh search results
-    // await Promise.all(promises);
+    patch_req.entry = entry;
+    patch_req.acl = values.permission;
+
+    await fetch(`/api/v1/link/${oldLinkInfo.id}/acl`, {
+      method: 'PATCH',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(patch_req),
+    });
     // await this.refreshResults();
   };
 
@@ -671,10 +676,10 @@ export class Dashboard extends React.Component<Props, State> {
           <ShareLinkModal
             visible={this.state.shareLinkModalState.visible}
             userPrivileges={this.props.userPrivileges}
-            people={this.state.shareLinkModalState.people}
-            // onAdd={async (values: any) =>
-            //   await this.doShareLinkWithPeople(values)
-            // }
+            people={this.state.shareLinkModalState.entities}
+            onAddEntity={async (values: any) =>
+              await this.doShareLinkWithEntity(values)
+            }
             onOk={this.hideShareLinkModal}
             onCancel={this.hideShareLinkModal}
           />

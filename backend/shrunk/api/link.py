@@ -32,7 +32,7 @@ ACL_ENTRY_SCHEMA = {
     'required': ['_id', 'type'],
     'properties' : {
         '_id': {'type': 'string'},
-        'type': {'type': 'string', 'enum': ['org', 'user']}
+        'type': {'type': 'string', 'enum': ['org', 'netid']}
     }
 }
 
@@ -257,7 +257,7 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
 MODIFY_ACL_SCHEMA = {
     'type': 'object',
     'additionalProperties': False,
-    'requried': ['entry', 'acl', 'action'],
+    'required': ['entry', 'acl', 'action'],
     'properties': {
         'entry': ACL_ENTRY_SCHEMA,
         'acl': {'type': 'string', 'enum': ['editors', 'viewers']},
@@ -271,7 +271,7 @@ MODIFY_ACL_SCHEMA = {
 @require_login
 def modify_acl(netid: str, client: ShrunkClient,
                req: Any, link_id: ObjectId) -> Any:
-    """``PATCH /api/link/<link_id>``
+    """``PATCH /api/link/<link_id>/acl``
 
     Modify an existing link's acl. Returns 204 on success or 403 on error.
     Request format:
