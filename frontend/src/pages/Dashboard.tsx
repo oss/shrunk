@@ -8,7 +8,7 @@ import React from 'react';
 import { Row, Col, Pagination, Spin, Dropdown, Button } from 'antd';
 import { PlusCircleFilled } from '@ant-design/icons';
 
-import { listOrgs, OrgInfo } from '../api/Org';
+import { getOrgInfo, listOrgs, OrgInfo } from '../api/Org';
 import { SearchQuery, SearchBox } from '../components/SearchBox';
 import { LinkRow } from '../components/LinkRow';
 import { LinkInfo } from '../components/LinkInfo';
@@ -20,8 +20,30 @@ import { CreateLinkForm } from '../components/CreateLinkForm';
 import './Dashboard.less';
 
 /**
- *
+ * The final values of the share link form
+ * @type
  */
+export type Entity = {
+  /**
+   * The id of the entity the link is shared with
+   * @property
+   */
+  _id: string;
+  /**
+   * The name of the entity. For an organization, it would be the organization name. For a netid, it would be the netid.
+   */
+  name: string;
+  /**
+   * The type of entity the link is shared with (netid/org)
+   * @property
+   */
+  type: string;
+  /**
+   * The permission of the entity the link is shared with (viewer/editor)
+   * @property
+   */
+  permission: string;
+};
 
 /**
  * Props for the [[Dashboard]] component.
@@ -104,7 +126,7 @@ export interface State {
    */
   shareLinkModalState: {
     visible: boolean;
-    entities: Array<{ _id: string; type: string; permission: string }>;
+    entities: Array<Entity>;
     linkInfo: LinkInfo | null;
   };
 
@@ -333,30 +355,30 @@ export class Dashboard extends React.Component<Props, State> {
   };
 
   /**
-   * Retrieves viewer/editor data for a link, reorganizes it in a displayable manner, and displays the share link modal
-   * @method
-   * @param linkInfo The [[LinkInfo]] of the link to manage sharing
+   * Retrieves viewer/editor data for a link and reorganizes it in a displayable manner.
+   * @param linkInfo
    */
-  showShareLinkModal = async (linkInfo: LinkInfo): Promise<void> => {
+  getLinkACL = async (linkInfo: LinkInfo): Promise<Entity[]> => {
     const sharingInfo = await fetch(`/api/v1/link/${linkInfo.id}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
     }).then((resp) => resp.json());
-    console.log(sharingInfo);
 
-    var entities: Array<{ _id: string; type: string; permission: string }> = [];
+    var entities: Array<Entity> = [];
     for (var i = 0; i < sharingInfo.editors.length; i++) {
       if (sharingInfo.editors[i].type === 'netid')
         entities.push({
           _id: sharingInfo.editors[i]._id,
+          name: sharingInfo.editors[i]._id,
           type: 'netid',
           permission: 'editor',
         });
       else if (sharingInfo.editors[i].type === 'org')
         entities.push({
           _id: sharingInfo.editors[i]._id,
+          name: (await getOrgInfo(sharingInfo.editors[i]._id)).name,
           type: 'org',
           permission: 'editor',
         });
@@ -369,12 +391,17 @@ export class Dashboard extends React.Component<Props, State> {
       )
         entities.push({
           _id: sharingInfo.viewers[i]._id,
+          name: sharingInfo.viewers[i]._id,
           type: 'netid',
           permission: 'viewer',
         });
-      else if (sharingInfo.viewers[i].type === 'org')
+      else if (
+        sharingInfo.viewers[i].type === 'org' &&
+        !entities.some((entity) => entity._id === sharingInfo.viewers[i]._id) // don't show an org as a viewer if they're already an editor
+      )
         entities.push({
           _id: sharingInfo.viewers[i]._id,
+          name: (await getOrgInfo(sharingInfo.viewers[i]._id)).name,
           type: 'org',
           permission: 'viewer',
         });
@@ -382,21 +409,29 @@ export class Dashboard extends React.Component<Props, State> {
 
     // sort the list of entities:
     // first sorts by permission (editor > viewer), then by type (org > netid), then alphabetically by id
-    // people.sort(
-    //   (person1, person2) =>
-    //     person1.permission.localeCompare(person2.permission) ||
-    //     person2.type.localeCompare(person1.type) ||
-    //     person1._id.localeCompare(person2._id)
-    // );
+    entities.sort(
+      (entity1, entity2) =>
+        entity1.permission.localeCompare(entity2.permission) ||
+        entity2.type.localeCompare(entity1.type) ||
+        entity1._id.localeCompare(entity2._id)
+    );
 
+    return entities;
+  };
+
+  /**
+   * Displays the share link modal
+   * @method
+   * @param linkInfo The [[LinkInfo]] of the link to manage sharing
+   */
+  showShareLinkModal = async (linkInfo: LinkInfo): Promise<void> => {
     this.setState({
       shareLinkModalState: {
         visible: true,
-        entities: entities,
+        entities: await this.getLinkACL(linkInfo),
         linkInfo: linkInfo,
       },
     });
-    // console.log(this.state.shareLinkModalState.entities);
   };
 
   /** Hides the share link modal

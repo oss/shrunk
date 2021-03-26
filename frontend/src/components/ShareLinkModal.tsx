@@ -34,6 +34,10 @@ export type Entity = {
    */
   _id: string;
   /**
+   * The name of the entity. For an organization, it would be the organization name. For a netid, it would be the netid.
+   */
+  name: string;
+  /**
    * The type of entity the link is shared with (netid/org)
    * @property
    */
@@ -137,7 +141,7 @@ export class ShareLinkModal extends React.Component<Props, State> {
   tableColumns = [
     {
       title: 'NetID/Org',
-      dataIndex: '_id',
+      dataIndex: 'name',
     },
     {
       title: 'Type',
