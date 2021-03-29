@@ -616,7 +616,15 @@ export class Dashboard extends React.Component<Props, State> {
       },
       body: JSON.stringify(patch_req),
     });
-    // await this.refreshResults();
+
+    // update the state with the new ACL list, which rerenders the link sharing modal with the updated list
+    this.setState({
+      shareLinkModalState: {
+        visible: this.state.shareLinkModalState.visible,
+        entities: await this.getLinkACL(oldLinkInfo),
+        linkInfo: oldLinkInfo,
+      },
+    });
   };
 
   render(): React.ReactNode {
