@@ -79,7 +79,12 @@ export interface Props {
   onAddEntity: (values: Entity) => void;
 
   /**
-   * Callback that will be called when the user clicks the "ok" button
+   * Callback that will be called when user unshares link with an entity
+   */
+  onRemoveEntity: (_id: string, type: string, permission: string) => void;
+
+  /**
+   * Callback that will be called when the user clicks the "ok" button of the modal
    * @property
    */
   onOk: () => void;
@@ -165,11 +170,21 @@ export class ShareLinkModal extends React.Component<Props, State> {
     },
     {
       title: 'Remove',
-      render: () => (
+      render: (text: any, record: any, index: any) => (
         <>
-          <Button>
-            <MinusCircleOutlined />
-          </Button>
+          <Button
+            icon={<MinusCircleOutlined />}
+            onClick={() =>
+              this.props.onRemoveEntity(
+                record._id,
+                record.type,
+                record.permission
+              )
+            }
+          />
+          {/* {text} */}
+          {/* {record.name} */}
+          {/* {index} */}
         </>
       ),
     },

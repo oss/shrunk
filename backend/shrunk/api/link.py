@@ -285,7 +285,7 @@ def modify_acl(netid: str, client: ShrunkClient,
 
     .. code-block:: json
 
-       { "_id": "netid|org_id", "type": "org|user" }
+       { "_id": "netid|org_id", "type": "org|netid" }
 
     :param netid:
     :param client:

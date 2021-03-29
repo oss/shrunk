@@ -579,9 +579,9 @@ export class Dashboard extends React.Component<Props, State> {
   };
 
   /**
-   * TODO: Executes API request to add people the link is shared with
+   * Executes API request to add people the link is shared with
    * @param values The form values from the edit link form
-   * @throws Error if the value of `this.state.editModalState.linkInfo` is `null`
+   * @throws Error if the value of `this.state.shareLinkModalState.linkInfo` is `null`
    */
   doShareLinkWithEntity = async (values: any): Promise<void> => {
     const oldLinkInfo = this.state.shareLinkModalState.linkInfo;
@@ -608,6 +608,53 @@ export class Dashboard extends React.Component<Props, State> {
 
     patch_req.entry = entry;
     patch_req.acl = values.permission;
+
+    await fetch(`/api/v1/link/${oldLinkInfo.id}/acl`, {
+      method: 'PATCH',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(patch_req),
+    });
+
+    // update the state with the new ACL list, which rerenders the link sharing modal with the updated list
+    this.setState({
+      shareLinkModalState: {
+        visible: this.state.shareLinkModalState.visible,
+        entities: await this.getLinkACL(oldLinkInfo),
+        linkInfo: oldLinkInfo,
+      },
+    });
+  };
+
+  /**
+   * Executes API request to add people the link is shared with
+   * @param _id The _id of the entity being removed
+   * @param type Whether the entity is a netid or an org
+   * @throws Error if the value of `this.state.shareLinkModalState.linkInfo` is `null`
+   */
+  doUnshareLinkWithEntity = async (
+    _id: string,
+    type: string,
+    permission: string
+  ): Promise<void> => {
+    const oldLinkInfo = this.state.shareLinkModalState.linkInfo;
+    if (oldLinkInfo === null) {
+      throw new Error('oldLinkInfo should not be null');
+    }
+
+    // Create the request to add to ACL
+    const patch_req: Record<string, string | Record<string, string>> = {};
+    const entry: Record<string, string> = {};
+
+    patch_req.action = 'remove';
+
+    // building entry value in request body
+    entry._id = _id;
+    entry.type = type;
+
+    patch_req.entry = entry;
+    patch_req.acl = permission.concat('s');
 
     await fetch(`/api/v1/link/${oldLinkInfo.id}/acl`, {
       method: 'PATCH',
@@ -723,6 +770,11 @@ export class Dashboard extends React.Component<Props, State> {
             onAddEntity={async (values: any) =>
               await this.doShareLinkWithEntity(values)
             }
+            onRemoveEntity={async (
+              _id: string,
+              type: string,
+              permission: string
+            ) => await this.doUnshareLinkWithEntity(_id, type, permission)}
             onOk={this.hideShareLinkModal}
             onCancel={this.hideShareLinkModal}
           />
