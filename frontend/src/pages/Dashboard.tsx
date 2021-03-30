@@ -128,6 +128,7 @@ export interface State {
     visible: boolean;
     entities: Array<Entity>;
     linkInfo: LinkInfo | null;
+    isLoading: boolean;
   };
 
   /**
@@ -182,6 +183,7 @@ export class Dashboard extends React.Component<Props, State> {
         visible: false,
         entities: [],
         linkInfo: null,
+        isLoading: false,
       },
       qrModalState: {
         visible: false,
@@ -359,6 +361,15 @@ export class Dashboard extends React.Component<Props, State> {
    * @param linkInfo
    */
   getLinkACL = async (linkInfo: LinkInfo): Promise<Entity[]> => {
+    this.setState({
+      shareLinkModalState: {
+        visible: this.state.shareLinkModalState.visible,
+        entities: this.state.shareLinkModalState.entities,
+        linkInfo: this.state.shareLinkModalState.linkInfo,
+        isLoading: true, // set isLoading to true
+      },
+    });
+
     const sharingInfo = await fetch(`/api/v1/link/${linkInfo.id}`, {
       method: 'GET',
       headers: {
@@ -416,6 +427,14 @@ export class Dashboard extends React.Component<Props, State> {
         entity1._id.localeCompare(entity2._id)
     );
 
+    this.setState({
+      shareLinkModalState: {
+        visible: this.state.shareLinkModalState.visible,
+        entities: this.state.shareLinkModalState.entities,
+        linkInfo: this.state.shareLinkModalState.linkInfo,
+        isLoading: false, // set isLoading to false
+      },
+    });
     return entities;
   };
 
@@ -430,6 +449,7 @@ export class Dashboard extends React.Component<Props, State> {
         visible: true,
         entities: await this.getLinkACL(linkInfo),
         linkInfo: linkInfo,
+        isLoading: false,
       },
     });
   };
@@ -584,6 +604,15 @@ export class Dashboard extends React.Component<Props, State> {
    * @throws Error if the value of `this.state.shareLinkModalState.linkInfo` is `null`
    */
   doShareLinkWithEntity = async (values: any): Promise<void> => {
+    this.setState({
+      shareLinkModalState: {
+        visible: this.state.shareLinkModalState.visible,
+        entities: this.state.shareLinkModalState.entities,
+        linkInfo: this.state.shareLinkModalState.linkInfo,
+        isLoading: true,
+      },
+    });
+
     const oldLinkInfo = this.state.shareLinkModalState.linkInfo;
     if (oldLinkInfo === null) {
       throw new Error('oldLinkInfo should not be null');
@@ -623,6 +652,7 @@ export class Dashboard extends React.Component<Props, State> {
         visible: this.state.shareLinkModalState.visible,
         entities: await this.getLinkACL(oldLinkInfo),
         linkInfo: oldLinkInfo,
+        isLoading: false,
       },
     });
   };
@@ -670,6 +700,7 @@ export class Dashboard extends React.Component<Props, State> {
         visible: this.state.shareLinkModalState.visible,
         entities: await this.getLinkACL(oldLinkInfo),
         linkInfo: oldLinkInfo,
+        isLoading: this.state.shareLinkModalState.isLoading,
       },
     });
   };
@@ -767,6 +798,7 @@ export class Dashboard extends React.Component<Props, State> {
             visible={this.state.shareLinkModalState.visible}
             userPrivileges={this.props.userPrivileges}
             people={this.state.shareLinkModalState.entities}
+            isLoading={this.state.shareLinkModalState.isLoading}
             onAddEntity={async (values: any) =>
               await this.doShareLinkWithEntity(values)
             }

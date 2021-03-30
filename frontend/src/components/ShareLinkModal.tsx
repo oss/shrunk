@@ -74,6 +74,12 @@ export interface Props {
   people: Array<Entity>;
 
   /**
+   * Whether the modal is waiting for a request to be fulfilled
+   * @property
+   */
+  isLoading: boolean;
+
+  /**
    * Callback that will be called when user shares link with an entity
    */
   onAddEntity: (values: Entity) => void;
@@ -244,6 +250,7 @@ export class ShareLinkModal extends React.Component<Props, State> {
           pagination={{
             total: this.props.people.length > 0 ? this.props.people.length : 1, // always shows pagination
           }}
+          loading={this.props.isLoading}
         />
         <Form ref={this.formRef} onFinish={this.props.onAddEntity}>
           <Row gutter={[8, 15]}>
