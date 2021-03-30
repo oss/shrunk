@@ -176,7 +176,7 @@ export class ShareLinkModal extends React.Component<Props, State> {
     },
     {
       title: 'Remove',
-      render: (text: any, record: any, index: any) => (
+      render: (record: any) => (
         <>
           <Button
             icon={<MinusCircleOutlined />}
@@ -252,7 +252,13 @@ export class ShareLinkModal extends React.Component<Props, State> {
           }}
           loading={this.props.isLoading}
         />
-        <Form ref={this.formRef} onFinish={this.props.onAddEntity}>
+        <Form
+          ref={this.formRef}
+          onFinish={(e) => {
+            this.props.onAddEntity(e);
+            this.formRef.current!.resetFields();
+          }}
+        >
           <Row gutter={[8, 15]}>
             <Col span={14}>
               <Space>

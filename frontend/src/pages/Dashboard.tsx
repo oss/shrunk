@@ -694,6 +694,18 @@ export class Dashboard extends React.Component<Props, State> {
       body: JSON.stringify(patch_req),
     });
 
+    // removing an editor actually downgrades them to a viewer. So, we send another request to downgrade editors twice, once to make them viewer, and once to completely remove them
+    if (permission === 'editor') {
+      patch_req.acl = 'viewers';
+      await fetch(`/api/v1/link/${oldLinkInfo.id}/acl`, {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(patch_req),
+      });
+    }
+
     // update the state with the new ACL list, which rerenders the link sharing modal with the updated list
     this.setState({
       shareLinkModalState: {
