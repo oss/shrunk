@@ -15,3 +15,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Complete overhaul of website design.
 - Ability to request access to edit links.
+
+## [1.3.3]
+
+### Added
+- Phishtrain checking to stop people from shortening known fishing links
+- A users links are now disabled instead of deleted when a user is blacklisted
+- Improved admin stats
+- Admins can view all organizations
+- Option to shrunk to require 2fa from shibboleth (not enabled, using vpn instead)
+- Now using webpack for js and css
+- Code cleanup/refactoring
+- Cleaned up documentation
+- Styling updates
+
+### Fixed
+- Fixed packaging problems
+- QR ui bugs
