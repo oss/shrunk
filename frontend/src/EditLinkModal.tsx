@@ -7,6 +7,7 @@ import React from 'react';
 import moment from 'moment';
 import { Modal, Form, Input, Button, DatePicker, Space } from 'antd';
 import { LinkOutlined, PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
+import base32 from 'hi-base32';
 
 import { LinkInfo } from './LinkInfo';
 import { serverValidateReservedAlias, serverValidateDuplicateAlias, serverValidateLongUrl, serverValidateNetId } from './Validators';
@@ -106,15 +107,19 @@ export const EditLinkModal: React.FC<Props> = (props) => {
         aliases: props.linkInfo.aliases.filter(alias => !alias.deleted),
     };
 
+    const isAnInitialAlias = (alias: any) => {
+        if(initialValues.aliases.some(obj => obj.alias === alias)) return true
+        else return false
+    };
+
     return (
         <Modal
             visible={props.visible}
             title='Edit link'
             onOk={() => {
-                form
-                    .validateFields()
+                form.validateFields()
                     .then(values => {
-                        form.resetFields();
+                        //form.resetFields();
                         props.onOk(values as EditLinkFormValues);
                     });
             }}
@@ -172,6 +177,18 @@ export const EditLinkModal: React.FC<Props> = (props) => {
                                                 message: 'Alias may consist only of numbers, letters, and the punctuation marks “.,-_”.',
                                             },
                                             { validator: serverValidateReservedAlias },
+                                            ({ getFieldValue }) => ({
+                                                async validator(_, value) {
+                                                    if (!value || isAnInitialAlias(value)) {
+                                                        return Promise.resolve();
+                                                    }
+                                                    const result = await fetch(`/api/v1/link/validate_duplicate_alias/${base32.encode(value)}`)
+                                                        .then(resp => resp.json());
+                                                    if (!result.valid && value.length >= 5) {
+                                                        return Promise.reject(new Error(result.reason));
+                                                    }
+                                                },
+                                              }),
                                         ]}>
                                         <Input disabled={!mayEditAliases} placeholder='Alias' />
                                     </Form.Item>
