@@ -244,7 +244,7 @@ def test_validate_long_url(client: Client, long_url: str, expected: bool) -> Non
 def test_validate_alias(client: Client, alias: str, expected: bool) -> None:
     alias_b32 = str(base64.b32encode(bytes(alias, 'utf8')), 'utf8')
     with dev_login(client, 'user'):
-        resp = client.get(f'/api/v1/link/validate_alias/{alias_b32}')
+        resp = client.get(f'/api/v1/link/validate_reserved_alias/{alias_b32}')
         assert resp.status_code == 200
         assert resp.json['valid'] is expected
 
