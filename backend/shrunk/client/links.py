@@ -71,6 +71,13 @@ class LinksClient:
         if alias in self.reserved_words:
             return True
         return any(alias in str(route) for route in current_app.url_map.iter_rules())
+    
+    def alias_is_duplicate(self, alias: str) -> bool:
+        """Check whether the given alias already exists"""
+
+        # check to see if the alias is already being used
+        result = self.db.urls.find_one({'aliases': {'$elemMatch':{'alias':alias, 'deleted': False}}})
+        return True if result is not None else False
 
     def _long_url_is_phished(self, long_url: str) -> bool:
         """Check whether the given long url is present in the phishing blacklist."""
@@ -344,6 +351,7 @@ class LinksClient:
         if alias is None:
             return self.create_random_alias(link_id, description)
 
+        # If alias is reserved word
         if self.alias_is_reserved(alias):
             raise BadAliasException
 
@@ -352,12 +360,12 @@ class LinksClient:
                                          {'$set': {
                                              'aliases.$.deleted': False,
                                              'aliases.$.description': description}})
+
         if result.modified_count == 1:
             return alias
 
-        # Otherwise, try to insert the alias. First check whether it already exsits.
-        result = self.db.urls.find_one({'aliases.alias': alias})
-        if result is not None:
+        # Otherwise, try to insert the alias. First check whether it already exists.
+        if self.alias_is_duplicate(alias):
             raise BadAliasException
 
         # Create the alias.
@@ -448,7 +456,8 @@ class LinksClient:
         return result
 
     def get_link_info_by_alias(self, alias: str) -> Any:
-        return self.db.urls.find_one({'aliases.alias': alias})
+        return self.db.urls.find_one({'$and':[{'aliases.alias' : alias, 'aliases.deleted' : False}]})
+
 
     def get_long_url(self, alias: str) -> Optional[str]:
         """Given a short URL, returns the long URL.

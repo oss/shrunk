@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sharing tab to manage which people/organizations your link is shared with (Link ACLs)
 - Updated link editing user interface.
 
+### Fixed
+- Fixed use of duplicate alias
+- Fixed reuse of deleted/inactive alias
+- Fixed ui bug: edit link modal form reverting back to original values
+
+
 ## [1.4.0] - 2020-10-15
 
 ### Added

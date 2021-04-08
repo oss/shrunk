@@ -11,18 +11,29 @@ import base32 from 'hi-base32';
  * @function
  * @param _rule The rule
  * @param value The alias
- * @throws Error if the alias is not allowed
+ * @throws Error if the alias is a reserved word
  */
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export const serverValidateAlias = async (_rule: any, value: string): Promise<void> => {
-    if (!value) {
-        return;
-    }
-    const result = await fetch(`/api/v1/link/validate_alias/${base32.encode(value)}`)
+export const serverValidateReservedAlias = async (_rule: any, value: string): Promise<void> => {
+    if (!value) return;
+    const result = await fetch(`/api/v1/link/validate_reserved_alias/${base32.encode(value)}`)
         .then(resp => resp.json());
-    if (!result.valid) {
-        throw new Error(result.reason);
-    }
+    if (!result.valid && value.length >= 5) throw new Error(result.reason);
+}
+
+/**
+ * Check whether an alias is allowed
+ * @function
+ * @param _rule The rule
+ * @param value The alias
+ * @throws Error if the alias already exists
+ */
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+export const serverValidateDuplicateAlias = async (_rule: any, value: string): Promise<void> => {
+    if (!value) return;
+    const result = await fetch(`/api/v1/link/validate_duplicate_alias/${base32.encode(value)}`)
+        .then(resp => resp.json());
+    if (!result.valid && value.length >= 5) throw new Error(result.reason);
 }
 
 /**

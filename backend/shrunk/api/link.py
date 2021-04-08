@@ -584,10 +584,10 @@ def create_alias(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) 
     return jsonify({'alias': alias})
 
 
-@bp.route('/validate_alias/<b32:alias>', methods=['GET'])
+@bp.route('/validate_reserved_alias/<b32:alias>', methods=['GET'])
 @require_login
-def validate_alias(_netid: str, client: ShrunkClient, alias: str) -> Any:
-    """``GET /api/validate_alias/<b32:alias>``
+def validate_reserved_alias(_netid: str, client: ShrunkClient, alias: str) -> Any:
+    """``GET /api/validate_reserved_alias/<b32:alias>``
 
     Validate an alias. This endpoint is used for form validation in the frontend. Response format:
 
@@ -601,10 +601,32 @@ def validate_alias(_netid: str, client: ShrunkClient, alias: str) -> Any:
     """
     valid = not client.links.alias_is_reserved(alias)
     response: Dict[str, Any] = {'valid': valid}
+    
     if not valid:
-        response['reason'] = 'That alias is not allowed.'
+        response['reason'] = 'That alias cannot be used.'
     return jsonify(response)
 
+@bp.route('/validate_duplicate_alias/<b32:alias>', methods=['GET'])
+@require_login
+def validate_duplicate_alias(_netid: str, client: ShrunkClient, alias: str) -> Any:
+    """``GET /api/validate_duplicate_alias/<b32:alias>``
+
+    Validate an alias. This endpoint is used for form validation in the frontend. Response format:
+
+    .. code-block:: json
+
+       { "valid": "boolean", "reason?": "string" }
+
+    :param netid:
+    :param client:
+    :param alias:
+    """
+    valid = not client.links.alias_is_duplicate(alias)
+    response: Dict[str, Any] = {'valid': valid}
+
+    if not valid:
+        response['reason'] = 'That alias already exists.'
+    return jsonify(response)
 
 @bp.route('/<ObjectId:link_id>/alias/<alias>', methods=['DELETE'])
 @require_login
