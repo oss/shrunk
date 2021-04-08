@@ -177,7 +177,7 @@ export const EditLinkModal: React.FC<Props> = (props) => {
                                                 message: 'Alias may consist only of numbers, letters, and the punctuation marks “.,-_”.',
                                             },
                                             { validator: serverValidateReservedAlias },
-                                            ({ getFieldValue }) => ({
+                                            () => ({
                                                 async validator(_, value) {
                                                     if (!value || isAnInitialAlias(value)) {
                                                         return Promise.resolve();

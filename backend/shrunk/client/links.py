@@ -76,8 +76,7 @@ class LinksClient:
         """Check whether the given alias already exists"""
 
         # check to see if the alias is already being used
-        result = self.db.urls.find_one({'$and':[{'aliases.alias' : alias, 'aliases.deleted' : False}]})
-
+        result = self.db.urls.find_one({'aliases': {'$elemMatch':{'alias':alias, 'deleted': False}}})
         return True if result is not None else False
 
     def _long_url_is_phished(self, long_url: str) -> bool:
