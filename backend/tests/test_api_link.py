@@ -589,7 +589,7 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
         link, status = check_create({
             'title': 'title',
             'long_url': 'https://example.com',
-            'editors': [{'_id': 'DEV_ADMIN', 'type': 'user'}]
+            'editors': [{'_id': 'DEV_ADMIN', 'type': 'netid'}]
         })
         assert 200 <= status < 300
         assert len(link['viewers']) == 1
@@ -598,7 +598,7 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
         link, status = check_create({
             'title': 'title',
             'long_url': 'https://example.com',
-            'viewers': [{'_id': 'DEV_ADMIN', 'type': 'user'}]
+            'viewers': [{'_id': 'DEV_ADMIN', 'type': 'netid'}]
         })
         assert 200 <= status < 300
         assert len(link['editors']) == 0
@@ -607,8 +607,8 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
         link, status = check_create({
             'title': 'title',
             'long_url': 'https://example.com',
-            'viewers': [{'_id': 'DEV_ADMIN', 'type': 'user'},
-                        {'_id': 'DEV_ADMIN', 'type': 'user'}]
+            'viewers': [{'_id': 'DEV_ADMIN', 'type': 'netid'},
+                        {'_id': 'DEV_ADMIN', 'type': 'netid'}]
         })
         assert 200 <= status < 300
         assert len(link['viewers']) == 1
@@ -670,8 +670,8 @@ def test_update_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
             resp = client.get(f'/api/v1/link/{link_id}')
             return resp.json, status
 
-        person = {'_id': 'roofus', 'type': 'user'}
-        person2 = {'_id': 'doofus', 'type': 'user'}
+        person = {'_id': 'roofus', 'type': 'netid'}
+        person2 = {'_id': 'doofus', 'type': 'netid'}
         inv_org = {'_id': 'not_obj_id', 'type': 'org'}
         inv_org2 = {'_id': '5fbed163b7202e4c33f01a93', 'type': 'org'}
 
@@ -748,7 +748,7 @@ def test_update_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
 
         # add owner doesn't actually add them to the list
 
-        link, status = mod_acl('add', {'_id': 'DEV_FACSTAFF', 'type': 'user'}, 'editors')
+        link, status = mod_acl('add', {'_id': 'DEV_FACSTAFF', 'type': 'netid'}, 'editors')
         assert 200 <= status <= 300
         assert len(link['viewers']) == 0
         assert len(link['editors']) == 0
@@ -773,7 +773,7 @@ def test_acl(client: Client) -> None: # pylint: disable=too-many-statements
         resp = client.post('/api/v1/link', json={
             'title': 'testlink2333',
             'long_url': 'https://example.com',
-            'editors': [{'_id': 'DEV_USER', 'type': 'user'}],
+            'editors': [{'_id': 'DEV_USER', 'type': 'netid'}],
             'viewers': [{'_id': org_id, 'type': 'org'}]
         })
         assert 200 <= resp.status_code <= 300
@@ -856,7 +856,7 @@ def test_acl(client: Client) -> None: # pylint: disable=too-many-statements
             resp = client.patch(f'/api/v1/link/{link_id}/acl', json={
                 'entry': {
                     '_id': 'roofus' + str(random.randrange(0, 1000)),
-                    'type': 'user'
+                    'type': 'netid'
                 },
                 'acl': 'viewers',
                 'action': 'add'

@@ -3,23 +3,24 @@
  * @packageDocumentation
  */
 
-import React from "react";
-import { Row, Col, Button, Popconfirm, Tooltip, Tag } from "antd";
+import React from 'react';
+import { Row, Col, Button, Popconfirm, Tooltip, Tag } from 'antd';
 import {
   CopyFilled,
   DeleteOutlined,
   LineChartOutlined,
+  LockOutlined,
   EditOutlined,
   QrcodeOutlined,
   ExclamationCircleFilled,
   TeamOutlined,
-} from "@ant-design/icons";
-import CopyToClipboard from "react-copy-to-clipboard";
-import { Link } from "react-router-dom";
-import moment from "moment";
+} from '@ant-design/icons';
+import CopyToClipboard from 'react-copy-to-clipboard';
+import { Link } from 'react-router-dom';
+import moment from 'moment';
 
-import { LinkInfo } from "./LinkInfo";
-import "./LinkRow.less";
+import { LinkInfo } from './LinkInfo';
+import './LinkRow.less';
 
 /**
  * Props for the [[LinkRow]] component
@@ -37,6 +38,12 @@ export interface Props {
    * @property
    */
   showEditModal: (linkInfo: LinkInfo) => void;
+
+  /**
+   * Callback called when the share link modal should be displayed
+   * @property
+   */
+  showShareLinkModal: (linkInfo: LinkInfo) => void;
 
   /**
    * Callback called when the QR modal should be displayed
@@ -74,21 +81,27 @@ export class LinkRow extends React.Component<Props, State> {
    * Execute API requests to delete the link, then refresh search results
    * @method
    */
-   confirmDelete = async (): Promise<void> => {
+  confirmDelete = async (): Promise<void> => {
     // Delete link
     await fetch(`/api/v1/link/${this.props.linkInfo.id}`, { method: 'DELETE' });
-    
+
     // Delete alias link
     var alias_name;
-    {this.props.linkInfo.aliases.map(alias => { alias_name = `${alias.alias}`;})}
-    await fetch(`/api/v1/link/${this.props.linkInfo.id}/alias/${alias_name}`, { method: 'DELETE' });
+    {
+      this.props.linkInfo.aliases.map((alias) => {
+        alias_name = `${alias.alias}`;
+      });
+    }
+    await fetch(`/api/v1/link/${this.props.linkInfo.id}/alias/${alias_name}`, {
+      method: 'DELETE',
+    });
 
     await this.props.refreshResults();
-}
+  };
 
   requestEditAccess = async (): Promise<void> => {
     await fetch(`/api/v1/link/${this.props.linkInfo.id}/request_edit_access`, {
-      method: "POST",
+      method: 'POST',
     });
   };
 
@@ -96,10 +109,14 @@ export class LinkRow extends React.Component<Props, State> {
     const isLinkDeleted = this.props.linkInfo.deletion_info !== null;
     const isLinkExpired = this.props.linkInfo.is_expired;
     const titleClassName =
-      isLinkDeleted || isLinkExpired ? "title deleted" : "title";
+      isLinkDeleted || isLinkExpired ? 'title deleted' : 'title';
 
     return (
-      <Row className="primary-row" style={{ alignItems: "center" }}>
+      <Row
+        className="primary-row"
+        justify="center"
+        // style={{ alignItems: 'center' }}
+      >
         <Col span={20}>
           <Row>
             <Col span={24}>
@@ -127,16 +144,16 @@ export class LinkRow extends React.Component<Props, State> {
                 <></>
               ) : (
                 <span className="info">
-                  Expires:{" "}
+                  Expires:{' '}
                   {moment(this.props.linkInfo.expiration_time).format(
-                    "DD MMM YYYY"
+                    'DD MMM YYYY'
                   )}
                 </span>
               )}
 
               <span className="info">
-                Created:{" "}
-                {moment(this.props.linkInfo.created_time).format("DD MMM YYYY")}
+                Created:{' '}
+                {moment(this.props.linkInfo.created_time).format('DD MMM YYYY')}
               </span>
             </Col>
           </Row>
@@ -144,8 +161,8 @@ export class LinkRow extends React.Component<Props, State> {
             const short_url = `https://${document.location.host}/${alias.alias}`;
             const className =
               isLinkDeleted || isLinkExpired || alias.deleted
-                ? "alias deleted"
-                : "alias";
+                ? 'alias deleted'
+                : 'alias';
             return (
               <Row key={alias.alias}>
                 <Col>
@@ -155,7 +172,7 @@ export class LinkRow extends React.Component<Props, State> {
                         <Button type="text" icon={<CopyFilled />} />
                       </Tooltip>
                     </CopyToClipboard>
-                    {alias.description ? <em>({alias.description})</em> : ""}
+                    {alias.description ? <em>({alias.description})</em> : ''}
                     &nbsp;
                     <a href={short_url}>{short_url}</a>
                     &rarr;
@@ -179,6 +196,19 @@ export class LinkRow extends React.Component<Props, State> {
               onClick={(_ev) => this.props.showEditModal(this.props.linkInfo)}
             />
           )}
+
+          {isLinkDeleted || !this.props.linkInfo.may_edit ? (
+            <></>
+          ) : (
+            <Button
+              type="text"
+              icon={<TeamOutlined />}
+              onClick={(_ev) =>
+                this.props.showShareLinkModal(this.props.linkInfo)
+              }
+            />
+          )}
+
           <Button type="text">
             <Link to={`/stats/${this.props.linkInfo.id}`}>
               <LineChartOutlined />
@@ -196,7 +226,7 @@ export class LinkRow extends React.Component<Props, State> {
               placement="top"
               title="Are you sure you want to delete this link?"
               onConfirm={this.confirmDelete}
-              icon={<ExclamationCircleFilled style={{ color: "red" }} />}
+              icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
             >
               <Button danger type="text" icon={<DeleteOutlined />} />
             </Popconfirm>
