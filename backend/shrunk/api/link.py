@@ -44,7 +44,6 @@ CREATE_LINK_SCHEMA = {
         'title': {'type': 'string', 'minLength': 1},
         'long_url': {'type': 'string', 'minLength': 1},
         'expiration_time': {'type': 'string', 'format': 'date-time'},
-        'last_edited': {'type': 'string', 'format': 'date-time'},
         'editors': {'type': 'array', 'items': ACL_ENTRY_SCHEMA},
         'viewers': {'type': 'array', 'items': ACL_ENTRY_SCHEMA},
     },
@@ -206,7 +205,6 @@ MODIFY_LINK_SCHEMA = {
         'title': {'type': 'string', 'minLength': 1},
         'long_url': {'type': 'string', 'format': 'uri'},
         'expiration_time': {'type': ['string', 'null'], 'format': 'date-time'},
-        'last_edited': {'type': ['string', 'null'], 'format': 'date-time'},
         'owner': {'type': 'string', 'minLength': 1},
     },
 }

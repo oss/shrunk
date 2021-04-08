@@ -132,7 +132,6 @@ class LinksClient:
             for member in members:
                 self.assert_valid_acl_entry(acl, member)
 
-        last_edited = datetime.now()
 
         document = {
             'title': title,
@@ -143,7 +142,6 @@ class LinksClient:
             'deleted': False,
             'creator_ip': creator_ip,
             'expiration_time': expiration_time,
-            'last_edited': last_edited,
             'netid': netid,
             'aliases': [],
             'viewers': viewers,
@@ -170,7 +168,6 @@ class LinksClient:
         fields: Dict[str, Any] = {}
         update: Dict[str, Any] = {'$set': fields}
 
-        fields['last_edited'] = datetime.now()
         if title is not None:
             fields['title'] = title
         if long_url is not None:

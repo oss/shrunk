@@ -2,9 +2,6 @@
 *.sw[op]
 *~
 
-# Apple stuff
-.DS_Store
-
 # Secrets
 backend/shrunk/config.py
 
