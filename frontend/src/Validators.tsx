@@ -14,12 +14,16 @@ import base32 from 'hi-base32';
  * @throws Error if the alias is a reserved word
  */
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export const serverValidateReservedAlias = async (_rule: any, value: string): Promise<void> => {
-    if (!value) return;
-    const result = await fetch(`/api/v1/link/validate_reserved_alias/${base32.encode(value)}`)
-        .then(resp => resp.json());
-    if (!result.valid && value.length >= 5) throw new Error(result.reason);
-}
+export const serverValidateReservedAlias = async (
+  _rule: any,
+  value: string
+): Promise<void> => {
+  if (!value) return;
+  const result = await fetch(
+    `/api/v1/link/validate_reserved_alias/${base32.encode(value)}`
+  ).then((resp) => resp.json());
+  if (!result.valid && value.length >= 5) throw new Error(result.reason);
+};
 
 /**
  * Check whether an alias is allowed
@@ -29,12 +33,16 @@ export const serverValidateReservedAlias = async (_rule: any, value: string): Pr
  * @throws Error if the alias already exists
  */
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export const serverValidateDuplicateAlias = async (_rule: any, value: string): Promise<void> => {
-    if (!value) return;
-    const result = await fetch(`/api/v1/link/validate_duplicate_alias/${base32.encode(value)}`)
-        .then(resp => resp.json());
-    if (!result.valid && value.length >= 5) throw new Error(result.reason);
-}
+export const serverValidateDuplicateAlias = async (
+  _rule: any,
+  value: string
+): Promise<void> => {
+  if (!value) return;
+  const result = await fetch(
+    `/api/v1/link/validate_duplicate_alias/${base32.encode(value)}`
+  ).then((resp) => resp.json());
+  if (!result.valid && value.length >= 5) throw new Error(result.reason);
+};
 
 /**
  * Check whether a long URL is allowed

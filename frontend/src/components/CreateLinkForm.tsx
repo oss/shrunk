@@ -9,7 +9,7 @@
  import { LinkOutlined, MinusCircleOutlined, PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons';
  
  import { serverValidateReservedAlias, serverValidateDuplicateAlias, serverValidateLongUrl } from '../Validators';
- import './Base.less';
+ import '../Base.less';
  import './FixAliasRemoveButton.less';
  
  /**

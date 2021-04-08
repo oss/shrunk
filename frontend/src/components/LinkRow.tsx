@@ -81,17 +81,23 @@ export class LinkRow extends React.Component<Props, State> {
    * Execute API requests to delete the link, then refresh search results
    * @method
    */
-   confirmDelete = async (): Promise<void> => {
+  confirmDelete = async (): Promise<void> => {
     // Delete link
     await fetch(`/api/v1/link/${this.props.linkInfo.id}`, { method: 'DELETE' });
-    
+
     // Delete alias link
     var alias_name;
-    {this.props.linkInfo.aliases.map(alias => { alias_name = `${alias.alias}`;})}
-    await fetch(`/api/v1/link/${this.props.linkInfo.id}/alias/${alias_name}`, { method: 'DELETE' });
+    {
+      this.props.linkInfo.aliases.map((alias) => {
+        alias_name = `${alias.alias}`;
+      });
+    }
+    await fetch(`/api/v1/link/${this.props.linkInfo.id}/alias/${alias_name}`, {
+      method: 'DELETE',
+    });
 
     await this.props.refreshResults();
-}
+  };
 
   requestEditAccess = async (): Promise<void> => {
     await fetch(`/api/v1/link/${this.props.linkInfo.id}/request_edit_access`, {
