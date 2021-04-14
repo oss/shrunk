@@ -182,6 +182,7 @@ export class ShareLinkModal extends React.Component<Props, State> {
         <>
           <Button
             type="text"
+            shape='circle'
             icon={<MinusCircleOutlined />}
             onClick={() =>
               this.props.onRemoveEntity(
