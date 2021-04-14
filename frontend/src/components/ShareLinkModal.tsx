@@ -239,7 +239,7 @@ export class ShareLinkModal extends React.Component<Props, State> {
         cancelButtonProps={{ style: { display: 'none' } }}
         onOk={() => {
           this.formRef.current!.resetFields();
-          this.props.onCancel();
+          this.props.onOk();
         }}
         onCancel={() => {
           this.formRef.current!.resetFields();
