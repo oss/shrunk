@@ -78,6 +78,12 @@ export interface Props {
   userPrivileges: Set<string>;
 
   /**
+   * NetID of the user
+   * @property
+   */
+  netid: string;
+
+  /**
    * The original [[LinkInfo]] of the link to edit
    * @property
    */
@@ -118,9 +124,9 @@ export const EditLinkModal: React.FC<Props> = (props) => {
         : moment(props.linkInfo.expiration_time),
     aliases: props.linkInfo.aliases.filter((alias) => !alias.deleted),
   };
-
+  const mayEditOwner = props.netid == initialValues.owner;
   const isAnInitialAlias = (alias: any) => {
-    if (initialValues.aliases.some((obj) => obj.alias === alias)) return true;
+    if (initialValues.aliases.some((obj: { alias: any; }) => obj.alias === alias)) return true;
     else return false;
   };
 
@@ -177,7 +183,10 @@ export const EditLinkModal: React.FC<Props> = (props) => {
           name="owner"
           rules={[{ validator: serverValidateNetId }]}
         >
-          <Input placeholder="Link owner" />
+          <Input 
+            placeholder="Link owner" 
+            disabled={!mayEditOwner}
+          />
         </Form.Item>
 
         <Form.List name="aliases">
