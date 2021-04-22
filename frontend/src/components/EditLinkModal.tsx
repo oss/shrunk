@@ -120,7 +120,7 @@ export const EditLinkModal: React.FC<Props> = (props) => {
   };
 
   const isAnInitialAlias = (alias: any) => {
-    if (initialValues.aliases.some((obj) => obj.alias === alias)) return true;
+    if (initialValues.aliases.some((obj: { alias: any; }) => obj.alias === alias)) return true;
     else return false;
   };
 
