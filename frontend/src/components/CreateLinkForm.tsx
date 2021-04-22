@@ -11,6 +11,7 @@
  import { serverValidateReservedAlias, serverValidateDuplicateAlias, serverValidateLongUrl } from '../Validators';
  import '../Base.less';
  import './FixAliasRemoveButton.less';
+ import base32 from 'hi-base32';
  
  /**
   * Displays a label with the text "Alias" and a tooltip with extended help text
@@ -92,7 +93,7 @@
          super(props);
          this.state = {};
      }
- 
+
      /**
       * Executes API requests to create a new link and then calls the `onFinish` callback
       * @param values The values from the form
@@ -113,10 +114,16 @@
          }).then(resp => resp.json());
  
          const link_id: string = create_link_resp.id;
- 
+         
+        
          await Promise.all(values.aliases.map(async (alias) => {
              const create_alias_req: any = { description: alias.description };
-             if (alias.alias !== undefined) {
+             const result = await fetch(
+                `/api/v1/link/validate_duplicate_alias/${base32.encode(
+                  alias.alias!
+                )}`
+              ).then((resp) => resp.json());
+             if (alias.alias !== undefined && result.valid) {
                  create_alias_req.alias = alias.alias;
              }
              await fetch(`/api/v1/link/${link_id}/alias`, {
