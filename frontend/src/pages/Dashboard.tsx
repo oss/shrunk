@@ -51,6 +51,7 @@ export type Entity = {
  */
 export interface Props {
   userPrivileges: Set<string>;
+  netid: string;
 }
 
 /**
@@ -794,6 +795,7 @@ export class Dashboard extends React.Component<Props, State> {
           <EditLinkModal
             visible={this.state.editModalState.visible}
             userPrivileges={this.props.userPrivileges}
+            netid={this.props.netid}
             linkInfo={this.state.editModalState.linkInfo}
             onOk={async (values) => {
               await this.doEditLink(values);
