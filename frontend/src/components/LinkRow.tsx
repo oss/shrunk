@@ -34,6 +34,12 @@ export interface Props {
   linkInfo: LinkInfo;
 
   /**
+   * NetID of the user
+   * @property
+   */
+  netid: string;
+
+   /**
    * Callback called when the edit modal should be displayed
    * @property
    */
@@ -108,6 +114,7 @@ export class LinkRow extends React.Component<Props, State> {
   render(): React.ReactNode {
     const isLinkDeleted = this.props.linkInfo.deletion_info !== null;
     const isLinkExpired = this.props.linkInfo.is_expired;
+    const isOwner = this.props.linkInfo.owner==this.props.netid;
     const titleClassName =
       isLinkDeleted || isLinkExpired ? 'title deleted' : 'title';
 
@@ -219,7 +226,7 @@ export class LinkRow extends React.Component<Props, State> {
             icon={<QrcodeOutlined />}
             onClick={(_ev) => this.props.showQrModal(this.props.linkInfo)}
           />
-          {isLinkDeleted || !this.props.linkInfo.may_edit ? (
+          {isLinkDeleted || !isOwner ? (
             <></>
           ) : (
             <Popconfirm
