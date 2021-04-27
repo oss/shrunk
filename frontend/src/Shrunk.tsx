@@ -221,7 +221,10 @@ export class Shrunk extends React.Component<Props, State> {
                 </Route>
 
                 <Route exact path="/dash">
-                  <Dashboard userPrivileges={this.props.userPrivileges} />
+                  <Dashboard 
+                    userPrivileges={this.props.userPrivileges} 
+                    netid={this.props.netid}
+                  />
                 </Route>
 
                 <Route exact path="/stats/:id" render={(props) => <Stats id={props.match.params.id} />} />

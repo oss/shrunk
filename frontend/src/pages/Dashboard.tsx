@@ -5,7 +5,7 @@
 
 import React from 'react';
 
-import { Row, Col, Pagination, Spin, Dropdown, Button } from 'antd';
+import { Row, Col, Pagination, Spin, Dropdown, Button, Space } from 'antd';
 import { PlusCircleFilled } from '@ant-design/icons';
 
 import { getOrgInfo, listOrgs, OrgInfo } from '../api/Org';
@@ -51,6 +51,7 @@ export type Entity = {
  */
 export interface Props {
   userPrivileges: Set<string>;
+  netid: string;
 }
 
 /**
@@ -721,20 +722,19 @@ export class Dashboard extends React.Component<Props, State> {
     return (
       <>
         <Row className="primary-row">
-          <Col span={4}>
-            <span className="page-title">Dashboard</span>
-          </Col>
-
-          <Col span={16} className="vertical-center-col">
-            {this.state.userOrgs === null ? (
-              <></>
-            ) : (
-              <SearchBox
-                userPrivileges={this.props.userPrivileges}
-                userOrgs={this.state.userOrgs}
-                setQuery={this.setQuery}
-              />
-            )}
+          <Col span={20}>
+           <Space>
+              <span className="page-title">Dashboard</span>
+              {this.state.userOrgs === null ? (
+                <></>
+              ) : (
+                <SearchBox
+                  userPrivileges={this.props.userPrivileges}
+                  userOrgs={this.state.userOrgs}
+                  setQuery={this.setQuery}
+                />
+              )}
+            </Space> 
           </Col>
 
           <Col span={4} className="btn-col">
@@ -794,6 +794,7 @@ export class Dashboard extends React.Component<Props, State> {
           <EditLinkModal
             visible={this.state.editModalState.visible}
             userPrivileges={this.props.userPrivileges}
+            netid={this.props.netid}
             linkInfo={this.state.editModalState.linkInfo}
             onOk={async (values) => {
               await this.doEditLink(values);
