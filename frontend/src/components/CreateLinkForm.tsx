@@ -6,7 +6,7 @@
  import React from 'react';
  import moment from 'moment';
  import { Form, Input, Button, DatePicker, Space, Tooltip } from 'antd';
- import { LinkOutlined, MinusCircleOutlined, PlusOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+ import { LinkOutlined, MinusCircleOutlined, PlusOutlined, PrinterFilled, QuestionCircleOutlined } from '@ant-design/icons';
  
  import { serverValidateReservedAlias, serverValidateDuplicateAlias, serverValidateLongUrl } from '../Validators';
  import '../Base.less';
@@ -118,11 +118,14 @@
         
          await Promise.all(values.aliases.map(async (alias) => {
              const create_alias_req: any = { description: alias.description };
-             const result = await fetch(
-                `/api/v1/link/validate_duplicate_alias/${base32.encode(
-                  alias.alias!
-                )}`
-              ).then((resp) => resp.json());
+             var result = null;
+             if(alias.alias != undefined) {
+                result = await fetch(
+                    `/api/v1/link/validate_duplicate_alias/${base32.encode(
+                      alias.alias!
+                    )}`
+                  ).then((resp) => resp.json());
+             }
              if (alias.alias !== undefined && result.valid) {
                  create_alias_req.alias = alias.alias;
              }
