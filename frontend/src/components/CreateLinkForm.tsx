@@ -127,7 +127,6 @@
                   ).then((resp) => resp.json());
              }
              if (alias.alias !== undefined && result.valid) {
-                 console.log("is creating an alias but its blank?");
                  create_alias_req.alias = alias.alias;
              }
              await fetch(`/api/v1/link/${link_id}/alias`, {
