@@ -9,10 +9,11 @@ import {
   CopyFilled,
   DeleteOutlined,
   LineChartOutlined,
-  LockOutlined,
   EditOutlined,
   QrcodeOutlined,
   ExclamationCircleFilled,
+  StopOutlined,
+  MailOutlined, 
   TeamOutlined,
 } from '@ant-design/icons';
 import CopyToClipboard from 'react-copy-to-clipboard';
@@ -63,7 +64,7 @@ export interface Props {
  * State for the [[LinkRow]] component
  * @interface
  */
-export interface State {}
+export interface State { cancelRequest: boolean }
 
 /**
  * The [[LinkRow]] component displays the information for a single link
@@ -74,7 +75,9 @@ export interface State {}
 export class LinkRow extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = {};
+    this.state = {
+      cancelRequest: false // true is edit request icon, false is cancel request icon
+    };
   }
 
   /**
@@ -103,6 +106,14 @@ export class LinkRow extends React.Component<Props, State> {
     await fetch(`/api/v1/link/${this.props.linkInfo.id}/request_edit_access`, {
       method: 'POST',
     });
+    this.setState({cancelRequest: true});
+  };
+
+  cancelRequest = async (): Promise<void> => {
+    await fetch(`/api/v1/link/${this.props.linkInfo.id}/cancel_request_edit_access`, {
+      method: 'POST',
+    });
+    this.setState({cancelRequest: false});
   };
 
   render(): React.ReactNode {
@@ -231,7 +242,7 @@ export class LinkRow extends React.Component<Props, State> {
               <Button danger type="text" icon={<DeleteOutlined />} />
             </Popconfirm>
           )}
-          {this.props.linkInfo.may_edit ? (
+          {this.props.linkInfo.may_edit || this.state.cancelRequest ? (
             <></>
           ) : (
             <Popconfirm
@@ -240,7 +251,20 @@ export class LinkRow extends React.Component<Props, State> {
               onConfirm={this.requestEditAccess}
             >
               <Tooltip title="Request edit access">
-                <Button type="text" icon={<TeamOutlined />} />
+                <Button type="text" icon={<MailOutlined />} />
+              </Tooltip>
+            </Popconfirm>
+          )}
+          {!this.state.cancelRequest ? (
+            <></>
+          ) : (
+            <Popconfirm
+              placement="top"
+              title="Cancel request for access to edit this link?"
+              onConfirm={this.cancelRequest}
+            >
+              <Tooltip title="Cancel request for edit access">
+                <Button type="text" icon={<StopOutlined />} /> 
               </Tooltip>
             </Popconfirm>
           )}

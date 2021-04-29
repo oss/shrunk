@@ -686,6 +686,10 @@ Please do not reply to this email. You may direct any questions to oss@oss.rutge
             recipient_list=[f'{owner_netid}@rutgers.edu'],
         )
 
+    def cancel_request_edit_access(self, mail: Mail, link_id: ObjectId, requesting_netid: str) -> None:
+        self.db.access_requests.remove({'link_id': link_id})
+        return
+
     def check_access_request_permission(self, token: bytes, netid: str) -> bool:
         request = self.db.access_requests.find_one({'token': token})
         if request is None:
