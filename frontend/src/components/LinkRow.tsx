@@ -209,35 +209,42 @@ export class LinkRow extends React.Component<Props, State> {
           {isLinkDeleted || !this.props.linkInfo.may_edit ? (
             <></>
           ) : (
-            <Button
+            <Tooltip title="Edit link info">
+              <Button
               type="text"
               icon={<EditOutlined />}
               onClick={(_ev) => this.props.showEditModal(this.props.linkInfo)}
             />
+            </Tooltip>
           )}
 
           {isLinkDeleted || !this.props.linkInfo.may_edit ? (
             <></>
           ) : (
-            <Button
+            <Tooltip title="Share link with others">
+              <Button
               type="text"
               icon={<TeamOutlined />}
               onClick={(_ev) =>
                 this.props.showShareLinkModal(this.props.linkInfo)
               }
             />
+            </Tooltip>
           )}
-
-          <Button 
+          <Tooltip title="Link statistics">
+             <Button 
             type="text"
             icon={<LineChartOutlined />}
             href={`/app/#/stats/${this.props.linkInfo.id}`}
           />
-          <Button
-            type="text"
-            icon={<QrcodeOutlined />}
-            onClick={(_ev) => this.props.showQrModal(this.props.linkInfo)}
-          />
+          </Tooltip>
+          <Tooltip title="QR Code">
+            <Button
+              type="text"
+              icon={<QrcodeOutlined />}
+              onClick={(_ev) => this.props.showQrModal(this.props.linkInfo)}
+            />
+          </Tooltip>
           {isLinkDeleted || !this.props.linkInfo.may_edit ? (
             <></>
           ) : (
@@ -247,7 +254,9 @@ export class LinkRow extends React.Component<Props, State> {
               onConfirm={this.confirmDelete}
               icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
             >
-              <Button danger type="text" icon={<DeleteOutlined />} />
+              <Tooltip title="Delete link">
+                <Button danger type="text" icon={<DeleteOutlined />} />
+              </Tooltip>
             </Popconfirm>
           )}
           {this.props.linkInfo.may_edit || this.state.cancelRequest ? (
