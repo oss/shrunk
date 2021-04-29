@@ -228,11 +228,11 @@ export class LinkRow extends React.Component<Props, State> {
             />
           )}
 
-          <Button type="text">
-            <Link to={`/stats/${this.props.linkInfo.id}`}>
-              <LineChartOutlined />
-            </Link>
-          </Button>
+          <Button 
+            type="text"
+            icon={<LineChartOutlined />}
+            href={`/app/#/stats/${this.props.linkInfo.id}`}
+          />
           <Button
             type="text"
             icon={<QrcodeOutlined />}
