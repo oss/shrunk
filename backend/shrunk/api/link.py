@@ -389,7 +389,6 @@ def cancel_request_edit(netid: str, client: ShrunkClient, mail: Mail, link_id: O
     return '', 204
 
 
-
 def anonymize_visit(client: ShrunkClient, visit: Any) -> Any:
     """Anonymize a visit by replacing its source IP with an opaque visitor ID.
 

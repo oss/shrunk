@@ -688,7 +688,6 @@ Please do not reply to this email. You may direct any questions to oss@oss.rutge
 
     def cancel_request_edit_access(self, mail: Mail, link_id: ObjectId, requesting_netid: str) -> None:
         self.db.access_requests.remove({'link_id': link_id})
-        
         return
 
     def check_access_request_permission(self, token: bytes, netid: str) -> bool:
