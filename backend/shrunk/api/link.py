@@ -374,6 +374,7 @@ def post_request_edit(netid: str, client: ShrunkClient, mail: Mail, link_id: Obj
     client.links.request_edit_access(mail, link_id, netid)
     return '', 204
 
+
 @bp.route('/<ObjectId:link_id>/cancel_request_edit_access', methods=['POST'])
 @require_mail
 @require_login
@@ -386,6 +387,7 @@ def cancel_request_edit(netid: str, client: ShrunkClient, mail: Mail, link_id: O
         abort(403)
     client.links.cancel_request_edit_access(mail, link_id, netid)
     return '', 204
+
 
 
 def anonymize_visit(client: ShrunkClient, visit: Any) -> Any:

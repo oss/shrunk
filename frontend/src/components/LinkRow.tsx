@@ -101,7 +101,11 @@ export class LinkRow extends React.Component<Props, State> {
 
     await this.props.refreshResults();
   };
-
+  
+  /**
+   * Execute API requests to request edit for the link
+   * @method
+   */
   requestEditAccess = async (): Promise<void> => {
     await fetch(`/api/v1/link/${this.props.linkInfo.id}/request_edit_access`, {
       method: 'POST',
@@ -109,6 +113,10 @@ export class LinkRow extends React.Component<Props, State> {
     this.setState({cancelRequest: true});
   };
 
+  /**
+   * Execute API requests to delete the request for edit
+   * @method
+   */
   cancelRequest = async (): Promise<void> => {
     await fetch(`/api/v1/link/${this.props.linkInfo.id}/cancel_request_edit_access`, {
       method: 'POST',
