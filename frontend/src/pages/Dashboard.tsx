@@ -247,13 +247,15 @@ export class Dashboard extends React.Component<Props, State> {
       skip,
       this.state.linksPerPage
     );
-    const totalPages = Math.ceil(results.count / this.state.linksPerPage);
+    const uniqueResults = results.results.filter((v,i,a)=>a.findIndex(t=>(t.id === v.id))===i);
+    
+    const totalPages = Math.ceil(uniqueResults.length / this.state.linksPerPage);
     this.setState({
-      linkInfo: results.results,
+      linkInfo: uniqueResults,
       currentPage: newPage,
       totalPages,
       currentOffset: newPage * this.state.linksPerPage,
-      totalLinks: results.count,
+      totalLinks: uniqueResults.length,
     });
   };
 
