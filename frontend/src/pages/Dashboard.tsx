@@ -18,6 +18,7 @@ import { ShareLinkModal } from '../components/ShareLinkModal';
 import { CreateLinkForm } from '../components/CreateLinkForm';
 
 import './Dashboard.less';
+import { arrayMax } from 'highcharts';
 
 /**
  * The final values of the share link form
@@ -214,14 +215,18 @@ export class Dashboard extends React.Component<Props, State> {
    */
   setQuery = async (newQuery: SearchQuery): Promise<void> => {
     const results = await this.doQuery(newQuery, 0, this.state.linksPerPage);
-    const totalPages = Math.ceil(results.count / this.state.linksPerPage);
+    
+    // Filter out duplicate links
+    const uniqueResults = results.results.filter((v,i,a)=>a.findIndex(t=>(t.id === v.id))===i);
+
+    const totalPages = Math.ceil(uniqueResults.length / this.state.linksPerPage);
     this.setState({
-      linkInfo: results.results,
+      linkInfo: uniqueResults,
       query: newQuery,
       currentPage: 1,
       totalPages,
       currentOffset: this.state.linksPerPage,
-      totalLinks: results.count,
+      totalLinks: uniqueResults.length,
     });
   };
 
@@ -242,13 +247,15 @@ export class Dashboard extends React.Component<Props, State> {
       skip,
       this.state.linksPerPage
     );
-    const totalPages = Math.ceil(results.count / this.state.linksPerPage);
+    const uniqueResults = results.results.filter((v,i,a)=>a.findIndex(t=>(t.id === v.id))===i);
+    
+    const totalPages = Math.ceil(uniqueResults.length / this.state.linksPerPage);
     this.setState({
-      linkInfo: results.results,
+      linkInfo: uniqueResults,
       currentPage: newPage,
       totalPages,
       currentOffset: newPage * this.state.linksPerPage,
-      totalLinks: results.count,
+      totalLinks: uniqueResults.length,
     });
   };
 
