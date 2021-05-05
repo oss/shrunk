@@ -774,6 +774,7 @@ export class Dashboard extends React.Component<Props, State> {
                 showShareLinkModal={this.showShareLinkModal}
                 showQrModal={this.showQrModal}
                 refreshResults={this.refreshResults}
+                netid={this.props.netid}
               />
             ))}
 
