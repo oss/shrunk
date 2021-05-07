@@ -9,10 +9,11 @@ import {
   CopyFilled,
   DeleteOutlined,
   LineChartOutlined,
-  LockOutlined,
   EditOutlined,
   QrcodeOutlined,
   ExclamationCircleFilled,
+  StopOutlined,
+  MailOutlined, 
   TeamOutlined,
 } from '@ant-design/icons';
 import CopyToClipboard from 'react-copy-to-clipboard';
@@ -69,7 +70,7 @@ export interface Props {
  * State for the [[LinkRow]] component
  * @interface
  */
-export interface State {}
+export interface State { cancelRequest: boolean }
 
 /**
  * The [[LinkRow]] component displays the information for a single link
@@ -80,7 +81,9 @@ export interface State {}
 export class LinkRow extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = {};
+    this.state = {
+      cancelRequest: false // true is edit request icon, false is cancel request icon
+    };
   }
 
   /**
@@ -105,10 +108,39 @@ export class LinkRow extends React.Component<Props, State> {
     await this.props.refreshResults();
   };
 
+  /**
+   * Check if request has been sent yet
+   * @method
+   */
+   hasSentRequest = async (): Promise<void> => {
+    const result = await fetch(`/api/v1/link/${this.props.linkInfo.id}/request_exists`, {
+      method: 'GET',
+    }).then((resp) => resp.json());
+    this.setState({cancelRequest: !result.exists})
+  };
+  
+  /**
+   * Execute API requests to request edit for the link
+   * @method
+   */
   requestEditAccess = async (): Promise<void> => {
     await fetch(`/api/v1/link/${this.props.linkInfo.id}/request_edit_access`, {
       method: 'POST',
     });
+    //this.setState({cancelRequest: true});
+    await this.props.refreshResults();
+  };
+
+  /**
+   * Execute API requests to delete the request for edit
+   * @method
+   */
+  cancelRequest = async (): Promise<void> => {
+    await fetch(`/api/v1/link/${this.props.linkInfo.id}/cancel_request_edit_access`, {
+      method: 'POST',
+    });
+    //this.setState({cancelRequest: false});
+    await this.props.refreshResults();
   };
 
   render(): React.ReactNode {
@@ -117,6 +149,10 @@ export class LinkRow extends React.Component<Props, State> {
     const isOwner = this.props.linkInfo.owner==this.props.netid;
     const titleClassName =
       isLinkDeleted || isLinkExpired ? 'title deleted' : 'title';
+
+    console.log(this.props.linkInfo);
+    this.hasSentRequest();
+    console.log(this.state.cancelRequest);
 
     return (
       <Row
@@ -197,36 +233,43 @@ export class LinkRow extends React.Component<Props, State> {
           {isLinkDeleted || !this.props.linkInfo.may_edit ? (
             <></>
           ) : (
-            <Button
+            <Tooltip title="Edit link">
+              <Button
               type="text"
               icon={<EditOutlined />}
               onClick={(_ev) => this.props.showEditModal(this.props.linkInfo)}
             />
+            </Tooltip>
           )}
 
           {isLinkDeleted || !this.props.linkInfo.may_edit ? (
             <></>
           ) : (
-            <Button
+            <Tooltip title="Manage sharing">
+              <Button
               type="text"
               icon={<TeamOutlined />}
               onClick={(_ev) =>
                 this.props.showShareLinkModal(this.props.linkInfo)
               }
             />
+            </Tooltip>
           )}
-
-          <Button type="text">
-            <Link to={`/stats/${this.props.linkInfo.id}`}>
-              <LineChartOutlined />
-            </Link>
-          </Button>
-          <Button
+          <Tooltip title="Link statistics">
+             <Button 
             type="text"
-            icon={<QrcodeOutlined />}
-            onClick={(_ev) => this.props.showQrModal(this.props.linkInfo)}
+            icon={<LineChartOutlined />}
+            href={`/app/#/stats/${this.props.linkInfo.id}`}
           />
-          {isLinkDeleted || !isOwner ? (
+          </Tooltip>
+          <Tooltip title="QR Code">
+            <Button
+              type="text"
+              icon={<QrcodeOutlined />}
+              onClick={(_ev) => this.props.showQrModal(this.props.linkInfo)}
+            />
+          </Tooltip>
+          {isLinkDeleted || !this.props.linkInfo.may_edit ? (
             <></>
           ) : (
             <Popconfirm
@@ -235,10 +278,12 @@ export class LinkRow extends React.Component<Props, State> {
               onConfirm={this.confirmDelete}
               icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
             >
-              <Button danger type="text" icon={<DeleteOutlined />} />
+              <Tooltip title="Delete link">
+                <Button danger type="text" icon={<DeleteOutlined />} />
+              </Tooltip>
             </Popconfirm>
           )}
-          {this.props.linkInfo.may_edit ? (
+          {this.props.linkInfo.may_edit || this.state.cancelRequest ? (
             <></>
           ) : (
             <Popconfirm
@@ -247,7 +292,20 @@ export class LinkRow extends React.Component<Props, State> {
               onConfirm={this.requestEditAccess}
             >
               <Tooltip title="Request edit access">
-                <Button type="text" icon={<TeamOutlined />} />
+                <Button type="text" icon={<MailOutlined />} />
+              </Tooltip>
+            </Popconfirm>
+          )}
+          {!this.state.cancelRequest ? (
+            <></>
+          ) : (
+            <Popconfirm
+              placement="top"
+              title="Cancel request for access to edit this link?"
+              onConfirm={this.cancelRequest}
+            >
+              <Tooltip title="Cancel request for edit access">
+                <Button type="text" icon={<StopOutlined />} /> 
               </Tooltip>
             </Popconfirm>
           )}

@@ -375,6 +375,33 @@ def post_request_edit(netid: str, client: ShrunkClient, mail: Mail, link_id: Obj
     return '', 204
 
 
+@bp.route('/<ObjectId:link_id>/cancel_request_edit_access', methods=['POST'])
+@require_mail
+@require_login
+def cancel_request_edit(netid: str, client: ShrunkClient, mail: Mail, link_id: ObjectId) -> Any:
+    try:
+        client.links.get_link_info(link_id)
+    except NoSuchObjectException:
+        abort(404)
+    if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
+        abort(403)
+    client.links.cancel_request_edit_access(mail, link_id, netid)
+    return '', 204
+
+@bp.route('/<ObjectId:link_id>/request_exists', methods=['GET'])
+@require_mail
+@require_login
+def request_exists(netid: str, client: ShrunkClient, mail: Mail, link_id: ObjectId) -> bool:
+    try:
+        client.links.get_link_info(link_id)
+    except NoSuchObjectException:
+        abort(404)
+    if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
+        abort(403)
+    exists = client.links.request_exists(mail, link_id, netid)
+    response: Dict[str, bool] = {'exists': exists}
+    return jsonify(response), 204
+
 def anonymize_visit(client: ShrunkClient, visit: Any) -> Any:
     """Anonymize a visit by replacing its source IP with an opaque visitor ID.
 
