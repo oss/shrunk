@@ -5,7 +5,7 @@
 
  import React from 'react';
  import moment from 'moment';
- import { Form, Input, Button, DatePicker, Space, Tooltip } from 'antd';
+ import { Form, Input, Button, DatePicker, Space, Tooltip, Spin } from 'antd';
  import { LinkOutlined, MinusCircleOutlined, PlusOutlined, PrinterFilled, QuestionCircleOutlined } from '@ant-design/icons';
  
  import { serverValidateReservedAlias, serverValidateDuplicateAlias, serverValidateLongUrl } from '../Validators';
@@ -82,7 +82,7 @@
   * State for the [[CreateLinkForm]] component
   * @interface
   */
- interface State { }
+ interface State { loading: boolean }
  
  /**
   * The [[CreateLinkForm]] component allows the user to create a new link
@@ -91,8 +91,14 @@
  export class CreateLinkForm extends React.Component<Props, State> {
      constructor(props: Props) {
          super(props);
-         this.state = {};
+         this.state = {
+            loading: false
+         };
      }
+
+     toggleLoading = () => {
+        this.setState({ loading: true });
+      };
 
      /**
       * Executes API requests to create a new link and then calls the `onFinish` callback
@@ -218,7 +224,10 @@
                      </Form.List>
  
                      <Form.Item>
-                         <Button type='primary' htmlType='submit' style={{ width: '100%' }}>Shrink!</Button>
+                         <Spin spinning={this.state.loading}>
+                            <Button type='primary' htmlType='submit' onClick={this.toggleLoading} style={{ width: '100%' }}>{this.state.loading ? "" : "Shrink!"}</Button>
+                            {/*<Button type='primary' htmlType='submit' onClick={this.toggleLoading} style={{ width: '100%' }}>Shrink!</Button>*/}
+                         </Spin>
                      </Form.Item>
                  </Form>
              </div>
