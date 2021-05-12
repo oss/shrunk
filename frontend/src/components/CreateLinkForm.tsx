@@ -7,7 +7,7 @@
  import moment from 'moment';
  import { Form, Input, Button, DatePicker, Space, Tooltip, Spin } from 'antd';
  import { LinkOutlined, MinusCircleOutlined, PlusOutlined, PrinterFilled, QuestionCircleOutlined } from '@ant-design/icons';
- 
+ import { FormInstance } from 'antd/lib/form';
  import { serverValidateReservedAlias, serverValidateDuplicateAlias, serverValidateLongUrl } from '../Validators';
  import '../Base.less';
  import './FixAliasRemoveButton.less';
@@ -96,6 +96,8 @@
          };
      }
 
+     formRef = React.createRef<FormInstance>();
+
      toggleLoading = () => {
         this.setState({ loading: true });
       };
@@ -125,6 +127,7 @@
          await Promise.all(values.aliases.map(async (alias) => {
              const create_alias_req: any = { description: alias.description };
              var result = null;
+             // Check if there are duplicate aliases
              if(alias.alias != undefined) {
                 result = await fetch(
                     `/api/v1/link/validate_duplicate_alias/${base32.encode(
@@ -141,8 +144,9 @@
                  body: JSON.stringify(create_alias_req),
              });
          }));
- 
+         this.formRef.current!.resetFields();
          await this.props.onFinish();
+         this.setState({ loading: false });
      }
  
      render(): React.ReactNode {
@@ -150,7 +154,11 @@
          const mayUseCustomAliases = this.props.userPrivileges.has('power_user') || this.props.userPrivileges.has('admin');
          return (
              <div className='dropdown-form'>
-                 <Form layout='vertical' initialValues={initialValues} onFinish={this.createLink}>
+                 <Form
+                    ref={this.formRef} 
+                    layout='vertical' 
+                    initialValues={initialValues} 
+                    onFinish={this.createLink}>
                      <Form.Item
                          label='Title'
                          name='title'
@@ -225,8 +233,7 @@
  
                      <Form.Item>
                          <Spin spinning={this.state.loading}>
-                            <Button type='primary' htmlType='submit' onClick={this.toggleLoading} style={{ width: '100%' }}>{this.state.loading ? "" : "Shrink!"}</Button>
-                            {/*<Button type='primary' htmlType='submit' onClick={this.toggleLoading} style={{ width: '100%' }}>Shrink!</Button>*/}
+                            <Button type='primary' htmlType='submit' onClick={this.toggleLoading} style={{ width: '100%' }}>Shrink!</Button>
                          </Spin>
                      </Form.Item>
                  </Form>

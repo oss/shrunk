@@ -150,9 +150,9 @@ export class LinkRow extends React.Component<Props, State> {
     const titleClassName =
       isLinkDeleted || isLinkExpired ? 'title deleted' : 'title';
 
-    console.log(this.props.linkInfo);
-    this.hasSentRequest();
-    console.log(this.state.cancelRequest);
+    //console.log(this.props.linkInfo);
+    //this.hasSentRequest();
+    //console.log(this.state.cancelRequest);
 
     return (
       <Row
