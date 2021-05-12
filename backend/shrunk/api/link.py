@@ -399,8 +399,7 @@ def request_exists(netid: str, client: ShrunkClient, mail: Mail, link_id: Object
     if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
         abort(403)
     exists = client.links.request_exists(mail, link_id, netid)
-    response: Dict[str, bool] = {'exists': exists}
-    return jsonify(response), 204
+    return jsonify(exists)
 
 def anonymize_visit(client: ShrunkClient, visit: Any) -> Any:
     """Anonymize a visit by replacing its source IP with an opaque visitor ID.
