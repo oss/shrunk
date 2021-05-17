@@ -812,7 +812,7 @@ export class Dashboard extends React.Component<Props, State> {
           />
         )}
 
-        {!this.state.shareLinkModalState.visible ? (
+        {!this.state.shareLinkModalState.linkInfo === null ? (
           <></>
         ) : (
           <ShareLinkModal
