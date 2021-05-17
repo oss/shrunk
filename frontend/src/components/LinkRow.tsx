@@ -86,9 +86,8 @@ export class LinkRow extends React.Component<Props, State> {
     };
   }
 
-  componentDidMount = async () => {
-    await this.hasSentRequest;
-    console.log("component mounted: called hasSentRequest");
+  componentDidMount = () => {
+    this.hasSentRequest();
   }
 
   /**
