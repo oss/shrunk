@@ -111,12 +111,6 @@ export interface State {
   totalLinks: number;
 
   /**
-   * The current state of the create link form
-   * @property
-   */
-  createLinkState: { visible: boolean };
-
-  /**
    * The current state of the edit modal.
    * @property
    */
@@ -174,9 +168,6 @@ export class Dashboard extends React.Component<Props, State> {
       totalLinks: 0,
       currentPage: 1,
       currentOffset: 0,
-      createLinkState: {
-        visible: false,
-      },
       editModalState: {
         visible: false,
         linkInfo: null,
@@ -812,7 +803,7 @@ export class Dashboard extends React.Component<Props, State> {
           />
         )}
 
-        {!this.state.shareLinkModalState.visible ? (
+        {!this.state.shareLinkModalState.linkInfo === null ? (
           <></>
         ) : (
           <ShareLinkModal
