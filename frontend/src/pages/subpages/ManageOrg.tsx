@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import React from "react";
+import React from 'react';
 import {
   Row,
   Col,
@@ -15,7 +15,7 @@ import {
   Input,
   Checkbox,
   Tooltip,
-} from "antd";
+} from 'antd';
 import {
   ExclamationCircleFilled,
   DeleteOutlined,
@@ -24,15 +24,15 @@ import {
   CloseOutlined,
   UpOutlined,
   DownOutlined,
-} from "@ant-design/icons";
-import { Link, RouteComponentProps, withRouter } from "react-router-dom";
-import moment from "moment";
+} from '@ant-design/icons';
+import { Link, RouteComponentProps, withRouter } from 'react-router-dom';
+import moment from 'moment';
 
-import { MemberInfo, OrgInfo, getOrgInfo } from "../../api/Org";
-import { OrgAdminTag } from "./OrgCommon";
-import "../../Base.less";
-import "./ManageOrg.less";
-import { serverValidateNetId } from "../../Validators";
+import { MemberInfo, OrgInfo, getOrgInfo } from '../../api/Org';
+import { OrgAdminTag } from './OrgCommon';
+import '../../Base.less';
+import './ManageOrg.less';
+import { serverValidateNetId } from '../../Validators';
 
 /**
  * Props for the [[ManageOrg]] component
@@ -89,26 +89,26 @@ const AddMemberForm: React.FC<{
   const onFinish = async (values: { netid: string; is_admin: boolean }) =>
     await props.onCreate(values.netid, values.is_admin);
   return (
-    <div className="dropdown-form">
-      <Form layout="inline" initialValues={{ name: "" }} onFinish={onFinish}>
+    <div className='dropdown-form'>
+      <Form layout='inline' initialValues={{ name: '' }} onFinish={onFinish}>
         <Input.Group compact>
           <Form.Item
-            name="netid"
+            name='netid'
             rules={[
-              { required: true, message: "Please input a NetID." },
+              { required: true, message: 'Please input a NetID.' },
               { validator: serverValidateNetId },
             ]}
           >
-            <Input placeholder="NetID" />
+            <Input placeholder='NetID' />
           </Form.Item>
 
           {!props.isAdmin ? (
             <></>
           ) : (
             <Form.Item
-              name="is_admin"
-              valuePropName="checked"
-              className="admin-checkbox"
+              name='is_admin'
+              valuePropName='checked'
+              className='admin-checkbox'
             >
               <Checkbox defaultChecked={false}>Admin?</Checkbox>
             </Form.Item>
@@ -116,8 +116,8 @@ const AddMemberForm: React.FC<{
 
           <Form.Item>
             <Button
-              type="primary"
-              htmlType="submit"
+              type='primary'
+              htmlType='submit'
               icon={<PlusCircleFilled />}
             />
           </Form.Item>
@@ -141,37 +141,37 @@ const MemberRow: React.FC<{
   const mayNotRemoveMember =
     props.memberInfo.is_admin && props.adminsCount === 1;
   return (
-    <Row className="primary-row">
+    <Row className='primary-row'>
       <Col span={20}>
-        <span className="title">{props.memberInfo.netid}</span>
+        <span className='title'>{props.memberInfo.netid}</span>
         {props.memberInfo.is_admin ? (
-          <OrgAdminTag title="This member is an administrator." />
+          <OrgAdminTag title='This member is an administrator.' />
         ) : (
           <></>
         )}
         <span>
-          Added: {moment(props.memberInfo.timeCreated).format("DD MMM YYYY")}
+          Added: {moment(props.memberInfo.timeCreated).format('DD MMM YYYY')}
         </span>
       </Col>
 
-      <Col span={4} className="btn-col">
+      <Col span={4} className='btn-col'>
         {!props.isAdmin ? (
           <></>
         ) : props.memberInfo.is_admin ? (
           mayNotRemoveMember ? (
             <Tooltip
-              placement="top"
-              title="You may not remove the last administrator from an organization."
+              placement='top'
+              title='You may not remove the last administrator from an organization.'
             >
-              <Button disabled type="text" icon={<DownOutlined />} />
+              <Button disabled type='text' icon={<DownOutlined />} />
             </Tooltip>
           ) : (
             <Tooltip
-              placement="top"
-              title="Remove administrator privileges from this member."
+              placement='top'
+              title='Remove administrator privileges from this member.'
             >
               <Button
-                type="text"
+                type='text'
                 icon={<DownOutlined />}
                 onClick={async () =>
                   await props.onChangeAdmin(props.memberInfo.netid, false)
@@ -180,9 +180,9 @@ const MemberRow: React.FC<{
             </Tooltip>
           )
         ) : (
-          <Tooltip placement="top" title="Make this member an administrator.">
+          <Tooltip placement='top' title='Make this member an administrator.'>
             <Button
-              type="text"
+              type='text'
               icon={<UpOutlined />}
               onClick={async () =>
                 await props.onChangeAdmin(props.memberInfo.netid, true)
@@ -195,19 +195,19 @@ const MemberRow: React.FC<{
           <></>
         ) : mayNotRemoveMember ? (
           <Tooltip
-            placement="top"
-            title="You may not remove the last administrator from an organization."
+            placement='top'
+            title='You may not remove the last administrator from an organization.'
           >
-            <Button danger disabled type="text" icon={<CloseOutlined />} />
+            <Button danger disabled type='text' icon={<CloseOutlined />} />
           </Tooltip>
         ) : (
           <Popconfirm
-            placement="top"
-            title="Are you sure you want to remove this member?"
+            placement='top'
+            title='Are you sure you want to remove this member?'
             onConfirm={async () => await props.onDelete(props.memberInfo.netid)}
-            icon={<ExclamationCircleFilled style={{ color: "red" }} />}
+            icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
           >
-            <Button danger type="text" icon={<CloseOutlined />} />
+            <Button danger type='text' icon={<CloseOutlined />} />
           </Popconfirm>
         )}
       </Col>
@@ -259,12 +259,12 @@ class ManageOrgInner extends React.Component<Props, State> {
    */
   onAddMember = async (netid: string, is_admin: boolean): Promise<void> => {
     await fetch(`/api/v1/org/${this.props.match.params.id}/member/${netid}`, {
-      method: "PUT",
+      method: 'PUT',
     });
     if (is_admin) {
       await fetch(`/api/v1/org/${this.props.match.params.id}/member/${netid}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_admin: true }),
       });
     }
@@ -279,7 +279,7 @@ class ManageOrgInner extends React.Component<Props, State> {
    */
   onDeleteMember = async (netid: string): Promise<void> => {
     await fetch(`/api/v1/org/${this.props.match.params.id}/member/${netid}`, {
-      method: "DELETE",
+      method: 'DELETE',
     });
     await this.refreshOrgInfo();
   };
@@ -292,8 +292,8 @@ class ManageOrgInner extends React.Component<Props, State> {
    */
   onChangeAdmin = async (netid: string, admin: boolean): Promise<void> => {
     await fetch(`/api/v1/org/${this.props.match.params.id}/member/${netid}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ is_admin: admin }),
     });
     await this.refreshOrgInfo();
@@ -307,9 +307,9 @@ class ManageOrgInner extends React.Component<Props, State> {
   leaveOrg = async (): Promise<void> => {
     await fetch(
       `/api/v1/org/${this.props.match.params.id}/member/${this.props.userNetid}`,
-      { method: "DELETE" }
+      { method: 'DELETE' }
     );
-    this.props.history.push("/orgs");
+    this.props.history.push('/orgs');
   };
 
   /**
@@ -318,34 +318,34 @@ class ManageOrgInner extends React.Component<Props, State> {
    */
   deleteOrg = async (): Promise<void> => {
     await fetch(`/api/v1/org/${this.props.match.params.id}`, {
-      method: "DELETE",
+      method: 'DELETE',
     });
-    this.props.history.push("/orgs");
+    this.props.history.push('/orgs');
   };
 
   render(): React.ReactNode {
     if (this.state.orgInfo === null) {
-      return <Spin size="large" />;
+      return <Spin size='large' />;
     }
 
     const isAdmin =
-      this.state.orgInfo.is_admin || this.props.userPrivileges.has("admin");
+      this.state.orgInfo.is_admin || this.props.userPrivileges.has('admin');
     const userMayNotLeave =
       this.state.orgInfo.is_admin && this.state.adminsCount === 1;
     return (
       <>
-        <Row className="primary-row">
+        <Row className='primary-row'>
           <Col span={12}>
             {this.state.orgInfo === null ? (
-              <Spin size="small" />
+              <Spin size='small' />
             ) : (
-              <span className="page-title">
+              <span className='page-title'>
                 Manage organization <em>{this.state.orgInfo.name}</em>
               </span>
             )}
           </Col>
 
-          <Col span={12} className="btn-col">
+          <Col span={12} className='btn-col'>
             <Dropdown
               overlay={
                 <AddMemberForm isAdmin={isAdmin} onCreate={this.onAddMember} />
@@ -354,14 +354,14 @@ class ManageOrgInner extends React.Component<Props, State> {
               onVisibleChange={(flag) =>
                 this.setState({ addMemberFormVisible: flag })
               }
-              trigger={["click"]}
+              trigger={['click']}
             >
-              <Button type="primary">
+              <Button type='primary'>
                 <PlusCircleFilled /> Add a Member
               </Button>
             </Dropdown>
 
-            <Button type="primary">
+            <Button type='primary'>
               <Link to={`/orgs/${this.props.match.params.id}/stats`}>
                 <LineChartOutlined /> Org Stats
               </Link>
@@ -371,8 +371,8 @@ class ManageOrgInner extends React.Component<Props, State> {
               <></>
             ) : userMayNotLeave ? (
               <Tooltip
-                placement="bottom"
-                title="You may not remove the last administrator from an organization."
+                placement='bottom'
+                title='You may not remove the last administrator from an organization.'
               >
                 <Button danger disabled>
                   <CloseOutlined /> Leave Org
@@ -380,10 +380,10 @@ class ManageOrgInner extends React.Component<Props, State> {
               </Tooltip>
             ) : (
               <Popconfirm
-                placement="bottom"
-                title="Are you sure you want to leave this organization?"
+                placement='bottom'
+                title='Are you sure you want to leave this organization?'
                 onConfirm={this.leaveOrg}
-                icon={<ExclamationCircleFilled style={{ color: "red" }} />}
+                icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
               >
                 <Button danger>
                   <CloseOutlined /> Leave Org
@@ -395,10 +395,10 @@ class ManageOrgInner extends React.Component<Props, State> {
               <></>
             ) : (
               <Popconfirm
-                placement="bottom"
-                title="Are you sure you want to delete this organization?"
+                placement='bottom'
+                title='Are you sure you want to delete this organization?'
                 onConfirm={this.deleteOrg}
-                icon={<ExclamationCircleFilled style={{ color: "red" }} />}
+                icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
               >
                 <Button danger>
                   <DeleteOutlined /> Delete Org

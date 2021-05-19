@@ -3,21 +3,21 @@
  * @packageDocumentation
  */
 
-import React from "react";
-import { Row, Col, Spin, Select, Button, Popconfirm } from "antd";
+import React from 'react';
+import { Row, Col, Spin, Select, Button, Popconfirm } from 'antd';
 import {
   DownloadOutlined,
   ExclamationCircleFilled,
   CloseOutlined,
-} from "@ant-design/icons";
-import Highcharts from "highcharts";
-import HighchartsReact from "highcharts-react-official";
+} from '@ant-design/icons';
+import Highcharts from 'highcharts';
+import HighchartsReact from 'highcharts-react-official';
 
-import { LinkInfo, AliasInfo } from "../../components/LinkInfo";
-import { GeoipStats, MENU_ITEMS, GeoipChart } from "./StatsCommon";
-import { downloadVisitsCsv } from "../../components/Csv";
+import { LinkInfo, AliasInfo } from '../../components/LinkInfo';
+import { GeoipStats, MENU_ITEMS, GeoipChart } from './StatsCommon';
+import { downloadVisitsCsv } from '../../components/Csv';
 
-import "../../Base.less";
+import '../../Base.less';
 
 /**
  * Props for the [[Stats]] component
@@ -191,22 +191,22 @@ const VisitsChart: React.FC<{ visitStats: VisitStats | null }> = (props) => {
     Date.UTC(datum._id.year, datum._id.month - 1, datum._id.day);
 
   const options = {
-    chart: { type: "spline", zoomType: "x" },
+    chart: { type: 'spline', zoomType: 'x' },
     plotOptions: { spline: { marker: { enabled: true } } },
     exporting: { buttons: { contextButton: { menuItems: MENU_ITEMS } } },
-    title: { text: "Visits" },
-    subtitle: { text: "Click and drag to zoom in" },
-    xAxis: { title: { text: "Date" }, type: "datetime" },
-    yAxis: { title: { text: "Visits" }, min: 0 },
+    title: { text: 'Visits' },
+    subtitle: { text: 'Click and drag to zoom in' },
+    xAxis: { title: { text: 'Date' }, type: 'datetime' },
+    yAxis: { title: { text: 'Visits' }, min: 0 },
     series: [
       {
-        name: "Unique visits",
-        color: "#fce2cc",
+        name: 'Unique visits',
+        color: '#fce2cc',
         data: visits.map((el) => [getMsSinceEpoch(el), el.first_time_visits]),
       },
       {
-        name: "Total visits",
-        color: "#fc580c",
+        name: 'Total visits',
+        color: '#fc580c',
         data: visits.map((el) => [getMsSinceEpoch(el), el.all_visits]),
       },
     ],
@@ -220,13 +220,13 @@ const VisitsChart: React.FC<{ visitStats: VisitStats | null }> = (props) => {
  * @constant
  */
 const BROWSER_COLORS: Map<string, string> = new Map([
-  ["Firefox", "rgba(244,199,133,1.0)"],
-  ["Chrome", "rgba(200,240,97,1.0)"],
-  ["Safari", "rgba(155,186,238,1.0)"],
-  ["Microsoft Internet Explorer", "rgba(136,198,247,1.0)"],
-  ["Microsoft Edge", "rgba(136,198,247,1.0)"],
-  ["Opera", "rgba(238,120,124,1.0)"],
-  ["Unknown", "rgba(80,80,80,0.2)"],
+  ['Firefox', 'rgba(244,199,133,1.0)'],
+  ['Chrome', 'rgba(200,240,97,1.0)'],
+  ['Safari', 'rgba(155,186,238,1.0)'],
+  ['Microsoft Internet Explorer', 'rgba(136,198,247,1.0)'],
+  ['Microsoft Edge', 'rgba(136,198,247,1.0)'],
+  ['Opera', 'rgba(238,120,124,1.0)'],
+  ['Unknown', 'rgba(80,80,80,0.2)'],
 ]);
 
 // TODO: iOS, *BSD, etc?
@@ -235,11 +235,11 @@ const BROWSER_COLORS: Map<string, string> = new Map([
  * @constant
  */
 const PLATFORM_COLORS: Map<string, string> = new Map([
-  ["Linux", "rgba(216,171,36,1.0)"],
-  ["Windows", "rgba(129,238,208,1.0)"],
-  ["Mac", "rgba(201,201,201,1.0)"],
-  ["Android", "rgba(200,227,120,1.0)"],
-  ["Unknown", "rgba(80,80,80,0.2)"],
+  ['Linux', 'rgba(216,171,36,1.0)'],
+  ['Windows', 'rgba(129,238,208,1.0)'],
+  ['Mac', 'rgba(201,201,201,1.0)'],
+  ['Android', 'rgba(200,227,120,1.0)'],
+  ['Unknown', 'rgba(80,80,80,0.2)'],
 ]);
 
 /**
@@ -247,11 +247,11 @@ const PLATFORM_COLORS: Map<string, string> = new Map([
  * @constant
  */
 const REFERER_COLORS: Map<string, string> = new Map([
-  ["Facebook", "rgba(0,75,150,1.0)"],
-  ["Twitter", "rgba(147,191,241,1.0)"],
-  ["Instagram", "rgba(193,131,212,1.0)"],
-  ["Reddit", "rgba(241,155,123,1.0)"],
-  ["Unknown", "rgba(80,80,80,0.2)"],
+  ['Facebook', 'rgba(0,75,150,1.0)'],
+  ['Twitter', 'rgba(147,191,241,1.0)'],
+  ['Instagram', 'rgba(193,131,212,1.0)'],
+  ['Reddit', 'rgba(241,155,123,1.0)'],
+  ['Unknown', 'rgba(80,80,80,0.2)'],
 ]);
 
 /**
@@ -264,15 +264,15 @@ const PieChart: React.FC<{ title: string; data: PieDatum[] }> = (props) => {
       plotBackgroundColor: null,
       plotBorderWidth: null,
       plotShadow: false,
-      type: "pie",
+      type: 'pie',
     },
     exporting: { buttons: { contextButton: { menuItems: MENU_ITEMS } } },
     title: { text: props.title },
-    tooltip: { pointFormat: "{series.name}: <b>{point.percentage:.1f}%</b>" },
+    tooltip: { pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>' },
     plotOptions: {
       pie: {
         allowPointSelect: true,
-        cursor: "pointer",
+        cursor: 'pointer',
         showInLegend: true,
         dataLabels: { enabled: false },
       },
@@ -314,13 +314,13 @@ const BrowserCharts: React.FC<{ browserStats: BrowserStats | null }> = (
   return (
     <>
       <Col span={8}>
-        <PieChart title="Browsers" data={browserData} />
+        <PieChart title='Browsers' data={browserData} />
       </Col>
       <Col span={8}>
-        <PieChart title="Platforms" data={platformData} />
+        <PieChart title='Platforms' data={platformData} />
       </Col>
       <Col span={8}>
-        <PieChart title="Referrers" data={refererData} />
+        <PieChart title='Referrers' data={refererData} />
       </Col>
     </>
   );
@@ -421,7 +421,7 @@ export class Stats extends React.Component<Props, State> {
    * @param alias The name of an alias, or a number to select all aliases (stupid hack why did I even do that?)
    */
   setAlias = async (alias: number | string): Promise<void> => {
-    if (typeof alias === "number") {
+    if (typeof alias === 'number') {
       this.setState({ selectedAlias: null });
     } else {
       this.setState({ selectedAlias: alias });
@@ -444,7 +444,7 @@ export class Stats extends React.Component<Props, State> {
    */
   clearVisitData = async (): Promise<void> => {
     await fetch(`/api/v1/link/${this.props.id}/clear_visits`, {
-      method: "POST",
+      method: 'POST',
     });
     await this.updateStats();
   };
@@ -452,9 +452,9 @@ export class Stats extends React.Component<Props, State> {
   render(): React.ReactNode {
     return (
       <>
-        <Row className="primary-row">
+        <Row className='primary-row'>
           <Col span={16}>
-            <span className="page-title">Stats</span>
+            <span className='page-title'>Stats</span>
             {this.state.overallStats === null ? (
               <></>
             ) : (
@@ -465,15 +465,15 @@ export class Stats extends React.Component<Props, State> {
             )}
           </Col>
 
-          <Col span={8} className="btn-col">
+          <Col span={8} className='btn-col'>
             {!this.state.mayEdit ? (
               <></>
             ) : (
               <Popconfirm
-                placement="bottom"
-                title="Are you sure you want to clear all visit data associated with this link? This operation cannot be undone."
+                placement='bottom'
+                title='Are you sure you want to clear all visit data associated with this link? This operation cannot be undone.'
                 onConfirm={this.clearVisitData}
-                icon={<ExclamationCircleFilled style={{ color: "red" }} />}
+                icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
               >
                 <Button danger>
                   <CloseOutlined /> Clear visit data
@@ -504,19 +504,19 @@ export class Stats extends React.Component<Props, State> {
           </Col>
         </Row>
 
-        <Row className="primary-row">
+        <Row className='primary-row'>
           <Col span={24}>
             <VisitsChart visitStats={this.state.visitStats} />
           </Col>
         </Row>
 
-        <Row className="primary-row">
+        <Row className='primary-row'>
           <Col span={24}>
             <GeoipChart geoipStats={this.state.geoipStats} />
           </Col>
         </Row>
 
-        <Row className="primary-row">
+        <Row className='primary-row'>
           <BrowserCharts browserStats={this.state.browserStats} />
         </Row>
       </>

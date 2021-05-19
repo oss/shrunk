@@ -18,11 +18,11 @@ export const serverValidateReservedAlias = async (
   _rule: any,
   value: string
 ): Promise<void> => {
-  if (!value) return;
+  if (!value) {return;}
   const result = await fetch(
     `/api/v1/link/validate_reserved_alias/${base32.encode(value)}`
   ).then((resp) => resp.json());
-  if (!result.valid && value.length >= 5) throw new Error(result.reason);
+  if (!result.valid && value.length >= 5) {throw new Error(result.reason);}
 };
 
 /**
@@ -37,11 +37,11 @@ export const serverValidateDuplicateAlias = async (
   _rule: any,
   value: string
 ): Promise<void> => {
-  if (!value) return;
+  if (!value) {return;}
   const result = await fetch(
     `/api/v1/link/validate_duplicate_alias/${base32.encode(value)}`
   ).then((resp) => resp.json());
-  if (!result.valid && value.length >= 5) throw new Error(result.reason);
+  if (!result.valid && value.length >= 5) {throw new Error(result.reason);}
 };
 
 /**

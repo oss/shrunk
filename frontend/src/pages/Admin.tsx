@@ -3,11 +3,11 @@
  * @packageDocumentation
  */
 
-import React from "react";
-import { Row, Col, Spin } from "antd";
-import { Link } from "react-router-dom";
+import React from 'react';
+import { Row, Col, Spin } from 'antd';
+import { Link } from 'react-router-dom';
 
-import "../Base.less";
+import '../Base.less';
 
 /**
  * Props for the [[Admin]] component
@@ -59,35 +59,35 @@ export class Admin extends React.Component<Props, State> {
   }
 
   async componentDidMount(): Promise<void> {
-    await fetch("/api/v1/role")
+    await fetch('/api/v1/role')
       .then((resp) => resp.json())
-      .then((json) => this.setState({ roles: json["roles"] as RoleInfo[] }));
+      .then((json) => this.setState({ roles: json['roles'] as RoleInfo[] }));
   }
 
   render(): React.ReactNode {
     return (
       <>
-        <Row className="primary-row">
+        <Row className='primary-row'>
           <Col span={16}>
-            <span className="page-title">Administrator Controls</span>
+            <span className='page-title'>Administrator Controls</span>
           </Col>
         </Row>
 
-        <Row className="primary-row">
+        <Row className='primary-row'>
           <Col span={24}>
-            <Link to="/admin/stats" className="title">
+            <Link to='/admin/stats' className='title'>
               Admin Statistics
             </Link>
           </Col>
         </Row>
 
         {this.state.roles === null ? (
-          <Spin size="large" />
+          <Spin size='large' />
         ) : (
           this.state.roles.map((role) => (
-            <Row key={role.name} className="primary-row">
+            <Row key={role.name} className='primary-row'>
               <Col span={24}>
-                <Link to={`/roles/${role.name}`} className="title">
+                <Link to={`/roles/${role.name}`} className='title'>
                   {role.display_name}
                 </Link>
               </Col>

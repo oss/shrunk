@@ -1,7 +1,7 @@
 Flask==1.1.2
 Flask-SSO==0.4.0
 flask-mailman==0.1.7
-Jinja2==2.11.2
+Jinja2==2.11.3
 MarkupSafe==1.1.1
 Werkzeug==1.0.1
 itsdangerous==1.1.0

@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import React from "react";
+import React from 'react';
 import {
   Row,
   Col,
@@ -13,21 +13,21 @@ import {
   Dropdown,
   Form,
   Input,
-} from "antd";
-import { Link } from "react-router-dom";
+} from 'antd';
+import { Link } from 'react-router-dom';
 import {
   ExclamationCircleFilled,
   DeleteOutlined,
   LineChartOutlined,
   ToolOutlined,
   PlusCircleFilled,
-} from "@ant-design/icons";
-import moment from "moment";
+} from '@ant-design/icons';
+import moment from 'moment';
 
-import { OrgInfo, listOrgs, createOrg, deleteOrg } from "../api/Org";
-import { OrgAdminTag, OrgMemberTag } from "./subpages/OrgCommon";
+import { OrgInfo, listOrgs, createOrg, deleteOrg } from '../api/Org';
+import { OrgAdminTag, OrgMemberTag } from './subpages/OrgCommon';
 
-import "../Base.less";
+import '../Base.less';
 
 /**
  * Props for the [[Orgs]] component
@@ -80,9 +80,9 @@ const CreateOrgForm: React.FC<{ onCreate: (name: string) => Promise<void> }> = (
     if (!value) {
       return;
     }
-    const result = await fetch("/api/v1/org/validate_name", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const result = await fetch('/api/v1/org/validate_name', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: value }),
     }).then((resp) => resp.json());
     if (!result.valid) {
@@ -92,13 +92,13 @@ const CreateOrgForm: React.FC<{ onCreate: (name: string) => Promise<void> }> = (
   const onFinish = async (values: { name: string }) =>
     await props.onCreate(values.name);
   return (
-    <div className="dropdown-form">
-      <Form layout="inline" initialValues={{ name: "" }} onFinish={onFinish}>
+    <div className='dropdown-form'>
+      <Form layout='inline' initialValues={{ name: '' }} onFinish={onFinish}>
         <Input.Group compact>
           <Form.Item
-            name="name"
+            name='name'
             rules={[
-              { required: true, message: "Please input a name." },
+              { required: true, message: 'Please input a name.' },
               {
                 pattern: /^[a-zA-Z0-9_.,-]*$/,
                 message:
@@ -107,13 +107,13 @@ const CreateOrgForm: React.FC<{ onCreate: (name: string) => Promise<void> }> = (
               { validator: serverValidateOrgName },
             ]}
           >
-            <Input placeholder="Name" />
+            <Input placeholder='Name' />
           </Form.Item>
 
           <Form.Item>
             <Button
-              type="primary"
-              htmlType="submit"
+              type='primary'
+              htmlType='submit'
               icon={<PlusCircleFilled />}
             />
           </Form.Item>
@@ -133,39 +133,39 @@ const OrgRow: React.FC<{
   onDelete: (id: string) => Promise<void>;
 }> = (props) => {
   return (
-    <Row className="primary-row">
+    <Row className='primary-row'>
       <Col span={20}>
-        <span className="title">{props.orgInfo.name}</span>
+        <span className='title'>{props.orgInfo.name}</span>
         {props.orgInfo.is_admin ? (
-          <OrgAdminTag title="You are an administrator of this organization." />
+          <OrgAdminTag title='You are an administrator of this organization.' />
         ) : (
           <></>
         )}
         {props.showAll && props.orgInfo.is_member ? <OrgMemberTag /> : <></>}
         <span>
-          Created: {moment(props.orgInfo.timeCreated).format("DD MMM YYYY")}
+          Created: {moment(props.orgInfo.timeCreated).format('DD MMM YYYY')}
         </span>
       </Col>
-      <Col span={4} className="btn-col">
-        <Button type="text">
+      <Col span={4} className='btn-col'>
+        <Button type='text'>
           <Link to={`/orgs/${props.orgInfo.id}/manage`}>
             <ToolOutlined />
           </Link>
         </Button>
 
-        <Button type="text">
+        <Button type='text'>
           <Link to={`/orgs/${props.orgInfo.id}/stats`}>
             <LineChartOutlined />
           </Link>
         </Button>
 
         <Popconfirm
-          placement="top"
-          title="Are you sure you want to delete this organization?"
+          placement='top'
+          title='Are you sure you want to delete this organization?'
           onConfirm={async () => await props.onDelete(props.orgInfo.id)}
-          icon={<ExclamationCircleFilled style={{ color: "red" }} />}
+          icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
         >
-          <Button danger type="text" icon={<DeleteOutlined />} />
+          <Button danger type='text' icon={<DeleteOutlined />} />
         </Popconfirm>
       </Col>
     </Row>
@@ -201,7 +201,7 @@ export class Orgs extends React.Component<Props, State> {
    * @method
    */
   refreshOrgs = async (): Promise<void> => {
-    await listOrgs(this.state.showAll ? "all" : "user").then((orgs) =>
+    await listOrgs(this.state.showAll ? 'all' : 'user').then((orgs) =>
       this.setState({ orgs })
     );
   };
@@ -229,17 +229,17 @@ export class Orgs extends React.Component<Props, State> {
 
   render(): React.ReactNode {
     const mayCreateOrg =
-      this.props.userPrivileges.has("admin") ||
-      this.props.userPrivileges.has("facstaff");
-    const isAdmin = this.props.userPrivileges.has("admin");
+      this.props.userPrivileges.has('admin') ||
+      this.props.userPrivileges.has('facstaff');
+    const isAdmin = this.props.userPrivileges.has('admin');
     return (
       <>
-        <Row className="primary-row">
+        <Row className='primary-row'>
           <Col span={16}>
-            <span className="page-title">Orgs</span>
+            <span className='page-title'>Orgs</span>
           </Col>
 
-          <Col span={8} className="btn-col">
+          <Col span={8} className='btn-col'>
             {!mayCreateOrg ? (
               <></>
             ) : (
@@ -249,10 +249,10 @@ export class Orgs extends React.Component<Props, State> {
                 onVisibleChange={(flag) =>
                   this.setState({ createOrgFormVisible: flag })
                 }
-                placement="bottomRight"
-                trigger={["click"]}
+                placement='bottomRight'
+                trigger={['click']}
               >
-                <Button type="primary">
+                <Button type='primary'>
                   <PlusCircleFilled /> Create an Org
                 </Button>
               </Dropdown>
