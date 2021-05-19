@@ -17,6 +17,7 @@ import {
   Table,
   Tag,
 } from 'antd';
+
 import { FormInstance } from 'antd/lib/form';
 import { PlusCircleOutlined, MinusCircleOutlined } from '@ant-design/icons';
 
@@ -176,9 +177,12 @@ export class ShareLinkModal extends React.Component<Props, State> {
     },
     {
       title: 'Remove',
+      align: 'center',
       render: (record: any) => (
         <>
           <Button
+            type="text"
+            shape='circle'
             icon={<MinusCircleOutlined />}
             onClick={() =>
               this.props.onRemoveEntity(
@@ -235,7 +239,7 @@ export class ShareLinkModal extends React.Component<Props, State> {
         cancelButtonProps={{ style: { display: 'none' } }}
         onOk={() => {
           this.formRef.current!.resetFields();
-          this.props.onCancel();
+          this.props.onOk();
         }}
         onCancel={() => {
           this.formRef.current!.resetFields();
