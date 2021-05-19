@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Form,
   Input,
@@ -13,17 +13,17 @@ import {
   Radio,
   Checkbox,
   DatePicker,
-} from "antd";
-import { SettingOutlined, SearchOutlined } from "@ant-design/icons";
-import { OrgInfo } from "../api/Org";
+} from 'antd';
+import { SettingOutlined, SearchOutlined } from '@ant-design/icons';
+import { OrgInfo } from '../api/Org';
 
 /**
  * The type of the `set` parameter in the search query.
  * @type
  */
 export type SearchSet =
-  | { set: "user" | "shared" | "all" }
-  | { set: "org"; org: string };
+  | { set: 'user' | 'shared' | 'all' }
+  | { set: 'org'; org: string };
 
 /**
  * The type of a search query
@@ -102,33 +102,33 @@ export interface Props {
  * @param props The props
  */
 export const SearchBox: React.FC<Props> = (props) => {
-  const isAdmin = props.userPrivileges.has("admin");
+  const isAdmin = props.userPrivileges.has('admin');
   const sortOptions = [
-    { label: "Ascending", value: "ascending" },
-    { label: "Descending", value: "descending" },
+    { label: 'Ascending', value: 'ascending' },
+    { label: 'Descending', value: 'descending' },
   ];
 
   const [dropdownVisible, setDropdownVisible] = useState(false);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const [org, setOrg] = useState<number | string>(isAdmin ? 1 : 0);
   const [showExpired, setShowExpired] = useState(false);
   const [showDeleted, setShowDeleted] = useState(false);
-  const [sortKey, setSortKey] = useState("created_time");
-  const [sortOrder, setSortOrder] = useState("descending");
+  const [sortKey, setSortKey] = useState('created_time');
+  const [sortOrder, setSortOrder] = useState('descending');
   const [beginTime, setBeginTime] = useState<moment.Moment | null>(null);
   const [endTime, setEndTime] = useState<moment.Moment | null>(null);
 
   const dropdown = (
-    <div className="dropdown-form">
+    <div className='dropdown-form'>
       <Form
-        layout="vertical"
+        layout='vertical'
         initialValues={{
           org: isAdmin ? 1 : 0,
-          sortKey: "created_time",
-          sortOrder: "descending",
+          sortKey: 'created_time',
+          sortOrder: 'descending',
         }}
       >
-        <Form.Item name="org" label="Organization">
+        <Form.Item name='org' label='Organization'>
           <Select value={org} onChange={setOrg}>
             <Select.Option value={0}>
               <em>My links</em>
@@ -150,7 +150,7 @@ export const SearchBox: React.FC<Props> = (props) => {
             ))}
           </Select>
         </Form.Item>
-        <Form.Item name="show_expired">
+        <Form.Item name='show_expired'>
           <Checkbox
             checked={showExpired}
             onChange={(e) => setShowExpired(e.target.checked)}
@@ -161,7 +161,7 @@ export const SearchBox: React.FC<Props> = (props) => {
         {!isAdmin ? (
           <></>
         ) : (
-          <Form.Item name="show_deleted">
+          <Form.Item name='show_deleted'>
             <Checkbox
               checked={showDeleted}
               onChange={(e) => setShowDeleted(e.target.checked)}
@@ -170,32 +170,32 @@ export const SearchBox: React.FC<Props> = (props) => {
             </Checkbox>
           </Form.Item>
         )}
-        <Form.Item name="sortKey" label="Sort by">
+        <Form.Item name='sortKey' label='Sort by'>
           <Select value={sortKey} onChange={setSortKey}>
-            <Select.Option value="relevance">Relevance</Select.Option>
-            <Select.Option value="created_time">Time created</Select.Option>
-            <Select.Option value="title">Title</Select.Option>
-            <Select.Option value="visits">Number of visits</Select.Option>
+            <Select.Option value='relevance'>Relevance</Select.Option>
+            <Select.Option value='created_time'>Time created</Select.Option>
+            <Select.Option value='title'>Title</Select.Option>
+            <Select.Option value='visits'>Number of visits</Select.Option>
           </Select>
         </Form.Item>
-        <Form.Item name="sortOrder" label="Sort order">
+        <Form.Item name='sortOrder' label='Sort order'>
           <Radio.Group
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value)}
             options={sortOptions}
-            optionType="button"
+            optionType='button'
           />
         </Form.Item>
-        <Form.Item name="beginTime" label="Created after">
+        <Form.Item name='beginTime' label='Created after'>
           <DatePicker
-            format="YYYY-MM-DD"
+            format='YYYY-MM-DD'
             value={beginTime}
             onChange={setBeginTime}
           />
         </Form.Item>
-        <Form.Item name="endTime" label="Created before">
+        <Form.Item name='endTime' label='Created before'>
           <DatePicker
-            format="YYYY-MM-DD"
+            format='YYYY-MM-DD'
             value={endTime}
             onChange={setEndTime}
           />
@@ -207,23 +207,23 @@ export const SearchBox: React.FC<Props> = (props) => {
   const doSearch = async (): Promise<void> => {
     const searchSet: SearchSet =
       org === 0
-        ? { set: "user" }
+        ? { set: 'user' }
         : org === 1
-        ? { set: "all" }
+        ? { set: 'all' }
         : org === 2
-        ? { set: "shared" }
-        : { set: "org", org: org as string };
+        ? { set: 'shared' }
+        : { set: 'org', org: org as string };
 
     const searchQuery: SearchQuery = {
       set: searchSet,
       show_expired_links: showExpired,
       show_deleted_links: showDeleted,
       sort: { key: sortKey, order: sortOrder },
-      begin_time: beginTime === null ? null : beginTime.startOf("day"),
-      end_time: endTime === null ? null : endTime.startOf("day"),
+      begin_time: beginTime === null ? null : beginTime.startOf('day'),
+      end_time: endTime === null ? null : endTime.startOf('day'),
     };
 
-    if (query !== "") {
+    if (query !== '') {
       searchQuery.query = query;
     }
 
@@ -231,11 +231,11 @@ export const SearchBox: React.FC<Props> = (props) => {
   };
 
   return (
-    <Form layout="inline">
+    <Form layout='inline'>
       <Input.Group compact>
-        <Form.Item name="query">
+        <Form.Item name='query'>
           <Input
-            placeholder="Search"
+            placeholder='Search'
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -245,8 +245,8 @@ export const SearchBox: React.FC<Props> = (props) => {
             overlay={dropdown}
             visible={dropdownVisible}
             onVisibleChange={setDropdownVisible}
-            placement="bottomRight"
-            trigger={["click"]}
+            placement='bottomRight'
+            trigger={['click']}
           >
             <Button icon={<SettingOutlined />} />
           </Dropdown>

@@ -376,22 +376,22 @@ export class Dashboard extends React.Component<Props, State> {
       },
     }).then((resp) => resp.json());
 
-    var entities: Array<Entity> = [];
+    const entities: Array<Entity> = [];
     for (var i = 0; i < sharingInfo.editors.length; i++) {
       if (sharingInfo.editors[i].type === 'netid')
-        entities.push({
+        {entities.push({
           _id: sharingInfo.editors[i]._id,
           name: sharingInfo.editors[i]._id,
           type: 'netid',
           permission: 'editor',
-        });
+        });}
       else if (sharingInfo.editors[i].type === 'org')
-        entities.push({
+        {entities.push({
           _id: sharingInfo.editors[i]._id,
           name: (await getOrgInfo(sharingInfo.editors[i]._id)).name,
           type: 'org',
           permission: 'editor',
-        });
+        });}
     }
 
     for (var i = 0; i < sharingInfo.viewers.length; i++) {
@@ -399,22 +399,22 @@ export class Dashboard extends React.Component<Props, State> {
         sharingInfo.viewers[i].type === 'netid' &&
         !entities.some((entity) => entity._id === sharingInfo.viewers[i]._id) // don't show a person as a viewer if they're already an editor
       )
-        entities.push({
+        {entities.push({
           _id: sharingInfo.viewers[i]._id,
           name: sharingInfo.viewers[i]._id,
           type: 'netid',
           permission: 'viewer',
-        });
+        });}
       else if (
         sharingInfo.viewers[i].type === 'org' &&
         !entities.some((entity) => entity._id === sharingInfo.viewers[i]._id) // don't show an org as a viewer if they're already an editor
       )
-        entities.push({
+        {entities.push({
           _id: sharingInfo.viewers[i]._id,
           name: (await getOrgInfo(sharingInfo.viewers[i]._id)).name,
           type: 'org',
           permission: 'viewer',
-        });
+        });}
     }
 
     // sort the list of entities:
@@ -719,10 +719,10 @@ export class Dashboard extends React.Component<Props, State> {
   render(): React.ReactNode {
     return (
       <>
-        <Row className="primary-row">
+        <Row className='primary-row'>
           <Col span={20}>
            <Space>
-              <span className="page-title">Dashboard</span>
+              <span className='page-title'>Dashboard</span>
               {this.state.userOrgs === null ? (
                 <></>
               ) : (
@@ -735,7 +735,7 @@ export class Dashboard extends React.Component<Props, State> {
             </Space> 
           </Col>
 
-          <Col span={4} className="btn-col">
+          <Col span={4} className='btn-col'>
             <Dropdown
               overlay={
                 <CreateLinkForm
@@ -750,10 +750,10 @@ export class Dashboard extends React.Component<Props, State> {
               onVisibleChange={(flag) =>
                 this.setState({ createLinkDropdownVisible: flag })
               }
-              placement="bottomRight"
+              placement='bottomRight'
               trigger={['click']}
             >
-              <Button type="primary">
+              <Button type='primary'>
                 <PlusCircleFilled /> Shrink a Link
               </Button>
             </Dropdown>
@@ -761,9 +761,9 @@ export class Dashboard extends React.Component<Props, State> {
         </Row>
 
         {this.state.linkInfo === null ? (
-          <Spin size="large" />
+          <Spin size='large' />
         ) : (
-          <div className="dashboard-links">
+          <div className='dashboard-links'>
             {this.state.linkInfo.map((linkInfo) => (
               <LinkRow
                 key={linkInfo.id}
@@ -777,7 +777,7 @@ export class Dashboard extends React.Component<Props, State> {
             ))}
 
             <Pagination
-              className="pagination"
+              className='pagination'
               defaultCurrent={1}
               current={this.state.currentPage}
               showSizeChanger={false}

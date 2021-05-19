@@ -92,7 +92,7 @@
      constructor(props: Props) {
          super(props);
          this.state = {
-            loading: false
+            loading: false,
          };
      }
 
@@ -126,7 +126,7 @@
         
          await Promise.all(values.aliases.map(async (alias) => {
              const create_alias_req: any = { description: alias.description };
-             var result = null;
+             let result = null;
              // Check if there are duplicate aliases
              if(alias.alias != undefined) {
                 result = await fetch(

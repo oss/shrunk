@@ -126,14 +126,14 @@ export const EditLinkModal: React.FC<Props> = (props) => {
   };
   const mayEditOwner = props.netid == initialValues.owner;
   const isAnInitialAlias = (alias: any) => {
-    if (initialValues.aliases.some((obj: { alias: any; }) => obj.alias === alias)) return true;
-    else return false;
+    if (initialValues.aliases.some((obj: { alias: any; }) => obj.alias === alias)) {return true;}
+    else {return false;}
   };
 
   return (
     <Modal
       visible={props.visible}
-      title="Edit link"
+      title='Edit link'
       onOk={() => {
         form.validateFields().then((values) => {
           props.onOk(values as EditLinkFormValues);
@@ -146,16 +146,16 @@ export const EditLinkModal: React.FC<Props> = (props) => {
     >
       <Form form={form} layout={'vertical'} initialValues={initialValues}>
         <Form.Item
-          label="Title"
-          name="title"
+          label='Title'
+          name='title'
           rules={[{ required: true, message: 'Please input a title.' }]}
         >
-          <Input placeholder="Title" />
+          <Input placeholder='Title' />
         </Form.Item>
 
         <Form.Item
-          label="Long URL"
-          name="long_url"
+          label='Long URL'
+          name='long_url'
           rules={[
             { required: true, message: 'Please input a URL.' },
             { type: 'url', message: 'Please enter a valid URL.' },
@@ -163,14 +163,14 @@ export const EditLinkModal: React.FC<Props> = (props) => {
           ]}
         >
           <Input
-            placeholder="Long URL"
-            prefix={<LinkOutlined className="site-from-item-icon" />}
+            placeholder='Long URL'
+            prefix={<LinkOutlined className='site-from-item-icon' />}
           />
         </Form.Item>
 
-        <Form.Item label="Expiration time" name="expiration_time">
+        <Form.Item label='Expiration time' name='expiration_time'>
           <DatePicker
-            format="YYYY-MM-DD HH:mm:ss"
+            format='YYYY-MM-DD HH:mm:ss'
             disabledDate={(current) =>
               current && current < moment().startOf('day')
             }
@@ -179,24 +179,24 @@ export const EditLinkModal: React.FC<Props> = (props) => {
         </Form.Item>
 
         <Form.Item
-          label="Owner"
-          name="owner"
+          label='Owner'
+          name='owner'
           rules={[{ validator: serverValidateNetId }]}
         >
           <Input 
-            placeholder="Link owner" 
+            placeholder='Link owner' 
             disabled={!mayEditOwner}
           />
         </Form.Item>
 
-        <Form.List name="aliases">
+        <Form.List name='aliases'>
           {(fields, { add, remove }) => (
-            <div className="fix-alias-remove-button">
+            <div className='fix-alias-remove-button'>
               {fields.map((field, index) => (
                 <Space
                   key={field.key}
                   style={{ display: 'flex', marginBottom: 8 }}
-                  align="start"
+                  align='start'
                 >
                   <Form.Item
                     label={index === 0 ? 'Alias' : ''}
@@ -235,7 +235,7 @@ export const EditLinkModal: React.FC<Props> = (props) => {
                       }),
                     ]}
                   >
-                    <Input disabled={!mayEditAliases} placeholder="Alias" />
+                    <Input disabled={!mayEditAliases} placeholder='Alias' />
                   </Form.Item>
 
                   <Form.Item
@@ -245,7 +245,7 @@ export const EditLinkModal: React.FC<Props> = (props) => {
                   >
                     <Input
                       disabled={!mayEditAliases}
-                      placeholder="Description"
+                      placeholder='Description'
                     />
                   </Form.Item>
 
@@ -254,7 +254,7 @@ export const EditLinkModal: React.FC<Props> = (props) => {
                   ) : (
                     <Button
                       disabled={fields.length === 1}
-                      type="text"
+                      type='text'
                       icon={<MinusCircleOutlined />}
                       onClick={() => remove(field.name)}
                     />
@@ -267,7 +267,7 @@ export const EditLinkModal: React.FC<Props> = (props) => {
               ) : (
                 <Form.Item>
                   <Button
-                    type="dashed"
+                    type='dashed'
                     onClick={() => {
                       add();
                     }}

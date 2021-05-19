@@ -13,11 +13,10 @@ import {
   QrcodeOutlined,
   ExclamationCircleFilled,
   StopOutlined,
-  MailOutlined, 
+  MailOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
 import CopyToClipboard from 'react-copy-to-clipboard';
-import { Link } from 'react-router-dom';
 import moment from 'moment';
 
 import { LinkInfo } from './LinkInfo';
@@ -40,7 +39,7 @@ export interface Props {
    */
   netid: string;
 
-   /**
+  /**
    * Callback called when the edit modal should be displayed
    * @property
    */
@@ -99,7 +98,7 @@ export class LinkRow extends React.Component<Props, State> {
     await fetch(`/api/v1/link/${this.props.linkInfo.id}`, { method: 'DELETE' });
 
     // Delete alias link
-    var alias_name;
+    let alias_name;
     {
       this.props.linkInfo.aliases.map((alias) => {
         alias_name = `${alias.alias}`;
@@ -122,7 +121,7 @@ export class LinkRow extends React.Component<Props, State> {
     }).then((resp) => resp.json());
     this.setState({requestSent: result})
   };
-  
+
   /**
    * Execute API requests to request edit for the link
    * @method
@@ -150,16 +149,12 @@ export class LinkRow extends React.Component<Props, State> {
   render(): React.ReactNode {
     const isLinkDeleted = this.props.linkInfo.deletion_info !== null;
     const isLinkExpired = this.props.linkInfo.is_expired;
-    const isOwner = this.props.linkInfo.owner==this.props.netid;
+    const isOwner = this.props.linkInfo.owner == this.props.netid;
     const titleClassName =
       isLinkDeleted || isLinkExpired ? 'title deleted' : 'title';
 
     return (
-      <Row
-        className="primary-row"
-        justify="center"
-        // style={{ alignItems: 'center' }}
-      >
+      <Row className="primary-row" justify="center">
         <Col span={20}>
           <Row>
             <Col span={24}>
@@ -235,10 +230,10 @@ export class LinkRow extends React.Component<Props, State> {
           ) : (
             <Tooltip title="Edit link">
               <Button
-              type="text"
-              icon={<EditOutlined />}
-              onClick={(_ev) => this.props.showEditModal(this.props.linkInfo)}
-            />
+                type="text"
+                icon={<EditOutlined />}
+                onClick={(_ev) => this.props.showEditModal(this.props.linkInfo)}
+              />
             </Tooltip>
           )}
 
@@ -247,20 +242,20 @@ export class LinkRow extends React.Component<Props, State> {
           ) : (
             <Tooltip title="Manage sharing">
               <Button
-              type="text"
-              icon={<TeamOutlined />}
-              onClick={(_ev) =>
-                this.props.showShareLinkModal(this.props.linkInfo)
-              }
-            />
+                type="text"
+                icon={<TeamOutlined />}
+                onClick={(_ev) =>
+                  this.props.showShareLinkModal(this.props.linkInfo)
+                }
+              />
             </Tooltip>
           )}
           <Tooltip title="Link statistics">
-             <Button 
-            type="text"
-            icon={<LineChartOutlined />}
-            href={`/app/#/stats/${this.props.linkInfo.id}`}
-          />
+            <Button
+              type="text"
+              icon={<LineChartOutlined />}
+              href={`/app/#/stats/${this.props.linkInfo.id}`}
+            />
           </Tooltip>
           <Tooltip title="QR Code">
             <Button
@@ -305,7 +300,7 @@ export class LinkRow extends React.Component<Props, State> {
               onConfirm={this.cancelRequest}
             >
               <Tooltip title="Cancel request for edit access">
-                <Button type="text" icon={<StopOutlined />} /> 
+                <Button type="text" icon={<StopOutlined />} />
               </Tooltip>
             </Popconfirm>
           )}

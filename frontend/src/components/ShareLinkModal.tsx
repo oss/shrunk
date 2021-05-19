@@ -23,6 +23,7 @@ import { PlusCircleOutlined, MinusCircleOutlined } from '@ant-design/icons';
 
 import { OrgInfo, listOrgs } from '../api/Org';
 import { serverValidateNetId } from '../Validators';
+import { ColumnsType } from 'antd/es/table';
 
 /**
  * The final values of the share link form
@@ -150,7 +151,7 @@ export interface State {
 export class ShareLinkModal extends React.Component<Props, State> {
   formRef = React.createRef<FormInstance>();
 
-  tableColumns = [
+  tableColumns: ColumnsType<Entity> = [
     {
       title: 'NetID/Org',
       dataIndex: 'name',
@@ -181,7 +182,7 @@ export class ShareLinkModal extends React.Component<Props, State> {
       render: (record: any) => (
         <>
           <Button
-            type="text"
+            type='text'
             shape='circle'
             icon={<MinusCircleOutlined />}
             onClick={() =>
@@ -213,7 +214,7 @@ export class ShareLinkModal extends React.Component<Props, State> {
 
   async componentDidMount(): Promise<void> {
     await this.refreshOrgs();
-    var options = this.state.orgs.map((org) => {
+    const options = this.state.orgs.map((org) => {
       return { label: org.name, value: org.id };
     });
     this.setState({ options: options });
@@ -233,9 +234,9 @@ export class ShareLinkModal extends React.Component<Props, State> {
     return (
       <Modal
         visible={this.props.visible}
-        title="Share link"
-        okText="Done"
-        okType="ghost"
+        title='Share link'
+        okText='Done'
+        okType='ghost'
         cancelButtonProps={{ style: { display: 'none' } }}
         onOk={() => {
           this.formRef.current!.resetFields();
@@ -249,7 +250,7 @@ export class ShareLinkModal extends React.Component<Props, State> {
         <Table
           columns={this.tableColumns}
           dataSource={this.props.people}
-          rowKey="_id"
+          rowKey='_id'
           locale={{ emptyText: 'This link is not shared with anyone.' }}
           pagination={{
             total: this.props.people.length > 0 ? this.props.people.length : 1, // always shows pagination
@@ -271,14 +272,14 @@ export class ShareLinkModal extends React.Component<Props, State> {
                   onChange={(e) =>
                     this.setState({ addNetIDOrOrg: e.target.value })
                   }
-                  defaultValue="netid"
-                  buttonStyle="solid"
+                  defaultValue='netid'
+                  buttonStyle='solid'
                 >
-                  <Radio.Button value="netid">NetID</Radio.Button>
-                  <Radio.Button value="org">Organization</Radio.Button>
+                  <Radio.Button value='netid'>NetID</Radio.Button>
+                  <Radio.Button value='org'>Organization</Radio.Button>
                 </Radio.Group>
                 :
-                <Col flex="auto" />
+                <Col flex='auto' />
               </Space>
             </Col>
           </Row>
@@ -287,17 +288,17 @@ export class ShareLinkModal extends React.Component<Props, State> {
             <Col span={12}>
               {this.state.addNetIDOrOrg == 'netid' ? (
                 <Form.Item
-                  name="netid"
+                  name='netid'
                   rules={[
                     { required: true, message: 'Please enter a valid NetID.' },
                     { validator: serverValidateNetId },
                   ]}
                 >
-                  <Input placeholder="NetID" />
+                  <Input placeholder='NetID' />
                 </Form.Item>
               ) : (
                 <Form.Item
-                  name="organization"
+                  name='organization'
                   rules={[
                     {
                       required: true,
@@ -305,7 +306,7 @@ export class ShareLinkModal extends React.Component<Props, State> {
                     },
                   ]}
                 >
-                  <Select placeholder="Select an organization" allowClear>
+                  <Select placeholder='Select an organization' allowClear>
                     {this.state.orgs.map((org, index) => (
                       <Select.Option value={org.id} key={index}>
                         {org.name}
@@ -316,16 +317,16 @@ export class ShareLinkModal extends React.Component<Props, State> {
               )}
             </Col>
             <Col span={6}>
-              <Form.Item name="permission" initialValue="viewers">
+              <Form.Item name='permission' initialValue='viewers'>
                 <Select>
-                  <Select.Option value="viewers">Viewer</Select.Option>
-                  <Select.Option value="editors">Editor</Select.Option>
+                  <Select.Option value='viewers'>Viewer</Select.Option>
+                  <Select.Option value='editors'>Editor</Select.Option>
                 </Select>
               </Form.Item>
             </Col>
             <Col span={6}>
               <Form.Item>
-                <Button type="primary" htmlType="submit">
+                <Button type='primary' htmlType='submit'>
                   <PlusCircleOutlined />
                   Share
                 </Button>

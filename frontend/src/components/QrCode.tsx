@@ -3,12 +3,12 @@
  * @packageDocumentation
  */
 
-import React from "react";
-import { Modal, Row, Col, Select, Space, Button } from "antd";
-import QRCodeReact from "qrcode.react";
+import React from 'react';
+import { Modal, Row, Col, Select, Space, Button } from 'antd';
+import QRCodeReact from 'qrcode.react';
 
-import { LinkInfo } from "./LinkInfo";
-import "./QrCode.less";
+import { LinkInfo } from './LinkInfo';
+import './QrCode.less';
 
 /**
  * Props for the [[QrCodeModal]] component
@@ -112,13 +112,13 @@ export class QrCodeModal extends React.Component<Props, State> {
    * @method
    */
   getQrDataUrl = (): string => {
-    const canvasCol = document.getElementsByClassName("qrcode-canvas");
+    const canvasCol = document.getElementsByClassName('qrcode-canvas');
     if (canvasCol.length === 0) {
-      throw new Error("could not find QR code canvas");
+      throw new Error('could not find QR code canvas');
     }
 
     const canvas = canvasCol[0] as HTMLCanvasElement;
-    return canvas.toDataURL("image/png");
+    return canvas.toDataURL('image/png');
   };
 
   /**
@@ -128,7 +128,7 @@ export class QrCodeModal extends React.Component<Props, State> {
   onPrint = (): void => {
     const popup = window.open();
     if (popup === null) {
-      throw new Error("could not open window to print QR code");
+      throw new Error('could not open window to print QR code');
     }
 
     popup.document.write(`
@@ -147,7 +147,7 @@ export class QrCodeModal extends React.Component<Props, State> {
    * @method
    */
   onDownload = (): void => {
-    const dlLink = document.createElement("a");
+    const dlLink = document.createElement('a');
     dlLink.download = `${this.state.selectedAlias}.png`;
     dlLink.href = this.getQrDataUrl();
     document.body.appendChild(dlLink);
@@ -166,10 +166,10 @@ export class QrCodeModal extends React.Component<Props, State> {
     return (
       <Modal
         visible={this.props.visible}
-        title="QR code"
+        title='QR code'
         onCancel={this.props.onCancel}
         width={this.props.width + 2 * 24}
-        className="qr-modal"
+        className='qr-modal'
         footer={
           <Space>
             <Button onClick={this.onPrint}>Print</Button>
@@ -185,7 +185,7 @@ export class QrCodeModal extends React.Component<Props, State> {
               <Select
                 onSelect={this.setAlias}
                 defaultValue={aliases[0].alias}
-                className="select"
+                className='select'
                 style={{ width: this.props.width }}
               >
                 {aliases.map((alias) => (
@@ -206,7 +206,7 @@ export class QrCodeModal extends React.Component<Props, State> {
             <Col>
               <QRCodeReact
                 value={this.state.selectedShortUrl}
-                className="qrcode-canvas"
+                className='qrcode-canvas'
                 size={this.props.width}
               />
             </Col>

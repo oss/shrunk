@@ -2,6 +2,10 @@
 *.sw[op]
 *~
 
+# Cache
+.cache
+.parcel-cache
+
 # Secrets
 backend/shrunk/config.py
 
@@ -51,6 +55,8 @@ dist-newstyle
 .vscode/
 frontend/.cache
 frontend/docs
+# in case frontend/docs doesn't work
+docs
 
 backend/mail
 

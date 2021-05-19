@@ -3,13 +3,13 @@
  * @packageDocumentation
  */
 
-import React from "react";
-import { Spin, Row, Col } from "antd";
-import Highcharts from "highcharts";
-import HighchartsReact from "highcharts-react-official";
+import React from 'react';
+import { Spin, Row, Col } from 'antd';
+import Highcharts from 'highcharts';
+import HighchartsReact from 'highcharts-react-official';
 
-import { OrgInfo } from "../../api/Org";
-import { GeoipStats, MENU_ITEMS, GeoipChart } from "./StatsCommon";
+import { OrgInfo } from '../../api/Org';
+import { GeoipStats, MENU_ITEMS, GeoipChart } from './StatsCommon';
 
 /**
  * Props for the [[OrgStats]] component
@@ -57,35 +57,35 @@ const VisitsChart: React.FC<{ visitStats: VisitDatum[] | null }> = (props) => {
   }
 
   const options = {
-    chart: { type: "bar" },
-    title: { text: "Visits per user" },
+    chart: { type: 'bar' },
+    title: { text: 'Visits per user' },
     exporting: { buttons: { contextButton: { menuItems: MENU_ITEMS } } },
     xAxis: {
       categories: props.visitStats.map((datum) => datum.netid),
-      title: { text: "User" },
+      title: { text: 'User' },
     },
     yAxis: {
       min: 0,
-      title: { text: "Visitors" },
-      labels: { overflow: "justify", step: 4 },
+      title: { text: 'Visitors' },
+      labels: { overflow: 'justify', step: 4 },
     },
     legend: {
-      layout: "vertical",
-      align: "right",
-      verticalAlign: "top",
+      layout: 'vertical',
+      align: 'right',
+      verticalAlign: 'top',
       x: -40,
       y: 80,
       borderWidth: 1,
     },
     series: [
       {
-        name: "Total visits",
-        color: "#fc580c",
+        name: 'Total visits',
+        color: '#fc580c',
         data: props.visitStats.map((datum) => datum.total_visits),
       },
       {
-        name: "Unique visits",
-        color: "#fce2cc",
+        name: 'Unique visits',
+        color: '#fce2cc',
         data: props.visitStats.map((datum) => datum.unique_visits),
       },
     ],
@@ -152,19 +152,19 @@ export class OrgStats extends React.Component<Props, State> {
       .then((json) => this.setState({ info: json as OrgInfo }));
     const visitStatsPromise = await fetch(
       `/api/v1/org/${this.props.id}/stats/visits`,
-      { method: "GET" }
+      { method: 'GET' }
     )
       .then((resp) => resp.json())
       .then((json) =>
-        this.setState({ visitStats: json["visits"] as VisitDatum[] })
+        this.setState({ visitStats: json['visits'] as VisitDatum[] })
       );
     const geoipStatsPromise = await fetch(
       `/api/v1/org/${this.props.id}/stats/geoip`,
-      { method: "GET" }
+      { method: 'GET' }
     )
       .then((resp) => resp.json())
       .then((json) =>
-        this.setState({ geoipStats: json["geoip"] as GeoipStats })
+        this.setState({ geoipStats: json['geoip'] as GeoipStats })
       );
     await Promise.all([infoPromise, visitStatsPromise, geoipStatsPromise]);
   };
@@ -172,25 +172,25 @@ export class OrgStats extends React.Component<Props, State> {
   render(): React.ReactNode {
     return (
       <>
-        <Row className="primary-row">
+        <Row className='primary-row'>
           <Col span={24}>
             {this.state.info === null ? (
-              <Spin size="small" />
+              <Spin size='small' />
             ) : (
-              <span className="page-title">
+              <span className='page-title'>
                 Statistics for organization <em>{this.state.info.name}</em>
               </span>
             )}
           </Col>
         </Row>
 
-        <Row className="primary-row">
+        <Row className='primary-row'>
           <Col span={24}>
             <VisitsChart visitStats={this.state.visitStats} />
           </Col>
         </Row>
 
-        <Row className="primary-row">
+        <Row className='primary-row'>
           <Col span={24}>
             <GeoipChart geoipStats={this.state.geoipStats} />
           </Col>

@@ -3,16 +3,16 @@
  * @packageDocumentation
  */
 
-import React from "react";
+import React from 'react';
 
-import { Row, Col, Spin, DatePicker, Form, Button } from "antd";
-import { ArrowRightOutlined } from "@ant-design/icons";
-import Highcharts from "highcharts";
-import HighchartsReact from "highcharts-react-official";
+import { Row, Col, Spin, DatePicker, Form, Button } from 'antd';
+import { ArrowRightOutlined } from '@ant-design/icons';
+import Highcharts from 'highcharts';
+import HighchartsReact from 'highcharts-react-official';
 
-import { MENU_ITEMS } from "../pages/subpages/StatsCommon";
+import { MENU_ITEMS } from '../pages/subpages/StatsCommon';
 
-import "../Base.less";
+import '../Base.less';
 const { RangePicker } = DatePicker;
 
 /**
@@ -72,39 +72,39 @@ const EndpointChart: React.FC<{ endpointData: EndpointDatum[] | null }> = (
   props
 ) => {
   if (props.endpointData === null) {
-    return <Spin size="large" />;
+    return <Spin size='large' />;
   }
 
   const options = {
-    chart: { type: "bar" },
-    title: { text: "Endpoint visits" },
+    chart: { type: 'bar' },
+    title: { text: 'Endpoint visits' },
     exporting: { buttons: { contextButton: { menuItems: MENU_ITEMS } } },
     xAxis: {
       categories: props.endpointData.map((datum) => datum.endpoint),
-      title: { text: "Endpoint" },
+      title: { text: 'Endpoint' },
     },
     yAxis: {
       min: 0,
-      title: { text: "Visits" },
-      labels: { overflow: "justify", step: 4 },
+      title: { text: 'Visits' },
+      labels: { overflow: 'justify', step: 4 },
     },
     legend: {
-      layout: "vertical",
-      align: "right",
-      verticalAlign: "top",
+      layout: 'vertical',
+      align: 'right',
+      verticalAlign: 'top',
       x: -40,
       y: 80,
       borderWidth: 1,
     },
     series: [
       {
-        name: "Total visits",
-        color: "#fc580c",
+        name: 'Total visits',
+        color: '#fc580c',
         data: props.endpointData.map((datum) => datum.total_visits),
       },
       {
-        name: "Unique visits",
-        color: "#fce2cc",
+        name: 'Unique visits',
+        color: '#fce2cc',
         data: props.endpointData.map((datum) => datum.unique_visits),
       },
     ],
@@ -178,9 +178,9 @@ export class AdminStats extends React.Component<Props, State> {
       };
     }
 
-    await fetch("/api/v1/admin/stats/overview", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    await fetch('/api/v1/admin/stats/overview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(req),
     })
       .then((resp) => resp.json())
@@ -192,7 +192,7 @@ export class AdminStats extends React.Component<Props, State> {
    * @method
    */
   updateEndpointData = async (): Promise<void> => {
-    await fetch("/api/v1/admin/stats/endpoint")
+    await fetch('/api/v1/admin/stats/endpoint')
       .then((resp) => resp.json())
       .then((json) =>
         this.setState({ endpointData: json.stats as EndpointDatum[] })
@@ -223,39 +223,39 @@ export class AdminStats extends React.Component<Props, State> {
   render(): React.ReactNode {
     return (
       <>
-        <Row className="primary-row">
+        <Row className='primary-row'>
           <Col span={24}>
-            <span className="page-title">Admin Statistics</span>
+            <span className='page-title'>Admin Statistics</span>
           </Col>
         </Row>
 
-        <Row className="primary-row">
+        <Row className='primary-row'>
           <Col span={24}>
-            <Row style={{ marginBottom: "12px" }}>
+            <Row style={{ marginBottom: '12px' }}>
               <Col span={24}>
-                <Form layout="inline" onFinish={this.submitRangeForm}>
-                  <Form.Item name="range">
+                <Form layout='inline' onFinish={this.submitRangeForm}>
+                  <Form.Item name='range'>
                     <RangePicker />
                   </Form.Item>
 
                   <Form.Item>
-                    <Button htmlType="submit" icon={<ArrowRightOutlined />} />
+                    <Button htmlType='submit' icon={<ArrowRightOutlined />} />
                   </Form.Item>
                 </Form>
               </Col>
             </Row>
             <Row>
               {this.state.adminData === null ? (
-                <Spin size="small" />
+                <Spin size='small' />
               ) : (
                 <>
-                  <span className="info">
+                  <span className='info'>
                     Links: {this.state.adminData.links}
                   </span>
-                  <span className="info">
+                  <span className='info'>
                     Visits: {this.state.adminData.visits}
                   </span>
-                  <span className="info">
+                  <span className='info'>
                     Users: {this.state.adminData.users}
                   </span>
                 </>
@@ -264,7 +264,7 @@ export class AdminStats extends React.Component<Props, State> {
           </Col>
         </Row>
 
-        <Row className="primary-row">
+        <Row className='primary-row'>
           <Col span={24}>
             <EndpointChart endpointData={this.state.endpointData} />
           </Col>

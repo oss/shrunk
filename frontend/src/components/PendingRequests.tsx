@@ -3,12 +3,12 @@
  * @packageDocumentation
  */
 
-import React from "react";
-import { Row, Col, Modal, Button } from "antd";
-import moment from "moment";
+import React from 'react';
+import { Row, Col, Modal, Button } from 'antd';
+import moment from 'moment';
 
-import "../Base.less";
-import { CheckOutlined, CloseOutlined } from "@ant-design/icons";
+import '../Base.less';
+import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 
 /**
  * Data describing a pending access request
@@ -58,13 +58,13 @@ const PendingRequestRow: React.FC<{
 }> = (props) => {
   const request = props.request;
   return (
-    <Row className={props.singletonRow ? "" : "primary-row"}>
+    <Row className={props.singletonRow ? '' : 'primary-row'}>
       <Col span={20}>
         <Row>
           <Col>
-            <span style={{ fontWeight: "bold" }}>
+            <span style={{ fontWeight: 'bold' }}>
               {request.requesting_netid}
-            </span>{" "}
+            </span>{' '}
             has requested access to edit &ldquo;{request.title}&rdquo;
           </Col>
         </Row>
@@ -72,27 +72,27 @@ const PendingRequestRow: React.FC<{
           <Col>
             <span
               style={{
-                fontVariantCaps: "small-caps",
-                fontVariantNumeric: "oldstyle-nums",
-                fontSize: "small",
-                color: "gray",
+                fontVariantCaps: 'small-caps',
+                fontVariantNumeric: 'oldstyle-nums',
+                fontSize: 'small',
+                color: 'gray',
               }}
             >
-              Requested at{" "}
-              {moment(request.request_time).format("D MMMM YYYY, h:mm a")}
+              Requested at{' '}
+              {moment(request.request_time).format('D MMMM YYYY, h:mm a')}
             </span>
           </Col>
         </Row>
       </Col>
-      <Col span={4} className="btn-col">
+      <Col span={4} className='btn-col'>
         <Button
-          type="text"
+          type='text'
           icon={<CheckOutlined />}
           onClick={async (_ev) => await props.onAccept(request.request_token)}
         />
         <Button
           danger
-          type="text"
+          type='text'
           icon={<CloseOutlined />}
           onClick={async (_ev) => await props.onDeny(request.request_token)}
         />
@@ -149,10 +149,10 @@ export class PendingRequests extends React.Component<Props, State> {
    */
   updatePendingRequests = async (): Promise<void> => {
     const pendingRequests = await fetch(
-      "/api/v1/request/pending"
+      '/api/v1/request/pending'
     ).then((resp) => resp.json());
     this.setState({
-      pendingRequests: pendingRequests["requests"].map((req: any) => ({
+      pendingRequests: pendingRequests['requests'].map((req: any) => ({
         ...req,
         request_time: new Date(req.request_time),
       })),
@@ -187,7 +187,7 @@ export class PendingRequests extends React.Component<Props, State> {
     return (
       <Modal
         visible={!this.state.hidden && this.state.pendingRequests.length > 0}
-        title="You have pending access requests"
+        title='You have pending access requests'
         footer={null}
         onCancel={() => this.setState({ hidden: true })}
       >
