@@ -686,8 +686,8 @@ Please do not reply to this email. You may direct any questions to oss@oss.rutge
             recipient_list=[f'{owner_netid}@rutgers.edu'],
         )
 
-    def request_exists(self, mail: Mail, link_id: ObjectId, requesting_netid: str) -> bool:
-        request = self.db.access_requests.find_one({'link_id': link_id, 'requesting_netid': requesting_netid})
+    def active_request_exists(self, mail: Mail, link_id: ObjectId, requesting_netid: str) -> bool:
+        request = self.db.access_requests.find_one({'link_id': link_id, 'requesting_netid': requesting_netid, 'state' : "pending"})
         return True if request is not None else False
 
     def cancel_request_edit_access(self, mail: Mail, link_id: ObjectId, requesting_netid: str) -> None:

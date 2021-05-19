@@ -117,10 +117,9 @@ export class LinkRow extends React.Component<Props, State> {
    * @method
    */
    hasSentRequest = async (): Promise<void> => {
-    const result = await fetch(`/api/v1/link/${this.props.linkInfo.id}/request_exists`, {
+    const result = await fetch(`/api/v1/link/${this.props.linkInfo.id}/active_request_exists`, {
       method: 'GET',
     }).then((resp) => resp.json());
-    console.log(result);
     this.setState({requestSent: result})
   };
   
@@ -133,7 +132,7 @@ export class LinkRow extends React.Component<Props, State> {
       method: 'POST',
     });
     this.setState({requestSent: true});
-    //await this.props.refreshResults();
+    await this.props.refreshResults();
   };
 
   /**
@@ -145,7 +144,7 @@ export class LinkRow extends React.Component<Props, State> {
       method: 'POST',
     });
     this.setState({requestSent: false});
-    //await this.props.refreshResults();
+    await this.props.refreshResults();
   };
 
   render(): React.ReactNode {
@@ -297,7 +296,7 @@ export class LinkRow extends React.Component<Props, State> {
               </Tooltip>
             </Popconfirm>
           )}
-          {!this.state.requestSent ? (
+          {this.props.linkInfo.may_edit || !this.state.requestSent ? (
             <></>
           ) : (
             <Popconfirm
