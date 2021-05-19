@@ -388,7 +388,7 @@ def cancel_request_edit(netid: str, client: ShrunkClient, mail: Mail, link_id: O
     client.links.cancel_request_edit_access(mail, link_id, netid)
     return '', 204
 
-@bp.route('/<ObjectId:link_id>/request_exists', methods=['GET'])
+@bp.route('/<ObjectId:link_id>/active_request_exists', methods=['GET'])
 @require_mail
 @require_login
 def request_exists(netid: str, client: ShrunkClient, mail: Mail, link_id: ObjectId) -> bool:
@@ -398,9 +398,8 @@ def request_exists(netid: str, client: ShrunkClient, mail: Mail, link_id: Object
         abort(404)
     if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
         abort(403)
-    exists = client.links.request_exists(mail, link_id, netid)
-    response: Dict[str, bool] = {'exists': exists}
-    return jsonify(response), 204
+    exists = client.links.active_request_exists(mail, link_id, netid)
+    return jsonify(exists)
 
 def anonymize_visit(client: ShrunkClient, visit: Any) -> Any:
     """Anonymize a visit by replacing its source IP with an opaque visitor ID.

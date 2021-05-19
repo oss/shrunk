@@ -70,7 +70,7 @@ export interface Props {
  * State for the [[LinkRow]] component
  * @interface
  */
-export interface State { cancelRequest: boolean }
+export interface State { requestSent: boolean }
 
 /**
  * The [[LinkRow]] component displays the information for a single link
@@ -82,8 +82,12 @@ export class LinkRow extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      cancelRequest: false // true is edit request icon, false is cancel request icon
+      requestSent: false
     };
+  }
+
+  componentDidMount = () => {
+    this.hasSentRequest();
   }
 
   /**
@@ -113,10 +117,10 @@ export class LinkRow extends React.Component<Props, State> {
    * @method
    */
    hasSentRequest = async (): Promise<void> => {
-    const result = await fetch(`/api/v1/link/${this.props.linkInfo.id}/request_exists`, {
+    const result = await fetch(`/api/v1/link/${this.props.linkInfo.id}/active_request_exists`, {
       method: 'GET',
     }).then((resp) => resp.json());
-    this.setState({cancelRequest: !result.exists})
+    this.setState({requestSent: result})
   };
   
   /**
@@ -127,7 +131,7 @@ export class LinkRow extends React.Component<Props, State> {
     await fetch(`/api/v1/link/${this.props.linkInfo.id}/request_edit_access`, {
       method: 'POST',
     });
-    //this.setState({cancelRequest: true});
+    this.setState({requestSent: true});
     await this.props.refreshResults();
   };
 
@@ -139,7 +143,7 @@ export class LinkRow extends React.Component<Props, State> {
     await fetch(`/api/v1/link/${this.props.linkInfo.id}/cancel_request_edit_access`, {
       method: 'POST',
     });
-    //this.setState({cancelRequest: false});
+    this.setState({requestSent: false});
     await this.props.refreshResults();
   };
 
@@ -149,10 +153,6 @@ export class LinkRow extends React.Component<Props, State> {
     const isOwner = this.props.linkInfo.owner==this.props.netid;
     const titleClassName =
       isLinkDeleted || isLinkExpired ? 'title deleted' : 'title';
-
-    //console.log(this.props.linkInfo);
-    //this.hasSentRequest();
-    //console.log(this.state.cancelRequest);
 
     return (
       <Row
@@ -283,7 +283,7 @@ export class LinkRow extends React.Component<Props, State> {
               </Tooltip>
             </Popconfirm>
           )}
-          {this.props.linkInfo.may_edit || this.state.cancelRequest ? (
+          {this.props.linkInfo.may_edit || this.state.requestSent ? (
             <></>
           ) : (
             <Popconfirm
@@ -296,7 +296,7 @@ export class LinkRow extends React.Component<Props, State> {
               </Tooltip>
             </Popconfirm>
           )}
-          {!this.state.cancelRequest ? (
+          {this.props.linkInfo.may_edit || !this.state.requestSent ? (
             <></>
           ) : (
             <Popconfirm
