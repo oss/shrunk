@@ -9,17 +9,18 @@ import { Row, Col, Pagination, Spin, Dropdown, Button, Space } from 'antd';
 import { PlusCircleFilled } from '@ant-design/icons';
 
 import { getOrgInfo, listOrgs, OrgInfo } from '../api/Org';
-import { SearchQuery, SearchBox } from '../components/SearchBox';
+import { SearchBox } from '../components/SearchBox';
 import { LinkRow } from '../components/LinkRow';
 import { LinkInfo } from '../components/LinkInfo';
 import { QrCodeModal } from '../components/QrCode';
 import { EditLinkModal, EditLinkFormValues } from '../components/EditLinkModal';
 import { ShareLinkModal } from '../components/ShareLinkModal';
 import { CreateLinkForm } from '../components/CreateLinkForm';
+import { FilterDropdown } from "../components/FilterLinks";
 
 import './Dashboard.less';
 import { arrayMax } from 'highcharts';
-
+ 
 /**
  * The final values of the share link form
  * @type
@@ -45,6 +46,61 @@ export type Entity = {
    */
   permission: string;
 };
+
+/**
+ * The type of the `set` parameter in the search query.
+ * @type
+ */
+ export type SearchSet =
+ | { set: 'user' | 'shared' | 'all' }
+ | { set: 'org'; org: string };
+
+/**
+* The type of a search query
+* @interface
+*/
+export interface SearchQuery {
+ /**
+  * The query string (optional)
+  * @property
+  */
+ queryString?: string;
+
+ /**
+  * The set of links to search (c.f. [[SearchSet]])
+  * @property
+  */
+ set: SearchSet;
+
+ /**
+  * Whether to show expired links
+  * @property
+  */
+ show_expired_links: boolean;
+
+ /** Whether to show deleted links
+  * @property
+  */
+ show_deleted_links: boolean;
+
+ /**
+  * The sort order and key
+  * @property
+  */
+ sort: { key: string; order: string };
+
+ /**
+  * The beginning of the time range to search
+  * @property
+  */
+ begin_time: moment.Moment | null;
+
+ /**
+  * The end of the time range to search
+  * @property
+  */
+ end_time: moment.Moment | null;
+}
 
 /**
  * Props for the [[Dashboard]] component.
@@ -138,6 +194,7 @@ export interface State {
    * @property
    */
   createLinkDropdownVisible: boolean;
+
 }
 
 /**
@@ -200,11 +257,51 @@ export class Dashboard extends React.Component<Props, State> {
   };
 
   /**
+   * Executes a search query by query string
+   * @method
+   * @param newQueryString The new query string
+   */
+   setQueryString = async (newQueryString: string): Promise<void> => {
+    const newQuery: SearchQuery = {
+      queryString : newQueryString,
+      set: this.state.query === null ? { set: this.props.userPrivileges.has('admin') ? 'all' : 'user' } : this.state.query.set,
+      show_expired_links: this.state.query === null ? false : this.state.query.show_expired_links,
+      show_deleted_links: this.state.query === null ? false : this.state.query.show_deleted_links,
+      sort: this.state.query === null ?  { key: 'created_time', order: 'descending' } : this.state.query.sort,
+      begin_time: this.state.query === null ? null : this.state.query.begin_time,
+      end_time: this.state.query === null ? null : this.state.query.end_time,
+    };
+    this.setState({query: newQuery});
+    await this.setQuery(newQuery)
+  };
+
+  /**
+   * Executes a search query by query filter
+   * @method
+   * @param newQuery The new query by filter
+   */
+   setQueryByFilter = async (newQueryFiltered: SearchQuery): Promise<void> => {
+    const newQuery: SearchQuery = {
+      queryString : this.state.query?.queryString,
+      set: newQueryFiltered.set,
+      show_expired_links: this.state.query === null ? false : newQueryFiltered.show_expired_links,
+      show_deleted_links: this.state.query === null ? false : newQueryFiltered.show_deleted_links,
+      sort: newQueryFiltered.sort,
+      begin_time: this.state.query === null ? null : newQueryFiltered.begin_time,
+      end_time: this.state.query === null ? null : newQueryFiltered.end_time,
+    };
+    this.setState({query: newQuery});
+    await this.setQuery(newQuery)
+  };
+
+  /**
    * Executes a search query and updates component state with the results
    * @method
    * @param newQuery The new query
    */
   setQuery = async (newQuery: SearchQuery): Promise<void> => {
+    console.log("in dashboard.tsx");
+    console.log(newQuery);
     const results = await this.doQuery(newQuery, 0, this.state.linksPerPage);
     
     // Filter out duplicate links
@@ -274,7 +371,7 @@ export class Dashboard extends React.Component<Props, State> {
     limit: number
   ): Promise<{ count: number; results: LinkInfo[] }> => {
     const req: Record<string, any> = {
-      query: query.query,
+      query: query.queryString,
       set: query.set,
       show_expired_links: query.show_expired_links,
       show_deleted_links: query.show_deleted_links,
@@ -726,10 +823,15 @@ export class Dashboard extends React.Component<Props, State> {
               {this.state.userOrgs === null ? (
                 <></>
               ) : (
-                <SearchBox
+                <SearchBox setQueryString={this.setQueryString}/>
+              )}
+              {this.state.userOrgs === null ? (
+                <></>
+              ) : (
+              <FilterDropdown
                   userPrivileges={this.props.userPrivileges}
                   userOrgs={this.state.userOrgs}
-                  setQuery={this.setQuery}
+                  setQueryByFilter={this.setQueryByFilter}
                 />
               )}
             </Space> 

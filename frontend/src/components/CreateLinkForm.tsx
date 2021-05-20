@@ -92,7 +92,11 @@
      constructor(props: Props) {
          super(props);
          this.state = {
+<<<<<<< Updated upstream
             loading: false,
+=======
+            loading: false
+>>>>>>> Stashed changes
          };
      }
 
@@ -126,7 +130,11 @@
         
          await Promise.all(values.aliases.map(async (alias) => {
              const create_alias_req: any = { description: alias.description };
+<<<<<<< Updated upstream
              let result = null;
+=======
+             var result = null;
+>>>>>>> Stashed changes
              // Check if there are duplicate aliases
              if(alias.alias != undefined) {
                 result = await fetch(
