@@ -107,6 +107,8 @@
       * @param values The values from the form
       */
      createLink = async (values: CreateLinkFormValues): Promise<void> => {
+         this.toggleLoading();
+
          const create_link_req: Record<string, string> = {
              title: values.title,
              long_url: values.long_url,
@@ -233,7 +235,7 @@
  
                      <Form.Item>
                          <Spin spinning={this.state.loading}>
-                            <Button type='primary' htmlType='submit' onClick={this.toggleLoading} style={{ width: '100%' }}>Shrink!</Button>
+                            <Button type='primary' htmlType='submit' style={{ width: '100%' }}>Shrink!</Button>
                          </Spin>
                      </Form.Item>
                  </Form>
