@@ -16,20 +16,20 @@ import { Shrunk } from './Shrunk';
  * @interface
  */
 interface ShrunkParams {
-    /**
-     * The NetID of the user.
-     * @property
-     */
-    netid: string;
+  /**
+   * The NetID of the user.
+   * @property
+   */
+  netid: string;
 
-    /**
-     * A list of strings describing the user's privileges. Valid privileges are
-     *   * `"admin"`
-     *   * `"power_user"`
-     *   * `"facstaff"`
-     * @property
-     */
-    userPrivileges: Array<string>;
+  /**
+   * A list of strings describing the user's privileges. Valid privileges are
+   *   * `"admin"`
+   *   * `"power_user"`
+   *   * `"facstaff"`
+   * @property
+   */
+  userPrivileges: Array<string>;
 }
 
 /**
@@ -39,21 +39,24 @@ interface ShrunkParams {
  * @returns An object containing the SPA parameters
  */
 const loadShrunkParams = () => {
-    const cookie = Cookies.get('shrunk_params');
-    if (cookie === undefined) {
-        throw new Error('shrunk_params cookie not found');
-    }
-    const decoded = atob(cookie);
-    return JSON.parse(decoded) as ShrunkParams;
-}
+  const cookie = Cookies.get('shrunk_params');
+  if (cookie === undefined) {
+    throw new Error('shrunk_params cookie not found');
+  }
+  const decoded = atob(cookie);
+  return JSON.parse(decoded) as ShrunkParams;
+};
 
 const shrunkParams = loadShrunkParams();
 
 // const sock = io();
 // sock.on('connect', () => console.log('connected'));
 
-ReactDOM.render(<Shrunk
+ReactDOM.render(
+  <Shrunk
     siderWidth={200}
     netid={shrunkParams.netid}
-    userPrivileges={new Set(shrunkParams.userPrivileges)} />,
-    document.getElementById('react'));
+    userPrivileges={new Set(shrunkParams.userPrivileges)}
+  />,
+  document.getElementById('react'),
+);

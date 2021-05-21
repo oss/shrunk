@@ -69,7 +69,9 @@ export interface Props {
  * State for the [[LinkRow]] component
  * @interface
  */
-export interface State { requestSent: boolean }
+export interface State {
+  requestSent: boolean;
+}
 
 /**
  * The [[LinkRow]] component displays the information for a single link
@@ -81,13 +83,13 @@ export class LinkRow extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      requestSent: false
+      requestSent: false,
     };
   }
 
   componentDidMount = () => {
     this.hasSentRequest();
-  }
+  };
 
   /**
    * Execute API requests to delete the link, then refresh search results
@@ -98,13 +100,13 @@ export class LinkRow extends React.Component<Props, State> {
     await fetch(`/api/v1/link/${this.props.linkInfo.id}`, { method: 'DELETE' });
 
     // Delete alias link
-    let alias_name;
-    {
-      this.props.linkInfo.aliases.map((alias) => {
-        alias_name = `${alias.alias}`;
-      });
-    }
-    await fetch(`/api/v1/link/${this.props.linkInfo.id}/alias/${alias_name}`, {
+    let aliasName;
+
+    this.props.linkInfo.aliases.map((alias) => {
+      aliasName = `${alias.alias}`;
+    });
+
+    await fetch(`/api/v1/link/${this.props.linkInfo.id}/alias/${aliasName}`, {
       method: 'DELETE',
     });
 
@@ -115,11 +117,14 @@ export class LinkRow extends React.Component<Props, State> {
    * Check if request has been sent yet
    * @method
    */
-   hasSentRequest = async (): Promise<void> => {
-    const result = await fetch(`/api/v1/link/${this.props.linkInfo.id}/active_request_exists`, {
-      method: 'GET',
-    }).then((resp) => resp.json());
-    this.setState({requestSent: result})
+  hasSentRequest = async (): Promise<void> => {
+    const result = await fetch(
+      `/api/v1/link/${this.props.linkInfo.id}/active_request_exists`,
+      {
+        method: 'GET',
+      },
+    ).then((resp) => resp.json());
+    this.setState({ requestSent: result });
   };
 
   /**
@@ -130,7 +135,7 @@ export class LinkRow extends React.Component<Props, State> {
     await fetch(`/api/v1/link/${this.props.linkInfo.id}/request_edit_access`, {
       method: 'POST',
     });
-    this.setState({requestSent: true});
+    this.setState({ requestSent: true });
     await this.props.refreshResults();
   };
 
@@ -139,17 +144,19 @@ export class LinkRow extends React.Component<Props, State> {
    * @method
    */
   cancelRequest = async (): Promise<void> => {
-    await fetch(`/api/v1/link/${this.props.linkInfo.id}/cancel_request_edit_access`, {
-      method: 'POST',
-    });
-    this.setState({requestSent: false});
+    await fetch(
+      `/api/v1/link/${this.props.linkInfo.id}/cancel_request_edit_access`,
+      {
+        method: 'POST',
+      },
+    );
+    this.setState({ requestSent: false });
     await this.props.refreshResults();
   };
 
   render(): React.ReactNode {
     const isLinkDeleted = this.props.linkInfo.deletion_info !== null;
     const isLinkExpired = this.props.linkInfo.is_expired;
-    const isOwner = this.props.linkInfo.owner == this.props.netid;
     const titleClassName =
       isLinkDeleted || isLinkExpired ? 'title deleted' : 'title';
 
@@ -184,7 +191,7 @@ export class LinkRow extends React.Component<Props, State> {
                 <span className="info">
                   Expires:{' '}
                   {moment(this.props.linkInfo.expiration_time).format(
-                    'DD MMM YYYY'
+                    'DD MMM YYYY',
                   )}
                 </span>
               )}
@@ -196,7 +203,7 @@ export class LinkRow extends React.Component<Props, State> {
             </Col>
           </Row>
           {this.props.linkInfo.aliases.map((alias) => {
-            const short_url = `https://${document.location.host}/${alias.alias}`;
+            const shortUrl = `https://${document.location.host}/${alias.alias}`;
             const className =
               isLinkDeleted || isLinkExpired || alias.deleted
                 ? 'alias deleted'
@@ -205,14 +212,14 @@ export class LinkRow extends React.Component<Props, State> {
               <Row key={alias.alias}>
                 <Col>
                   <div className={className}>
-                    <CopyToClipboard text={short_url}>
+                    <CopyToClipboard text={shortUrl}>
                       <Tooltip title="Copy shortened URL.">
                         <Button type="text" icon={<CopyFilled />} />
                       </Tooltip>
                     </CopyToClipboard>
                     {alias.description ? <em>({alias.description})</em> : ''}
                     &nbsp;
-                    <a href={short_url}>{short_url}</a>
+                    <a href={shortUrl}>{shortUrl}</a>
                     &rarr;
                     <a href={this.props.linkInfo.long_url}>
                       {this.props.linkInfo.long_url}

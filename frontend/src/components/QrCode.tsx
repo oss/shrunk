@@ -87,7 +87,7 @@ export class QrCodeModal extends React.Component<Props, State> {
    * @method
    */
   resetAlias = (): void => {
-    const linkInfo = this.props.linkInfo;
+    const { linkInfo } = this.props;
     if (linkInfo === null || linkInfo.aliases.length === 0) {
       return;
     }
@@ -103,7 +103,7 @@ export class QrCodeModal extends React.Component<Props, State> {
   setAlias = (alias: string): void => {
     this.setState({
       selectedAlias: alias,
-      selectedShortUrl: `https://${location.origin}/${alias}`,
+      selectedShortUrl: `https://${window.location.origin}/${alias}`,
     });
   };
 
@@ -160,16 +160,16 @@ export class QrCodeModal extends React.Component<Props, State> {
     }
 
     const aliases = this.props.linkInfo.aliases.filter(
-      (alias) => !alias.deleted
+      (alias) => !alias.deleted,
     );
 
     return (
       <Modal
         visible={this.props.visible}
-        title='QR code'
+        title="QR code"
         onCancel={this.props.onCancel}
         width={this.props.width + 2 * 24}
-        className='qr-modal'
+        className="qr-modal"
         footer={
           <Space>
             <Button onClick={this.onPrint}>Print</Button>
@@ -185,7 +185,7 @@ export class QrCodeModal extends React.Component<Props, State> {
               <Select
                 onSelect={this.setAlias}
                 defaultValue={aliases[0].alias}
-                className='select'
+                className="select"
                 style={{ width: this.props.width }}
               >
                 {aliases.map((alias) => (
@@ -206,7 +206,7 @@ export class QrCodeModal extends React.Component<Props, State> {
             <Col>
               <QRCodeReact
                 value={this.state.selectedShortUrl}
-                className='qrcode-canvas'
+                className="qrcode-canvas"
                 size={this.props.width}
               />
             </Col>

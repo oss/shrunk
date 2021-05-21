@@ -71,11 +71,11 @@ interface State {
  * @param props The props
  */
 const CreateOrgForm: React.FC<{ onCreate: (name: string) => Promise<void> }> = (
-  props
+  props,
 ) => {
   const serverValidateOrgName = async (
     _rule: any,
-    value: string
+    value: string,
   ): Promise<void> => {
     if (!value) {
       return;
@@ -90,13 +90,13 @@ const CreateOrgForm: React.FC<{ onCreate: (name: string) => Promise<void> }> = (
     }
   };
   const onFinish = async (values: { name: string }) =>
-    await props.onCreate(values.name);
+    props.onCreate(values.name);
   return (
-    <div className='dropdown-form'>
-      <Form layout='inline' initialValues={{ name: '' }} onFinish={onFinish}>
+    <div className="dropdown-form">
+      <Form layout="inline" initialValues={{ name: '' }} onFinish={onFinish}>
         <Input.Group compact>
           <Form.Item
-            name='name'
+            name="name"
             rules={[
               { required: true, message: 'Please input a name.' },
               {
@@ -107,13 +107,13 @@ const CreateOrgForm: React.FC<{ onCreate: (name: string) => Promise<void> }> = (
               { validator: serverValidateOrgName },
             ]}
           >
-            <Input placeholder='Name' />
+            <Input placeholder="Name" />
           </Form.Item>
 
           <Form.Item>
             <Button
-              type='primary'
-              htmlType='submit'
+              type="primary"
+              htmlType="submit"
               icon={<PlusCircleFilled />}
             />
           </Form.Item>
@@ -131,46 +131,44 @@ const OrgRow: React.FC<{
   showAll: boolean;
   orgInfo: OrgInfo;
   onDelete: (id: string) => Promise<void>;
-}> = (props) => {
-  return (
-    <Row className='primary-row'>
-      <Col span={20}>
-        <span className='title'>{props.orgInfo.name}</span>
-        {props.orgInfo.is_admin ? (
-          <OrgAdminTag title='You are an administrator of this organization.' />
-        ) : (
-          <></>
-        )}
-        {props.showAll && props.orgInfo.is_member ? <OrgMemberTag /> : <></>}
-        <span>
-          Created: {moment(props.orgInfo.timeCreated).format('DD MMM YYYY')}
-        </span>
-      </Col>
-      <Col span={4} className='btn-col'>
-        <Button type='text'>
-          <Link to={`/orgs/${props.orgInfo.id}/manage`}>
-            <ToolOutlined />
-          </Link>
-        </Button>
+}> = (props) => (
+  <Row className="primary-row">
+    <Col span={20}>
+      <span className="title">{props.orgInfo.name}</span>
+      {props.orgInfo.is_admin ? (
+        <OrgAdminTag title="You are an administrator of this organization." />
+      ) : (
+        <></>
+      )}
+      {props.showAll && props.orgInfo.is_member ? <OrgMemberTag /> : <></>}
+      <span>
+        Created: {moment(props.orgInfo.timeCreated).format('DD MMM YYYY')}
+      </span>
+    </Col>
+    <Col span={4} className="btn-col">
+      <Button type="text">
+        <Link to={`/orgs/${props.orgInfo.id}/manage`}>
+          <ToolOutlined />
+        </Link>
+      </Button>
 
-        <Button type='text'>
-          <Link to={`/orgs/${props.orgInfo.id}/stats`}>
-            <LineChartOutlined />
-          </Link>
-        </Button>
+      <Button type="text">
+        <Link to={`/orgs/${props.orgInfo.id}/stats`}>
+          <LineChartOutlined />
+        </Link>
+      </Button>
 
-        <Popconfirm
-          placement='top'
-          title='Are you sure you want to delete this organization?'
-          onConfirm={async () => await props.onDelete(props.orgInfo.id)}
-          icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
-        >
-          <Button danger type='text' icon={<DeleteOutlined />} />
-        </Popconfirm>
-      </Col>
-    </Row>
-  );
-};
+      <Popconfirm
+        placement="top"
+        title="Are you sure you want to delete this organization?"
+        onConfirm={async () => props.onDelete(props.orgInfo.id)}
+        icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
+      >
+        <Button danger type="text" icon={<DeleteOutlined />} />
+      </Popconfirm>
+    </Col>
+  </Row>
+);
 
 /**
  * The [[Orgs]] component implements the orgs list view
@@ -202,7 +200,7 @@ export class Orgs extends React.Component<Props, State> {
    */
   refreshOrgs = async (): Promise<void> => {
     await listOrgs(this.state.showAll ? 'all' : 'user').then((orgs) =>
-      this.setState({ orgs })
+      this.setState({ orgs }),
     );
   };
 
@@ -234,12 +232,12 @@ export class Orgs extends React.Component<Props, State> {
     const isAdmin = this.props.userPrivileges.has('admin');
     return (
       <>
-        <Row className='primary-row'>
+        <Row className="primary-row">
           <Col span={16}>
-            <span className='page-title'>Orgs</span>
+            <span className="page-title">Orgs</span>
           </Col>
 
-          <Col span={8} className='btn-col'>
+          <Col span={8} className="btn-col">
             {!mayCreateOrg ? (
               <></>
             ) : (
@@ -249,10 +247,10 @@ export class Orgs extends React.Component<Props, State> {
                 onVisibleChange={(flag) =>
                   this.setState({ createOrgFormVisible: flag })
                 }
-                placement='bottomRight'
+                placement="bottomRight"
                 trigger={['click']}
               >
-                <Button type='primary'>
+                <Button type="primary">
                   <PlusCircleFilled /> Create an Org
                 </Button>
               </Dropdown>

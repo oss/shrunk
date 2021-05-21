@@ -2,6 +2,13 @@
 *.sw[op]
 *~
 
+# Frontend doc
+frontend/typedoc.json
+frontend/.cache
+frontend/docs
+# in case frontend/docs doesn't work
+docs
+
 # Cache
 .cache
 .parcel-cache
@@ -53,10 +60,6 @@ dist-newstyle
 .mypy_cache/
 .pytest_cache/
 .vscode/
-frontend/.cache
-frontend/docs
-# in case frontend/docs doesn't work
-docs
 
 backend/mail
 

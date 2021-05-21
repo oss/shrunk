@@ -56,7 +56,7 @@ const PendingRequestRow: React.FC<{
   onAccept: (request_token: string) => Promise<void>;
   onDeny: (request_token: string) => Promise<void>;
 }> = (props) => {
-  const request = props.request;
+  const { request } = props;
   return (
     <Row className={props.singletonRow ? '' : 'primary-row'}>
       <Col span={20}>
@@ -84,17 +84,17 @@ const PendingRequestRow: React.FC<{
           </Col>
         </Row>
       </Col>
-      <Col span={4} className='btn-col'>
+      <Col span={4} className="btn-col">
         <Button
-          type='text'
+          type="text"
           icon={<CheckOutlined />}
-          onClick={async (_ev) => await props.onAccept(request.request_token)}
+          onClick={async (_ev) => props.onAccept(request.request_token)}
         />
         <Button
           danger
-          type='text'
+          type="text"
           icon={<CloseOutlined />}
-          onClick={async (_ev) => await props.onDeny(request.request_token)}
+          onClick={async (_ev) => props.onDeny(request.request_token)}
         />
       </Col>
     </Row>
@@ -148,11 +148,11 @@ export class PendingRequests extends React.Component<Props, State> {
    * @method
    */
   updatePendingRequests = async (): Promise<void> => {
-    const pendingRequests = await fetch(
-      '/api/v1/request/pending'
-    ).then((resp) => resp.json());
+    const pendingRequests = await fetch('/api/v1/request/pending').then(
+      (resp) => resp.json(),
+    );
     this.setState({
-      pendingRequests: pendingRequests['requests'].map((req: any) => ({
+      pendingRequests: pendingRequests.requests.map((req: any) => ({
         ...req,
         request_time: new Date(req.request_time),
       })),
@@ -187,7 +187,7 @@ export class PendingRequests extends React.Component<Props, State> {
     return (
       <Modal
         visible={!this.state.hidden && this.state.pendingRequests.length > 0}
-        title='You have pending access requests'
+        title="You have pending access requests"
         footer={null}
         onCancel={() => this.setState({ hidden: true })}
       >

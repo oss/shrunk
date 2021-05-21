@@ -16,19 +16,19 @@ app.options.addReader(new td.TSConfigReader());
 app.bootstrap({
   // can put other options here too, or in typedoc.json/tsconfig.json
   options: 'typedoc.json',
-  entryPoints: ["./src"]
+  entryPoints: ['./src'],
 });
 
 const program = ts.createProgram(
   app.options.getFileNames(),
-  app.options.getCompilerOptions()
+  app.options.getCompilerOptions(),
 );
 
 // Application.convert checks for compiler errors here.
 
 const project = app.converter.convert(
   app.expandInputFiles(app.options.getValue('entryPoints')),
-  program
+  program,
 );
 
 app.generateDocs(project, './docs');
