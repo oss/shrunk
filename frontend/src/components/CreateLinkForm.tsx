@@ -93,7 +93,11 @@
          super(props);
          this.state = {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             loading: false,
+=======
+            loading: false
+>>>>>>> Stashed changes
 =======
             loading: false
 >>>>>>> Stashed changes
@@ -134,6 +138,9 @@
              let result = null;
 =======
              var result = null;
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
              // Check if there are duplicate aliases
              if(alias.alias != undefined) {

@@ -182,7 +182,11 @@ export class ShareLinkModal extends React.Component<Props, State> {
       render: (record: any) => (
         <>
           <Button
+<<<<<<< Updated upstream
             type='text'
+=======
+            type="text"
+>>>>>>> Stashed changes
             shape='circle'
             icon={<MinusCircleOutlined />}
             onClick={() =>

@@ -20,7 +20,7 @@ export interface Props {
    * Callback called when the user executes a new search query
    * @property
    */
-  setQueryString: (newQueryString: string) => Promise<void>;
+  setQueryString: (newQueryString: string) => void;
 }
 
 /**
@@ -30,8 +30,8 @@ export interface Props {
 export const SearchBox: React.FC<Props> = (props) => {
   const [query, setQuery] = useState('');
 
-  const doSearch = async (): Promise<void> => {
-    if(query != "") {
+  const updateQueryString = async (): Promise<void> => {
+    if(query != '') {
       await props.setQueryString(query);
     }
   };
@@ -47,7 +47,7 @@ export const SearchBox: React.FC<Props> = (props) => {
           />
         </Form.Item>
         <Form.Item>
-          <Button icon={<SearchOutlined />} onClick={doSearch} />
+          <Button icon={<SearchOutlined />} onClick={updateQueryString} />
         </Form.Item>
       </Input.Group>
     </Form>

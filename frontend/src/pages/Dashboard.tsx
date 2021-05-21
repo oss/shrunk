@@ -6,7 +6,7 @@
 import React from 'react';
 
 import { Row, Col, Pagination, Spin, Dropdown, Button, Space } from 'antd';
-import { PlusCircleFilled } from '@ant-design/icons';
+import { PlusCircleFilled, SettingOutlined } from '@ant-design/icons';
 
 import { getOrgInfo, listOrgs, OrgInfo } from '../api/Org';
 import { SearchBox } from '../components/SearchBox';
@@ -140,7 +140,7 @@ export interface State {
    * The current search query.
    * @property
    */
-  query: SearchQuery | null;
+  query: SearchQuery;
 
   /**
    * The current page in the search results. Starts from `1`.
@@ -257,42 +257,27 @@ export class Dashboard extends React.Component<Props, State> {
   };
 
   /**
-   * Executes a search query by query string
+   * Updates the query string in the state and executes a search query
    * @method
    * @param newQueryString The new query string
    */
-   setQueryString = async (newQueryString: string): Promise<void> => {
-    const newQuery: SearchQuery = {
-      queryString : newQueryString,
-      set: this.state.query === null ? { set: this.props.userPrivileges.has('admin') ? 'all' : 'user' } : this.state.query.set,
-      show_expired_links: this.state.query === null ? false : this.state.query.show_expired_links,
-      show_deleted_links: this.state.query === null ? false : this.state.query.show_deleted_links,
-      sort: this.state.query === null ?  { key: 'created_time', order: 'descending' } : this.state.query.sort,
-      begin_time: this.state.query === null ? null : this.state.query.begin_time,
-      end_time: this.state.query === null ? null : this.state.query.end_time,
-    };
-    this.setState({query: newQuery});
-    await this.setQuery(newQuery)
+   setQueryString = (newQueryString: string) => {
+    this.setState(
+      {query : { ...this.state.query, queryString: newQueryString}},
+      () => this.setQuery(this.state.query));
   };
 
   /**
-   * Executes a search query by query filter
+   * Updates the query string in the state and executes a search query
    * @method
-   * @param newQuery The new query by filter
+   * @param newQueryString The new query string
    */
-   setQueryByFilter = async (newQueryFiltered: SearchQuery): Promise<void> => {
-    const newQuery: SearchQuery = {
-      queryString : this.state.query?.queryString,
-      set: newQueryFiltered.set,
-      show_expired_links: this.state.query === null ? false : newQueryFiltered.show_expired_links,
-      show_deleted_links: this.state.query === null ? false : newQueryFiltered.show_deleted_links,
-      sort: newQueryFiltered.sort,
-      begin_time: this.state.query === null ? null : newQueryFiltered.begin_time,
-      end_time: this.state.query === null ? null : newQueryFiltered.end_time,
-    };
-    this.setState({query: newQuery});
-    await this.setQuery(newQuery)
+   setOrgFilter = (orgs: SearchSet) => {
+    this.setState(
+      {query : { ...this.state.query, set: orgs}},
+      () => this.setQuery(this.state.query));
   };
+
 
   /**
    * Executes a search query and updates component state with the results
@@ -300,8 +285,6 @@ export class Dashboard extends React.Component<Props, State> {
    * @param newQuery The new query
    */
   setQuery = async (newQuery: SearchQuery): Promise<void> => {
-    console.log("in dashboard.tsx");
-    console.log(newQuery);
     const results = await this.doQuery(newQuery, 0, this.state.linksPerPage);
     
     // Filter out duplicate links
@@ -831,7 +814,6 @@ export class Dashboard extends React.Component<Props, State> {
               <FilterDropdown
                   userPrivileges={this.props.userPrivileges}
                   userOrgs={this.state.userOrgs}
-                  setQueryByFilter={this.setQueryByFilter}
                 />
               )}
             </Space> 

@@ -33,12 +33,7 @@
     * @property
     */
    userOrgs: OrgInfo[];
- 
-   /**
-    * Callback called when the user executes a new search query
-    * @property
-    */
-   setQueryByFilter: (newQueryFiltered: SearchQuery) => Promise<void>;
+
  }
  
  /**
@@ -60,12 +55,13 @@
    const [sortOrder, setSortOrder] = useState("descending");
    const [beginTime, setBeginTime] = useState<moment.Moment | null>(null);
    const [endTime, setEndTime] = useState<moment.Moment | null>(null);
+
+   const updateOrg = (e: any) => {
+    setOrg(e), () => console.log(org);
+   };
  
    const dropdown = (
      <div className="dropdown-form">
-       <Form.Provider
-        onFormChange={doSearch}>
-       </Form.Provider>
        <Form
          layout="vertical"
          initialValues={{
@@ -73,10 +69,9 @@
            sortKey: "created_time",
            sortOrder: "descending",
          }}
-         onValuesChange={doSearch}
        >
          <Form.Item name="org" label="Organization">
-           <Select value={org} onChange={setOrg}>
+           <Select value={org} onChange={updateOrg}>
              <Select.Option value={0}>
                <em>My links</em>
              </Select.Option>
@@ -150,31 +145,6 @@
        </Form>
      </div>
    );
- 
-   async function doSearch () {
-     console.log("doSearch is called");
-     const searchSet: SearchSet =
-       org === 0
-         ? { set: "user" }
-         : org === 1
-         ? { set: "all" }
-         : org === 2
-         ? { set: "shared" }
-         : { set: "org", org: org as string };
- 
-     const searchQuery: SearchQuery = {
-       set: searchSet,
-       show_expired_links: showExpired,
-       show_deleted_links: showDeleted,
-       sort: { key: sortKey, order: sortOrder },
-       begin_time: beginTime === null ? null : beginTime.startOf("day"),
-       end_time: endTime === null ? null : endTime.startOf("day"),
-     };
-     console.log("search query in filterlinks");
-     console.log(searchQuery);
-
-     await props.setQueryByFilter(searchQuery);
-   }
  
    return (
     <Dropdown
