@@ -39,8 +39,9 @@ function createVisitsCsv(visits: AnonymizedVisit[]): string {
     ],
   });
 
-  return csvStringifier.getHeaderString() +
-    csvStringifier.stringifyRecords(visits);
+  return (
+    csvStringifier.getHeaderString() + csvStringifier.stringifyRecords(visits)
+  );
 }
 
 /**
@@ -65,14 +66,20 @@ function doDownload(filename: string, csvString: string): void {
  * @param link_id The link ID
  * @param alias The alias, or `null` to get all data for the given link ID
  */
-export async function downloadVisitsCsv(link_id: string, alias: string | null): Promise<void> {
-  const apiUrl = alias === null ? `/api/v1/link/${link_id}/visits`
-    : `/api/v1/link/${link_id}/alias/${alias}/visits`;
+export async function downloadVisitsCsv(
+  link_id: string,
+  alias: string | null,
+): Promise<void> {
+  const apiUrl =
+    alias === null
+      ? `/api/v1/link/${link_id}/visits`
+      : `/api/v1/link/${link_id}/alias/${alias}/visits`;
   const visits = await fetch(apiUrl)
-    .then(resp => resp.json())
-    .then(json => json.visits as AnonymizedVisit[]);
+    .then((resp) => resp.json())
+    .then((json) => json.visits as AnonymizedVisit[]);
 
-  const filename = alias === null ? `${link_id}.csv` : `${link_id}-${alias}.csv`;
+  const filename =
+    alias === null ? `${link_id}.csv` : `${link_id}-${alias}.csv`;
   const csvString = createVisitsCsv(visits);
   doDownload(filename, csvString);
 }

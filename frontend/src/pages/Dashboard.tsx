@@ -8,6 +8,7 @@ import React from 'react';
 import { Row, Col, Pagination, Spin, Dropdown, Button, Space } from 'antd';
 import { PlusCircleFilled } from '@ant-design/icons';
 
+import { arrayMax } from 'highcharts';
 import { getOrgInfo, listOrgs, OrgInfo } from '../api/Org';
 import { SearchQuery, SearchBox } from '../components/SearchBox';
 import { LinkRow } from '../components/LinkRow';
@@ -18,7 +19,6 @@ import { ShareLinkModal } from '../components/ShareLinkModal';
 import { CreateLinkForm } from '../components/CreateLinkForm';
 
 import './Dashboard.less';
-import { arrayMax } from 'highcharts';
 
 /**
  * The final values of the share link form
@@ -206,11 +206,15 @@ export class Dashboard extends React.Component<Props, State> {
    */
   setQuery = async (newQuery: SearchQuery): Promise<void> => {
     const results = await this.doQuery(newQuery, 0, this.state.linksPerPage);
-    
-    // Filter out duplicate links
-    const uniqueResults = results.results.filter((v,i,a)=>a.findIndex(t=>(t.id === v.id))===i);
 
-    const totalPages = Math.ceil(uniqueResults.length / this.state.linksPerPage);
+    // Filter out duplicate links
+    const uniqueResults = results.results.filter(
+      (v, i, a) => a.findIndex((t) => t.id === v.id) === i,
+    );
+
+    const totalPages = Math.ceil(
+      uniqueResults.length / this.state.linksPerPage,
+    );
     this.setState({
       linkInfo: uniqueResults,
       query: newQuery,
@@ -236,11 +240,15 @@ export class Dashboard extends React.Component<Props, State> {
     const results = await this.doQuery(
       this.state.query,
       skip,
-      this.state.linksPerPage
+      this.state.linksPerPage,
     );
-    const uniqueResults = results.results.filter((v,i,a)=>a.findIndex(t=>(t.id === v.id))===i);
-    
-    const totalPages = Math.ceil(uniqueResults.length / this.state.linksPerPage);
+    const uniqueResults = results.results.filter(
+      (v, i, a) => a.findIndex((t) => t.id === v.id) === i,
+    );
+
+    const totalPages = Math.ceil(
+      uniqueResults.length / this.state.linksPerPage,
+    );
     this.setState({
       linkInfo: uniqueResults,
       currentPage: newPage,
@@ -271,7 +279,7 @@ export class Dashboard extends React.Component<Props, State> {
   doQuery = async (
     query: SearchQuery,
     skip: number,
-    limit: number
+    limit: number,
   ): Promise<{ count: number; results: LinkInfo[] }> => {
     const req: Record<string, any> = {
       query: query.query,
@@ -313,7 +321,7 @@ export class Dashboard extends React.Component<Props, State> {
                   deleted_by: result.deletion_info.deleted_by,
                   deleted_time: new Date(result.deletion_info.deleted_time),
                 },
-          } as LinkInfo)
+          } as LinkInfo),
       ),
     };
   };
@@ -378,43 +386,45 @@ export class Dashboard extends React.Component<Props, State> {
 
     const entities: Array<Entity> = [];
     for (var i = 0; i < sharingInfo.editors.length; i++) {
-      if (sharingInfo.editors[i].type === 'netid')
-        {entities.push({
+      if (sharingInfo.editors[i].type === 'netid') {
+        entities.push({
           _id: sharingInfo.editors[i]._id,
           name: sharingInfo.editors[i]._id,
           type: 'netid',
           permission: 'editor',
-        });}
-      else if (sharingInfo.editors[i].type === 'org')
-        {entities.push({
+        });
+      } else if (sharingInfo.editors[i].type === 'org') {
+        entities.push({
           _id: sharingInfo.editors[i]._id,
           name: (await getOrgInfo(sharingInfo.editors[i]._id)).name,
           type: 'org',
           permission: 'editor',
-        });}
+        });
+      }
     }
 
     for (var i = 0; i < sharingInfo.viewers.length; i++) {
       if (
         sharingInfo.viewers[i].type === 'netid' &&
         !entities.some((entity) => entity._id === sharingInfo.viewers[i]._id) // don't show a person as a viewer if they're already an editor
-      )
-        {entities.push({
+      ) {
+        entities.push({
           _id: sharingInfo.viewers[i]._id,
           name: sharingInfo.viewers[i]._id,
           type: 'netid',
           permission: 'viewer',
-        });}
-      else if (
+        });
+      } else if (
         sharingInfo.viewers[i].type === 'org' &&
         !entities.some((entity) => entity._id === sharingInfo.viewers[i]._id) // don't show an org as a viewer if they're already an editor
-      )
-        {entities.push({
+      ) {
+        entities.push({
           _id: sharingInfo.viewers[i]._id,
           name: (await getOrgInfo(sharingInfo.viewers[i]._id)).name,
           type: 'org',
           permission: 'viewer',
-        });}
+        });
+      }
     }
 
     // sort the list of entities:
@@ -423,7 +433,7 @@ export class Dashboard extends React.Component<Props, State> {
       (entity1, entity2) =>
         entity1.permission.localeCompare(entity2.permission) ||
         entity2.type.localeCompare(entity1.type) ||
-        entity1._id.localeCompare(entity2._id)
+        entity1._id.localeCompare(entity2._id),
     );
 
     this.setState({
@@ -447,7 +457,7 @@ export class Dashboard extends React.Component<Props, State> {
       shareLinkModalState: {
         visible: true,
         entities: await this.getLinkACL(linkInfo),
-        linkInfo: linkInfo,
+        linkInfo,
         isLoading: false,
       },
     });
@@ -551,14 +561,14 @@ export class Dashboard extends React.Component<Props, State> {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(patch_req),
-      })
+      }),
     );
 
     const oldAliases = new Map(
-      oldLinkInfo.aliases.map((alias) => [alias.alias, alias])
+      oldLinkInfo.aliases.map((alias) => [alias.alias, alias]),
     );
     const newAliases = new Map(
-      values.aliases.map((alias) => [alias.alias, alias])
+      values.aliases.map((alias) => [alias.alias, alias]),
     );
 
     // Delete aliases that no longer exist
@@ -567,7 +577,7 @@ export class Dashboard extends React.Component<Props, State> {
         promises.push(
           fetch(`/api/v1/link/${oldLinkInfo.id}/alias/${alias}`, {
             method: 'DELETE',
-          })
+          }),
         );
       }
     }
@@ -587,7 +597,7 @@ export class Dashboard extends React.Component<Props, State> {
               alias,
               description: info.description,
             }),
-          })
+          }),
         );
       }
     }
@@ -665,7 +675,7 @@ export class Dashboard extends React.Component<Props, State> {
   doUnshareLinkWithEntity = async (
     _id: string,
     type: string,
-    permission: string
+    permission: string,
   ): Promise<void> => {
     const oldLinkInfo = this.state.shareLinkModalState.linkInfo;
     if (oldLinkInfo === null) {
@@ -719,10 +729,10 @@ export class Dashboard extends React.Component<Props, State> {
   render(): React.ReactNode {
     return (
       <>
-        <Row className='primary-row'>
+        <Row className="primary-row">
           <Col span={20}>
-           <Space>
-              <span className='page-title'>Dashboard</span>
+            <Space>
+              <span className="page-title">Dashboard</span>
               {this.state.userOrgs === null ? (
                 <></>
               ) : (
@@ -732,10 +742,10 @@ export class Dashboard extends React.Component<Props, State> {
                   setQuery={this.setQuery}
                 />
               )}
-            </Space> 
+            </Space>
           </Col>
 
-          <Col span={4} className='btn-col'>
+          <Col span={4} className="btn-col">
             <Dropdown
               overlay={
                 <CreateLinkForm
@@ -750,10 +760,10 @@ export class Dashboard extends React.Component<Props, State> {
               onVisibleChange={(flag) =>
                 this.setState({ createLinkDropdownVisible: flag })
               }
-              placement='bottomRight'
+              placement="bottomRight"
               trigger={['click']}
             >
-              <Button type='primary'>
+              <Button type="primary">
                 <PlusCircleFilled /> Shrink a Link
               </Button>
             </Dropdown>
@@ -761,9 +771,9 @@ export class Dashboard extends React.Component<Props, State> {
         </Row>
 
         {this.state.linkInfo === null ? (
-          <Spin size='large' />
+          <Spin size="large" />
         ) : (
-          <div className='dashboard-links'>
+          <div className="dashboard-links">
             {this.state.linkInfo.map((linkInfo) => (
               <LinkRow
                 key={linkInfo.id}
@@ -777,7 +787,7 @@ export class Dashboard extends React.Component<Props, State> {
             ))}
 
             <Pagination
-              className='pagination'
+              className="pagination"
               defaultCurrent={1}
               current={this.state.currentPage}
               showSizeChanger={false}
@@ -812,13 +822,13 @@ export class Dashboard extends React.Component<Props, State> {
             people={this.state.shareLinkModalState.entities}
             isLoading={this.state.shareLinkModalState.isLoading}
             onAddEntity={async (values: any) =>
-              await this.doShareLinkWithEntity(values)
+              this.doShareLinkWithEntity(values)
             }
             onRemoveEntity={async (
               _id: string,
               type: string,
-              permission: string
-            ) => await this.doUnshareLinkWithEntity(_id, type, permission)}
+              permission: string,
+            ) => this.doUnshareLinkWithEntity(_id, type, permission)}
             onOk={this.hideShareLinkModal}
             onCancel={this.hideShareLinkModal}
           />

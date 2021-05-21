@@ -1,60 +1,62 @@
 .primary-row {
-    &:not(:last-of-type), &:first-of-type {
-        border-bottom: 1px lightgray solid;
-        margin-bottom: 20px;
-        padding-bottom: 20px;
+  &:not(:last-of-type),
+  &:first-of-type {
+    border-bottom: 1px lightgray solid;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+  }
+
+  .page-title {
+    font-size: 30pt;
+    color: black;
+    margin-right: 20px;
+  }
+
+  .title {
+    font-size: 23pt;
+    color: #686b69;
+    margin-right: 20px;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &.deleted {
+      color: lightgray;
+      text-decoration: line-through;
     }
+  }
 
-    .page-title {
-        font-size: 30pt;
-        color: black;
-        margin-right: 20px;
+  .info {
+    margin-right: 20px;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .vertical-center-col {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .btn-col {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+
+    .ant-btn,
+    .ant-select {
+      margin-right: 10px;
+      float: right;
     }
-
-    .title {
-        font-size: 23pt;
-        color: #686b69;
-        margin-right: 20px;
-        white-space: nowrap;
-        max-width: 100%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-
-        &.deleted {
-            color: lightgray;
-            text-decoration: line-through;
-        }
-    }
-
-    .info {
-        margin-right: 20px;
-        white-space: nowrap;
-        max-width: 100%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .vertical-center-col {
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-    }
-
-    .btn-col {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-
-        .ant-btn, .ant-select {
-            margin-right: 10px;
-            float: right;
-        }
-    }
+  }
 }
 
 .dropdown-form {
-    background: white;
-    padding: 10px;
-    border-radius: 3px;
-    border: 1px solid lightgray;
+  background: white;
+  padding: 10px;
+  border-radius: 3px;
+  border: 1px solid lightgray;
 }
