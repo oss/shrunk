@@ -1,30 +1,28 @@
 // eslint-disable-next-line no-undef
 module.exports = {
-    root: true,
-    parser: '@typescript-eslint/parser',
-    plugins: [
-        '@typescript-eslint',
+  root: true,
+  parser: '@typescript-eslint/parser',
+  parserOptions: {
+    project: './tsconfig.json',
+  },
+  plugins: ['@typescript-eslint', 'prettier'],
+  extends: ['airbnb-typescript', 'prettier'],
+  rules: {
+    'no-unused-vars': [
+      'error',
+      { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
     ],
-    extends: [
-        'eslint:recommended',
-        'plugin:@typescript-eslint/eslint-recommended',
-        'plugin:@typescript-eslint/recommended',
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
     ],
-    rules: {
-        'quotes': ['error', 'single'],
-        'jsx-quotes': ['error', 'prefer-single'],
-        'curly': ['error', 'all'],
-        'comma-dangle': ['error', 'always-multiline'],
-        'eol-last': ['error', 'always'],
-        'no-unused-vars': [
-            'error', { 'argsIgnorePattern': '^_', 'varsIgnorePattern': '^_' },
-        ],
-        '@typescript-eslint/no-unused-vars': [
-            'error', { 'argsIgnorePattern': '^_', 'varsIgnorePattern': '^_' },
-        ],
-        '@typescript-eslint/camelcase': 'off',
-        '@typescript-eslint/no-non-null-assertion': 'off',
-        '@typescript-eslint/no-empty-interface': 'off',
-        '@typescript-eslint/no-explicit-any': 'off',
-    },
+    'no-underscore-dangle': 'off',
+    // 'react/no-access-state-in-setstate': 'off',
+    'react/prop-types': 'off',
+    'react/destructuring-assignment': 'off',
+    'prettier/prettier': 'warn',
+    '@typescript-eslint/no-non-null-assertion': 'off',
+    '@typescript-eslint/no-empty-interface': 'off',
+    '@typescript-eslint/no-explicit-any': 'off',
+  },
 };

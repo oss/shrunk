@@ -186,7 +186,7 @@ const VisitsChart: React.FC<{ visitStats: VisitStats | null }> = (props) => {
     return <Spin />;
   }
 
-  const visits = props.visitStats.visits;
+  const { visits } = props.visitStats;
   const getMsSinceEpoch = (datum: VisitDatum) =>
     Date.UTC(datum._id.year, datum._id.month - 1, datum._id.day);
 
@@ -295,7 +295,7 @@ const PieChart: React.FC<{ title: string; data: PieDatum[] }> = (props) => {
  * @param props The props
  */
 const BrowserCharts: React.FC<{ browserStats: BrowserStats | null }> = (
-  props
+  props,
 ) => {
   if (props.browserStats === null) {
     return <Spin />;
@@ -307,20 +307,20 @@ const BrowserCharts: React.FC<{ browserStats: BrowserStats | null }> = (
   const browserData = processData(props.browserStats.browsers, BROWSER_COLORS);
   const platformData = processData(
     props.browserStats.platforms,
-    PLATFORM_COLORS
+    PLATFORM_COLORS,
   );
   const refererData = processData(props.browserStats.referers, REFERER_COLORS);
 
   return (
     <>
       <Col span={8}>
-        <PieChart title='Browsers' data={browserData} />
+        <PieChart title="Browsers" data={browserData} />
       </Col>
       <Col span={8}>
-        <PieChart title='Platforms' data={platformData} />
+        <PieChart title="Platforms" data={platformData} />
       </Col>
       <Col span={8}>
-        <PieChart title='Referrers' data={refererData} />
+        <PieChart title="Referrers" data={refererData} />
       </Col>
     </>
   );
@@ -369,9 +369,9 @@ export class Stats extends React.Component<Props, State> {
    * @method
    */
   updateLinkInfo = async (): Promise<void> => {
-    const linkInfo = (await fetch(
-      `/api/v1/link/${this.props.id}`
-    ).then((resp) => resp.json())) as LinkInfo;
+    const linkInfo = (await fetch(`/api/v1/link/${this.props.id}`).then(
+      (resp) => resp.json(),
+    )) as LinkInfo;
     const aliases = linkInfo.aliases.filter((alias) => !alias.deleted);
     if (aliases.length === 0) {
       throw new Error(`link ${this.props.id} has no aliases!`);
@@ -452,9 +452,9 @@ export class Stats extends React.Component<Props, State> {
   render(): React.ReactNode {
     return (
       <>
-        <Row className='primary-row'>
+        <Row className="primary-row">
           <Col span={16}>
-            <span className='page-title'>Stats</span>
+            <span className="page-title">Stats</span>
             {this.state.overallStats === null ? (
               <></>
             ) : (
@@ -465,13 +465,13 @@ export class Stats extends React.Component<Props, State> {
             )}
           </Col>
 
-          <Col span={8} className='btn-col'>
+          <Col span={8} className="btn-col">
             {!this.state.mayEdit ? (
               <></>
             ) : (
               <Popconfirm
-                placement='bottom'
-                title='Are you sure you want to clear all visit data associated with this link? This operation cannot be undone.'
+                placement="bottom"
+                title="Are you sure you want to clear all visit data associated with this link? This operation cannot be undone."
                 onConfirm={this.clearVisitData}
                 icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
               >
@@ -504,19 +504,19 @@ export class Stats extends React.Component<Props, State> {
           </Col>
         </Row>
 
-        <Row className='primary-row'>
+        <Row className="primary-row">
           <Col span={24}>
             <VisitsChart visitStats={this.state.visitStats} />
           </Col>
         </Row>
 
-        <Row className='primary-row'>
+        <Row className="primary-row">
           <Col span={24}>
             <GeoipChart geoipStats={this.state.geoipStats} />
           </Col>
         </Row>
 
-        <Row className='primary-row'>
+        <Row className="primary-row">
           <BrowserCharts browserStats={this.state.browserStats} />
         </Row>
       </>

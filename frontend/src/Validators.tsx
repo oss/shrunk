@@ -16,13 +16,17 @@ import base32 from 'hi-base32';
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export const serverValidateReservedAlias = async (
   _rule: any,
-  value: string
+  value: string,
 ): Promise<void> => {
-  if (!value) {return;}
+  if (!value) {
+    return;
+  }
   const result = await fetch(
-    `/api/v1/link/validate_reserved_alias/${base32.encode(value)}`
+    `/api/v1/link/validate_reserved_alias/${base32.encode(value)}`,
   ).then((resp) => resp.json());
-  if (!result.valid && value.length >= 5) {throw new Error(result.reason);}
+  if (!result.valid && value.length >= 5) {
+    throw new Error(result.reason);
+  }
 };
 
 /**
@@ -35,13 +39,17 @@ export const serverValidateReservedAlias = async (
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export const serverValidateDuplicateAlias = async (
   _rule: any,
-  value: string
+  value: string,
 ): Promise<void> => {
-  if (!value) {return;}
+  if (!value) {
+    return;
+  }
   const result = await fetch(
-    `/api/v1/link/validate_duplicate_alias/${base32.encode(value)}`
+    `/api/v1/link/validate_duplicate_alias/${base32.encode(value)}`,
   ).then((resp) => resp.json());
-  if (!result.valid && value.length >= 5) {throw new Error(result.reason);}
+  if (!result.valid && value.length >= 5) {
+    throw new Error(result.reason);
+  }
 };
 
 /**
@@ -54,13 +62,13 @@ export const serverValidateDuplicateAlias = async (
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export const serverValidateLongUrl = async (
   _rule: any,
-  value: string
+  value: string,
 ): Promise<void> => {
   if (!value) {
     return;
   }
   const result = await fetch(
-    `/api/v1/link/validate_long_url/${base32.encode(value)}`
+    `/api/v1/link/validate_long_url/${base32.encode(value)}`,
   ).then((resp) => resp.json());
   if (!result.valid) {
     throw new Error(result.reason);
@@ -77,7 +85,7 @@ export const serverValidateLongUrl = async (
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export const serverValidateNetId = async (
   _rule: any,
-  value: string
+  value: string,
 ): Promise<void> => {
   if (!value) {
     return;

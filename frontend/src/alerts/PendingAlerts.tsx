@@ -13,17 +13,17 @@ import { Orgsv2AlertNewUser, Orgsv2AlertCurrentUser } from './Orgsv2Alerts';
  * @interface
  */
 export interface Alert {
-    /**
-     * The title of the modal
-     * @property
-     */
-    title: string;
+  /**
+   * The title of the modal
+   * @property
+   */
+  title: string;
 
-    /**
-     * The component to display in the modal's content area
-     * @property
-     */
-    body: React.FunctionComponent<{ closePopup: () => Promise<void> }>;
+  /**
+   * The component to display in the modal's content area
+   * @property
+   */
+  body: React.FunctionComponent<{ closePopup: () => Promise<void> }>;
 }
 
 /**
@@ -31,8 +31,8 @@ export interface Alert {
  * @constant
  */
 const ALERTS: Map<string, Alert> = new Map([
-    ['orgsv2_newuser', Orgsv2AlertNewUser],
-    ['orgsv2_currentuser', Orgsv2AlertCurrentUser],
+  ['orgsv2_newuser', Orgsv2AlertNewUser],
+  ['orgsv2_currentuser', Orgsv2AlertCurrentUser],
 ]);
 
 /**
@@ -40,17 +40,17 @@ const ALERTS: Map<string, Alert> = new Map([
  * @interface
  */
 export interface Props {
-    /**
-     * The user's NetID
-     * @property
-     */
-    netid: string;
+  /**
+   * The user's NetID
+   * @property
+   */
+  netid: string;
 
-    /**
-     * List of alert names to be displayed
-     * @property
-     */
-    pendingAlerts: Array<string>;
+  /**
+   * List of alert names to be displayed
+   * @property
+   */
+  pendingAlerts: Array<string>;
 }
 
 /**
@@ -58,11 +58,11 @@ export interface Props {
  * @interface
  */
 interface State {
-    /**
-     * Number of alerts viewed so far.
-     * @property
-     */
-    numberViewed: number;
+  /**
+   * Number of alerts viewed so far.
+   * @property
+   */
+  numberViewed: number;
 }
 
 /**
@@ -71,49 +71,52 @@ interface State {
  * @class
  */
 export class PendingAlerts extends React.Component<Props, State> {
-    constructor(props: Props) {
-        super(props);
-        this.state = {
-            numberViewed: 0,
-        };
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      numberViewed: 0,
+    };
+  }
+
+  /**
+   * Execute API request to mark an alert as viewed serverside, and update
+   * the component state accordingly
+   * @method
+   * @param alertViewed The identifier of the alert viewed
+   */
+  nextAlert = async (alertViewed: string): Promise<void> => {
+    if (this.props.pendingAlerts[this.state.numberViewed] !== alertViewed) {
+      throw new Error('something went wrong');
     }
 
-    /**
-     * Execute API request to mark an alert as viewed serverside, and update
-     * the component state accordingly
-     * @method
-     * @param alertViewed The identifier of the alert viewed
-     */
-    nextAlert = async (alertViewed: string): Promise<void> => {
-        if (this.props.pendingAlerts[this.state.numberViewed] !== alertViewed) {
-            throw new Error('something went wrong');
-        }
+    await fetch(`/api/v1/alert/${this.props.netid}/${alertViewed}`, {
+      method: 'PUT',
+    });
+    this.setState({ numberViewed: this.state.numberViewed + 1 });
+  };
 
-        await fetch(`/api/v1/alert/${this.props.netid}/${alertViewed}`, { method: 'PUT' });
-        this.setState({ numberViewed: this.state.numberViewed + 1 });
+  render(): React.ReactNode {
+    const currentAlertName = this.props.pendingAlerts[this.state.numberViewed];
+    const currentAlert = ALERTS.get(currentAlertName);
+    if (currentAlert === undefined) {
+      return <></>;
     }
 
-    render(): React.ReactNode {
-        const currentAlertName = this.props.pendingAlerts[this.state.numberViewed];
-        const currentAlert = ALERTS.get(currentAlertName);
-        if (currentAlert === undefined) {
-            return (<></>);
-        }
+    const nextAlert = async () => this.nextAlert(currentAlertName);
 
-        const nextAlert = async () => this.nextAlert(currentAlertName);
-
-        return (
-            <Modal
-                visible={this.state.numberViewed !== this.props.pendingAlerts.length}
-                title={currentAlert.title}
-                footer={[
-                    <Button key='ok' type='primary' onClick={nextAlert}>
-                        OK
-                    </Button>,
-                ]}
-                onCancel={nextAlert}>
-                <currentAlert.body closePopup={nextAlert} />
-            </Modal>
-        );
-    }
+    return (
+      <Modal
+        visible={this.state.numberViewed !== this.props.pendingAlerts.length}
+        title={currentAlert.title}
+        footer={[
+          <Button key="ok" type="primary" onClick={nextAlert}>
+            OK
+          </Button>,
+        ]}
+        onCancel={nextAlert}
+      >
+        <currentAlert.body closePopup={nextAlert} />
+      </Modal>
+    );
+  }
 }

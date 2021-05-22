@@ -152,45 +152,43 @@ export class OrgStats extends React.Component<Props, State> {
       .then((json) => this.setState({ info: json as OrgInfo }));
     const visitStatsPromise = await fetch(
       `/api/v1/org/${this.props.id}/stats/visits`,
-      { method: 'GET' }
+      { method: 'GET' },
     )
       .then((resp) => resp.json())
       .then((json) =>
-        this.setState({ visitStats: json['visits'] as VisitDatum[] })
+        this.setState({ visitStats: json.visits as VisitDatum[] }),
       );
     const geoipStatsPromise = await fetch(
       `/api/v1/org/${this.props.id}/stats/geoip`,
-      { method: 'GET' }
+      { method: 'GET' },
     )
       .then((resp) => resp.json())
-      .then((json) =>
-        this.setState({ geoipStats: json['geoip'] as GeoipStats })
-      );
+      .then((json) => this.setState({ geoipStats: json.geoip as GeoipStats }));
     await Promise.all([infoPromise, visitStatsPromise, geoipStatsPromise]);
   };
 
   render(): React.ReactNode {
     return (
       <>
-        <Row className='primary-row'>
+        <Row className="primary-row">
           <Col span={24}>
             {this.state.info === null ? (
-              <Spin size='small' />
+              <Spin size="small" />
             ) : (
-              <span className='page-title'>
+              <span className="page-title">
                 Statistics for organization <em>{this.state.info.name}</em>
               </span>
             )}
           </Col>
         </Row>
 
-        <Row className='primary-row'>
+        <Row className="primary-row">
           <Col span={24}>
             <VisitsChart visitStats={this.state.visitStats} />
           </Col>
         </Row>
 
-        <Row className='primary-row'>
+        <Row className="primary-row">
           <Col span={24}>
             <GeoipChart geoipStats={this.state.geoipStats} />
           </Col>

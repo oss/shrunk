@@ -37,11 +37,11 @@ export const SearchBox: React.FC<Props> = (props) => {
   };
 
   return (
-    <Form layout='inline'>
+    <Form layout="inline">
       <Input.Group compact>
-        <Form.Item name='query'>
+        <Form.Item name="query">
           <Input
-            placeholder='Search'
+            placeholder="Search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />

@@ -13,6 +13,7 @@ import HighchartsReact from 'highcharts-react-official';
 import { MENU_ITEMS } from '../pages/subpages/StatsCommon';
 
 import '../Base.less';
+
 const { RangePicker } = DatePicker;
 
 /**
@@ -69,10 +70,10 @@ interface EndpointDatum {
  * @param props Props
  */
 const EndpointChart: React.FC<{ endpointData: EndpointDatum[] | null }> = (
-  props
+  props,
 ) => {
   if (props.endpointData === null) {
-    return <Spin size='large' />;
+    return <Spin size="large" />;
   }
 
   const options = {
@@ -195,7 +196,7 @@ export class AdminStats extends React.Component<Props, State> {
     await fetch('/api/v1/admin/stats/endpoint')
       .then((resp) => resp.json())
       .then((json) =>
-        this.setState({ endpointData: json.stats as EndpointDatum[] })
+        this.setState({ endpointData: json.stats as EndpointDatum[] }),
       );
   };
 
@@ -207,7 +208,7 @@ export class AdminStats extends React.Component<Props, State> {
   submitRangeForm = async (values: {
     range: moment.Moment[] | null | undefined;
   }): Promise<void> => {
-    const range = values.range;
+    const { range } = values;
     const adminDataRange =
       range === undefined || range === null
         ? null
@@ -223,39 +224,39 @@ export class AdminStats extends React.Component<Props, State> {
   render(): React.ReactNode {
     return (
       <>
-        <Row className='primary-row'>
+        <Row className="primary-row">
           <Col span={24}>
-            <span className='page-title'>Admin Statistics</span>
+            <span className="page-title">Admin Statistics</span>
           </Col>
         </Row>
 
-        <Row className='primary-row'>
+        <Row className="primary-row">
           <Col span={24}>
             <Row style={{ marginBottom: '12px' }}>
               <Col span={24}>
-                <Form layout='inline' onFinish={this.submitRangeForm}>
-                  <Form.Item name='range'>
+                <Form layout="inline" onFinish={this.submitRangeForm}>
+                  <Form.Item name="range">
                     <RangePicker />
                   </Form.Item>
 
                   <Form.Item>
-                    <Button htmlType='submit' icon={<ArrowRightOutlined />} />
+                    <Button htmlType="submit" icon={<ArrowRightOutlined />} />
                   </Form.Item>
                 </Form>
               </Col>
             </Row>
             <Row>
               {this.state.adminData === null ? (
-                <Spin size='small' />
+                <Spin size="small" />
               ) : (
                 <>
-                  <span className='info'>
+                  <span className="info">
                     Links: {this.state.adminData.links}
                   </span>
-                  <span className='info'>
+                  <span className="info">
                     Visits: {this.state.adminData.visits}
                   </span>
-                  <span className='info'>
+                  <span className="info">
                     Users: {this.state.adminData.users}
                   </span>
                 </>
@@ -264,7 +265,7 @@ export class AdminStats extends React.Component<Props, State> {
           </Col>
         </Row>
 
-        <Row className='primary-row'>
+        <Row className="primary-row">
           <Col span={24}>
             <EndpointChart endpointData={this.state.endpointData} />
           </Col>

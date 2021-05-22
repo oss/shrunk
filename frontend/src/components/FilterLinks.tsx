@@ -14,7 +14,8 @@
  } from "antd";
  import { DownOutlined } from "@ant-design/icons";
  import { OrgInfo } from "../api/Org";
- import { SearchSet, SearchQuery } from "../pages/Dashboard";
+ import { SearchSet } from "../pages/Dashboard";
+import moment from "moment";
  
  /**
   * Props for the [[SearchBox]] component
@@ -33,6 +34,48 @@
     * @property
     */
    userOrgs: OrgInfo[];
+
+   /**
+   * Callback called when the user executes a new search query
+   * @property
+   */
+  showByOrg: (orgs: SearchSet) => void;
+
+  /**
+   * Callback called when the user executes a new search query
+   * @property
+   */
+  showExpiredLinks: (show_expired_links: boolean) => void;
+
+  /**
+   * Callback called when the user executes a new search query
+   * @property
+   */
+  showDeletedLinks: (show_deleted_links: boolean) => void;
+
+  /**
+   * Callback called when the user executes a new search query
+   * @property
+   */
+  sortLinksByKey: (key: string) => void;
+
+   /**
+   * Callback called when the user executes a new search query
+   * @property
+   */
+  sortLinksByOrder: (order: string) => void;
+
+  /**
+   * Callback called when the user executes a new search query
+   * @property
+   */
+  showLinksAfter: (begin_time: moment.Moment) => void;
+
+   /**
+   * Callback called when the user executes a new search query
+   * @property
+   */
+  showLinksBefore: (end_time: moment.Moment) => void;
 
  }
  
@@ -56,9 +99,48 @@
    const [beginTime, setBeginTime] = useState<moment.Moment | null>(null);
    const [endTime, setEndTime] = useState<moment.Moment | null>(null);
 
-   const updateOrg = (e: any) => {
-    setOrg(e), () => console.log(org);
+   const updateOrg = async(e: any): Promise<void> => {
+    setOrg(e);
+    const searchSet: SearchSet =
+      e === 0
+        ? { set: 'user' }
+        : e === 1
+        ? { set: 'all' }
+        : e === 2
+        ? { set: 'shared' }
+        : { set: 'org', org: org as string };
+    await props.showByOrg(searchSet);
    };
+
+   const showExpiredLinks = async (e: any): Promise<void> => {
+    setShowExpired(e.target.checked);
+    await props.showExpiredLinks(e.target.checked);
+  };
+
+   const showDeletedLinks = async (e: any): Promise<void> => {
+    setShowDeleted(e.target.checked);
+    await props.showDeletedLinks(e.target.checked);
+  };
+
+  const sortByKey = async (e: any): Promise<void> => {
+    setSortKey(e);
+    await props.sortLinksByKey(e);
+  };
+
+  const sortByOrder = async (e: any): Promise<void> => {
+    setSortOrder(e.target.value);
+    await props.sortLinksByOrder(e.target.checked);
+  };
+
+  const showAfter = async (e: any): Promise<void> => {
+    setBeginTime(e.target.checked);
+    await props.showLinksAfter(e.target.checked);
+  };
+
+  const showBefore = async (e: any): Promise<void> => {
+    setEndTime(e.target.checked);
+    await props.showLinksBefore(e.target.checked);
+  };
  
    const dropdown = (
      <div className="dropdown-form">
@@ -95,7 +177,7 @@
          <Form.Item name="show_expired">
            <Checkbox
              checked={showExpired}
-             onChange={(e) => setShowExpired(e.target.checked)}
+             onChange={showExpiredLinks}
            >
              Show expired links?
            </Checkbox>
@@ -106,14 +188,14 @@
            <Form.Item name="show_deleted">
              <Checkbox
                checked={showDeleted}
-               onChange={(e) => setShowDeleted(e.target.checked)}
+               onChange={showDeletedLinks}
              >
                Show deleted links?
              </Checkbox>
            </Form.Item>
          )}
          <Form.Item name="sortKey" label="Sort by">
-           <Select value={sortKey} onChange={setSortKey}>
+           <Select value={sortKey} onChange={sortByKey}>
              <Select.Option value="relevance">Relevance</Select.Option>
              <Select.Option value="created_time">Time created</Select.Option>
              <Select.Option value="title">Title</Select.Option>
@@ -123,7 +205,7 @@
          <Form.Item name="sortOrder" label="Sort order">
            <Radio.Group
              value={sortOrder}
-             onChange={(e) => setSortOrder(e.target.value)}
+             onChange={sortByOrder}
              options={sortOptions}
              optionType="button"
            />
@@ -132,14 +214,14 @@
            <DatePicker
              format="YYYY-MM-DD"
              value={beginTime}
-             onChange={setBeginTime}
+             onChange={showAfter}
            />
          </Form.Item>
          <Form.Item name="endTime" label="Created before">
            <DatePicker
              format="YYYY-MM-DD"
              value={endTime}
-             onChange={setEndTime}
+             onChange={showBefore}
            />
          </Form.Item>
        </Form>
