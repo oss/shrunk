@@ -17,7 +17,7 @@ import { QrCodeModal } from '../components/QrCode';
 import { EditLinkModal, EditLinkFormValues } from '../components/EditLinkModal';
 import { ShareLinkModal } from '../components/ShareLinkModal';
 import { CreateLinkForm } from '../components/CreateLinkForm';
-import { FilterDropdown } from "../components/FilterLinks";
+import { FilterDropdown } from "../components/FilterDropdown";
 
 import './Dashboard.less';
 import moment from 'moment';
@@ -280,7 +280,7 @@ export class Dashboard extends React.Component<Props, State> {
   };
 
   /**
-   * Updates the query string in the state and executes a search query
+   * Updates expired links being shown/not shown in the state and executes a search query
    * @method
    * @param show_expired_links Whether expired links are shown or not
    */
@@ -291,7 +291,7 @@ export class Dashboard extends React.Component<Props, State> {
   };
 
   /**
-   * Updates the query string in the state and executes a search query
+   * Updates deleted links being shown/not shown in the state and executes a search query
    * @method
    * @param show_deleted_links Whether deleted links are shown or not 
    */
@@ -302,7 +302,7 @@ export class Dashboard extends React.Component<Props, State> {
   };
 
   /**
-   * Updates the query string in the state and executes a search query
+   * Updates the sort category in the state and executes a search query
    * @method
    * @param key Category that links can be sorted by
    */
@@ -313,7 +313,7 @@ export class Dashboard extends React.Component<Props, State> {
   };
 
   /**
-   * Updates the query string in the state and executes a search query
+   * Updates the sort order in the state and executes a search query
    * @method
    * @param order Ascending or descending order
    */
@@ -324,7 +324,7 @@ export class Dashboard extends React.Component<Props, State> {
   };
 
   /**
-   * Updates the query string in the state and executes a search query
+   * Updates the beginning time in the state and executes a search query
    * @method
    * @param begin_time View links created after this date
    */
@@ -335,7 +335,7 @@ export class Dashboard extends React.Component<Props, State> {
   };
 
   /**
-   * Updates the query string in the state and executes a search query
+   * Updates the end time in the state and executes a search query
    * @method
    * @param end_time View links created before this date
    */
@@ -443,7 +443,6 @@ export class Dashboard extends React.Component<Props, State> {
     if (query.end_time !== null) {
       req.end_time = query.end_time.format();
     }
-    console.log(req);
     const result = await fetch('/api/v1/search', {
       method: 'POST',
       headers: {

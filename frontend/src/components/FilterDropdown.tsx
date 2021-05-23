@@ -18,7 +18,7 @@
 import moment from "moment";
  
  /**
-  * Props for the [[SearchBox]] component
+  * Props for the [[FilterDropdown]] component
   * @interface
   */
  export interface Props {
@@ -36,43 +36,43 @@ import moment from "moment";
    userOrgs: OrgInfo[];
 
    /**
-   * Callback called when the user executes a new search query
+   * Callback called when the user changes organization of whose links will be displayed
    * @property
    */
   showByOrg: (orgs: SearchSet) => void;
 
   /**
-   * Callback called when the user executes a new search query
+   * Callback called when the user checks checkbox for showing expired links
    * @property
    */
   showExpiredLinks: (show_expired_links: boolean) => void;
 
   /**
-   * Callback called when the user executes a new search query
+   * Callback called when the user checks checkbox for showing deleted links
    * @property
    */
   showDeletedLinks: (show_deleted_links: boolean) => void;
 
   /**
-   * Callback called when the user executes a new search query
+   * Callback called when the user changes category under which links will be sorted
    * @property
    */
   sortLinksByKey: (key: string) => void;
 
    /**
-   * Callback called when the user executes a new search query
+   * Callback called when the user changes order in which links will be sorted
    * @property
    */
   sortLinksByOrder: (order: string) => void;
 
   /**
-   * Callback called when the user executes a new search query
+   * Callback called when the user choosses a date of which links will be shown after
    * @property
    */
   showLinksAfter: (begin_time: moment.Moment) => void;
 
    /**
-   * Callback called when the user executes a new search query
+   * Callback called when the user chooses a date of which links will be shown before
    * @property
    */
   showLinksBefore: (end_time: moment.Moment) => void;
@@ -108,7 +108,7 @@ import moment from "moment";
         ? { set: 'all' }
         : e === 2
         ? { set: 'shared' }
-        : { set: 'org', org: org as string };
+        : { set: 'org', org: e as string };
     await props.showByOrg(searchSet);
    };
 
@@ -129,17 +129,17 @@ import moment from "moment";
 
   const sortByOrder = async (e: any): Promise<void> => {
     setSortOrder(e.target.value);
-    await props.sortLinksByOrder(e.target.checked);
+    await props.sortLinksByOrder(e.target.value);
   };
 
   const showAfter = async (e: any): Promise<void> => {
-    setBeginTime(e.target.checked);
-    await props.showLinksAfter(e.target.checked);
+    setBeginTime(e);
+    await props.showLinksAfter(e);
   };
 
   const showBefore = async (e: any): Promise<void> => {
-    setEndTime(e.target.checked);
-    await props.showLinksBefore(e.target.checked);
+    setEndTime(e);
+    await props.showLinksBefore(e);
   };
  
    const dropdown = (
