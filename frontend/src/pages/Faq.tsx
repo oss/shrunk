@@ -90,23 +90,27 @@ export const Faq: React.FC = (_props) => (
           to add members to the organization.
         </p>
 
-        <p>
-          To view the links created by members of an organization, click the
-          &ldquo;My Links&rdquo; dropdown next to the search bar, and select the
-          organization whose links you would like to view.
-        </p>
-      </Col>
-    </Row>
-    <Row>
-      <Col>
-        <h1>
-          What access does somone have when I make them a viewer or editor?
-        </h1>
-        <img
-          src="/app/static/img/friendly_permissions.png"
-          alt="Permissions table"
-        />
-      </Col>
-    </Row>
-  </div>
-);
+                    <p>To view the links created by members of an organization,
+                    click the &ldquo;My Links&rdquo; dropdown next to the search bar, and
+                    select the organization whose links you would like to view.</p>
+                </Col>
+            </Row>
+            
+            <Row>
+                <Col>
+                  <h1>What access does somone have when I make them a viewer or editor?</h1>
+                  <img src='/app/static/img/friendly_permissions.png' />
+                </Col>
+            </Row>
+
+            <Row>
+                <Col>
+                    <h1>Why would I create multiple aliases for one link?</h1>
+                    <p>One use of multiple aliases would be creating 
+                    distinct aliases for Twitter and Facebook if you wish to 
+                    track the number of impressions from each platform.</p>
+                </Col>
+            </Row>
+        </div >
+    );
+}
