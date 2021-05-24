@@ -8,7 +8,7 @@ import React from 'react';
 import { Row, Col, Pagination, Spin, Dropdown, Button, Space } from 'antd';
 import { PlusCircleFilled } from '@ant-design/icons';
 
-import { arrayMax } from 'highcharts';
+import moment from 'moment';
 import { getOrgInfo, listOrgs, OrgInfo } from '../api/Org';
 import { SearchBox } from '../components/SearchBox';
 import { LinkRow } from '../components/LinkRow';
@@ -17,11 +17,10 @@ import { QrCodeModal } from '../components/QrCode';
 import { EditLinkModal, EditLinkFormValues } from '../components/EditLinkModal';
 import { ShareLinkModal } from '../components/ShareLinkModal';
 import { CreateLinkForm } from '../components/CreateLinkForm';
-import { FilterDropdown } from "../components/FilterDropdown";
+import { FilterDropdown } from '../components/FilterDropdown';
 
 import './Dashboard.less';
-import moment from 'moment';
- 
+
 /**
  * The final values of the share link form
  * @type
@@ -52,55 +51,55 @@ export type Entity = {
  * The type of the `set` parameter in the search query.
  * @type
  */
- export type SearchSet =
- | { set: 'user' | 'shared' | 'all' }
- | { set: 'org'; org: string };
+export type SearchSet =
+  | { set: 'user' | 'shared' | 'all' }
+  | { set: 'org'; org: string };
 
 /**
-* The type of a search query
-* @interface
-*/
+ * The type of a search query
+ * @interface
+ */
 export interface SearchQuery {
- /**
-  * The query string (optional)
-  * @property
-  */
- queryString?: string;
+  /**
+   * The query string (optional)
+   * @property
+   */
+  queryString?: string;
 
- /**
-  * The set of links to search (c.f. [[SearchSet]])
-  * @property
-  */
- set: SearchSet;
+  /**
+   * The set of links to search (c.f. [[SearchSet]])
+   * @property
+   */
+  set: SearchSet;
 
- /**
-  * Whether to show expired links
-  * @property
-  */
- show_expired_links: boolean;
+  /**
+   * Whether to show expired links
+   * @property
+   */
+  show_expired_links: boolean;
 
- /** Whether to show deleted links
-  * @property
-  */
- show_deleted_links: boolean;
+  /** Whether to show deleted links
+   * @property
+   */
+  show_deleted_links: boolean;
 
- /**
-  * The sort order and key
-  * @property
-  */
- sort: { key: string; order: string };
+  /**
+   * The sort order and key
+   * @property
+   */
+  sort: { key: string; order: string };
 
- /**
-  * The beginning of the time range to search
-  * @property
-  */
- begin_time: moment.Moment | null;
+  /**
+   * The beginning of the time range to search
+   * @property
+   */
+  begin_time: moment.Moment | null;
 
- /**
-  * The end of the time range to search
-  * @property
-  */
- end_time: moment.Moment | null;
+  /**
+   * The end of the time range to search
+   * @property
+   */
+  end_time: moment.Moment | null;
 }
 
 /**
@@ -195,7 +194,6 @@ export interface State {
    * @property
    */
   createLinkDropdownVisible: boolean;
-
 }
 
 /**
@@ -262,10 +260,11 @@ export class Dashboard extends React.Component<Props, State> {
    * @method
    * @param newQueryString The new query string
    */
-   setQueryString = (newQueryString: string) => {
+  setQueryString = (newQueryString: string) => {
     this.setState(
-      {query : { ...this.state.query, queryString: newQueryString}},
-      () => this.setQuery(this.state.query));
+      { query: { ...this.state.query, queryString: newQueryString } },
+      () => this.setQuery(this.state.query),
+    );
   };
 
   /**
@@ -273,10 +272,10 @@ export class Dashboard extends React.Component<Props, State> {
    * @method
    * @param orgs The organization of which links will be shown
    */
-   showByOrg = (orgs: SearchSet) => {
-    this.setState(
-      {query : { ...this.state.query, set: orgs}},
-      () => this.setQuery(this.state.query));
+  showByOrg = (orgs: SearchSet) => {
+    this.setState({ query: { ...this.state.query, set: orgs } }, () =>
+      this.setQuery(this.state.query),
+    );
   };
 
   /**
@@ -284,21 +283,27 @@ export class Dashboard extends React.Component<Props, State> {
    * @method
    * @param show_expired_links Whether expired links are shown or not
    */
-   showExpiredLinks = (show_expired_links: boolean) => {
+  showExpiredLinks = (show_expired_links: boolean) => {
     this.setState(
-      {query : { ...this.state.query, show_expired_links: show_expired_links}},
-      () => this.setQuery(this.state.query));
+      {
+        query: { ...this.state.query, show_expired_links },
+      },
+      () => this.setQuery(this.state.query),
+    );
   };
 
   /**
    * Updates deleted links being shown/not shown in the state and executes a search query
    * @method
-   * @param show_deleted_links Whether deleted links are shown or not 
+   * @param show_deleted_links Whether deleted links are shown or not
    */
-   showDeletedLinks = (show_deleted_links: boolean) => {
+  showDeletedLinks = (show_deleted_links: boolean) => {
     this.setState(
-      {query : { ...this.state.query, show_deleted_links: show_deleted_links}},
-      () => this.setQuery(this.state.query));
+      {
+        query: { ...this.state.query, show_deleted_links },
+      },
+      () => this.setQuery(this.state.query),
+    );
   };
 
   /**
@@ -306,10 +311,13 @@ export class Dashboard extends React.Component<Props, State> {
    * @method
    * @param key Category that links can be sorted by
    */
-   sortLinksByKey = (key: string) => {
+  sortLinksByKey = (key: string) => {
     this.setState(
-      {query : { ...this.state.query, sort: {...this.state.query.sort, key}}},
-      () => this.setQuery(this.state.query));
+      {
+        query: { ...this.state.query, sort: { ...this.state.query.sort, key } },
+      },
+      () => this.setQuery(this.state.query),
+    );
   };
 
   /**
@@ -317,10 +325,16 @@ export class Dashboard extends React.Component<Props, State> {
    * @method
    * @param order Ascending or descending order
    */
-   sortLinksByOrder = (order: string) => {
+  sortLinksByOrder = (order: string) => {
     this.setState(
-      {query : { ...this.state.query, sort: {...this.state.query.sort, order}}},
-      () => this.setQuery(this.state.query));
+      {
+        query: {
+          ...this.state.query,
+          sort: { ...this.state.query.sort, order },
+        },
+      },
+      () => this.setQuery(this.state.query),
+    );
   };
 
   /**
@@ -328,10 +342,10 @@ export class Dashboard extends React.Component<Props, State> {
    * @method
    * @param begin_time View links created after this date
    */
-   showLinksAfter = (begin_time: moment.Moment) => {
-    this.setState(
-      {query : { ...this.state.query, begin_time: begin_time}},
-      () => this.setQuery(this.state.query));
+  showLinksAfter = (begin_time: moment.Moment) => {
+    this.setState({ query: { ...this.state.query, begin_time } }, () =>
+      this.setQuery(this.state.query),
+    );
   };
 
   /**
@@ -339,10 +353,10 @@ export class Dashboard extends React.Component<Props, State> {
    * @method
    * @param end_time View links created before this date
    */
-   showLinksBefore = (end_time: moment.Moment) => {
-    this.setState(
-      {query : { ...this.state.query, end_time: end_time}},
-      () => this.setQuery(this.state.query));
+  showLinksBefore = (end_time: moment.Moment) => {
+    this.setState({ query: { ...this.state.query, end_time } }, () =>
+      this.setQuery(this.state.query),
+    );
   };
 
   /**
@@ -530,7 +544,7 @@ export class Dashboard extends React.Component<Props, State> {
     }).then((resp) => resp.json());
 
     const entities: Array<Entity> = [];
-    for (var i = 0; i < sharingInfo.editors.length; i++) {
+    for (let i = 0; i < sharingInfo.editors.length; i++) {
       if (sharingInfo.editors[i].type === 'netid') {
         entities.push({
           _id: sharingInfo.editors[i]._id,
@@ -548,7 +562,7 @@ export class Dashboard extends React.Component<Props, State> {
       }
     }
 
-    for (var i = 0; i < sharingInfo.viewers.length; i++) {
+    for (let i = 0; i < sharingInfo.viewers.length; i++) {
       if (
         sharingInfo.viewers[i].type === 'netid' &&
         !entities.some((entity) => entity._id === sharingInfo.viewers[i]._id) // don't show a person as a viewer if they're already an editor
@@ -682,18 +696,18 @@ export class Dashboard extends React.Component<Props, State> {
     }
 
     // Create the request to edit title, long_url, and expiration_time
-    const patch_req: Record<string, any> = {};
+    const patchReq: Record<string, any> = {};
     if (values.title !== oldLinkInfo.title) {
-      patch_req.title = values.title;
+      patchReq.title = values.title;
     }
     if (values.long_url !== oldLinkInfo.long_url) {
-      patch_req.long_url = values.long_url;
+      patchReq.long_url = values.long_url;
     }
     if (values.owner !== oldLinkInfo.owner) {
-      patch_req.owner = values.owner;
+      patchReq.owner = values.owner;
     }
     if (values.expiration_time !== oldLinkInfo.expiration_time) {
-      patch_req.expiration_time =
+      patchReq.expiration_time =
         values.expiration_time === null
           ? null
           : values.expiration_time.format();
@@ -705,7 +719,7 @@ export class Dashboard extends React.Component<Props, State> {
       fetch(`/api/v1/link/${oldLinkInfo.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(patch_req),
+        body: JSON.stringify(patchReq),
       }),
     );
 
@@ -773,10 +787,10 @@ export class Dashboard extends React.Component<Props, State> {
     }
 
     // Create the request to add to ACL
-    const patch_req: Record<string, string | Record<string, string>> = {};
+    const patchReq: Record<string, string | Record<string, string>> = {};
     const entry: Record<string, string> = {};
 
-    patch_req.action = 'add';
+    patchReq.action = 'add';
 
     // building entry value in request body
     if (values.hasOwnProperty('netid')) {
@@ -789,15 +803,15 @@ export class Dashboard extends React.Component<Props, State> {
       throw new Error('Invalid entity.');
     }
 
-    patch_req.entry = entry;
-    patch_req.acl = values.permission;
+    patchReq.entry = entry;
+    patchReq.acl = values.permission;
 
     await fetch(`/api/v1/link/${oldLinkInfo.id}/acl`, {
       method: 'PATCH',
       headers: {
         'content-type': 'application/json',
       },
-      body: JSON.stringify(patch_req),
+      body: JSON.stringify(patchReq),
     });
 
     // update the state with the new ACL list, which rerenders the link sharing modal with the updated list
@@ -828,35 +842,35 @@ export class Dashboard extends React.Component<Props, State> {
     }
 
     // Create the request to add to ACL
-    const patch_req: Record<string, string | Record<string, string>> = {};
+    const patchReq: Record<string, string | Record<string, string>> = {};
     const entry: Record<string, string> = {};
 
-    patch_req.action = 'remove';
+    patchReq.action = 'remove';
 
     // building entry value in request body
     entry._id = _id;
     entry.type = type;
 
-    patch_req.entry = entry;
-    patch_req.acl = permission.concat('s');
+    patchReq.entry = entry;
+    patchReq.acl = permission.concat('s');
 
     await fetch(`/api/v1/link/${oldLinkInfo.id}/acl`, {
       method: 'PATCH',
       headers: {
         'content-type': 'application/json',
       },
-      body: JSON.stringify(patch_req),
+      body: JSON.stringify(patchReq),
     });
 
     // removing an editor actually downgrades them to a viewer. So, we send another request to downgrade editors twice, once to make them viewer, and once to completely remove them
     if (permission === 'editor') {
-      patch_req.acl = 'viewers';
+      patchReq.acl = 'viewers';
       await fetch(`/api/v1/link/${oldLinkInfo.id}/acl`, {
         method: 'PATCH',
         headers: {
           'content-type': 'application/json',
         },
-        body: JSON.stringify(patch_req),
+        body: JSON.stringify(patchReq),
       });
     }
 
@@ -881,12 +895,12 @@ export class Dashboard extends React.Component<Props, State> {
               {this.state.userOrgs === null ? (
                 <></>
               ) : (
-                <SearchBox setQueryString={this.setQueryString}/>
+                <SearchBox setQueryString={this.setQueryString} />
               )}
               {this.state.userOrgs === null ? (
                 <></>
               ) : (
-              <FilterDropdown
+                <FilterDropdown
                   userPrivileges={this.props.userPrivileges}
                   userOrgs={this.state.userOrgs}
                   showByOrg={this.showByOrg}

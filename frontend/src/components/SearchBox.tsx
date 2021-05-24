@@ -1,15 +1,11 @@
 /**
- * Implements the search box 
+ * Implements the search box
  * @packageDocumentation
  */
 
 import React, { useState } from 'react';
-import {
-  Form,
-  Input,
-  Button,
-} from "antd";
-import { SearchOutlined } from "@ant-design/icons";
+import { Form, Input, Button } from 'antd';
+import { SearchOutlined } from '@ant-design/icons';
 
 /**
  * Props for the [[SearchBox]] component
@@ -31,7 +27,7 @@ export const SearchBox: React.FC<Props> = (props) => {
   const [query, setQuery] = useState('');
 
   const updateQueryString = async (): Promise<void> => {
-    if(query != '') {
+    if (query !== '') {
       await props.setQueryString(query);
     }
   };
