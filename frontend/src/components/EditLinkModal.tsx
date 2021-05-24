@@ -182,9 +182,12 @@ export const EditLinkModal: React.FC<Props> = (props) => {
         </Form.Item>
 
         <Form.Item
-          label="Owner"
-          name="owner"
-          rules={[{ validator: serverValidateNetId }]}
+          label='Owner'
+          name='owner'
+          rules={[
+            { required: true, message: 'Please input a NetID.' },
+            { validator: serverValidateNetId },
+          ]}
         >
           <Input placeholder="Link owner" disabled={!mayEditOwner} />
         </Form.Item>
