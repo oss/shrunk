@@ -236,9 +236,8 @@ import moment from "moment";
         placement="bottomRight"
         trigger={["click"]}
     >
-        <a onClick={e => e.preventDefault()}>
-          Filter Links <DownOutlined />
-        </a>
+        <span className="filter-links-dropdown">Filter Links
+        <DownOutlined /></span>
     </Dropdown>
    );
  };
