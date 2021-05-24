@@ -236,7 +236,7 @@ import moment from "moment";
         placement="bottomRight"
         trigger={["click"]}
     >
-        <span className="filter-links-dropdown">Filter Links
+        <span className="filter-links-dropdown">Filter Links {" "}
         <DownOutlined /></span>
     </Dropdown>
    );
