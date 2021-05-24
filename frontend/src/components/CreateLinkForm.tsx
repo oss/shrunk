@@ -28,9 +28,9 @@ import './FixAliasRemoveButton.less';
  */
 const AliasLabel: React.FC = (_props) => {
   const aliasHelp = `
-         You are now able to create multiple aliases for each shortened URL. For example, you may
-         create distinct aliases for Twitter and Facebook if you wish to track the number of impressions
-         from each platform. Each alias may have an optional description to help you keep track.`;
+  You may create multiple aliases with optional descriptions for each shortened 
+  URL to help you distinguish them from one another. Please note that you may only 
+  create custom aliases if you are a power user.`;
   return (
     <Tooltip title={aliasHelp}>
       Alias <QuestionCircleOutlined />
