@@ -219,7 +219,7 @@ export const FilterDropdown: React.FC<Props> = (props) => {
       overlay={dropdown}
       visible={dropdownVisible}
       onVisibleChange={setDropdownVisible}
-      placement="bottomRight"
+      placement="bottomLeft"
       trigger={['click']}
     >
       <span className="filter-links-dropdown">
