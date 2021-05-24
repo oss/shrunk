@@ -219,7 +219,7 @@ export const EditLinkModal: React.FC<Props> = (props) => {
                       },
                       { validator: serverValidateReservedAlias },
                       () => ({
-                        async validator(_, value) {
+                        async validator(_, value) : Promise<void> {
                           if (!value || isAnInitialAlias(value)) {
                             return Promise.resolve();
                           }

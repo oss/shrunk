@@ -181,9 +181,6 @@ export class ShareLinkModal extends React.Component<Props, State> {
               )
             }
           />
-          {/* {text} */}
-          {/* {record.name} */}
-          {/* {index} */}
         </>
       ),
     },
