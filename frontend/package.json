@@ -1,6 +1,6 @@
 {
   "name": "shrunk",
-  "version": "1.4.0",
+  "version": "2.0.0",
   "description": "Rutgers University URL Shortener",
   "scripts": {
     "build": "parcel build --no-source-maps --no-content-hash --public-url=./static/dist/ src/index.html",
