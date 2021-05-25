@@ -372,16 +372,14 @@ export class Dashboard extends React.Component<Props, State> {
       (v, i, a) => a.findIndex((t) => t.id === v.id) === i,
     );
 
-    const totalPages = Math.ceil(
-      uniqueResults.length / this.state.linksPerPage,
-    );
+    const totalPages = Math.ceil(results.count / this.state.linksPerPage);
     this.setState({
       linkInfo: uniqueResults,
       query: newQuery,
       currentPage: 1,
       totalPages,
       currentOffset: this.state.linksPerPage,
-      totalLinks: uniqueResults.length,
+      totalLinks: results.count,
     });
   };
 
@@ -406,15 +404,13 @@ export class Dashboard extends React.Component<Props, State> {
       (v, i, a) => a.findIndex((t) => t.id === v.id) === i,
     );
 
-    const totalPages = Math.ceil(
-      uniqueResults.length / this.state.linksPerPage,
-    );
+    const totalPages = Math.ceil(results.count / this.state.linksPerPage);
     this.setState({
       linkInfo: uniqueResults,
       currentPage: newPage,
       totalPages,
       currentOffset: newPage * this.state.linksPerPage,
-      totalLinks: uniqueResults.length,
+      totalLinks: results.count,
     });
   };
 
