@@ -627,7 +627,7 @@ def validate_reserved_alias(_netid: str, client: ShrunkClient, alias: str) -> An
     """
     valid = not client.links.alias_is_reserved(alias)
     response: Dict[str, Any] = {'valid': valid}
-    
+
     if not valid:
         response['reason'] = 'That alias cannot be used.'
     return jsonify(response)

@@ -1,10 +1,10 @@
-import requests
 import json
+import requests
 from pymongo import MongoClient
 
 with open("phishAPI.json", "r") as api_file:
     api_key = json.load(api_file)["api_key"]
- 
+
 url = f"http://data.phishtank.com/data/{api_key}/online-valid.json"
 file = requests.get(url)
 
@@ -26,11 +26,3 @@ for phish in phishList:
            'target': phish['target']}
 
     collection.insert_one(post)
-
-
-
-    
-
-
-
-    

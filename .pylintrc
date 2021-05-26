@@ -149,6 +149,7 @@ disable=print-statement,
         too-many-instance-attributes,
         too-many-public-methods,
         duplicate-code,
+        import-error,
         unsubscriptable-object # pylint has a bug with Python 3.9 where it complains about e.g. Option[T]
         
 
