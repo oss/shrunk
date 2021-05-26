@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "description": "Rutgers University URL Shortener",
   "scripts": {
-    "build": "node src/lib/fix-table.js && parcel build --no-source-maps --no-content-hash --public-url=./static/dist/ src/index.html",
+    "build": "node src/lib/fix-antd-table.js && parcel build --no-source-maps --no-content-hash --public-url=./static/dist/ src/index.html",
     "watch": "parcel watch --public-url=./static/dist/ src/index.html",
     "doc": "node ./typedocRunner.ts",
     "lint": "eslint ./src --ext .ts,tsx --ignore-path ../.gitignore",
