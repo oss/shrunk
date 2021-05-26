@@ -191,8 +191,8 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         'long_url': info['long_url'],
         'aliases': aliases,
         'deleted': info.get('deleted', False),
-        'editors': info['editors'],
-        'viewers': info['viewers']
+        'editors': info['editors'] if 'editors' in info else [],
+        'viewers': info['viewers'] if 'viewers' in info else []
     }
 
     return jsonify(json_info)
