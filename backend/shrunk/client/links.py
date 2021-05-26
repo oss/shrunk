@@ -71,7 +71,7 @@ class LinksClient:
         if alias in self.reserved_words:
             return True
         return any(alias in str(route) for route in current_app.url_map.iter_rules())
-    
+
     def alias_is_duplicate(self, alias: str) -> bool:
         """Check whether the given alias already exists"""
 
