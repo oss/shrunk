@@ -203,6 +203,7 @@ export class Orgs extends React.Component<Props, State> {
     await listOrgs(this.state.showAll ? 'all' : 'user').then((orgs) =>
       this.setState({ orgs }),
     );
+    console.log(this.state.orgs);
   };
 
   /**
@@ -273,7 +274,8 @@ export class Orgs extends React.Component<Props, State> {
         {this.state.orgs === null ? (
           <Spin size="large" />
         ) : (
-          {this.state.orgs.length === 1 ? (
+          <div>
+          {this.state.orgs.length === 0 ? (
             <p>You are currently not in any organizations.</p>
           ) : (
             <div>
@@ -286,7 +288,9 @@ export class Orgs extends React.Component<Props, State> {
               />
             ))}
             </div>
-        )})}
+        )}
+        </div>
+      )}
       </>
     );
   }
