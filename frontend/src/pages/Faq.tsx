@@ -36,7 +36,7 @@ export const Faq: React.FC = (_props) => (
           All current Rutgers University faculty and staff members are able to
           log into <a href="https://go.rutgers.edu/">go.rutgers.edu</a> using
           their NetID and password. Undergraduate student workers can be granted
-          access to Go by a faculty or staff members.
+          access to Go by a faculty or staff member.
         </p>
       </Col>
     </Row>
@@ -79,7 +79,7 @@ export const Faq: React.FC = (_props) => (
       <Col>
         <h1>What is the organizations feature?</h1>
         <p>
-          The organizations feature is a collaborative tool allows a group of
+          The organizations feature is a collaborative tool that allows a group of
           users to view each other&rsquo;s links. For example, users working
           together on a project may want to be able to see each other&rsquo;s
           links.
