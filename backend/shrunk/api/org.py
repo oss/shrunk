@@ -310,7 +310,8 @@ def delete_org_member(netid: str, client: ShrunkClient, org_id: ObjectId, member
     :param member_netid:
     """
     if not client.orgs.is_admin(org_id, netid) and not client.roles.has('admin', netid):
-        abort(403)
+        if not netid == member_netid:
+            abort(403)
     client.orgs.delete_member(org_id, member_netid)
     return '', 204
 
