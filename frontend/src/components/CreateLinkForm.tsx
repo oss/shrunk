@@ -30,7 +30,7 @@ const CustomAliasLabel: React.FC = (_props) => {
   const customAliasHelp = `
   An alias is the shortened part of the URL. For example, for 
   the link 'go.rutgers.edu/abc123' the alias is 'abc123'. If you 
-  leave it blank, we will automatically generate an alias for you.`;
+  leave it blank, Go will automatically generate an alias for you.`;
   return (
     <Tooltip title={customAliasHelp}>
       Custom Alias <QuestionCircleOutlined />
