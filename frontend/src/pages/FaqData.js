@@ -102,26 +102,31 @@ module.exports = {
             title: 'Action',
             dataIndex: 'action',
             key: 'action',
+            align: 'left',
           },
           {
             title: 'Owner',
             dataIndex: 'owner',
             key: 'owner',
+            align: 'center',
           },
           {
             title: 'Editor',
             dataIndex: 'editor',
             key: 'editor',
+            align: 'center',
           },
           {
             title: 'Viewer',
             dataIndex: 'viewer',
             key: 'viewer',
+            align: 'center',
           },
           {
             title: 'Everyone',
             dataIndex: 'everyone',
             key: 'everyone',
+            align: 'center',
           },
     ]
 };
