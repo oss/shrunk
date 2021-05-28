@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 import React from 'react';
-import { Row, Col, Table } from 'antd';
+import { Row, Col, Table, Collapse } from 'antd';
 import { Link } from 'react-router-dom';
 import * as Data from './FaqData.js';
 
