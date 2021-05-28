@@ -14,6 +14,7 @@ import {
   Form,
   Input,
   Tooltip,
+  Spin,
 } from 'antd';
 import { Link } from 'react-router-dom';
 import {
@@ -58,7 +59,7 @@ interface State {
    * Contains an [[OrgInfo]] for each org to be displayed
    * @property
    */
-  orgs: OrgInfo[];
+  orgs: OrgInfo[] | null;
 
   /**
    * Whether the create org dropdown is visible
@@ -188,7 +189,7 @@ export class Orgs extends React.Component<Props, State> {
     super(props);
     this.state = {
       showAll: false,
-      orgs: [],
+      orgs: null,
       createOrgFormVisible: false,
     };
   }
@@ -278,14 +279,26 @@ export class Orgs extends React.Component<Props, State> {
           </Col>
         </Row>
 
-        {this.state.orgs.map((org) => (
-          <OrgRow
-            key={org.id}
-            showAll={this.state.showAll}
-            orgInfo={org}
-            onDelete={this.onDeleteOrg}
-          />
-        ))}
+        {this.state.orgs === null ? (
+          <Spin size="large" />
+        ) : (
+          <div>
+          {this.state.orgs.length === 0 ? (
+            <p>You are currently not in any organizations.</p>
+          ) : (
+            <div>
+            {this.state.orgs.map((org) => (
+              <OrgRow
+                key={org.id}
+                showAll={this.state.showAll}
+                orgInfo={org}
+                onDelete={this.onDeleteOrg}
+              />
+            ))}
+            </div>
+        )}
+        </div>
+      )}
       </>
     );
   }

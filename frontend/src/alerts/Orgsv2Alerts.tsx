@@ -5,7 +5,6 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-
 import { Alert } from './PendingAlerts';
 
 /**
@@ -15,7 +14,7 @@ import { Alert } from './PendingAlerts';
 const NewUser: React.FC<{ closePopup: () => Promise<void> }> = (props) => (
   // TODO fill this out once all the Orgsv2 features are finalized
   <>
-    <p>Put some explanation here</p>
+    <p>You can do so with an organization.</p>
     Head to the{' '}
     <Link onClick={async (_ev) => props.closePopup()} to="/orgs">
       Orgs
@@ -25,7 +24,7 @@ const NewUser: React.FC<{ closePopup: () => Promise<void> }> = (props) => (
 );
 
 export const Orgsv2AlertNewUser: Alert = {
-  title: 'Want to create an organziation?',
+  title: 'Want to share certain links with a group?',
   body: NewUser,
 };
 
@@ -38,8 +37,8 @@ const CurrentUser: React.FC<{ closePopup: () => Promise<void> }> = (props) => (
   <>
     You can now
     <ul>
-      <li>choose which links are shared with an organization</li>
-      <li>share a link with a single user</li>
+      <li>share a specific link with an organization</li>
+      <li>share a specific link with a single user</li>
       <li>request access to a link from the link&apos;s owner</li>
     </ul>
     head to the{' '}
