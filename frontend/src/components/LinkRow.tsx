@@ -257,14 +257,14 @@ export class LinkRow extends React.Component<Props, State> {
               />
             </Tooltip>
           )}
-          <Tooltip title="Link statistics">
+          <Tooltip title="Link stats">
             <Button
               type="text"
               icon={<LineChartOutlined />}
               href={`/app/#/stats/${this.props.linkInfo.id}`}
             />
           </Tooltip>
-          <Tooltip title="QR Code">
+          <Tooltip title="QR code">
             <Button
               type="text"
               icon={<QrcodeOutlined />}

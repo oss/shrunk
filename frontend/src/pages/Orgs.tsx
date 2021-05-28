@@ -13,6 +13,7 @@ import {
   Dropdown,
   Form,
   Input,
+  Tooltip,
 } from 'antd';
 import { Link } from 'react-router-dom';
 import {
@@ -146,26 +147,34 @@ const OrgRow: React.FC<{
       </span>
     </Col>
     <Col span={4} className="btn-col">
-      <Button type="text">
-        <Link to={`/orgs/${props.orgInfo.id}/manage`}>
-          <ToolOutlined />
-        </Link>
-      </Button>
-
+      <Tooltip title="Manage org">
+        <Button type="text">
+          <Link to={`/orgs/${props.orgInfo.id}/manage`}>
+            <ToolOutlined />
+          </Link>
+        </Button>
+      </Tooltip>
+      <Tooltip title="Org stats">
       <Button type="text">
         <Link to={`/orgs/${props.orgInfo.id}/stats`}>
           <LineChartOutlined />
         </Link>
       </Button>
-
-      <Popconfirm
-        placement="top"
-        title="Are you sure you want to delete this organization?"
-        onConfirm={async () => props.onDelete(props.orgInfo.id)}
-        icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
-      >
-        <Button danger type="text" icon={<DeleteOutlined />} />
-      </Popconfirm>
+      </Tooltip>
+      {!props.orgInfo.is_admin ? (
+        <></>
+      ) : (
+        <Tooltip title="Delete org">
+          <Popconfirm
+          placement="top"
+          title="Are you sure you want to delete this organization?"
+          onConfirm={async () => props.onDelete(props.orgInfo.id)}
+          icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
+          >
+          <Button danger type="text" icon={<DeleteOutlined />} />
+        </Popconfirm>
+        </Tooltip>
+      )}
     </Col>
   </Row>
 );
