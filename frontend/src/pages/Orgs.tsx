@@ -203,7 +203,6 @@ export class Orgs extends React.Component<Props, State> {
     await listOrgs(this.state.showAll ? 'all' : 'user').then((orgs) =>
       this.setState({ orgs }),
     );
-    console.log(this.state.orgs);
   };
 
   /**
