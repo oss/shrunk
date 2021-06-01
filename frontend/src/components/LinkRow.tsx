@@ -213,7 +213,7 @@ export class LinkRow extends React.Component<Props, State> {
                 <Col>
                   <div className={className}>
                     <CopyToClipboard text={shortUrl}>
-                      <Tooltip title="Copy shortened URL.">
+                      <Tooltip title="Copy shortened URL">
                         <Button type="text" icon={<CopyFilled />} />
                       </Tooltip>
                     </CopyToClipboard>
