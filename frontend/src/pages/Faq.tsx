@@ -33,7 +33,7 @@ export class Faq extends React.Component<void> {
               All current Rutgers University faculty and staff members are able to
               log into <a href="https://go.rutgers.edu/">go.rutgers.edu</a> using
               their NetID and password. Undergraduate student workers can be granted
-              access to Go by a faculty or staff members.
+              access to Go by a faculty or staff member.
             </p>
           </Panel>
           <Panel header="Can I choose the URL my link will be shortened to?" key="3">
@@ -60,69 +60,14 @@ export class Faq extends React.Component<void> {
           </Panel>
           <Panel header="What is the organizations feature?" key="6">
             <p style={{ paddingLeft: 24 }}>
-              The organizations feature is a collaborative tool allows a group of
+              The organizations feature is a collaborative tool that allows a group of
               users to view each other&rsquo;s links. For example, users working
               together on a project may want to be able to see each other&rsquo;s
               links.
             </p>
-          </Panel>
-
-    <Row>
-      <Col>
-        <h1>Who has access to Go?</h1>
-        <p>
-          All current Rutgers University faculty and staff members are able to
-          log into <a href="https://go.rutgers.edu/">go.rutgers.edu</a> using
-          their NetID and password. Undergraduate student workers can be granted
-          access to Go by a faculty or staff member.
-        </p>
-      </Col>
-    </Row>
-
-            <p style={{ paddingLeft: 24 }}>To view the links created by members of an organization,
-            click the &ldquo;Filter Links&rdquo; dropdown next to the search bar, and
-            select the organization whose links you would like to view.</p>
-          </Panel>
-          <Panel header="Why can I view this link but not edit it?" key="8">
-            <p style={{ paddingLeft: 24 }}>As a viewer, you can see a link's stats and QR code; however, 
-            you cannot edit it. You can request for edit access by hitting the 
-            mail icon next to the link which will send a request to the owner 
-            of the link.</p>
-          </Panel>
-
-          <Panel header="How do I share my links?" key="9">
-            <p style={{ paddingLeft: 24 }}>To share your link with a specific user or an organization, 
-            you must either be the owner or an editor of the link. Click on 
-            the "manage sharing" icon to the right of your link and add the 
-            user's NetId or organization name. You can also specify whether 
-            you want them to be a viewer or editor of the link. </p>
-          </Panel>
-
-    <Row>
-      <Col>
-        <h1>Why would I create multiple aliases for one link?</h1>
-        <p>One use of multiple aliases would be creating 
-        distinct aliases for Twitter and Facebook if you wish to 
-        track the number of impressions from each platform.</p>
-      </Col>
-    </Row>
-    
-    <Row>
-      <Col>
-        <h1>What is the organizations feature?</h1>
-        <p>
-          The organizations feature is a collaborative tool that allows a group of
-          users to view each other&rsquo;s links. For example, users working
-          together on a project may want to be able to see each other&rsquo;s
-          links.
-        </p>
-      </Col>
-    </Row>
-
-    <Row>
-      <Col>
-        <h1>How can I use the organizations feature?</h1>
-        <p>
+          </Panel>        
+          <Panel header="How can I use the organizations feature?" key="7">
+          <p style={{ paddingLeft: 24 }}>
           Only faculty and staff members are able to create a new organization.
           To do so, navigate to the <Link to="/orgs">Organizations </Link>
           page and click the &ldquo;Create an Organization&rdquo; button. You
@@ -131,41 +76,32 @@ export class Faq extends React.Component<void> {
           to its management page and use the &ldquo;Add a Member&rdquo; button
           to add members to the organization. Only admins of the organization can 
           delete an organization which removes member access to the shared links. 
-        </p>
-
-        <p>To view the links created by members of an organization,
-        click the &ldquo;Filter Links&rdquo; dropdown next to the search bar, and
-        select the organization whose links you would like to view.</p>
-
-      </Col>
-    </Row>
-
-    <Row>
-      <Col>
-        <h1>Why can I view this link but not edit it?</h1>
-        <p>As a viewer, you can see a link's stats and QR code; however, 
-        you cannot edit it. You can request for edit access by hitting the 
-        mail icon next to the link which will send a request to the owner 
-        of the link.</p>
-      </Col>
-    </Row>
-
-    <Row>
-      <Col>
-        <h1>How do I share my links?</h1>
-        <p>To share your link with a specific user or an organization, 
-        you must either be the owner or an editor of the link. Click on 
-        the "manage sharing" icon to the right of your link and add the 
-        user's NetId or organization name. You can also specify whether 
-        you want them to be a viewer or editor of the link. </p>
-      </Col>
-    </Row>
-
-    <Row>
-      <Col>
-        <h1>What access does somone have when I make them a viewer or editor?</h1>
-        <Table size="small" pagination={{ pageSize: 25 , hideOnSinglePage: true}} dataSource={Data.data} columns={Data.cols}/>
-      </Col>
-    </Row>
-  </div >
-);
+          </p>
+          <p style={{ paddingLeft: 24 }}>
+          To view the links created by members of an organization,
+          click the &ldquo;Filter Links&rdquo; dropdown next to the search bar, and
+          select the organization whose links you would like to view.</p>
+        </Panel>
+        <Panel header="Why can I view this link but not edit it?" key="8">
+          <p style={{ paddingLeft: 24 }}>
+          As a viewer, you can see a link's stats and QR code; however, 
+          you cannot edit it. You can request for edit access by hitting the 
+          mail icon next to the link which will send a request to the owner 
+          of the link.</p>
+        </Panel>
+        <Panel header="How do I share my links?" key="9">
+          <p style={{ paddingLeft: 24 }}>
+          To share your link with a specific user or an organization, 
+          you must either be the owner or an editor of the link. Click on 
+          the "manage sharing" icon to the right of your link and add the 
+          user's NetId or organization name. You can also specify whether 
+          you want them to be a viewer or editor of the link. </p>
+        </Panel>
+        <Panel header="What access does somone have when I make them a viewer or editor?" key="10">
+          <Table size="small" pagination={{ pageSize: 25 , hideOnSinglePage: true}} dataSource={Data.data} columns={Data.cols}/>
+        </Panel>
+      </Collapse>
+    </div >
+    );
+  }
+}
