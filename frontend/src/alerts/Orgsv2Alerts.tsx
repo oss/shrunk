@@ -41,7 +41,7 @@ const CurrentUser: React.FC<{ closePopup: () => Promise<void> }> = (props) => (
       <li>share a specific link with a single user</li>
       <li>request access to a link from the link&apos;s owner</li>
     </ul>
-    head to the{' '}
+    Head to the{' '}
     <Link onClick={async (_ev) => props.closePopup()} to="/orgs">
       Orgs
     </Link>{' '}
