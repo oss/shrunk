@@ -29,6 +29,21 @@ class SearchClient:
         # or on the urls collection otherwise.
         pipeline: List[Any] = []
 
+        # Filter based on search string, if provided.
+        if 'query' in query:
+            pipeline += [{
+                '$match': {
+                    '$text': {
+                        '$search': query['query'],
+                    },
+                },
+            },
+            {
+                '$addFields': {
+                    'text_search_score': {'$meta': 'textScore'},
+                }},
+            ]
+
         # Filter the appropriate links set.
         if query['set']['set'] == 'user':  # search within `user_netid`'s links
             pipeline.append({'$match': {'netid': user_netid}})
@@ -36,7 +51,7 @@ class SearchClient:
             # If the set is 'shared', the pipeline will be executed against the 'organizations'
             # collection instead of the 'urls' collection.
             pipeline += [
-                {'$match': {'members.netid': user_netid} },
+                {'$match': {'members.netid': user_netid}},
                 {'$lookup': {
                     'from': 'urls',
                     'localField': '_id',
@@ -52,21 +67,6 @@ class SearchClient:
             ]
         elif query['set']['set'] == 'org':  # search within the given org
             pipeline.append({'$match': {'viewers.type': 'org', 'viewers._id': query['set']['org']}})
-
-        # Filter based on search string, if provided.
-        if 'query' in query:
-            pipeline += [{
-                '$match': {
-                    '$text': {
-                        '$search': query['query'],
-                    },
-                },
-            },
-            {
-                '$addFields': {
-                    'text_search_score': {'$meta': 'textScore'},
-                },
-            }]
 
         # Sort results.
         sort_order = 1 if query['sort']['order'] == 'ascending' else -1
@@ -119,7 +119,7 @@ class SearchClient:
                 {'$limit': query['pagination']['limit']},
             ]
         pipeline.append({'$facet': facet})
-
+        print(pipeline)
         # Execute the query. Make sure we use the 'en' collation so strings
         # are sorted properly (e.g. wrt case and punctuation).
         if query['set']['set'] == 'shared':
