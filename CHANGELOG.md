@@ -5,16 +5,19 @@ All notable changes to Shrunk will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.0.0] - 2021-06-02
 
+### Added
 - Sharing tab to manage which people/organizations your link is shared with (Link ACLs)
 - Updated link editing user interface.
+- Updated FAQ
+- Updated orgs page
+- Updated Dashboard link filters/search
 
 ### Fixed
 - Fixed use of duplicate alias
 - Fixed reuse of deleted/inactive alias
 - Fixed ui bug: edit link modal form reverting back to original values
-
 
 ## [1.4.0] - 2020-10-15
 
