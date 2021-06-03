@@ -221,6 +221,28 @@ export class Shrunk extends React.Component<Props, State> {
                 title={this.props.netid}
                 style={{ float: 'right' }}
               >
+                {this.props.userPrivileges.size === 0 ? (
+                  <Menu.Item>
+                    <p>Role: User</p>
+                  </Menu.Item>
+                ) : (                 
+                  this.props.userPrivileges.has("power_user") ? (
+                  <Menu.Item>
+                    <p>Role: Power User</p>
+                  </Menu.Item>
+                ) : (
+                  this.props.userPrivileges.has("facstaff") ? (
+                  <Menu.Item>
+                    <p>Role: Faculty/Staff</p>
+                  </Menu.Item>
+                ) : (
+                  <Menu.Item>
+                    <p>Role: Admin</p>
+                  </Menu.Item>
+                )
+                )
+                )}
+
                 <Menu.Item key="logout">
                   <a href="/app/logout">Logout</a>
                 </Menu.Item>
