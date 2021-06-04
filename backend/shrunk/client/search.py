@@ -119,7 +119,7 @@ class SearchClient:
                 {'$limit': query['pagination']['limit']},
             ]
         pipeline.append({'$facet': facet})
-        print(pipeline)
+
         # Execute the query. Make sure we use the 'en' collation so strings
         # are sorted properly (e.g. wrt case and punctuation).
         if query['set']['set'] == 'shared':
@@ -164,7 +164,7 @@ class SearchClient:
         result = next(cursor)
         count = result['count'][0]['count'] if result['count'] else 0
         results = [prepare_result(res) for res in result['result']]
-
+        print(results)
         return {
             'count': count,
             'results': results,
