@@ -270,6 +270,18 @@ export class Dashboard extends React.Component<Props, State> {
   /**
    * Updates the query string in the state and executes a search query
    * @method
+   * @param newQueryString The new query string
+   */
+  clearString = () => {
+      this.setState(
+        { query: { ...this.state.query, queryString: undefined } },
+        () => this.setQuery(this.state.query),
+      );
+    };
+
+  /**
+   * Updates the query string in the state and executes a search query
+   * @method
    * @param orgs The organization of which links will be shown
    */
   showByOrg = (orgs: SearchSet) => {
@@ -884,57 +896,61 @@ export class Dashboard extends React.Component<Props, State> {
   render(): React.ReactNode {
     return (
       <>
-        <Row className="primary-row">
-          <Col span={20}>
-            <Space>
-              <span className="page-title">Dashboard</span>
-              {this.state.userOrgs === null ? (
-                <></>
-              ) : (
-                <SearchBox setQueryString={this.setQueryString} />
-              )}
-              {this.state.userOrgs === null ? (
-                <></>
-              ) : (
-                <FilterDropdown
-                  userPrivileges={this.props.userPrivileges}
-                  userOrgs={this.state.userOrgs}
-                  showByOrg={this.showByOrg}
-                  showDeletedLinks={this.showDeletedLinks}
-                  showExpiredLinks={this.showExpiredLinks}
-                  sortLinksByKey={this.sortLinksByKey}
-                  sortLinksByOrder={this.sortLinksByOrder}
-                  showLinksAfter={this.showLinksAfter}
-                  showLinksBefore={this.showLinksBefore}
-                />
-              )}
-            </Space>
-          </Col>
-
-          <Col span={4} className="btn-col">
-            <Dropdown
-              overlay={
-                <CreateLinkForm
-                  userPrivileges={this.props.userPrivileges}
-                  onFinish={async () => {
-                    this.setState({ createLinkDropdownVisible: false });
-                    await this.refreshResults();
-                  }}
-                />
-              }
-              visible={this.state.createLinkDropdownVisible}
-              onVisibleChange={(flag) =>
-                this.setState({ createLinkDropdownVisible: flag })
-              }
-              placement="bottomRight"
-              trigger={['click']}
-            >
-              <Button type="primary">
-                <PlusCircleFilled /> Shrink a Link
-              </Button>
-            </Dropdown>
-          </Col>
-        </Row>
+          <Row className="primary-row" wrap align="middle" justify="start">
+            <Col>
+                <span className="page-title">Dashboard</span>
+            </Col>
+            <Col offset={1}>
+                {this.state.userOrgs === null ? (
+                  <></>
+                ) : (
+                  <SearchBox 
+                    setQueryString={this.setQueryString} 
+                    clearString={this.clearString}
+                  />
+                )}
+              </Col>
+              <Col offset={1}>
+                {this.state.userOrgs === null ? (
+                  <></>
+                ) : (
+                  <FilterDropdown
+                    userPrivileges={this.props.userPrivileges}
+                    userOrgs={this.state.userOrgs}
+                    showByOrg={this.showByOrg}
+                    showDeletedLinks={this.showDeletedLinks}
+                    showExpiredLinks={this.showExpiredLinks}
+                    sortLinksByKey={this.sortLinksByKey}
+                    sortLinksByOrder={this.sortLinksByOrder}
+                    showLinksAfter={this.showLinksAfter}
+                    showLinksBefore={this.showLinksBefore}
+                  />
+                )}
+            </Col>
+            <Col offset={4} className="btn-col">
+              <Dropdown
+                overlay={
+                  <CreateLinkForm
+                    userPrivileges={this.props.userPrivileges}
+                    onFinish={async () => {
+                      this.setState({ createLinkDropdownVisible: false });
+                      await this.refreshResults();
+                    }}
+                  />
+                }
+                visible={this.state.createLinkDropdownVisible}
+                onVisibleChange={(flag) =>
+                  this.setState({ createLinkDropdownVisible: flag })
+                }
+                placement="bottomRight"
+                trigger={['click']}
+              >
+                <Button type="primary">
+                  <PlusCircleFilled /> Shrink a Link
+                </Button>
+              </Dropdown>
+            </Col>
+          </Row>
 
         {this.state.linkInfo === null ? (
           <Spin size="large" />
