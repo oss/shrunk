@@ -223,7 +223,7 @@ export class Shrunk extends React.Component<Props, State> {
               >
                 {this.props.userPrivileges.size === 0 ? (
                   <Menu.Item>
-                    <p>Role: User</p>
+                    <p>Role: Whitelisted User</p>
                   </Menu.Item>
                 ) : (                 
                   this.props.userPrivileges.has("power_user") ? (
