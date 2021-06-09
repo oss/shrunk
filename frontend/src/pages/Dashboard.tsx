@@ -897,10 +897,10 @@ export class Dashboard extends React.Component<Props, State> {
     return (
       <>
           <Row className="primary-row" wrap align="middle" justify="start">
-            <Col>
+            <Col flex="1 1 200px">
                 <span className="page-title">Dashboard</span>
             </Col>
-            <Col offset={1}>
+            <Col flex="1 1 200px">
                 {this.state.userOrgs === null ? (
                   <></>
                 ) : (
@@ -910,7 +910,7 @@ export class Dashboard extends React.Component<Props, State> {
                   />
                 )}
               </Col>
-              <Col offset={1}>
+              <Col flex="1 1 100px">
                 {this.state.userOrgs === null ? (
                   <></>
                 ) : (
@@ -927,7 +927,7 @@ export class Dashboard extends React.Component<Props, State> {
                   />
                 )}
             </Col>
-            <Col offset={4} className="btn-col">
+            <Col flex="1 1 200px" className="btn-col">
               <Dropdown
                 overlay={
                   <CreateLinkForm
