@@ -40,6 +40,7 @@ export const SearchBox: React.FC<Props> = (props) => {
       await props.setQueryString(query);
       showTag(true);
       setTag(query);
+      setQuery('');
     }
   };
 

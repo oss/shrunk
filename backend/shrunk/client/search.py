@@ -30,7 +30,7 @@ class SearchClient:
         pipeline: List[Any] = []
 
         # Filter based on search string, if provided.
-        if 'query' in query:
+        if 'query' in query and query['set']['set'] != 'shared':
             pipeline += [{
                 '$match': {
                     '$text': {
@@ -60,11 +60,19 @@ class SearchClient:
                 }},
                 {'$unwind': '$shared_urls'},
                 {'$replaceRoot': {'newRoot': '$shared_urls'}},
-                {'$unionWith': {
-                    'coll': 'urls',
-                    'pipeline': [{'$match': {'viewers._id': user_netid}}],
-                }},
             ]
+            if 'query' in query:
+                pipeline += [{'$unionWith': {
+                                'coll': 'urls',
+                                'pipeline': [{'$match': {'$text': {'$search': query['query']}}},
+                                            {'$addFields': {'text_search_score': {'$meta': 'textScore'}}},
+                                            {'$match': {'viewers._id': user_netid}}]
+                            }}]
+            else:
+                pipeline += [{'$unionWith': {
+                                'coll': 'urls',
+                                'pipeline': [{'$match': {'viewers._id': user_netid}}]
+                            }}]
         elif query['set']['set'] == 'org':  # search within the given org
             pipeline.append({'$match': {'viewers.type': 'org', 'viewers._id': query['set']['org']}})
 
@@ -120,7 +128,6 @@ class SearchClient:
             ]
         pipeline.append({'$facet': facet})
 
-        print(pipeline)
         # Execute the query. Make sure we use the 'en' collation so strings
         # are sorted properly (e.g. wrt case and punctuation).
         if query['set']['set'] == 'shared':
@@ -159,7 +166,7 @@ class SearchClient:
                     'deleted_by': res['deleted_by'],
                     'deleted_time': res['deleted_time'],
                 }
-
+            print(prepared)
             return prepared
 
         result = next(cursor)
