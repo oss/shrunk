@@ -43,6 +43,9 @@ class SearchClient:
                     'text_search_score': {'$meta': 'textScore'},
                 }},
             ]
+        #db.organizations.aggregate([{$match:{'members.netid': 'DEV_ADMIN'}},{$lookup:{from:'urls',localField:'_id',foreignField:'viewers._id',as:'shared_urls',}},{$unwind:'$shared_urls'},{$replaceRoot:{newRoot:'$shared_urls'}},{$unionWith:{coll:'urls',pipeline:[{$match:{'viewers._id': 'DEV_ADMIN'}}]}}])
+        #db.organizations.aggregate([{$match:{'members.netid': 'DEV_ADMIN'}},{$lookup:{from:'urls',localField:'_id',foreignField:'viewers._id',as:'shared_urls',}},{$unwind:'$shared_urls'},{$replaceRoot:{newRoot:'$shared_urls'}},{$unionWith:{coll:'urls',pipeline:[{$match: {$text: {$search: 'random'}}},{$addFields: {text_search_score: {$meta: 'textScore'}}},{$match:{'viewers._id': 'DEV_ADMIN'}}]}}])
+        #db.organizations.aggregate([{$match:{'members.netid': 'DEV_ADMIN'}},{$lookup:{from:'urls',localField:'_id',foreignField:'viewers._id',as:'shared_urls',}},{$unwind:'$shared_urls'},{$replaceRoot:{newRoot:'$shared_urls'}},{$unionWith:{coll:'urls',pipeline:[{$match: {$text: {$search: 'random'}}},{$addFields: {text_search_score: {$meta: 'textScore'}}},{$match:{'viewers._id': 'DEV_ADMIN'}}]}},{$match:{text_search_score:{$gt:1.0}}}])
 
         # Filter the appropriate links set.
         if query['set']['set'] == 'user':  # search within `user_netid`'s links
@@ -66,8 +69,9 @@ class SearchClient:
                                 'coll': 'urls',
                                 'pipeline': [{'$match': {'$text': {'$search': query['query']}}},
                                             {'$addFields': {'text_search_score': {'$meta': 'textScore'}}},
-                                            {'$match': {'viewers._id': user_netid}}]
-                            }}]
+                                            {'$match': {'viewers._id': user_netid}},
+                                            {'$match': {'text_search_score': {'$gt': 0.5}}}]
+                            }}] 
             else:
                 pipeline += [{'$unionWith': {
                                 'coll': 'urls',

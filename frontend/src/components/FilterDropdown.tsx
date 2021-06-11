@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { Form, Dropdown, Select, Radio, Checkbox, DatePicker } from 'antd';
+import { Form, Dropdown, Select, Radio, Checkbox, DatePicker, Space } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import moment from 'moment';
 import { OrgInfo } from '../api/Org';
@@ -215,7 +215,8 @@ export const FilterDropdown: React.FC<Props> = (props) => {
   );
 
   return (
-    <Dropdown
+    <Space>
+      <Dropdown
       overlay={dropdown}
       visible={dropdownVisible}
       onVisibleChange={setDropdownVisible}
@@ -226,5 +227,6 @@ export const FilterDropdown: React.FC<Props> = (props) => {
         Filter Links <DownOutlined />
       </span>
     </Dropdown>
+    </Space>
   );
 };

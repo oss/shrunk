@@ -378,15 +378,15 @@ export class Dashboard extends React.Component<Props, State> {
    */
   setQuery = async (newQuery: SearchQuery): Promise<void> => {
     const results = await this.doQuery(newQuery, 0, this.state.linksPerPage);
-
+    /*
     // Filter out duplicate links
     const uniqueResults = results.results.filter(
       (v, i, a) => a.findIndex((t) => t.id === v.id) === i,
     );
-
+      */
     const totalPages = Math.ceil(results.count / this.state.linksPerPage);
     this.setState({
-      linkInfo: uniqueResults,
+      linkInfo: results.results,
       query: newQuery,
       currentPage: 1,
       totalPages,
@@ -412,13 +412,14 @@ export class Dashboard extends React.Component<Props, State> {
       skip,
       this.state.linksPerPage,
     );
+    /*
     const uniqueResults = results.results.filter(
       (v, i, a) => a.findIndex((t) => t.id === v.id) === i,
     );
-
+    */
     const totalPages = Math.ceil(results.count / this.state.linksPerPage);
     this.setState({
-      linkInfo: uniqueResults,
+      linkInfo: results.results,
       currentPage: newPage,
       totalPages,
       currentOffset: newPage * this.state.linksPerPage,
