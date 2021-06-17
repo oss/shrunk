@@ -384,6 +384,8 @@ export class Dashboard extends React.Component<Props, State> {
       (v, i, a) => a.findIndex((t) => t.id === v.id) === i,
     );
       */
+    console.log("In setQuery()");
+    console.log(results);
     const totalPages = Math.ceil(results.count / this.state.linksPerPage);
     this.setState({
       linkInfo: results.results,
@@ -417,6 +419,8 @@ export class Dashboard extends React.Component<Props, State> {
       (v, i, a) => a.findIndex((t) => t.id === v.id) === i,
     );
     */
+   console.log("In setPage()");
+   console.log(results);
     const totalPages = Math.ceil(results.count / this.state.linksPerPage);
     this.setState({
       linkInfo: results.results,
@@ -473,6 +477,8 @@ export class Dashboard extends React.Component<Props, State> {
       },
       body: JSON.stringify(req),
     }).then((resp) => resp.json());
+    console.log("In doQuery()");
+    console.log(result);
     return {
       count: result.count,
       results: result.results.map(
@@ -895,6 +901,7 @@ export class Dashboard extends React.Component<Props, State> {
   };
 
   render(): React.ReactNode {
+    console.log(this.state.linkInfo);
     return (
       <>
           <Row className="primary-row" wrap align="middle" justify="start">

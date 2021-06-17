@@ -45,7 +45,7 @@ class SearchClient:
             ]
         #db.organizations.aggregate([{$match:{'members.netid': 'DEV_ADMIN'}},{$lookup:{from:'urls',localField:'_id',foreignField:'viewers._id',as:'shared_urls',}},{$unwind:'$shared_urls'},{$replaceRoot:{newRoot:'$shared_urls'}},{$unionWith:{coll:'urls',pipeline:[{$match:{'viewers._id': 'DEV_ADMIN'}}]}}])
         #db.organizations.aggregate([{$match:{'members.netid': 'DEV_ADMIN'}},{$lookup:{from:'urls',localField:'_id',foreignField:'viewers._id',as:'shared_urls',}},{$unwind:'$shared_urls'},{$replaceRoot:{newRoot:'$shared_urls'}},{$unionWith:{coll:'urls',pipeline:[{$match: {$text: {$search: 'random'}}},{$addFields: {text_search_score: {$meta: 'textScore'}}},{$match:{'viewers._id': 'DEV_ADMIN'}}]}}])
-        #db.organizations.aggregate([{$match:{'members.netid': 'DEV_ADMIN'}},{$lookup:{from:'urls',localField:'_id',foreignField:'viewers._id',as:'shared_urls',}},{$unwind:'$shared_urls'},{$replaceRoot:{newRoot:'$shared_urls'}},{$unionWith:{coll:'urls',pipeline:[{$match: {$text: {$search: 'random'}}},{$addFields: {text_search_score: {$meta: 'textScore'}}},{$match:{'viewers._id': 'DEV_ADMIN'}}]}},{$match:{text_search_score:{$gt:1.0}}}])
+        #db.organizations.aggregate([{$match:{'members.netid': 'DEV_ADMIN'}},{$lookup:{from:'urls',localField:'_id',foreignField:'viewers._id',as:'shared_urls',}},{$unwind:'$shared_urls'},{$replaceRoot:{newRoot:'$shared_urls'}},{$unionWith:{coll:'urls',pipeline:[{$match: {$text: {$search: 'random'}}},{$addFields: {text_search_score: {$meta: 'textScore'}}},{$match:{'viewers._id': 'DEV_ADMIN'}}]}},{$match:{text_search_score:{$gt:0.5}}}])
 
         # Filter the appropriate links set.
         if query['set']['set'] == 'user':  # search within `user_netid`'s links
@@ -93,7 +93,7 @@ class SearchClient:
         else:
             # This should never happen
             raise RuntimeError(f'Bad sort key {query["sort"]["key"]}')
-        pipeline.append({'$sort': {sort_key: sort_order}})
+        pipeline.append({'$sort': {sort_key: sort_order, '_id': sort_order}})
 
         # Add is_expired field
         now = datetime.now(timezone.utc)
@@ -170,14 +170,20 @@ class SearchClient:
                     'deleted_by': res['deleted_by'],
                     'deleted_time': res['deleted_time'],
                 }
-            print(prepared)
+            
             return prepared
 
         result = next(cursor)
         count = result['count'][0]['count'] if result['count'] else 0
         results = [prepare_result(res) for res in result['result']]
 
+        # Remove possible duplicates in results and update total count
+        unique = { each['id'] : each for each in results}.values()
+        unique_results = list(unique)
+        diff = len(results) - len(unique_results)
+        count = count - diff
+
         return {
             'count': count,
-            'results': results,
+            'results': unique_results,
         }
