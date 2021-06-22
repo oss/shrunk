@@ -30,6 +30,7 @@ class SearchClient:
         pipeline: List[Any] = []
 
         # Filter based on search string, if provided.
+
         if 'query' in query and query['set']['set'] != 'shared':
             pipeline += [{
                 '$match': {
@@ -43,9 +44,6 @@ class SearchClient:
                     'text_search_score': {'$meta': 'textScore'},
                 }},
             ]
-        #db.organizations.aggregate([{$match:{'members.netid': 'DEV_ADMIN'}},{$lookup:{from:'urls',localField:'_id',foreignField:'viewers._id',as:'shared_urls',}},{$unwind:'$shared_urls'},{$replaceRoot:{newRoot:'$shared_urls'}},{$unionWith:{coll:'urls',pipeline:[{$match:{'viewers._id': 'DEV_ADMIN'}}]}}])
-        #db.organizations.aggregate([{$match:{'members.netid': 'DEV_ADMIN'}},{$lookup:{from:'urls',localField:'_id',foreignField:'viewers._id',as:'shared_urls',}},{$unwind:'$shared_urls'},{$replaceRoot:{newRoot:'$shared_urls'}},{$unionWith:{coll:'urls',pipeline:[{$match: {$text: {$search: 'random'}}},{$addFields: {text_search_score: {$meta: 'textScore'}}},{$match:{'viewers._id': 'DEV_ADMIN'}}]}}])
-        #db.organizations.aggregate([{$match:{'members.netid': 'DEV_ADMIN'}},{$lookup:{from:'urls',localField:'_id',foreignField:'viewers._id',as:'shared_urls',}},{$unwind:'$shared_urls'},{$replaceRoot:{newRoot:'$shared_urls'}},{$unionWith:{coll:'urls',pipeline:[{$match: {$text: {$search: 'random'}}},{$addFields: {text_search_score: {$meta: 'textScore'}}},{$match:{'viewers._id': 'DEV_ADMIN'}}]}},{$match:{text_search_score:{$gt:0.5}}}])
 
         # Filter the appropriate links set.
         if query['set']['set'] == 'user':  # search within `user_netid`'s links

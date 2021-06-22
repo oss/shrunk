@@ -61,10 +61,10 @@ export type SearchSet =
  */
 export interface SearchQuery {
   /**
-   * The query string (optional)
+   * An array that holds query strings
    * @property
    */
-  queryString?: string;
+  queryString: Array<String>;
 
   /**
    * The set of links to search (c.f. [[SearchSet]])
@@ -213,6 +213,7 @@ export class Dashboard extends React.Component<Props, State> {
       linkInfo: null,
       linksPerPage: 10,
       query: {
+        queryString: [],
         set: { set: this.props.userPrivileges.has('admin') ? 'all' : 'user' },
         show_expired_links: false,
         show_deleted_links: false,
@@ -256,28 +257,16 @@ export class Dashboard extends React.Component<Props, State> {
   };
 
   /**
-   * Updates the query string in the state and executes a search query
+   * Updates the query string state and executes a search query
    * @method
    * @param newQueryString The new query string
    */
-  setQueryString = (newQueryString: string) => {
+  updateQueryString = (queryStrings: string[]) => {
     this.setState(
-      { query: { ...this.state.query, queryString: newQueryString } },
+      { query: { ...this.state.query, queryString: queryStrings} },
       () => this.setQuery(this.state.query),
     );
   };
-
-  /**
-   * Updates the query string in the state and executes a search query
-   * @method
-   * @param newQueryString The new query string
-   */
-  clearString = () => {
-      this.setState(
-        { query: { ...this.state.query, queryString: undefined } },
-        () => this.setQuery(this.state.query),
-      );
-    };
 
   /**
    * Updates the query string in the state and executes a search query
@@ -445,8 +434,18 @@ export class Dashboard extends React.Component<Props, State> {
     skip: number,
     limit: number,
   ): Promise<{ count: number; results: LinkInfo[] }> => {
+    
+    // Convert string array to one string with all text queries
+    var querystr; 
+    if(query.queryString.length==0){  
+      querystr = undefined;
+    }
+    else{
+      querystr = query.queryString.toString();
+    }
+    console.log(querystr);
     const req: Record<string, any> = {
-      query: query.queryString,
+      query: querystr,
       set: query.set,
       show_expired_links: query.show_expired_links,
       show_deleted_links: query.show_deleted_links,
@@ -904,8 +903,7 @@ export class Dashboard extends React.Component<Props, State> {
                   <></>
                 ) : (
                   <SearchBox 
-                    setQueryString={this.setQueryString} 
-                    clearString={this.clearString}
+                    updateQueryString={this.updateQueryString}
                   />
                 )}
               </Col>

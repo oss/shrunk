@@ -16,13 +16,7 @@ export interface Props {
    * Callback called when the user executes a new search query
    * @property
    */
-  setQueryString: (newQueryString: string) => void;
-
-  /**
-   * Callback called when the user executes a new search query
-   * @property
-   */
-  clearString: () => void;
+  updateQueryString: (queryStrings: string[]) => void;
 }
 
 /**
@@ -31,24 +25,41 @@ export interface Props {
  */
 export const SearchBox: React.FC<Props> = (props) => {
   const [query, setQuery] = useState('');
-  const [tag, setTag] = useState('');
-  const [toggleTag, showTag] = useState(false);
+  const [tags, setTag] = useState([]);
 
 
-  const updateQueryString = async (): Promise<void> => {
+  function addTag() {
     if (query !== '') {
-      await props.setQueryString(query);
-      showTag(true);
-      setTag(query);
+      tags.push(query);
+      props.updateQueryString(tags);
       setQuery('');
     }
   };
 
-  const clearString = async() : Promise<void> => {
-    setQuery('');
-    showTag(false);
-    await props.clearString();
+  function deleteTag(tag: string) {
+    const updated = tags.filter(e => e !== tag)
+    setTag(updated);
+    props.updateQueryString(updated);
   }
+
+  function forMap(tag: string) {
+    const tagElem = (
+      <Tag
+        closable
+        onClose={e => {
+          e.preventDefault();
+          deleteTag(tag);
+        }}
+      >
+        {tag}
+      </Tag>
+    );
+    return (
+      <span key={tag} style={{ display: 'inline-block' }}>
+        {tagElem}
+      </span>
+    );
+  };
 
   return (
     <Space direction="vertical" align="baseline">
@@ -58,13 +69,11 @@ export const SearchBox: React.FC<Props> = (props) => {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-            <Button icon={<SearchOutlined />} onClick={updateQueryString} />
+            <Button icon={<SearchOutlined />} onClick={addTag} />
       </Space>
-      {!toggleTag ? (
-        <></>
-        ) : (
-            <Tag closable onClose={clearString}>{tag}</Tag>
-      )}
+      <Space direction ="horizontal">
+        {tags.map(forMap)}
+      </Space>
     </Space>
   );
 };
