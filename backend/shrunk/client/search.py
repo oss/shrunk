@@ -32,17 +32,9 @@ class SearchClient:
         # Filter based on search string, if provided.
 
         if 'query' in query and query['set']['set'] != 'shared':
-            pipeline += [{
-                '$match': {
-                    '$text': {
-                        '$search': query['query'],
-                    },
-                },
-            },
-            {
-                '$addFields': {
-                    'text_search_score': {'$meta': 'textScore'},
-                }},
+            pipeline += [
+                {'$match': {'$text': {'$search': query['query']}}},
+                {'$addFields': {'text_search_score': {'$meta': 'textScore'}}},
             ]
 
         # Filter the appropriate links set.
@@ -51,30 +43,45 @@ class SearchClient:
         elif query['set']['set'] == 'shared':
             # If the set is 'shared', the pipeline will be executed against the 'organizations'
             # collection instead of the 'urls' collection.
-            pipeline += [
-                {'$match': {'members.netid': user_netid}},
-                {'$lookup': {
-                    'from': 'urls',
-                    'localField': '_id',
-                    'foreignField': 'viewers._id',
-                    'as': 'shared_urls',
-                }},
-                {'$unwind': '$shared_urls'},
-                {'$replaceRoot': {'newRoot': '$shared_urls'}},
-            ]
             if 'query' in query:
-                pipeline += [{'$unionWith': {
-                                'coll': 'urls',
-                                'pipeline': [{'$match': {'$text': {'$search': query['query']}}},
-                                            {'$addFields': {'text_search_score': {'$meta': 'textScore'}}},
-                                            {'$match': {'viewers._id': user_netid}},
-                                            {'$match': {'text_search_score': {'$gt': 0.5}}}]
-                            }}] 
+                pipeline += [
+                    {'$match': {'members.netid': user_netid}},
+                    {'$lookup': {
+                        'from': 'urls',
+                        'let': {'org_id':'$_id'},
+                        'pipeline' : [
+                            {'$match': {'$text': {'$search': query['query']}}},
+                            {'$addFields': {'text_search_score': {'$meta': 'textScore'}}},
+                            {'$unwind': '$viewers'},
+                            {'$match': {'$expr':{'$eq':['$viewers._id','$$org_id']}}},
+                            {'$match': {'text_search_score': {'$gt': 0.5}}},
+                        ],
+                        'as': 'shared_urls',
+                    }},
+                    {'$unwind': '$shared_urls'},
+                    {'$replaceRoot': {'newRoot': '$shared_urls'}},
+                    {'$unionWith': {
+                                    'coll': 'urls',
+                                    'pipeline': [{'$match': {'$text': {'$search': query['query']}}},
+                                                {'$addFields': {'text_search_score': {'$meta': 'textScore'}}},
+                                                {'$match': {'viewers._id': user_netid}},
+                                                {'$match': {'text_search_score': {'$gt': 0.5}}}]
+                                }}] 
             else:
-                pipeline += [{'$unionWith': {
-                                'coll': 'urls',
-                                'pipeline': [{'$match': {'viewers._id': user_netid}}]
-                            }}]
+                pipeline += [
+                    {'$match': {'members.netid': user_netid}},
+                    {'$lookup': {
+                        'from': 'urls',
+                        'localField': '_id',
+                        'foreignField': 'viewers._id',
+                        'as': 'shared_urls',
+                    }},
+                    {'$unwind': '$shared_urls'},
+                    {'$replaceRoot': {'newRoot': '$shared_urls'}},
+                    {'$unionWith': {
+                        'coll': 'urls',
+                        'pipeline': [{'$match': {'viewers._id': user_netid}}]
+                    }}]
         elif query['set']['set'] == 'org':  # search within the given org
             pipeline.append({'$match': {'viewers.type': 'org', 'viewers._id': query['set']['org']}})
 
