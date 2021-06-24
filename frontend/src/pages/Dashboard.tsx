@@ -368,8 +368,6 @@ export class Dashboard extends React.Component<Props, State> {
   setQuery = async (newQuery: SearchQuery): Promise<void> => {
     const results = await this.doQuery(newQuery, 0, this.state.linksPerPage);
 
-    console.log("In setQuery()");
-    console.log(results);
     const totalPages = Math.ceil(results.count / this.state.linksPerPage);
     this.setState({
       linkInfo: results.results,
@@ -399,8 +397,6 @@ export class Dashboard extends React.Component<Props, State> {
       this.state.linksPerPage,
     );
 
-   console.log("In setPage()");
-   console.log(results);
     const totalPages = Math.ceil(results.count / this.state.linksPerPage);
     this.setState({
       linkInfo: results.results,
@@ -443,7 +439,7 @@ export class Dashboard extends React.Component<Props, State> {
     else{
       querystr = query.queryString.toString();
     }
-    console.log(querystr);
+
     const req: Record<string, any> = {
       query: querystr,
       set: query.set,
@@ -467,8 +463,7 @@ export class Dashboard extends React.Component<Props, State> {
       },
       body: JSON.stringify(req),
     }).then((resp) => resp.json());
-    console.log("In doQuery()");
-    console.log(result);
+
     return {
       count: result.count,
       results: result.results.map(
@@ -891,7 +886,6 @@ export class Dashboard extends React.Component<Props, State> {
   };
 
   render(): React.ReactNode {
-    console.log(this.state.linkInfo);
     return (
       <>
           <Row className="primary-row" wrap align="middle" justify="start">
