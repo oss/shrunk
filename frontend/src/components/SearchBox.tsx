@@ -55,7 +55,7 @@ export const SearchBox: React.FC<Props> = (props) => {
       </Tag>
     );
     return (
-      <span key={tag} style={{ display: 'inline-block' }}>
+      <span key={tag}>
         {tagElem}
       </span>
     );
@@ -63,14 +63,14 @@ export const SearchBox: React.FC<Props> = (props) => {
 
   return (
     <Space direction="vertical" align="baseline">
-      <Space direction="horizontal">
-        <Input
+      <Space direction = "horizontal">
+          <Input
               placeholder="Search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
             <Button icon={<SearchOutlined />} onClick={addTag} />
-      </Space>
+      </Space>   
       <Space direction ="horizontal">
         {tags.map(forMap)}
       </Space>
