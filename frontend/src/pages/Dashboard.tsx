@@ -5,7 +5,7 @@
 
 import React from 'react';
 
-import { Row, Col, Pagination, Spin, Dropdown, Button } from 'antd';
+import { Row, Col, Pagination, Spin, Dropdown, Button, Space } from 'antd';
 import { PlusCircleFilled } from '@ant-design/icons';
 
 import moment from 'moment';
@@ -888,11 +888,10 @@ export class Dashboard extends React.Component<Props, State> {
   render(): React.ReactNode {
     return (
       <>
-          <Row className="primary-row" wrap align="middle" justify="start">
-            <Col flex="1 1 200px">
+          <Row className="primary-row">
+            <Col span={20}>
+              <Space>
                 <span className="page-title">Dashboard</span>
-            </Col>
-            <Col flex="1 1 200px">
                 {this.state.userOrgs === null ? (
                   <></>
                 ) : (
@@ -900,8 +899,6 @@ export class Dashboard extends React.Component<Props, State> {
                     updateQueryString={this.updateQueryString}
                   />
                 )}
-              </Col>
-              <Col flex="1 1 100px">
                 {this.state.userOrgs === null ? (
                   <></>
                 ) : (
@@ -917,8 +914,9 @@ export class Dashboard extends React.Component<Props, State> {
                     showLinksBefore={this.showLinksBefore}
                   />
                 )}
+                </Space>
             </Col>
-            <Col flex="1 1 200px" className="btn-col">
+            <Col span={4} className="btn-col">
               <Dropdown
                 overlay={
                   <CreateLinkForm

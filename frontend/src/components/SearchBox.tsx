@@ -67,6 +67,7 @@ export const SearchBox: React.FC<Props> = (props) => {
           <Input
               placeholder="Search"
               value={query}
+              onPressEnter={addTag}
               onChange={(e) => setQuery(e.target.value)}
             />
             <Button icon={<SearchOutlined />} onClick={addTag} />
