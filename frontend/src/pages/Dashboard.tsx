@@ -901,7 +901,7 @@ export class Dashboard extends React.Component<Props, State> {
                 />
               )}
             </Col>
-            <Col span={7} className="vertical-center-col">
+            <Col span={7} className="filter-col">
               {this.state.userOrgs === null ? (
                 <></>
               ) : (
