@@ -4,8 +4,9 @@
  */
 
 import React, { useState } from 'react';
-import { Space, Input, Button, Tag } from 'antd';
+import { Space, Input, Button, Tag, Alert } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
+import { truncate } from 'fs/promises';
 
 /**
  * Props for the [[SearchBox]] component
@@ -26,13 +27,30 @@ export interface Props {
 export const SearchBox: React.FC<Props> = (props) => {
   const [query, setQuery] = useState('');
   const [tags, setTag] = useState([]);
+  const [errorMsg, setError] = useState('');
+  const [error, toggleError] = useState(false);
 
+  function checkDuplicates(tag: string){
+    if(tags.includes(tag)){
+      return true;
+    }
+    else{
+      return false;
+    }
+  }
 
   function addTag() {
     if (query !== '') {
-      tags.push(query);
-      props.updateQueryString(tags);
-      setQuery('');
+      if(tags.includes(query)){
+        setQuery('');
+        setError("Already set a filter for " + query);
+        toggleError(true);
+      }
+      else{
+        tags.push(query);
+        props.updateQueryString(tags);
+        setQuery('');
+      }
     }
   };
 
@@ -75,6 +93,7 @@ export const SearchBox: React.FC<Props> = (props) => {
       <Space direction ="horizontal">
         {tags.map(forMap)}
       </Space>
+      {!error ? (<></>) : <Alert message={errorMsg} type="error" showIcon banner closable/>}
     </Space>
   );
 };
