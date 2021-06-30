@@ -93,6 +93,7 @@ export const SearchBox: React.FC<Props> = (props) => {
       <Space direction ="horizontal">
         {tags.map(forMap)}
       </Space>
+      
       {!error ? (<></>) : <Alert message={errorMsg} type="error" showIcon banner closable/>}
     </Space>
   );
