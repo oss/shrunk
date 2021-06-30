@@ -889,32 +889,34 @@ export class Dashboard extends React.Component<Props, State> {
     return (
       <>
           <Row className="primary-row">
-            <Col span={20}>
-              <Space>
-                <span className="page-title">Dashboard</span>
-                {this.state.userOrgs === null ? (
-                  <></>
-                ) : (
-                  <SearchBox 
-                    updateQueryString={this.updateQueryString}
-                  />
-                )}
-                {this.state.userOrgs === null ? (
-                  <></>
-                ) : (
-                  <FilterDropdown
-                    userPrivileges={this.props.userPrivileges}
-                    userOrgs={this.state.userOrgs}
-                    showByOrg={this.showByOrg}
-                    showDeletedLinks={this.showDeletedLinks}
-                    showExpiredLinks={this.showExpiredLinks}
-                    sortLinksByKey={this.sortLinksByKey}
-                    sortLinksByOrder={this.sortLinksByOrder}
-                    showLinksAfter={this.showLinksAfter}
-                    showLinksBefore={this.showLinksBefore}
-                  />
-                )}
-                </Space>
+            <Col span={6}>
+              <span className="page-title">Dashboard</span>
+            </Col>
+            <Col span={7} className="search-bar-col">
+              {this.state.userOrgs === null ? (
+                <></>
+              ) : (
+                <SearchBox 
+                  updateQueryString={this.updateQueryString}
+                />
+              )}
+            </Col>
+            <Col span={7} className="vertical-center-col">
+              {this.state.userOrgs === null ? (
+                <></>
+              ) : (
+                <FilterDropdown
+                  userPrivileges={this.props.userPrivileges}
+                  userOrgs={this.state.userOrgs}
+                  showByOrg={this.showByOrg}
+                  showDeletedLinks={this.showDeletedLinks}
+                  showExpiredLinks={this.showExpiredLinks}
+                  sortLinksByKey={this.sortLinksByKey}
+                  sortLinksByOrder={this.sortLinksByOrder}
+                  showLinksAfter={this.showLinksAfter}
+                  showLinksBefore={this.showLinksBefore}
+                />
+              )}
             </Col>
             <Col span={4} className="btn-col">
               <Dropdown

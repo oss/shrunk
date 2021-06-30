@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { Space, Input, Button, Tag, Alert } from 'antd';
+import { Form, Input, Button, Tag } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { truncate } from 'fs/promises';
 
@@ -27,30 +27,24 @@ export interface Props {
 export const SearchBox: React.FC<Props> = (props) => {
   const [query, setQuery] = useState('');
   const [tags, setTag] = useState([]);
-  const [errorMsg, setError] = useState('');
-  const [error, toggleError] = useState(false);
+  const [form] = Form.useForm();
+  const maxTags = 4;
 
-  function checkDuplicates(tag: string){
-    if(tags.includes(tag)){
+  function checkDuplicates(){
+    if(query == '') return false;
+    if(tags.includes(query)){
       return true;
     }
     else{
-      return false;
+      return false; 
     }
   }
 
   function addTag() {
-    if (query !== '') {
-      if(tags.includes(query)){
-        setQuery('');
-        setError("Already set a filter for " + query);
-        toggleError(true);
-      }
-      else{
-        tags.push(query);
-        props.updateQueryString(tags);
-        setQuery('');
-      }
+    if (query !== '' && tags.length < maxTags && !checkDuplicates()) {
+      setQuery('');
+      tags.push(query);
+      props.updateQueryString(tags);
     }
   };
 
@@ -80,21 +74,40 @@ export const SearchBox: React.FC<Props> = (props) => {
   };
 
   return (
-    <Space direction="vertical" align="baseline">
-      <Space direction = "horizontal">
+    <Form layout="inline" form={form} onFinish={() => form.resetFields()}>
+      <Input.Group compact>
+        <Form.Item 
+          rules={[
+            // Validator for duplicate tags and limit tags
+            () => ({
+              async validator(_,value) : Promise<void> {
+                if (!checkDuplicates() && tags.length < maxTags) {
+                  return Promise.resolve();
+                }
+                if (checkDuplicates()){
+                  return Promise.reject(new Error("Already a filter word."));
+                }
+                if (tags.length == maxTags){
+                  return Promise.reject(new Error("Too many filter words."));
+                }
+              },
+            }),]}
+        >
           <Input
-              placeholder="Search"
-              value={query}
-              onPressEnter={addTag}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-            <Button icon={<SearchOutlined />} onClick={addTag} />
-      </Space>   
-      <Space direction ="horizontal">
-        {tags.map(forMap)}
-      </Space>
-      
-      {!error ? (<></>) : <Alert message={errorMsg} type="error" showIcon banner closable/>}
-    </Space>
+            placeholder="Search"
+            value={query}
+            onPressEnter={addTag}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </Form.Item>
+        <Form.Item>
+          <Button icon={<SearchOutlined />} onClick={addTag} />
+        </Form.Item>
+        <br/>
+        <Form.Item>
+          {tags.map(forMap)}
+        </Form.Item>
+      </Input.Group>
+    </Form>
   );
 };
