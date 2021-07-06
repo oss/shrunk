@@ -888,7 +888,7 @@ export class Dashboard extends React.Component<Props, State> {
   render(): React.ReactNode {
     return (
       <>
-          <Row className="primary-row">
+          <Row className="primary-row" align="top">
             <Col span={6}>
               <span className="page-title">Dashboard</span>
             </Col>
