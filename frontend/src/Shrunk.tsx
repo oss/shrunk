@@ -13,7 +13,8 @@ import {
   NavLink,
 } from 'react-router-dom';
 import { createBrowserHistory, Location } from 'history';
-import { Layout, Menu } from 'antd';
+import { Layout, Menu, Dropdown } from 'antd';
+import { DownOutlined } from '@ant-design/icons';
 
 import { Dashboard } from './pages/Dashboard';
 import { Admin } from './pages/Admin';
@@ -216,15 +217,41 @@ export class Shrunk extends React.Component<Props, State> {
                   FAQ
                 </NavLink>
               </Menu.Item>
-              <SubMenu
-                key="user"
-                title={this.props.netid}
-                style={{ float: 'right' }}
-              >
-                <Menu.Item key="logout">
-                  <a href="/app/logout">Logout</a>
-                </Menu.Item>
-              </SubMenu>
+              <Dropdown 
+                className="logout-menu"
+                overlay={
+                <Menu>
+                  {this.props.userPrivileges.size === 0 ? (
+                    <Menu.Item disabled>
+                      Whitelisted User
+                    </Menu.Item>
+                  ) : (                 
+                    this.props.userPrivileges.has("power_user") ? (
+                    <Menu.Item disabled>
+                      Power User
+                    </Menu.Item>
+                  ) : (
+                    this.props.userPrivileges.has("facstaff") ? (
+                    <Menu.Item disabled>
+                      Faculty/Staff
+                    </Menu.Item>
+                  ) : (
+                    <Menu.Item disabled>
+                      Administrator
+                    </Menu.Item>
+                  )
+                  )
+                  )}
+
+                  <Menu.Item key="logout">
+                    <a href="/app/logout">Logout</a>
+                  </Menu.Item>
+                </Menu>
+              }>
+                <a onClick={e => e.preventDefault()}>
+                {this.props.netid} <DownOutlined />
+                </a>
+            </Dropdown>
             </Menu>
           </Header>
           <Layout>
