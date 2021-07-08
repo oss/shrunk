@@ -30,9 +30,20 @@ export const SearchBox: React.FC<Props> = (props) => {
   const [form] = Form.useForm();
   const maxTags = 4;
 
-  function checkDuplicates(){
-    if(query == '') return false;
-    if(tags.includes(query)){
+  const validator = (_: any, value: { word: string }) => {
+    if (checkDuplicates(value.word)) {
+      return Promise.reject(new Error('This word is already used as a filter.'));
+    }
+    if (maxTags == tags.length) {
+      return Promise.reject(new Error('You must remove a tag first.'));
+    }
+    return Promise.resolve();
+  };
+
+  function checkDuplicates(word: string){
+    console.log("calling checkDuplicates()");
+    if(word == '') return false;
+    if(tags.includes(word)){
       return true;
     }
     else{
@@ -41,7 +52,7 @@ export const SearchBox: React.FC<Props> = (props) => {
   }
 
   function addTag() {
-    if (query !== '' && tags.length < maxTags && !checkDuplicates()) {
+    if (query !== '' && tags.length < maxTags && !checkDuplicates(query)) {
       setQuery('');
       tags.push(query);
       props.updateQueryString(tags);
@@ -74,25 +85,13 @@ export const SearchBox: React.FC<Props> = (props) => {
   };
 
   return (
-    <Form layout="inline" form={form} onFinish={() => form.resetFields()}>
+    <Form 
+      layout="inline" 
+      form={form} 
+      onFinish={() => form.resetFields()}
+      >
       <Input.Group compact>
-        <Form.Item 
-          rules={[
-            // Validator for duplicate tags and limit tags
-            () => ({
-              async validator(_,value) : Promise<void> {
-                if (!checkDuplicates() && tags.length < maxTags) {
-                  return Promise.resolve();
-                }
-                if (checkDuplicates()){
-                  return Promise.reject(new Error("Already a filter word."));
-                }
-                if (tags.length == maxTags){
-                  return Promise.reject(new Error("Too many filter words."));
-                }
-              },
-            }),]}
-        >
+        <Form.Item rules={[{ validator: validator }]}>
           <Input
             placeholder="Search"
             value={query}
