@@ -4,8 +4,9 @@
  */
 
 import React, { useState } from 'react';
-import { Form, Input, Button } from 'antd';
+import { Form, Input, Button, Tag } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
+import { truncate } from 'fs/promises';
 
 /**
  * Props for the [[SearchBox]] component
@@ -16,7 +17,7 @@ export interface Props {
    * Callback called when the user executes a new search query
    * @property
    */
-  setQueryString: (newQueryString: string) => void;
+  updateQueryString: (queryStrings: string[]) => void;
 }
 
 /**
@@ -25,25 +26,85 @@ export interface Props {
  */
 export const SearchBox: React.FC<Props> = (props) => {
   const [query, setQuery] = useState('');
+  const [tags, setTag] = useState([]);
+  const [form] = Form.useForm();
+  const maxTags = 4;
 
-  const updateQueryString = async (): Promise<void> => {
-    if (query !== '') {
-      await props.setQueryString(query);
+  const validator = (_: any, value: { word: string }) => {
+    if (checkDuplicates(value.word)) {
+      return Promise.reject(new Error('This word is already used as a filter.'));
+    }
+    if (maxTags == tags.length) {
+      return Promise.reject(new Error('You must remove a tag first.'));
+    }
+    return Promise.resolve();
+  };
+
+  function checkDuplicates(word: string){
+    console.log("calling checkDuplicates()");
+    if(word == '') return false;
+    if(tags.includes(word)){
+      return true;
+    }
+    else{
+      return false; 
+    }
+  }
+
+  function addTag() {
+    if (query !== '' && tags.length < maxTags && !checkDuplicates(query)) {
+      setQuery('');
+      tags.push(query);
+      props.updateQueryString(tags);
     }
   };
 
+  function deleteTag(tag: string) {
+    const updated = tags.filter(e => e !== tag)
+    setTag(updated);
+    props.updateQueryString(updated);
+  }
+
+  function forMap(tag: string) {
+    const tagElem = (
+      <Tag
+        closable
+        onClose={e => {
+          e.preventDefault();
+          deleteTag(tag);
+        }}
+      >
+        {tag}
+      </Tag>
+    );
+    return (
+      <span key={tag}>
+        {tagElem}
+      </span>
+    );
+  };
+
   return (
-    <Form layout="inline">
+    <Form 
+      layout="inline" 
+      form={form} 
+      onFinish={() => form.resetFields()}
+      >
       <Input.Group compact>
-        <Form.Item name="query">
+        <Form.Item rules={[{ validator: validator }]}>
           <Input
             placeholder="Search"
             value={query}
+            onPressEnter={addTag}
             onChange={(e) => setQuery(e.target.value)}
           />
         </Form.Item>
         <Form.Item>
-          <Button icon={<SearchOutlined />} onClick={updateQueryString} />
+          <Button icon={<SearchOutlined />} onClick={addTag} />
+        </Form.Item>
+        <br/>
+        <Form.Item>
+          {tags.map(forMap)}
         </Form.Item>
       </Input.Group>
     </Form>

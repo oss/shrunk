@@ -29,44 +29,61 @@ class SearchClient:
         # or on the urls collection otherwise.
         pipeline: List[Any] = []
 
+        # Filter based on search string, if provided.
+
+        if 'query' in query and query['set']['set'] != 'shared':
+            pipeline += [
+                {'$match': {'$text': {'$search': query['query']}}},
+                {'$addFields': {'text_search_score': {'$meta': 'textScore'}}},
+            ]
+
         # Filter the appropriate links set.
         if query['set']['set'] == 'user':  # search within `user_netid`'s links
             pipeline.append({'$match': {'netid': user_netid}})
         elif query['set']['set'] == 'shared':
             # If the set is 'shared', the pipeline will be executed against the 'organizations'
             # collection instead of the 'urls' collection.
-            pipeline += [
-                {'$match': {'members.netid': user_netid} },
-                {'$lookup': {
-                    'from': 'urls',
-                    'localField': '_id',
-                    'foreignField': 'viewers._id',
-                    'as': 'shared_urls',
-                }},
-                {'$unwind': '$shared_urls'},
-                {'$replaceRoot': {'newRoot': '$shared_urls'}},
-                {'$unionWith': {
-                    'coll': 'urls',
-                    'pipeline': [{'$match': {'viewers._id': user_netid}}],
-                }},
-            ]
+            if 'query' in query:
+                pipeline += [
+                    {'$match': {'members.netid': user_netid}},
+                    {'$lookup': {
+                        'from': 'urls',
+                        'let': {'org_id':'$_id'},
+                        'pipeline' : [
+                            {'$match': {'$text': {'$search': query['query']}}},
+                            {'$addFields': {'text_search_score': {'$meta': 'textScore'}}},
+                            {'$unwind': '$viewers'},
+                            {'$match': {'$expr':{'$eq':['$viewers._id','$$org_id']}}},
+                            {'$match': {'text_search_score': {'$gt': 0.5}}},
+                        ],
+                        'as': 'shared_urls',
+                    }},
+                    {'$unwind': '$shared_urls'},
+                    {'$replaceRoot': {'newRoot': '$shared_urls'}},
+                    {'$unionWith': {
+                                    'coll': 'urls',
+                                    'pipeline': [{'$match': {'$text': {'$search': query['query']}}},
+                                                {'$addFields': {'text_search_score': {'$meta': 'textScore'}}},
+                                                {'$match': {'viewers._id': user_netid}},
+                                                {'$match': {'text_search_score': {'$gt': 0.5}}}]
+                                }}] 
+            else:
+                pipeline += [
+                    {'$match': {'members.netid': user_netid}},
+                    {'$lookup': {
+                        'from': 'urls',
+                        'localField': '_id',
+                        'foreignField': 'viewers._id',
+                        'as': 'shared_urls',
+                    }},
+                    {'$unwind': '$shared_urls'},
+                    {'$replaceRoot': {'newRoot': '$shared_urls'}},
+                    {'$unionWith': {
+                        'coll': 'urls',
+                        'pipeline': [{'$match': {'viewers._id': user_netid}}]
+                    }}]
         elif query['set']['set'] == 'org':  # search within the given org
             pipeline.append({'$match': {'viewers.type': 'org', 'viewers._id': query['set']['org']}})
-
-        # Filter based on search string, if provided.
-        if 'query' in query:
-            pipeline += [{
-                '$match': {
-                    '$text': {
-                        '$search': query['query'],
-                    },
-                },
-            },
-            {
-                '$addFields': {
-                    'text_search_score': {'$meta': 'textScore'},
-                },
-            }]
 
         # Sort results.
         sort_order = 1 if query['sort']['order'] == 'ascending' else -1
@@ -81,7 +98,7 @@ class SearchClient:
         else:
             # This should never happen
             raise RuntimeError(f'Bad sort key {query["sort"]["key"]}')
-        pipeline.append({'$sort': {sort_key: sort_order}})
+        pipeline.append({'$sort': {sort_key: sort_order, '_id': sort_order}})
 
         # Add is_expired field
         now = datetime.now(timezone.utc)
@@ -158,14 +175,20 @@ class SearchClient:
                     'deleted_by': res['deleted_by'],
                     'deleted_time': res['deleted_time'],
                 }
-
+            
             return prepared
 
         result = next(cursor)
         count = result['count'][0]['count'] if result['count'] else 0
         results = [prepare_result(res) for res in result['result']]
 
+        # Remove possible duplicates in results and update total count
+        unique = { each['id'] : each for each in results}.values()
+        unique_results = list(unique)
+        diff = len(results) - len(unique_results)
+        count = count - diff
+
         return {
             'count': count,
-            'results': results,
+            'results': unique_results,
         }

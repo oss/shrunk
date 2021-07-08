@@ -61,10 +61,10 @@ export type SearchSet =
  */
 export interface SearchQuery {
   /**
-   * The query string (optional)
+   * An array that holds query strings
    * @property
    */
-  queryString?: string;
+  queryString: Array<String>;
 
   /**
    * The set of links to search (c.f. [[SearchSet]])
@@ -213,6 +213,7 @@ export class Dashboard extends React.Component<Props, State> {
       linkInfo: null,
       linksPerPage: 10,
       query: {
+        queryString: [],
         set: { set: this.props.userPrivileges.has('admin') ? 'all' : 'user' },
         show_expired_links: false,
         show_deleted_links: false,
@@ -256,13 +257,13 @@ export class Dashboard extends React.Component<Props, State> {
   };
 
   /**
-   * Updates the query string in the state and executes a search query
+   * Updates the query string state and executes a search query
    * @method
    * @param newQueryString The new query string
    */
-  setQueryString = (newQueryString: string) => {
+  updateQueryString = (queryStrings: string[]) => {
     this.setState(
-      { query: { ...this.state.query, queryString: newQueryString } },
+      { query: { ...this.state.query, queryString: queryStrings} },
       () => this.setQuery(this.state.query),
     );
   };
@@ -367,14 +368,9 @@ export class Dashboard extends React.Component<Props, State> {
   setQuery = async (newQuery: SearchQuery): Promise<void> => {
     const results = await this.doQuery(newQuery, 0, this.state.linksPerPage);
 
-    // Filter out duplicate links
-    const uniqueResults = results.results.filter(
-      (v, i, a) => a.findIndex((t) => t.id === v.id) === i,
-    );
-
     const totalPages = Math.ceil(results.count / this.state.linksPerPage);
     this.setState({
-      linkInfo: uniqueResults,
+      linkInfo: results.results,
       query: newQuery,
       currentPage: 1,
       totalPages,
@@ -393,20 +389,17 @@ export class Dashboard extends React.Component<Props, State> {
     if (this.state.query === null) {
       throw new Error('attempted to set page with this.state.query === null');
     }
-
+    
     const skip = (newPage - 1) * this.state.linksPerPage;
     const results = await this.doQuery(
       this.state.query,
       skip,
       this.state.linksPerPage,
     );
-    const uniqueResults = results.results.filter(
-      (v, i, a) => a.findIndex((t) => t.id === v.id) === i,
-    );
 
     const totalPages = Math.ceil(results.count / this.state.linksPerPage);
     this.setState({
-      linkInfo: uniqueResults,
+      linkInfo: results.results,
       currentPage: newPage,
       totalPages,
       currentOffset: newPage * this.state.linksPerPage,
@@ -437,8 +430,18 @@ export class Dashboard extends React.Component<Props, State> {
     skip: number,
     limit: number,
   ): Promise<{ count: number; results: LinkInfo[] }> => {
+    
+    // Convert string array to one string with all text queries
+    var querystr; 
+    if(query.queryString.length==0){  
+      querystr = undefined;
+    }
+    else{
+      querystr = query.queryString.toString();
+    }
+
     const req: Record<string, any> = {
-      query: query.queryString,
+      query: querystr,
       set: query.set,
       show_expired_links: query.show_expired_links,
       show_deleted_links: query.show_deleted_links,
@@ -460,6 +463,7 @@ export class Dashboard extends React.Component<Props, State> {
       },
       body: JSON.stringify(req),
     }).then((resp) => resp.json());
+
     return {
       count: result.count,
       results: result.results.map(
@@ -884,15 +888,20 @@ export class Dashboard extends React.Component<Props, State> {
   render(): React.ReactNode {
     return (
       <>
-        <Row className="primary-row">
-          <Col span={20}>
-            <Space>
+          <Row className="primary-row" align="top">
+            <Col span={6}>
               <span className="page-title">Dashboard</span>
+            </Col>
+            <Col span={7} className="search-bar-col">
               {this.state.userOrgs === null ? (
                 <></>
               ) : (
-                <SearchBox setQueryString={this.setQueryString} />
+                <SearchBox 
+                  updateQueryString={this.updateQueryString}
+                />
               )}
+            </Col>
+            <Col span={7} className="filter-col">
               {this.state.userOrgs === null ? (
                 <></>
               ) : (
@@ -908,33 +917,31 @@ export class Dashboard extends React.Component<Props, State> {
                   showLinksBefore={this.showLinksBefore}
                 />
               )}
-            </Space>
-          </Col>
-
-          <Col span={4} className="btn-col">
-            <Dropdown
-              overlay={
-                <CreateLinkForm
-                  userPrivileges={this.props.userPrivileges}
-                  onFinish={async () => {
-                    this.setState({ createLinkDropdownVisible: false });
-                    await this.refreshResults();
-                  }}
-                />
-              }
-              visible={this.state.createLinkDropdownVisible}
-              onVisibleChange={(flag) =>
-                this.setState({ createLinkDropdownVisible: flag })
-              }
-              placement="bottomRight"
-              trigger={['click']}
-            >
-              <Button type="primary">
-                <PlusCircleFilled /> Shrink a Link
-              </Button>
-            </Dropdown>
-          </Col>
-        </Row>
+            </Col>
+            <Col span={4} className="btn-col">
+              <Dropdown
+                overlay={
+                  <CreateLinkForm
+                    userPrivileges={this.props.userPrivileges}
+                    onFinish={async () => {
+                      this.setState({ createLinkDropdownVisible: false });
+                      await this.refreshResults();
+                    }}
+                  />
+                }
+                visible={this.state.createLinkDropdownVisible}
+                onVisibleChange={(flag) =>
+                  this.setState({ createLinkDropdownVisible: flag })
+                }
+                placement="bottomRight"
+                trigger={['click']}
+              >
+                <Button type="primary">
+                  <PlusCircleFilled /> Shrink a Link
+                </Button>
+              </Dropdown>
+            </Col>
+          </Row>
 
         {this.state.linkInfo === null ? (
           <Spin size="large" />
