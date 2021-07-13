@@ -465,18 +465,18 @@ export class Dashboard extends React.Component<Props, State> {
     return {
       count: result.count,
       results: result.results.map(
-        (result: any) =>
+        (output: any) =>
           ({
-            ...result,
-            created_time: new Date(result.created_time),
-            expiration_time: !result.expiration_time
+            ...output,
+            created_time: new Date(output.created_time),
+            expiration_time: !output.expiration_time
               ? null
-              : new Date(result.expiration_time),
-            deletion_info: !result.deletion_info
+              : new Date(output.expiration_time),
+            deletion_info: !output.deletion_info
               ? null
               : {
-                  deleted_by: result.deletion_info.deleted_by,
-                  deleted_time: new Date(result.deletion_info.deleted_time),
+                  deleted_by: output.deletion_info.deleted_by,
+                  deleted_time: new Date(output.deletion_info.deleted_time),
                 },
           } as LinkInfo),
       ),
