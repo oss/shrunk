@@ -5,7 +5,7 @@
 
 import React from 'react';
 
-import { Row, Col, Pagination, Spin, Dropdown, Button, Space } from 'antd';
+import { Row, Col, Pagination, Spin, Dropdown, Button } from 'antd';
 import { PlusCircleFilled } from '@ant-design/icons';
 
 import moment from 'moment';
@@ -263,7 +263,7 @@ export class Dashboard extends React.Component<Props, State> {
    */
   updateQueryString = (queryStrings: string[]) => {
     this.setState(
-      { query: { ...this.state.query, queryString: queryStrings} },
+      { query: { ...this.state.query, queryString: queryStrings } },
       () => this.setQuery(this.state.query),
     );
   };
@@ -389,7 +389,7 @@ export class Dashboard extends React.Component<Props, State> {
     if (this.state.query === null) {
       throw new Error('attempted to set page with this.state.query === null');
     }
-    
+
     const skip = (newPage - 1) * this.state.linksPerPage;
     const results = await this.doQuery(
       this.state.query,
@@ -430,13 +430,11 @@ export class Dashboard extends React.Component<Props, State> {
     skip: number,
     limit: number,
   ): Promise<{ count: number; results: LinkInfo[] }> => {
-    
     // Convert string array to one string with all text queries
-    var querystr; 
-    if(query.queryString.length==0){  
+    let querystr;
+    if (query.queryString.length === 0) {
       querystr = undefined;
-    }
-    else{
+    } else {
       querystr = query.queryString.toString();
     }
 
@@ -888,60 +886,58 @@ export class Dashboard extends React.Component<Props, State> {
   render(): React.ReactNode {
     return (
       <>
-          <Row className="primary-row" align="top">
-            <Col span={6}>
-              <span className="page-title">Dashboard</span>
-            </Col>
-            <Col span={7} className="search-bar-col">
-              {this.state.userOrgs === null ? (
-                <></>
-              ) : (
-                <SearchBox 
-                  updateQueryString={this.updateQueryString}
-                />
-              )}
-            </Col>
-            <Col span={7} className="filter-col">
-              {this.state.userOrgs === null ? (
-                <></>
-              ) : (
-                <FilterDropdown
+        <Row className="primary-row" align="top">
+          <Col span={6}>
+            <span className="page-title">Dashboard</span>
+          </Col>
+          <Col span={7} className="search-bar-col">
+            {this.state.userOrgs === null ? (
+              <></>
+            ) : (
+              <SearchBox updateQueryString={this.updateQueryString} />
+            )}
+          </Col>
+          <Col span={7} className="filter-col">
+            {this.state.userOrgs === null ? (
+              <></>
+            ) : (
+              <FilterDropdown
+                userPrivileges={this.props.userPrivileges}
+                userOrgs={this.state.userOrgs}
+                showByOrg={this.showByOrg}
+                showDeletedLinks={this.showDeletedLinks}
+                showExpiredLinks={this.showExpiredLinks}
+                sortLinksByKey={this.sortLinksByKey}
+                sortLinksByOrder={this.sortLinksByOrder}
+                showLinksAfter={this.showLinksAfter}
+                showLinksBefore={this.showLinksBefore}
+              />
+            )}
+          </Col>
+          <Col span={4} className="btn-col">
+            <Dropdown
+              overlay={
+                <CreateLinkForm
                   userPrivileges={this.props.userPrivileges}
-                  userOrgs={this.state.userOrgs}
-                  showByOrg={this.showByOrg}
-                  showDeletedLinks={this.showDeletedLinks}
-                  showExpiredLinks={this.showExpiredLinks}
-                  sortLinksByKey={this.sortLinksByKey}
-                  sortLinksByOrder={this.sortLinksByOrder}
-                  showLinksAfter={this.showLinksAfter}
-                  showLinksBefore={this.showLinksBefore}
+                  onFinish={async () => {
+                    this.setState({ createLinkDropdownVisible: false });
+                    await this.refreshResults();
+                  }}
                 />
-              )}
-            </Col>
-            <Col span={4} className="btn-col">
-              <Dropdown
-                overlay={
-                  <CreateLinkForm
-                    userPrivileges={this.props.userPrivileges}
-                    onFinish={async () => {
-                      this.setState({ createLinkDropdownVisible: false });
-                      await this.refreshResults();
-                    }}
-                  />
-                }
-                visible={this.state.createLinkDropdownVisible}
-                onVisibleChange={(flag) =>
-                  this.setState({ createLinkDropdownVisible: flag })
-                }
-                placement="bottomRight"
-                trigger={['click']}
-              >
-                <Button type="primary">
-                  <PlusCircleFilled /> Shrink a Link
-                </Button>
-              </Dropdown>
-            </Col>
-          </Row>
+              }
+              visible={this.state.createLinkDropdownVisible}
+              onVisibleChange={(flag) =>
+                this.setState({ createLinkDropdownVisible: flag })
+              }
+              placement="bottomRight"
+              trigger={['click']}
+            >
+              <Button type="primary">
+                <PlusCircleFilled /> Shrink a Link
+              </Button>
+            </Dropdown>
+          </Col>
+        </Row>
 
         {this.state.linkInfo === null ? (
           <Spin size="large" />
