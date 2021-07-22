@@ -42,7 +42,6 @@ export const SearchBox: React.FC<Props> = (props) => {
       loading={loading}
       allowClear
       onSearch={onSearch}
-      style={{borderRadius:'10px'}}
       />
   );
 };

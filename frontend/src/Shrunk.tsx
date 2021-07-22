@@ -13,8 +13,9 @@ import {
   NavLink,
 } from 'react-router-dom';
 import { createBrowserHistory, Location } from 'history';
-import { Layout, Menu, Dropdown } from 'antd';
-import { DownOutlined } from '@ant-design/icons';
+import { Layout, Menu, Dropdown, Button, Popover } from 'antd';
+import { DownOutlined, LogoutOutlined } from '@ant-design/icons';
+import { IoIosLogOut } from 'react-icons/io';
 
 import { Dashboard } from './pages/Dashboard';
 import { Admin } from './pages/Admin';
@@ -26,6 +27,7 @@ import { AdminStats } from './admin/AdminStats';
 import { Role } from './admin/Role';
 import { ManageOrg } from './pages/subpages/ManageOrg';
 import { OrgStats } from './pages/subpages/OrgStats';
+import { SearchBox } from './components/SearchBox';
 
 import { PendingAlerts } from './alerts/PendingAlerts';
 import { PendingRequests } from './components/PendingRequests';
@@ -33,7 +35,6 @@ import { PendingRequests } from './components/PendingRequests';
 import './antd_themed.less';
 import './Shrunk.less';
 
-const { SubMenu } = Menu;
 const { Header, Content, Footer, Sider } = Layout;
 
 /**
@@ -91,6 +92,12 @@ interface State {
    * @property
    */
   pendingAlerts: Array<string>;
+
+  /**
+   * Role of the user
+   * @property
+   */
+  role: string;
 }
 
 /**
@@ -105,11 +112,25 @@ export class Shrunk extends React.Component<Props, State> {
     const showAdminTab = this.props.userPrivileges.has('admin');
     const showWhitelistTab =
       !showAdminTab && this.props.userPrivileges.has('facstaff');
+    const role = 
+      this.props.userPrivileges.size === 0 ? (
+        'Whitelisted User'
+      ) : (                 
+        this.props.userPrivileges.has("power_user") ? (
+          'Power User'
+      ) : (
+        this.props.userPrivileges.has("facstaff") ? (
+          'Faculty/Staff'
+      ) : (
+          'Administrator'
+      )))
+      
     this.state = {
       showAdminTab,
       showWhitelistTab,
       selectedKeys: ['dashboard'],
       pendingAlerts: [],
+      role,
     };
   }
 
@@ -217,41 +238,16 @@ export class Shrunk extends React.Component<Props, State> {
                   FAQ
                 </NavLink>
               </Menu.Item>
-              <Dropdown 
-                className="logout-menu"
-                overlay={
-                <Menu>
-                  {this.props.userPrivileges.size === 0 ? (
-                    <Menu.Item disabled>
-                      Whitelisted User
-                    </Menu.Item>
-                  ) : (                 
-                    this.props.userPrivileges.has("power_user") ? (
-                    <Menu.Item disabled>
-                      Power User
-                    </Menu.Item>
-                  ) : (
-                    this.props.userPrivileges.has("facstaff") ? (
-                    <Menu.Item disabled>
-                      Faculty/Staff
-                    </Menu.Item>
-                  ) : (
-                    <Menu.Item disabled>
-                      Administrator
-                    </Menu.Item>
-                  )
-                  )
-                  )}
-
-                  <Menu.Item key="logout">
-                    <a href="/app/logout">Logout</a>
-                  </Menu.Item>
-                </Menu>
-              }>
-                <a onClick={e => e.preventDefault()}>
-                {this.props.netid} <DownOutlined />
-                </a>
-            </Dropdown>
+              <Menu.Item key="logout" className="logout-menu">
+                <Button type="text" icon={<LogoutOutlined />} href="/app/logout"/>
+              </Menu.Item>
+              <Menu.Item className="logout-menu">
+                <Popover 
+                  placement="bottom" 
+                  content={<span>{this.state.role}</span>}>
+                  <Button type="primary">{this.props.netid}</Button>
+                </Popover>
+              </Menu.Item>
             </Menu>
           </Header>
           <Layout>
