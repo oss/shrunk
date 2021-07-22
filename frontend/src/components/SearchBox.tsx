@@ -24,41 +24,18 @@ export interface Props {
  * @param props The props
  */
 export const SearchBox: React.FC<Props> = (props) => {
-  const [query, setQuery] = useState('');
-  const [clearIcon, toggle] = useState(false);
+  const { Search } = Input;
 
-  function clearSearch(){
-    setQuery('');
-    toggle(false);
-    props.updateQueryString('');
-  }
-
-  function submitSearch() {
-    if (query == '') {
-      clearSearch();
-    }
-    else{
-      toggle(true);
-      props.updateQueryString(query);
-    }
+  const onSearch = (query: string) => {
+    console.log(query);
+    props.updateQueryString(query);
   };
 
   return (
-    <Form layout="inline">
-      <Input.Group compact>
-        <Form.Item>
-          <Input   
-            suffix={ !clearIcon ? <></> : <Button type='text' icon={<CloseOutlined />} onClick={clearSearch} size='small'/>}
-            placeholder="Search"
-            value={query}
-            onPressEnter={submitSearch}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </Form.Item>
-        <Form.Item>
-          <Button icon={<SearchOutlined />} onClick={submitSearch} />
-        </Form.Item>
-      </Input.Group>
-    </Form>
+    <Search 
+      placeholder="Search"
+      allowClear
+      onSearch={onSearch}
+      enterButton />
   );
 };
