@@ -4,8 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { Form, Input, Button } from 'antd';
-import { SearchOutlined, CloseOutlined } from '@ant-design/icons';
+import { Input } from 'antd';
 
 /**
  * Props for the [[SearchBox]] component
@@ -24,18 +23,26 @@ export interface Props {
  * @param props The props
  */
 export const SearchBox: React.FC<Props> = (props) => {
+  const [loading, toggle] = useState(false);
   const { Search } = Input;
 
   const onSearch = (query: string) => {
-    console.log(query);
-    props.updateQueryString(query);
+    toggle(true);
+    // Create a delay
+    setTimeout(() => {
+      toggle(false);
+      console.log(query);
+      props.updateQueryString(query);
+    }, 400);
   };
 
   return (
-    <Search 
-      placeholder="Search"
+    <Search
+      placeholder="Search URLs"
+      loading={loading}
       allowClear
       onSearch={onSearch}
-      enterButton />
+      style={{borderRadius:'10px'}}
+      />
   );
 };

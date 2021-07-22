@@ -158,7 +158,7 @@ export class LinkRow extends React.Component<Props, State> {
     const isLinkDeleted = this.props.linkInfo.deletion_info !== null;
     const isLinkExpired = this.props.linkInfo.is_expired;
     const titleClassName =
-      isLinkDeleted || isLinkExpired ? 'title deleted' : 'title';
+      isLinkDeleted || isLinkExpired ? 'link-title deleted' : 'link-title';
 
     return (
       <Row className="primary-row" justify="center">

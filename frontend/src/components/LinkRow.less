@@ -1,11 +1,27 @@
 @import '../Base.less';
 
 .primary-row {
-  .alias {
+  .link-title {
+    font-size: 23pt;
+    color: #3473a5;
+    margin-right: 20px;
     white-space: nowrap;
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
+
+    &.deleted {
+      color: lightgray;
+      text-decoration: line-through;
+    }
+  }
+  .alias {
+    font-size: 1.2em;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: black;
 
     &.deleted {
       color: lightgray;
