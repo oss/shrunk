@@ -4,9 +4,8 @@
  */
 
 import React, { useState } from 'react';
-import { Form, Input, Button, Tag } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
-import { truncate } from 'fs/promises';
+import { Form, Input, Button } from 'antd';
+import { SearchOutlined, CloseOutlined } from '@ant-design/icons';
 
 /**
  * Props for the [[SearchBox]] component
@@ -17,8 +16,8 @@ export interface Props {
    * Callback called when the user executes a new search query
    * @property
    */
-  updateQueryString: (queryStrings: string[]) => void;
-}
+  updateQueryString: (newQueryString: string) => void;
+} 
 
 /**
  * The [[SearchBox]] component allows the user to enter and execute a search query
@@ -26,85 +25,38 @@ export interface Props {
  */
 export const SearchBox: React.FC<Props> = (props) => {
   const [query, setQuery] = useState('');
-  const [tags, setTag] = useState([]);
-  const [form] = Form.useForm();
-  const maxTags = 4;
+  const [clearIcon, toggle] = useState(false);
 
-  const validator = (_: any, value: { word: string }) => {
-    if (checkDuplicates(value.word)) {
-      return Promise.reject(new Error('This word is already used as a filter.'));
-    }
-    if (maxTags == tags.length) {
-      return Promise.reject(new Error('You must remove a tag first.'));
-    }
-    return Promise.resolve();
-  };
+  function clearSearch(){
+    setQuery('');
+    toggle(false);
+    props.updateQueryString('');
+  }
 
-  function checkDuplicates(word: string){
-    console.log("calling checkDuplicates()");
-    if(word == '') return false;
-    if(tags.includes(word)){
-      return true;
+  function submitSearch() {
+    if (query == '') {
+      clearSearch();
     }
     else{
-      return false; 
+      toggle(true);
+      props.updateQueryString(query);
     }
-  }
-
-  function addTag() {
-    if (query !== '' && tags.length < maxTags && !checkDuplicates(query)) {
-      setQuery('');
-      tags.push(query);
-      props.updateQueryString(tags);
-    }
-  };
-
-  function deleteTag(tag: string) {
-    const updated = tags.filter(e => e !== tag)
-    setTag(updated);
-    props.updateQueryString(updated);
-  }
-
-  function forMap(tag: string) {
-    const tagElem = (
-      <Tag
-        closable
-        onClose={e => {
-          e.preventDefault();
-          deleteTag(tag);
-        }}
-      >
-        {tag}
-      </Tag>
-    );
-    return (
-      <span key={tag}>
-        {tagElem}
-      </span>
-    );
   };
 
   return (
-    <Form 
-      layout="inline" 
-      form={form} 
-      onFinish={() => form.resetFields()}
-      >
+    <Form layout="inline">
       <Input.Group compact>
-        <Form.Item rules={[{ validator: validator }]}>
-          <Input
+        <Form.Item>
+          <Input   
+            suffix={ !clearIcon ? <></> : <Button type='text' icon={<CloseOutlined />} onClick={clearSearch} size='small'/>}
             placeholder="Search"
             value={query}
-            onPressEnter={addTag}
+            onPressEnter={submitSearch}
             onChange={(e) => setQuery(e.target.value)}
           />
         </Form.Item>
         <Form.Item>
-          <Button icon={<SearchOutlined />} onClick={addTag} />
-        </Form.Item>
-        <br/>
-        <Form.Item>
-          {tags.map(forMap)}
+          <Button icon={<SearchOutlined />} onClick={submitSearch} />
         </Form.Item>
       </Input.Group>
     </Form>

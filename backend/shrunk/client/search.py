@@ -31,7 +31,7 @@ class SearchClient:
 
         # Filter based on search string, if provided.
 
-        if 'query' in query and query['set']['set'] != 'shared':
+        if query['query'] != '' and query['set']['set'] != 'shared':
             pipeline += [
                 {'$match': {'$text': {'$search': query['query']}}},
                 {'$addFields': {'text_search_score': {'$meta': 'textScore'}}},

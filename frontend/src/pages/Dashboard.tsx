@@ -64,7 +64,7 @@ export interface SearchQuery {
    * An array that holds query strings
    * @property
    */
-  queryString: Array<String>;
+  queryString: string;
 
   /**
    * The set of links to search (c.f. [[SearchSet]])
@@ -213,7 +213,7 @@ export class Dashboard extends React.Component<Props, State> {
       linkInfo: null,
       linksPerPage: 10,
       query: {
-        queryString: [],
+        queryString: '',
         set: { set: this.props.userPrivileges.has('admin') ? 'all' : 'user' },
         show_expired_links: false,
         show_deleted_links: false,
@@ -261,9 +261,9 @@ export class Dashboard extends React.Component<Props, State> {
    * @method
    * @param newQueryString The new query string
    */
-  updateQueryString = (queryStrings: string[]) => {
+  updateQueryString = (newQueryString: string) => {
     this.setState(
-      { query: { ...this.state.query, queryString: queryStrings} },
+      { query: { ...this.state.query, queryString: newQueryString} },
       () => this.setQuery(this.state.query),
     );
   };
@@ -430,18 +430,9 @@ export class Dashboard extends React.Component<Props, State> {
     skip: number,
     limit: number,
   ): Promise<{ count: number; results: LinkInfo[] }> => {
-    
-    // Convert string array to one string with all text queries
-    var querystr; 
-    if(query.queryString.length==0){  
-      querystr = undefined;
-    }
-    else{
-      querystr = query.queryString.toString();
-    }
 
     const req: Record<string, any> = {
-      query: querystr,
+      query: query.queryString,
       set: query.set,
       show_expired_links: query.show_expired_links,
       show_deleted_links: query.show_deleted_links,
@@ -890,7 +881,7 @@ export class Dashboard extends React.Component<Props, State> {
       <>
           <Row className="primary-row" align="top">
             <Col span={6}>
-              <span className="page-title">Dashboard</span>
+              <span className="page-title">URL Dashboard</span>
             </Col>
             <Col span={7} className="search-bar-col">
               {this.state.userOrgs === null ? (
