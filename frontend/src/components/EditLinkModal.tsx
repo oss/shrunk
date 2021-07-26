@@ -252,16 +252,12 @@ export const EditLinkModal: React.FC<Props> = (props) => {
                     />
                   </Form.Item>
 
-                  {!mayEditAliases ? (
-                    <></>
-                  ) : (
-                    <Button
-                      disabled={fields.length === 1}
-                      type="text"
-                      icon={<MinusCircleOutlined />}
-                      onClick={() => remove(field.name)}
-                    />
-                  )}
+                  <Button
+                    disabled={fields.length === 1}
+                    type="text"
+                    icon={<MinusCircleOutlined />}
+                    onClick={() => remove(field.name)}
+                  />
                 </Space>
               ))}
 
