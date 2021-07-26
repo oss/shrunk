@@ -182,8 +182,8 @@ export const EditLinkModal: React.FC<Props> = (props) => {
         </Form.Item>
 
         <Form.Item
-          label='Owner'
-          name='owner'
+          label="Owner"
+          name="owner"
           rules={[
             { required: true, message: 'Please input a NetID.' },
             { validator: serverValidateNetId },
@@ -222,7 +222,7 @@ export const EditLinkModal: React.FC<Props> = (props) => {
                       },
                       { validator: serverValidateReservedAlias },
                       () => ({
-                        async validator(_, value) : Promise<void> {
+                        async validator(_, value): Promise<void> {
                           if (!value || isAnInitialAlias(value)) {
                             return Promise.resolve();
                           }

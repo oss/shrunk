@@ -6,7 +6,6 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, Tag } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
-import { truncate } from 'fs/promises';
 
 /**
  * Props for the [[SearchBox]] component
@@ -32,23 +31,23 @@ export const SearchBox: React.FC<Props> = (props) => {
 
   const validator = (_: any, value: { word: string }) => {
     if (checkDuplicates(value.word)) {
-      return Promise.reject(new Error('This word is already used as a filter.'));
+      return Promise.reject(
+        new Error('This word is already used as a filter.'),
+      );
     }
-    if (maxTags == tags.length) {
+    if (maxTags === tags.length) {
       return Promise.reject(new Error('You must remove a tag first.'));
     }
     return Promise.resolve();
   };
 
-  function checkDuplicates(word: string){
-    console.log("calling checkDuplicates()");
-    if(word == '') return false;
-    if(tags.includes(word)){
+  function checkDuplicates(word: string) {
+    if (word === '') return false;
+    if (tags.includes(word)) {
       return true;
     }
-    else{
-      return false; 
-    }
+
+    return false;
   }
 
   function addTag() {
@@ -57,10 +56,10 @@ export const SearchBox: React.FC<Props> = (props) => {
       tags.push(query);
       props.updateQueryString(tags);
     }
-  };
+  }
 
   function deleteTag(tag: string) {
-    const updated = tags.filter(e => e !== tag)
+    const updated = tags.filter((e) => e !== tag);
     setTag(updated);
     props.updateQueryString(updated);
   }
@@ -69,7 +68,7 @@ export const SearchBox: React.FC<Props> = (props) => {
     const tagElem = (
       <Tag
         closable
-        onClose={e => {
+        onClose={(e) => {
           e.preventDefault();
           deleteTag(tag);
         }}
@@ -77,21 +76,13 @@ export const SearchBox: React.FC<Props> = (props) => {
         {tag}
       </Tag>
     );
-    return (
-      <span key={tag}>
-        {tagElem}
-      </span>
-    );
-  };
+    return <span key={tag}>{tagElem}</span>;
+  }
 
   return (
-    <Form 
-      layout="inline" 
-      form={form} 
-      onFinish={() => form.resetFields()}
-      >
+    <Form layout="inline" form={form} onFinish={() => form.resetFields()}>
       <Input.Group compact>
-        <Form.Item rules={[{ validator: validator }]}>
+        <Form.Item rules={[{ validator }]}>
           <Input
             placeholder="Search"
             value={query}
@@ -102,10 +93,8 @@ export const SearchBox: React.FC<Props> = (props) => {
         <Form.Item>
           <Button icon={<SearchOutlined />} onClick={addTag} />
         </Form.Item>
-        <br/>
-        <Form.Item>
-          {tags.map(forMap)}
-        </Form.Item>
+        <br />
+        <Form.Item>{tags.map(forMap)}</Form.Item>
       </Input.Group>
     </Form>
   );

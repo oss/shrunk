@@ -24,5 +24,11 @@ module.exports = {
     '@typescript-eslint/no-non-null-assertion': 'off',
     '@typescript-eslint/no-empty-interface': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
+    'no-nested-ternary': 'off',
+    'no-plusplus': [
+      "error", 
+      { "allowForLoopAfterthoughts": true }
+    ],
+    'react/no-access-state-in-setstate': 'off',
   },
 };

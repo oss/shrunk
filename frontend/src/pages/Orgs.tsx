@@ -156,24 +156,24 @@ const OrgRow: React.FC<{
         </Button>
       </Tooltip>
       <Tooltip title="Org stats">
-      <Button type="text">
-        <Link to={`/orgs/${props.orgInfo.id}/stats`}>
-          <LineChartOutlined />
-        </Link>
-      </Button>
+        <Button type="text">
+          <Link to={`/orgs/${props.orgInfo.id}/stats`}>
+            <LineChartOutlined />
+          </Link>
+        </Button>
       </Tooltip>
       {!props.orgInfo.is_admin ? (
         <></>
       ) : (
         <Tooltip title="Delete org">
           <Popconfirm
-          placement="top"
-          title="Are you sure you want to delete this organization?"
-          onConfirm={async () => props.onDelete(props.orgInfo.id)}
-          icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
+            placement="top"
+            title="Are you sure you want to delete this organization?"
+            onConfirm={async () => props.onDelete(props.orgInfo.id)}
+            icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
           >
-          <Button danger type="text" icon={<DeleteOutlined />} />
-        </Popconfirm>
+            <Button danger type="text" icon={<DeleteOutlined />} />
+          </Popconfirm>
         </Tooltip>
       )}
     </Col>
@@ -283,22 +283,22 @@ export class Orgs extends React.Component<Props, State> {
           <Spin size="large" />
         ) : (
           <div>
-          {this.state.orgs.length === 0 ? (
-            <p>You are currently not in any organizations.</p>
-          ) : (
-            <div>
-            {this.state.orgs.map((org) => (
-              <OrgRow
-                key={org.id}
-                showAll={this.state.showAll}
-                orgInfo={org}
-                onDelete={this.onDeleteOrg}
-              />
-            ))}
-            </div>
+            {this.state.orgs.length === 0 ? (
+              <p>You are currently not in any organizations.</p>
+            ) : (
+              <div>
+                {this.state.orgs.map((org) => (
+                  <OrgRow
+                    key={org.id}
+                    showAll={this.state.showAll}
+                    orgInfo={org}
+                    onDelete={this.onDeleteOrg}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         )}
-        </div>
-      )}
       </>
     );
   }

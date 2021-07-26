@@ -33,7 +33,6 @@ import { PendingRequests } from './components/PendingRequests';
 import './antd_themed.less';
 import './Shrunk.less';
 
-const { SubMenu } = Menu;
 const { Header, Content, Footer, Sider } = Layout;
 
 /**
@@ -217,41 +216,34 @@ export class Shrunk extends React.Component<Props, State> {
                   FAQ
                 </NavLink>
               </Menu.Item>
-              <Dropdown 
+              <Dropdown
                 className="logout-menu"
                 overlay={
-                <Menu>
-                  {this.props.userPrivileges.size === 0 ? (
-                    <Menu.Item disabled>
-                      Whitelisted User
-                    </Menu.Item>
-                  ) : (                 
-                    this.props.userPrivileges.has("power_user") ? (
-                    <Menu.Item disabled>
-                      Power User
-                    </Menu.Item>
-                  ) : (
-                    this.props.userPrivileges.has("facstaff") ? (
-                    <Menu.Item disabled>
-                      Faculty/Staff
-                    </Menu.Item>
-                  ) : (
-                    <Menu.Item disabled>
-                      Administrator
-                    </Menu.Item>
-                  )
-                  )
-                  )}
+                  <Menu>
+                    {this.props.userPrivileges.size === 0 ? (
+                      <Menu.Item disabled>Whitelisted User</Menu.Item>
+                    ) : this.props.userPrivileges.has('power_user') ? (
+                      <Menu.Item disabled>Power User</Menu.Item>
+                    ) : this.props.userPrivileges.has('facstaff') ? (
+                      <Menu.Item disabled>Faculty/Staff</Menu.Item>
+                    ) : (
+                      <Menu.Item disabled>Administrator</Menu.Item>
+                    )}
 
-                  <Menu.Item key="logout">
-                    <a href="/app/logout">Logout</a>
-                  </Menu.Item>
-                </Menu>
-              }>
-                <a onClick={e => e.preventDefault()}>
-                {this.props.netid} <DownOutlined />
+                    <Menu.Item key="logout">
+                      <a href="/app/logout">Logout</a>
+                    </Menu.Item>
+                  </Menu>
+                }
+              >
+                <a
+                  onClick={(e) => e.preventDefault()}
+                  onKeyPress={(e) => e.preventDefault()}
+                >
+                  {this.props.netid}
+                  <DownOutlined />
                 </a>
-            </Dropdown>
+              </Dropdown>
             </Menu>
           </Header>
           <Layout>
