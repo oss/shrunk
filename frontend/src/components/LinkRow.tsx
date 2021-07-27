@@ -16,6 +16,19 @@ import {
   MailOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
+import { 
+  RiEditBoxLine, 
+  RiMailSendFill,
+  RiMailForbidLine,
+  RiFileChartLine, 
+  RiFileCopy2Fill,
+  RiDeleteBin6Line, 
+  RiQrCodeLine, 
+  RiMessage2Line,
+  RiChatOffLine,
+  RiTeamLine
+} from "react-icons/ri"
+
 import CopyToClipboard from 'react-copy-to-clipboard';
 import moment from 'moment';
 
@@ -214,7 +227,7 @@ export class LinkRow extends React.Component<Props, State> {
                   <div className={className}>
                     <CopyToClipboard text={shortUrl}>
                       <Tooltip title="Copy shortened URL">
-                        <Button type="text" icon={<CopyFilled />} />
+                        <Button type="text" icon={<RiFileCopy2Fill />} />
                       </Tooltip>
                     </CopyToClipboard>
                     {alias.description ? <em>({alias.description})</em> : ''}
@@ -238,7 +251,7 @@ export class LinkRow extends React.Component<Props, State> {
             <Tooltip title="Edit link">
               <Button
                 type="text"
-                icon={<EditOutlined />}
+                icon={<RiEditBoxLine size="1.1em"/>}
                 onClick={(_ev) => this.props.showEditModal(this.props.linkInfo)}
               />
             </Tooltip>
@@ -250,7 +263,7 @@ export class LinkRow extends React.Component<Props, State> {
             <Tooltip title="Manage sharing">
               <Button
                 type="text"
-                icon={<TeamOutlined />}
+                icon={<RiTeamLine size="1.1em"/>}
                 onClick={(_ev) =>
                   this.props.showShareLinkModal(this.props.linkInfo)
                 }
@@ -260,14 +273,14 @@ export class LinkRow extends React.Component<Props, State> {
           <Tooltip title="Link stats">
             <Button
               type="text"
-              icon={<LineChartOutlined />}
+              icon={<RiFileChartLine size="1.1em"/>}
               href={`/app/#/stats/${this.props.linkInfo.id}`}
             />
           </Tooltip>
           <Tooltip title="QR code">
             <Button
               type="text"
-              icon={<QrcodeOutlined />}
+              icon={<RiQrCodeLine size="1.1em"/>}
               onClick={(_ev) => this.props.showQrModal(this.props.linkInfo)}
             />
           </Tooltip>
@@ -281,7 +294,7 @@ export class LinkRow extends React.Component<Props, State> {
               icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
             >
               <Tooltip title="Delete link">
-                <Button danger type="text" icon={<DeleteOutlined />} />
+                <Button danger type="text" icon={<RiDeleteBin6Line size="1.1em"/>} />
               </Tooltip>
             </Popconfirm>
           )}
@@ -294,7 +307,7 @@ export class LinkRow extends React.Component<Props, State> {
               onConfirm={this.requestEditAccess}
             >
               <Tooltip title="Request edit access">
-                <Button type="text" icon={<MailOutlined />} />
+                <Button type="text" icon={<RiMailSendFill size="1.1em"/>} />
               </Tooltip>
             </Popconfirm>
           )}
@@ -307,7 +320,7 @@ export class LinkRow extends React.Component<Props, State> {
               onConfirm={this.cancelRequest}
             >
               <Tooltip title="Cancel request for edit access">
-                <Button type="text" icon={<StopOutlined />} />
+                <Button type="text" icon={<RiMailForbidLine size="1.1em"/>} />
               </Tooltip>
             </Popconfirm>
           )}

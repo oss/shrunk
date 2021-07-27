@@ -30,8 +30,6 @@ class SearchClient:
         pipeline: List[Any] = []
 
         # Filter based on search string, if provided.
-        print(query)
-
         if 'query' in query and query['query'] != '' and query['set']['set'] != 'shared':
             pipeline += [
                 {'$match': {'$text': {'$search': query['query']}}},

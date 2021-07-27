@@ -7,6 +7,8 @@ import React from 'react';
 
 import { Row, Col, Pagination, Spin, Dropdown, Button } from 'antd';
 import { PlusCircleFilled } from '@ant-design/icons';
+import { FiEdit2, FiUsers } from "react-icons/fi";
+import { ImStatsDots } from "react-icons/im"
 
 import moment from 'moment';
 import { getOrgInfo, listOrgs, OrgInfo } from '../api/Org';

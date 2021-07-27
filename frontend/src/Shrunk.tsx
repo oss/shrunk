@@ -14,8 +14,7 @@ import {
 } from 'react-router-dom';
 import { createBrowserHistory, Location } from 'history';
 import { Layout, Menu, Dropdown, Button, Popover } from 'antd';
-import { DownOutlined, LogoutOutlined } from '@ant-design/icons';
-import { IoIosLogOut } from 'react-icons/io';
+import { RiLogoutBoxRLine } from 'react-icons/ri'
 
 import { Dashboard } from './pages/Dashboard';
 import { Admin } from './pages/Admin';
@@ -239,7 +238,7 @@ export class Shrunk extends React.Component<Props, State> {
                 </NavLink>
               </Menu.Item>
               <Menu.Item key="logout" className="logout-menu">
-                <Button type="text" icon={<LogoutOutlined />} href="/app/logout"/>
+                <Button type="text" icon={<RiLogoutBoxRLine size="1.3em" />} href="/app/logout"/>
               </Menu.Item>
               <Menu.Item className="logout-menu">
                 <Popover 
