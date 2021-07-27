@@ -13,7 +13,8 @@ import {
   NavLink,
 } from 'react-router-dom';
 import { createBrowserHistory, Location } from 'history';
-import { Layout, Menu, Dropdown, Button, Popover } from 'antd';
+import { Layout, Menu, Dropdown, Button } from 'antd';
+import { UserOutlined, DownOutlined } from '@ant-design/icons'
 import { RiLogoutBoxRLine } from 'react-icons/ri'
 
 import { Dashboard } from './pages/Dashboard';
@@ -237,15 +238,22 @@ export class Shrunk extends React.Component<Props, State> {
                   FAQ
                 </NavLink>
               </Menu.Item>
-              <Menu.Item key="logout" className="logout-menu">
-                <Button type="text" icon={<RiLogoutBoxRLine size="1.3em" />} href="/app/logout"/>
+              <Menu.Item>
+                <Dropdown
+                  overlay={
+                    <Menu>
+                      <Menu.Item key="1" disabled icon={<UserOutlined/>}>
+                        {this.state.role}
+                      </Menu.Item>
+                    </Menu>
+                  }>
+                    <Button type="text" style={{width:'130px'}} className="user-btn">
+                      {this.props.netid} <DownOutlined/>
+                    </Button>
+                  </Dropdown>
               </Menu.Item>
-              <Menu.Item className="logout-menu">
-                <Popover 
-                  placement="bottom" 
-                  content={<span>{this.state.role}</span>}>
-                  <Button type="primary">{this.props.netid}</Button>
-                </Popover>
+              <Menu.Item key="logout" className="logout">
+                <Button type="text" icon={<RiLogoutBoxRLine size="1.2em" />} href="/app/logout"/>
               </Menu.Item>
             </Menu>
           </Header>

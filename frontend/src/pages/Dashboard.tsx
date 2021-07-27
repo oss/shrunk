@@ -7,8 +7,6 @@ import React from 'react';
 
 import { Row, Col, Pagination, Spin, Dropdown, Button } from 'antd';
 import { PlusCircleFilled } from '@ant-design/icons';
-import { FiEdit2, FiUsers } from "react-icons/fi";
-import { ImStatsDots } from "react-icons/im"
 
 import moment from 'moment';
 import { getOrgInfo, listOrgs, OrgInfo } from '../api/Org';
@@ -929,8 +927,8 @@ export class Dashboard extends React.Component<Props, State> {
                 placement="bottomRight"
                 trigger={['click']}
               >
-                <Button type="primary">
-                  <PlusCircleFilled /> Shrink a Link
+                <Button type="primary" style={{borderRadius:'15px'}}>
+                  <PlusCircleFilled/> Shrink a Link
                 </Button>
               </Dropdown>
             </Col>
