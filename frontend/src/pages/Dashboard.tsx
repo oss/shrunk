@@ -898,25 +898,41 @@ export class Dashboard extends React.Component<Props, State> {
               ) : (
                 <FilterDropdown
                   userPrivileges={this.props.userPrivileges}
-                  onFinish={async () => {
-                    this.setState({ createLinkDropdownVisible: false });
-                    await this.refreshResults();
-                  }}
+                  userOrgs={this.state.userOrgs}
+                  showByOrg={this.showByOrg}
+                  showDeletedLinks={this.showDeletedLinks}
+                  showExpiredLinks={this.showExpiredLinks}
+                  sortLinksByKey={this.sortLinksByKey}
+                  sortLinksByOrder={this.sortLinksByOrder}
+                  showLinksAfter={this.showLinksAfter}
+                  showLinksBefore={this.showLinksBefore}
                 />
-              }
-              visible={this.state.createLinkDropdownVisible}
-              onVisibleChange={(flag) =>
-                this.setState({ createLinkDropdownVisible: flag })
-              }
-              placement="bottomRight"
-              trigger={['click']}
-            >
-              <Button type="primary">
-                <PlusCircleFilled /> Shrink a Link
-              </Button>
-            </Dropdown>
-          </Col>
-        </Row>
+              )}
+            </Col>
+            <Col span={4} className="btn-col">
+              <Dropdown
+                overlay={
+                  <CreateLinkForm
+                    userPrivileges={this.props.userPrivileges}
+                    onFinish={async () => {
+                      this.setState({ createLinkDropdownVisible: false });
+                      await this.refreshResults();
+                    }}
+                  />
+                }
+                visible={this.state.createLinkDropdownVisible}
+                onVisibleChange={(flag) =>
+                  this.setState({ createLinkDropdownVisible: flag })
+                }
+                placement="bottomRight"
+                trigger={['click']}
+              >
+                <Button type="primary">
+                  <PlusCircleFilled /> Shrink a Link
+                </Button>
+              </Dropdown>
+            </Col>
+          </Row>
 
         {this.state.linkInfo === null ? (
           <Spin size="large" />
