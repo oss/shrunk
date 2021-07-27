@@ -42,7 +42,7 @@ class SearchClient:
         elif query['set']['set'] == 'shared':
             # If the set is 'shared', the pipeline will be executed against the 'organizations'
             # collection instead of the 'urls' collection.
-            if 'query' in query:
+            if 'query' in query and query['query'] != '':
                 pipeline += [
                     {'$match': {'members.netid': user_netid}},
                     {'$lookup': {

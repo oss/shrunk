@@ -18,6 +18,7 @@ import { EditLinkModal, EditLinkFormValues } from '../components/EditLinkModal';
 import { ShareLinkModal } from '../components/ShareLinkModal';
 import { CreateLinkForm } from '../components/CreateLinkForm';
 import { FilterDropdown } from '../components/FilterDropdown';
+import { OrgsSelect } from '../components/OrgsSelect';
 
 import './Dashboard.less';
 
@@ -880,7 +881,7 @@ export class Dashboard extends React.Component<Props, State> {
     return (
       <>
           <Row className="primary-row" align="top">
-            <Col span={6}>
+            <Col span={8}>
               <span className="page-title">URL Dashboard</span>
             </Col>
             <Col span={7} className="search-bar-col">
@@ -889,17 +890,7 @@ export class Dashboard extends React.Component<Props, State> {
               ) : (
                 <SearchBox 
                   updateQueryString={this.updateQueryString}
-                />
-              )}
-            </Col>
-            <Col span={7} className="filter-col">
-              {this.state.userOrgs === null ? (
-                <></>
-              ) : (
-                <FilterDropdown
                   userPrivileges={this.props.userPrivileges}
-                  userOrgs={this.state.userOrgs}
-                  showByOrg={this.showByOrg}
                   showDeletedLinks={this.showDeletedLinks}
                   showExpiredLinks={this.showExpiredLinks}
                   sortLinksByKey={this.sortLinksByKey}
@@ -907,6 +898,17 @@ export class Dashboard extends React.Component<Props, State> {
                   showLinksAfter={this.showLinksAfter}
                   showLinksBefore={this.showLinksBefore}
                 />
+              )}
+            </Col>
+            <Col span={5} className="filter-col">
+              {this.state.userOrgs === null ? (
+                <></>
+              ) : (
+              <OrgsSelect 
+                userPrivileges={this.props.userPrivileges}
+                userOrgs={this.state.userOrgs}
+                showByOrg={this.showByOrg}
+              />
               )}
             </Col>
             <Col span={4} className="btn-col">
@@ -927,7 +929,7 @@ export class Dashboard extends React.Component<Props, State> {
                 placement="bottomRight"
                 trigger={['click']}
               >
-                <Button type="primary" style={{borderRadius:'15px'}}>
+                <Button type="primary" style={{borderRadius:'10px'}}>
                   <PlusCircleFilled/> Shrink a Link
                 </Button>
               </Dropdown>
