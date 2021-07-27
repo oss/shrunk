@@ -5,7 +5,7 @@
 
 import React from 'react';
 
-import { Row, Col, Pagination, Spin, Dropdown, Button, Space } from 'antd';
+import { Row, Col, Pagination, Spin, Dropdown, Button } from 'antd';
 import { PlusCircleFilled } from '@ant-design/icons';
 
 import moment from 'moment';
@@ -389,7 +389,7 @@ export class Dashboard extends React.Component<Props, State> {
     if (this.state.query === null) {
       throw new Error('attempted to set page with this.state.query === null');
     }
-    
+
     const skip = (newPage - 1) * this.state.linksPerPage;
     const results = await this.doQuery(
       this.state.query,
@@ -458,18 +458,18 @@ export class Dashboard extends React.Component<Props, State> {
     return {
       count: result.count,
       results: result.results.map(
-        (result: any) =>
+        (output: any) =>
           ({
-            ...result,
-            created_time: new Date(result.created_time),
-            expiration_time: !result.expiration_time
+            ...output,
+            created_time: new Date(output.created_time),
+            expiration_time: !output.expiration_time
               ? null
-              : new Date(result.expiration_time),
-            deletion_info: !result.deletion_info
+              : new Date(output.expiration_time),
+            deletion_info: !output.deletion_info
               ? null
               : {
-                  deleted_by: result.deletion_info.deleted_by,
-                  deleted_time: new Date(result.deletion_info.deleted_time),
+                  deleted_by: output.deletion_info.deleted_by,
+                  deleted_time: new Date(output.deletion_info.deleted_time),
                 },
           } as LinkInfo),
       ),
@@ -898,41 +898,25 @@ export class Dashboard extends React.Component<Props, State> {
               ) : (
                 <FilterDropdown
                   userPrivileges={this.props.userPrivileges}
-                  userOrgs={this.state.userOrgs}
-                  showByOrg={this.showByOrg}
-                  showDeletedLinks={this.showDeletedLinks}
-                  showExpiredLinks={this.showExpiredLinks}
-                  sortLinksByKey={this.sortLinksByKey}
-                  sortLinksByOrder={this.sortLinksByOrder}
-                  showLinksAfter={this.showLinksAfter}
-                  showLinksBefore={this.showLinksBefore}
+                  onFinish={async () => {
+                    this.setState({ createLinkDropdownVisible: false });
+                    await this.refreshResults();
+                  }}
                 />
-              )}
-            </Col>
-            <Col span={4} className="btn-col">
-              <Dropdown
-                overlay={
-                  <CreateLinkForm
-                    userPrivileges={this.props.userPrivileges}
-                    onFinish={async () => {
-                      this.setState({ createLinkDropdownVisible: false });
-                      await this.refreshResults();
-                    }}
-                  />
-                }
-                visible={this.state.createLinkDropdownVisible}
-                onVisibleChange={(flag) =>
-                  this.setState({ createLinkDropdownVisible: flag })
-                }
-                placement="bottomRight"
-                trigger={['click']}
-              >
-                <Button type="primary">
-                  <PlusCircleFilled /> Shrink a Link
-                </Button>
-              </Dropdown>
-            </Col>
-          </Row>
+              }
+              visible={this.state.createLinkDropdownVisible}
+              onVisibleChange={(flag) =>
+                this.setState({ createLinkDropdownVisible: flag })
+              }
+              placement="bottomRight"
+              trigger={['click']}
+            >
+              <Button type="primary">
+                <PlusCircleFilled /> Shrink a Link
+              </Button>
+            </Dropdown>
+          </Col>
+        </Row>
 
         {this.state.linkInfo === null ? (
           <Spin size="large" />
