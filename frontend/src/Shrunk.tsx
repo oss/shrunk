@@ -260,6 +260,8 @@ export class Shrunk extends React.Component<Props, State> {
           <Layout>
             <Sider
               width={this.props.siderWidth}
+              breakpoint="xl"
+              collapsedWidth="10"
               style={{ background: 'white' }}
             />
             <Content
@@ -345,6 +347,8 @@ export class Shrunk extends React.Component<Props, State> {
             </Content>
             <Sider
               width={this.props.siderWidth}
+              breakpoint="xl"
+              collapsedWidth="10"
               style={{ background: 'white' }}
             />
           </Layout>
