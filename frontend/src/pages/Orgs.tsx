@@ -150,18 +150,10 @@ const OrgRow: React.FC<{
     </Col>
     <Col span={4} className="btn-col">
       <Tooltip title="Manage org">
-        <Button type="text">
-          <Link to={`/orgs/${props.orgInfo.id}/manage`}>
-            <RiToolsFill size="1.1em"/>
-          </Link>
-        </Button>
+        <Button type="text" href={`/orgs/${props.orgInfo.id}/manage`} icon={<RiToolsFill size="1.1em" />}/>
       </Tooltip>
       <Tooltip title="Org stats">
-        <Button type="text">
-          <Link to={`/orgs/${props.orgInfo.id}/stats`}>
-            <RiLineChartFill size="1.1em"/>
-          </Link>
-        </Button>
+        <Button type="text" icon={<RiLineChartFill size="1.1em" />} href={`/orgs/${props.orgInfo.id}/stats`}/>
       </Tooltip>
       {!props.orgInfo.is_admin ? (
         <></>

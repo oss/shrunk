@@ -14,7 +14,7 @@ import {
 } from 'react-router-dom';
 import { createBrowserHistory, Location } from 'history';
 import { Layout, Menu, Dropdown, Button } from 'antd';
-import { UserOutlined, DownOutlined } from '@ant-design/icons'
+import { UserOutlined, DownOutlined, MenuOutlined } from '@ant-design/icons'
 import { RiLogoutBoxRLine } from 'react-icons/ri'
 
 import { Dashboard } from './pages/Dashboard';
@@ -200,62 +200,65 @@ export class Shrunk extends React.Component<Props, State> {
                 />
               </Link>
             </div>
-            <Menu
-              theme="dark"
-              mode="horizontal"
-              selectedKeys={this.state.selectedKeys}
-            >
-              <Menu.Item key="dash">
-                <NavLink to="/dash" className="nav-text">
-                  Dashboard
-                </NavLink>
-              </Menu.Item>
-              {!this.state.showAdminTab ? (
-                <></>
-              ) : (
-                <Menu.Item key="admin">
-                  <NavLink to="/admin" className="nav-text">
-                    Admin
+            <div className="nav-bar">
+              <Menu
+                theme="dark"
+                mode="horizontal"
+                selectedKeys={this.state.selectedKeys}
+              >
+                <Menu.Item key="dash">
+                  <NavLink to="/dash" className="nav-text">
+                    Dashboard
                   </NavLink>
                 </Menu.Item>
-              )}
-              {!this.state.showWhitelistTab ? (
-                <></>
-              ) : (
-                <Menu.Item key="whitelist">
-                  <NavLink to="/roles/whitelisted" className="nav-text">
-                    Whitelist
+                {!this.state.showAdminTab ? (
+                  <></>
+                ) : (
+                  <Menu.Item key="admin">
+                    <NavLink to="/admin" className="nav-text">
+                      Admin
+                    </NavLink>
+                  </Menu.Item>
+                )}
+                {!this.state.showWhitelistTab ? (
+                  <></>
+                ) : (
+                  <Menu.Item key="whitelist">
+                    <NavLink to="/roles/whitelisted" className="nav-text">
+                      Whitelist
+                    </NavLink>
+                  </Menu.Item>
+                )}
+                <Menu.Item key="orgs">
+                  <NavLink to="/orgs" className="nav-text">
+                    Organizations
                   </NavLink>
                 </Menu.Item>
-              )}
-              <Menu.Item key="orgs">
-                <NavLink to="/orgs" className="nav-text">
-                  Organizations
-                </NavLink>
-              </Menu.Item>
-              <Menu.Item key="faq">
-                <NavLink to="/faq" className="nav-text">
-                  FAQ
-                </NavLink>
-              </Menu.Item>
-              <Menu.Item>
-                <Dropdown
-                  overlay={
-                    <Menu>
-                      <Menu.Item key="1" disabled icon={<UserOutlined/>}>
-                        {this.state.role}
-                      </Menu.Item>
-                    </Menu>
-                  }>
-                    <Button type="text" style={{width:'130px'}} className="user-btn">
-                      {this.props.netid} <DownOutlined/>
-                    </Button>
-                  </Dropdown>
-              </Menu.Item>
-              <Menu.Item key="logout" className="logout">
-                <Button type="text" icon={<RiLogoutBoxRLine size="1.2em" />} href="/app/logout"/>
-              </Menu.Item>
-            </Menu>
+                <Menu.Item key="faq">
+                  <NavLink to="/faq" className="nav-text">
+                    FAQ
+                  </NavLink>
+                </Menu.Item>
+                <Menu.Item>
+                  <Dropdown
+                    overlay={
+                      <Menu>
+                        <Menu.Item key="1" disabled icon={<UserOutlined/>}>
+                          {this.state.role}
+                        </Menu.Item>
+                        <Menu.Divider/>
+                        <Menu.Item key="2" style={{textAlign: 'center'}}>
+                          <a href="/app/logout">Logout</a>
+                        </Menu.Item>
+                      </Menu>
+                    }>
+                      <Button type="text" style={{width:'130px'}} className="user-btn">
+                        {this.props.netid} <DownOutlined/>
+                      </Button>
+                    </Dropdown>
+                </Menu.Item>
+              </Menu>
+            </div>
           </Header>
           <Layout>
             <Sider
