@@ -189,29 +189,30 @@ export class LinkRow extends React.Component<Props, State> {
               ) : (
                 <></>
               )}
+              <span className="info-span">
+                <span className="info">Owner: {this.props.linkInfo.owner}</span>
 
-              <span className="info">Owner: {this.props.linkInfo.owner}</span>
+                <span className="info">Visits: {this.props.linkInfo.visits}</span>
 
-              <span className="info">Visits: {this.props.linkInfo.visits}</span>
-
-              <span className="info">
-                Unique visits: {this.props.linkInfo.unique_visits}
-              </span>
-
-              {this.props.linkInfo.expiration_time === null ? (
-                <></>
-              ) : (
                 <span className="info">
-                  Expires:{' '}
-                  {moment(this.props.linkInfo.expiration_time).format(
-                    'DD MMM YYYY',
-                  )}
+                  Unique visits: {this.props.linkInfo.unique_visits}
                 </span>
-              )}
 
-              <span className="info">
-                Created:{' '}
-                {moment(this.props.linkInfo.created_time).format('DD MMM YYYY')}
+                {this.props.linkInfo.expiration_time === null ? (
+                  <></>
+                ) : (
+                  <span className="info">
+                    Expires:{' '}
+                    {moment(this.props.linkInfo.expiration_time).format(
+                      'DD MMM YYYY',
+                    )}
+                  </span>
+                )}
+
+                <span className="info">
+                  Created:{' '}
+                  {moment(this.props.linkInfo.created_time).format('DD MMM YYYY')}
+                </span>
               </span>
             </Col>
           </Row>

@@ -261,7 +261,6 @@ export class CreateLinkForm extends React.Component<Props, State> {
                         ]}
                       >
                         <Input
-                          addonBefore="go.rutgers.edu/"
                           placeholder="alias"
                         />
                       </Form.Item>

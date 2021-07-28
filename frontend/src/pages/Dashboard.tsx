@@ -5,7 +5,7 @@
 
 import React from 'react';
 
-import { Row, Col, Pagination, Spin, Dropdown, Button } from 'antd';
+import { Row, Col, Pagination, Spin, Dropdown, Button, Space } from 'antd';
 import { PlusCircleFilled } from '@ant-design/icons';
 
 import moment from 'moment';
@@ -17,7 +17,6 @@ import { QrCodeModal } from '../components/QrCode';
 import { EditLinkModal, EditLinkFormValues } from '../components/EditLinkModal';
 import { ShareLinkModal } from '../components/ShareLinkModal';
 import { CreateLinkForm } from '../components/CreateLinkForm';
-import { FilterDropdown } from '../components/FilterDropdown';
 import { OrgsSelect } from '../components/OrgsSelect';
 
 import './Dashboard.less';
@@ -880,61 +879,61 @@ export class Dashboard extends React.Component<Props, State> {
   render(): React.ReactNode {
     return (
       <>
-          <Row className="primary-row" align="top">
-            <Col span={8}>
-              <span className="page-title">URL Dashboard</span>
-            </Col>
-            <Col span={7} className="search-bar-col">
-              {this.state.userOrgs === null ? (
-                <></>
-              ) : (
-                <SearchBox 
-                  updateQueryString={this.updateQueryString}
-                  userPrivileges={this.props.userPrivileges}
-                  showDeletedLinks={this.showDeletedLinks}
-                  showExpiredLinks={this.showExpiredLinks}
-                  sortLinksByKey={this.sortLinksByKey}
-                  sortLinksByOrder={this.sortLinksByOrder}
-                  showLinksAfter={this.showLinksAfter}
-                  showLinksBefore={this.showLinksBefore}
-                />
-              )}
-            </Col>
-            <Col span={5} className="filter-col">
-              {this.state.userOrgs === null ? (
-                <></>
-              ) : (
-              <OrgsSelect 
+        <Row className="primary-row" >
+          <Col>
+            <span className="page-title">URL Dashboard</span>
+          </Col>
+          <Col>
+            {this.state.userOrgs === null ? (
+              <></>
+            ) : (
+              <SearchBox 
+                updateQueryString={this.updateQueryString}
                 userPrivileges={this.props.userPrivileges}
-                userOrgs={this.state.userOrgs}
-                showByOrg={this.showByOrg}
+                showDeletedLinks={this.showDeletedLinks}
+                showExpiredLinks={this.showExpiredLinks}
+                sortLinksByKey={this.sortLinksByKey}
+                sortLinksByOrder={this.sortLinksByOrder}
+                showLinksAfter={this.showLinksAfter}
+                showLinksBefore={this.showLinksBefore}
               />
-              )}
-            </Col>
-            <Col span={4} className="btn-col">
-              <Dropdown
-                overlay={
-                  <CreateLinkForm
-                    userPrivileges={this.props.userPrivileges}
-                    onFinish={async () => {
-                      this.setState({ createLinkDropdownVisible: false });
-                      await this.refreshResults();
-                    }}
-                  />
-                }
-                visible={this.state.createLinkDropdownVisible}
-                onVisibleChange={(flag) =>
-                  this.setState({ createLinkDropdownVisible: flag })
-                }
-                placement="bottomRight"
-                trigger={['click']}
-              >
-                <Button type="primary" style={{borderRadius:'10px'}}>
-                  <PlusCircleFilled/> Shrink a Link
-                </Button>
-              </Dropdown>
-            </Col>
-          </Row>
+            )}
+          </Col>
+          <Col>
+            {this.state.userOrgs === null ? (
+              <></>
+            ) : (
+            <OrgsSelect 
+              userPrivileges={this.props.userPrivileges}
+              userOrgs={this.state.userOrgs}
+              showByOrg={this.showByOrg}
+            />
+            )}
+          </Col>
+          <Col>
+            <Dropdown
+              overlay={
+                <CreateLinkForm
+                  userPrivileges={this.props.userPrivileges}
+                  onFinish={async () => {
+                    this.setState({ createLinkDropdownVisible: false });
+                    await this.refreshResults();
+                  }}
+                />
+              }
+              visible={this.state.createLinkDropdownVisible}
+              onVisibleChange={(flag) =>
+                this.setState({ createLinkDropdownVisible: flag })
+              }
+              placement="bottomRight"
+              trigger={['click']}
+            >
+              <Button type="primary">
+                <PlusCircleFilled/> Shrink a Link
+              </Button>
+            </Dropdown>
+          </Col>
+        </Row>
 
         {this.state.linkInfo === null ? (
           <Spin size="large" />

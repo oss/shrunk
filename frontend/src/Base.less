@@ -1,9 +1,14 @@
 .primary-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+
   &:not(:last-of-type),
   &:first-of-type {
     border-bottom: 1px lightgray solid;
     margin-bottom: 20px;
-    padding-bottom: 20px;
+    padding-bottom: 15px;
   }
 
   .page-title {
@@ -42,30 +47,18 @@
     align-items: flex-start;
     padding-top: 20px;
   }
-
+  
   .info {
+    font-size: 14px;
     margin-right: 20px;
-    white-space: nowrap;
     max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .search-bar-col {
-    display: flex;
-    margin-top: 15px;
-  }
-
-  .vertical-center-col {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
   }
 
   .btn-col {
     display: flex;
     margin-top: 15px;
     justify-content: flex-end;
+    flex-direction: row;
 
     .ant-btn,
     .ant-select {
@@ -84,4 +77,14 @@
 
 .react-icons {
   vertical-align: middle;
+}
+
+@media only screen and (max-width: 900px) {
+  .primary-row {
+    flex-direction: column;
+    justify-content: center;
+  }
+  .btn-col {
+    flex-wrap: wrap;
+  }
 }
