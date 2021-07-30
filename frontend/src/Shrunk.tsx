@@ -203,6 +203,7 @@ export class Shrunk extends React.Component<Props, State> {
             </div>
             <Menu
               overflowedIndicator={<MenuOutlined/>}
+              className="navbar"
               theme="dark"
               mode="horizontal"
               selectedKeys={this.state.selectedKeys}
@@ -240,7 +241,8 @@ export class Shrunk extends React.Component<Props, State> {
                   FAQ
                 </NavLink>
               </Menu.Item>
-              <Menu.Item key="logout">
+              <div className="user-name">
+              <Menu.Item key="logout" className="user-name">
                 <Dropdown
                   className="logout-menu"
                   overlay={
@@ -259,66 +261,8 @@ export class Shrunk extends React.Component<Props, State> {
                     </Button>
                   </Dropdown>
               </Menu.Item>
-            </Menu>
-            {/*
-            <div className="navbar">
-              <ul className="navbar">
-                <li className="nav-link">
-                  <NavLink to="/dash" className="nav-text">
-                    Dashboard
-                    </NavLink>
-                </li>
-                {!this.state.showAdminTab ? (
-                  <></>
-                ) : (
-                  <li className="nav-link">
-                    <NavLink to="/admin" className="nav-text">
-                      Admin
-                    </NavLink>
-                  </li>
-                )}
-                {!this.state.showWhitelistTab ? (
-                  <></>
-                ) : (
-                  <li className="nav-link">
-                    <NavLink to="/roles/whitelisted" className="nav-text">
-                      Whitelist
-                    </NavLink>
-                  </li>
-                )}
-                <li className="nav-link">
-                  <NavLink to="/orgs" className="nav-text">
-                    Organizations
-                  </NavLink>
-                </li>
-                <li className="nav-link">
-                  <NavLink to="/faq" className="nav-text">
-                    FAQ
-                  </NavLink>
-                </li>
-              </ul>
-            </div>
-
-            <div className="logout-menu">
-                <Dropdown
-                  className="logout-menu"
-                  overlay={
-                    <Menu>
-                      <Menu.Item key="1" disabled icon={<UserOutlined/>}>
-                        {this.state.role}
-                      </Menu.Item>
-                      <Menu.Divider/>
-                      <Menu.Item key="2" style={{textAlign: 'center'}}>
-                        <a href="/app/logout">Logout</a>
-                      </Menu.Item>
-                    </Menu>
-                  }>
-                    <Button type="text" style={{width:'130px'}} className="user-btn">
-                      {this.props.netid} <DownOutlined/>
-                    </Button>
-                  </Dropdown>
               </div>
-            */}
+            </Menu>
           </Header>
           <Layout>
             <Sider
