@@ -879,7 +879,7 @@ export class Dashboard extends React.Component<Props, State> {
   render(): React.ReactNode {
     return (
       <>
-        <Row className="primary-row" >
+        <Row className="primary-row" gutter={[8,24]}>
           <Col>
             <span className="page-title">URL Dashboard</span>
           </Col>
