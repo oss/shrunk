@@ -18,6 +18,7 @@ import { EditLinkModal, EditLinkFormValues } from '../components/EditLinkModal';
 import { ShareLinkModal } from '../components/ShareLinkModal';
 import { CreateLinkForm } from '../components/CreateLinkForm';
 import { OrgsSelect } from '../components/OrgsSelect';
+import { FilterDropdown } from '../components/FilterDropdown';
 
 import './Dashboard.less';
 
@@ -879,24 +880,17 @@ export class Dashboard extends React.Component<Props, State> {
   render(): React.ReactNode {
     return (
       <>
-        <Row className="primary-row" gutter={[8,24]}>
+        <Row className="primary-row">
           <Col>
             <span className="page-title">URL Dashboard</span>
           </Col>
-          <Col>
+        </Row>
+        <Row className="primary-row" gutter={[8,24]}>
+          <Col span={9}>
             {this.state.userOrgs === null ? (
               <></>
             ) : (
-              <SearchBox 
-                updateQueryString={this.updateQueryString}
-                userPrivileges={this.props.userPrivileges}
-                showDeletedLinks={this.showDeletedLinks}
-                showExpiredLinks={this.showExpiredLinks}
-                sortLinksByKey={this.sortLinksByKey}
-                sortLinksByOrder={this.sortLinksByOrder}
-                showLinksAfter={this.showLinksAfter}
-                showLinksBefore={this.showLinksBefore}
-              />
+              <SearchBox updateQueryString={this.updateQueryString}/>
             )}
           </Col>
           <Col>
@@ -911,6 +905,20 @@ export class Dashboard extends React.Component<Props, State> {
             )}
           </Col>
           <Col>
+            {this.state.userOrgs === null ? (
+                <></>
+              ) : (
+              <FilterDropdown
+              userPrivileges={this.props.userPrivileges}
+              showDeletedLinks={this.showDeletedLinks}
+              showExpiredLinks={this.showExpiredLinks}
+              sortLinksByKey={this.sortLinksByKey}
+              sortLinksByOrder={this.sortLinksByOrder}
+              showLinksAfter={this.showLinksAfter}
+              showLinksBefore={this.showLinksBefore}
+            />)}
+          </Col>
+          <Col offset={5}>
             <Dropdown
               overlay={
                 <CreateLinkForm
@@ -925,7 +933,7 @@ export class Dashboard extends React.Component<Props, State> {
               onVisibleChange={(flag) =>
                 this.setState({ createLinkDropdownVisible: flag })
               }
-              placement="bottomRight"
+              placement="bottomLeft"
               trigger={['click']}
             >
               <Button type="primary">

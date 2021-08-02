@@ -7,13 +7,14 @@ import React, { useState } from 'react';
 import {
   Form,
   Dropdown,
+  Button,
   Select,
   Radio,
   Checkbox,
   DatePicker,
   Space,
 } from 'antd';
-import { MoreOutlined } from '@ant-design/icons';
+import { DownOutlined, MoreOutlined, CaretDownOutlined } from '@ant-design/icons';
 import moment from 'moment';
 import { SearchSet } from '../pages/Dashboard';
 
@@ -178,10 +179,12 @@ export const FilterDropdown: React.FC<Props> = (props) => {
         overlay={dropdown}
         visible={dropdownVisible}
         onVisibleChange={setDropdownVisible}
-        placement="bottomRight"
+        placement="bottomLeft"
         trigger={['click']}
       >
-        <MoreOutlined className="filter-links-dropdown"/>
+        <a className="filter-links-dropdown" onClick={e => e.preventDefault()}>
+        Filter By <CaretDownOutlined />
+      </a>
       </Dropdown>
     </Space>
   );

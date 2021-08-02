@@ -7,7 +7,7 @@
  import { Select } from 'antd';
  import { OrgInfo } from '../api/Org';
  import { SearchSet } from '../pages/Dashboard';
- import { CaretDownOutlined, DownOutlined } from '@ant-design/icons'
+ import { CaretDownOutlined, LoadingOutlined } from '@ant-design/icons'
  
  /**
   * Props for the [[OrgsSelect]] component
@@ -43,49 +43,49 @@
    const [org, setOrg] = useState<number | string>(isAdmin ? 1 : 0);
    const [loading, toggle] = useState(false);
    const { Option, OptGroup } = Select;
-   const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
    const updateOrg = async (e: any): Promise<void> => {
      toggle(true);
-     delay(10000);
-     setOrg(e);
-     const searchSet: SearchSet =
-       e === 0
-         ? { set: 'user' }
-         : e === 1
-         ? { set: 'all' }
-         : e === 2
-         ? { set: 'shared' }
-         : { set: 'org', org: e as string };
-     await props.showByOrg(searchSet);
-     toggle(false);
+     setTimeout(() => {
+      setOrg(e);
+      const searchSet: SearchSet =
+        e === 0
+          ? { set: 'user' }
+          : e === 1
+          ? { set: 'all' }
+          : e === 2
+          ? { set: 'shared' }
+          : { set: 'org', org: e as string };
+      props.showByOrg(searchSet);
+      toggle(false);
+      }, 300);
    };
  
    return (
-        <Select 
-          value={org} 
-          loading={loading} 
-          onChange={updateOrg} 
-          style={{width:'150px', borderRadius:'10px', color:'#cc0e32'}} 
-          bordered={false}
-          showArrow={false}
-          suffixIcon={<DownOutlined/>}
-          >
-          <Option value={0}>My Links</Option>
-          <Option value={2}>Shared with Me</Option>
-          {!isAdmin ? (
-              <></>
-            ) : (
-              <Option value={1}>All Links</Option>
-            )}
-          <OptGroup label="My Organizations">
-              {props.userOrgs.map((info) => (
-              <Option key={info.id} value={info.id}>
-                  <em>{info.name}</em>
-              </Option>
-              ))}
-          </OptGroup>
-        </Select>
+    <Select 
+      value={org} 
+      onChange={updateOrg} 
+      className="filter-links-dropdown"
+      style={{width:'130px'}} 
+      bordered={false}
+      showArrow={true}
+      suffixIcon={loading ? (<LoadingOutlined  spin />) : <CaretDownOutlined style={{ position: 'relative', color:'#cc0e32', fontSize:'18px', top: '-4px', left:'-10px'}}/>}
+      >
+      <Option value={0}>My Links</Option>
+      <Option value={2}>Shared with Me</Option>
+      {!isAdmin ? (
+          <></>
+        ) : (
+          <Option value={1}>All Links</Option>
+        )}
+      <OptGroup label="My Organizations">
+          {props.userOrgs.map((info) => (
+          <Option key={info.id} value={info.id}>
+              <em>{info.name}</em>
+          </Option>
+          ))}
+      </OptGroup>
+    </Select>
    );
  };
  
