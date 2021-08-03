@@ -1,9 +1,14 @@
 .primary-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+
   &:not(:last-of-type),
   &:first-of-type {
     border-bottom: 1px lightgray solid;
     margin-bottom: 20px;
-    padding-bottom: 20px;
+    padding-bottom: 15px;
   }
 
   .page-title {
@@ -14,7 +19,7 @@
 
   .title {
     font-size: 23pt;
-    color: #686b69;
+    color: #3473a5;
     margin-right: 20px;
     white-space: nowrap;
     max-width: 100%;
@@ -28,7 +33,7 @@
   }
 
   .filter-links-dropdown {
-    font-size: 11pt;
+    font-size: 12pt;
     padding: 5px;
     color: #cc0e32;
   }
@@ -42,30 +47,20 @@
     align-items: flex-start;
     padding-top: 20px;
   }
-
+  
   .info {
+    font-size: 14px;
     margin-right: 20px;
-    white-space: nowrap;
     max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .search-bar-col {
-    display: flex;
-    margin-top: 15px;
-  }
-
-  .vertical-center-col {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
+    display: inline-block;
+    white-space: nowrap;
   }
 
   .btn-col {
     display: flex;
     margin-top: 15px;
     justify-content: flex-end;
+    flex-direction: row;
 
     .ant-btn,
     .ant-select {
@@ -80,4 +75,22 @@
   padding: 10px;
   border-radius: 3px;
   border: 1px solid lightgray;
+}
+
+.react-icons {
+  vertical-align: middle;
+}
+
+.shrink-link{
+  justify-self: flex-end;
+}
+
+@media only screen and (max-width: 900px) {
+  .primary-row {
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+  .btn-col {
+    flex-wrap: wrap;
+  }
 }

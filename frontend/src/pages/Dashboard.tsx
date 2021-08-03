@@ -5,7 +5,7 @@
 
 import React from 'react';
 
-import { Row, Col, Pagination, Spin, Dropdown, Button } from 'antd';
+import { Row, Col, Pagination, Spin, Dropdown, Button, Space } from 'antd';
 import { PlusCircleFilled } from '@ant-design/icons';
 
 import moment from 'moment';
@@ -17,6 +17,7 @@ import { QrCodeModal } from '../components/QrCode';
 import { EditLinkModal, EditLinkFormValues } from '../components/EditLinkModal';
 import { ShareLinkModal } from '../components/ShareLinkModal';
 import { CreateLinkForm } from '../components/CreateLinkForm';
+import { OrgsSelect } from '../components/OrgsSelect';
 import { FilterDropdown } from '../components/FilterDropdown';
 
 import './Dashboard.less';
@@ -64,7 +65,7 @@ export interface SearchQuery {
    * An array that holds query strings
    * @property
    */
-  queryString: Array<String>;
+  queryString: string;
 
   /**
    * The set of links to search (c.f. [[SearchSet]])
@@ -213,7 +214,7 @@ export class Dashboard extends React.Component<Props, State> {
       linkInfo: null,
       linksPerPage: 10,
       query: {
-        queryString: [],
+        queryString: '',
         set: { set: this.props.userPrivileges.has('admin') ? 'all' : 'user' },
         show_expired_links: false,
         show_deleted_links: false,
@@ -261,9 +262,9 @@ export class Dashboard extends React.Component<Props, State> {
    * @method
    * @param newQueryString The new query string
    */
-  updateQueryString = (queryStrings: string[]) => {
+  updateQueryString = (newQueryString: string) => {
     this.setState(
-      { query: { ...this.state.query, queryString: queryStrings } },
+      { query: { ...this.state.query, queryString: newQueryString} },
       () => this.setQuery(this.state.query),
     );
   };
@@ -430,16 +431,9 @@ export class Dashboard extends React.Component<Props, State> {
     skip: number,
     limit: number,
   ): Promise<{ count: number; results: LinkInfo[] }> => {
-    // Convert string array to one string with all text queries
-    let querystr;
-    if (query.queryString.length === 0) {
-      querystr = undefined;
-    } else {
-      querystr = query.queryString.toString();
-    }
 
     const req: Record<string, any> = {
-      query: querystr,
+      query: query.queryString,
       set: query.set,
       show_expired_links: query.show_expired_links,
       show_deleted_links: query.show_deleted_links,
@@ -886,35 +880,45 @@ export class Dashboard extends React.Component<Props, State> {
   render(): React.ReactNode {
     return (
       <>
-        <Row className="primary-row" align="top">
-          <Col span={6}>
-            <span className="page-title">Dashboard</span>
+        <Row className="primary-row">
+          <Col>
+            <span className="page-title">URL Dashboard</span>
           </Col>
-          <Col span={7} className="search-bar-col">
+        </Row>
+        <Row className="primary-row" gutter={[8,24]}>
+          <Col xs={{span:24}} sm={{span:9}}>
             {this.state.userOrgs === null ? (
               <></>
             ) : (
-              <SearchBox updateQueryString={this.updateQueryString} />
+              <SearchBox updateQueryString={this.updateQueryString}/>
             )}
           </Col>
-          <Col span={7} className="filter-col">
+          <Col>
             {this.state.userOrgs === null ? (
               <></>
             ) : (
+            <OrgsSelect 
+              userPrivileges={this.props.userPrivileges}
+              userOrgs={this.state.userOrgs}
+              showByOrg={this.showByOrg}
+            />
+            )}
+          </Col>
+          <Col>
+            {this.state.userOrgs === null ? (
+                <></>
+              ) : (
               <FilterDropdown
-                userPrivileges={this.props.userPrivileges}
-                userOrgs={this.state.userOrgs}
-                showByOrg={this.showByOrg}
-                showDeletedLinks={this.showDeletedLinks}
-                showExpiredLinks={this.showExpiredLinks}
-                sortLinksByKey={this.sortLinksByKey}
-                sortLinksByOrder={this.sortLinksByOrder}
-                showLinksAfter={this.showLinksAfter}
-                showLinksBefore={this.showLinksBefore}
-              />
-            )}
+              userPrivileges={this.props.userPrivileges}
+              showDeletedLinks={this.showDeletedLinks}
+              showExpiredLinks={this.showExpiredLinks}
+              sortLinksByKey={this.sortLinksByKey}
+              sortLinksByOrder={this.sortLinksByOrder}
+              showLinksAfter={this.showLinksAfter}
+              showLinksBefore={this.showLinksBefore}
+            />)}
           </Col>
-          <Col span={4} className="btn-col">
+          <Col className="shrink-link">
             <Dropdown
               overlay={
                 <CreateLinkForm
@@ -933,7 +937,7 @@ export class Dashboard extends React.Component<Props, State> {
               trigger={['click']}
             >
               <Button type="primary">
-                <PlusCircleFilled /> Shrink a Link
+                <PlusCircleFilled/> Shrink a Link
               </Button>
             </Dropdown>
           </Col>

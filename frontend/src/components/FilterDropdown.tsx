@@ -7,15 +7,15 @@ import React, { useState } from 'react';
 import {
   Form,
   Dropdown,
+  Button,
   Select,
   Radio,
   Checkbox,
   DatePicker,
   Space,
 } from 'antd';
-import { DownOutlined } from '@ant-design/icons';
+import { DownOutlined, MoreOutlined, CaretDownOutlined } from '@ant-design/icons';
 import moment from 'moment';
-import { OrgInfo } from '../api/Org';
 import { SearchSet } from '../pages/Dashboard';
 
 /**
@@ -28,19 +28,6 @@ export interface Props {
    * @property
    */
   userPrivileges: Set<string>;
-
-  /**
-   * The orgs of which the user is a member, used to display the list of
-   * available link sets
-   * @property
-   */
-  userOrgs: OrgInfo[];
-
-  /**
-   * Callback called when the user changes organization of whose links will be displayed
-   * @property
-   */
-  showByOrg: (orgs: SearchSet) => void;
 
   /**
    * Callback called when the user checks checkbox for showing expired links
@@ -91,26 +78,12 @@ export const FilterDropdown: React.FC<Props> = (props) => {
   ];
 
   const [dropdownVisible, setDropdownVisible] = useState(false);
-  const [org, setOrg] = useState<number | string>(isAdmin ? 1 : 0);
   const [showExpired, setShowExpired] = useState(false);
   const [showDeleted, setShowDeleted] = useState(false);
   const [sortKey, setSortKey] = useState('created_time');
   const [sortOrder, setSortOrder] = useState('descending');
   const [beginTime, setBeginTime] = useState<moment.Moment | null>(null);
   const [endTime, setEndTime] = useState<moment.Moment | null>(null);
-
-  const updateOrg = async (e: any): Promise<void> => {
-    setOrg(e);
-    const searchSet: SearchSet =
-      e === 0
-        ? { set: 'user' }
-        : e === 1
-        ? { set: 'all' }
-        : e === 2
-        ? { set: 'shared' }
-        : { set: 'org', org: e as string };
-    await props.showByOrg(searchSet);
-  };
 
   const showExpiredLinks = async (e: any): Promise<void> => {
     setShowExpired(e.target.checked);
@@ -152,42 +125,6 @@ export const FilterDropdown: React.FC<Props> = (props) => {
           sortOrder: 'descending',
         }}
       >
-        <Form.Item name="org" label="Organization">
-          <Select value={org} onChange={updateOrg}>
-            <Select.Option value={0}>
-              <em>My links</em>
-            </Select.Option>
-            <Select.Option value={2}>
-              <em>Shared with me</em>
-            </Select.Option>
-            {!isAdmin ? (
-              <></>
-            ) : (
-              <Select.Option value={1}>
-                <em>All links</em>
-              </Select.Option>
-            )}
-            {props.userOrgs.map((info) => (
-              <Select.Option key={info.id} value={info.id}>
-                {info.name}
-              </Select.Option>
-            ))}
-          </Select>
-        </Form.Item>
-        <Form.Item name="show_expired">
-          <Checkbox checked={showExpired} onChange={showExpiredLinks}>
-            Show expired links?
-          </Checkbox>
-        </Form.Item>
-        {!isAdmin ? (
-          <></>
-        ) : (
-          <Form.Item name="show_deleted">
-            <Checkbox checked={showDeleted} onChange={showDeletedLinks}>
-              Show deleted links?
-            </Checkbox>
-          </Form.Item>
-        )}
         <Form.Item name="sortKey" label="Sort by">
           <Select value={sortKey} onChange={sortByKey}>
             <Select.Option value="relevance">Relevance</Select.Option>
@@ -204,6 +141,20 @@ export const FilterDropdown: React.FC<Props> = (props) => {
             optionType="button"
           />
         </Form.Item>
+        <Form.Item name="show_expired">
+          <Checkbox checked={showExpired} onChange={showExpiredLinks}>
+            Show expired links?
+          </Checkbox>
+        </Form.Item>
+        {!isAdmin ? (
+          <></>
+        ) : (
+          <Form.Item name="show_deleted">
+            <Checkbox checked={showDeleted} onChange={showDeletedLinks}>
+              Show deleted links?
+            </Checkbox>
+          </Form.Item>
+        )}
         <Form.Item name="beginTime" label="Created after">
           <DatePicker
             format="YYYY-MM-DD"
@@ -228,12 +179,12 @@ export const FilterDropdown: React.FC<Props> = (props) => {
         overlay={dropdown}
         visible={dropdownVisible}
         onVisibleChange={setDropdownVisible}
-        placement="bottomRight"
+        placement="bottomLeft"
         trigger={['click']}
       >
-        <span className="filter-links-dropdown">
-          Filter Links <DownOutlined />
-        </span>
+        <a className="filter-links-dropdown" onClick={e => e.preventDefault()}>
+        Filter By <CaretDownOutlined />
+      </a>
       </Dropdown>
     </Space>
   );

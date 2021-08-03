@@ -9,6 +9,7 @@ import {
   DownloadOutlined,
   ExclamationCircleFilled,
   CloseOutlined,
+  CloudDownloadOutlined,
 } from '@ant-design/icons';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
@@ -482,7 +483,7 @@ export class Stats extends React.Component<Props, State> {
             )}
 
             <Button onClick={this.downloadCsv}>
-              <DownloadOutlined /> Download visits as CSV
+              <CloudDownloadOutlined/> Download visits as CSV
             </Button>
 
             {this.state.allAliases.length === 1 ? (

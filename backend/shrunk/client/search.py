@@ -30,8 +30,7 @@ class SearchClient:
         pipeline: List[Any] = []
 
         # Filter based on search string, if provided.
-
-        if 'query' in query and query['set']['set'] != 'shared':
+        if 'query' in query and query['query'] != '' and query['set']['set'] != 'shared':
             pipeline += [
                 {'$match': {'$text': {'$search': query['query']}}},
                 {'$addFields': {'text_search_score': {'$meta': 'textScore'}}},
@@ -43,7 +42,7 @@ class SearchClient:
         elif query['set']['set'] == 'shared':
             # If the set is 'shared', the pipeline will be executed against the 'organizations'
             # collection instead of the 'urls' collection.
-            if 'query' in query:
+            if 'query' in query and query['query'] != '':
                 pipeline += [
                     {'$match': {'members.netid': user_netid}},
                     {'$lookup': {

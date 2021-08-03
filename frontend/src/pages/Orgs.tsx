@@ -24,6 +24,7 @@ import {
   ToolOutlined,
   PlusCircleFilled,
 } from '@ant-design/icons';
+import { RiLineChartFill, RiToolsFill, RiDeleteBin6Line } from 'react-icons/ri'
 import moment from 'moment';
 
 import { OrgInfo, listOrgs, createOrg, deleteOrg } from '../api/Org';
@@ -149,18 +150,10 @@ const OrgRow: React.FC<{
     </Col>
     <Col span={4} className="btn-col">
       <Tooltip title="Manage org">
-        <Button type="text">
-          <Link to={`/orgs/${props.orgInfo.id}/manage`}>
-            <ToolOutlined />
-          </Link>
-        </Button>
+        <Button type="text" href={`/orgs/${props.orgInfo.id}/manage`} icon={<RiToolsFill size="1.1em" />}/>
       </Tooltip>
       <Tooltip title="Org stats">
-        <Button type="text">
-          <Link to={`/orgs/${props.orgInfo.id}/stats`}>
-            <LineChartOutlined />
-          </Link>
-        </Button>
+        <Button type="text" icon={<RiLineChartFill size="1.1em" />} href={`/orgs/${props.orgInfo.id}/stats`}/>
       </Tooltip>
       {!props.orgInfo.is_admin ? (
         <></>
@@ -172,7 +165,7 @@ const OrgRow: React.FC<{
             onConfirm={async () => props.onDelete(props.orgInfo.id)}
             icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
           >
-            <Button danger type="text" icon={<DeleteOutlined />} />
+            <Button danger type="text" icon={<RiDeleteBin6Line size="1.1em"/>} />
           </Popconfirm>
         </Tooltip>
       )}

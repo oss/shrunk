@@ -2,6 +2,18 @@
   font-family: 'Roboto', sans-serif;
 }
 
+.header {
+  max-width: 100%;
+}
+
+.navbar {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  max-width: 100%;
+  padding-right: 20px;
+}
+
 .logo {
   margin: 0 28px 0 0;
   float: left;
@@ -12,13 +24,29 @@
   min-height: calc(100vh - 64px - 70px) !important;
 }
 
-.logout-menu {
-  background-color: #cc0e32;
-  margin-right: 20px;
-  float: right;
-  color: #E9BDCA;
+.role {
+  color: white;
+  pointer-events: none;
 }
 
-.logout-menu:hover {
-  color: white;
+.user-name{
+  position: absolute;
+  right: 20px;
+  margin-left: 20px;
+  width: 150px;
+}
+
+.logout-menu {
+  color: #eda6b8;
+  font-size: 1.2em;
+}
+.logout:hover {color: white;}
+
+.nav-text {
+  font-size: 1.2em;
+  color: #eda6b8;
+}
+
+.nav-text:hover {
+  color: #fff;
 }
