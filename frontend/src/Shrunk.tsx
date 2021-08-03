@@ -13,9 +13,8 @@ import {
   NavLink,
 } from 'react-router-dom';
 import { createBrowserHistory, Location } from 'history';
-import { Layout, Menu, Dropdown, Button } from 'antd';
+import { Layout, Menu, Dropdown, Button, Space } from 'antd';
 import { UserOutlined, DownOutlined, MenuOutlined, MoreOutlined } from '@ant-design/icons'
-import { RiLogoutBoxRLine } from 'react-icons/ri'
 
 import { Dashboard } from './pages/Dashboard';
 import { Admin } from './pages/Admin';
@@ -243,28 +242,26 @@ export class Shrunk extends React.Component<Props, State> {
               </Menu.Item>
               <div className="user-name">
               <Menu.Item key="logout" className="user-name">
+                <Dropdown
+                  className="logout-menu"
+                  overlay={
+                    <Menu>
+                      <Menu.Item key="1" disabled icon={<UserOutlined/>}>
+                        {this.state.role}
+                      </Menu.Item>
+                      <Menu.Divider/>
+                      <Menu.Item key="2" style={{textAlign: 'center'}}>
+                        <a href="/app/logout">Logout</a>
+                      </Menu.Item>
+                    </Menu>
+                  }>
+                    <Button type="text" style={{width:'130px'}} className="user-btn">
+                      {this.props.netid} <DownOutlined/>
+                    </Button>
+                </Dropdown>
               </Menu.Item>
               </div>
             </Menu>
-            <span className="user-name">
-              <Dropdown
-                className="logout-menu"
-                overlay={
-                  <Menu>
-                    <Menu.Item key="1" disabled icon={<UserOutlined/>}>
-                      {this.state.role}
-                    </Menu.Item>
-                    <Menu.Divider/>
-                    <Menu.Item key="2" style={{textAlign: 'center'}}>
-                      <a href="/app/logout">Logout</a>
-                    </Menu.Item>
-                  </Menu>
-                }>
-                  <Button type="text" style={{width:'130px'}} className="user-btn">
-                    {this.props.netid} <DownOutlined/>
-                  </Button>
-                </Dropdown>
-            </span>
           </Header>
           <Layout>
             <Sider

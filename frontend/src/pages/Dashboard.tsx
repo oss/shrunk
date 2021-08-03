@@ -886,7 +886,7 @@ export class Dashboard extends React.Component<Props, State> {
           </Col>
         </Row>
         <Row className="primary-row" gutter={[8,24]}>
-          <Col span={9}>
+          <Col xs={{span:24}} sm={{span:9}}>
             {this.state.userOrgs === null ? (
               <></>
             ) : (
@@ -918,7 +918,7 @@ export class Dashboard extends React.Component<Props, State> {
               showLinksBefore={this.showLinksBefore}
             />)}
           </Col>
-          <Col offset={5}>
+          <Col className="shrink-link">
             <Dropdown
               overlay={
                 <CreateLinkForm
@@ -933,7 +933,7 @@ export class Dashboard extends React.Component<Props, State> {
               onVisibleChange={(flag) =>
                 this.setState({ createLinkDropdownVisible: flag })
               }
-              placement="bottomLeft"
+              placement="bottomRight"
               trigger={['click']}
             >
               <Button type="primary">
