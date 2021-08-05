@@ -30,15 +30,22 @@
 }
 
 .user-name{
-  position: absolute;
-  right: 20px;
-  margin-left: 20px;
-  width: 150px;
+  float: right;
+  padding-top: 14px;
+  display: inline;
+}
+
+.user-icon{
+  float: right;
+  padding-top: 14px;
+  display: none;
 }
 
 .logout-menu {
   color: #eda6b8;
   font-size: 1.2em;
+  float: right;
+  margin-right: 20px;
 }
 .logout:hover {color: white;}
 
@@ -49,4 +56,25 @@
 
 .nav-text:hover {
   color: #fff;
+}
+
+
+@media only screen and (max-width: 600px) {
+  .logout-menu{
+    margin-right: 5px;
+  }
+}
+
+@media only screen and (max-width: 450px) {
+  .logo{
+    background-size: contain;
+    width: 50%;
+    height: auto;
+  }
+  .user-name {
+    display: none;
+  }
+  .user-icon{
+    display: inline;
+  }
 }

@@ -69,7 +69,7 @@
       style={{width:'130px'}} 
       bordered={false}
       showArrow={true}
-      suffixIcon={loading ? (<LoadingOutlined  spin />) : <CaretDownOutlined style={{ position: 'relative', color:'#cc0e32', fontSize:'18px', top: '-4px', left:'-10px'}}/>}
+      suffixIcon={loading ? (<LoadingOutlined  spin />) : <CaretDownOutlined style={{ position: 'relative', color:'#cc0e32', fontSize:'18px', top: '-4px', left:'-20px'}}/>}
       >
       <Option value={0}>My Links</Option>
       <Option value={2}>Shared with Me</Option>
