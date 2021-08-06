@@ -13,8 +13,8 @@ import {
   NavLink,
 } from 'react-router-dom';
 import { createBrowserHistory, Location } from 'history';
-import { Layout, Menu, Dropdown, Button, Space } from 'antd';
-import { UserOutlined, DownOutlined, MenuOutlined, MoreOutlined } from '@ant-design/icons'
+import { Layout, Menu, Dropdown, Button } from 'antd';
+import { UserOutlined, DownOutlined, MenuOutlined, LogoutOutlined } from '@ant-design/icons'
 
 import { Dashboard } from './pages/Dashboard';
 import { Admin } from './pages/Admin';
@@ -26,7 +26,6 @@ import { AdminStats } from './admin/AdminStats';
 import { Role } from './admin/Role';
 import { ManageOrg } from './pages/subpages/ManageOrg';
 import { OrgStats } from './pages/subpages/OrgStats';
-import { SearchBox } from './components/SearchBox';
 
 import { PendingAlerts } from './alerts/PendingAlerts';
 import { PendingRequests } from './components/PendingRequests';
@@ -200,6 +199,42 @@ export class Shrunk extends React.Component<Props, State> {
                 />
               </Link>
             </div>
+            <div className="user-name">
+              <Dropdown
+                className="logout-menu"
+                overlay={
+                  <Menu>
+                    <Menu.Item key="1" disabled icon={<UserOutlined/>}>
+                      {this.state.role}
+                    </Menu.Item>
+                    <Menu.Divider/>
+                    <Menu.Item key="2" style={{textAlign: 'center'}}>
+                      <a href="/app/logout">Logout</a>
+                    </Menu.Item>
+                  </Menu>
+                }>
+                  <Button type="text" style={{width:'130px'}}>
+                    {this.props.netid} <DownOutlined/>
+                  </Button>
+              </Dropdown>
+            </div>
+            <div className="user-icon">
+              <Dropdown
+                className="logout-menu"
+                overlay={
+                  <Menu>
+                    <Menu.Item key="1" disabled>
+                      {this.state.role}
+                    </Menu.Item>
+                    <Menu.Divider/>
+                    <Menu.Item key="2" style={{textAlign: 'center'}}>
+                      <a href="/app/logout">Logout</a>
+                    </Menu.Item>
+                  </Menu>
+                }>
+                  <Button type="text" className="user-btn" icon={<UserOutlined style={{color:"#f0b1b9"}}/>}/>
+              </Dropdown>
+            </div>
             <Menu
               overflowedIndicator={<MenuOutlined/>}
               className="navbar"
@@ -240,28 +275,8 @@ export class Shrunk extends React.Component<Props, State> {
                   FAQ
                 </NavLink>
               </Menu.Item>
-              <div className="user-name">
-              <Menu.Item key="logout" className="user-name">
-                <Dropdown
-                  className="logout-menu"
-                  overlay={
-                    <Menu>
-                      <Menu.Item key="1" disabled icon={<UserOutlined/>}>
-                        {this.state.role}
-                      </Menu.Item>
-                      <Menu.Divider/>
-                      <Menu.Item key="2" style={{textAlign: 'center'}}>
-                        <a href="/app/logout">Logout</a>
-                      </Menu.Item>
-                    </Menu>
-                  }>
-                    <Button type="text" style={{width:'130px'}} className="user-btn">
-                      {this.props.netid} <DownOutlined/>
-                    </Button>
-                </Dropdown>
-              </Menu.Item>
-              </div>
             </Menu>
+              
           </Header>
           <Layout>
             <Sider

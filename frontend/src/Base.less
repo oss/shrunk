@@ -82,13 +82,16 @@
 }
 
 .shrink-link{
-  justify-self: flex-end;
+  margin-left: auto;
 }
 
 @media only screen and (max-width: 900px) {
   .primary-row {
     flex-direction: column;
-    justify-content: flex-start;
+    justify-content: center;
+  }
+  .shrink-link{
+    margin-left: 0;
   }
   .btn-col {
     flex-wrap: wrap;
