@@ -137,7 +137,7 @@ const OrgRow: React.FC<{
 }> = (props) => (
   <Row className="primary-row">
     <Col span={20}>
-      <span className="title">{props.orgInfo.name}</span>
+      <a className="title" href={`/app/#/orgs/${props.orgInfo.id}/manage`}>{props.orgInfo.name}</a>
       {props.orgInfo.is_admin ? (
         <OrgAdminTag title="You are an administrator of this organization." />
       ) : (
@@ -150,10 +150,10 @@ const OrgRow: React.FC<{
     </Col>
     <Col span={4} className="btn-col">
       <Tooltip title="Manage org">
-        <Button type="text" href={`/orgs/${props.orgInfo.id}/manage`} icon={<RiToolsFill size="1.1em" />}/>
+        <Button type="text" href={`/app/#/orgs/${props.orgInfo.id}/manage`} icon={<RiToolsFill size="1.1em" />}/>
       </Tooltip>
       <Tooltip title="Org stats">
-        <Button type="text" icon={<RiLineChartFill size="1.1em" />} href={`/orgs/${props.orgInfo.id}/stats`}/>
+        <Button type="text" icon={<RiLineChartFill size="1.1em" />} href={`/app/#/orgs/${props.orgInfo.id}/stats`}/>
       </Tooltip>
       {!props.orgInfo.is_admin ? (
         <></>

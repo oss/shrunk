@@ -203,7 +203,7 @@ export class Shrunk extends React.Component<Props, State> {
               <Dropdown
                 className="logout-menu"
                 overlay={
-                  <Menu>
+                  <Menu className="customclass">
                     <Menu.Item key="1" disabled icon={<UserOutlined/>}>
                       {this.state.role}
                     </Menu.Item>
@@ -213,7 +213,7 @@ export class Shrunk extends React.Component<Props, State> {
                     </Menu.Item>
                   </Menu>
                 }>
-                  <Button type="text" style={{width:'130px'}}>
+                  <Button type="text" className="filter-btn">
                     {this.props.netid} <DownOutlined/>
                   </Button>
               </Dropdown>
