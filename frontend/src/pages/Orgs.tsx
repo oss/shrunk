@@ -137,7 +137,7 @@ const OrgRow: React.FC<{
 }> = (props) => (
   <Row className="primary-row">
     <Col span={20}>
-      <span className="title">{props.orgInfo.name}</span>
+      <a className="title" href={`/app/#/orgs/${props.orgInfo.id}/manage`}>{props.orgInfo.name}</a>
       {props.orgInfo.is_admin ? (
         <OrgAdminTag title="You are an administrator of this organization." />
       ) : (
