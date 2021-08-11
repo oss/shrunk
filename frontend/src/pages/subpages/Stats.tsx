@@ -4,21 +4,23 @@
  */
 
 import React from 'react';
-import { Row, Col, Spin, Select, Button, Popconfirm } from 'antd';
+import { Row, Col, Spin, Select, Button, Popconfirm, Tabs, Typography } from 'antd';
 import {
-  DownloadOutlined,
   ExclamationCircleFilled,
   CloseOutlined,
   CloudDownloadOutlined,
 } from '@ant-design/icons';
+import { IoReturnUpBack } from 'react-icons/io5'
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
+import moment from 'moment';
 
 import { LinkInfo, AliasInfo } from '../../components/LinkInfo';
 import { GeoipStats, MENU_ITEMS, GeoipChart } from './StatsCommon';
 import { downloadVisitsCsv } from '../../components/Csv';
 
 import '../../Base.less';
+import './Stats.less';
 
 /**
  * Props for the [[Stats]] component
@@ -133,6 +135,12 @@ interface BrowserStats {
  * @interface
  */
 interface State {
+  /**
+   * List of all aliases for the current link
+   * @property
+   */
+  linkInfo: LinkInfo | null;
+
   /**
    * List of all aliases for the current link
    * @property
@@ -337,6 +345,7 @@ export class Stats extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
+      linkInfo: null,
       allAliases: [],
       selectedAlias: null,
       overallStats: null,
@@ -346,6 +355,7 @@ export class Stats extends React.Component<Props, State> {
       mayEdit: null,
     };
   }
+  
 
   async componentDidMount(): Promise<void> {
     await this.updateLinkInfo();
@@ -379,6 +389,7 @@ export class Stats extends React.Component<Props, State> {
     }
 
     this.setState({
+      linkInfo: linkInfo,
       allAliases: aliases,
       selectedAlias: null,
       mayEdit: linkInfo.may_edit,
@@ -455,17 +466,9 @@ export class Stats extends React.Component<Props, State> {
       <>
         <Row className="primary-row">
           <Col span={16}>
-            <span className="page-title">Stats</span>
-            {this.state.overallStats === null ? (
-              <></>
-            ) : (
-              <span>
-                Total visits: {this.state.overallStats.total_visits}&nbsp; First
-                time visits: {this.state.overallStats.unique_visits}
-              </span>
-            )}
+            <Button type="text" href={"/app/#/dash"} icon={<IoReturnUpBack/>} size="large"/>
+            <span className="page-title">Stats for <em>{this.state.linkInfo?.title}</em></span>
           </Col>
-
           <Col span={8} className="btn-col">
             {!this.state.mayEdit ? (
               <></>
@@ -504,22 +507,61 @@ export class Stats extends React.Component<Props, State> {
             )}
           </Col>
         </Row>
+        <div className="card-container">
+          <Tabs type="card">
+            <Tabs.TabPane tab="Link Info" key="1">
+              <Row>
+                {this.state.linkInfo === null ? (
+                  <></>
+                ) : (
+                  <Col span={12}>
+                    <Typography.Title level={3}>Details</Typography.Title>
+                      <p><b>Link Title:</b> {this.state.linkInfo.title}</p>
+                      <p><b>Owner:</b> {this.state.linkInfo.owner}</p>
+                      <p><b>Date Created:</b> {moment(this.state.linkInfo.created_time).format('DD MMM YYYY')}</p>
 
-        <Row className="primary-row">
-          <Col span={24}>
-            <VisitsChart visitStats={this.state.visitStats} />
-          </Col>
-        </Row>
-
-        <Row className="primary-row">
-          <Col span={24}>
-            <GeoipChart geoipStats={this.state.geoipStats} />
-          </Col>
-        </Row>
-
-        <Row className="primary-row">
-          <BrowserCharts browserStats={this.state.browserStats} />
-        </Row>
+                      <p><b>Long URL:</b> {this.state.linkInfo.long_url}</p>
+                      {this.state.selectedAlias === null ? (
+                          <p><b>Aliases:</b> {this.state.linkInfo.aliases.map((alias) => (
+                          <p>{alias.alias}</p>
+                          ))}</p>
+                        ) : (
+                          <p><b>Alias:</b> {this.state.selectedAlias}</p>
+                      )}
+                  </Col>
+              )}
+                {this.state.overallStats === null ? (
+                  <></>
+                ) : (
+                  <Col span={12}>
+                    <Typography.Title level={3}>Visits</Typography.Title>
+                    <p><b>Total visits:</b> {this.state.overallStats.total_visits}</p> 
+                    <p><b>First time visits:</b> {this.state.overallStats.unique_visits}</p>
+                  </Col>
+                )}
+              </Row>
+            </Tabs.TabPane>
+            <Tabs.TabPane tab="Visit Statistics" key="2">
+              <Row className="primary-row">
+              <Col span={24}>
+                <VisitsChart visitStats={this.state.visitStats} />
+              </Col>
+            </Row>
+            </Tabs.TabPane>
+            <Tabs.TabPane tab="Location Statistics" key="3">
+              <Row className="primary-row">
+                <Col span={24}>
+                  <GeoipChart geoipStats={this.state.geoipStats} />
+                </Col>
+              </Row>
+            </Tabs.TabPane>
+            <Tabs.TabPane tab="Browser Statistics" key="4">
+            <Row className="primary-row">
+              <BrowserCharts browserStats={this.state.browserStats} />
+            </Row>
+            </Tabs.TabPane>
+          </Tabs>
+        </div>
       </>
     );
   }

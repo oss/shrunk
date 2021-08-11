@@ -14,7 +14,7 @@ import {
 } from 'react-router-dom';
 import { createBrowserHistory, Location } from 'history';
 import { Layout, Menu, Dropdown, Button } from 'antd';
-import { UserOutlined, DownOutlined, MenuOutlined, LogoutOutlined } from '@ant-design/icons'
+import { UserOutlined, DownOutlined, MenuOutlined } from '@ant-design/icons'
 
 import { Dashboard } from './pages/Dashboard';
 import { Admin } from './pages/Admin';
@@ -220,7 +220,7 @@ export class Shrunk extends React.Component<Props, State> {
             </div>
             <div className="user-icon">
               <Dropdown
-                className="logout-menu"
+                className="icon-menu"
                 overlay={
                   <Menu>
                     <Menu.Item key="1" disabled style={{textAlign: 'center'}}>
