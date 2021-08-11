@@ -204,7 +204,7 @@ export class Shrunk extends React.Component<Props, State> {
                 className="logout-menu"
                 overlay={
                   <Menu className="customclass">
-                    <Menu.Item key="1" disabled icon={<UserOutlined/>}>
+                    <Menu.Item key="1" disabled icon={<UserOutlined/>} style={{textAlign: 'center'}}>
                       {this.state.role}
                     </Menu.Item>
                     <Menu.Divider/>
@@ -223,7 +223,7 @@ export class Shrunk extends React.Component<Props, State> {
                 className="logout-menu"
                 overlay={
                   <Menu>
-                    <Menu.Item key="1" disabled>
+                    <Menu.Item key="1" disabled style={{textAlign: 'center'}}>
                       {this.state.role}
                     </Menu.Item>
                     <Menu.Divider/>
