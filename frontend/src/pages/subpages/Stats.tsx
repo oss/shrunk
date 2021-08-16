@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Row, Col, Spin, Select, Button, Popconfirm, Tabs, Typography } from 'antd';
+import { Row, Space, Col, Spin, Select, Button, Popconfirm, Tabs, Typography, Card } from 'antd';
 import {
   ExclamationCircleFilled,
   CloseOutlined,
@@ -184,6 +184,22 @@ interface State {
    */
   mayEdit: boolean | null;
 }
+
+/**
+ * The [[InfoBox]] component displays the info for link
+ * @param props The props
+ */
+ const InfoBox: React.FC<{infoLabel: string; data: string;}> = (props) => {
+  return (
+    <Card className="info-box">
+      <span style={{display: 'flex', justifyContent:'space-between'}}>
+        <Typography.Text style={{color:'#686b69'}}>{props.infoLabel}</Typography.Text>
+        <Typography.Text style={{fontWeight:'bold', textAlign:'end'}}>{props.data}</Typography.Text> 
+      </span>
+    </Card>
+  );
+};
+
 
 /**
  * The [[VisitsChart]] component displays a line graph of total visits and unique
@@ -485,10 +501,6 @@ export class Stats extends React.Component<Props, State> {
               </Popconfirm>
             )}
 
-            <Button onClick={this.downloadCsv}>
-              <CloudDownloadOutlined/> Download visits as CSV
-            </Button>
-
             {this.state.allAliases.length === 1 ? (
               <></>
             ) : (
@@ -510,33 +522,43 @@ export class Stats extends React.Component<Props, State> {
         <div className="card-container">
           <Tabs type="card">
             <Tabs.TabPane tab="Link Info" key="1">
-              <Row>
+              <Row justify="space-between">
                 {this.state.linkInfo === null ? (
                   <></>
                 ) : (
-                  <Col span={12}>
+                  <Col span={10}>
                     <Typography.Title level={3}>Details</Typography.Title>
-                      <p><b>Link Title:</b> {this.state.linkInfo.title}</p>
-                      <p><b>Owner:</b> {this.state.linkInfo.owner}</p>
-                      <p><b>Date Created:</b> {moment(this.state.linkInfo.created_time).format('DD MMM YYYY')}</p>
-
-                      <p><b>Long URL:</b> {this.state.linkInfo.long_url}</p>
+                      <InfoBox infoLabel="Link Title" data={this.state.linkInfo.title}/>
+                      <InfoBox infoLabel="Owner" data={this.state.linkInfo.owner}/>
+                      <InfoBox infoLabel="Date Created" data={moment(this.state.linkInfo.created_time).format('DD MMM YYYY')}/>
+                      <InfoBox infoLabel="Long URL" data= {this.state.linkInfo.long_url}/>
                       {this.state.selectedAlias === null ? (
-                          <p><b>Aliases:</b> {this.state.linkInfo.aliases.map((alias) => (
-                          <p>{alias.alias}</p>
-                          ))}</p>
+                        <Card className="info-box">
+                          <span style={{display: 'flex', justifyContent:'space-between'}}>
+                            <Typography.Text style={{color:'#686b69'}}>Aliases</Typography.Text>
+                            <Typography.Text style={{fontWeight:'bold', textAlign:'end'}}>
+                            {this.state.linkInfo.aliases.map((alias) => (
+                            <p>{alias.alias}</p>))}
+                              </Typography.Text> 
+                          </span>
+                        </Card>
                         ) : (
-                          <p><b>Alias:</b> {this.state.selectedAlias}</p>
+                          <InfoBox infoLabel="Alias" data={this.state.selectedAlias}/>
                       )}
                   </Col>
               )}
                 {this.state.overallStats === null ? (
                   <></>
                 ) : (
-                  <Col span={12}>
+                  <Col span={10}>
                     <Typography.Title level={3}>Visits</Typography.Title>
-                    <p><b>Total visits:</b> {this.state.overallStats.total_visits}</p> 
-                    <p><b>First time visits:</b> {this.state.overallStats.unique_visits}</p>
+                    <InfoBox infoLabel="Total Visits" data={this.state.overallStats.total_visits.toString()}/>
+                    <InfoBox infoLabel="First Time Visits" data={this.state.overallStats.unique_visits.toString()}/>
+                    <Space align="center">
+                      <Button type="default" shape="round" icon={<CloudDownloadOutlined/>} onClick={this.downloadCsv}>
+                        Download visits as CSV
+                      </Button>
+                    </Space>
                   </Col>
                 )}
               </Row>
@@ -544,14 +566,18 @@ export class Stats extends React.Component<Props, State> {
             <Tabs.TabPane tab="Visit Statistics" key="2">
               <Row className="primary-row">
               <Col span={24}>
-                <VisitsChart visitStats={this.state.visitStats} />
+                <Card className="card">
+                  <VisitsChart visitStats={this.state.visitStats} />
+                </Card>
               </Col>
             </Row>
             </Tabs.TabPane>
             <Tabs.TabPane tab="Location Statistics" key="3">
               <Row className="primary-row">
                 <Col span={24}>
-                  <GeoipChart geoipStats={this.state.geoipStats} />
+                  <Card className="card">
+                    <GeoipChart geoipStats={this.state.geoipStats} />
+                  </Card>
                 </Col>
               </Row>
             </Tabs.TabPane>
