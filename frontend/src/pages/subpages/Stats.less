@@ -54,3 +54,15 @@
     border-color: #141414;
     border-radius: '9px';
 }
+
+.detail {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+@media only screen and (max-width: 600px) {
+    .detail {
+        flex-direction: column;
+    }
+  }

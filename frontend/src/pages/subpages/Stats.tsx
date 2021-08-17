@@ -7,7 +7,7 @@ import React from 'react';
 import { Row, Space, Col, Spin, Select, Button, Popconfirm, Tabs, Typography, Card } from 'antd';
 import {
   ExclamationCircleFilled,
-  CloseOutlined,
+  ClearOutlined,
   CloudDownloadOutlined,
   LoadingOutlined,
 } from '@ant-design/icons';
@@ -199,9 +199,9 @@ interface State {
  const InfoBox: React.FC<{infoLabel: string; data: string;}> = (props) => {
   return (
     <Card className="info-box">
-      <span style={{display: 'flex', justifyContent:'space-between'}}>
+      <span className="detail">
         <Typography.Text style={{color:'#686b69'}}>{props.infoLabel}</Typography.Text>
-        <Typography.Text style={{fontWeight:'bold', textAlign:'end', wordWrap: 'break-word'}}>{props.data}</Typography.Text> 
+        <Typography.Text style={{fontWeight:'bold', textAlign:'end', wordWrap: 'break-word', overflowWrap: 'break-word'}}>{props.data}</Typography.Text> 
       </span>
     </Card>
   );
@@ -490,28 +490,12 @@ export class Stats extends React.Component<Props, State> {
   render(): React.ReactNode {
     return (
       <>
-        <Row className="primary-row">
+        <Row className="primary-row" justify="space-between">
           <Col span={16}>
             <Button type="text" href={"/app/#/dash"} icon={<IoReturnUpBack/>} size="large"/>
             <span className="page-title">Stats for <em>{this.state.linkInfo?.title}</em></span>
           </Col>
 
-          {!this.state.mayEdit ? (
-            <></>
-          ) : (
-            <Col span={4} className="btn-col">
-            <Popconfirm
-              placement="bottom"
-              title="Are you sure you want to clear all visit data associated with this link? This operation cannot be undone."
-              onConfirm={this.clearVisitData}
-              icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
-            >
-              <Button danger>
-                <CloseOutlined /> Clear visit data
-              </Button>
-            </Popconfirm>
-            </Col>
-          )}
           {this.state.allAliases.length === 1 ? (
             <></>
           ) : (
@@ -566,10 +550,26 @@ export class Stats extends React.Component<Props, State> {
                     <Typography.Title level={3}>Visits</Typography.Title>
                       <InfoBox infoLabel="Total Visits" data={this.state.overallStats.total_visits.toString()}/>
                       <InfoBox infoLabel="First Time Visits" data={this.state.overallStats.unique_visits.toString()}/>
-                    <Space align="center">
+                    <Space align="center" wrap>
                       <Button type="default" shape="round" icon={this.state.loading ? <LoadingOutlined spin/> : <CloudDownloadOutlined/>} onClick={this.downloadCsv}>
                         Download visits as CSV
                       </Button>
+                      {this.state.mayEdit ? (
+                        <></>
+                      ) : (
+                        <Col span={4} className="btn-col">
+                        <Popconfirm
+                          placement="bottom"
+                          title="Are you sure you want to clear all visit data associated with this link? This operation cannot be undone."
+                          onConfirm={this.clearVisitData}
+                          icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
+                        >
+                          <Button danger>
+                            <ClearOutlined /> Clear all visit data
+                          </Button>
+                        </Popconfirm>
+                        </Col>
+                      )}
                     </Space>
                   </Col>
                 )}
