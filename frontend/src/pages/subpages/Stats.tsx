@@ -9,6 +9,7 @@ import {
   ExclamationCircleFilled,
   CloseOutlined,
   CloudDownloadOutlined,
+  LoadingOutlined,
 } from '@ant-design/icons';
 import { IoReturnUpBack } from 'react-icons/io5'
 import Highcharts from 'highcharts';
@@ -183,6 +184,12 @@ interface State {
    * @property
    */
   mayEdit: boolean | null;
+
+  /**
+   * Loading state for download button
+   * @property
+   */
+  loading: boolean;
 }
 
 /**
@@ -194,7 +201,7 @@ interface State {
     <Card className="info-box">
       <span style={{display: 'flex', justifyContent:'space-between'}}>
         <Typography.Text style={{color:'#686b69'}}>{props.infoLabel}</Typography.Text>
-        <Typography.Text style={{fontWeight:'bold', textAlign:'end'}}>{props.data}</Typography.Text> 
+        <Typography.Text style={{fontWeight:'bold', textAlign:'end', wordWrap: 'break-word'}}>{props.data}</Typography.Text> 
       </span>
     </Card>
   );
@@ -369,6 +376,7 @@ export class Stats extends React.Component<Props, State> {
       geoipStats: null,
       browserStats: null,
       mayEdit: null,
+      loading: false,
     };
   }
   
@@ -463,7 +471,9 @@ export class Stats extends React.Component<Props, State> {
    * @method
    */
   downloadCsv = async (): Promise<void> => {
+    this.setState({ loading: true });
     await downloadVisitsCsv(this.props.id, this.state.selectedAlias);
+    this.setState({ loading: false });
   };
 
   /**
@@ -485,25 +495,27 @@ export class Stats extends React.Component<Props, State> {
             <Button type="text" href={"/app/#/dash"} icon={<IoReturnUpBack/>} size="large"/>
             <span className="page-title">Stats for <em>{this.state.linkInfo?.title}</em></span>
           </Col>
-          <Col span={8} className="btn-col">
-            {!this.state.mayEdit ? (
-              <></>
-            ) : (
-              <Popconfirm
-                placement="bottom"
-                title="Are you sure you want to clear all visit data associated with this link? This operation cannot be undone."
-                onConfirm={this.clearVisitData}
-                icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
-              >
-                <Button danger>
-                  <CloseOutlined /> Clear visit data
-                </Button>
-              </Popconfirm>
-            )}
 
-            {this.state.allAliases.length === 1 ? (
-              <></>
-            ) : (
+          {!this.state.mayEdit ? (
+            <></>
+          ) : (
+            <Col span={4} className="btn-col">
+            <Popconfirm
+              placement="bottom"
+              title="Are you sure you want to clear all visit data associated with this link? This operation cannot be undone."
+              onConfirm={this.clearVisitData}
+              icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
+            >
+              <Button danger>
+                <CloseOutlined /> Clear visit data
+              </Button>
+            </Popconfirm>
+            </Col>
+          )}
+          {this.state.allAliases.length === 1 ? (
+            <></>
+          ) : (
+            <Col span={4} className="btn-col">
               <Select onSelect={this.setAlias} defaultValue={0}>
                 <Select.Option value={0}>
                   <b>All aliases</b>
@@ -516,8 +528,8 @@ export class Stats extends React.Component<Props, State> {
                   </Select.Option>
                 ))}
               </Select>
-            )}
-          </Col>
+            </Col>
+          )}
         </Row>
         <div className="card-container">
           <Tabs type="card">
@@ -552,10 +564,10 @@ export class Stats extends React.Component<Props, State> {
                 ) : (
                   <Col span={10}>
                     <Typography.Title level={3}>Visits</Typography.Title>
-                    <InfoBox infoLabel="Total Visits" data={this.state.overallStats.total_visits.toString()}/>
-                    <InfoBox infoLabel="First Time Visits" data={this.state.overallStats.unique_visits.toString()}/>
+                      <InfoBox infoLabel="Total Visits" data={this.state.overallStats.total_visits.toString()}/>
+                      <InfoBox infoLabel="First Time Visits" data={this.state.overallStats.unique_visits.toString()}/>
                     <Space align="center">
-                      <Button type="default" shape="round" icon={<CloudDownloadOutlined/>} onClick={this.downloadCsv}>
+                      <Button type="default" shape="round" icon={this.state.loading ? <LoadingOutlined spin/> : <CloudDownloadOutlined/>} onClick={this.downloadCsv}>
                         Download visits as CSV
                       </Button>
                     </Space>
