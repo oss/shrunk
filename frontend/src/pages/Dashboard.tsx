@@ -990,6 +990,7 @@ export class Dashboard extends React.Component<Props, State> {
             userPrivileges={this.props.userPrivileges}
             people={this.state.shareLinkModalState.entities}
             isLoading={this.state.shareLinkModalState.isLoading}
+            linkInfo={this.state.shareLinkModalState.linkInfo}
             onAddEntity={async (values: any) =>
               this.doShareLinkWithEntity(values)
             }

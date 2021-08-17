@@ -4,13 +4,14 @@
  */
 
 import React from 'react';
+import { LinkInfo } from '../components/LinkInfo';
 import {
   Col,
   Modal,
   Form,
   Input,
   Button,
-  Radio,
+  Popconfirm,
   Row,
   Select,
   Space,
@@ -19,11 +20,12 @@ import {
 } from 'antd';
 
 import { FormInstance } from 'antd/lib/form';
-import { PlusCircleOutlined, MinusCircleOutlined } from '@ant-design/icons';
+import { PlusCircleFilled, ExclamationCircleFilled } from '@ant-design/icons';
 
 import { ColumnsType } from 'antd/es/table';
 import { OrgInfo, listOrgs } from '../api/Org';
 import { serverValidateNetId } from '../Validators';
+import { RiDeleteBin6Line } from 'react-icons/ri';
 
 /**
  * The final values of the share link form
@@ -80,6 +82,12 @@ export interface Props {
    * @property
    */
   isLoading: boolean;
+
+  /**
+   * The original [[LinkInfo]] of the link to edit
+   * @property
+   */
+  linkInfo: LinkInfo | null;
 
   /**
    * Callback that will be called when user shares link with an entity
@@ -141,8 +149,9 @@ export class ShareLinkModal extends React.Component<Props, State> {
 
   tableColumns: ColumnsType<Entity> = [
     {
-      title: 'NetID/Org',
+      title: 'Shared With',
       dataIndex: 'name',
+      width: 200
     },
     {
       title: 'Type',
@@ -152,6 +161,7 @@ export class ShareLinkModal extends React.Component<Props, State> {
           <Tag color={type === 'org' ? '#cc0033' : 'red'}>{type}</Tag>
         </>
       ),
+      width: 100
     },
     {
       title: 'Permission',
@@ -163,24 +173,31 @@ export class ShareLinkModal extends React.Component<Props, State> {
           </Tag>
         </>
       ),
+      width: 100
     },
     {
       title: 'Remove',
       align: 'center',
       render: (record: any) => (
         <>
-          <Button
-            type="text"
-            shape="circle"
-            icon={<MinusCircleOutlined />}
-            onClick={() =>
+          <Popconfirm
+            placement="topRight"
+            title={record.type === 'netid' ? 
+              "Are you sure you want to remove " + record._id + " (" + record.permission + ")?" 
+              :
+              "Are you sure you want to remove this org (" + record.permission + ")?"
+            }
+            onConfirm={() =>
               this.props.onRemoveEntity(
                 record._id,
                 record.type,
                 record.permission,
               )
             }
-          />
+            icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
+            >
+            <Button type="text" shape="circle" danger icon={<RiDeleteBin6Line size="1.1em"/>}/>
+          </Popconfirm>
         </>
       ),
     },
@@ -213,7 +230,7 @@ export class ShareLinkModal extends React.Component<Props, State> {
     return (
       <Modal
         visible={this.props.visible}
-        title="Share link"
+        title={this.props.linkInfo === null ? "Share link" : "Share link: " + this.props.linkInfo.title}
         okText="Done"
         okType="ghost"
         cancelButtonProps={{ style: { display: 'none' } }}
@@ -226,16 +243,6 @@ export class ShareLinkModal extends React.Component<Props, State> {
           this.props.onCancel();
         }}
       >
-        <Table
-          columns={this.tableColumns}
-          dataSource={this.props.people}
-          rowKey="_id"
-          locale={{ emptyText: 'This link is not shared with anyone.' }}
-          pagination={{
-            total: this.props.people.length > 0 ? this.props.people.length : 1, // always shows pagination
-          }}
-          loading={this.props.isLoading}
-        />
         <Form
           ref={this.formRef}
           onFinish={(e) => {
@@ -243,76 +250,90 @@ export class ShareLinkModal extends React.Component<Props, State> {
             this.formRef.current!.resetFields();
           }}
         >
-          <Row gutter={[8, 15]}>
-            <Col span={14}>
-              <Space>
-                Add
-                <Radio.Group
-                  onChange={(e) =>
-                    this.setState({ addNetIDOrOrg: e.target.value })
-                  }
-                  defaultValue="netid"
-                  buttonStyle="solid"
-                >
-                  <Radio.Button value="netid">NetID</Radio.Button>
-                  <Radio.Button value="org">Organization</Radio.Button>
-                </Radio.Group>
-                :
-                <Col flex="auto" />
-              </Space>
-            </Col>
-          </Row>
-
           <Row>
-            <Col span={12}>
-              {this.state.addNetIDOrOrg === 'netid' ? (
-                <Form.Item
-                  name="netid"
-                  rules={[
-                    { required: true, message: 'Please enter a valid NetID.' },
-                    { validator: serverValidateNetId },
-                  ]}
+            <Space>
+              <Col span={25}>
+                <Form.Item 
+                  name="typeOfAdd" 
+                  initialValue={this.state.addNetIDOrOrg}
                 >
-                  <Input placeholder="NetID" />
-                </Form.Item>
-              ) : (
-                <Form.Item
-                  name="organization"
-                  rules={[
-                    {
-                      required: true,
-                      message: 'Please select an organization.',
-                    },
-                  ]}
-                >
-                  <Select placeholder="Select an organization" allowClear>
-                    {this.state.orgs.map((org) => (
-                      <Select.Option key={org.id} value={org.id}>
-                        {org.name}
-                      </Select.Option>
-                    ))}
+                  <Select                 
+                    onSelect={(value, e) =>
+                      this.setState({ addNetIDOrOrg: e.value })
+                    }
+                  >
+                    <Select.Option value="netid">NetID</Select.Option>
+                    <Select.Option value="org">Org</Select.Option>
                   </Select>
                 </Form.Item>
-              )}
-            </Col>
-            <Col span={6}>
-              <Form.Item name="permission" initialValue="viewers">
-                <Select>
-                  <Select.Option value="viewers">Viewer</Select.Option>
-                  <Select.Option value="editors">Editor</Select.Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={6}>
-              <Form.Item>
-                <Button type="primary" htmlType="submit">
-                  <PlusCircleOutlined />
-                  Share
-                </Button>
-              </Form.Item>
-            </Col>
+              </Col>
+
+              <Col span={25}>
+                {this.state.addNetIDOrOrg === 'netid' ? (
+                  <Form.Item
+                    name="netid"
+                    rules={[
+                      { required: true, message: 'Please enter a valid NetID.' },
+                      { validator: serverValidateNetId }, //have a select row search
+                    ]}
+                  >
+                    <Input placeholder="NetID" />
+                  </Form.Item>
+                ) : (
+                  <Form.Item
+                    name="organization"
+                    rules={[
+                      {
+                        required: true,
+                        message: 'Please select an organization.',
+                      },
+                    ]}
+                  >
+                    <Select placeholder="Organization" allowClear> 
+                      {this.state.orgs.map((org) => (
+                        <Select.Option key={org.id} value={org.id}>
+                          {org.name}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                )}
+              </Col>
+
+              <Col span={25}>
+                <Form.Item name="permission" initialValue="viewers">
+                  <Select>
+                    <Select.Option value="viewers">Viewer</Select.Option>
+                    <Select.Option value="editors">Editor</Select.Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+
+              <Col span={5}>
+                <Form.Item>
+                  <Button type="primary" htmlType="submit">
+                    <PlusCircleFilled />
+                    Share
+                  </Button>
+                </Form.Item>
+              </Col>
+            </Space>
           </Row>
+
         </Form>
+        <Table
+          columns={this.tableColumns}
+          dataSource={this.props.people}
+          scroll={{ x: 300 }}
+          rowKey="_id"
+          locale={{ emptyText: 'This link is not shared with anyone.' }}
+          pagination={{
+            total: this.props.people.length > 0 ? this.props.people.length : 1, // always shows pagination
+            hideOnSinglePage: true,
+            pageSize: 5
+          }}
+          loading={this.props.isLoading}
+        />
       </Modal>
     );
   }
