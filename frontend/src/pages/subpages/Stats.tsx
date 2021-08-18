@@ -526,7 +526,7 @@ export class Stats extends React.Component<Props, State> {
                     <Typography.Title level={3}>Details</Typography.Title>
                       <InfoBox infoLabel="Link Title" data={this.state.linkInfo.title}/>
                       <InfoBox infoLabel="Owner" data={this.state.linkInfo.owner}/>
-                      <InfoBox infoLabel="Date Created" data={moment(this.state.linkInfo.created_time).format('DD MMM YYYY')}/>
+                      <InfoBox infoLabel="Date Created" data={moment(this.state.linkInfo.created_time).format('MMM D, YYYY')}/>
                       <InfoBox infoLabel="Long URL" data= {this.state.linkInfo.long_url}/>
                       {this.state.selectedAlias === null ? (
                         <Card className="info-box">
