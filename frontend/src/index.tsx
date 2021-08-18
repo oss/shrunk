@@ -54,7 +54,7 @@ const shrunkParams = loadShrunkParams();
 
 ReactDOM.render(
   <Shrunk
-    siderWidth={200}
+    siderWidth={150}
     netid={shrunkParams.netid}
     userPrivileges={new Set(shrunkParams.userPrivileges)}
   />,

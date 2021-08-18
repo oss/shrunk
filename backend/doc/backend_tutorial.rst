@@ -83,6 +83,15 @@ http://127.0.0.1:5000/ (Press CTRL+C to quit)``. At this point, you
 should be able to point your browser at that URL and see the Shrunk
 login page.
 
+Alternatively, you may execute the following shell script in ``backend/`` to start the backend server:
+
+  $ ./start.sh 
+  
+Use the following command if you do not have permission to execute the shell script:
+  
+  $ chmod +x start.sh 
+
+
 Common Errors
 --------------
 Don't forget to import the GeoIP database.

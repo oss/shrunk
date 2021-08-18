@@ -25,12 +25,12 @@ export class Faq extends React.Component<void> {
         </Row>
 
         <Collapse bordered={false}>
-          <Panel header="What is Go?" key="1">
+          <Panel header="What is Go?" key="1" className="question-title">
             <p style={{ paddingLeft: 24 }}>
               Go is the official URL shortener of Rutgers University.
             </p>
           </Panel>
-          <Panel header="Who has access to Go?" key="2">
+          <Panel header="Who has access to Go?" key="2" className="question-title">
             <p style={{ paddingLeft: 24 }}>
               All current Rutgers University faculty and staff members are able
               to log into <a href="https://go.rutgers.edu/">go.rutgers.edu</a>{' '}
@@ -41,6 +41,7 @@ export class Faq extends React.Component<void> {
           <Panel
             header="Can I choose the URL my link will be shortened to?"
             key="3"
+            className="question-title"
           >
             <p style={{ paddingLeft: 24 }}>
               To create a custom short URL, you must have the &ldquo;power
@@ -52,6 +53,7 @@ export class Faq extends React.Component<void> {
           <Panel
             header="How can I grant an undergraduate student worker access to Go?"
             key="4"
+            className="question-title"
           >
             <p style={{ paddingLeft: 24 }}>
               To grant access to an undergraduate user, click the&nbsp;
@@ -65,6 +67,7 @@ export class Faq extends React.Component<void> {
           <Panel
             header="Why would I create multiple aliases for one link?"
             key="5"
+            className="question-title"
           >
             <p style={{ paddingLeft: 24 }}>
               One use of multiple aliases would be creating distinct aliases for
@@ -72,7 +75,7 @@ export class Faq extends React.Component<void> {
               impressions from each platform.
             </p>
           </Panel>
-          <Panel header="What is the organizations feature?" key="6">
+          <Panel header="What is the organizations feature?" key="6" className="question-title">
             <p style={{ paddingLeft: 24 }}>
               The organizations feature is a collaborative tool that allows a
               group of users to view each other&rsquo;s links. For example,
@@ -80,7 +83,7 @@ export class Faq extends React.Component<void> {
               each other&rsquo;s links.
             </p>
           </Panel>
-          <Panel header="How can I use the organizations feature?" key="7">
+          <Panel header="How can I use the organizations feature?" key="7" className="question-title">
             <p style={{ paddingLeft: 24 }}>
               Only faculty and staff members are able to create a new
               organization. To do so, navigate to the{' '}
@@ -99,7 +102,7 @@ export class Faq extends React.Component<void> {
               select the organization whose links you would like to view.
             </p>
           </Panel>
-          <Panel header="Why can I view this link but not edit it?" key="8">
+          <Panel header="Why can I view this link but not edit it?" key="8" className="question-title">
             <p style={{ paddingLeft: 24 }}>
               As a viewer, you can see a link&apos;s stats and QR code; however,
               you cannot edit it. You can request for edit access by hitting the
@@ -107,7 +110,7 @@ export class Faq extends React.Component<void> {
               of the link.
             </p>
           </Panel>
-          <Panel header="How do I share my links?" key="9">
+          <Panel header="How do I share my links?" key="9" className="question-title">
             <p style={{ paddingLeft: 24 }}>
               To share your link with a specific user or an organization, you
               must either be the owner or an editor of the link. Click on the
@@ -120,6 +123,7 @@ export class Faq extends React.Component<void> {
           <Panel
             header="What access does somone have when I make them a viewer or editor?"
             key="10"
+            className="question-title"
           >
             <Table
               size="small"
