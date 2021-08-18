@@ -198,12 +198,12 @@ interface State {
  */
  const InfoBox: React.FC<{infoLabel: string; data: string;}> = (props) => {
   return (
-    <Card className="info-box">
-      <span className="detail">
-        <Typography.Text style={{color:'#686b69'}}>{props.infoLabel}</Typography.Text>
-        <Typography.Text style={{fontWeight:'bold', textAlign:'end', wordWrap: 'break-word', overflowWrap: 'break-word'}}>{props.data}</Typography.Text> 
-      </span>
-    </Card>
+      <Card className="info-box">
+        <span className="detail">
+          <Typography.Text style={{color:'#686b69'}}>{props.infoLabel}</Typography.Text>
+          <Typography.Text style={{fontWeight:'bold', textAlign:'end', wordWrap: 'break-word', overflowWrap: 'break-word'}}>{props.data}</Typography.Text> 
+        </span>
+      </Card>
   );
 };
 
@@ -550,8 +550,8 @@ export class Stats extends React.Component<Props, State> {
                     <Typography.Title level={3}>Visits</Typography.Title>
                       <InfoBox infoLabel="Total Visits" data={this.state.overallStats.total_visits.toString()}/>
                       <InfoBox infoLabel="First Time Visits" data={this.state.overallStats.unique_visits.toString()}/>
-                    <Space align="center" wrap>
-                      <Button type="default" shape="round" icon={this.state.loading ? <LoadingOutlined spin/> : <CloudDownloadOutlined/>} onClick={this.downloadCsv}>
+                    <Space style={{position:'relative', marginTop:'20px'}} align="center" wrap>
+                      <Button icon={this.state.loading ? <LoadingOutlined spin/> : <CloudDownloadOutlined/>} onClick={this.downloadCsv}>
                         Download visits as CSV
                       </Button>
                       {this.state.mayEdit ? (
