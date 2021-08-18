@@ -269,7 +269,7 @@ export const EditLinkModal: React.FC<Props> = (props) => {
                 </Space>
               ))}
 
-              {!mayEditAliases ? (
+              {!mayEditAliases || fields.length >= 6 ? (
                 <></>
               ) : (
                 <Form.Item>

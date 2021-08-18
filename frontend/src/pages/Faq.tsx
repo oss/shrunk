@@ -71,7 +71,7 @@ export class Faq extends React.Component<void> {
             <p style={{ paddingLeft: 24 }}>
               One use of multiple aliases would be creating distinct aliases for
               Twitter and Facebook if you wish to track the number of
-              impressions from each platform.
+              impressions from each platform. You can have at most 6 aliases for one link.
             </p>
           </Panel>
           <Panel header="What is the organizations feature?" key="6" className="question-title">
