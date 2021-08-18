@@ -189,6 +189,8 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         '_id': info['_id'],
         'title': info['title'],
         'long_url': info['long_url'],
+        'owner': client.links.get_owner(link_id),
+        'created_time': info['timeCreated'],
         'aliases': aliases,
         'deleted': info.get('deleted', False),
         'editors': info['editors'] if 'editors' in info else [],
@@ -205,6 +207,7 @@ MODIFY_LINK_SCHEMA = {
         'title': {'type': 'string', 'minLength': 1},
         'long_url': {'type': 'string', 'format': 'uri'},
         'expiration_time': {'type': ['string', 'null'], 'format': 'date-time'},
+        'created_time': {'type': ['string', 'null'], 'format': 'date-time'},
         'owner': {'type': 'string', 'minLength': 1},
     },
 }
