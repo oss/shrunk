@@ -50,9 +50,16 @@
     border-color: #141414;
 }
 
+.details-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
 .info-box {
     border-color: #141414;
     border-radius: '9px';
+    width: 400px;
 }
 
 .detail {
@@ -61,8 +68,23 @@
     justify-content: space-between;
 }
 
+.data-text {
+    font-weight: bold; 
+    text-align: end;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+
+
 @media only screen and (max-width: 600px) {
+    .details-row{
+        flex-direction: column;
+    }
     .detail {
         flex-direction: column;
+    }
+    .detail-text{
+        display: block;
     }
   }
