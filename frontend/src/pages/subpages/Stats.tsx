@@ -199,10 +199,10 @@ interface State {
  const InfoBox: React.FC<{infoLabel: string; data: string;}> = (props) => {
   return (
       <Card className="info-box">
-        <span className="detail">
+        <div className="detail">
           <Typography.Text style={{color:'#686b69'}}>{props.infoLabel}</Typography.Text>
-          <Typography.Text style={{fontWeight:'bold', textAlign:'end', wordWrap: 'break-word', overflowWrap: 'break-word'}}>{props.data}</Typography.Text> 
-        </span>
+          <Typography.Text className="data-text">{props.data}</Typography.Text> 
+        </div>
       </Card>
   );
 };
@@ -518,11 +518,11 @@ export class Stats extends React.Component<Props, State> {
         <div className="card-container">
           <Tabs type="card">
             <Tabs.TabPane tab="Link Info" key="1">
-              <Row justify="space-between">
+              <Row className="details-row">
                 {this.state.linkInfo === null ? (
                   <></>
                 ) : (
-                  <Col span={10}>
+                  <Col>
                     <Typography.Title level={3}>Details</Typography.Title>
                       <InfoBox infoLabel="Link Title" data={this.state.linkInfo.title}/>
                       <InfoBox infoLabel="Owner" data={this.state.linkInfo.owner}/>
@@ -530,13 +530,13 @@ export class Stats extends React.Component<Props, State> {
                       <InfoBox infoLabel="Long URL" data= {this.state.linkInfo.long_url}/>
                       {this.state.selectedAlias === null ? (
                         <Card className="info-box">
-                          <span style={{display: 'flex', justifyContent:'space-between'}}>
+                          <div className="detail">
                             <Typography.Text style={{color:'#686b69'}}>Aliases</Typography.Text>
-                            <Typography.Text style={{fontWeight:'bold', textAlign:'end'}}>
+                            <Typography.Text className="data-text">
                             {this.state.linkInfo.aliases.map((alias) => (
                             <p>{alias.alias}</p>))}
                               </Typography.Text> 
-                          </span>
+                          </div>
                         </Card>
                         ) : (
                           <InfoBox infoLabel="Alias" data={this.state.selectedAlias}/>
@@ -546,7 +546,7 @@ export class Stats extends React.Component<Props, State> {
                 {this.state.overallStats === null ? (
                   <></>
                 ) : (
-                  <Col span={10}>
+                  <Col>
                     <Typography.Title level={3}>Visits</Typography.Title>
                       <InfoBox infoLabel="Total Visits" data={this.state.overallStats.total_visits.toString()}/>
                       <InfoBox infoLabel="First Time Visits" data={this.state.overallStats.unique_visits.toString()}/>
