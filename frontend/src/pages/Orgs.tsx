@@ -16,12 +16,8 @@ import {
   Tooltip,
   Spin,
 } from 'antd';
-import { Link } from 'react-router-dom';
 import {
   ExclamationCircleFilled,
-  DeleteOutlined,
-  LineChartOutlined,
-  ToolOutlined,
   PlusCircleFilled,
 } from '@ant-design/icons';
 import { RiLineChartFill, RiToolsFill, RiDeleteBin6Line } from 'react-icons/ri'
