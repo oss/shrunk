@@ -6,15 +6,7 @@
 import React from 'react';
 import { Row, Col, Button, Popconfirm, Tooltip, Tag } from 'antd';
 import {
-  CopyFilled,
-  DeleteOutlined,
-  LineChartOutlined,
-  EditOutlined,
-  QrcodeOutlined,
   ExclamationCircleFilled,
-  StopOutlined,
-  MailOutlined,
-  TeamOutlined,
 } from '@ant-design/icons';
 import { 
   RiEditBoxLine, 
@@ -24,8 +16,6 @@ import {
   RiFileCopy2Fill,
   RiDeleteBin6Line, 
   RiQrCodeLine, 
-  RiMessage2Line,
-  RiChatOffLine,
   RiTeamLine
 } from "react-icons/ri"
 

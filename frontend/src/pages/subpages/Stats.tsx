@@ -4,21 +4,24 @@
  */
 
 import React from 'react';
-import { Row, Col, Spin, Select, Button, Popconfirm } from 'antd';
+import { Row, Space, Col, Spin, Select, Button, Popconfirm, Tabs, Typography, Card } from 'antd';
 import {
-  DownloadOutlined,
   ExclamationCircleFilled,
-  CloseOutlined,
+  ClearOutlined,
   CloudDownloadOutlined,
+  LoadingOutlined,
 } from '@ant-design/icons';
+import { IoReturnUpBack } from 'react-icons/io5'
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
+import moment from 'moment';
 
 import { LinkInfo, AliasInfo } from '../../components/LinkInfo';
 import { GeoipStats, MENU_ITEMS, GeoipChart } from './StatsCommon';
 import { downloadVisitsCsv } from '../../components/Csv';
 
 import '../../Base.less';
+import './Stats.less';
 
 /**
  * Props for the [[Stats]] component
@@ -137,6 +140,12 @@ interface State {
    * List of all aliases for the current link
    * @property
    */
+  linkInfo: LinkInfo | null;
+
+  /**
+   * List of all aliases for the current link
+   * @property
+   */
   allAliases: AliasInfo[];
 
   /**
@@ -175,7 +184,29 @@ interface State {
    * @property
    */
   mayEdit: boolean | null;
+
+  /**
+   * Loading state for download button
+   * @property
+   */
+  loading: boolean;
 }
+
+/**
+ * The [[InfoBox]] component displays the info for link
+ * @param props The props
+ */
+ const InfoBox: React.FC<{infoLabel: string; data: string;}> = (props) => {
+  return (
+      <Card className="info-box">
+        <div className="detail">
+          <Typography.Text style={{color:'#686b69'}}>{props.infoLabel}</Typography.Text>
+          <Typography.Text className="data-text">{props.data}</Typography.Text> 
+        </div>
+      </Card>
+  );
+};
+
 
 /**
  * The [[VisitsChart]] component displays a line graph of total visits and unique
@@ -337,6 +368,7 @@ export class Stats extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
+      linkInfo: null,
       allAliases: [],
       selectedAlias: null,
       overallStats: null,
@@ -344,8 +376,10 @@ export class Stats extends React.Component<Props, State> {
       geoipStats: null,
       browserStats: null,
       mayEdit: null,
+      loading: false,
     };
   }
+  
 
   async componentDidMount(): Promise<void> {
     await this.updateLinkInfo();
@@ -379,6 +413,7 @@ export class Stats extends React.Component<Props, State> {
     }
 
     this.setState({
+      linkInfo: linkInfo,
       allAliases: aliases,
       selectedAlias: null,
       mayEdit: linkInfo.may_edit,
@@ -436,7 +471,9 @@ export class Stats extends React.Component<Props, State> {
    * @method
    */
   downloadCsv = async (): Promise<void> => {
+    this.setState({ loading: true });
     await downloadVisitsCsv(this.props.id, this.state.selectedAlias);
+    this.setState({ loading: false });
   };
 
   /**
@@ -453,42 +490,16 @@ export class Stats extends React.Component<Props, State> {
   render(): React.ReactNode {
     return (
       <>
-        <Row className="primary-row">
+        <Row className="primary-row" justify="space-between">
           <Col span={16}>
-            <span className="page-title">Stats</span>
-            {this.state.overallStats === null ? (
-              <></>
-            ) : (
-              <span>
-                Total visits: {this.state.overallStats.total_visits}&nbsp; First
-                time visits: {this.state.overallStats.unique_visits}
-              </span>
-            )}
+            <Button type="text" href={"/app/#/dash"} icon={<IoReturnUpBack/>} size="large"/>
+            <span className="page-title">Stats for <em>{this.state.linkInfo?.title}</em></span>
           </Col>
 
-          <Col span={8} className="btn-col">
-            {!this.state.mayEdit ? (
-              <></>
-            ) : (
-              <Popconfirm
-                placement="bottom"
-                title="Are you sure you want to clear all visit data associated with this link? This operation cannot be undone."
-                onConfirm={this.clearVisitData}
-                icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
-              >
-                <Button danger>
-                  <CloseOutlined /> Clear visit data
-                </Button>
-              </Popconfirm>
-            )}
-
-            <Button onClick={this.downloadCsv}>
-              <CloudDownloadOutlined/> Download visits as CSV
-            </Button>
-
-            {this.state.allAliases.length === 1 ? (
-              <></>
-            ) : (
+          {this.state.allAliases.length === 1 ? (
+            <></>
+          ) : (
+            <Col span={4} className="btn-col">
               <Select onSelect={this.setAlias} defaultValue={0}>
                 <Select.Option value={0}>
                   <b>All aliases</b>
@@ -501,25 +512,94 @@ export class Stats extends React.Component<Props, State> {
                   </Select.Option>
                 ))}
               </Select>
-            )}
-          </Col>
+            </Col>
+          )}
         </Row>
-
-        <Row className="primary-row">
-          <Col span={24}>
-            <VisitsChart visitStats={this.state.visitStats} />
-          </Col>
-        </Row>
-
-        <Row className="primary-row">
-          <Col span={24}>
-            <GeoipChart geoipStats={this.state.geoipStats} />
-          </Col>
-        </Row>
-
-        <Row className="primary-row">
-          <BrowserCharts browserStats={this.state.browserStats} />
-        </Row>
+        <div className="card-container">
+          <Tabs type="card">
+            <Tabs.TabPane tab="Link Info" key="1">
+              <Row className="details-row">
+                {this.state.linkInfo === null ? (
+                  <></>
+                ) : (
+                  <Col>
+                    <Typography.Title level={3}>Details</Typography.Title>
+                      <InfoBox infoLabel="Link Title" data={this.state.linkInfo.title}/>
+                      <InfoBox infoLabel="Owner" data={this.state.linkInfo.owner}/>
+                      <InfoBox infoLabel="Date Created" data={moment(this.state.linkInfo.created_time).format('DD MMM YYYY')}/>
+                      <InfoBox infoLabel="Long URL" data= {this.state.linkInfo.long_url}/>
+                      {this.state.selectedAlias === null ? (
+                        <Card className="info-box">
+                          <div className="detail">
+                            <Typography.Text style={{color:'#686b69'}}>Aliases</Typography.Text>
+                            <Typography.Text className="data-text">
+                            {this.state.linkInfo.aliases.map((alias) => (
+                            <p>{alias.alias}</p>))}
+                              </Typography.Text> 
+                          </div>
+                        </Card>
+                        ) : (
+                          <InfoBox infoLabel="Alias" data={this.state.selectedAlias}/>
+                      )}
+                  </Col>
+              )}
+                {this.state.overallStats === null ? (
+                  <></>
+                ) : (
+                  <Col>
+                    <Typography.Title level={3}>Visits</Typography.Title>
+                      <InfoBox infoLabel="Total Visits" data={this.state.overallStats.total_visits.toString()}/>
+                      <InfoBox infoLabel="First Time Visits" data={this.state.overallStats.unique_visits.toString()}/>
+                    <Space style={{position:'relative', marginTop:'20px'}} align="center" wrap>
+                      <Button icon={this.state.loading ? <LoadingOutlined spin/> : <CloudDownloadOutlined/>} onClick={this.downloadCsv}>
+                        Download visits as CSV
+                      </Button>
+                      {this.state.mayEdit ? (
+                        <></>
+                      ) : (
+                        <Col span={4} className="btn-col">
+                        <Popconfirm
+                          placement="bottom"
+                          title="Are you sure you want to clear all visit data associated with this link? This operation cannot be undone."
+                          onConfirm={this.clearVisitData}
+                          icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
+                        >
+                          <Button danger>
+                            <ClearOutlined /> Clear all visit data
+                          </Button>
+                        </Popconfirm>
+                        </Col>
+                      )}
+                    </Space>
+                  </Col>
+                )}
+              </Row>
+            </Tabs.TabPane>
+            <Tabs.TabPane tab="Visit Statistics" key="2">
+              <Row className="primary-row">
+              <Col span={24}>
+                <Card className="card">
+                  <VisitsChart visitStats={this.state.visitStats} />
+                </Card>
+              </Col>
+            </Row>
+            </Tabs.TabPane>
+            <Tabs.TabPane tab="Location Statistics" key="3">
+              <Row className="primary-row">
+                <Col span={24}>
+                  <Card className="card">
+                    <GeoipChart geoipStats={this.state.geoipStats} />
+                  </Card>
+                </Col>
+              </Row>
+            </Tabs.TabPane>
+            <Tabs.TabPane tab="Browser Statistics" key="4">
+            <Row className="primary-row">
+              <BrowserCharts browserStats={this.state.browserStats} />
+            </Row>
+            </Tabs.TabPane>
+          </Tabs>
+        </div>
       </>
     );
   }
