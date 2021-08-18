@@ -16,12 +16,8 @@ import {
   Tooltip,
   Spin,
 } from 'antd';
-import { Link } from 'react-router-dom';
 import {
   ExclamationCircleFilled,
-  DeleteOutlined,
-  LineChartOutlined,
-  ToolOutlined,
   PlusCircleFilled,
 } from '@ant-design/icons';
 import { RiLineChartFill, RiToolsFill, RiDeleteBin6Line } from 'react-icons/ri'
@@ -145,7 +141,7 @@ const OrgRow: React.FC<{
       )}
       {props.showAll && props.orgInfo.is_member ? <OrgMemberTag /> : <></>}
       <span>
-        Created: {moment(props.orgInfo.timeCreated).format('DD MMM YYYY')}
+        Created: {moment(props.orgInfo.timeCreated).format('MMM D, YYYY')}
       </span>
     </Col>
     <Col span={4} className="btn-col">

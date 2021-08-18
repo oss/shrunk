@@ -187,7 +187,7 @@ const EntityRow: React.FC<{
           <Col span={24}>
             <span>
               <em>Date granted:</em>&nbsp;
-              {moment(props.info.time_granted).format('DD MMM YYYY')}
+              {moment(props.info.time_granted).format('MMM D, YYYY')}
             </span>
           </Col>
         </Row>

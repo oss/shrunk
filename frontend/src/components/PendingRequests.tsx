@@ -79,7 +79,7 @@ const PendingRequestRow: React.FC<{
               }}
             >
               Requested at{' '}
-              {moment(request.request_time).format('D MMMM YYYY, h:mm a')}
+              {moment(request.request_time).format('MMMM D, YYYY h:mm a')}
             </span>
           </Col>
         </Row>

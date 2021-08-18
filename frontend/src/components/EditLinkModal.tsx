@@ -5,11 +5,12 @@
 
 import React from 'react';
 import moment from 'moment';
-import { Modal, Form, Input, Button, DatePicker, Space } from 'antd';
+import { Modal, Form, Input, Button, DatePicker, Space, Popconfirm } from 'antd';
 import {
   LinkOutlined,
   PlusOutlined,
   MinusCircleOutlined,
+  ExclamationCircleFilled,
 } from '@ant-design/icons';
 import base32 from 'hi-base32';
 
@@ -252,16 +253,23 @@ export const EditLinkModal: React.FC<Props> = (props) => {
                     />
                   </Form.Item>
 
-                  <Button
+                  <Popconfirm
+                    placement="topRight"
+                    title="Are you sure you want to delete this alias?"
+                    onConfirm={() => remove(field.name)}
+                    icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
                     disabled={fields.length === 1}
-                    type="text"
-                    icon={<MinusCircleOutlined />}
-                    onClick={() => remove(field.name)}
-                  />
+                    >
+                    <Button
+                      disabled={fields.length === 1}
+                      type="text"
+                      icon={<MinusCircleOutlined />}
+                    />
+                  </Popconfirm>
                 </Space>
               ))}
 
-              {!mayEditAliases ? (
+              {!mayEditAliases || fields.length >= 6 ? (
                 <></>
               ) : (
                 <Form.Item>
