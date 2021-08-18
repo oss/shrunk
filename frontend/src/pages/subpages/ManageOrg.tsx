@@ -150,7 +150,7 @@ const MemberRow: React.FC<{
           <></>
         )}
         <span>
-          Added: {moment(props.memberInfo.timeCreated).format('DD MMM YYYY')}
+          Added: {moment(props.memberInfo.timeCreated).format('MMM D, YYYY')}
         </span>
       </Col>
 

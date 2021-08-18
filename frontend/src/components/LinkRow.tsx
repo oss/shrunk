@@ -204,14 +204,14 @@ export class LinkRow extends React.Component<Props, State> {
                   <span className="info">
                     Expires:{' '}
                     {moment(this.props.linkInfo.expiration_time).format(
-                      'DD MMM YYYY',
+                      'MMM D, YYYY',
                     )}
                   </span>
                 )}
 
                 <span className="info">
                   Created:{' '}
-                  {moment(this.props.linkInfo.created_time).format('DD MMM YYYY')}
+                  {moment(this.props.linkInfo.created_time).format('MMM D, YYYY')}
                 </span>
               </span>
             </Col>

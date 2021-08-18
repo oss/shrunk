@@ -145,7 +145,7 @@ const OrgRow: React.FC<{
       )}
       {props.showAll && props.orgInfo.is_member ? <OrgMemberTag /> : <></>}
       <span>
-        Created: {moment(props.orgInfo.timeCreated).format('DD MMM YYYY')}
+        Created: {moment(props.orgInfo.timeCreated).format('MMM D, YYYY')}
       </span>
     </Col>
     <Col span={4} className="btn-col">
