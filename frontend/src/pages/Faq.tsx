@@ -23,7 +23,6 @@ export class Faq extends React.Component<void> {
             <span className="page-title">Frequently Asked Questions</span>
           </Col>
         </Row>
-
         <Collapse bordered={false}>
         <Panel header="What is Go?" key="1" className="question-title">
             <p style={{ paddingLeft: 24 }}>
