@@ -24,7 +24,7 @@ const NewUser: React.FC<{ closePopup: () => Promise<void> }> = (props) => (
 );
 
 export const Orgsv2AlertNewUser: Alert = {
-  title: 'Want to share certain links with a group?',
+  title: 'Want to share specific links with a group?',
   body: NewUser,
 };
 
@@ -40,6 +40,7 @@ const CurrentUser: React.FC<{ closePopup: () => Promise<void> }> = (props) => (
       <li>share a specific link with an organization</li>
       <li>share a specific link with a single user</li>
       <li>request access to a link from the link&apos;s owner</li>
+      <li>use go.rutgers.edu on mobile</li>
     </ul>
     Head to the{' '}
     <Link onClick={async (_ev) => props.closePopup()} to="/orgs">

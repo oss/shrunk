@@ -4,7 +4,6 @@
  */
 
 import React from 'react';
-import { LinkInfo } from '../components/LinkInfo';
 import {
   Col,
   Modal,
@@ -23,9 +22,10 @@ import { FormInstance } from 'antd/lib/form';
 import { PlusCircleFilled, ExclamationCircleFilled } from '@ant-design/icons';
 
 import { ColumnsType } from 'antd/es/table';
+import { RiDeleteBin6Line } from 'react-icons/ri';
 import { OrgInfo, listOrgs } from '../api/Org';
 import { serverValidateNetId } from '../Validators';
-import { RiDeleteBin6Line } from 'react-icons/ri';
+import { LinkInfo } from './LinkInfo';
 
 /**
  * The final values of the share link form
@@ -151,7 +151,7 @@ export class ShareLinkModal extends React.Component<Props, State> {
     {
       title: 'Shared With',
       dataIndex: 'name',
-      width: 200
+      width: 200,
     },
     {
       title: 'Type',
@@ -161,7 +161,7 @@ export class ShareLinkModal extends React.Component<Props, State> {
           <Tag color={type === 'org' ? '#cc0033' : 'red'}>{type}</Tag>
         </>
       ),
-      width: 100
+      width: 100,
     },
     {
       title: 'Permission',
@@ -173,7 +173,7 @@ export class ShareLinkModal extends React.Component<Props, State> {
           </Tag>
         </>
       ),
-      width: 100
+      width: 100,
     },
     {
       title: 'Remove',
@@ -182,10 +182,10 @@ export class ShareLinkModal extends React.Component<Props, State> {
         <>
           <Popconfirm
             placement="topRight"
-            title={record.type === 'netid' ? 
-              "Are you sure you want to remove " + record._id + " (" + record.permission + ")?" 
-              :
-              "Are you sure you want to remove this org (" + record.permission + ")?"
+            title={
+              record.type === 'netid'
+                ? `Are you sure you want to remove ${record._id} (${record.permission})?`
+                : `Are you sure you want to remove this org (${record.permission})?`
             }
             onConfirm={() =>
               this.props.onRemoveEntity(
@@ -195,8 +195,13 @@ export class ShareLinkModal extends React.Component<Props, State> {
               )
             }
             icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
-            >
-            <Button type="text" shape="circle" danger icon={<RiDeleteBin6Line size="1.1em"/>}/>
+          >
+            <Button
+              type="text"
+              shape="circle"
+              danger
+              icon={<RiDeleteBin6Line size="1.1em" />}
+            />
           </Popconfirm>
         </>
       ),
@@ -230,7 +235,11 @@ export class ShareLinkModal extends React.Component<Props, State> {
     return (
       <Modal
         visible={this.props.visible}
-        title={this.props.linkInfo === null ? "Share link" : "Share link: " + this.props.linkInfo.title}
+        title={
+          this.props.linkInfo === null
+            ? 'Share link'
+            : `Share link: ${this.props.linkInfo.title}`
+        }
         okText="Done"
         okType="ghost"
         cancelButtonProps={{ style: { display: 'none' } }}
@@ -253,11 +262,11 @@ export class ShareLinkModal extends React.Component<Props, State> {
           <Row>
             <Space>
               <Col span={25}>
-                <Form.Item 
-                  name="typeOfAdd" 
+                <Form.Item
+                  name="typeOfAdd"
                   initialValue={this.state.addNetIDOrOrg}
                 >
-                  <Select                 
+                  <Select
                     onSelect={(value, e) =>
                       this.setState({ addNetIDOrOrg: e.value })
                     }
@@ -273,8 +282,11 @@ export class ShareLinkModal extends React.Component<Props, State> {
                   <Form.Item
                     name="netid"
                     rules={[
-                      { required: true, message: 'Please enter a valid NetID.' },
-                      { validator: serverValidateNetId }, //have a select row search
+                      {
+                        required: true,
+                        message: 'Please enter a valid NetID.',
+                      },
+                      { validator: serverValidateNetId }, // have a select row search
                     ]}
                   >
                     <Input placeholder="NetID" />
@@ -289,7 +301,7 @@ export class ShareLinkModal extends React.Component<Props, State> {
                       },
                     ]}
                   >
-                    <Select placeholder="Organization" allowClear> 
+                    <Select placeholder="Organization" allowClear>
                       {this.state.orgs.map((org) => (
                         <Select.Option key={org.id} value={org.id}>
                           {org.name}
@@ -319,7 +331,6 @@ export class ShareLinkModal extends React.Component<Props, State> {
               </Col>
             </Space>
           </Row>
-
         </Form>
         <Table
           columns={this.tableColumns}
@@ -330,7 +341,7 @@ export class ShareLinkModal extends React.Component<Props, State> {
           pagination={{
             total: this.props.people.length > 0 ? this.props.people.length : 1, // always shows pagination
             hideOnSinglePage: true,
-            pageSize: 5
+            pageSize: 5,
           }}
           loading={this.props.isLoading}
         />

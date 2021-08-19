@@ -66,7 +66,7 @@ module.exports = {
         },
         {
           key: '9',
-          action: 'Modify Permissions',
+          action: 'Modify Link Permissions',
           owner: '*',
           editor: '*',
           viewer: '',
@@ -74,7 +74,7 @@ module.exports = {
         },
         {
           key: '10',
-          action: 'Delete Alias',
+          action: 'Modify Link Owner',
           owner: '*',
           editor: '',
           viewer: '',
@@ -82,7 +82,7 @@ module.exports = {
         },
         {
           key: '11',
-          action: 'Delete Link',
+          action: 'Delete Alias',
           owner: '*',
           editor: '',
           viewer: '',
@@ -90,6 +90,14 @@ module.exports = {
         },
         {
           key: '12',
+          action: 'Delete Link',
+          owner: '*',
+          editor: '',
+          viewer: '',
+          everyone: '',
+        },
+        {
+          key: '13',
           action: 'Reset Visit Count',
           owner: '*',
           editor: '',

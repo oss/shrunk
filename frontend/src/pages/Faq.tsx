@@ -23,14 +23,17 @@ export class Faq extends React.Component<void> {
             <span className="page-title">Frequently Asked Questions</span>
           </Col>
         </Row>
-
         <Collapse bordered={false}>
           <Panel header="What is Go?" key="1" className="question-title">
             <p style={{ paddingLeft: 24 }}>
               Go is the official URL shortener of Rutgers University.
             </p>
           </Panel>
-          <Panel header="Who has access to Go?" key="2" className="question-title">
+          <Panel
+            header="Who has access to Go?"
+            key="2"
+            className="question-title"
+          >
             <p style={{ paddingLeft: 24 }}>
               All current Rutgers University faculty and staff members are able
               to log into <a href="https://go.rutgers.edu/">go.rutgers.edu</a>{' '}
@@ -72,10 +75,15 @@ export class Faq extends React.Component<void> {
             <p style={{ paddingLeft: 24 }}>
               One use of multiple aliases would be creating distinct aliases for
               Twitter and Facebook if you wish to track the number of
-              impressions from each platform.
+              impressions from each platform. You can have at most 6 aliases for
+              one link.
             </p>
           </Panel>
-          <Panel header="What is the organizations feature?" key="6" className="question-title">
+          <Panel
+            header="What is the organizations feature?"
+            key="6"
+            className="question-title"
+          >
             <p style={{ paddingLeft: 24 }}>
               The organizations feature is a collaborative tool that allows a
               group of users to view each other&rsquo;s links. For example,
@@ -83,26 +91,35 @@ export class Faq extends React.Component<void> {
               each other&rsquo;s links.
             </p>
           </Panel>
-          <Panel header="How can I use the organizations feature?" key="7" className="question-title">
+          <Panel
+            header="How can I use the organizations feature?"
+            key="7"
+            className="question-title"
+          >
             <p style={{ paddingLeft: 24 }}>
               Only faculty and staff members are able to create a new
               organization. To do so, navigate to the{' '}
               <Link to="/orgs">Organizations </Link>
-              page and click the &ldquo;Create an Organization&rdquo; button.
-              You will automatically be made an administrator of the newly
-              created organization. Once the organization has been created, you
-              may navigate to its management page and use the &ldquo;Add a
-              Member&rdquo; button to add members to the organization. Only
-              admins of the organization can delete an organization which
-              removes member access to the shared links.
+              page and click the <b>Create an Organization</b> button. You will
+              automatically be made an administrator of the newly created
+              organization. Once the organization has been created, you may
+              navigate to its management page and use the <b>Add a Member</b>{' '}
+              button to add members to the organization. Only admins of the
+              organization can delete an organization which removes member
+              access to the shared links.
             </p>
             <p style={{ paddingLeft: 24 }}>
-              To view the links created by members of an organization, click the
-              &ldquo;Filter Links&rdquo; dropdown next to the search bar, and
-              select the organization whose links you would like to view.
+              To view the links created by members of an organization, click on
+              <b> My Links</b> next to the search bar and under &ldquo;My
+              Organizations&rdquo; select the organization whose links you would
+              like to view.
             </p>
           </Panel>
-          <Panel header="Why can I view this link but not edit it?" key="8" className="question-title">
+          <Panel
+            header="Why can I view this link but not edit it?"
+            key="8"
+            className="question-title"
+          >
             <p style={{ paddingLeft: 24 }}>
               As a viewer, you can see a link&apos;s stats and QR code; however,
               you cannot edit it. You can request for edit access by hitting the
@@ -110,19 +127,51 @@ export class Faq extends React.Component<void> {
               of the link.
             </p>
           </Panel>
-          <Panel header="How do I share my links?" key="9" className="question-title">
+          <Panel
+            header="How do I share my links?"
+            key="9"
+            className="question-title"
+          >
             <p style={{ paddingLeft: 24 }}>
               To share your link with a specific user or an organization, you
               must either be the owner or an editor of the link. Click on the
-              &ldquo;manage sharing&rdquo; icon to the right of your link and
-              add the user&apos;s NetId or organization name. You can also
-              specify whether you want them to be a viewer or editor of the
-              link.{' '}
+              <b> manage sharing</b> icon to the right of your link and add the
+              user&apos;s NetId or the organization name. You can also specify
+              whether you want them to be a viewer or editor of the link.{' '}
+            </p>
+          </Panel>
+          <Panel
+            header="How do I sort my links? How do I see my deleted and expired links?"
+            key="10"
+            className="question-title"
+          >
+            <p style={{ paddingLeft: 24 }}>
+              To sort your links on your URL dashboard, you can click on{' '}
+              <b>Filter By </b>
+              next to the search bar and choose how you want your links to be
+              sorted by and in what order. You can also view your expired and
+              deleted links among your active links. You can also specify only
+              links created after or before a specific data to be shown.
+            </p>
+          </Panel>
+          <Panel
+            header="Where can I download my link statistics?"
+            key="11"
+            className="question-title"
+          >
+            <p style={{ paddingLeft: 24 }}>
+              Click on the <b>link statistics</b> icon to the right of your link
+              and on that page under the tab <b>Link Info</b> and below the{' '}
+              <b>Visits</b> header is the <b>Download visits as CSV</b> button.
+              This downloads onto your computer a .csv file of link statistics
+              for that specific link. The .csv file includes which alias was
+              used to access the link, visitor ID, referrer, approximate
+              location of the user, and time accessed.
             </p>
           </Panel>
           <Panel
             header="What access does somone have when I make them a viewer or editor?"
-            key="10"
+            key="12"
             className="question-title"
           >
             <Table

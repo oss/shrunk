@@ -5,19 +5,17 @@
 
 import React from 'react';
 import { Row, Col, Button, Popconfirm, Tooltip, Tag } from 'antd';
+import { ExclamationCircleFilled } from '@ant-design/icons';
 import {
-  ExclamationCircleFilled,
-} from '@ant-design/icons';
-import { 
-  RiEditBoxLine, 
+  RiEditBoxLine,
   RiMailSendFill,
   RiMailForbidLine,
-  RiFileChartLine, 
+  RiFileChartLine,
   RiFileCopy2Fill,
-  RiDeleteBin6Line, 
-  RiQrCodeLine, 
-  RiTeamLine
-} from "react-icons/ri"
+  RiDeleteBin6Line,
+  RiQrCodeLine,
+  RiTeamLine,
+} from 'react-icons/ri';
 
 import CopyToClipboard from 'react-copy-to-clipboard';
 import moment from 'moment';
@@ -182,7 +180,9 @@ export class LinkRow extends React.Component<Props, State> {
               <span className="info-span">
                 <span className="info">Owner: {this.props.linkInfo.owner}</span>
 
-                <span className="info">Visits: {this.props.linkInfo.visits}</span>
+                <span className="info">
+                  Visits: {this.props.linkInfo.visits}
+                </span>
 
                 <span className="info">
                   Unique visits: {this.props.linkInfo.unique_visits}
@@ -194,14 +194,16 @@ export class LinkRow extends React.Component<Props, State> {
                   <span className="info">
                     Expires:{' '}
                     {moment(this.props.linkInfo.expiration_time).format(
-                      'DD MMM YYYY',
+                      'MMM D, YYYY',
                     )}
                   </span>
                 )}
 
                 <span className="info">
                   Created:{' '}
-                  {moment(this.props.linkInfo.created_time).format('DD MMM YYYY')}
+                  {moment(this.props.linkInfo.created_time).format(
+                    'MMM D, YYYY',
+                  )}
                 </span>
               </span>
             </Col>
@@ -242,7 +244,7 @@ export class LinkRow extends React.Component<Props, State> {
             <Tooltip title="Edit link">
               <Button
                 type="text"
-                icon={<RiEditBoxLine size="1.1em"/>}
+                icon={<RiEditBoxLine size="1.1em" />}
                 onClick={(_ev) => this.props.showEditModal(this.props.linkInfo)}
               />
             </Tooltip>
@@ -254,7 +256,7 @@ export class LinkRow extends React.Component<Props, State> {
             <Tooltip title="Manage sharing">
               <Button
                 type="text"
-                icon={<RiTeamLine size="1.1em"/>}
+                icon={<RiTeamLine size="1.1em" />}
                 onClick={(_ev) =>
                   this.props.showShareLinkModal(this.props.linkInfo)
                 }
@@ -264,14 +266,14 @@ export class LinkRow extends React.Component<Props, State> {
           <Tooltip title="Link stats">
             <Button
               type="text"
-              icon={<RiFileChartLine size="1.1em"/>}
+              icon={<RiFileChartLine size="1.1em" />}
               href={`/app/#/stats/${this.props.linkInfo.id}`}
             />
           </Tooltip>
           <Tooltip title="QR code">
             <Button
               type="text"
-              icon={<RiQrCodeLine size="1.1em"/>}
+              icon={<RiQrCodeLine size="1.1em" />}
               onClick={(_ev) => this.props.showQrModal(this.props.linkInfo)}
             />
           </Tooltip>
@@ -285,7 +287,11 @@ export class LinkRow extends React.Component<Props, State> {
               icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
             >
               <Tooltip title="Delete link">
-                <Button danger type="text" icon={<RiDeleteBin6Line size="1.1em"/>} />
+                <Button
+                  danger
+                  type="text"
+                  icon={<RiDeleteBin6Line size="1.1em" />}
+                />
               </Tooltip>
             </Popconfirm>
           )}
@@ -298,7 +304,7 @@ export class LinkRow extends React.Component<Props, State> {
               onConfirm={this.requestEditAccess}
             >
               <Tooltip title="Request edit access">
-                <Button type="text" icon={<RiMailSendFill size="1.1em"/>} />
+                <Button type="text" icon={<RiMailSendFill size="1.1em" />} />
               </Tooltip>
             </Popconfirm>
           )}
@@ -311,7 +317,7 @@ export class LinkRow extends React.Component<Props, State> {
               onConfirm={this.cancelRequest}
             >
               <Tooltip title="Cancel request for edit access">
-                <Button type="text" icon={<RiMailForbidLine size="1.1em"/>} />
+                <Button type="text" icon={<RiMailForbidLine size="1.1em" />} />
               </Tooltip>
             </Popconfirm>
           )}

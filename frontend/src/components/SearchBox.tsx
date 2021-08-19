@@ -16,7 +16,7 @@ export interface Props {
    * @property
    */
   updateQueryString: (newQueryString: string) => void;
-} 
+}
 
 /**
  * The [[SearchBox]] component allows the user to enter and execute a search query
@@ -31,7 +31,6 @@ export const SearchBox: React.FC<Props> = (props) => {
     // Create a delay
     setTimeout(() => {
       toggle(false);
-      console.log(query);
       props.updateQueryString(query);
     }, 400);
   };
@@ -43,6 +42,6 @@ export const SearchBox: React.FC<Props> = (props) => {
       allowClear
       onSearch={onSearch}
       enterButton
-      />
+    />
   );
 };

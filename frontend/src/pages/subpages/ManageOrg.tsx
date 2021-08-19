@@ -25,7 +25,7 @@ import {
   UpOutlined,
   DownOutlined,
 } from '@ant-design/icons';
-import { IoReturnUpBack } from 'react-icons/io5'
+import { IoReturnUpBack } from 'react-icons/io5';
 import { Link, RouteComponentProps, withRouter } from 'react-router-dom';
 import moment from 'moment';
 
@@ -151,7 +151,7 @@ const MemberRow: React.FC<{
           <></>
         )}
         <span>
-          Added: {moment(props.memberInfo.timeCreated).format('DD MMM YYYY')}
+          Added: {moment(props.memberInfo.timeCreated).format('MMM D, YYYY')}
         </span>
       </Col>
 
@@ -338,7 +338,12 @@ class ManageOrgInner extends React.Component<Props, State> {
       <>
         <Row className="primary-row">
           <Col span={12}>
-            <Button type="text" href={"/app/#/orgs"} icon={<IoReturnUpBack/>} size="large"/>
+            <Button
+              type="text"
+              href="/app/#/orgs"
+              icon={<IoReturnUpBack />}
+              size="large"
+            />
             {this.state.orgInfo === null ? (
               <Spin size="small" />
             ) : (
