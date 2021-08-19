@@ -260,9 +260,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
                           { validator: serverValidateDuplicateAlias },
                         ]}
                       >
-                        <Input
-                          placeholder="alias"
-                        />
+                        <Input placeholder="alias" />
                       </Form.Item>
                     )}
 
@@ -294,13 +292,13 @@ export class CreateLinkForm extends React.Component<Props, State> {
                 ))}
                 {fields.length >= 6 ? (
                   <></>
-                  ) : (
+                ) : (
                   <Form.Item>
                     <Button block type="dashed" onClick={add}>
                       <PlusOutlined /> Add another alias
                     </Button>
                   </Form.Item>
-                  )}
+                )}
               </div>
             )}
           </Form.List>

@@ -5,7 +5,7 @@
 
 import React from 'react';
 
-import { Row, Col, Pagination, Spin, Dropdown, Button, Space } from 'antd';
+import { Row, Col, Pagination, Spin, Dropdown, Button } from 'antd';
 import { PlusCircleFilled } from '@ant-design/icons';
 
 import moment from 'moment';
@@ -264,7 +264,7 @@ export class Dashboard extends React.Component<Props, State> {
    */
   updateQueryString = (newQueryString: string) => {
     this.setState(
-      { query: { ...this.state.query, queryString: newQueryString} },
+      { query: { ...this.state.query, queryString: newQueryString } },
       () => this.setQuery(this.state.query),
     );
   };
@@ -431,7 +431,6 @@ export class Dashboard extends React.Component<Props, State> {
     skip: number,
     limit: number,
   ): Promise<{ count: number; results: LinkInfo[] }> => {
-
     const req: Record<string, any> = {
       query: query.queryString,
       set: query.set,
@@ -885,38 +884,39 @@ export class Dashboard extends React.Component<Props, State> {
             <span className="page-title">URL Dashboard</span>
           </Col>
         </Row>
-        <Row className="primary-row" gutter={[8,24]}>
-          <Col xs={{span:24}} sm={{span:9}}>
+        <Row className="primary-row" gutter={[8, 24]}>
+          <Col xs={{ span: 24 }} sm={{ span: 9 }}>
             {this.state.userOrgs === null ? (
               <></>
             ) : (
-              <SearchBox updateQueryString={this.updateQueryString}/>
+              <SearchBox updateQueryString={this.updateQueryString} />
             )}
           </Col>
           <Col>
             {this.state.userOrgs === null ? (
               <></>
             ) : (
-            <OrgsSelect 
-              userPrivileges={this.props.userPrivileges}
-              userOrgs={this.state.userOrgs}
-              showByOrg={this.showByOrg}
-            />
+              <OrgsSelect
+                userPrivileges={this.props.userPrivileges}
+                userOrgs={this.state.userOrgs}
+                showByOrg={this.showByOrg}
+              />
             )}
           </Col>
           <Col>
             {this.state.userOrgs === null ? (
-                <></>
-              ) : (
+              <></>
+            ) : (
               <FilterDropdown
-              userPrivileges={this.props.userPrivileges}
-              showDeletedLinks={this.showDeletedLinks}
-              showExpiredLinks={this.showExpiredLinks}
-              sortLinksByKey={this.sortLinksByKey}
-              sortLinksByOrder={this.sortLinksByOrder}
-              showLinksAfter={this.showLinksAfter}
-              showLinksBefore={this.showLinksBefore}
-            />)}
+                userPrivileges={this.props.userPrivileges}
+                showDeletedLinks={this.showDeletedLinks}
+                showExpiredLinks={this.showExpiredLinks}
+                sortLinksByKey={this.sortLinksByKey}
+                sortLinksByOrder={this.sortLinksByOrder}
+                showLinksAfter={this.showLinksAfter}
+                showLinksBefore={this.showLinksBefore}
+              />
+            )}
           </Col>
           <Col className="shrink-link">
             <Dropdown
@@ -937,7 +937,7 @@ export class Dashboard extends React.Component<Props, State> {
               trigger={['click']}
             >
               <Button type="primary">
-                <PlusCircleFilled/> Shrink a Link
+                <PlusCircleFilled /> Shrink a Link
               </Button>
             </Dropdown>
           </Col>
