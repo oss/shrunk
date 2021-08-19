@@ -5,7 +5,15 @@
 
 import React from 'react';
 import moment from 'moment';
-import { Modal, Form, Input, Button, DatePicker, Space, Popconfirm } from 'antd';
+import {
+  Modal,
+  Form,
+  Input,
+  Button,
+  DatePicker,
+  Space,
+  Popconfirm,
+} from 'antd';
 import {
   LinkOutlined,
   PlusOutlined,
@@ -259,7 +267,7 @@ export const EditLinkModal: React.FC<Props> = (props) => {
                     onConfirm={() => remove(field.name)}
                     icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
                     disabled={fields.length === 1}
-                    >
+                  >
                     <Button
                       disabled={fields.length === 1}
                       type="text"

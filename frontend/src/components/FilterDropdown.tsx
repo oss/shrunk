@@ -183,7 +183,7 @@ export const FilterDropdown: React.FC<Props> = (props) => {
         trigger={['click']}
       >
         <Button type="text">
-          Filter By <CaretDownOutlined className="caret-style"/>
+          Filter By <CaretDownOutlined className="caret-style" />
         </Button>
       </Dropdown>
     </Space>

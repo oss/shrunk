@@ -4,14 +4,25 @@
  */
 
 import React from 'react';
-import { Row, Space, Col, Spin, Select, Button, Popconfirm, Tabs, Typography, Card } from 'antd';
+import {
+  Row,
+  Space,
+  Col,
+  Spin,
+  Select,
+  Button,
+  Popconfirm,
+  Tabs,
+  Typography,
+  Card,
+} from 'antd';
 import {
   ExclamationCircleFilled,
   ClearOutlined,
   CloudDownloadOutlined,
   LoadingOutlined,
 } from '@ant-design/icons';
-import { IoReturnUpBack } from 'react-icons/io5'
+import { IoReturnUpBack } from 'react-icons/io5';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import moment from 'moment';
@@ -196,17 +207,16 @@ interface State {
  * The [[InfoBox]] component displays the info for link
  * @param props The props
  */
- const InfoBox: React.FC<{infoLabel: string; data: string;}> = (props) => {
-  return (
-      <Card className="info-box">
-        <div className="detail">
-          <Typography.Text style={{color:'#686b69'}}>{props.infoLabel}</Typography.Text>
-          <Typography.Text className="data-text">{props.data}</Typography.Text> 
-        </div>
-      </Card>
-  );
-};
-
+const InfoBox: React.FC<{ infoLabel: string; data: string }> = (props) => (
+  <Card className="info-box">
+    <div className="detail">
+      <Typography.Text style={{ color: '#686b69' }}>
+        {props.infoLabel}
+      </Typography.Text>
+      <Typography.Text className="data-text">{props.data}</Typography.Text>
+    </div>
+  </Card>
+);
 
 /**
  * The [[VisitsChart]] component displays a line graph of total visits and unique
@@ -379,7 +389,6 @@ export class Stats extends React.Component<Props, State> {
       loading: false,
     };
   }
-  
 
   async componentDidMount(): Promise<void> {
     await this.updateLinkInfo();
@@ -413,7 +422,7 @@ export class Stats extends React.Component<Props, State> {
     }
 
     this.setState({
-      linkInfo: linkInfo,
+      linkInfo,
       allAliases: aliases,
       selectedAlias: null,
       mayEdit: linkInfo.may_edit,
@@ -492,8 +501,15 @@ export class Stats extends React.Component<Props, State> {
       <>
         <Row className="primary-row" justify="space-between">
           <Col span={16}>
-            <Button type="text" href={"/app/#/dash"} icon={<IoReturnUpBack/>} size="large"/>
-            <span className="page-title">Stats for <em>{this.state.linkInfo?.title}</em></span>
+            <Button
+              type="text"
+              href="/app/#/dash"
+              icon={<IoReturnUpBack />}
+              size="large"
+            />
+            <span className="page-title">
+              Stats for <em>{this.state.linkInfo?.title}</em>
+            </span>
           </Col>
 
           {this.state.allAliases.length === 1 ? (
@@ -524,50 +540,93 @@ export class Stats extends React.Component<Props, State> {
                 ) : (
                   <Col>
                     <Typography.Title level={3}>Details</Typography.Title>
-                      <InfoBox infoLabel="Link Title" data={this.state.linkInfo.title}/>
-                      <InfoBox infoLabel="Owner" data={this.state.linkInfo.owner}/>
-                      <InfoBox infoLabel="Date Created" data={moment(this.state.linkInfo.created_time).format('MMM D, YYYY')}/>
-                      <InfoBox infoLabel="Long URL" data= {this.state.linkInfo.long_url}/>
-                      {this.state.selectedAlias === null ? (
-                        <Card className="info-box">
-                          <div className="detail">
-                            <Typography.Text style={{color:'#686b69'}}>Aliases</Typography.Text>
-                            <Typography.Text className="data-text">
-                            {this.state.linkInfo.aliases.map((alias) => (
-                            <p>{alias.alias}</p>))}
-                              </Typography.Text> 
-                          </div>
-                        </Card>
-                        ) : (
-                          <InfoBox infoLabel="Alias" data={this.state.selectedAlias}/>
+                    <InfoBox
+                      infoLabel="Link Title"
+                      data={this.state.linkInfo.title}
+                    />
+                    <InfoBox
+                      infoLabel="Owner"
+                      data={this.state.linkInfo.owner}
+                    />
+                    <InfoBox
+                      infoLabel="Date Created"
+                      data={moment(this.state.linkInfo.created_time).format(
+                        'MMM D, YYYY',
                       )}
+                    />
+                    <InfoBox
+                      infoLabel="Long URL"
+                      data={this.state.linkInfo.long_url}
+                    />
+                    {this.state.selectedAlias === null ? (
+                      <Card className="info-box">
+                        <div className="detail">
+                          <Typography.Text style={{ color: '#686b69' }}>
+                            Aliases
+                          </Typography.Text>
+                          <Typography.Text className="data-text">
+                            {this.state.linkInfo.aliases.map((alias) => (
+                              <p>{alias.alias}</p>
+                            ))}
+                          </Typography.Text>
+                        </div>
+                      </Card>
+                    ) : (
+                      <InfoBox
+                        infoLabel="Alias"
+                        data={this.state.selectedAlias}
+                      />
+                    )}
                   </Col>
-              )}
+                )}
                 {this.state.overallStats === null ? (
                   <></>
                 ) : (
                   <Col>
                     <Typography.Title level={3}>Visits</Typography.Title>
-                      <InfoBox infoLabel="Total Visits" data={this.state.overallStats.total_visits.toString()}/>
-                      <InfoBox infoLabel="First Time Visits" data={this.state.overallStats.unique_visits.toString()}/>
-                    <Space style={{position:'relative', marginTop:'20px'}} align="center" wrap>
-                      <Button icon={this.state.loading ? <LoadingOutlined spin/> : <CloudDownloadOutlined/>} onClick={this.downloadCsv}>
+                    <InfoBox
+                      infoLabel="Total Visits"
+                      data={this.state.overallStats.total_visits.toString()}
+                    />
+                    <InfoBox
+                      infoLabel="First Time Visits"
+                      data={this.state.overallStats.unique_visits.toString()}
+                    />
+                    <Space
+                      style={{ position: 'relative', marginTop: '20px' }}
+                      align="center"
+                      wrap
+                    >
+                      <Button
+                        icon={
+                          this.state.loading ? (
+                            <LoadingOutlined spin />
+                          ) : (
+                            <CloudDownloadOutlined />
+                          )
+                        }
+                        onClick={this.downloadCsv}
+                      >
                         Download visits as CSV
                       </Button>
                       {this.state.mayEdit ? (
                         <></>
                       ) : (
                         <Col span={4} className="btn-col">
-                        <Popconfirm
-                          placement="bottom"
-                          title="Are you sure you want to clear all visit data associated with this link? This operation cannot be undone."
-                          onConfirm={this.clearVisitData}
-                          icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
-                        >
-                          <Button danger>
-                            <ClearOutlined /> Clear all visit data
-                          </Button>
-                        </Popconfirm>
+                          <Popconfirm
+                            placement="bottom"
+                            title="Are you sure you want to clear all visit data associated with this link? This operation cannot be undone."
+                            onConfirm={this.clearVisitData}
+                            icon={
+                              <ExclamationCircleFilled
+                                style={{ color: 'red' }}
+                              />
+                            }
+                          >
+                            <Button danger>
+                              <ClearOutlined /> Clear all visit data
+                            </Button>
+                          </Popconfirm>
                         </Col>
                       )}
                     </Space>
@@ -577,12 +636,12 @@ export class Stats extends React.Component<Props, State> {
             </Tabs.TabPane>
             <Tabs.TabPane tab="Visit Statistics" key="2">
               <Row className="primary-row">
-              <Col span={24}>
-                <Card className="card">
-                  <VisitsChart visitStats={this.state.visitStats} />
-                </Card>
-              </Col>
-            </Row>
+                <Col span={24}>
+                  <Card className="card">
+                    <VisitsChart visitStats={this.state.visitStats} />
+                  </Card>
+                </Col>
+              </Row>
             </Tabs.TabPane>
             <Tabs.TabPane tab="Location Statistics" key="3">
               <Row className="primary-row">
@@ -594,9 +653,9 @@ export class Stats extends React.Component<Props, State> {
               </Row>
             </Tabs.TabPane>
             <Tabs.TabPane tab="Browser Statistics" key="4">
-            <Row className="primary-row">
-              <BrowserCharts browserStats={this.state.browserStats} />
-            </Row>
+              <Row className="primary-row">
+                <BrowserCharts browserStats={this.state.browserStats} />
+              </Row>
             </Tabs.TabPane>
           </Tabs>
         </div>

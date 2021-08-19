@@ -14,7 +14,7 @@ import {
 } from 'react-router-dom';
 import { createBrowserHistory, Location } from 'history';
 import { Layout, Menu, Dropdown, Button } from 'antd';
-import { UserOutlined, DownOutlined, MenuOutlined } from '@ant-design/icons'
+import { UserOutlined, DownOutlined, MenuOutlined } from '@ant-design/icons';
 
 import { Dashboard } from './pages/Dashboard';
 import { Admin } from './pages/Admin';
@@ -96,7 +96,6 @@ interface State {
    * @property
    */
   role: string;
-
 }
 
 /**
@@ -111,19 +110,15 @@ export class Shrunk extends React.Component<Props, State> {
     const showAdminTab = this.props.userPrivileges.has('admin');
     const showWhitelistTab =
       !showAdminTab && this.props.userPrivileges.has('facstaff');
-    const role = 
-      this.props.userPrivileges.size === 0 ? (
-        'Whitelisted User'
-      ) : (                 
-        this.props.userPrivileges.has("power_user") ? (
-          'Power User'
-      ) : (
-        this.props.userPrivileges.has("facstaff") ? (
-          'Faculty/Staff'
-      ) : (
-          'Administrator'
-      )))
-      
+    const role =
+      this.props.userPrivileges.size === 0
+        ? 'Whitelisted User'
+        : this.props.userPrivileges.has('power_user')
+        ? 'Power User'
+        : this.props.userPrivileges.has('facstaff')
+        ? 'Faculty/Staff'
+        : 'Administrator';
+
     this.state = {
       showAdminTab,
       showWhitelistTab,
@@ -204,18 +199,24 @@ export class Shrunk extends React.Component<Props, State> {
                 className="logout-menu"
                 overlay={
                   <Menu className="customclass">
-                    <Menu.Item key="1" disabled icon={<UserOutlined/>} style={{textAlign: 'center'}}>
+                    <Menu.Item
+                      key="1"
+                      disabled
+                      icon={<UserOutlined />}
+                      style={{ textAlign: 'center' }}
+                    >
                       {this.state.role}
                     </Menu.Item>
-                    <Menu.Divider/>
-                    <Menu.Item key="2" style={{textAlign: 'center'}}>
+                    <Menu.Divider />
+                    <Menu.Item key="2" style={{ textAlign: 'center' }}>
                       <a href="/app/logout">Logout</a>
                     </Menu.Item>
                   </Menu>
-                }>
-                  <Button type="text" className="filter-btn">
-                    {this.props.netid} <DownOutlined/>
-                  </Button>
+                }
+              >
+                <Button type="text" className="filter-btn">
+                  {this.props.netid} <DownOutlined />
+                </Button>
               </Dropdown>
             </div>
             <div className="user-icon">
@@ -223,20 +224,25 @@ export class Shrunk extends React.Component<Props, State> {
                 className="icon-menu"
                 overlay={
                   <Menu>
-                    <Menu.Item key="1" disabled style={{textAlign: 'center'}}>
+                    <Menu.Item key="1" disabled style={{ textAlign: 'center' }}>
                       {this.state.role}
                     </Menu.Item>
-                    <Menu.Divider/>
-                    <Menu.Item key="2" style={{textAlign: 'center'}}>
+                    <Menu.Divider />
+                    <Menu.Item key="2" style={{ textAlign: 'center' }}>
                       <a href="/app/logout">Logout</a>
                     </Menu.Item>
                   </Menu>
-                }>
-                  <Button type="text" className="user-btn" icon={<UserOutlined style={{color:"#f0b1b9"}}/>}/>
+                }
+              >
+                <Button
+                  type="text"
+                  className="user-btn"
+                  icon={<UserOutlined style={{ color: '#f0b1b9' }} />}
+                />
               </Dropdown>
             </div>
             <Menu
-              overflowedIndicator={<MenuOutlined/>}
+              overflowedIndicator={<MenuOutlined />}
               className="navbar"
               theme="dark"
               mode="horizontal"
@@ -276,7 +282,6 @@ export class Shrunk extends React.Component<Props, State> {
                 </NavLink>
               </Menu.Item>
             </Menu>
-              
           </Header>
           <Layout>
             <Sider
