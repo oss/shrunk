@@ -879,12 +879,12 @@ export class Dashboard extends React.Component<Props, State> {
   render(): React.ReactNode {
     return (
       <>
-        <Row className="primary-row">
+        <Row style={{marginBottom:'20px'}}>
           <Col>
-            <span className="page-title">URL Dashboard</span>
+            <span style={{fontSize:'30pt', color: 'black'}}>URL Dashboard</span>
           </Col>
         </Row>
-        <Row className="primary-row" gutter={[8, 24]}>
+        <Row style={{backgroundColor: '#CBBEC0', padding: '7px', marginBottom:'20px', borderRadius: '9px'}} gutter={[8, 24]}>
           <Col xs={{ span: 24 }} sm={{ span: 9 }}>
             {this.state.userOrgs === null ? (
               <></>
