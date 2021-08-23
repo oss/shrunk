@@ -884,7 +884,7 @@ export class Dashboard extends React.Component<Props, State> {
             <span className="page-title">URL Dashboard</span>
           </Col>
         </Row>
-        <Row className="primary-row" gutter={[8, 24]}>
+        <Row className="primary-row" gutter={[8, 24]} style={{borderColor: 'transparent !important'}}>
           <Col xs={{ span: 24 }} sm={{ span: 9 }}>
             {this.state.userOrgs === null ? (
               <></>
