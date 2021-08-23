@@ -116,8 +116,24 @@ export class Faq extends React.Component<void> {
             </p>
           </Panel>
           <Panel
-            header="Why can I view this link but not edit it?"
+            header="Where did the links that were shared to my organization go?"
             key="8"
+            className="question-title"
+          >
+            <p style={{ paddingLeft: 24 }}>
+              The organizations feature has been changed as of September 2021.
+              Previously all user links would be shared within organizations
+              automatically. Now, users must share each individual link to an 
+              organization in order for other members of the organization to 
+              view shared links. If you would like to re-share all your links 
+              to an organization, please email&nbsp;
+              <a href="mailto:oss@oss.rutgers.edu">oss@oss.rutgers.edu</a>. 
+              
+            </p>
+          </Panel>
+          <Panel
+            header="Why can I view this link but not edit it?"
+            key="9"
             className="question-title"
           >
             <p style={{ paddingLeft: 24 }}>
@@ -129,7 +145,7 @@ export class Faq extends React.Component<void> {
           </Panel>
           <Panel
             header="How do I share my links?"
-            key="9"
+            key="10"
             className="question-title"
           >
             <p style={{ paddingLeft: 24 }}>
@@ -142,7 +158,7 @@ export class Faq extends React.Component<void> {
           </Panel>
           <Panel
             header="How do I sort my links? How do I see my deleted and expired links?"
-            key="10"
+            key="11"
             className="question-title"
           >
             <p style={{ paddingLeft: 24 }}>
@@ -156,7 +172,7 @@ export class Faq extends React.Component<void> {
           </Panel>
           <Panel
             header="Where can I download my link statistics?"
-            key="11"
+            key="12"
             className="question-title"
           >
             <p style={{ paddingLeft: 24 }}>
