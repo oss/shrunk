@@ -879,7 +879,7 @@ export class Dashboard extends React.Component<Props, State> {
   render(): React.ReactNode {
     return (
       <>
-        <Row style={{marginBottom:'20px'}}>
+        <Row className="dashboard-title">
           <Col>
             <span style={{fontSize:'30pt', color: 'black'}}>URL Dashboard</span>
           </Col>

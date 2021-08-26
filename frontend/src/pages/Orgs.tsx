@@ -270,6 +270,7 @@ export class Orgs extends React.Component<Props, State> {
               <></>
             ) : (
               <Checkbox
+                style={{paddingTop: '6px'}}
                 defaultChecked={false}
                 onChange={(ev) => this.setState({ showAll: ev.target.checked })}
               >
