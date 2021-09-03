@@ -66,7 +66,7 @@ export const OrgsSelect: React.FC<Props> = (props) => {
       value={org}
       onChange={updateOrg}
       className="filter-links-dropdown"
-      style={{ width: 'auto' }}
+      style={{ width: '130px' }}
       bordered={false}
       showArrow
       suffixIcon={
@@ -79,7 +79,7 @@ export const OrgsSelect: React.FC<Props> = (props) => {
               color: '#cc0e32',
               fontSize: '18px',
               top: '-4px',
-              //left: '-20px',
+              left: '-20px',
             }}
           />
         )
