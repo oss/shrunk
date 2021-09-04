@@ -532,14 +532,14 @@ export class Stats extends React.Component<Props, State> {
           )}
         </Row>
         <div className="card-container">
-          <Tabs>
+          <Tabs type="card">
             <Tabs.TabPane tab="Link Info" key="1">
               <Row className="details-row">
                 {this.state.linkInfo === null ? (
                   <></>
                 ) : (
                   <Col>
-                    <Typography.Text style={{fontSize: '23px'}}>Details</Typography.Text>
+                    <Typography.Title level={3}>Details</Typography.Title>
                     <InfoBox
                       infoLabel="Link Title"
                       data={this.state.linkInfo.title}
@@ -583,7 +583,7 @@ export class Stats extends React.Component<Props, State> {
                   <></>
                 ) : (
                   <Col>
-                    <Typography.Text style={{fontSize: '23px'}}>Visits</Typography.Text>
+                    <Typography.Title level={3}>Visits</Typography.Title>
                     <InfoBox
                       infoLabel="Total Visits"
                       data={this.state.overallStats.total_visits.toString()}
