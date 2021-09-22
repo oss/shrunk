@@ -50,7 +50,7 @@ const AliasLabel: React.FC = (_props) => {
   for more info.`;
   return (
     <Tooltip title={aliasHelp}>
-      Alias <QuestionCircleOutlined />
+      Alias(es) <QuestionCircleOutlined />
     </Tooltip>
   );
 };
@@ -264,7 +264,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
                       </Form.Item>
                     )}
 
-                    <Form.Item
+                    <Form.Item //style={{ marginBottom: "0px" }}
                       label={
                         index === 0 ? (
                           !mayUseCustomAliases ? (
@@ -282,7 +282,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
                       <Input placeholder="Description" />
                     </Form.Item>
 
-                    <Button
+                    <Button //style={{ marginBottom: "0px" }}
                       disabled={fields.length === 1}
                       type="text"
                       icon={<MinusCircleOutlined />}

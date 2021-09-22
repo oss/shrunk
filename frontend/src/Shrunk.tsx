@@ -203,7 +203,7 @@ export class Shrunk extends React.Component<Props, State> {
                       key="1"
                       disabled
                       icon={<UserOutlined />}
-                      style={{ textAlign: 'center' }}
+                      style={{ textAlign: 'center', cursor:'default', color:'black'}}
                     >
                       {this.state.role}
                     </Menu.Item>
