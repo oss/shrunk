@@ -144,7 +144,7 @@ const MemberRow: React.FC<{
   return (
     <Row className="primary-row">
       <Col span={20}>
-        <span className="title">{props.memberInfo.netid}</span>
+        <span className="user-title">{props.memberInfo.netid}</span>
         {props.memberInfo.is_admin ? (
           <OrgAdminTag title="This member is an administrator." />
         ) : (
