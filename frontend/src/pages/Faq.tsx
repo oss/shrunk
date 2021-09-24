@@ -106,7 +106,7 @@ export class Faq extends React.Component<void> {
               organization. Once the organization has been created, you may
               navigate to its management page and use the <b>Add a Member</b>{' '}
               button to add members to the organization. Only admins of the
-              organization can delete an organization which removes member
+              organization can delete an organization, which removes member
               access to the shared links.
             </p>
             <p style={{ paddingLeft: 24 }}>
@@ -139,7 +139,7 @@ export class Faq extends React.Component<void> {
           >
             <p style={{ paddingLeft: 24 }}>
               As a viewer, you can see a link&apos;s stats and QR code; however,
-              you cannot edit it. You can request for edit access by hitting the
+              you cannot edit it. You can request edit access by hitting the
               mail icon next to the link which will send a request to the owner
               of the link.
             </p>
@@ -165,7 +165,7 @@ export class Faq extends React.Component<void> {
             <p style={{ paddingLeft: 24 }}>
               To sort your links on your URL dashboard, you can click on{' '}
               <b>Filter By </b>
-              next to the search bar and choose how you want your links to be
+              next to the search bar and choose what you want your links to be
               sorted by and in what order. You can also view your expired and
               deleted links among your active links. You can also specify only
               links created after or before a specific data to be shown.
@@ -188,7 +188,7 @@ export class Faq extends React.Component<void> {
           </Panel>
           <Panel
             header="What access does somone have when I make them a viewer or editor?"
-            key="12"
+            key="13"
             className="question-title"
           >
             <Table
