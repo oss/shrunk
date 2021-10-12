@@ -264,7 +264,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
                       </Form.Item>
                     )}
 
-                    <Form.Item //style={{ marginBottom: "0px" }}
+                    <Form.Item
                       label={
                         index === 0 ? (
                           !mayUseCustomAliases ? (
@@ -282,7 +282,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
                       <Input placeholder="Description" />
                     </Form.Item>
 
-                    <Button //style={{ marginBottom: "0px" }}
+                    <Button
                       disabled={fields.length === 1}
                       type="text"
                       icon={<MinusCircleOutlined />}
