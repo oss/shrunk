@@ -123,6 +123,8 @@ def _init_roles() -> None:
         'title': 'Power Users',
         'grant_title': 'Grant power user',
         'revoke_title': 'Revoke power user',
+        'allow_comment': True,
+        'comment_prompt': 'Describe why the user has been granted power user access to Go.',
     })
 
     def onblacklist(netid: str) -> None:
