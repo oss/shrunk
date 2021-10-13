@@ -50,7 +50,7 @@ const AliasLabel: React.FC = (_props) => {
   for more info.`;
   return (
     <Tooltip title={aliasHelp}>
-      Alias <QuestionCircleOutlined />
+      Alias(es) <QuestionCircleOutlined />
     </Tooltip>
   );
 };
