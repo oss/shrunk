@@ -354,20 +354,24 @@ class ManageOrgInner extends React.Component<Props, State> {
           </Col>
 
           <Col span={12} className="btn-col">
-            <Dropdown
-              overlay={
-                <AddMemberForm isAdmin={isAdmin} onCreate={this.onAddMember} />
-              }
-              visible={this.state.addMemberFormVisible}
-              onVisibleChange={(flag) =>
-                this.setState({ addMemberFormVisible: flag })
-              }
-              trigger={['click']}
-            >
-              <Button type="primary">
-                <PlusCircleFilled /> Add a Member
-              </Button>
-            </Dropdown>
+            {!isAdmin ? (
+                <></>
+              ) : (
+              <Dropdown
+                overlay={
+                  <AddMemberForm isAdmin={isAdmin} onCreate={this.onAddMember} />
+                }
+                visible={this.state.addMemberFormVisible}
+                onVisibleChange={(flag) =>
+                  this.setState({ addMemberFormVisible: flag })
+                }
+                trigger={['click']}
+              >
+                <Button type="primary">
+                  <PlusCircleFilled /> Add a Member
+                </Button>
+              </Dropdown>
+            )}
 
             <Button type="primary">
               <Link to={`/orgs/${this.props.match.params.id}/stats`}>
