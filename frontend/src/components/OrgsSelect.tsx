@@ -8,7 +8,6 @@ import { Select } from 'antd';
 import { CaretDownOutlined, LoadingOutlined } from '@ant-design/icons';
 import { OrgInfo } from '../api/Org';
 import { SearchSet } from '../pages/Dashboard';
-import '../Base.less';
 
 /**
  * Props for the [[OrgsSelect]] component
@@ -43,7 +42,6 @@ export const OrgsSelect: React.FC<Props> = (props) => {
   const isAdmin = props.userPrivileges.has('admin');
   const [org, setOrg] = useState<number | string>(isAdmin ? 1 : 0);
   const [loading, toggle] = useState(false);
-  const [dropdownView, toggleDropdown] = useState(false);
   const { Option, OptGroup } = Select;
 
   const updateOrg = async (e: any): Promise<void> => {
@@ -65,9 +63,7 @@ export const OrgsSelect: React.FC<Props> = (props) => {
 
   return (
     <Select
-      onClick={()=>(toggleDropdown(!dropdownView))}
       value={org}
-      open={dropdownView}
       onChange={updateOrg}
       className="filter-links-dropdown"
       style={{ width: 'auto' }}
@@ -80,7 +76,6 @@ export const OrgsSelect: React.FC<Props> = (props) => {
           <LoadingOutlined spin />
         ) : (
           <CaretDownOutlined
-            onClick={()=>(toggleDropdown(!dropdownView))}
             style={{
               position: 'relative',
               color: '#cc0e32',
