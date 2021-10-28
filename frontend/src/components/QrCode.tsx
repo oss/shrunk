@@ -103,7 +103,7 @@ export class QrCodeModal extends React.Component<Props, State> {
   setAlias = (alias: string): void => {
     this.setState({
       selectedAlias: alias,
-      selectedShortUrl: `https://${window.location.origin}/${alias}`,
+      selectedShortUrl: `${window.location.origin}/${alias}`,
     });
   };
 
