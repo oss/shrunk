@@ -13,7 +13,7 @@ import {
   NavLink,
 } from 'react-router-dom';
 import { createBrowserHistory, Location } from 'history';
-import { Layout, Menu, Dropdown, Button } from 'antd';
+import { Layout, Menu, Dropdown, Button, Modal, Typography } from 'antd';
 import { UserOutlined, DownOutlined, MenuOutlined } from '@ant-design/icons';
 
 import { Dashboard } from './pages/Dashboard';
@@ -379,9 +379,12 @@ export class Shrunk extends React.Component<Props, State> {
             />
           </Layout>
           <Footer style={{ textAlign: 'center', color: '#f0f0f0' }}>
-            &copy;{new Date().getFullYear()}&mdash;Rutgers, The State University
-            of New Jersey&mdash;Questions? Bugs? Contact us:&nbsp;
-            <a href="mailto:oss@oss.rutgers.edu">oss@oss.rutgers.edu</a>
+          <p>Rutgers is an equal access/equal opportunity institution. 
+            Individuals with disabilities are encouraged to direct suggestions, comments, or complaints concerning any accessibility issues 
+            with Rutgers web sites to <a href="mailto:accessibility@rutgers.edu">accessibility@rutgers.edu</a> or complete the
+             <a href="https://rutgers.ca1.qualtrics.com/jfe/form/SV_57iH6Rfeocz51z0"> Report Accessibility Barrier or Provide Feedback Form</a>.</p>
+            &copy;{new Date().getFullYear()}&mdash;<a href="https://www.rutgers.edu">Rutgers, The State University
+            of New Jersey</a>&mdash;Questions? Bugs? Contact us:&nbsp;<a href="mailto:oss@oss.rutgers.edu">oss@oss.rutgers.edu</a>
           </Footer>
         </Layout>
       </HashRouter>
