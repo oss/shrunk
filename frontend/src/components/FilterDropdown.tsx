@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Form,
   Dropdown,
@@ -114,6 +114,19 @@ export const FilterDropdown: React.FC<Props> = (props) => {
     await props.showLinksBefore(e);
   };
 
+  useEffect(() => {
+    const buttonFilterBy = document.getElementById("filter-by-text");
+
+    if(dropdownVisible) {
+      buttonFilterBy?.classList.toggle('gray-text');
+      buttonFilterBy?.classList.toggle('red-text');
+    } else {
+      buttonFilterBy?.classList.toggle('red-text');
+      buttonFilterBy?.classList.toggle('gray-text');
+    }
+
+  }, [dropdownVisible]);
+
   const dropdown = (
     <div className="dropdown-form">
       <Form
@@ -183,7 +196,7 @@ export const FilterDropdown: React.FC<Props> = (props) => {
         trigger={['click']}
       >
         <Button type="text" style={{ position: 'relative', top: '-1px'}}>
-          Filter By <CaretDownOutlined className="caret-style" style={{fontSize:'18px', position: 'relative', top:'1.25px'}}/>
+          <span id='filter-by-text'>Filter By</span> <CaretDownOutlined className="caret-style" style={{fontSize:'18px', position: 'relative', top:'1.25px'}}/>
         </Button>
       </Dropdown>
     </Space>
