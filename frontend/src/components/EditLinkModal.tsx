@@ -147,25 +147,30 @@ export const EditLinkModal: React.FC<Props> = (props) => {
     setOwnerInputVal(e.target.value);
   };
 
+  const handleSubmit = () => {
+    form.validateFields().then((values) => {
+      props.onOk(values as EditLinkFormValues);
+    });
+  }
+
   return (
     <Modal
       visible={props.visible}
       title="Edit link"
       onOk={() => {
-        console.log('hello');
-
         if(ownerInputVal !== initialValues.owner) {
           Modal.confirm({
-            title: "You are changing the owner of this link",
+            title: "Link owner modification",
             icon: <ExclamationCircleFilled/>,
-            content: "You will no longer be the owner of this link. Do you wish to proceed?",
+            content: "The owner of this link was modified. Do you wish to proceed?",
+            okText: "Yes",
+            onOk() {
+              handleSubmit();
+            }
           });
         } else {
-          form.validateFields().then((values) => {
-            props.onOk(values as EditLinkFormValues);
-          });
+          handleSubmit();
         }
-
       }}
       onCancel={() => {
         form.resetFields();
