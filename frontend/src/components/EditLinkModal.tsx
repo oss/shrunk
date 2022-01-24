@@ -162,7 +162,7 @@ export const EditLinkModal: React.FC<Props> = (props) => {
           Modal.confirm({
             title: "Link owner modification",
             icon: <ExclamationCircleFilled/>,
-            content: "The owner of this link was modified. Do you wish to proceed?",
+            content: "You are about to modify the link owner. Do you wish to proceed?",
             okText: "Yes",
             onOk() {
               handleSubmit();
