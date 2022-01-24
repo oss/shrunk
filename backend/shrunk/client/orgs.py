@@ -1,6 +1,7 @@
 """Implements the :py:class:`OrgsClient` class."""
 
 from datetime import datetime, timezone
+from optparse import Option
 from typing import Any, Optional, List, cast
 
 from bson import ObjectId
@@ -85,6 +86,11 @@ class OrgsClient:
         """
         result = self.db.organizations.find_one({'name': org_name})
         return result is None
+
+    def rename_org(self, org_name: str, new_org_name: str) -> Optional[ObjectId]:
+        org = self.validate_name(org_name)
+
+        pass
 
     def delete(self, org_id: ObjectId) -> bool:
         """Delete an org

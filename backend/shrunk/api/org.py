@@ -1,5 +1,6 @@
 """Implements API endpoints under ``/api/org``"""
 
+from crypt import methods
 from typing import Any, Dict
 
 from flask import Blueprint, jsonify
@@ -154,6 +155,25 @@ def get_org(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
     org['is_member'] = any(member['netid'] == netid for member in org['members'])
     org['is_admin'] = any(member['netid'] == netid and member['is_admin'] for member in org['members'])
     return jsonify(org)
+
+
+@bp.route('/<ObjetID:org_id>/<string:new_org_name>', methods=['POST'])
+@require_login
+def rename_org(netid: str, client: ShrunkClient, org_id: ObjectId, new_org_name: str) -> Any:
+    """`POST /api/org/<org_id>/<new_org_name>`
+
+    Changes an organization's name if user is the admin of the org.
+
+    :param org_id:
+    :param new_org_name:
+    """
+    org = client.orgs.get_org(org_id)
+    if org is None:
+        abort(404)
+    if not client.orgs.is_member(org_id, netid) and not client.orgs.is_admin(netid):
+        abort(403)
+    client.orgs.rename_org(org_id, new_org_name)
+    pass
 
 
 VALIDATE_NAME_SCHEMA = {
