@@ -157,7 +157,7 @@ def get_org(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
     return jsonify(org)
 
 
-@bp.route('/<ObjetID:org_id>/<string:new_org_name>', methods=['POST'])
+@bp.route('/<ObjectId:org_id>/<string:new_org_name>/rename')
 @require_login
 def rename_org(netid: str, client: ShrunkClient, org_id: ObjectId, new_org_name: str) -> Any:
     """`POST /api/org/<org_id>/<new_org_name>`
@@ -173,7 +173,7 @@ def rename_org(netid: str, client: ShrunkClient, org_id: ObjectId, new_org_name:
     if not client.orgs.is_member(org_id, netid) and not client.orgs.is_admin(netid):
         abort(403)
     client.orgs.rename_org(org_id, new_org_name)
-    pass
+    return jsonify(org)
 
 
 VALIDATE_NAME_SCHEMA = {
