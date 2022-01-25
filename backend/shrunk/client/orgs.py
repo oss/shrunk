@@ -92,8 +92,6 @@ class OrgsClient:
 
         :param org_id:
         """
-        if self.validate_name(new_org_name) is not None:
-            return 'Name already taken'
 
         matched = {'_id': org_id}
         update = {'$set': {'name': new_org_name}}

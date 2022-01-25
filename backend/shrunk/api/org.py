@@ -157,10 +157,10 @@ def get_org(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
     return jsonify(org)
 
 
-@bp.route('/<ObjectId:org_id>/<string:new_org_name>/rename')
+@bp.route('/<ObjectId:org_id>/<string:new_org_name>', methods=['PUT'])
 @require_login
 def rename_org(netid: str, client: ShrunkClient, org_id: ObjectId, new_org_name: str) -> Any:
-    """`POST /api/org/<org_id>/<new_org_name>`
+    """`PUT /api/org/<org_id>/<new_org_name>`
 
     Changes an organization's name if user is the admin of the org.
 
@@ -170,7 +170,9 @@ def rename_org(netid: str, client: ShrunkClient, org_id: ObjectId, new_org_name:
     org = client.orgs.get_org(org_id)
     if org is None:
         abort(404)
-    if not client.orgs.is_member(org_id, netid) and not client.orgs.is_admin(netid):
+    if (not client.orgs.is_member(org_id, netid)
+        and not client.orgs.is_admin(netid)) or \
+            not client.orgs.validate_name(new_org_name):
         abort(403)
     client.orgs.rename_org(org_id, new_org_name)
     return jsonify(org)
