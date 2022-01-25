@@ -1,6 +1,5 @@
 """Implements API endpoints under ``/api/org``"""
 
-from crypt import methods
 from typing import Any, Dict
 
 from flask import Blueprint, jsonify
