@@ -15,6 +15,7 @@ import {
   Input,
   Checkbox,
   Tooltip,
+  Menu,
 } from 'antd';
 import {
   ExclamationCircleFilled,
@@ -24,6 +25,8 @@ import {
   CloseOutlined,
   UpOutlined,
   DownOutlined,
+  ReconciliationOutlined,
+  MoreOutlined,
 } from '@ant-design/icons';
 import { IoReturnUpBack } from 'react-icons/io5';
 import { Link, RouteComponentProps, withRouter } from 'react-router-dom';
@@ -334,6 +337,52 @@ class ManageOrgInner extends React.Component<Props, State> {
       this.state.orgInfo.is_admin || this.props.userPrivileges.has('admin');
     const userMayNotLeave =
       this.state.orgInfo.is_admin && this.state.adminsCount === 1;
+
+    const orgOptions = (
+      <Menu>
+        {!isAdmin ? (
+          <></>
+        ) : (
+          <Menu.Item>
+            Rename
+          </Menu.Item>
+        )}
+        <Menu.Item>
+          Statistics
+        </Menu.Item>
+        {!this.state.orgInfo.is_member ? (
+              <></>
+            ) : userMayNotLeave ? (
+              <Tooltip
+                placement="bottom"
+                title="You may not remove the last administrator from an organization."
+              >
+                <Menu.Item danger disabled>
+                  <CloseOutlined /> Leave Org
+                </Menu.Item>
+              </Tooltip>
+            ) : (
+              <Popconfirm
+                placement="bottom"
+                title="Are you sure you want to leave this organization?"
+                onConfirm={this.leaveOrg}
+                icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
+              >
+                <Menu.Item danger>
+                  <CloseOutlined /> Leave Org
+                </Menu.Item>
+              </Popconfirm>
+        )}
+
+        <Menu.Item>
+          Leave
+        </Menu.Item>
+        <Menu.Item>
+          Delete
+        </Menu.Item>
+      </Menu>
+    )
+
     return (
       <>
         <Row className="primary-row">
@@ -371,6 +420,20 @@ class ManageOrgInner extends React.Component<Props, State> {
                   <PlusCircleFilled /> Add a Member
                 </Button>
               </Dropdown>
+            )}
+
+            <Dropdown overlay={orgOptions}>
+                <Button>
+                  <MoreOutlined />
+                </Button>
+            </Dropdown>
+
+            {!isAdmin ? (
+              <></>
+            ) : (
+              <Button>
+                <ReconciliationOutlined /> Rename Org
+              </Button>
             )}
 
             <Button type="primary">
