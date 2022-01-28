@@ -1,7 +1,6 @@
 """Implements the :py:class:`OrgsClient` class."""
 
 from datetime import datetime, timezone
-from optparse import Option
 from typing import Any, Optional, List, cast
 
 from bson import ObjectId

@@ -16,6 +16,7 @@ import {
   Checkbox,
   Tooltip,
   Menu,
+  Modal
 } from 'antd';
 import {
   ExclamationCircleFilled,
@@ -27,6 +28,8 @@ import {
   DownOutlined,
   ReconciliationOutlined,
   MoreOutlined,
+  ExclamationCircleOutlined,
+  WarningFilled,
 } from '@ant-design/icons';
 import { IoReturnUpBack } from 'react-icons/io5';
 import { Link, RouteComponentProps, withRouter } from 'react-router-dom';
@@ -348,38 +351,64 @@ class ManageOrgInner extends React.Component<Props, State> {
           </Menu.Item>
         )}
         <Menu.Item>
-          Statistics
+          <Link to={`/orgs/${this.props.match.params.id}/stats`}>
+            Statistics
+          </Link>
         </Menu.Item>
-        {!this.state.orgInfo.is_member ? (
-              <></>
-            ) : userMayNotLeave ? (
-              <Tooltip
-                placement="bottom"
-                title="You may not remove the last administrator from an organization."
-              >
-                <Menu.Item danger disabled>
-                  <CloseOutlined /> Leave Org
-                </Menu.Item>
-              </Tooltip>
-            ) : (
-              <Popconfirm
-                placement="bottom"
-                title="Are you sure you want to leave this organization?"
-                onConfirm={this.leaveOrg}
-                icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
-              >
-                <Menu.Item danger>
-                  <CloseOutlined /> Leave Org
-                </Menu.Item>
-              </Popconfirm>
-        )}
+        <Menu.Divider />
 
-        <Menu.Item>
-          Leave
-        </Menu.Item>
-        <Menu.Item>
-          Delete
-        </Menu.Item>
+        {!this.state.orgInfo.is_member ? (
+          <></>
+        ) : userMayNotLeave ? (
+          <Menu.Item disabled>
+            <Tooltip placement="left"title="You may not remove the last administrator from an organization">
+              Leave
+            </Tooltip>
+          </Menu.Item>
+        ) : (
+          <Menu.Item danger onClick={() => {
+            Modal.confirm({
+              title: 'Do you want to leave this organization?',
+              icon: <ExclamationCircleOutlined />,
+              content: 'By pressing Yes, you will no longer be a member of this organization.',
+              okText: 'Yes',
+              onOk: this.leaveOrg
+            });
+          }}>
+            Leave
+          </Menu.Item>
+        )
+        }
+
+        {
+          !isAdmin ? (
+            <></>
+          ) : (
+            <Menu.Item danger onClick={() => {
+              Modal.confirm({
+                title: 'Do you want to delete this organization?',
+                icon: <ExclamationCircleOutlined />,
+                content: 'By pressing Yes, you will delete this organization and all of the content within it will be gone. This includes member list and links.',
+                okText: 'Yes',
+                /**
+                 * The act of deleting an organization has two warning pop ups. That is why
+                 * there is a nested Modal confirm.
+                 */
+                onOk: () => {
+                  Modal.confirm({
+                    title: 'Are you absolutely sure?',
+                    okText: 'Yes',
+                    icon: <WarningFilled />,
+                    content: 'This is your last warning. If you press Yes, you will delete this organization.',
+                    onOk: this.deleteOrg
+                  })
+                }
+              });
+            }}>
+              Delete
+            </Menu.Item>
+          )
+        }
       </Menu>
     )
 
@@ -421,65 +450,11 @@ class ManageOrgInner extends React.Component<Props, State> {
                 </Button>
               </Dropdown>
             )}
-
             <Dropdown overlay={orgOptions}>
                 <Button>
                   <MoreOutlined />
                 </Button>
             </Dropdown>
-
-            {!isAdmin ? (
-              <></>
-            ) : (
-              <Button>
-                <ReconciliationOutlined /> Rename Org
-              </Button>
-            )}
-
-            <Button type="primary">
-              <Link to={`/orgs/${this.props.match.params.id}/stats`}>
-                <LineChartOutlined /> Org Stats
-              </Link>
-            </Button>
-
-            {!this.state.orgInfo.is_member ? (
-              <></>
-            ) : userMayNotLeave ? (
-              <Tooltip
-                placement="bottom"
-                title="You may not remove the last administrator from an organization."
-              >
-                <Button danger disabled>
-                  <CloseOutlined /> Leave Org
-                </Button>
-              </Tooltip>
-            ) : (
-              <Popconfirm
-                placement="bottom"
-                title="Are you sure you want to leave this organization?"
-                onConfirm={this.leaveOrg}
-                icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
-              >
-                <Button danger>
-                  <CloseOutlined /> Leave Org
-                </Button>
-              </Popconfirm>
-            )}
-
-            {!isAdmin ? (
-              <></>
-            ) : (
-              <Popconfirm
-                placement="bottom"
-                title="Are you sure you want to delete this organization?"
-                onConfirm={this.deleteOrg}
-                icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
-              >
-                <Button danger>
-                  <DeleteOutlined /> Delete Org
-                </Button>
-              </Popconfirm>
-            )}
           </Col>
         </Row>
 
