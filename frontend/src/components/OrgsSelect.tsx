@@ -74,6 +74,7 @@ export const OrgsSelect: React.FC<Props> = (props) => {
       open={dropdownOpen}
       onClick={() => setDropdownOpen(!dropdownOpen)}
       showArrow
+      onBlur={() => setDropdownOpen(dropdownOpen ? false : dropdownOpen)}
       suffixIcon={
         loading ? (
           <LoadingOutlined spin />
