@@ -83,6 +83,12 @@ interface State {
    * @property
    */
   addMemberFormVisible: boolean;
+
+  /**
+   * Whether the rename org modal is visible
+   * @property
+   */
+  renameOrgModalVisible: boolean;
 }
 
 /**
@@ -234,6 +240,7 @@ class ManageOrgInner extends React.Component<Props, State> {
       orgInfo: null,
       adminsCount: 0,
       addMemberFormVisible: false,
+      renameOrgModalVisible: false,
     };
   }
 
@@ -330,6 +337,17 @@ class ManageOrgInner extends React.Component<Props, State> {
     });
     this.props.history.push('/orgs');
   };
+
+  /**
+   * Execute API request that renames the organization name.
+   * @param newName the new name that the organization will take on
+   */
+  renameOrg = async (newName: string): Promise<void> => {
+    await fetch(`api/vi/org/${this.props.match.params.id}`, {
+      method: 'PUT'
+    });
+    this.props.history.push('/orgs');
+  }
 
   render(): React.ReactNode {
     if (this.state.orgInfo === null) {
