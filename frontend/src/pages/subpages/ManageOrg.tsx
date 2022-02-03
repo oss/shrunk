@@ -359,12 +359,33 @@ class ManageOrgInner extends React.Component<Props, State> {
     const userMayNotLeave =
       this.state.orgInfo.is_admin && this.state.adminsCount === 1;
 
+    const renameModal = {
+      handleOk: () => {
+        this.setState({
+          renameOrgModalVisible: false
+        });
+      },
+
+      handleCancel: () => {
+        this.setState({
+          renameOrgModalVisible: false
+        });
+      },
+
+      setVisible: (visible: boolean) => {
+        this.setState({
+          renameOrgModalVisible: visible
+        });
+      }
+    }
+
     const orgOptions = (
       <Menu>
         {!isAdmin ? (
           <></>
         ) : (
-          <Menu.Item>
+          <Menu.Item
+            onClick={() => renameModal.setVisible(!this.state.renameOrgModalVisible)}>
             Rename
           </Menu.Item>
         )}
@@ -432,6 +453,17 @@ class ManageOrgInner extends React.Component<Props, State> {
 
     return (
       <>
+        <Modal
+          visible={this.state.renameOrgModalVisible}
+          onOk={renameModal.handleOk}
+          onCancel={renameModal.handleCancel}
+          title="Rename"
+        >
+          <Form>
+
+          </Form>
+
+        </Modal>
         <Row className="primary-row">
           <Col span={12}>
             <Button
