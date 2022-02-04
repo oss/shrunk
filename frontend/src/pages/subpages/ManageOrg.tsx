@@ -16,7 +16,8 @@ import {
   Checkbox,
   Tooltip,
   Menu,
-  Modal
+  Modal,
+  FormInstance
 } from 'antd';
 import {
   ExclamationCircleFilled,
@@ -31,7 +32,7 @@ import {
   ExclamationCircleOutlined,
   WarningFilled,
 } from '@ant-design/icons';
-import { IoReturnUpBack } from 'react-icons/io5';
+import { IoReturnUpBack, IoThumbsUpSharp } from 'react-icons/io5';
 import { Link, RouteComponentProps, withRouter } from 'react-router-dom';
 import moment from 'moment';
 
@@ -234,6 +235,7 @@ const MemberRow: React.FC<{
  * @class
  */
 class ManageOrgInner extends React.Component<Props, State> {
+  private formRef: React.RefObject<FormInstance<any>>;
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -242,6 +244,8 @@ class ManageOrgInner extends React.Component<Props, State> {
       addMemberFormVisible: false,
       renameOrgModalVisible: false,
     };
+
+    this.formRef = React.createRef();
   }
 
   async componentDidMount(): Promise<void> {
@@ -361,12 +365,20 @@ class ManageOrgInner extends React.Component<Props, State> {
 
     const renameModal = {
       handleOk: () => {
-        this.setState({
-          renameOrgModalVisible: false
-        });
+        if(this.formRef.current) {
+          this.formRef.current.validateFields().then((values) => {
+            console.log(values['newName']);
+
+            this.setState({
+              renameOrgModalVisible: false
+            });
+          }).catch(() => console.log("Input value for renaming encountered an error"));
+        }
       },
 
       handleCancel: () => {
+        if(this.formRef.current)
+          this.formRef.current.resetFields();
         this.setState({
           renameOrgModalVisible: false
         });
@@ -457,10 +469,15 @@ class ManageOrgInner extends React.Component<Props, State> {
           visible={this.state.renameOrgModalVisible}
           onOk={renameModal.handleOk}
           onCancel={renameModal.handleCancel}
-          title="Rename"
+          title="Rename Organization"
         >
-          <Form>
-
+          <Form ref={this.formRef}>
+            <Form.Item
+              name="newName"
+              rules={[{ required: true, message: 'Please input a new name.'}]}
+            >
+              <Input placeholder="Name" />
+            </Form.Item>
           </Form>
 
         </Modal>
