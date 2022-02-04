@@ -198,6 +198,23 @@ export class Faq extends React.Component<void> {
               columns={Data.cols}
             />
           </Panel>
+          <Panel
+            header="How do I shorten a link?"
+            key="11"
+            className="question-title"
+          >
+            <p style={{ paddingLeft: 24 }}>
+            To shorten a link click on the <b>Shrink</b> a Link button, from there you can 
+            give your link a name in the title field, then you can paste your long 
+            link in the <b>Long URL</b> field. After that you can optionally set a time for 
+            your link to expire. Then you have option to set up a description for your 
+            link. Additionaly, with Power user access you can add a custom ending 
+            to your URL.
+            </p>
+          </Panel>
+
+
+
         </Collapse>
       </div>
     );
