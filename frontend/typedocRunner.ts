@@ -7,29 +7,28 @@
 const td = require('typedoc');
 const ts = require('typescript');
 
-const app = new td.Application();
-// For reading typedoc.json - optional
-app.options.addReader(new td.TypeDocReader());
-// For reading tsconfig.json - essential
-app.options.addReader(new td.TSConfigReader());
 
-app.bootstrap({
-  // can put other options here too, or in typedoc.json/tsconfig.json
-  options: 'typedoc.json',
-  entryPoints: ['./src'],
-});
+async function main() {
+  const app = new td.Application();
+  // For reading typedoc.json - optional
+  app.options.addReader(new td.TypeDocReader());
+  // For reading tsconfig.json - essential
+  app.options.addReader(new td.TSConfigReader());
 
-const program = ts.createProgram(
-  app.options.getFileNames(),
-  app.options.getCompilerOptions(),
-);
+  app.bootstrap({
+    // can put other options here too, or in typedoc.json/tsconfig.json
+    options: 'typedoc.json',
+    entryPoints: ['./src'],
+  });
 
-// Application.convert checks for compiler errors here.
 
-const project = app.converter.convert(
-  app.expandInputFiles(app.options.getValue('entryPoints')),
-  program,
-);
+  // Application.convert checks for compiler errors here.
 
-app.generateDocs(project, './docs');
-app.generateJson(project, './docs.json');
+  const project = app.convert();
+
+  app.generateDocs(project, './docs');
+  app.generateJson(project, './docs.json');
+
+}
+
+main().catch(console.error);
