@@ -156,10 +156,10 @@ def get_org(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
     return jsonify(org)
 
 
-@bp.route('/<ObjectId:org_id>/<string:new_org_name>', methods=['PUT'])
+@bp.route('/<ObjectId:org_id>/rename/<string:new_org_name>', methods=['PUT'])
 @require_login
 def rename_org(netid: str, client: ShrunkClient, org_id: ObjectId, new_org_name: str) -> Any:
-    """`PUT /api/org/<org_id>/<new_org_name>`
+    """`PUT /api/org/<org_id>/rename/<new_org_name>`
 
     Changes an organization's name if user is the admin of the org.
 

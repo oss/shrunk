@@ -344,10 +344,11 @@ class ManageOrgInner extends React.Component<Props, State> {
 
   /**
    * Execute API request that renames the organization name.
+   * @method
    * @param newName the new name that the organization will take on
    */
   renameOrg = async (newName: string): Promise<void> => {
-    await fetch(`api/vi/org/${this.props.match.params.id}`, {
+    await fetch(`api/v1/org/${this.props.match.params.id}/rename/${newName}`, {
       method: 'PUT'
     });
     this.props.history.push('/orgs');
@@ -367,7 +368,9 @@ class ManageOrgInner extends React.Component<Props, State> {
       handleOk: () => {
         if(this.formRef.current) {
           this.formRef.current.validateFields().then((values) => {
-            console.log(values['newName']);
+            this.renameOrg(values['newName']);
+
+            if(this.formRef.current) this.formRef.current.resetFields();
 
             this.setState({
               renameOrgModalVisible: false
