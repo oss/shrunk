@@ -200,7 +200,7 @@ export class Faq extends React.Component<void> {
           </Panel>
           <Panel
             header="How do I shorten a link?"
-            key="11"
+            key="14"
             className="question-title"
           >
             <p style={{ paddingLeft: 24 }}>
