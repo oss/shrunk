@@ -319,6 +319,19 @@ class ManageOrgInner extends React.Component<Props, State> {
   };
 
   /**
+   * Execute API request that renames the organization name.
+   * @method
+   * @param newName the new name that the organization will take on
+   */
+   onRenameOrg = async (newName: string): Promise<void> => {
+     await fetch(`/api/v1/org/${this.props.match.params.id}/rename/${newName}`, {
+      method: 'PUT'
+    });
+    this.props.history.push('/orgs');
+    await this.refreshOrgInfo();
+  }
+
+  /**
    * Execute API requests to remove the current user from the org, then navigate
    * to the `/orgs` page
    * @method
@@ -342,18 +355,6 @@ class ManageOrgInner extends React.Component<Props, State> {
     this.props.history.push('/orgs');
   };
 
-  /**
-   * Execute API request that renames the organization name.
-   * @method
-   * @param newName the new name that the organization will take on
-   */
-  renameOrg = async (newName: string): Promise<void> => {
-    await fetch(`api/v1/org/${this.props.match.params.id}/rename/${newName}`, {
-      method: 'PUT'
-    });
-    this.props.history.push('/orgs');
-  }
-
   render(): React.ReactNode {
     if (this.state.orgInfo === null) {
       return <Spin size="large" />;
@@ -365,10 +366,12 @@ class ManageOrgInner extends React.Component<Props, State> {
       this.state.orgInfo.is_admin && this.state.adminsCount === 1;
 
     const renameModal = {
-      handleOk: () => {
+      handleOk: async () => {
+        // console.log(this);
         if(this.formRef.current) {
-          this.formRef.current.validateFields().then((values) => {
-            this.renameOrg(values['newName']);
+          this.formRef.current.validateFields().then(async (values) => {
+            console.log(this);
+            this.onRenameOrg(values['newName']);
 
             if(this.formRef.current) this.formRef.current.resetFields();
 
