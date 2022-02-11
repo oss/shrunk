@@ -21,18 +21,15 @@ import {
 } from 'antd';
 import {
   ExclamationCircleFilled,
-  DeleteOutlined,
   PlusCircleFilled,
-  LineChartOutlined,
   CloseOutlined,
   UpOutlined,
   DownOutlined,
-  ReconciliationOutlined,
   MoreOutlined,
   ExclamationCircleOutlined,
   WarningFilled,
 } from '@ant-design/icons';
-import { IoReturnUpBack, IoThumbsUpSharp } from 'react-icons/io5';
+import { IoReturnUpBack } from 'react-icons/io5';
 import { Link, RouteComponentProps, withRouter } from 'react-router-dom';
 import moment from 'moment';
 

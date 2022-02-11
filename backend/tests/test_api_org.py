@@ -52,6 +52,5 @@ def test_rename_org_permissions(client: Client) -> None:
 
     with dev_login(client, 'user'):
         # Check that can't rename the org
-        # However, this might be wrong since an org admin can become a user?
         resp = client.put(f'/api/v1/org/{org_id}/rename/kevinwasheretestrename')
         assert resp.status_code == 403
