@@ -40,7 +40,9 @@ import { MemberInfo, OrgInfo, getOrgInfo } from '../../api/Org';
 import { OrgAdminTag } from './OrgCommon';
 import '../../Base.less';
 import './ManageOrg.less';
-import { serverValidateNetId } from '../../Validators';
+import { serverValidateNetId, serverValidateOrgName } from '../../Validators';
+
+
 
 /**
  * Props for the [[ManageOrg]] component
@@ -324,8 +326,10 @@ class ManageOrgInner extends React.Component<Props, State> {
    * @param newName the new name that the organization will take on
    */
    onRenameOrg = async (newName: string): Promise<void> => {
+     
      await fetch(`/api/v1/org/${this.props.match.params.id}/rename/${newName}`, {
       method: 'PUT'
+      
     });
     this.props.history.push('/orgs');
     await this.refreshOrgInfo();
@@ -480,7 +484,18 @@ class ManageOrgInner extends React.Component<Props, State> {
           <Form ref={this.formRef}>
             <Form.Item
               name="newName"
-              rules={[{ required: true, message: 'Please input a new name.'}]}
+              rules ={[
+                { required: true, message: 'Please input a new name.'},
+                {
+                  pattern: /^[a-zA-Z0-9_.,-]*$/,
+                  message:
+                  'Org names can only contain numbers letters and the punctuation marks “.,-_”.',
+                },
+                { 
+                  validator: serverValidateOrgName 
+                },
+              ]}
+              
             >
               <Input placeholder="Name" />
             </Form.Item>
