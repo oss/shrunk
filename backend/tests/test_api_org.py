@@ -1,10 +1,6 @@
 from werkzeug.test import Client
 from util import dev_login
 
-# Validate org name
-# Test that only an admin can rename the organization
-# If org name exists, send 403 (Forbidden)
-# If not an admin, send 403
 
 def test_rename_org(client: Client) -> None:
     """Tests that an org can successfully be renamed."""
