@@ -367,7 +367,6 @@ class ManageOrgInner extends React.Component<Props, State> {
 
     const renameModal = {
       handleOk: async () => {
-        // console.log(this);
         if(this.formRef.current) {
           this.formRef.current.validateFields().then(async (values) => {
             console.log(this);
