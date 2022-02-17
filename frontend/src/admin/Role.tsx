@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Row, Col, Spin, Button, Popconfirm, Form, Input } from 'antd';
+import { Row, Col, Spin, Button, Popconfirm, Form, Input, BackTop } from 'antd';
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import base32 from 'hi-base32';
 import moment from 'moment';
@@ -360,6 +360,7 @@ export class Role extends React.Component<Props, State> {
 
     return (
       <>
+      <BackTop />
         <Row className="primary-row">
           <Col span={24}>
             <span className="page-title">
