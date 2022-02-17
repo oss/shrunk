@@ -15,6 +15,7 @@ import {
   Input,
   Checkbox,
   Tooltip,
+  BackTop,
 } from 'antd';
 import {
   ExclamationCircleFilled,
@@ -336,6 +337,7 @@ class ManageOrgInner extends React.Component<Props, State> {
       this.state.orgInfo.is_admin && this.state.adminsCount === 1;
     return (
       <>
+      <BackTop />
         <Row className="primary-row">
           <Col span={12}>
             <Button
