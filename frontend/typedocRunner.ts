@@ -7,6 +7,7 @@
 const td = require('typedoc');
 const ts = require('typescript');
 
+
 const app = new td.Application();
 // For reading typedoc.json - optional
 app.options.addReader(new td.TypeDocReader());
