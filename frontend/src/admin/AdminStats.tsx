@@ -7,6 +7,7 @@ import React from 'react';
 
 import { Row, Col, Spin, DatePicker, Form, Button } from 'antd';
 import { ArrowRightOutlined } from '@ant-design/icons';
+import { IoReturnUpBack } from 'react-icons/io5';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 
@@ -226,6 +227,12 @@ export class AdminStats extends React.Component<Props, State> {
       <>
         <Row className="primary-row">
           <Col span={24}>
+            <Button
+                  type="text"
+                  href="/app/#/admin"
+                  icon={<IoReturnUpBack />}
+                  size="large"
+                />
             <span className="page-title">Admin Statistics</span>
           </Col>
         </Row>
