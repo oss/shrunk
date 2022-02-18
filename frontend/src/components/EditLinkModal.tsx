@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import React from 'react';
+import React, {useState} from 'react';
 import moment from 'moment';
 import {
   Modal,
@@ -142,14 +142,35 @@ export const EditLinkModal: React.FC<Props> = (props) => {
     return false;
   };
 
+  const [ownerInputVal, setOwnerInputVal] = useState(initialValues.owner);
+  const handleChange = (e: any) => {
+    setOwnerInputVal(e.target.value);
+  };
+
+  const handleSubmit = () => {
+    form.validateFields().then((values) => {
+      props.onOk(values as EditLinkFormValues);
+    });
+  }
+
   return (
     <Modal
       visible={props.visible}
       title="Edit link"
       onOk={() => {
-        form.validateFields().then((values) => {
-          props.onOk(values as EditLinkFormValues);
-        });
+        if(ownerInputVal !== initialValues.owner) {
+          Modal.confirm({
+            title: "Link owner modification",
+            icon: <ExclamationCircleFilled/>,
+            content: "You are about to modify the link owner. Do you wish to proceed?",
+            okText: "Yes",
+            onOk() {
+              handleSubmit();
+            }
+          });
+        } else {
+          handleSubmit();
+        }
       }}
       onCancel={() => {
         form.resetFields();
@@ -198,7 +219,7 @@ export const EditLinkModal: React.FC<Props> = (props) => {
             { validator: serverValidateNetId },
           ]}
         >
-          <Input placeholder="Link owner" disabled={!mayEditOwner} />
+          <Input placeholder="Link owner" onChange={handleChange} disabled={!mayEditOwner} />
         </Form.Item>
 
         <Form.List name="aliases">

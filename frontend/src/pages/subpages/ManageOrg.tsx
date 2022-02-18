@@ -17,7 +17,8 @@ import {
   Tooltip,
   Menu,
   Modal,
-  FormInstance
+  FormInstance,
+  BackTop,
 } from 'antd';
 import {
   ExclamationCircleFilled,
@@ -498,6 +499,7 @@ class ManageOrgInner extends React.Component<Props, State> {
           </Form>
 
         </Modal>
+      <BackTop />
         <Row className="primary-row">
           <Col span={12}>
             <Button

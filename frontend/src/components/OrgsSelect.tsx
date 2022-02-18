@@ -43,6 +43,7 @@ export const OrgsSelect: React.FC<Props> = (props) => {
   const [org, setOrg] = useState<number | string>(isAdmin ? 1 : 0);
   const [loading, toggle] = useState(false);
   const { Option, OptGroup } = Select;
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const updateOrg = async (e: any): Promise<void> => {
     toggle(true);
@@ -70,20 +71,25 @@ export const OrgsSelect: React.FC<Props> = (props) => {
       dropdownMatchSelectWidth={false}
       dropdownStyle={{ width: 175 }}
       bordered={false}
+      open={dropdownOpen}
+      onClick={() => setDropdownOpen(!dropdownOpen)}
       showArrow
+      onBlur={() => setDropdownOpen(!dropdownOpen)}
       suffixIcon={
         loading ? (
           <LoadingOutlined spin />
         ) : (
-          <CaretDownOutlined
-            style={{
-              position: 'relative',
-              color: '#cc0e32',
-              fontSize: '18px',
-              top: '-4px',
-              //left: '-20px',
-            }}
-          />
+          <div onClick={() => setDropdownOpen(!dropdownOpen)}>
+            <CaretDownOutlined
+              style={{
+                position: 'relative',
+                color: '#cc0e32',
+                fontSize: '18px',
+                top: '-4px',
+              }}
+            />
+          </div>
+
         )
       }
     >
