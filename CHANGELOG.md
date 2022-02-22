@@ -5,6 +5,20 @@ All notable changes to Shrunk will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.1] - 2022-02-02
+
+### Added
+- Back arrow on subpages
+- Scroll to top arrow on Admin/Role subpages
+- FAQ: How to shorten links?
+- Warning to change owner for a link
+- Added official Rutgers links and accessibility links to footer of page
+
+### Fixed
+- UI bug inconsistencies for filter by/links dropdowns (made arrow clickable, fixed color toggle)
+- Critical dependency error on marked package
+- Fixed broken qr code
+
 ## [2.0.0] - 2021-06-02
 
 ### Added
