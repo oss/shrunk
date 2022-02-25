@@ -486,7 +486,12 @@ class ManageOrgInner extends React.Component<Props, State> {
                 {
                   pattern: /^[a-zA-Z0-9_.,-]*$/,
                   message:
-                  'Org names can only contain numbers letters and the punctuation marks “.,-_”.',
+                  'Name must consist of letters, numbers, and the characters "_.,-".',
+                },
+                {
+                  max: 60,
+                  message:
+                  'Org names can be at most 60 characters long',
                 },
                 { 
                   validator: serverValidateOrgName 
