@@ -88,6 +88,11 @@ const CreateOrgForm: React.FC<{ onCreate: (name: string) => Promise<void> }> = (
                 message:
                   'Name must consist of letters, numbers, and the characters "_.,-".',
               },
+              {
+                max: 60,
+                message:
+                'Org names can be at most 60 characters long',
+              },
               { validator: serverValidateOrgName },
             ]}
           >
