@@ -15,16 +15,20 @@ import {
   Input,
   Checkbox,
   Tooltip,
+  Menu,
+  Modal,
+  FormInstance,
   BackTop,
 } from 'antd';
 import {
   ExclamationCircleFilled,
-  DeleteOutlined,
   PlusCircleFilled,
-  LineChartOutlined,
   CloseOutlined,
   UpOutlined,
   DownOutlined,
+  MoreOutlined,
+  ExclamationCircleOutlined,
+  WarningFilled,
 } from '@ant-design/icons';
 import { IoReturnUpBack } from 'react-icons/io5';
 import { Link, RouteComponentProps, withRouter } from 'react-router-dom';
@@ -34,7 +38,9 @@ import { MemberInfo, OrgInfo, getOrgInfo } from '../../api/Org';
 import { OrgAdminTag } from './OrgCommon';
 import '../../Base.less';
 import './ManageOrg.less';
-import { serverValidateNetId } from '../../Validators';
+import { serverValidateNetId, serverValidateOrgName } from '../../Validators';
+
+
 
 /**
  * Props for the [[ManageOrg]] component
@@ -78,6 +84,12 @@ interface State {
    * @property
    */
   addMemberFormVisible: boolean;
+
+  /**
+   * Whether the rename org modal is visible
+   * @property
+   */
+  renameOrgModalVisible: boolean;
 }
 
 /**
@@ -223,13 +235,17 @@ const MemberRow: React.FC<{
  * @class
  */
 class ManageOrgInner extends React.Component<Props, State> {
+  private formRef: React.RefObject<FormInstance<any>>;
   constructor(props: Props) {
     super(props);
     this.state = {
       orgInfo: null,
       adminsCount: 0,
       addMemberFormVisible: false,
+      renameOrgModalVisible: false,
     };
+
+    this.formRef = React.createRef();
   }
 
   async componentDidMount(): Promise<void> {
@@ -303,6 +319,21 @@ class ManageOrgInner extends React.Component<Props, State> {
   };
 
   /**
+   * Execute API request that renames the organization name.
+   * @method
+   * @param newName the new name that the organization will take on
+   */
+   onRenameOrg = async (newName: string): Promise<void> => {
+     
+     await fetch(`/api/v1/org/${this.props.match.params.id}/rename/${newName}`, {
+      method: 'PUT'
+      
+    });
+    this.props.history.push('/orgs');
+    await this.refreshOrgInfo();
+  }
+
+  /**
    * Execute API requests to remove the current user from the org, then navigate
    * to the `/orgs` page
    * @method
@@ -335,8 +366,139 @@ class ManageOrgInner extends React.Component<Props, State> {
       this.state.orgInfo.is_admin || this.props.userPrivileges.has('admin');
     const userMayNotLeave =
       this.state.orgInfo.is_admin && this.state.adminsCount === 1;
+
+    const renameModal = {
+      handleOk: async () => {
+        if(this.formRef.current) {
+          this.formRef.current.validateFields().then(async (values) => {
+            console.log(this);
+            this.onRenameOrg(values['newName']);
+
+            if(this.formRef.current) this.formRef.current.resetFields();
+
+            this.setState({
+              renameOrgModalVisible: false
+            });
+          }).catch(() => console.log("Input value for renaming encountered an error"));
+        }
+      },
+
+      handleCancel: () => {
+        if(this.formRef.current)
+          this.formRef.current.resetFields();
+        this.setState({
+          renameOrgModalVisible: false
+        });
+      },
+
+      setVisible: (visible: boolean) => {
+        this.setState({
+          renameOrgModalVisible: visible
+        });
+      }
+    }
+
+    const orgOptions = (
+      <Menu>
+        {!isAdmin ? (
+          <></>
+        ) : (
+          <Menu.Item
+            onClick={() => renameModal.setVisible(!this.state.renameOrgModalVisible)}>
+            Rename
+          </Menu.Item>
+        )}
+        <Menu.Item>
+          <Link to={`/orgs/${this.props.match.params.id}/stats`}>
+            Statistics
+          </Link>
+        </Menu.Item>
+        <Menu.Divider />
+
+        {!this.state.orgInfo.is_member ? (
+          <></>
+        ) : userMayNotLeave ? (
+          <Menu.Item disabled>
+            <Tooltip placement="left"title="You may not remove the last administrator from an organization">
+              Leave
+            </Tooltip>
+          </Menu.Item>
+        ) : (
+          <Menu.Item danger onClick={() => {
+            Modal.confirm({
+              title: 'Do you want to leave this organization?',
+              icon: <ExclamationCircleOutlined />,
+              content: 'By pressing Yes, you will no longer be a member of this organization.',
+              okText: 'Yes',
+              onOk: this.leaveOrg
+            });
+          }}>
+            Leave
+          </Menu.Item>
+        )
+        }
+
+        {
+          !isAdmin ? (
+            <></>
+          ) : (
+            <Menu.Item danger onClick={() => {
+              Modal.confirm({
+                title: 'Do you want to delete this organization?',
+                icon: <ExclamationCircleOutlined />,
+                content: 'By pressing Yes, you will delete this organization and all of the content within it will be gone. This includes member list and links.',
+                okText: 'Yes',
+                /**
+                 * The act of deleting an organization has two warning pop ups. That is why
+                 * there is a nested Modal confirm.
+                 */
+                onOk: () => {
+                  Modal.confirm({
+                    title: 'Are you absolutely sure?',
+                    okText: 'Yes',
+                    icon: <WarningFilled />,
+                    content: 'This is your last warning. If you press Yes, you will delete this organization.',
+                    onOk: this.deleteOrg
+                  })
+                }
+              });
+            }}>
+              Delete
+            </Menu.Item>
+          )
+        }
+      </Menu>
+    )
+
     return (
       <>
+        <Modal
+          visible={this.state.renameOrgModalVisible}
+          onOk={renameModal.handleOk}
+          onCancel={renameModal.handleCancel}
+          title="Rename Organization"
+        >
+          <Form ref={this.formRef}>
+            <Form.Item
+              name="newName"
+              rules ={[
+                { required: true, message: 'Please input a new name.'},
+                {
+                  pattern: /^[a-zA-Z0-9_.,-]*$/,
+                  message:
+                  'Org names can only contain numbers letters and the punctuation marks “.,-_”.',
+                },
+                { 
+                  validator: serverValidateOrgName 
+                },
+              ]}
+              
+            >
+              <Input placeholder="Name" />
+            </Form.Item>
+          </Form>
+
+        </Modal>
       <BackTop />
         <Row className="primary-row">
           <Col span={12}>
@@ -374,51 +536,11 @@ class ManageOrgInner extends React.Component<Props, State> {
                 </Button>
               </Dropdown>
             )}
-
-            <Button type="primary">
-              <Link to={`/orgs/${this.props.match.params.id}/stats`}>
-                <LineChartOutlined /> Org Stats
-              </Link>
-            </Button>
-
-            {!this.state.orgInfo.is_member ? (
-              <></>
-            ) : userMayNotLeave ? (
-              <Tooltip
-                placement="bottom"
-                title="You may not remove the last administrator from an organization."
-              >
-                <Button danger disabled>
-                  <CloseOutlined /> Leave Org
+            <Dropdown overlay={orgOptions}>
+                <Button>
+                  <MoreOutlined />
                 </Button>
-              </Tooltip>
-            ) : (
-              <Popconfirm
-                placement="bottom"
-                title="Are you sure you want to leave this organization?"
-                onConfirm={this.leaveOrg}
-                icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
-              >
-                <Button danger>
-                  <CloseOutlined /> Leave Org
-                </Button>
-              </Popconfirm>
-            )}
-
-            {!isAdmin ? (
-              <></>
-            ) : (
-              <Popconfirm
-                placement="bottom"
-                title="Are you sure you want to delete this organization?"
-                onConfirm={this.deleteOrg}
-                icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
-              >
-                <Button danger>
-                  <DeleteOutlined /> Delete Org
-                </Button>
-              </Popconfirm>
-            )}
+            </Dropdown>
           </Col>
         </Row>
 

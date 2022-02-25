@@ -86,6 +86,19 @@ class OrgsClient:
         result = self.db.organizations.find_one({'name': org_name})
         return result is None
 
+    def rename_org(self, org_id: ObjectId, new_org_name: str) -> Optional[ObjectId]:
+        """Renames an org to a new name given that the new name doesn't already exist.
+
+        :param org_id:
+        """
+
+        matched = {'_id': org_id}
+        update = {'$set': {'name': new_org_name}}
+
+        result = self.db.organizations.update_one(matched, update)
+
+        return cast(int, result.modified_count) == 1
+
     def delete(self, org_id: ObjectId) -> bool:
         """Delete an org
 

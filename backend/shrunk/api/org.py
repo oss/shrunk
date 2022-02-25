@@ -113,7 +113,7 @@ def post_org(netid: str, client: ShrunkClient, req: Any) -> Any:
     if org_id is None:
         abort(409)
     client.orgs.create_member(org_id, netid, is_admin=True)
-    return jsonify({'id': org_id})
+    return jsonify({'id': org_id, 'name': req['name']})
 
 
 @bp.route('/<ObjectId:org_id>', methods=['DELETE'])
@@ -153,6 +153,27 @@ def get_org(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
     del org['_id']
     org['is_member'] = any(member['netid'] == netid for member in org['members'])
     org['is_admin'] = any(member['netid'] == netid and member['is_admin'] for member in org['members'])
+    return jsonify(org)
+
+
+@bp.route('/<ObjectId:org_id>/rename/<string:new_org_name>', methods=['PUT'])
+@require_login
+def rename_org(netid: str, client: ShrunkClient, org_id: ObjectId, new_org_name: str) -> Any:
+    """`PUT /api/org/<org_id>/rename/<new_org_name>`
+
+    Changes an organization's name if user is the admin of the org.
+
+    :param org_id:
+    :param new_org_name:
+    """
+    org = client.orgs.get_org(org_id)
+    if org is None:
+        abort(404)
+    if (not client.orgs.is_member(org_id, netid)
+        and not client.orgs.is_admin(org_id, netid)) or \
+            not client.orgs.validate_name(new_org_name):
+        abort(403)
+    client.orgs.rename_org(org_id, new_org_name)
     return jsonify(org)
 
 

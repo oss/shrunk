@@ -26,6 +26,8 @@ import { OrgAdminTag, OrgMemberTag } from './subpages/OrgCommon';
 
 import '../Base.less';
 
+import {serverValidateOrgName } from '../Validators';
+
 /**
  * Props for the [[Orgs]] component
  * @interface
@@ -70,22 +72,7 @@ interface State {
 const CreateOrgForm: React.FC<{ onCreate: (name: string) => Promise<void> }> = (
   props,
 ) => {
-  const serverValidateOrgName = async (
-    _rule: any,
-    value: string,
-  ): Promise<void> => {
-    if (!value) {
-      return;
-    }
-    const result = await fetch('/api/v1/org/validate_name', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: value }),
-    }).then((resp) => resp.json());
-    if (!result.valid) {
-      throw new Error(result.reason);
-    }
-  };
+  
   const onFinish = async (values: { name: string }) =>
     props.onCreate(values.name);
   return (
@@ -119,7 +106,6 @@ const CreateOrgForm: React.FC<{ onCreate: (name: string) => Promise<void> }> = (
     </div>
   );
 };
-
 /**
  * The [[OrgRow]] component displays information pertaining to one org
  * @param props The props

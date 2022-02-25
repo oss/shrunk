@@ -99,3 +99,23 @@ export const serverValidateNetId = async (
     throw new Error(result.reason);
   }
 };
+
+
+
+//checks if an organization name is used
+export const serverValidateOrgName = async (
+  _rule: any,
+  value: string,
+): Promise<void> => {
+  if (!value) {
+    return;
+  }
+  const result = await fetch('/api/v1/org/validate_name', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: value }),
+  }).then((resp) => resp.json());
+  if (!result.valid) {
+    throw new Error(result.reason);
+  }
+};
