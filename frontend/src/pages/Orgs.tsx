@@ -26,7 +26,7 @@ import { OrgAdminTag, OrgMemberTag } from './subpages/OrgCommon';
 
 import '../Base.less';
 
-import {serverValidateOrgName } from '../Validators';
+import { serverValidateOrgName } from '../Validators';
 
 /**
  * Props for the [[Orgs]] component
@@ -72,12 +72,12 @@ interface State {
 const CreateOrgForm: React.FC<{ onCreate: (name: string) => Promise<void> }> = (
   props,
 ) => {
-  
+
   const onFinish = async (values: { name: string }) =>
     props.onCreate(values.name);
   return (
     <div className="dropdown-form">
-      <Form layout="inline" initialValues={{ name: '' }} onFinish={onFinish}>
+      <Form initialValues={{ name: '' }} onFinish={onFinish}>
         <Input.Group compact>
           <Form.Item
             name="name"
@@ -91,7 +91,7 @@ const CreateOrgForm: React.FC<{ onCreate: (name: string) => Promise<void> }> = (
               {
                 max: 60,
                 message:
-                'Org names can be at most 60 characters long',
+                  'Org names can be at most 60 characters long',
               },
               { validator: serverValidateOrgName },
             ]}
@@ -234,7 +234,7 @@ export class Orgs extends React.Component<Props, State> {
     const isAdmin = this.props.userPrivileges.has('admin');
     return (
       <>
-      <BackTop />
+        <BackTop />
         <Row className="primary-row">
           <Col span={16}>
             <span className="page-title">Orgs</span>
@@ -263,7 +263,7 @@ export class Orgs extends React.Component<Props, State> {
               <></>
             ) : (
               <Checkbox
-                style={{paddingTop: '6px'}}
+                style={{ paddingTop: '6px' }}
                 defaultChecked={false}
                 onChange={(ev) => this.setState({ showAll: ev.target.checked })}
               >
