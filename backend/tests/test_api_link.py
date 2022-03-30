@@ -1,3 +1,4 @@
+from ast import Str
 import time
 import base64
 from datetime import datetime, timezone, timedelta
@@ -876,3 +877,57 @@ def test_acl(client: Client) -> None: # pylint: disable=too-many-statements
             for endpoint in ['stats', 'stats/browser', 'stats/geoip', 'stats/visits', 'visits']:
                 resp = client.get(f'/api/v1/link/{link_id}/alias/{alias}/{endpoint}')
                 assert_access(user['view_alias_stats'], resp.status_code)
+
+
+@pytest.mark.parametrize(('permission'), ['user', 'factstaff', 'power'])
+def unsafe_link_found(client: Client, permission: Str) -> None:
+
+    unsafe_link = ''
+    forbidden_message = 'The submitted link has been detected to be unsafe. \
+        Please email the link to oss@rutgers.edu and we will verify it for \
+        you. We apologize for the inconvenience.'
+
+    warning_message = 'The submitted link has been detected to be unsafe. \
+        As an admin, please be careful before accepting this link. \
+        Investigate first, consult another human being, and make sure this \
+        link is safe.'
+
+    # Log in as a user and test that a user cannot add a link that has been
+    # detected to be unsafe. Also, test this is true for all users excepts
+    # admins.
+    with dev_login(client,  permission):
+        # Create a link and get its message
+        resp = client.post('/api/v1/link', json={
+            'title': 'Bad Link',
+            'long_url': unsafe_link,
+        })
+        assert 400 <= resp.status_code < 500
+        assert forbidden_message == resp.json['warning_unsafe_link_message']
+
+        # A regular user cannot bypass link security measures
+        resp = client.post('/api/v1/link', json={
+            'title': 'Bad Link',
+            'long_url': unsafe_link,
+            'bypass_safety_measure': True
+        })
+        assert 400 <= resp.status_code < 500
+
+    # Log in as admin and make sure that, as admins, we can add a link
+    # despite the warning.
+    with dev_login(client, 'admin'):
+        resp = client.post('/api/v1/link', json={
+            'title': 'Bad Link',
+            'long_url': unsafe_link,
+        })
+        assert 300 <= resp.status_code < 400
+        assert warning_message == resp.json['warning_unsafe_link_message']
+
+        # After an admin is told the link they are trying to shorten
+        # is found to be unsafe, an admin can bypass the security measure
+        # and shorten the link regardless.
+        resp = client.post('/api/v1/link', json={
+            'title': 'Bad Link',
+            'long_url': unsafe_link,
+            'bypass_safety_measure': True
+        })
+        assert resp.status_code == 201
