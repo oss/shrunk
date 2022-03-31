@@ -24,7 +24,8 @@ from .exceptions import (NoSuchObjectException,
                          BadAliasException,
                          BadLongURLException,
                          InvalidACL,
-                         NotUserOrOrg)
+                         NotUserOrOrg,
+                         SecurityRiskDetected)
 
 __all__ = ['LinksClient']
 
@@ -116,14 +117,18 @@ class LinksClient:
         result = self.db.urls.find_one({'aliases.alias': alias})
         return result['_id'] if result is not None else None
 
+    def security_risk_detected(self, long_url: str) -> bool:
+        """Checks a url with a security risk API"""
+        pass
+
     def create(self,
                title: str,
                long_url: str,
                expiration_time: Optional[datetime],
                netid: str,
                creator_ip: str,
-               viewers: List[Dict[str, Any]]=None,
-               editors: List[Dict[str, Any]]=None) -> ObjectId:
+               viewers: List[Dict[str, Any]] = None,
+               editors: List[Dict[str, Any]] = None) -> ObjectId:
         if viewers is None:
             viewers = []
         if editors is None:
@@ -133,6 +138,9 @@ class LinksClient:
 
         if self.redirects_to_blocked_url(long_url):
             raise BadLongURLException
+
+        if self.security_risk_detected(long_url):
+            raise SecurityRiskDetected
 
         for acl in ['viewers', 'editors']:
             members = {'viewers': viewers, 'editors': editors}[acl]

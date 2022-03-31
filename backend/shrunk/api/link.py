@@ -14,7 +14,8 @@ from shrunk.client.exceptions import (BadLongURLException,
                                       BadAliasException,
                                       NoSuchObjectException,
                                       InvalidACL,
-                                      NotUserOrOrg)
+                                      NotUserOrOrg,
+                                      SecurityRiskDetected)
 from shrunk.util.stats import get_human_readable_referer_domain, browser_stats_from_visits
 from shrunk.util.ldap import is_valid_netid
 from shrunk.util.decorators import require_login, require_mail, request_schema
@@ -126,11 +127,17 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
         if editor['_id'] not in viewer_ids:
             viewer_ids.add(editor['_id'])
             req['viewers'].append(editor)
+
+    # TODO
+    # Need a way to let an admin force a security risk link.
+
     try:
         link_id = client.links.create(req['title'], req['long_url'], expiration_time, netid,
                                       request.remote_addr, viewers=req['viewers'], editors=req['editors'])
     except BadLongURLException:
         return jsonify({'errors': ['long_url']}), 400
+    except SecurityRiskDetected:
+        return json({'errors': ['long_url']})
     except NotUserOrOrg as e:
         return jsonify({'errors': [str(e)]}), 400
     return jsonify({'id': str(link_id)})
