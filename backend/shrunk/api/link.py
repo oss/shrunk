@@ -137,7 +137,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
     except BadLongURLException:
         return jsonify({'errors': ['long_url']}), 400
     except SecurityRiskDetected:
-        return json({'errors': ['long_url']})
+        return json({'errors': ['security risk. forbidden']}), 403
     except NotUserOrOrg as e:
         return jsonify({'errors': [str(e)]}), 400
     return jsonify({'id': str(link_id)})

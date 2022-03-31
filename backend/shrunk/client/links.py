@@ -118,8 +118,41 @@ class LinksClient:
         return result['_id'] if result is not None else None
 
     def security_risk_detected(self, long_url: str) -> bool:
-        """Checks a url with a security risk API"""
-        pass
+        """Checks a url with a security risk API. In this case,
+        the API is Google Safe Browsing API. For now, if the status
+        code is not 200 when making a request, we continue with the link
+        creation.
+
+        :param long_url: a long url to verify
+        """
+        API_KEY = 'api_key_filler'
+
+        postBody = {
+            'clientInfo': {
+                'clientID': 'shrunk-rutgers',
+                # change this to something that is not hard coded
+                'clientVersion': '2.0'
+            },
+
+            'threatInfo': {
+                'threatTypes': ['MALWARE', 'SOCIAL_ENGINEERING',
+                                'POTENTIALLY_HARMFUL_APPLICATION',
+                                'UNWANTED_SOFTWARE'],
+                'platformType': ['ANY_PLATFORM'],
+                'threatEntryType': ['URL'],
+                'threatEntries': [{
+                    'url': long_url
+                }]
+            }
+        }
+
+        r = requests.post('https://safebrowsing.googleapis.com/v4/threatMatches:find?key={}'.format(API_KEY),
+                          data=postBody)
+        response = r.json()
+
+        # if status code is 200, raise_for_status returns None
+        if r.raise_for_status() is None:
+            return len(response.matches) > 0
 
     def create(self,
                title: str,

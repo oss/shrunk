@@ -884,8 +884,10 @@ def unsafe_link_found(client: Client, permission: Str) -> None:
 
     unsafe_link = ''
     forbidden_message = 'The submitted link has been detected to be unsafe. \
-        Please email the link to oss@rutgers.edu and we will verify it for \
-        you. We apologize for the inconvenience.'
+        If you know that the link is safe, please do not be alarmed. \
+        The link, along with your netID and full name, has been sent to \
+        oss@oss.rutgers.edu for verification. We apologize for the \
+        inconvenience and we\'ll approve your request promptly.'
 
     warning_message = 'The submitted link has been detected to be unsafe. \
         As an admin, please be careful before accepting this link. \
@@ -911,6 +913,8 @@ def unsafe_link_found(client: Client, permission: Str) -> None:
             'bypass_safety_measure': True
         })
         assert 400 <= resp.status_code < 500
+
+        # TODO: Check that the link doesn't exist after forbidden action
 
     # Log in as admin and make sure that, as admins, we can add a link
     # despite the warning.
