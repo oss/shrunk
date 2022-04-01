@@ -50,7 +50,6 @@ CREATE_LINK_SCHEMA = {
     },
 }
 
-
 @bp.route('', methods=['POST'])
 @request_schema(CREATE_LINK_SCHEMA)
 @require_login
@@ -137,10 +136,18 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
     except BadLongURLException:
         return jsonify({'errors': ['long_url']}), 400
     except SecurityRiskDetected:
-        return json({'errors': ['security risk. forbidden']}), 403
+        return jsonify({'errors': ['security risk. forbidden']}), 403
     except NotUserOrOrg as e:
         return jsonify({'errors': [str(e)]}), 400
     return jsonify({'id': str(link_id)})
+
+
+@bp.route('/security_test/<b32:long_url>', methods=['GET'])
+@require_login
+def security_test(netid: str, client: ShrunkClient) -> Any:
+    """``
+    """
+    return jsonify({'response': client.links.security_risk_detected(long_url)})
 
 
 @bp.route('/validate_long_url/<b32:long_url>', methods=['GET'])

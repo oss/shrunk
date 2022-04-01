@@ -1,5 +1,6 @@
 """Database-level interactions for shrunk."""
 from datetime import datetime, timezone
+from http.client import responses
 import random
 import string
 import re
@@ -26,6 +27,8 @@ from .exceptions import (NoSuchObjectException,
                          InvalidACL,
                          NotUserOrOrg,
                          SecurityRiskDetected)
+
+import sys
 
 __all__ = ['LinksClient']
 
@@ -125,7 +128,10 @@ class LinksClient:
 
         :param long_url: a long url to verify
         """
-        API_KEY = 'api_key_filler'
+
+        print(current_app.config['GOOGLE_SAFE_BROWSING_API'], file=sys.stderr)
+
+        API_KEY = current_app.config['GOOGLE_SAFE_BROWSING_API']
 
         postBody = {
             'clientInfo': {
@@ -150,9 +156,10 @@ class LinksClient:
                           data=postBody)
         response = r.json()
 
+        return r.status_code
         # if status code is 200, raise_for_status returns None
-        if r.raise_for_status() is None:
-            return len(response.matches) > 0
+        # if r.raise_for_status() is None:
+        #     return len(response.matches) > 0
 
     def create(self,
                title: str,
@@ -172,8 +179,8 @@ class LinksClient:
         if self.redirects_to_blocked_url(long_url):
             raise BadLongURLException
 
-        if self.security_risk_detected(long_url):
-            raise SecurityRiskDetected
+        # if self.security_risk_detected(long_url):
+        #     raise SecurityRiskDetected
 
         for acl in ['viewers', 'editors']:
             members = {'viewers': viewers, 'editors': editors}[acl]

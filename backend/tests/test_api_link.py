@@ -879,10 +879,21 @@ def test_acl(client: Client) -> None: # pylint: disable=too-many-statements
                 assert_access(user['view_alias_stats'], resp.status_code)
 
 
-@pytest.mark.parametrize(('permission'), ['user', 'factstaff', 'power'])
-def unsafe_link_found(client: Client, permission: Str) -> None:
+def test_security_risk_client_method(client: Client) -> None:
+    unsafe_link = 'http://malware.testing.google.test/testing/malware/*'
 
-    unsafe_link = ''
+    with dev_login(client, 'admin'):
+        # Create a link and get its message
+        resp = client.get(f'/api/v1/link/security_test/{unsafe_link}')
+        assert resp.status_code == 200
+        assert resp.json['response'] == 200
+
+
+# 'factstaff', 'power'
+@pytest.mark.parametrize(('permission'), ['user'])
+def test_unsafe_link_found(client: Client, permission: Str) -> None:
+
+    unsafe_link = 'http://malware.testing.google.test/testing/malware/*'
     forbidden_message = 'The submitted link has been detected to be unsafe. \
         If you know that the link is safe, please do not be alarmed. \
         The link, along with your netID and full name, has been sent to \
