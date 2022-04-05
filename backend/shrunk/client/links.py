@@ -5,7 +5,7 @@ import random
 import string
 import re
 import secrets
-from typing import Optional, List, Set, Any, Dict, cast
+from typing import Optional, List, Set, Any, Dict, Tuple, cast
 
 from flask import current_app, url_for
 from flask_mailman import Mail
@@ -128,9 +128,6 @@ class LinksClient:
 
         :param long_url: a long url to verify
         """
-
-        print(current_app.config['GOOGLE_SAFE_BROWSING_API'], file=sys.stderr)
-
         API_KEY = current_app.config['GOOGLE_SAFE_BROWSING_API']
 
         postBody = {
@@ -139,7 +136,6 @@ class LinksClient:
                 # change this to something that is not hard coded
                 'clientVersion': '2.0'
             },
-
             'threatInfo': {
                 'threatTypes': ['MALWARE', 'SOCIAL_ENGINEERING',
                                 'POTENTIALLY_HARMFUL_APPLICATION',
@@ -152,14 +148,22 @@ class LinksClient:
             }
         }
 
-        r = requests.post('https://safebrowsing.googleapis.com/v4/threatMatches:find?key={}'.format(API_KEY),
-                          data=postBody)
-        response = r.json()
-
-        return r.status_code
-        # if status code is 200, raise_for_status returns None
-        # if r.raise_for_status() is None:
-        #     return len(response.matches) > 0
+        try:
+            r = requests.post('https://safebrowsing.googleapis.com/v4/threatMatches:find?key={}'.format(API_KEY),
+                              data=postBody)
+            r.raise_for_status()
+            return len(r.json()['matches']) > 0
+        except requests.exceptions.HTTPError as err:
+            print('Google Safe Browsing API request failed. Status code: {}'.format(r.status_code), sys=sys.stderr)
+            print(err, sys=sys.stderr)
+        except KeyError as err:
+            print('Google Safe Browsing API did not return a JSON with a \'matches\' key. \
+                   Either the API request was invalid or the API was changed.', sys=sys.stderr)
+            print(err, sys=sys.stderr)
+        except Exception as err:
+            print(err, sys=sys.stderr)
+        finally:
+            return False
 
     def create(self,
                title: str,
@@ -176,8 +180,8 @@ class LinksClient:
         if self.long_url_is_blocked(long_url):
             raise BadLongURLException
 
-        if self.redirects_to_blocked_url(long_url):
-            raise BadLongURLException
+        # if self.redirects_to_blocked_url(long_url):
+        #     raise BadLongURLException
 
         # if self.security_risk_detected(long_url):
         #     raise SecurityRiskDetected

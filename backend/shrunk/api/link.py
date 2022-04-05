@@ -144,10 +144,15 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
 
 @bp.route('/security_test/<b32:long_url>', methods=['GET'])
 @require_login
-def security_test(netid: str, client: ShrunkClient) -> Any:
+def security_test(netid: str, client: ShrunkClient, long_url: str) -> Any:
     """``
     """
-    return jsonify({'response': client.links.security_risk_detected(long_url)})
+
+    # TODO: Remove this endpoint, and let the create_link handle the call
+    # to a method that checks if a link is safe or not
+
+    # return jsonify({}), 200
+    return jsonify({'detected': client.links.security_risk_detected(long_url)})
 
 
 @bp.route('/validate_long_url/<b32:long_url>', methods=['GET'])
