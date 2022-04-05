@@ -145,13 +145,15 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
 @bp.route('/security_test/<b32:long_url>', methods=['GET'])
 @require_login
 def security_test(netid: str, client: ShrunkClient, long_url: str) -> Any:
-    """``
+    """``GET /api/link/security_test/<b32:long_url>``
+
+    This endpoint is meant for testing purposes only; it should only be called in the unit tests.
+    The purpose of this endpoint is to modularize testing of the security measures. In the case
+    that the security measures do not work, this test will be the first to clearly show that.
     """
 
-    # TODO: Remove this endpoint, and let the create_link handle the call
-    # to a method that checks if a link is safe or not
-
-    # return jsonify({}), 200
+    if not client.roles.has('admin', netid):
+        abort(403)
     return jsonify({'detected': client.links.security_risk_detected(long_url)})
 
 

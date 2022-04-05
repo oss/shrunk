@@ -10,6 +10,7 @@ from typing import Optional, List, Set, Any, Dict, Tuple, cast
 from flask import current_app, url_for
 from flask_mailman import Mail
 import requests
+import json
 import pymongo
 from pymongo.collection import ReturnDocument
 from pymongo.results import UpdateResult
@@ -131,39 +132,35 @@ class LinksClient:
         API_KEY = current_app.config['GOOGLE_SAFE_BROWSING_API']
 
         postBody = {
-            'clientInfo': {
-                'clientID': 'shrunk-rutgers',
-                # change this to something that is not hard coded
-                'clientVersion': '2.0'
+            'client': {
+                'clientId':      'Shrunk-Rutgers',
+                'clientVersion': '2.2.0'
             },
             'threatInfo': {
-                'threatTypes': ['MALWARE', 'SOCIAL_ENGINEERING',
-                                'POTENTIALLY_HARMFUL_APPLICATION',
-                                'UNWANTED_SOFTWARE'],
-                'platformType': ['ANY_PLATFORM'],
-                'threatEntryType': ['URL'],
-                'threatEntries': [{
-                    'url': long_url
-                }]
+                'threatTypes':      ['MALWARE', 'SOCIAL_ENGINEERING'],
+                'platformTypes':    ['WINDOWS'],
+                'threatEntryTypes': ['URL'],
+                'threatEntries': [
+                    {'url': long_url},
+                ]
             }
         }
 
         try:
             r = requests.post('https://safebrowsing.googleapis.com/v4/threatMatches:find?key={}'.format(API_KEY),
-                              data=postBody)
+                              data=json.dumps(postBody))
             r.raise_for_status()
             return len(r.json()['matches']) > 0
         except requests.exceptions.HTTPError as err:
-            print('Google Safe Browsing API request failed. Status code: {}'.format(r.status_code), sys=sys.stderr)
-            print(err, sys=sys.stderr)
+            print('Google Safe Browsing API request failed. Status code: {}'.format(r.status_code), file=sys.stderr)
+            print(err, file=sys.stderr)
         except KeyError as err:
-            print('Google Safe Browsing API did not return a JSON with a \'matches\' key. \
-                   Either the API request was invalid or the API was changed.', sys=sys.stderr)
-            print(err, sys=sys.stderr)
+            print('Google Safe Browsing API did not return a JSON with a \'matches\' key. Either the API request was invalid or the API was changed.', file=sys.stderr)
+            print('ERROR: The key {} did not exist in the JSON response'.format(err), file=sys.stderr)
         except Exception as err:
-            print(err, sys=sys.stderr)
-        finally:
-            return False
+            print(err, file=sys.stderr)
+
+        return False
 
     def create(self,
                title: str,

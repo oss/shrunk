@@ -883,13 +883,26 @@ def test_security_risk_client_method(client: Client) -> None:
     unsafe_link = 'http://malware.testing.google.test/testing/malware/*'
     unsafe_link_b32 = str(base64.b32encode(bytes(unsafe_link, 'utf8')), 'utf8')
 
+    regular_link = 'https://google.com/'
+    regular_link_b32 = str(base64.b32encode(bytes(regular_link, 'utf8')), 'utf8')
+
+    second_regular_link = 'https://go.rutgers.edu/'
+    second_regular_link_b32 = str(base64.b32encode(bytes(second_regular_link, 'utf8')), 'utf8')
+
     with dev_login(client, 'admin'):
         # Create a link and get its message
         # resp = client.get(f'/api/v1/link/security_test/{unsafe_link}')
         resp = client.get(f'/api/v1/link/security_test/{unsafe_link_b32}')
         assert resp.status_code == 200
         assert resp.json['detected']
-        # assert resp.json['json_content']['matches'] == 1
+
+        resp = client.get(f'/api/v1/link/security_test/{regular_link_b32}')
+        assert resp.status_code == 200
+        assert not resp.json['detected']
+
+        resp = client.get(f'/api/v1/link/security_test/{second_regular_link_b32}')
+        assert resp.status_code == 200
+        assert not resp.json['detected']
 
 # TODO:
 # ADD a test that checks that when the Google API is NOT WORKING
