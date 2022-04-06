@@ -127,6 +127,11 @@ class LinksClient:
         code is not 200 when making a request, we continue with the link
         creation.
 
+        The daily quota for the Lookup API is 10,000. If Google Safe Browsing
+        API returns an error, this method will return false no matter what.
+        This is to ensure that link creation continues despite Google Safe
+        Browsing API failure.
+
         :param long_url: a long url to verify
         """
         API_KEY = current_app.config['GOOGLE_SAFE_BROWSING_API']

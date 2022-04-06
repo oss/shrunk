@@ -47,6 +47,7 @@ CREATE_LINK_SCHEMA = {
         'expiration_time': {'type': 'string', 'format': 'date-time'},
         'editors': {'type': 'array', 'items': ACL_ENTRY_SCHEMA},
         'viewers': {'type': 'array', 'items': ACL_ENTRY_SCHEMA},
+        'bypass_security_measures': {'type': 'boolean'}
     },
 }
 
@@ -133,9 +134,6 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
             viewer_ids.add(editor['_id'])
             req['viewers'].append(editor)
 
-    # TODO
-    # Need a way to let an admin force a security risk link.
-
     try:
         link_id = client.links.create(req['title'], req['long_url'], expiration_time, netid,
                                       request.remote_addr, viewers=req['viewers'], editors=req['editors'],
@@ -143,7 +141,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
     except BadLongURLException:
         return jsonify({'errors': ['long_url']}), 400
     except SecurityRiskDetected:
-        return jsonify({'errors': ['security risk. forbidden']}), 403
+        return jsonify({'errors': ['security risk']}), 403
     except NotUserOrOrg as e:
         return jsonify({'errors': [str(e)]}), 400
     return jsonify({'id': str(link_id)})

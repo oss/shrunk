@@ -131,11 +131,20 @@ def test_link(client: Client) -> None:  # pylint: disable=too-many-statements
 
 
 def test_create_link_expiration(client: Client) -> None:
-    """Test that we can create a link with an expiration time."""
+    """
+    Test that we can create a link with an expiration time.
+
+    With the implementation of verifying links with Google Safe Browsing API,
+    this test would fail due to the fact that the link expired too fast
+    because the API needed time to respond. If there were recent changes to
+    the link creation pipeline and this test fails, try increasing the link
+    expiration time so that links don't expire before they are tested.
+
+    """
 
     with dev_login(client, 'admin'):
-        # Create a link that expires 100 ms in the future
-        expiration_time = datetime.now(timezone.utc) + timedelta(milliseconds=250)
+        # Create a link that expires 500 ms in the future
+        expiration_time = datetime.now(timezone.utc) + timedelta(milliseconds=500)
         resp = client.post('/api/v1/link', json={
             'title': 'title',
             'long_url': 'https://example.com',
@@ -156,8 +165,8 @@ def test_create_link_expiration(client: Client) -> None:
         assert resp.status_code == 302
         assert resp.headers['Location'] == 'https://example.com'
 
-        # Sleep 500 ms
-        time.sleep(0.5)
+        # Sleep 1 second
+        time.sleep(1)
 
         # Check that alias0 no longer exists
         resp = client.get(f'/{alias0}')
@@ -892,14 +901,13 @@ def test_security_risk_client_method(client: Client) -> None:
         assert resp.status_code == 200
         assert resp.json['detected']
 
+        # Creating a link with a regular link should not be forbidden
         resp = client.get(f'/api/v1/link/security_test/{regular_link_b32}')
         assert resp.status_code == 200
         assert not resp.json['detected']
 
-        # test that we can force an error
-        resp = client.l
-
     with dev_login(client, 'user'):
+        # A user that is not an admin cannot use the security_test endpoint
         resp = client.get(f'/api/v1/link/security_test/{unsafe_link_b32}')
         assert resp.status_code == 403
 
@@ -911,6 +919,7 @@ def test_security_risk_client_method(client: Client) -> None:
 @pytest.mark.parametrize(('permission'), ['user'])
 def test_unsafe_link_found(client: Client, permission: Str) -> None:
     unsafe_link = 'http://malware.testing.google.test/testing/malware/*'
+    regular_link = 'https://google.com/'
     forbidden_message = 'The submitted link has been detected to be unsafe. \
         If you know that the link is safe, please do not be alarmed. \
         The link, along with your netID and full name, has been sent to \
@@ -931,34 +940,43 @@ def test_unsafe_link_found(client: Client, permission: Str) -> None:
             'long_url': unsafe_link,
         })
         assert 400 <= resp.status_code < 500
+        assert resp.json['errors'][0] == 'security risk'
         # assert forbidden_message == resp.json['warning_unsafe_link_message']
 
         # A regular user cannot bypass link security measures
         resp = client.post('/api/v1/link', json={
             'title': 'Bad Link',
             'long_url': unsafe_link,
-            'bypass_safety_measures': True
+            'bypass_security_measures': True
         })
-        assert 400 <= resp.status_code < 500
+        assert resp.status_code == 403
 
         # TODO: Check that the link doesn't exist after forbidden action
 
-    # Log in as admin and make sure that, as admins, we can add a link
-    # despite the warning.
     with dev_login(client, 'admin'):
+        # when an admin does not specify that an unsafe link
+        # should bypass security measures, server should reject
+        # the post request
         resp = client.post('/api/v1/link', json={
             'title': 'Bad Link',
             'long_url': unsafe_link,
         })
         assert resp.status_code == 403
-        # assert warning_message == resp.json['warning_unsafe_link_message']
+        assert resp.json['errors'][0] == 'security risk'
 
-        # After an admin is told the link they are trying to shorten
-        # is found to be unsafe, an admin can bypass the security measure
-        # and shorten the link regardless.
+        # when an admin specifies that a regular link should bypass
+        # security, go through with the request
+        resp = client.post('/api/v1/link', json={
+            'title': 'Bad Link',
+            'long_url': regular_link,
+            'bypass_security_measures': True
+        })
+        assert resp.status_code == 200
+
+        # an admin can bypass security measures for an unsafe link
         resp = client.post('/api/v1/link', json={
             'title': 'Bad Link',
             'long_url': unsafe_link,
-            'bypass_safety_measures': True
+            'bypass_security_measures': True
         })
-        assert resp.status_code == 201
+        assert resp.status_code == 200
