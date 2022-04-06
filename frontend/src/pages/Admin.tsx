@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Row, Col, Spin } from 'antd';
+import { Row, Col, Spin, Badge } from 'antd';
 import { Link } from 'react-router-dom';
 
 import '../Base.less';
@@ -13,7 +13,7 @@ import '../Base.less';
  * Props for the [[Admin]] component
  * @interface
  */
-export interface Props {}
+export interface Props { }
 
 /**
  * Summary information for one role
@@ -43,6 +43,7 @@ interface State {
    * @property
    */
   roles: RoleInfo[] | null;
+  linksToBeVerified: number;
 }
 
 /**
@@ -55,6 +56,7 @@ export class Admin extends React.Component<Props, State> {
     super(props);
     this.state = {
       roles: null,
+      linksToBeVerified: 1,
     };
   }
 
@@ -77,6 +79,15 @@ export class Admin extends React.Component<Props, State> {
           <Col span={24}>
             <Link to="/admin/stats" className="title">
               Admin Statistics
+            </Link>
+          </Col>
+        </Row>
+
+        <Row className="primary-row">
+          <Col span={24}>
+            <Link to="/admin/link_security" className="title">
+              Link Security Risk Verification
+              <Badge count={this.state.linksToBeVerified} offset={[8, -20]} />
             </Link>
           </Col>
         </Row>

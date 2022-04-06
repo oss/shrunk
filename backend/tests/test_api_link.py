@@ -915,8 +915,7 @@ def test_security_risk_client_method(client: Client) -> None:
 # ADD a test that checks that when the Google API is NOT WORKING
 # that all links are created without any impact to link creation
 
-# 'factstaff', 'power'
-@pytest.mark.parametrize(('permission'), ['user'])
+@pytest.mark.parametrize(('permission'), ['user', 'facstaff', 'power'])
 def test_unsafe_link_found(client: Client, permission: Str) -> None:
     unsafe_link = 'http://malware.testing.google.test/testing/malware/*'
     regular_link = 'https://google.com/'
@@ -980,3 +979,29 @@ def test_unsafe_link_found(client: Client, permission: Str) -> None:
             'bypass_security_measures': True
         })
         assert resp.status_code == 200
+
+
+def test_security_risk_link_verification_process(client: Client) -> None:
+    unsafe_link = 'http://malware.testing.google.test/testing/malware/*'
+
+    with dev_login(client, 'user'):
+        resp = client.post('/api/v1/link', json={
+            'title': 'unsafe link',
+            'long_url': unsafe_link
+        })
+        assert resp.status_code == 400
+
+        resp = client.get('/api/v1/link/links_pending_security_verification')
+        assert resp.status_code == 403
+        with pytest.raises(KeyError):
+            assert resp.json['pendingLinks']
+
+    with dev_login(client, 'admin'):
+        resp = client.get('/api/v1/link/links_pending_security_verification')
+        assert resp.json['pendingLinks']
+        assert len(resp.json['pendingLinks']) == 1
+
+        unsafe_link_document = resp['pendingLinks'][0]
+        assert unsafe_link_document['title'] == 'unsafe link'
+        assert unsafe_link_document['long_url'] == unsafe_link
+
