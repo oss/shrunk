@@ -91,6 +91,12 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
     if 'viewers' not in req:
         req['viewers'] = []
 
+    if 'bypass_security_measures' not in req:
+        req['bypass_security_measures'] = False
+
+    if not client.roles.has('admin', netid) and req['bypass_security_measures']:
+        abort(403)
+
     if 'expiration_time' in req:
         expiration_time: Optional[datetime] = datetime.fromisoformat(req['expiration_time'])
     else:
@@ -132,7 +138,8 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
 
     try:
         link_id = client.links.create(req['title'], req['long_url'], expiration_time, netid,
-                                      request.remote_addr, viewers=req['viewers'], editors=req['editors'])
+                                      request.remote_addr, viewers=req['viewers'], editors=req['editors'],
+                                      bypass_security_measures=req['bypass_security_measures'])
     except BadLongURLException:
         return jsonify({'errors': ['long_url']}), 400
     except SecurityRiskDetected:

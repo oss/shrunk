@@ -134,7 +134,7 @@ class LinksClient:
         postBody = {
             'client': {
                 'clientId':      'Shrunk-Rutgers',
-                'clientVersion': '2.2.0'
+                'clientVersion': current_app.config['SHRUNK_VERSION']
             },
             'threatInfo': {
                 'threatTypes':      ['MALWARE', 'SOCIAL_ENGINEERING'],
@@ -155,9 +155,9 @@ class LinksClient:
             print('Google Safe Browsing API request failed. Status code: {}'.format(r.status_code), file=sys.stderr)
             print(err, file=sys.stderr)
         except KeyError as err:
-            print('Google Safe Browsing API did not return a JSON with a \'matches\' key. Either the API request was invalid or the API was changed.', file=sys.stderr)
             print('ERROR: The key {} did not exist in the JSON response'.format(err), file=sys.stderr)
         except Exception as err:
+            print('An unknown error was detected when calling Google Safe Browsing API', file=sys.stderr)
             print(err, file=sys.stderr)
 
         return False
@@ -169,7 +169,8 @@ class LinksClient:
                netid: str,
                creator_ip: str,
                viewers: List[Dict[str, Any]] = None,
-               editors: List[Dict[str, Any]] = None) -> ObjectId:
+               editors: List[Dict[str, Any]] = None,
+               bypass_security_measures: bool = False) -> ObjectId:
         if viewers is None:
             viewers = []
         if editors is None:
@@ -177,11 +178,11 @@ class LinksClient:
         if self.long_url_is_blocked(long_url):
             raise BadLongURLException
 
-        # if self.redirects_to_blocked_url(long_url):
-        #     raise BadLongURLException
+        if self.redirects_to_blocked_url(long_url):
+            raise BadLongURLException
 
-        # if self.security_risk_detected(long_url):
-        #     raise SecurityRiskDetected
+        if not bypass_security_measures and self.security_risk_detected(long_url):
+            raise SecurityRiskDetected
 
         for acl in ['viewers', 'editors']:
             members = {'viewers': viewers, 'editors': editors}[acl]

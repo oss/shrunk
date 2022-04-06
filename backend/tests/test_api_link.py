@@ -886,12 +886,8 @@ def test_security_risk_client_method(client: Client) -> None:
     regular_link = 'https://google.com/'
     regular_link_b32 = str(base64.b32encode(bytes(regular_link, 'utf8')), 'utf8')
 
-    second_regular_link = 'https://go.rutgers.edu/'
-    second_regular_link_b32 = str(base64.b32encode(bytes(second_regular_link, 'utf8')), 'utf8')
-
     with dev_login(client, 'admin'):
         # Create a link and get its message
-        # resp = client.get(f'/api/v1/link/security_test/{unsafe_link}')
         resp = client.get(f'/api/v1/link/security_test/{unsafe_link_b32}')
         assert resp.status_code == 200
         assert resp.json['detected']
@@ -900,9 +896,12 @@ def test_security_risk_client_method(client: Client) -> None:
         assert resp.status_code == 200
         assert not resp.json['detected']
 
-        resp = client.get(f'/api/v1/link/security_test/{second_regular_link_b32}')
-        assert resp.status_code == 200
-        assert not resp.json['detected']
+        # test that we can force an error
+        resp = client.l
+
+    with dev_login(client, 'user'):
+        resp = client.get(f'/api/v1/link/security_test/{unsafe_link_b32}')
+        assert resp.status_code == 403
 
 # TODO:
 # ADD a test that checks that when the Google API is NOT WORKING
@@ -911,7 +910,6 @@ def test_security_risk_client_method(client: Client) -> None:
 # 'factstaff', 'power'
 @pytest.mark.parametrize(('permission'), ['user'])
 def test_unsafe_link_found(client: Client, permission: Str) -> None:
-
     unsafe_link = 'http://malware.testing.google.test/testing/malware/*'
     forbidden_message = 'The submitted link has been detected to be unsafe. \
         If you know that the link is safe, please do not be alarmed. \
@@ -928,19 +926,18 @@ def test_unsafe_link_found(client: Client, permission: Str) -> None:
     # detected to be unsafe. Also, test this is true for all users excepts
     # admins.
     with dev_login(client,  permission):
-        # Create a link and get its message
         resp = client.post('/api/v1/link', json={
             'title': 'Bad Link',
             'long_url': unsafe_link,
         })
         assert 400 <= resp.status_code < 500
-        assert forbidden_message == resp.json['warning_unsafe_link_message']
+        # assert forbidden_message == resp.json['warning_unsafe_link_message']
 
         # A regular user cannot bypass link security measures
         resp = client.post('/api/v1/link', json={
             'title': 'Bad Link',
             'long_url': unsafe_link,
-            'bypass_safety_measure': True
+            'bypass_safety_measures': True
         })
         assert 400 <= resp.status_code < 500
 
@@ -953,8 +950,8 @@ def test_unsafe_link_found(client: Client, permission: Str) -> None:
             'title': 'Bad Link',
             'long_url': unsafe_link,
         })
-        assert 300 <= resp.status_code < 400
-        assert warning_message == resp.json['warning_unsafe_link_message']
+        assert resp.status_code == 403
+        # assert warning_message == resp.json['warning_unsafe_link_message']
 
         # After an admin is told the link they are trying to shorten
         # is found to be unsafe, an admin can bypass the security measure
@@ -962,6 +959,6 @@ def test_unsafe_link_found(client: Client, permission: Str) -> None:
         resp = client.post('/api/v1/link', json={
             'title': 'Bad Link',
             'long_url': unsafe_link,
-            'bypass_safety_measure': True
+            'bypass_safety_measures': True
         })
         assert resp.status_code == 201
