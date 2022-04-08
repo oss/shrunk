@@ -661,6 +661,7 @@ def validate_reserved_alias(_netid: str, client: ShrunkClient, alias: str) -> An
         response['reason'] = 'That alias cannot be used.'
     return jsonify(response)
 
+
 @bp.route('/validate_duplicate_alias/<b32:alias>', methods=['GET'])
 @require_login
 def validate_duplicate_alias(_netid: str, client: ShrunkClient, alias: str) -> Any:
@@ -682,6 +683,7 @@ def validate_duplicate_alias(_netid: str, client: ShrunkClient, alias: str) -> A
     if not valid:
         response['reason'] = 'That alias already exists.'
     return jsonify(response)
+
 
 @bp.route('/<ObjectId:link_id>/alias/<alias>', methods=['DELETE'])
 @require_login

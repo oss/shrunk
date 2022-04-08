@@ -157,15 +157,20 @@ class LinksClient:
             r.raise_for_status()
             return len(r.json()['matches']) > 0
         except requests.exceptions.HTTPError as err:
-            print('Google Safe Browsing API request failed. Status code: {}'.format(r.status_code), file=sys.stderr)
-            print(err, file=sys.stderr)
+            current_app.logger.warning('Google Safe Browsing API request failed. Status code: {}'.format(r.status_code))
+            current_app.logger.warning(err)
         except KeyError as err:
-            print('ERROR: The key {} did not exist in the JSON response'.format(err), file=sys.stderr)
+            current_app.logger.warning('ERROR: The key {} did not exist in the JSON response'.format(err))
         except Exception as err:
-            print('An unknown error was detected when calling Google Safe Browsing API', file=sys.stderr)
-            print(err, file=sys.stderr)
+            current_app.logger.warning('An unknown error was detected when calling Google Safe Browsing API')
+            current_app.logger.warning(err)
+
+        current_app.logger.warning("Despite Google Safe Browsing API failure, link creation will continue but without security verification")
 
         return False
+
+    def create_pending_link(self, long_url: str, netid_) -> None:
+        pass
 
     def create(self,
                title: str,
@@ -193,7 +198,6 @@ class LinksClient:
             members = {'viewers': viewers, 'editors': editors}[acl]
             for member in members:
                 self.assert_valid_acl_entry(acl, member)
-
 
         document = {
             'title': title,

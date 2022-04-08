@@ -981,8 +981,11 @@ def test_unsafe_link_found(client: Client, permission: Str) -> None:
         assert resp.status_code == 200
 
 
-def test_security_risk_link_verification_process(client: Client) -> None:
+def test_pending_links_verification_process(client: Client) -> None:
     unsafe_link = 'http://malware.testing.google.test/testing/malware/*'
+    unsafe_link_b32 = str(base64.b32encode(bytes(unsafe_link, 'utf8')), 'utf8')
+
+    link_id = None
 
     with dev_login(client, 'user'):
         resp = client.post('/api/v1/link', json={
@@ -990,18 +993,33 @@ def test_security_risk_link_verification_process(client: Client) -> None:
             'long_url': unsafe_link
         })
         assert resp.status_code == 400
+        link_id = resp.json['id']
+        assert link_id is not None
 
-        resp = client.get('/api/v1/link/links_pending_security_verification')
+        resp = client.get('/api/v1/link/security/pending_list')
         assert resp.status_code == 403
         with pytest.raises(KeyError):
             assert resp.json['pendingLinks']
 
     with dev_login(client, 'admin'):
-        resp = client.get('/api/v1/link/links_pending_security_verification')
+        resp = client.get('/api/v1/security/pending_list')
         assert resp.json['pendingLinks']
         assert len(resp.json['pendingLinks']) == 1
 
         unsafe_link_document = resp['pendingLinks'][0]
         assert unsafe_link_document['title'] == 'unsafe link'
         assert unsafe_link_document['long_url'] == unsafe_link
+
+        assert link_id is not None
+        resp = client.get(f'/api/v1/link/{link_id}')
+
+        resp = client.patch('/api/v1/security/promote/<link_id>')
+
+        resp = client.patch('/api/v1/security/reject/<link_id>')
+
+        resp = client.get('/api/v1/security/status/<link_id>')
+
+        resp = client.patch('/api/v1/security/demote/<link_id>')
+
+        resp = client.get('/api/v1/security/check/{unsafe)}')
 
