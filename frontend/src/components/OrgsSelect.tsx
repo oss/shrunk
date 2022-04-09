@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Select } from 'antd';
 import { CaretDownOutlined, LoadingOutlined } from '@ant-design/icons';
 import { OrgInfo } from '../api/Org';
@@ -44,6 +44,7 @@ export const OrgsSelect: React.FC<Props> = (props) => {
   const [loading, toggle] = useState(false);
   const { Option, OptGroup } = Select;
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const linkDropDown = useRef<HTMLDivElement>(null);
 
   const updateOrg = async (e: any): Promise<void> => {
     toggle(true);
@@ -53,10 +54,10 @@ export const OrgsSelect: React.FC<Props> = (props) => {
         e === 0
           ? { set: 'user' }
           : e === 1
-          ? { set: 'all' }
-          : e === 2
-          ? { set: 'shared' }
-          : { set: 'org', org: e as string };
+            ? { set: 'all' }
+            : e === 2
+              ? { set: 'shared' }
+              : { set: 'org', org: e as string };
       props.showByOrg(searchSet);
       toggle(false);
     }, 300);
@@ -64,6 +65,7 @@ export const OrgsSelect: React.FC<Props> = (props) => {
 
   return (
     <Select
+      ref={linkDropDown}
       value={org}
       onChange={updateOrg}
       className="filter-links-dropdown"
@@ -85,7 +87,13 @@ export const OrgsSelect: React.FC<Props> = (props) => {
         loading ? (
           <LoadingOutlined spin />
         ) : (
-          <div onClick={() => setDropdownOpen(!dropdownOpen)}>
+          <div onClick={() => {
+            if (linkDropDown.current !== null) {
+              linkDropDown.current.focus();
+            }
+
+          }}
+          >
             <CaretDownOutlined
               style={{
                 position: 'relative',
