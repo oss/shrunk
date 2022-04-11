@@ -4,6 +4,7 @@
 from datetime import datetime, timezone
 from enum import Enum
 from os import link
+from tkinter import E
 from typing import Any, Dict
 from bson.objectid import ObjectId
 from backend.shrunk.client import ShrunkClient
@@ -77,29 +78,34 @@ class SecurityClient:
                                         editors=d['editors'],
                                         bypass_security_measures=True)
 
-    def reject_link(self):
-        pass
+    def reject_link(self,
+                    link_id: ObjectId,
+                    net_id: str):
+        self.change_link_status(link_id, net_id, DetectedLinkStatus.denied)
 
-    def demote_link(self):
-        pass
+    def consider_link(self,
+                      link_id: ObjectId,
+                      net_id: str):
+        self.change_link_status(link_id, net_id, DetectedLinkStatus.pending)
 
-    def verify_link(self):
-        pass
+    def get_unsafe_link_document(self, link_id: ObjectId) -> Any:
+        result = self.db.unsafe_link.find_one({'_id': link_id})
+        if result is None:
+            raise NoSuchObjectException
+        return result
 
-    def get_unsafe_link_document(self):
-        pass
-
-    def get_link_status(self):
-        pass
+    def get_link_status(self, link_id: ObjectId) -> Any:
+        link = self.get_unsafe_link_document(link_id)
+        return link['status']
 
     def get_history(self):
         pass
 
     def get_pending_links(self):
-        pass
+        return list(self.db.unsafe_links.find({'status': DetectedLinkStatus.pending}))
 
     def get_number_of_pending_links(self):
-        pass
+        return len(self.get_pending_links())
 
     def is_pending(self):
         pass
