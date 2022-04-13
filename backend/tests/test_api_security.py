@@ -46,19 +46,13 @@ def test_security_api_permissions(client: Client) -> None:
         with pytest.raises(KeyError):
             assert resp.json['pendingLinks']
 
-        resp = client.patch(f'/api/v1/link/security/promote/{link_id}')
+        resp = client.patch(f'/api/v1/security/promote/{link_id}')
         assert resp.status_code == 403
-        resp = client.get(f'/api/v1/link/security/status/{link_id}')
+        resp = client.get(f'/api/v1/security/status/{link_id}')
         assert resp.status_code == 403
-        resp = client.patch(f'/api/v1/link/security/demote/{link_id}')
+        resp = client.patch(f'/api/v1/security/reject/{link_id}')
         assert resp.status_code == 403
-        resp = client.patch(f'/api/v1/link/security/reject/{link_id}')
-        assert resp.status_code == 403
-        resp = client.patch(f'/api/v1/link/security/reject/{link_id}')
-        assert resp.status_code == 403
-        resp = client.get(f'/api/v1/link/security/pending_links/{link_id}')
-        assert resp.status_code == 403
-        resp = client.get(f'/api/v1/security/reconsider/{link_id}')
+        resp = client.get(f'/api/v1/security/pending_links/{link_id}')
         assert resp.status_code == 403
 
 

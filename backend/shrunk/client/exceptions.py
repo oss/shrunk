@@ -1,6 +1,8 @@
 """Database-related exceptions."""
 
-__all__ = ['ShrunkException', 'NoSuchObjectException', 'BadAliasException', 'BadLongURLException', 'InvalidEntity', 'InvalidACL']
+__all__ = ['ShrunkException', 'NoSuchObjectException', 'BadAliasException',
+           'BadLongURLException', 'InvalidEntity', 'InvalidACL',
+           'SecurityRiskDetected', 'InvalidStateChange', 'NotUserOrOrg']
 
 
 class ShrunkException(Exception):
@@ -29,6 +31,14 @@ class InvalidACL(ShrunkException, ValueError):
 
 class SecurityRiskDetected(ShrunkException):
     """Raised when a link has been detected to be a security risk"""
+
+
+class InvalidStateChange(ShrunkException):
+    """
+    Raised when someone changes a state of an entity incorrectly,
+    perhaps from one state to another state that cannot be reached from
+    previous state.
+    """
 
 
 class NotUserOrOrg(ShrunkException, ValueError):

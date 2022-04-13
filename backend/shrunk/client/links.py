@@ -121,57 +121,6 @@ class LinksClient:
         result = self.db.urls.find_one({'aliases.alias': alias})
         return result['_id'] if result is not None else None
 
-    def security_risk_detected(self, long_url: str) -> bool:
-        """Checks a url with a security risk API. In this case,
-        the API is Google Safe Browsing API. For now, if the status
-        code is not 200 when making a request, we continue with the link
-        creation.
-
-        The daily quota for the Lookup API is 10,000. If Google Safe Browsing
-        API returns an error, this method will return false no matter what.
-        This is to ensure that link creation continues despite Google Safe
-        Browsing API failure.
-
-        :param long_url: a long url to verify
-        """
-        API_KEY = current_app.config['GOOGLE_SAFE_BROWSING_API']
-
-        postBody = {
-            'client': {
-                'clientId':      'Shrunk-Rutgers',
-                'clientVersion': current_app.config['SHRUNK_VERSION']
-            },
-            'threatInfo': {
-                'threatTypes':      ['MALWARE', 'SOCIAL_ENGINEERING'],
-                'platformTypes':    ['WINDOWS'],
-                'threatEntryTypes': ['URL'],
-                'threatEntries': [
-                    {'url': long_url},
-                ]
-            }
-        }
-
-        try:
-            r = requests.post('https://safebrowsing.googleapis.com/v4/threatMatches:find?key={}'.format(API_KEY),
-                              data=json.dumps(postBody))
-            r.raise_for_status()
-            return len(r.json()['matches']) > 0
-        except requests.exceptions.HTTPError as err:
-            current_app.logger.warning('Google Safe Browsing API request failed. Status code: {}'.format(r.status_code))
-            current_app.logger.warning(err)
-        except KeyError as err:
-            current_app.logger.warning('ERROR: The key {} did not exist in the JSON response'.format(err))
-        except Exception as err:
-            current_app.logger.warning('An unknown error was detected when calling Google Safe Browsing API')
-            current_app.logger.warning(err)
-
-        current_app.logger.warning("Despite Google Safe Browsing API failure, link creation will continue but without security verification")
-
-        return False
-
-    def create_pending_link(self, long_url: str, netid_) -> None:
-        pass
-
     def create(self,
                title: str,
                long_url: str,
@@ -190,9 +139,6 @@ class LinksClient:
 
         if self.redirects_to_blocked_url(long_url):
             raise BadLongURLException
-
-        if not bypass_security_measures and self.security_risk_detected(long_url):
-            raise SecurityRiskDetected
 
         for acl in ['viewers', 'editors']:
             members = {'viewers': viewers, 'editors': editors}[acl]
@@ -213,6 +159,11 @@ class LinksClient:
             'viewers': viewers,
             'editors': editors,
         }
+
+        if not bypass_security_measures and \
+                self.other_clients.security.security_risk_detected(long_url):
+            self.other_clients.security.create_pending_link(document)
+            raise SecurityRiskDetected
 
         result = self.db.urls.insert_one(document)
         return result.inserted_id
