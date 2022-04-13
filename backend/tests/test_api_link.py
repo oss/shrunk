@@ -1061,7 +1061,7 @@ def test_pending_links_verification_process(client: Client) -> None:
         resp = client.patch(f'/api/v1/security/reject/{link_id}')
         assert resp.status_code == 409
 
-        resp = client.patch(f'/api/v1/security/demotel')
+        resp = client.patch(f'/api/v1/security/demote')
 
         resp = client.get(f'/api/v1/security/status/{link_id}')
         assert resp.status_code == 200

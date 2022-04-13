@@ -8,17 +8,13 @@ from tkinter import E
 from typing import Any, Dict
 from bson.objectid import ObjectId
 from backend.shrunk.client import ShrunkClient
+from backend.shrunk.api.security import DetectedLinkStatus
 from shrunk.client import LinksClient
 import pymongo
 
 from backend.shrunk.client.exceptions import NoSuchObjectException
 
 __all__ = ['SecurityClient']
-
-DetectedLinkStatus = Enum(pending='pending',
-                          approved='approved',
-                          denied='denied',
-                          deleted='deleted')
 
 
 class SecurityClient:
