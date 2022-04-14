@@ -888,7 +888,7 @@ def test_acl(client: Client) -> None: # pylint: disable=too-many-statements
                 assert_access(user['view_alias_stats'], resp.status_code)
 
 
-def test_security_risk_client_method(client: Client) -> None:
+def security_risk_client_method(client: Client) -> None:
     unsafe_link = 'http://malware.testing.google.test/testing/malware/*'
     unsafe_link_b32 = str(base64.b32encode(bytes(unsafe_link, 'utf8')), 'utf8')
 
@@ -915,8 +915,9 @@ def test_security_risk_client_method(client: Client) -> None:
 # ADD a test that checks that when the Google API is NOT WORKING
 # that all links are created without any impact to link creation
 
+
 @pytest.mark.parametrize(('permission'), ['user', 'facstaff', 'power'])
-def test_unsafe_link_found(client: Client, permission: Str) -> None:
+def unsafe_link_found(client: Client, permission: Str) -> None:
     unsafe_link = 'http://malware.testing.google.test/testing/malware/*'
     regular_link = 'https://google.com/'
     forbidden_message = 'The submitted link has been detected to be unsafe. \
@@ -981,7 +982,7 @@ def test_unsafe_link_found(client: Client, permission: Str) -> None:
         assert resp.status_code == 200
 
 
-def test_pending_links_verification_process(client: Client) -> None:
+def pending_links_verification_process(client: Client) -> None:
     unsafe_link = 'http://malware.testing.google.test/testing/malware/*'
     unsafe_link_b32 = str(base64.b32encode(bytes(unsafe_link, 'utf8')), 'utf8')
 

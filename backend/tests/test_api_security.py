@@ -1,34 +1,54 @@
-from ast import Str
-import time
 import base64
-from datetime import datetime, timezone, timedelta
-import random
-
 import pytest
 from werkzeug.test import Client
-
 from util import dev_login
 
 
-def test_user_cannot_create_unsafe_link(client: Client) -> None:
+def test_security_risk_client_method(client: Client) -> None:
     unsafe_link = 'http://malware.testing.google.test/testing/malware/*'
+    unsafe_link_b32 = str(base64.b32encode(bytes(unsafe_link, 'utf8')), 'utf8')
+
+    regular_link = 'https://google.com/'
+    regular_link_b32 = str(base64.b32encode(bytes(regular_link, 'utf8')), 'utf8')
+
+    with dev_login(client, 'admin'):
+        # Create a link and get its message
+        resp = client.get(f'/api/v1/security/security_test/{unsafe_link_b32}')
+        assert resp.status_code == 200
+        assert resp.json['detected']
+
+        # Creating a link with a regular link should not be forbidden
+        resp = client.get(f'/api/v1/security/security_test/{regular_link_b32}')
+        assert resp.status_code == 200
+        assert not resp.json['detected']
+
+    with dev_login(client, 'user'):
+        # A user that is not an admin cannot use the security_test endpoint
+        resp = client.get(f'/api/v1/security/security_test/{unsafe_link_b32}')
+        assert resp.status_code == 403
+
+
+def test_user_and_admin_security_link_abilities(client: Client) -> None:
+    unsafe_link = 'http://malware.testing.google.test/testing/malware/*'
+    unsafe_link_title = 'unsafe link'
+    regular_link = 'https://google.com'
     with dev_login(client, 'user'):
         # a user tries to shrink a link detected to be unsafe
         # this could be any user (admin, facstaff)
         resp = client.post('/api/v1/link', json={
-            'title': 'unsafe link',
+            'title': unsafe_link_title,
             'long_url': unsafe_link
         })
 
         # this is a forbidden action. the link will then
         # become a pending link in the unsafe_links collection
         assert resp.status_code == 403
-        link_id = resp.json['id']
-        assert link_id is not None
+        with pytest.raises(KeyError) as err:
+            link_id = resp.json['id']
 
     with dev_login(client, 'admin'):
         resp = client.post('/api/v1/link', json={
-            'title': 'unsafe link',
+            'title': unsafe_link_title,
             'long_url': unsafe_link
         })
 
@@ -36,15 +56,40 @@ def test_user_cannot_create_unsafe_link(client: Client) -> None:
         # without first explicitly stating to bypass security
         assert resp.status_code == 403
 
+        # when an admin specifies that a regular link should bypass
+        # security, go through with the request
+        resp = client.post('/api/v1/link', json={
+            'title': unsafe_link_title,
+            'long_url': regular_link,
+            'bypass_security_measures': True
+        })
+        assert resp.status_code == 200
+        link_id = resp.json['id']
+
+        # test that the link was made successfully after forcing bypass
+        resp = client.get(f'/api/v1/link/{link_id}')
+        assert resp.status_code == 200
+        assert resp.json['title'] == unsafe_link_title
+
 
 def test_security_api_permissions(client: Client) -> None:
     with dev_login(client, 'user'):
-        resp = client.get('/api/v1/link/security/pending_list')
+        resp = client.get('/api/v1/security/pending_links')
 
         # regular users cannot fetch pending list
         assert resp.status_code == 403
-        with pytest.raises(KeyError):
+        with pytest.raises(TypeError):
             assert resp.json['pendingLinks']
+
+        # we post a random link so that we have an
+        # objectID to work with. it does not matter what it is,
+        # we just need an objectID to work with in order to call endpoints
+        random_link = 'http://google.com'
+        resp = client.post('/api/v1/link', json={
+            'title': 'random',
+            'long_url': random_link
+        })
+        link_id = resp.json['id']
 
         resp = client.patch(f'/api/v1/security/promote/{link_id}')
         assert resp.status_code == 403
@@ -52,11 +97,9 @@ def test_security_api_permissions(client: Client) -> None:
         assert resp.status_code == 403
         resp = client.patch(f'/api/v1/security/reject/{link_id}')
         assert resp.status_code == 403
-        resp = client.get(f'/api/v1/security/pending_links/{link_id}')
-        assert resp.status_code == 403
 
 
-def test_retrieve_pending_links(client: Client) -> None:
+def test_verification_process(client: Client) -> None:
     unsafe_link = 'http://malware.testing.google.test/testing/malware/*'
     link_id = None
     with dev_login(client, 'user'):
@@ -83,7 +126,7 @@ def test_retrieve_pending_links(client: Client) -> None:
         assert resp.status_code == 403
 
     with dev_login(client, 'admin'):
-        resp = client.get('/api/v1/security/pending_list')
+        resp = client.get('/api/v1/security/pending_links')
         assert resp.status_code == 200
         assert resp.json['pendingLinks']
         assert len(resp.json['pendingLinks']) == 2
@@ -99,6 +142,10 @@ def test_retrieve_pending_links(client: Client) -> None:
         assert second_unsafe_link_document['long_url'] == unsafe_link
 
         resp = client.get(f'/api/v1/security/status/{unsafe_link_id}')
+        assert resp.status_code == 200
+        assert resp.json['status'] == 'pending'
+
+        resp = client.get(f'/api/v1/security/status/{second_unsafe_link_id}')
         assert resp.status_code == 200
         assert resp.json['status'] == 'pending'
 

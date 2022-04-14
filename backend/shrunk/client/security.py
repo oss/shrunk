@@ -3,20 +3,23 @@
 
 from datetime import datetime, timezone
 from enum import Enum
-from os import link
-from tkinter import E
+import json
 from typing import Any, Dict
 from bson.objectid import ObjectId
 from flask import current_app
-from backend.shrunk.client import ShrunkClient
-from backend.shrunk.api.security import DetectedLinkStatus
-from shrunk.client import LinksClient
 import pymongo
 import requests
 
-from backend.shrunk.client.exceptions import InvalidStateChange, NoSuchObjectException
+from .exceptions import InvalidStateChange, NoSuchObjectException
 
 __all__ = ['SecurityClient']
+
+
+class DetectedLinkStatus(Enum):
+    PENDING = 'pending'
+    APPROVED = 'approved'
+    DENIED = 'denied'
+    DETECTED = 'deleted'
 
 
 class SecurityClient:
@@ -25,14 +28,14 @@ class SecurityClient:
     verification system.
     """
 
-    def __init__(self, *, db: pymongo.database.Database, other_clients: ShrunkClient):
+    def __init__(self, *, db: pymongo.database.Database, other_clients: Any):
         self.db = db
         self.other_clients = other_clients
 
     def create_pending_link(self, link_document: Dict[str, Any]):
         if self.url_exists_as_pending(link_document['long_url']):
             return None
-        link_document['status'] = DetectedLinkStatus.pending
+        link_document['status'] = DetectedLinkStatus.PENDING.value
         link_document['netid_of_last_modifier'] = None
 
         result = self.db.unsafe_links.insert_one(link_document)
@@ -67,7 +70,7 @@ class SecurityClient:
 
         d = self.get_unsafe_link_document()
 
-        if d['status'] is not DetectedLinkStatus.pending:
+        if d['status'] is not DetectedLinkStatus.PENDING.value:
             raise InvalidStateChange
 
         args = [d['title'],
@@ -76,25 +79,25 @@ class SecurityClient:
                 d['netid'],
                 d['creator_ip']]
 
-        self.change_link_status(link_id, net_id, DetectedLinkStatus.approved)
+        self.change_link_status(link_id, net_id, DetectedLinkStatus.APPROVED.value)
         link_id = self.other_clients.links.create(
                                                     *args,
                                                     viewers=d['viewers'],
                                                     editors=d['editors'],
                                                     bypass_security_measures=True
-                                                    )
+                                                 )
 
         return link_id
 
     def reject_link(self,
                     link_id: ObjectId,
                     net_id: str):
-        self.change_link_status(link_id, net_id, DetectedLinkStatus.denied)
+        self.change_link_status(link_id, net_id, DetectedLinkStatus.DENIED.value)
 
     def consider_link(self,
                       link_id: ObjectId,
                       net_id: str):
-        self.change_link_status(link_id, net_id, DetectedLinkStatus.pending)
+        self.change_link_status(link_id, net_id, DetectedLinkStatus.PENDING.value)
 
     def get_unsafe_link_document(self, link_id: ObjectId) -> Any:
         result = self.db.unsafe_link.find_one({'_id': link_id})
@@ -114,7 +117,7 @@ class SecurityClient:
         pass
 
     def get_pending_links(self):
-        return list(self.db.unsafe_links.find({'status': DetectedLinkStatus.pending}))
+        return list(self.db.unsafe_links.find({'status': DetectedLinkStatus.PENDING.value}))
 
     def get_number_of_pending_links(self):
         return len(self.get_pending_links())
@@ -150,8 +153,11 @@ class SecurityClient:
         }
 
         try:
-            r = requests.post('https://safebrowsing.googleapis.com/v4/threatMatches:find?key={}'.format(API_KEY),
-                                data=json.dumps(postBody))
+            r = requests.post(
+                'https://safebrowsing.googleapis.com/v4/threatMatches:find?key={}'.format(API_KEY),
+                data=json.dumps(postBody)
+                )
+            current_app.logger.warning("The status code was: {}".format(r.status_code))
             r.raise_for_status()
             return len(r.json()['matches']) > 0
         except requests.exceptions.HTTPError as err:
@@ -162,7 +168,5 @@ class SecurityClient:
         except Exception as err:
             current_app.logger.warning('An unknown error was detected when calling Google Safe Browsing API')
             current_app.logger.warning(err)
-
-        current_app.logger.warning("Despite Google Safe Browsing API failure, link creation will continue but without security verification")
 
         return False
