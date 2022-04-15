@@ -465,8 +465,10 @@ class LinksClient:
         return result
 
     def get_link_info_by_alias(self, alias: str) -> Any:
-        return self.db.urls.find_one({'$and':[{'aliases.alias' : alias, 'aliases.deleted' : False}]})
+        return self.db.urls.find_one({'$and': [{'aliases.alias': alias, 'aliases.deleted': False}]})
 
+    def get_link_info_by_title(self, title: str) -> Any:
+        return self.db.urls.find_one({'title': title})
 
     def get_long_url(self, alias: str) -> Optional[str]:
         """Given a short URL, returns the long URL.

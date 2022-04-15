@@ -146,22 +146,6 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
         return jsonify({'errors': [str(e)]}), 400
     return jsonify({'id': str(link_id)})
 
-
-# @bp.route('/security_test/<b32:long_url>', methods=['GET'])
-# @require_login
-# def security_test(netid: str, client: ShrunkClient, long_url: str) -> Any:
-#     """``GET /api/link/security_test/<b32:long_url>``
-
-#     This endpoint is meant for testing purposes only; it should only be called in the unit tests.
-#     The purpose of this endpoint is to modularize testing of the security measures. In the case
-#     that the security measures do not work, this test will be the first to clearly show that.
-#     """
-
-#     if not client.roles.has('admin', netid):
-#         abort(403)
-#     return jsonify({'detected': client.links.security_risk_detected(long_url)})
-
-
 @bp.route('/validate_long_url/<b32:long_url>', methods=['GET'])
 @require_login
 def validate_long_url(_netid: str, client: ShrunkClient, long_url: str) -> Any:
@@ -224,6 +208,25 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     }
 
     return jsonify(json_info)
+
+
+@bp.route('/search_by_title/<b32:title>')
+@require_login
+def get_link_by_title(netid: str, client: ShrunkClient, title: ObjectId) -> Any:
+    """``GET /api/link/search_by_title/<title>11
+
+    Finds information of a single link by exact title. This simple method was made for
+    security unit tests. This method is NOT mean to be a comprehensive endpoint
+    called upon in production.
+
+    :param netid:
+    :param client:
+    :param link_id:
+    """
+    if not client.roles.has('admin', netid):
+        abort(403)
+
+    return jsonify(client.links.get_link_info_by_title(title)), 200
 
 
 MODIFY_LINK_SCHEMA = {

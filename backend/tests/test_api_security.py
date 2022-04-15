@@ -32,6 +32,7 @@ def test_user_and_admin_security_link_abilities(client: Client) -> None:
     unsafe_link = 'http://malware.testing.google.test/testing/malware/*'
     unsafe_link_title = 'unsafe link'
     regular_link = 'https://google.com'
+
     with dev_login(client, 'user'):
         # a user tries to shrink a link detected to be unsafe
         # this could be any user (admin, facstaff)
@@ -101,11 +102,15 @@ def test_security_api_permissions(client: Client) -> None:
 
 def test_verification_process(client: Client) -> None:
     unsafe_link = 'http://malware.testing.google.test/testing/malware/*'
-    link_id = None
+    second_unsafe_link = 'http://malware.wicar.org/data/ms09_072_style_object.html'
+
+    unsafe_link_title = 'unsafe link'
+    unsafe_link_title_b32 = str(base64.b32encode(bytes(unsafe_link_title, 'utf8')), 'utf8')
+
     with dev_login(client, 'user'):
         # an unsafe link for promotion testing
         resp = client.post('/api/v1/link', json={
-            'title': 'unsafe link',
+            'title': unsafe_link_title,
             'long_url': unsafe_link
         })
         assert resp.status_code == 403
@@ -113,7 +118,7 @@ def test_verification_process(client: Client) -> None:
         # we send the same request twice to see if
         # the security API will correctly handle it
         resp = client.post('/api/v1/link', json={
-            'title': 'unsafe link',
+            'title': unsafe_link_title,
             'long_url': unsafe_link
         })
         assert resp.status_code == 403
@@ -121,7 +126,7 @@ def test_verification_process(client: Client) -> None:
         # a second unsafe link for rejecting testing
         resp = client.post('/api/v1/link', json={
             'title': 'second unsafe link',
-            'long_url': unsafe_link
+            'long_url': second_unsafe_link
         })
         assert resp.status_code == 403
 
@@ -132,14 +137,14 @@ def test_verification_process(client: Client) -> None:
         assert len(resp.json['pendingLinks']) == 2
 
         unsafe_link_document = resp.json['pendingLinks'][0]
-        unsafe_link_id = unsafe_link_document['id']
-        assert unsafe_link_document['title'] == 'unsafe link'
+        unsafe_link_id = unsafe_link_document['_id']
+        assert unsafe_link_document['title'] == unsafe_link_title
         assert unsafe_link_document['long_url'] == unsafe_link
 
         second_unsafe_link_document = resp.json['pendingLinks'][1]
-        second_unsafe_link_id = unsafe_link_document['id']
+        second_unsafe_link_id = second_unsafe_link_document['_id']
         assert second_unsafe_link_document['title'] == 'second unsafe link'
-        assert second_unsafe_link_document['long_url'] == unsafe_link
+        assert second_unsafe_link_document['long_url'] == second_unsafe_link
 
         resp = client.get(f'/api/v1/security/status/{unsafe_link_id}')
         assert resp.status_code == 200
@@ -151,7 +156,8 @@ def test_verification_process(client: Client) -> None:
 
         # test that the link hasn't made through as a regular link
         # via a call to the link API
-        resp = client.get(f'/api/v1/link/{link_id}')
+        # TODO: may be a vulnerable as, ofc, _id wouldn't be found in link collection
+        resp = client.get(f'/api/v1/link/{unsafe_link_id}')
         assert resp.status_code == 404
 
         resp = client.patch(f'/api/v1/security/promote/{unsafe_link_id}')
@@ -162,9 +168,9 @@ def test_verification_process(client: Client) -> None:
 
         # when we promote a link, the link is able to be
         # retrieved from the links API as it is in the general collection
-        resp = client.get(f'/api/v1/link/{unsafe_link_id}')
+        resp = client.get(f'/api/v1/link/search_by_title/{unsafe_link_title_b32}')
         assert resp.status_code == 200
-        assert resp.json['title'] == 'unsafe link'
+        assert resp.json['title'] == unsafe_link_title
 
         # promoted unsafe link cannot be rejected
         resp = client.patch(f'/api/v1/security/reject/{unsafe_link_id}')
@@ -173,10 +179,7 @@ def test_verification_process(client: Client) -> None:
         # =======================Second Unsafe Link==================
 
         resp = client.patch(f'/api/v1/security/reject/{second_unsafe_link_id}')
-        assert resp.status_code == 409
-        resp = client.get(f'/api/v1/security/status/{link_id}')
+        assert resp.status_code == 200
+        resp = client.get(f'/api/v1/security/status/{second_unsafe_link_id}')
         assert resp.status_code == 200
         assert resp.json['status'] == 'denied'
-
-
-

@@ -82,7 +82,7 @@ class ShrunkClient:
 
     def reset_database(self) -> None:
         """Delete all documents from all collections in the shrunk database."""
-        for col in ['grants', 'organizations', 'urls', 'visitors', 'visits']:
+        for col in ['grants', 'organizations', 'urls', 'visitors', 'visits', 'unsafe_links']:
             self.db[col].delete_many({})
 
     def admin_stats(self, begin: Optional[datetime] = None, end: Optional[datetime] = None) -> Any:

@@ -45,32 +45,35 @@ class SecurityClient:
                            link_id: ObjectId,
                            net_id: str,
                            new_status: DetectedLinkStatus):
-        unsafe_link_document = self.client.get_unsafe_link_document(link_id)
+        unsafe_link_document = self.get_unsafe_link_document(link_id)
 
-        fields = Dict[str, Any] = {}
-        update: Dict[str, Any] = {'$set': fields}
-
-        fields['status'] = new_status
-        update['$push'] = {
-            'security_update_history': {
-                'status_changed_from': unsafe_link_document['status'],
-                'status_changed_to': new_status,
-                'netid_of_modifier': net_id,
-                'timestamp': datetime.now(timezone.utc)
+        update = {
+            '$set': {
+                'status': new_status
+            },
+            '$push': {
+                'security_update_history': {
+                    'status_changed_from': unsafe_link_document['status'],
+                    'status_changed_to': new_status,
+                    'netid_of_modifier': net_id,
+                    'timestamp': datetime.now(timezone.utc)
+                }
             }
         }
 
         result = self.db.unsafe_links.update_one({'_id': link_id}, update)
-        if result.matched_count != -1:
+        if result.matched_count == -1:
             raise NoSuchObjectException
+
+        current_app.logger.warning(self.get_pending_links())
 
     def promote_link(self,
                      net_id: str,
                      link_id: ObjectId):
 
-        d = self.get_unsafe_link_document()
+        d = self.get_unsafe_link_document(link_id)
 
-        if d['status'] is not DetectedLinkStatus.PENDING.value:
+        if d['status'] != DetectedLinkStatus.PENDING.value:
             raise InvalidStateChange
 
         args = [d['title'],
@@ -90,8 +93,13 @@ class SecurityClient:
         return link_id
 
     def reject_link(self,
-                    link_id: ObjectId,
-                    net_id: str):
+                    net_id: str,
+                    link_id: ObjectId
+                    ):
+        # TODO: we double query here. might as well do and be done
+        d = self.get_unsafe_link_document(link_id)
+        if d['status'] != DetectedLinkStatus.PENDING.value:
+            raise InvalidStateChange
         self.change_link_status(link_id, net_id, DetectedLinkStatus.DENIED.value)
 
     def consider_link(self,
@@ -100,13 +108,13 @@ class SecurityClient:
         self.change_link_status(link_id, net_id, DetectedLinkStatus.PENDING.value)
 
     def get_unsafe_link_document(self, link_id: ObjectId) -> Any:
-        result = self.db.unsafe_link.find_one({'_id': link_id})
+        result = self.db.unsafe_links.find_one({'_id': link_id})
         if result is None:
             raise NoSuchObjectException
         return result
 
     def url_exists_as_pending(self, long_url: str) -> Any:
-        result = self.db.unsafe_links.find_one({'url': long_url})
+        result = self.db.unsafe_links.find_one({'long_url': long_url})
         return result is not None
 
     def get_link_status(self, link_id: ObjectId) -> Any:
@@ -157,7 +165,6 @@ class SecurityClient:
                 'https://safebrowsing.googleapis.com/v4/threatMatches:find?key={}'.format(API_KEY),
                 data=json.dumps(postBody)
                 )
-            current_app.logger.warning("The status code was: {}".format(r.status_code))
             r.raise_for_status()
             return len(r.json()['matches']) > 0
         except requests.exceptions.HTTPError as err:

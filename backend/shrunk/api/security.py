@@ -1,3 +1,5 @@
+from os import link
+from pydoc import cli
 from typing import Any
 
 from flask import Blueprint, abort, current_app, jsonify
@@ -47,8 +49,11 @@ def promote(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     if not client.roles.has('admin', netid):
         abort(403)
 
+    current_app.logger.warning(f'calling link status with objectid of {link_id}')
+    current_app.logger.warning(client.security.get_pending_links())
+
     try:
-        link_id = client.security.promote(netid, link_id)
+        link_id = client.security.promote_link(netid, link_id)
     except NoSuchObjectException:
         return jsonify({'errors': ['link is not pending']}), 404
     except InvalidStateChange:
@@ -56,7 +61,7 @@ def promote(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     except Exception as err:
         current_app.logger.warning(err)
 
-    return jsonify({'id': link_id}), 200
+    return jsonify({'_id': link_id}), 200
 
 
 @bp.route('/reject/<ObjectId:link_id>', methods=['PATCH'])
@@ -66,13 +71,13 @@ def reject(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         abort(403)
 
     try:
-        client.security.promote(netid, link_id)
+        client.security.reject_link(netid, link_id)
     except NoSuchObjectException:
         return jsonify({'errors': ['link is not pending']}), 404
     except InvalidStateChange:
         return jsonify({'errors': ['cannot demote non-pending link']}), 409
     except Exception as err:
-        current_app.logger.wanring(err)
+        current_app.logger.warning(err)
 
     return jsonify({}), 200
 
@@ -97,7 +102,8 @@ def security_test(netid: str, client: ShrunkClient, long_url: str) -> Any:
 def get_pending_links(netid: str, client: ShrunkClient) -> Any:
     if not client.roles.has('admin', netid):
         abort(403)
-    return jsonify({'pending_links': client.security.get_pending_links}), 200
+    current_app.logger.warning(client.security.get_pending_links())
+    return jsonify({'pendingLinks': client.security.get_pending_links()}), 200
 
 
 @bp.route('/pending_links/count', methods=['GET'])
@@ -116,11 +122,11 @@ def get_link_status(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     if not client.roles.has('admin', netid):
         abort(403)
     try:
-        link_document = client.get_unsafe_link_document(link_id)
+        link_document = client.security.get_unsafe_link_document(link_id)
     except NoSuchObjectException:
         return jsonify({'error': ['object does not exist']}), 404
     except Exception:
-        return 500
+        return jsonify({'error': ['an unknown exception when getting link status']}), 500
 
     return jsonify({
         'title': link_document['title'],
