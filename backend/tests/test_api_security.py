@@ -184,6 +184,8 @@ def test_verification_process(client: Client) -> None:
         resp = client.get(f'/api/v1/link/search_by_title/{unsafe_link_title_b32}')
         assert resp.status_code == 200
         assert resp.json['title'] == unsafe_link_title
+        assert resp.json['long_url'] == unsafe_link
+        assert resp.json['aliases'] == []
 
         # promoted unsafe link cannot be rejected
         resp = client.patch(f'/api/v1/security/reject/{unsafe_link_id}')

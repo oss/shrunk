@@ -46,6 +46,16 @@ interface PendingRowProps {
   document: PendingLink;
 }
 
+enum PendingLinkAction {
+  Approve = 'promote',
+  Deny = 'reject',
+}
+
+function LinkAction(action: PendingLinkAction, link_id: string) {
+  fetch(`/api/v1/security/${action}/${link_id}`, {
+    method: 'PATCH',
+  });
+}
 
 /**
  * TODO:
@@ -59,7 +69,7 @@ function PendingLinkRow(props: PendingRowProps) {
       <Col span={20}>
         <Row>
           <Col span={24}>
-            <span className='title'>{document.title}</span>
+            <span className="title">{document.title}</span>
           </Col>
         </Row>
         <Row>
@@ -79,7 +89,7 @@ function PendingLinkRow(props: PendingRowProps) {
         <Popconfirm
           placement="top"
           title="Are you sure?"
-          onConfirm={() => {}}
+          onConfirm={() => LinkAction(PendingLinkAction.Deny, document._id)}
           icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
         >
           <Button danger>Deny</Button>
@@ -89,10 +99,10 @@ function PendingLinkRow(props: PendingRowProps) {
         <Popconfirm
           placement="top"
           title="Are you sure?"
-          onConfirm={() => {}}
+          onConfirm={() => LinkAction(PendingLinkAction.Approve, document._id)}
           icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
         >
-          <Button type='primary'>Approve</Button>
+          <Button type="primary">Approve</Button>
         </Popconfirm>
       </Col>
     </Row>

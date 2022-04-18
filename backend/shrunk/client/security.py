@@ -89,6 +89,7 @@ class SecurityClient:
                                                     editors=d['editors'],
                                                     bypass_security_measures=True
                                                  )
+        self.other_clients.links.create_random_alias(link_id, '')
 
         return link_id
 
