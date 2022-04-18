@@ -15,6 +15,10 @@ from util import dev_login
 # if it is pending, send 403 as it is awaiting verfication.
 
 
+# 2.
+# test for LinkIsPendingOrRejected exception
+
+
 
 def test_security_risk_client_method(client: Client) -> None:
     unsafe_link = 'http://malware.testing.google.test/testing/malware/*'

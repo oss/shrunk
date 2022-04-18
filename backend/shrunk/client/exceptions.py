@@ -2,7 +2,8 @@
 
 __all__ = ['ShrunkException', 'NoSuchObjectException', 'BadAliasException',
            'BadLongURLException', 'InvalidEntity', 'InvalidACL',
-           'SecurityRiskDetected', 'InvalidStateChange', 'NotUserOrOrg']
+           'SecurityRiskDetected', 'InvalidStateChange', 'NotUserOrOrg',
+           'LinkIsPendingOrRejected']
 
 
 class ShrunkException(Exception):
@@ -38,6 +39,14 @@ class InvalidStateChange(ShrunkException):
     Raised when someone changes a state of an entity incorrectly,
     perhaps from one state to another state that cannot be reached from
     previous state.
+    """
+
+
+class LinkIsPendingOrRejected(ShrunkException):
+    """
+    If a specific url is pending verification and client tries to verify,
+    we don't go further and tell the user that either the link is still pending
+    or it has been rejected.
     """
 
 

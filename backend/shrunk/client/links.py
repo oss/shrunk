@@ -27,7 +27,8 @@ from .exceptions import (NoSuchObjectException,
                          BadLongURLException,
                          InvalidACL,
                          NotUserOrOrg,
-                         SecurityRiskDetected)
+                         SecurityRiskDetected,
+                         LinkIsPendingOrRejected)
 
 import sys
 

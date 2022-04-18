@@ -10,7 +10,7 @@ from flask import current_app
 import pymongo
 import requests
 
-from .exceptions import InvalidStateChange, NoSuchObjectException
+from .exceptions import InvalidStateChange, LinkIsPendingOrRejected, NoSuchObjectException
 
 __all__ = ['SecurityClient']
 
@@ -137,6 +137,20 @@ class SecurityClient:
     def get_number_of_pending_links(self):
         return len(self.get_pending_links())
 
+    def get_status_of_url(self, long_url: str):
+        document = self.db.unsafe_links.find_one({'long_url': long_url})
+        if document is None:
+            return None
+        return document['status']
+
+    def url_not_approved(self, long_url: str):
+        """Either the link is pending or has been rejected.
+
+        :param long_url:
+        """
+        status = self.get_status_of_url(long_url)
+        return status == DetectedLinkStatus.DENIED.value or status == DetectedLinkStatus.PENDING.value
+
     def security_risk_detected(self, long_url: str) -> bool:
         """Checks a url with a security risk API. In this case,
         the API is Google Safe Browsing API. For now, if the status
@@ -150,6 +164,14 @@ class SecurityClient:
 
         :param long_url: a long url to verify
         """
+
+        url_status = self.get_status_of_url(long_url)
+        if url_status is not None and self.url_not_approved(long_url):
+            raise LinkIsPendingOrRejected
+
+        if url_status == DetectedLinkStatus.APPROVED.value:
+            return False
+
         API_KEY = current_app.config['GOOGLE_SAFE_BROWSING_API']
 
         postBody = {

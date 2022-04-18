@@ -15,7 +15,8 @@ from shrunk.client.exceptions import (BadLongURLException,
                                       NoSuchObjectException,
                                       InvalidACL,
                                       NotUserOrOrg,
-                                      SecurityRiskDetected)
+                                      SecurityRiskDetected,
+                                      LinkIsPendingOrRejected)
 from shrunk.util.stats import get_human_readable_referer_domain, browser_stats_from_visits
 from shrunk.util.ldap import is_valid_netid
 from shrunk.util.decorators import require_login, require_mail, request_schema
@@ -141,10 +142,13 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
     except BadLongURLException:
         return jsonify({'errors': ['long_url']}), 400
     except SecurityRiskDetected:
-        return jsonify({'errors': ['security risk']}), 403
+        return jsonify({'errors': ['This url has been detected to be a security risk. URL awaits admin approval.']}), 403
+    except LinkIsPendingOrRejected:
+        return jsonify({'errors': ['This url was detected to be unsafe. It is either awaiting approval or has been denied.']}), 403
     except NotUserOrOrg as e:
         return jsonify({'errors': [str(e)]}), 400
     return jsonify({'id': str(link_id)})
+
 
 @bp.route('/validate_long_url/<b32:long_url>', methods=['GET'])
 @require_login
