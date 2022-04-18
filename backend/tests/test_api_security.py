@@ -3,6 +3,18 @@ import pytest
 from werkzeug.test import Client
 from util import dev_login
 
+# TODO:
+
+# Google Safe Browsing API will cache the link
+# if a user sumbits it multiple times, you get an error 'Max retries exceeded
+# with a specific url.
+
+# to prevent, before checking with Safe Browsing API, check if it is in the
+# unsafe_links collection first awaiting verification
+# if it is approved, approve link. if it is rejected, send 403.
+# if it is pending, send 403 as it is awaiting verfication.
+
+
 
 def test_security_risk_client_method(client: Client) -> None:
     unsafe_link = 'http://malware.testing.google.test/testing/malware/*'
@@ -27,13 +39,13 @@ def test_security_risk_client_method(client: Client) -> None:
         resp = client.get(f'/api/v1/security/security_test/{unsafe_link_b32}')
         assert resp.status_code == 403
 
-
-def test_user_and_admin_security_link_abilities(client: Client) -> None:
+@pytest.mark.parametrize(('permission'), ['user', 'facstaff', 'power'])
+def test_user_and_admin_security_link_abilities(client: Client, permission: str) -> None:
     unsafe_link = 'http://malware.testing.google.test/testing/malware/*'
     unsafe_link_title = 'unsafe link'
     regular_link = 'https://google.com'
 
-    with dev_login(client, 'user'):
+    with dev_login(client, permission):
         # a user tries to shrink a link detected to be unsafe
         # this could be any user (admin, facstaff)
         resp = client.post('/api/v1/link', json={
@@ -73,8 +85,9 @@ def test_user_and_admin_security_link_abilities(client: Client) -> None:
         assert resp.json['title'] == unsafe_link_title
 
 
-def test_security_api_permissions(client: Client) -> None:
-    with dev_login(client, 'user'):
+@pytest.mark.parametrize(('permission'), ['user', 'facstaff', 'power'])
+def test_security_api_permissions(client: Client, permission: str) -> None:
+    with dev_login(client, permission):
         resp = client.get('/api/v1/security/pending_links')
 
         # regular users cannot fetch pending list

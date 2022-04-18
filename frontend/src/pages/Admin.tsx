@@ -56,11 +56,18 @@ export class Admin extends React.Component<Props, State> {
     super(props);
     this.state = {
       roles: null,
-      linksToBeVerified: 1,
+      linksToBeVerified: -1,
     };
   }
 
   async componentDidMount(): Promise<void> {
+    await fetch('/api/v1/security/pending_links/count')
+      .then((resp) => resp.json())
+      .then((json) =>
+        this.setState({
+          linksToBeVerified: json.pending_links_count,
+        }),
+      );
     await fetch('/api/v1/role')
       .then((resp) => resp.json())
       .then((json) => this.setState({ roles: json.roles as RoleInfo[] }));
@@ -87,7 +94,11 @@ export class Admin extends React.Component<Props, State> {
           <Col span={24}>
             <Link to="/admin/link_security" className="title">
               Link Security Risk Verification
-              <Badge count={this.state.linksToBeVerified} offset={[8, -20]} />
+              {this.state.linksToBeVerified === -1 ? (
+                <Spin size="small" />
+              ) : (
+                <Badge count={this.state.linksToBeVerified} offset={[8, -20]} />
+              )}
             </Link>
           </Col>
         </Row>

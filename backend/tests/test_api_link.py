@@ -844,7 +844,6 @@ def test_acl(client: Client) -> None: # pylint: disable=too-many-statements
         else:
             assert code == 403
 
-
     for user in permissions_table:
         print(user['user'])
 
@@ -886,97 +885,3 @@ def test_acl(client: Client) -> None: # pylint: disable=too-many-statements
             for endpoint in ['stats', 'stats/browser', 'stats/geoip', 'stats/visits', 'visits']:
                 resp = client.get(f'/api/v1/link/{link_id}/alias/{alias}/{endpoint}')
                 assert_access(user['view_alias_stats'], resp.status_code)
-
-
-def security_risk_client_method(client: Client) -> None:
-    unsafe_link = 'http://malware.testing.google.test/testing/malware/*'
-    unsafe_link_b32 = str(base64.b32encode(bytes(unsafe_link, 'utf8')), 'utf8')
-
-    regular_link = 'https://google.com/'
-    regular_link_b32 = str(base64.b32encode(bytes(regular_link, 'utf8')), 'utf8')
-
-    with dev_login(client, 'admin'):
-        # Create a link and get its message
-        resp = client.get(f'/api/v1/link/security_test/{unsafe_link_b32}')
-        assert resp.status_code == 200
-        assert resp.json['detected']
-
-        # Creating a link with a regular link should not be forbidden
-        resp = client.get(f'/api/v1/link/security_test/{regular_link_b32}')
-        assert resp.status_code == 200
-        assert not resp.json['detected']
-
-    with dev_login(client, 'user'):
-        # A user that is not an admin cannot use the security_test endpoint
-        resp = client.get(f'/api/v1/link/security_test/{unsafe_link_b32}')
-        assert resp.status_code == 403
-
-# TODO:
-# ADD a test that checks that when the Google API is NOT WORKING
-# that all links are created without any impact to link creation
-
-
-@pytest.mark.parametrize(('permission'), ['user', 'facstaff', 'power'])
-def unsafe_link_found(client: Client, permission: Str) -> None:
-    unsafe_link = 'http://malware.testing.google.test/testing/malware/*'
-    regular_link = 'https://google.com/'
-    forbidden_message = 'The submitted link has been detected to be unsafe. \
-        If you know that the link is safe, please do not be alarmed. \
-        The link, along with your netID and full name, has been sent to \
-        oss@oss.rutgers.edu for verification. We apologize for the \
-        inconvenience and we\'ll approve your request promptly.'
-
-    warning_message = 'The submitted link has been detected to be unsafe. \
-        As an admin, please be careful before accepting this link. \
-        Investigate first, consult another human being, and make sure this \
-        link is safe.'
-
-    # Log in as a user and test that a user cannot add a link that has been
-    # detected to be unsafe. Also, test this is true for all users excepts
-    # admins.
-    with dev_login(client,  permission):
-        resp = client.post('/api/v1/link', json={
-            'title': 'Bad Link',
-            'long_url': unsafe_link,
-        })
-        assert 400 <= resp.status_code < 500
-        assert resp.json['errors'][0] == 'security risk'
-        # assert forbidden_message == resp.json['warning_unsafe_link_message']
-
-        # A regular user cannot bypass link security measures
-        resp = client.post('/api/v1/link', json={
-            'title': 'Bad Link',
-            'long_url': unsafe_link,
-            'bypass_security_measures': True
-        })
-        assert resp.status_code == 403
-
-        # TODO: Check that the link doesn't exist after forbidden action
-
-    with dev_login(client, 'admin'):
-        # when an admin does not specify that an unsafe link
-        # should bypass security measures, server should reject
-        # the post request
-        resp = client.post('/api/v1/link', json={
-            'title': 'Bad Link',
-            'long_url': unsafe_link,
-        })
-        assert resp.status_code == 403
-        assert resp.json['errors'][0] == 'security risk'
-
-        # when an admin specifies that a regular link should bypass
-        # security, go through with the request
-        resp = client.post('/api/v1/link', json={
-            'title': 'Bad Link',
-            'long_url': regular_link,
-            'bypass_security_measures': True
-        })
-        assert resp.status_code == 200
-
-        # an admin can bypass security measures for an unsafe link
-        resp = client.post('/api/v1/link', json={
-            'title': 'Bad Link',
-            'long_url': unsafe_link,
-            'bypass_security_measures': True
-        })
-        assert resp.status_code == 200

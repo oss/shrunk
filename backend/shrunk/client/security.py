@@ -124,6 +124,12 @@ class SecurityClient:
     def get_history(self):
         pass
 
+    def get_rejected_links(self):
+        pass
+
+    def get_accepted_links(self):
+        pass
+
     def get_pending_links(self):
         return list(self.db.unsafe_links.find({'status': DetectedLinkStatus.PENDING.value}))
 
