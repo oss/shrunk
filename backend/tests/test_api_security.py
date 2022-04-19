@@ -115,6 +115,8 @@ def test_security_api_permissions(client: Client, permission: str) -> None:
         assert resp.status_code == 403
         resp = client.patch(f'/api/v1/security/reject/{link_id}')
         assert resp.status_code == 403
+        resp = client.patch(f'/api/v1/security/toggle')
+        assert resp.status_code == 403
 
 
 def test_verification_process(client: Client) -> None:
@@ -123,6 +125,7 @@ def test_verification_process(client: Client) -> None:
 
     unsafe_link_title = 'unsafe link'
     unsafe_link_title_b32 = str(base64.b32encode(bytes(unsafe_link_title, 'utf8')), 'utf8')
+    second_unsafe_link_title_b32 = str(base64.b32encode(bytes(second_unsafe_link_title_b32, 'utf8')), 'utf8')
 
     with dev_login(client, 'user'):
         # an unsafe link for promotion testing
@@ -189,7 +192,7 @@ def test_verification_process(client: Client) -> None:
         assert resp.status_code == 200
         assert resp.json['title'] == unsafe_link_title
         assert resp.json['long_url'] == unsafe_link
-        assert resp.json['aliases'] == []
+        assert len(resp.json['aliases']) == 1
 
         # promoted unsafe link cannot be rejected
         resp = client.patch(f'/api/v1/security/reject/{unsafe_link_id}')
@@ -202,3 +205,5 @@ def test_verification_process(client: Client) -> None:
         resp = client.get(f'/api/v1/security/status/{second_unsafe_link_id}')
         assert resp.status_code == 200
         assert resp.json['status'] == 'denied'
+        resp = client.get(f'/api/v1/link/search_by_title/{second_unsafe_link_title_b32}')
+        assert resp.status_code == 404

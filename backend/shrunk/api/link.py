@@ -142,7 +142,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
     except BadLongURLException:
         return jsonify({'errors': ['long_url']}), 400
     except SecurityRiskDetected:
-        return jsonify({'errors': ['This url has been detected to be a security risk. URL awaits admin approval.']}), 403
+        return jsonify({'errors': ['This url has been detected to be a security risk. URL now awaits admin approval.']}), 403
     except LinkIsPendingOrRejected:
         return jsonify({'errors': ['This url was detected to be unsafe. It is either awaiting approval or has been denied.']}), 403
     except NotUserOrOrg as e:
@@ -230,7 +230,12 @@ def get_link_by_title(netid: str, client: ShrunkClient, title: ObjectId) -> Any:
     if not client.roles.has('admin', netid):
         abort(403)
 
-    return jsonify(client.links.get_link_info_by_title(title)), 200
+    doc = client.links.get_link_info_by_title(title)
+
+    if doc is None:
+        return jsonify({}), 404
+
+    return jsonify(doc), 200
 
 
 MODIFY_LINK_SCHEMA = {

@@ -324,10 +324,10 @@ class ManageOrgInner extends React.Component<Props, State> {
    * @param newName the new name that the organization will take on
    */
    onRenameOrg = async (newName: string): Promise<void> => {
-     
+
      await fetch(`/api/v1/org/${this.props.match.params.id}/rename/${newName}`, {
       method: 'PUT'
-      
+
     });
     this.props.history.push('/orgs');
     await this.refreshOrgInfo();
@@ -493,11 +493,11 @@ class ManageOrgInner extends React.Component<Props, State> {
                   message:
                   'Org names can be at most 60 characters long',
                 },
-                { 
-                  validator: serverValidateOrgName 
+                {
+                  validator: serverValidateOrgName
                 },
               ]}
-              
+
             >
               <Input placeholder="Name" />
             </Form.Item>

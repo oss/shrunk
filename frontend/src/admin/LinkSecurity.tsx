@@ -55,6 +55,7 @@ function LinkAction(action: PendingLinkAction, link_id: string) {
   fetch(`/api/v1/security/${action}/${link_id}`, {
     method: 'PATCH',
   });
+  document.location.reload();
 }
 
 /**
@@ -92,7 +93,9 @@ function PendingLinkRow(props: PendingRowProps) {
           onConfirm={() => LinkAction(PendingLinkAction.Deny, document._id)}
           icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
         >
-          <Button danger>Deny</Button>
+          <Button danger style={{ margin: '0px 10px' }}>
+            Deny
+          </Button>
         </Popconfirm>
       </Col>
       <Col span={2}>
@@ -102,7 +105,9 @@ function PendingLinkRow(props: PendingRowProps) {
           onConfirm={() => LinkAction(PendingLinkAction.Approve, document._id)}
           icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
         >
-          <Button type="primary">Approve</Button>
+          <Button type="primary" style={{ margin: '0px 10px' }}>
+            Approve
+          </Button>
         </Popconfirm>
       </Col>
     </Row>

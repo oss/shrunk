@@ -6,7 +6,7 @@
 import React from 'react';
 import base32 from 'hi-base32';
 import moment from 'moment';
-import { Form, Input, Button, DatePicker, Space, Tooltip, Spin } from 'antd';
+import { Form, Input, Button, DatePicker, Space, Tooltip, Spin, Modal } from 'antd';
 import {
   LinkOutlined,
   MinusCircleOutlined,
@@ -131,6 +131,16 @@ export class CreateLinkForm extends React.Component<Props, State> {
   };
 
   /**
+   * Basic finishing actions when a user clicks on
+   * the Shrink! button.
+   */
+  onSubmitClick = async (): Promise<void> => {
+    this.formRef.current!.resetFields();
+    await this.props.onFinish();
+    this.setState({ loading: false });
+  };
+
+  /**
    * Executes API requests to create a new link and then calls the `onFinish` callback
    * @param values The values from the form
    */
@@ -146,11 +156,24 @@ export class CreateLinkForm extends React.Component<Props, State> {
       createLinkReq.expiration_time = values.expiration_time.format();
     }
 
+    let statusOfReq = 200;
     const createLinkResp = await fetch('/api/v1/link', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(createLinkReq),
-    }).then((resp) => resp.json());
+    }).then((resp) => {
+      statusOfReq = resp.status;
+      return resp.json();
+    });
+
+    if (statusOfReq >= 400 && statusOfReq < 500) {
+      Modal.error({
+        title: 'An error has ocurred',
+        content: createLinkResp.errors,
+      });
+      this.onSubmitClick();
+      return;
+    }
 
     const linkId: string = createLinkResp.id;
 
@@ -176,9 +199,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
         });
       }),
     );
-    this.formRef.current!.resetFields();
-    await this.props.onFinish();
-    this.setState({ loading: false });
+    this.onSubmitClick();
   };
 
   render(): React.ReactNode {
