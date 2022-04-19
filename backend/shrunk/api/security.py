@@ -1,3 +1,4 @@
+from crypt import methods
 from os import link
 from pydoc import cli
 from typing import Any
@@ -109,3 +110,34 @@ def get_link_status(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         'title': link_document['title'],
         'status': link_document['status']
     }), 200
+
+
+@bp.route('/toggle', methods=['PATCH'])
+@require_login
+def toggle_security(netid: str, client: ShrunkClient) -> Any:
+    if not client.role.has('admin', netid):
+        abort(403)
+    try:
+        status = client.security.toggle_status()
+    except Exception:
+        return jsonify({'error': ['an error occurred while toggling security']}), 500
+
+    return jsonify({
+        'status': status['status']
+    }), 200
+
+
+@bp.route('/get_status', methods=['GET'])
+@require_login
+def get_security_status(netid: str, client: ShrunkClient) -> Any:
+    if not client.role.has('admin', netid):
+        abort(403)
+    try:
+        status = client.security.toggle_status()
+    except Exception:
+        return jsonify({'error': ['an error occurred while toggling security']}), 500
+
+    return jsonify({
+        'status': status['status']
+    }), 200
+

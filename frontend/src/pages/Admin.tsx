@@ -93,7 +93,7 @@ export class Admin extends React.Component<Props, State> {
         <Row className="primary-row">
           <Col span={24}>
             <Link to="/admin/link_security" className="title">
-              Link Security Risk Verification
+              Unsafe Links Pending Verification
               {this.state.linksToBeVerified === -1 ? (
                 <Spin size="small" />
               ) : (

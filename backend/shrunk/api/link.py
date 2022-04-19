@@ -142,9 +142,13 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
     except BadLongURLException:
         return jsonify({'errors': ['long_url']}), 400
     except SecurityRiskDetected:
-        return jsonify({'errors': ['This url has been detected to be a security risk. URL now awaits admin approval.']}), 403
+        return jsonify({'errors': ['This url has been detected to be a potential security \
+            risk and requires manual verification. We apologize for the inconvenience and we\'ll\
+            verify the link as soon as possible. For more information, contact us at oss@oss.rutgers.edu']}), 403
     except LinkIsPendingOrRejected:
-        return jsonify({'errors': ['This url was detected to be unsafe. It is either awaiting approval or has been denied.']}), 403
+        return jsonify({'errors': ['This url was previously detected to be a potential security risk. \
+            The url either is pending verification or has been rejected. For more information, contact us at \
+            oss@oss.rutgers.edu']}), 403
     except NotUserOrOrg as e:
         return jsonify({'errors': [str(e)]}), 400
     return jsonify({'id': str(link_id)})

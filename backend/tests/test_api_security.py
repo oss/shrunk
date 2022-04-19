@@ -117,6 +117,8 @@ def test_security_api_permissions(client: Client, permission: str) -> None:
         assert resp.status_code == 403
         resp = client.patch(f'/api/v1/security/toggle')
         assert resp.status_code == 403
+        resp = client.get(f'/api/v1/security/get_status')
+        assert resp.status_code == 403
 
 
 def test_verification_process(client: Client) -> None:
@@ -207,3 +209,42 @@ def test_verification_process(client: Client) -> None:
         assert resp.json['status'] == 'denied'
         resp = client.get(f'/api/v1/link/search_by_title/{second_unsafe_link_title_b32}')
         assert resp.status_code == 404
+
+
+def test_toggle_security(client: Client) -> None:
+    unsafe_link = 'http://malware.testing.google.test/testing/malware/*'
+    unsafe_link_title = 'unsafe link'
+
+    with dev_login(client, 'admin'):
+        resp = client.get(f'/api/v1/security/get_status')
+        assert resp.status_code == 200
+        assert resp.json['status'] == 'on'
+
+        resp = client.patch(f'/toggle')
+        assert resp.status_code == 200
+
+        resp = client.get(f'/api/v1/security/get_status')
+        assert resp.status_code == 200
+        assert resp.json['status'] == 'off'
+
+    with dev_login(client, 'user'):
+        resp = client.post('/api/v1/link', json={
+            'title': unsafe_link_title,
+            'long_url': unsafe_link
+        })
+        assert resp.status_code == 200
+
+    with dev_login(client, 'admin'):
+        resp = client.patch(f'/toggle')
+        assert resp.status_code == 200
+
+        resp = client.get(f'/api/v1/security/get_status')
+        assert resp.status_code == 200
+        assert resp.json['status'] == 'on'
+
+    with dev_login(client, 'user'):
+        resp = client.post('/api/v1/link', json={
+            'title': 'IM GOING TO HACK RUTGERS LMAO !!!!!!!!! WOOOOOOo',
+            'long_url': unsafe_link
+        })
+        assert resp.status_code == 403
