@@ -139,15 +139,15 @@ def toggle_security(netid: str, client: ShrunkClient) -> Any:
 
     Toggles whether or not security measures are on
     """
-    if not client.role.has('admin', netid):
+    if not client.roles.has('admin', netid):
         abort(403)
     try:
-        status = client.security.toggle_status()
+        status = client.security.toggle_security()
     except Exception:
         return jsonify({'error': ['an error occurred while toggling security']}), 500
 
     return jsonify({
-        'status': status['status']
+        'status': status
     }), 200
 
 
@@ -158,14 +158,13 @@ def get_security_status(netid: str, client: ShrunkClient) -> Any:
 
     Checks the status of security measures
     """
-    if not client.role.has('admin', netid):
+    if not client.roles.has('admin', netid):
         abort(403)
     try:
-        status = client.security.toggle_status()
+        status = client.security.get_security_status()
     except Exception:
         return jsonify({'error': ['an error occurred while obtaining security status']}), 500
 
     return jsonify({
-        'status': status['status']
+        'status': status
     }), 200
-

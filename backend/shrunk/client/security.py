@@ -32,13 +32,13 @@ class SecurityClient:
     def __init__(self, *, db: pymongo.database.Database, other_clients: Any):
         self.db = db
         self.other_clients = other_clients
+        self.security_measures_on = True
 
     def create_pending_link(self, link_document: Dict[str, Any]):
         """
         Creates pending link document when link creation raises a security exception.
 
         :param link_document: this takes in the document created in the LINKS client.
-
         """
         if self.url_exists_in_collection(link_document['long_url']):
             return None
@@ -190,6 +190,15 @@ class SecurityClient:
         status = self.get_status_of_url(long_url)
         return status == DetectedLinkStatus.DENIED.value or status == DetectedLinkStatus.PENDING.value
 
+    def toggle_security(self):
+        """Toggles security feature"""
+        self.security_measures_on = not self.security_measures_on
+        return self.security_measures_on
+
+    def get_security_status(self):
+        """Gets status of security feature"""
+        return self.security_measures_on
+
     def security_risk_detected(self, long_url: str) -> bool:
         """Checks a url with a security risk API. In this case,
         the API is Google Safe Browsing API. For now, if the status
@@ -203,6 +212,9 @@ class SecurityClient:
 
         :param long_url: a long url to verify
         """
+
+        if self.security_measures_on is False:
+            return False
 
         url_status = self.get_status_of_url(long_url)
         if url_status is not None and self.url_not_approved(long_url):

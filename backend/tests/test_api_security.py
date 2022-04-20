@@ -3,21 +3,6 @@ import pytest
 from werkzeug.test import Client
 from util import dev_login
 
-# TODO:
-
-# Google Safe Browsing API will cache the link
-# if a user sumbits it multiple times, you get an error 'Max retries exceeded
-# with a specific url.
-
-# to prevent, before checking with Safe Browsing API, check if it is in the
-# unsafe_links collection first awaiting verification
-# if it is approved, approve link. if it is rejected, send 403.
-# if it is pending, send 403 as it is awaiting verfication.
-
-
-# 2.
-# test for LinkIsPendingOrRejected exception
-
 
 def test_security_risk_client_method(client: Client) -> None:
     unsafe_link = 'http://malware.testing.google.test/testing/malware/*'
@@ -127,7 +112,7 @@ def test_verification_process(client: Client) -> None:
 
     unsafe_link_title = 'unsafe link'
     unsafe_link_title_b32 = str(base64.b32encode(bytes(unsafe_link_title, 'utf8')), 'utf8')
-    second_unsafe_link_title_b32 = str(base64.b32encode(bytes(second_unsafe_link_title_b32, 'utf8')), 'utf8')
+    second_unsafe_link_title_b32 = str(base64.b32encode(bytes(second_unsafe_link, 'utf8')), 'utf8')
 
     with dev_login(client, 'user'):
         # an unsafe link for promotion testing
@@ -222,14 +207,14 @@ def test_toggle_security(client: Client) -> None:
         # we can get the status of security measures
         resp = client.get(f'/api/v1/security/get_status')
         assert resp.status_code == 200
-        assert resp.json['status'] == 'on'
+        assert resp.json['status']
 
         # toggling security measures works
-        resp = client.patch(f'/toggle')
+        resp = client.patch(f'/api/v1/security/toggle')
         assert resp.status_code == 200
         resp = client.get(f'/api/v1/security/get_status')
         assert resp.status_code == 200
-        assert resp.json['status'] == 'off'
+        assert not resp.json['status']
 
     with dev_login(client, 'user'):
         # when security measures are off, users can post unsafe links
@@ -240,12 +225,12 @@ def test_toggle_security(client: Client) -> None:
         assert resp.status_code == 200
 
     with dev_login(client, 'admin'):
-        resp = client.patch(f'/toggle')
+        resp = client.patch(f'/api/v1/security/toggle')
         assert resp.status_code == 200
 
         resp = client.get(f'/api/v1/security/get_status')
         assert resp.status_code == 200
-        assert resp.json['status'] == 'on'
+        assert resp.json['status']
 
     with dev_login(client, 'user'):
         # when security measures are toggled on, users cannot post unsafe links
