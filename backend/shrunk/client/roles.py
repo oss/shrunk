@@ -116,7 +116,7 @@ class RolesClient:
             raise InvalidEntity
 
     def revoke(self, role: str, entity: str) -> None:
-        """Revoe a role from an entity
+        """Revoke a role from an entity
 
         :param role: Role name
         :param entity: The entity

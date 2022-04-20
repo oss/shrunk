@@ -16,6 +16,7 @@ __all__ = ['SecurityClient']
 
 
 class DetectedLinkStatus(Enum):
+    """Possible states of a pending link"""
     PENDING = 'pending'
     APPROVED = 'approved'
     DENIED = 'denied'
@@ -33,7 +34,13 @@ class SecurityClient:
         self.other_clients = other_clients
 
     def create_pending_link(self, link_document: Dict[str, Any]):
-        if self.url_exists_as_pending(link_document['long_url']):
+        """
+        Creates pending link document when link creation raises a security exception.
+
+        :param link_document: this takes in the document created in the LINKS client.
+
+        """
+        if self.url_exists_in_collection(link_document['long_url']):
             return None
         link_document['status'] = DetectedLinkStatus.PENDING.value
         link_document['netid_of_last_modifier'] = None
@@ -46,6 +53,13 @@ class SecurityClient:
                            net_id: str,
                            new_status: DetectedLinkStatus):
         unsafe_link_document = self.get_unsafe_link_document(link_id)
+        """
+        Modifies status of pending link
+
+        :param link_id: document id of pending link
+        :param net_id: net_id of modifier
+        :param new_status: status that pending link will change to
+        """
 
         update = {
             '$set': {
@@ -65,12 +79,16 @@ class SecurityClient:
         if result.matched_count == -1:
             raise NoSuchObjectException
 
-        current_app.logger.warning(self.get_pending_links())
-
     def promote_link(self,
                      net_id: str,
                      link_id: ObjectId):
+        """
+        Promotes link by chaning link's status to approved and creating
+        a link document while bypassing security measures
 
+        :param net_id: net_id of modifier
+        :param link_id: link id of document of pending link
+        """
         d = self.get_unsafe_link_document(link_id)
 
         if d['status'] != DetectedLinkStatus.PENDING.value:
@@ -97,7 +115,12 @@ class SecurityClient:
                     net_id: str,
                     link_id: ObjectId
                     ):
-        # TODO: we double query here. might as well do and be done
+        """
+        Rejects link by chaning link's status to denied
+
+        :param net_id: net_id of modifier
+        :param link_id: link id of document of pending link
+        """
         d = self.get_unsafe_link_document(link_id)
         if d['status'] != DetectedLinkStatus.PENDING.value:
             raise InvalidStateChange
@@ -106,38 +129,54 @@ class SecurityClient:
     def consider_link(self,
                       link_id: ObjectId,
                       net_id: str):
+        """
+        This changes a link's status to PENDING from any state. Useful for
+        when we need to reconsider a link.
+
+        :param link_id: document id for pending link
+        :param net_id: net_id of modifier
+        """
         self.change_link_status(link_id, net_id, DetectedLinkStatus.PENDING.value)
 
     def get_unsafe_link_document(self, link_id: ObjectId) -> Any:
+        """Retrieves unsafe link document
+
+        :param link_id: document id of unsafe link
+        """
         result = self.db.unsafe_links.find_one({'_id': link_id})
         if result is None:
             raise NoSuchObjectException
         return result
 
-    def url_exists_as_pending(self, long_url: str) -> Any:
+    def url_exists_in_collection(self, long_url: str) -> Any:
+        """Checks if a URL already exists in collection
+
+        :param long_url: Long url to search
+        """
         result = self.db.unsafe_links.find_one({'long_url': long_url})
         return result is not None
 
     def get_link_status(self, link_id: ObjectId) -> Any:
+        """Returns status of link
+
+        :param link_id: link id
+        """
         link = self.get_unsafe_link_document(link_id)
         return link['status']
 
-    def get_history(self):
-        pass
-
-    def get_rejected_links(self):
-        pass
-
-    def get_accepted_links(self):
-        pass
-
     def get_pending_links(self):
+        """Returns a list of links currently awaiting verification"""
         return list(self.db.unsafe_links.find({'status': DetectedLinkStatus.PENDING.value}))
 
     def get_number_of_pending_links(self):
+        """Returns number of pending links awaiting verification"""
         return len(self.get_pending_links())
 
     def get_status_of_url(self, long_url: str):
+        """Returns status of long url
+
+        :param long_url: long_url
+        """
         document = self.db.unsafe_links.find_one({'long_url': long_url})
         if document is None:
             return None
