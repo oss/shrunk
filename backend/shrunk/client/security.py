@@ -216,11 +216,13 @@ class SecurityClient:
         postBody = {
             'client': {
                 'clientId':      'Shrunk-Rutgers',
-                'clientVersion': current_app.config['SHRUNK_VERSION']
+                'clientVersion': '2.2'
             },
             'threatInfo': {
-                'threatTypes':      ['MALWARE', 'SOCIAL_ENGINEERING'],
-                'platformTypes':    ['WINDOWS'],
+                'threatTypes':      ['MALWARE', 'SOCIAL_ENGINEERING',
+                                     'UNWANTED_SOFTWARE', 'POTENTIALLY_HARMFUL_APPLICATION',
+                                     'THREAT_TYPE_UNSPECIFIED'],
+                'platformTypes':    ['ANY_PLATFORM'],
                 'threatEntryTypes': ['URL'],
                 'threatEntries': [
                     {'url': long_url},
