@@ -221,7 +221,7 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
 @bp.route('/search_by_title/<b32:title>')
 @require_login
 def get_link_by_title(netid: str, client: ShrunkClient, title: ObjectId) -> Any:
-    """``GET /api/link/search_by_title/<title>11
+    """``GET /api/link/search_by_title/<title>``
 
     Finds information of a single link by exact title. This simple method was made for
     security unit tests. This method is NOT mean to be a comprehensive endpoint
