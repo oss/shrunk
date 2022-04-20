@@ -19,7 +19,6 @@ from util import dev_login
 # test for LinkIsPendingOrRejected exception
 
 
-
 def test_security_risk_client_method(client: Client) -> None:
     unsafe_link = 'http://malware.testing.google.test/testing/malware/*'
     unsafe_link_b32 = str(base64.b32encode(bytes(unsafe_link, 'utf8')), 'utf8')
@@ -42,6 +41,7 @@ def test_security_risk_client_method(client: Client) -> None:
         # A user that is not an admin cannot use the security_test endpoint
         resp = client.get(f'/api/v1/security/security_test/{unsafe_link_b32}')
         assert resp.status_code == 403
+
 
 @pytest.mark.parametrize(('permission'), ['user', 'facstaff', 'power'])
 def test_user_and_admin_security_link_abilities(client: Client, permission: str) -> None:
@@ -158,30 +158,32 @@ def test_verification_process(client: Client) -> None:
         assert resp.json['pendingLinks']
         assert len(resp.json['pendingLinks']) == 2
 
+        # check that unsafe link document is correct
         unsafe_link_document = resp.json['pendingLinks'][0]
         unsafe_link_id = unsafe_link_document['_id']
         assert unsafe_link_document['title'] == unsafe_link_title
         assert unsafe_link_document['long_url'] == unsafe_link
 
+        # check that second unsafe link document is correct
         second_unsafe_link_document = resp.json['pendingLinks'][1]
         second_unsafe_link_id = second_unsafe_link_document['_id']
         assert second_unsafe_link_document['title'] == 'second unsafe link'
         assert second_unsafe_link_document['long_url'] == second_unsafe_link
 
+        # check that default status is pending for both unsafe links
         resp = client.get(f'/api/v1/security/status/{unsafe_link_id}')
         assert resp.status_code == 200
         assert resp.json['status'] == 'pending'
-
         resp = client.get(f'/api/v1/security/status/{second_unsafe_link_id}')
         assert resp.status_code == 200
         assert resp.json['status'] == 'pending'
 
         # test that the link hasn't made through as a regular link
         # via a call to the link API
-        # TODO: may be a vulnerable as, ofc, _id wouldn't be found in link collection
         resp = client.get(f'/api/v1/link/{unsafe_link_id}')
         assert resp.status_code == 404
 
+        # check that pending link status promotion works
         resp = client.patch(f'/api/v1/security/promote/{unsafe_link_id}')
         assert resp.status_code == 200
         resp = client.get(f'/api/v1/security/status/{unsafe_link_id}')
@@ -202,6 +204,7 @@ def test_verification_process(client: Client) -> None:
 
         # =======================Second Unsafe Link==================
 
+        # test rejection of a pending link
         resp = client.patch(f'/api/v1/security/reject/{second_unsafe_link_id}')
         assert resp.status_code == 200
         resp = client.get(f'/api/v1/security/status/{second_unsafe_link_id}')
@@ -216,18 +219,20 @@ def test_toggle_security(client: Client) -> None:
     unsafe_link_title = 'unsafe link'
 
     with dev_login(client, 'admin'):
+        # we can get the status of security measures
         resp = client.get(f'/api/v1/security/get_status')
         assert resp.status_code == 200
         assert resp.json['status'] == 'on'
 
+        # toggling security measures works
         resp = client.patch(f'/toggle')
         assert resp.status_code == 200
-
         resp = client.get(f'/api/v1/security/get_status')
         assert resp.status_code == 200
         assert resp.json['status'] == 'off'
 
     with dev_login(client, 'user'):
+        # when security measures are off, users can post unsafe links
         resp = client.post('/api/v1/link', json={
             'title': unsafe_link_title,
             'long_url': unsafe_link
@@ -243,6 +248,7 @@ def test_toggle_security(client: Client) -> None:
         assert resp.json['status'] == 'on'
 
     with dev_login(client, 'user'):
+        # when security measures are toggled on, users cannot post unsafe links
         resp = client.post('/api/v1/link', json={
             'title': 'IM GOING TO HACK RUTGERS LMAO !!!!!!!!! WOOOOOOo',
             'long_url': unsafe_link

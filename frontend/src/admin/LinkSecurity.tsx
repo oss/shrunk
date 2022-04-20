@@ -58,11 +58,6 @@ function LinkAction(action: PendingLinkAction, link_id: string) {
   document.location.reload();
 }
 
-/**
- * TODO:
- *
- * NOT MPV BUT.... add the type of attack.
- */
 function PendingLinkRow(props: PendingRowProps) {
   const { document } = props;
   return (
