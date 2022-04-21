@@ -288,7 +288,7 @@ export class Shrunk extends React.Component<Props, State> {
               </Menu.Item>
               <Menu.Item key="feedback">
                 <a
-                  href="https://forms.gle/h2uNesbKDaTdnHDa6"
+                  href="https://forms.gle/Gv1L1bNZWtLS21wW8"
                   className="nav-text"
                   target="_blank"
                   rel="noreferrer"
