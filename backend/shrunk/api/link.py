@@ -14,7 +14,9 @@ from shrunk.client.exceptions import (BadLongURLException,
                                       BadAliasException,
                                       NoSuchObjectException,
                                       InvalidACL,
-                                      NotUserOrOrg)
+                                      NotUserOrOrg,
+                                      SecurityRiskDetected,
+                                      LinkIsPendingOrRejected)
 from shrunk.util.stats import get_human_readable_referer_domain, browser_stats_from_visits
 from shrunk.util.ldap import is_valid_netid
 from shrunk.util.decorators import require_login, require_mail, request_schema
@@ -46,9 +48,9 @@ CREATE_LINK_SCHEMA = {
         'expiration_time': {'type': 'string', 'format': 'date-time'},
         'editors': {'type': 'array', 'items': ACL_ENTRY_SCHEMA},
         'viewers': {'type': 'array', 'items': ACL_ENTRY_SCHEMA},
+        'bypass_security_measures': {'type': 'boolean'}
     },
 }
-
 
 @bp.route('', methods=['POST'])
 @request_schema(CREATE_LINK_SCHEMA)
@@ -91,6 +93,12 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
     if 'viewers' not in req:
         req['viewers'] = []
 
+    if 'bypass_security_measures' not in req:
+        req['bypass_security_measures'] = False
+
+    if not client.roles.has('admin', netid) and req['bypass_security_measures']:
+        abort(403)
+
     if 'expiration_time' in req:
         expiration_time: Optional[datetime] = datetime.fromisoformat(req['expiration_time'])
     else:
@@ -126,11 +134,21 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
         if editor['_id'] not in viewer_ids:
             viewer_ids.add(editor['_id'])
             req['viewers'].append(editor)
+
     try:
         link_id = client.links.create(req['title'], req['long_url'], expiration_time, netid,
-                                      request.remote_addr, viewers=req['viewers'], editors=req['editors'])
+                                      request.remote_addr, viewers=req['viewers'], editors=req['editors'],
+                                      bypass_security_measures=req['bypass_security_measures'])
     except BadLongURLException:
         return jsonify({'errors': ['long_url']}), 400
+    except SecurityRiskDetected:
+        return jsonify({'errors': ['This url has been detected to be a potential security \
+            risk and requires manual verification. We apologize for the inconvenience and we\'ll\
+            verify the link as soon as possible. For more information, contact us at oss@oss.rutgers.edu']}), 403
+    except LinkIsPendingOrRejected:
+        return jsonify({'errors': ['This url was previously detected to be a potential security risk. \
+            The url either is pending verification or has been rejected. For more information, contact us at \
+            oss@oss.rutgers.edu']}), 403
     except NotUserOrOrg as e:
         return jsonify({'errors': [str(e)]}), 400
     return jsonify({'id': str(link_id)})
@@ -198,6 +216,30 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     }
 
     return jsonify(json_info)
+
+
+@bp.route('/search_by_title/<b32:title>')
+@require_login
+def get_link_by_title(netid: str, client: ShrunkClient, title: ObjectId) -> Any:
+    """``GET /api/link/search_by_title/<title>``
+
+    Finds information of a single link by exact title. This simple method was made for
+    security unit tests. This method is NOT mean to be a comprehensive endpoint
+    called upon in production.
+
+    :param netid:
+    :param client:
+    :param link_id:
+    """
+    if not client.roles.has('admin', netid):
+        abort(403)
+
+    doc = client.links.get_link_info_by_title(title)
+
+    if doc is None:
+        return jsonify({}), 404
+
+    return jsonify(doc), 200
 
 
 MODIFY_LINK_SCHEMA = {
@@ -635,6 +677,7 @@ def validate_reserved_alias(_netid: str, client: ShrunkClient, alias: str) -> An
         response['reason'] = 'That alias cannot be used.'
     return jsonify(response)
 
+
 @bp.route('/validate_duplicate_alias/<b32:alias>', methods=['GET'])
 @require_login
 def validate_duplicate_alias(_netid: str, client: ShrunkClient, alias: str) -> Any:
@@ -656,6 +699,7 @@ def validate_duplicate_alias(_netid: str, client: ShrunkClient, alias: str) -> A
     if not valid:
         response['reason'] = 'That alias already exists.'
     return jsonify(response)
+
 
 @bp.route('/<ObjectId:link_id>/alias/<alias>', methods=['DELETE'])
 @require_login

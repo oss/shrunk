@@ -18,6 +18,9 @@ GEOLITE_PATH = './GeoLite2-City.mmdb'
 SECRET_KEY = 'something_secret'
 """A secret key for Flask."""
 
+GOOGLE_SAFE_BROWSING_API = "Ask Jack/Kevin about this"
+"""A secret key for Google Cloud Web Risk API"""
+
 SHRUNK_URL = 'http://localhost:6000'
 """The public URL for shrunk."""
 

@@ -5,6 +5,7 @@ from datetime import datetime
 
 import pymongo
 
+from .security import SecurityClient
 from .search import SearchClient
 from .geoip import GeoipClient
 from .orgs import OrgsClient
@@ -49,6 +50,7 @@ class ShrunkClient:
         self.orgs = OrgsClient(db=self.db)
         self.search = SearchClient(db=self.db, client=self)
         self.alerts = AlertsClient(db=self.db)
+        self.security = SecurityClient(db=self.db, other_clients=self)
 
     def _ensure_indexes(self) -> None:
         self.db.urls.create_index([('aliases.alias', pymongo.ASCENDING)])
@@ -57,6 +59,10 @@ class ShrunkClient:
                                    ('long_url', pymongo.TEXT),
                                    ('netid', pymongo.TEXT),
                                    ('aliases.alias', pymongo.TEXT)])
+
+        self.db.unsafe_links.create_index([('long_url', pymongo.TEXT)])
+        self.db.unsafe_links.create_index([('netid', pymongo.ASCENDING)])
+
         self.db.visits.create_index([('link_id', pymongo.ASCENDING)])
         self.db.visits.create_index([('source_ip', pymongo.ASCENDING)])
         self.db.visitors.create_index([('ip', pymongo.ASCENDING)], unique=True)
@@ -76,7 +82,7 @@ class ShrunkClient:
 
     def reset_database(self) -> None:
         """Delete all documents from all collections in the shrunk database."""
-        for col in ['grants', 'organizations', 'urls', 'visitors', 'visits']:
+        for col in ['grants', 'organizations', 'urls', 'visitors', 'visits', 'unsafe_links']:
             self.db[col].delete_many({})
 
     def admin_stats(self, begin: Optional[datetime] = None, end: Optional[datetime] = None) -> Any:

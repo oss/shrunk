@@ -58,6 +58,7 @@ class Base32Converter(BaseConverter):
     def to_url(self, value: str) -> str:
         return str(base64.b32encode(bytes(value, 'utf8')), 'utf8')
 
+
 class ShrunkEncoder(JSONEncoder):
     def default(self, o):
         if isinstance(o, ObjectId):
@@ -65,7 +66,6 @@ class ShrunkEncoder(JSONEncoder):
         if isinstance(o, datetime.datetime):
             return o.isoformat()
         return JSONEncoder.default(self, o)
-
 
 
 class HexTokenConverter(BaseConverter):
@@ -244,6 +244,7 @@ def create_app(config_path: str = 'config.py', **kwargs: Any) -> Flask:
     app.register_blueprint(api.admin.bp)
     app.register_blueprint(api.alert.bp)
     app.register_blueprint(api.request.bp)
+    app.register_blueprint(api.security.bp)
 
     # set up extensions
     mail = Mail()

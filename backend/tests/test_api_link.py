@@ -1,3 +1,4 @@
+from ast import Str
 import time
 import base64
 from datetime import datetime, timezone, timedelta
@@ -130,11 +131,20 @@ def test_link(client: Client) -> None:  # pylint: disable=too-many-statements
 
 
 def test_create_link_expiration(client: Client) -> None:
-    """Test that we can create a link with an expiration time."""
+    """
+    Test that we can create a link with an expiration time.
+
+    With the implementation of verifying links with Google Safe Browsing API,
+    this test would fail due to the fact that the link expired too fast
+    because the API needed time to respond. If there were recent changes to
+    the link creation pipeline and this test fails, try increasing the link
+    expiration time so that links don't expire before they are tested.
+
+    """
 
     with dev_login(client, 'admin'):
-        # Create a link that expires 100 ms in the future
-        expiration_time = datetime.now(timezone.utc) + timedelta(milliseconds=250)
+        # Create a link that expires 500 ms in the future
+        expiration_time = datetime.now(timezone.utc) + timedelta(milliseconds=500)
         resp = client.post('/api/v1/link', json={
             'title': 'title',
             'long_url': 'https://example.com',
@@ -155,8 +165,8 @@ def test_create_link_expiration(client: Client) -> None:
         assert resp.status_code == 302
         assert resp.headers['Location'] == 'https://example.com'
 
-        # Sleep 500 ms
-        time.sleep(0.5)
+        # Sleep 1 second
+        time.sleep(1)
 
         # Check that alias0 no longer exists
         resp = client.get(f'/{alias0}')
@@ -833,7 +843,6 @@ def test_acl(client: Client) -> None: # pylint: disable=too-many-statements
             assert 200 <= code <= 300
         else:
             assert code == 403
-
 
     for user in permissions_table:
         print(user['user'])

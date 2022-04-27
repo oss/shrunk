@@ -23,6 +23,7 @@ import { Faq } from './pages/Faq';
 
 import { Stats } from './pages/subpages/Stats';
 import { AdminStats } from './admin/AdminStats';
+import LinkSecurity from './admin/LinkSecurity';
 import { Role } from './admin/Role';
 import { ManageOrg } from './pages/subpages/ManageOrg';
 import { OrgStats } from './pages/subpages/OrgStats';
@@ -114,10 +115,10 @@ export class Shrunk extends React.Component<Props, State> {
       this.props.userPrivileges.size === 0
         ? 'Whitelisted User'
         : this.props.userPrivileges.has('power_user')
-        ? 'Power User'
-        : this.props.userPrivileges.has('facstaff')
-        ? 'Faculty/Staff'
-        : 'Administrator';
+          ? 'Power User'
+          : this.props.userPrivileges.has('facstaff')
+            ? 'Faculty/Staff'
+            : 'Administrator';
 
     this.state = {
       showAdminTab,
@@ -371,6 +372,9 @@ export class Shrunk extends React.Component<Props, State> {
                     </Route>
                     <Route exact path="/admin/stats">
                       <AdminStats />
+                    </Route>
+                    <Route exact path="/admin/link_security">
+                      <LinkSecurity />
                     </Route>
                   </>
                 )}

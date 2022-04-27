@@ -1,14 +1,16 @@
 """Database-level interactions for shrunk."""
 from datetime import datetime, timezone
+from http.client import responses
 import random
 import string
 import re
 import secrets
-from typing import Optional, List, Set, Any, Dict, cast
+from typing import Optional, List, Set, Any, Dict, Tuple, cast
 
 from flask import current_app, url_for
 from flask_mailman import Mail
 import requests
+import json
 import pymongo
 from pymongo.collection import ReturnDocument
 from pymongo.results import UpdateResult
@@ -24,7 +26,11 @@ from .exceptions import (NoSuchObjectException,
                          BadAliasException,
                          BadLongURLException,
                          InvalidACL,
-                         NotUserOrOrg)
+                         NotUserOrOrg,
+                         SecurityRiskDetected,
+                         LinkIsPendingOrRejected)
+
+import sys
 
 __all__ = ['LinksClient']
 
@@ -122,8 +128,9 @@ class LinksClient:
                expiration_time: Optional[datetime],
                netid: str,
                creator_ip: str,
-               viewers: List[Dict[str, Any]]=None,
-               editors: List[Dict[str, Any]]=None) -> ObjectId:
+               viewers: List[Dict[str, Any]] = None,
+               editors: List[Dict[str, Any]] = None,
+               bypass_security_measures: bool = False) -> ObjectId:
         if viewers is None:
             viewers = []
         if editors is None:
@@ -139,7 +146,6 @@ class LinksClient:
             for member in members:
                 self.assert_valid_acl_entry(acl, member)
 
-
         document = {
             'title': title,
             'long_url': long_url,
@@ -154,6 +160,11 @@ class LinksClient:
             'viewers': viewers,
             'editors': editors,
         }
+
+        if not bypass_security_measures and \
+                self.other_clients.security.security_risk_detected(long_url):
+            self.other_clients.security.create_pending_link(document)
+            raise SecurityRiskDetected
 
         result = self.db.urls.insert_one(document)
         return result.inserted_id
@@ -455,8 +466,10 @@ class LinksClient:
         return result
 
     def get_link_info_by_alias(self, alias: str) -> Any:
-        return self.db.urls.find_one({'$and':[{'aliases.alias' : alias, 'aliases.deleted' : False}]})
+        return self.db.urls.find_one({'$and': [{'aliases.alias': alias, 'aliases.deleted': False}]})
 
+    def get_link_info_by_title(self, title: str) -> Any:
+        return self.db.urls.find_one({'title': title})
 
     def get_long_url(self, alias: str) -> Optional[str]:
         """Given a short URL, returns the long URL.

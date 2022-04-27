@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Row, Col, Spin } from 'antd';
+import { Row, Col, Spin, Badge } from 'antd';
 import { Link } from 'react-router-dom';
 
 import '../Base.less';
@@ -13,7 +13,7 @@ import '../Base.less';
  * Props for the [[Admin]] component
  * @interface
  */
-export interface Props {}
+export interface Props { }
 
 /**
  * Summary information for one role
@@ -43,6 +43,7 @@ interface State {
    * @property
    */
   roles: RoleInfo[] | null;
+  linksToBeVerified: number;
 }
 
 /**
@@ -55,10 +56,18 @@ export class Admin extends React.Component<Props, State> {
     super(props);
     this.state = {
       roles: null,
+      linksToBeVerified: -1,
     };
   }
 
   async componentDidMount(): Promise<void> {
+    await fetch('/api/v1/security/pending_links/count')
+      .then((resp) => resp.json())
+      .then((json) =>
+        this.setState({
+          linksToBeVerified: json.pending_links_count,
+        }),
+      );
     await fetch('/api/v1/role')
       .then((resp) => resp.json())
       .then((json) => this.setState({ roles: json.roles as RoleInfo[] }));
@@ -77,6 +86,19 @@ export class Admin extends React.Component<Props, State> {
           <Col span={24}>
             <Link to="/admin/stats" className="title">
               Admin Statistics
+            </Link>
+          </Col>
+        </Row>
+
+        <Row className="primary-row">
+          <Col span={24}>
+            <Link to="/admin/link_security" className="title">
+              Unsafe Links Pending Verification
+              {this.state.linksToBeVerified === -1 ? (
+                <Spin size="small" />
+              ) : (
+                <Badge count={this.state.linksToBeVerified} offset={[8, -20]} />
+              )}
             </Link>
           </Col>
         </Row>
