@@ -22,6 +22,7 @@ eslint:
     - node --version
     - npm --version
     - cd frontend
+    - npm i
     - npm ci --cache .npm --prefer-offline
     - npx eslint --format=junit src > ../eslint.xml || exit 0
   artifacts:
