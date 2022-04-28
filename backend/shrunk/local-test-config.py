@@ -21,6 +21,11 @@ SECRET_KEY = 'something_secret'
 GOOGLE_SAFE_BROWSING_API = "Ask Jack/Kevin about this"
 """A secret key for Google Cloud Web Risk API"""
 
+SECURITY_MEASURES_ON = True
+"""Whether the security measures are turned on or off.
+You would this to be set to True when performing unit tests
+or you'll fail the security tests. However, in prod it can be whatever."""
+
 SHRUNK_URL = 'http://localhost:6000'
 """The public URL for shrunk."""
 

@@ -71,3 +71,8 @@ disallowed, and do not need to be added to this list."""
 TESTING = True
 
 WTF_CSRF_ENABLED = False
+
+SECURITY_MEASURES_ON = True
+"""Whether the security measures are turned on or off.
+You would this to be set to True when performing unit tests
+or you'll fail the security tests. However, in prod it can be whatever."""

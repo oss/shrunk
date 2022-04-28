@@ -32,7 +32,7 @@ class SecurityClient:
     def __init__(self, *, db: pymongo.database.Database, other_clients: Any):
         self.db = db
         self.other_clients = other_clients
-        self.security_measures_on = True
+        self.security_measures_on = current_app.config['SECURITY_MEASURES_ON']
 
     def create_pending_link(self, link_document: Dict[str, Any]):
         """
