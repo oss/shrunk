@@ -114,3 +114,9 @@ options; see flask-mailman documentation."""
 
 GOOGLE_SAFE_BROWSING_API = "Ask Kevin or Jack about acquiring this"
 """A secret key for Google Cloud Web Risk API"""
+
+SECURITY_MEASURES_ON = False
+"""Whether the security measures are turned on or off.
+You would this to be set to True when performing unit tests
+or you'll fail the security tests. However, in prod it can be whatever."""
+
