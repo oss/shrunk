@@ -404,6 +404,9 @@ class LinksClient:
         return result is not None
 
     def may_edit(self, link_id: ObjectId, netid: str) -> bool:
+        if self.other_clients.roles.has('admin', netid):
+            return True
+
         orgs = self.other_clients.orgs.get_orgs(netid, True)
         orgs = [org['id'] for org in orgs]
         result = self.db.urls.find_one({'$or': [
