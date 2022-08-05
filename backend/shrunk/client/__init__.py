@@ -32,6 +32,8 @@ class ShrunkClient:
                  RESERVED_WORDS: Optional[Set[str]] = None,
                  BANNED_REGEXES: Optional[List[str]] = None,
                  REDIRECT_CHECK_TIMEOUT: Optional[float] = 0.5,
+                 SECURITY_MEASURES_ON: Optional[bool] = False,
+                 GOOGLE_SAFE_BROWSING_API: Optional[str] = None,
                  **_kwargs: Any):
         self.conn = pymongo.MongoClient(DB_HOST, DB_PORT, username=DB_USERNAME,
                                         password=DB_PASSWORD, authSource='admin',
@@ -50,7 +52,9 @@ class ShrunkClient:
         self.orgs = OrgsClient(db=self.db)
         self.search = SearchClient(db=self.db, client=self)
         self.alerts = AlertsClient(db=self.db)
-        self.security = SecurityClient(db=self.db, other_clients=self)
+        self.security = SecurityClient(db=self.db, other_clients=self,
+                                       SECURITY_MEASURES_ON=SECURITY_MEASURES_ON or False,
+                                       GOOGLE_SAFE_BROWSING_API=GOOGLE_SAFE_BROWSING_API or None)
 
     def _ensure_indexes(self) -> None:
         self.db.urls.create_index([('aliases.alias', pymongo.ASCENDING)])

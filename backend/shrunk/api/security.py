@@ -151,10 +151,10 @@ def toggle_security(netid: str, client: ShrunkClient) -> Any:
     }), 200
 
 
-@bp.route('/get_status', methods=['GET'])
+@bp.route('/status', methods=['GET'])
 @require_login
 def get_security_status(netid: str, client: ShrunkClient) -> Any:
-    """``GET /api/v1/security/get_status``
+    """``GET /api/v1/security/status``
 
     Checks the status of security measures
     """

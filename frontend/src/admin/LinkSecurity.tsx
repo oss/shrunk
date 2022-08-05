@@ -1,5 +1,5 @@
 import ExclamationCircleFilled from '@ant-design/icons/lib/icons/ExclamationCircleFilled';
-import { BackTop, Button, Col, Popconfirm, Row } from 'antd';
+import { BackTop, Button, Col, Divider, Popconfirm, Row } from 'antd';
 import Spin from 'antd/es/spin';
 import React, { useEffect, useState } from 'react';
 import { IoReturnUpBack } from 'react-icons/io5';
@@ -113,11 +113,19 @@ function LinkSecurity() {
   const [pendingLinks, setPendingLinks] =
     useState<Array<PendingLink> | null>(null);
 
+  const [securityStatus, setSecurityStatus] = useState<string>("OFF");
+
   useEffect(() => {
     fetch('/api/v1/security/pending_links')
       .then((resp) => resp.json())
       .then((data) => {
         setPendingLinks(data.pendingLinks);
+      });
+
+    fetch('/api/v1/security/status')
+      .then((resp) => resp.json())
+      .then((data) => {
+        setSecurityStatus(data.status);
       });
   }, []);
 
@@ -133,6 +141,9 @@ function LinkSecurity() {
             size="large"
           />
         </Col>
+        <span>
+          Current Security Status: {securityStatus}
+        </span>
       </Row>
 
       {pendingLinks == null ? (
