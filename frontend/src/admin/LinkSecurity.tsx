@@ -122,7 +122,7 @@ function LinkSecurity() {
         setPendingLinks(data.pendingLinks);
       });
 
-    fetch('/api/v1/security/status')
+    fetch('/api/v1/security/get_status')
       .then((resp) => resp.json())
       .then((data) => {
         setSecurityStatus(data.status);
