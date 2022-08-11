@@ -73,7 +73,7 @@ SECURITY_MEASURES_ON = True
 You would this to be set to True when performing unit tests
 or you'll fail the security tests. However, in prod it can be whatever."""
 
-GOOGLE_SAFE_BROWSING_API = "Ask around for this API key"
+GOOGLE_SAFE_BROWSING_API = "Ask around for this key"
 """A secret key for Google Cloud Web Risk API"""
 
 TESTING = True

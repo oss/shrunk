@@ -197,6 +197,12 @@ class SecurityClient:
     def toggle_security(self):
         """Toggles security feature"""
         self.security_measures_on = not self.security_measures_on
+
+        if self.security_measures_on:
+            self.latest_status = "ON"
+        else:
+            self.latest_status = "OFF"
+
         return self.security_measures_on
 
     def get_security_status(self):
@@ -254,6 +260,7 @@ class SecurityClient:
                 data=json.dumps(postBody)
                 )
             r.raise_for_status()
+            self.latest_status = message
             return len(r.json()['matches']) > 0
         except requests.exceptions.HTTPError as err:
             message = 'Google Safe Browsing API request failed. Status code: {}'.format(r.status_code)

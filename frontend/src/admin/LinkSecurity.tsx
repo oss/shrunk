@@ -142,7 +142,7 @@ function LinkSecurity() {
           />
         </Col>
         <span>
-          Current Security Status: {securityStatus}
+          <strong>Current Security Status</strong>: {securityStatus}
         </span>
       </Row>
 
