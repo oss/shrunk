@@ -18,14 +18,6 @@ GEOLITE_PATH = './GeoLite2-City.mmdb'
 SECRET_KEY = 'something_secret'
 """A secret key for Flask."""
 
-GOOGLE_SAFE_BROWSING_API = "Ask Jack/Kevin about this"
-"""A secret key for Google Cloud Web Risk API"""
-
-SECURITY_MEASURES_ON = True
-"""Whether the security measures are turned on or off.
-You would this to be set to True when performing unit tests
-or you'll fail the security tests. However, in prod it can be whatever."""
-
 SHRUNK_URL = 'http://localhost:6000'
 """The public URL for shrunk."""
 
@@ -75,6 +67,14 @@ LDAP_VALIDATE_NETIDS = False
 RESERVED_WORDS = ['projectnightnight', 'shibboleth', 'shibboleth-sp', 'status']
 """Words that cannot be used as shortened URLs. Names used as routes are automatically
 disallowed, and do not need to be added to this list."""
+
+SECURITY_MEASURES_ON = True
+"""Whether the security measures are turned on or off.
+You would this to be set to True when performing unit tests
+or you'll fail the security tests. However, in prod it can be whatever."""
+
+GOOGLE_SAFE_BROWSING_API = "Ask around for this key"
+"""A secret key for Google Cloud Web Risk API"""
 
 TESTING = True
 

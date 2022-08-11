@@ -207,14 +207,14 @@ def test_toggle_security(client: Client) -> None:
         # we can get the status of security measures
         resp = client.get(f'/api/v1/security/get_status')
         assert resp.status_code == 200
-        assert resp.json['status']
+        assert resp.json['status'] == 'ON'
 
         # toggling security measures works
         resp = client.patch(f'/api/v1/security/toggle')
         assert resp.status_code == 200
         resp = client.get(f'/api/v1/security/get_status')
         assert resp.status_code == 200
-        assert not resp.json['status']
+        assert resp.json['status'] != 'ON'
 
     with dev_login(client, 'user'):
         # when security measures are off, users can post unsafe links
@@ -230,7 +230,7 @@ def test_toggle_security(client: Client) -> None:
 
         resp = client.get(f'/api/v1/security/get_status')
         assert resp.status_code == 200
-        assert resp.json['status']
+        assert resp.json['status'] == 'ON'
 
     with dev_login(client, 'user'):
         # when security measures are toggled on, users cannot post unsafe links

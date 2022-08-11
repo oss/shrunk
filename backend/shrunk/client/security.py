@@ -29,10 +29,14 @@ class SecurityClient:
     verification system.
     """
 
-    def __init__(self, *, db: pymongo.database.Database, other_clients: Any):
+    def __init__(self, *, db: pymongo.database.Database, other_clients: Any,
+                 SECURITY_MEASURES_ON: bool,
+                 GOOGLE_SAFE_BROWSING_API: str):
         self.db = db
         self.other_clients = other_clients
-        self.security_measures_on = current_app.config['SECURITY_MEASURES_ON']
+        self.security_measures_on = SECURITY_MEASURES_ON
+        self.google_safe_browsing_api = GOOGLE_SAFE_BROWSING_API
+        self.latest_status = "OFF" if not SECURITY_MEASURES_ON else "ON"
 
     def create_pending_link(self, link_document: Dict[str, Any]):
         """
@@ -193,11 +197,17 @@ class SecurityClient:
     def toggle_security(self):
         """Toggles security feature"""
         self.security_measures_on = not self.security_measures_on
+
+        if self.security_measures_on:
+            self.latest_status = "ON"
+        else:
+            self.latest_status = "OFF"
+
         return self.security_measures_on
 
     def get_security_status(self):
         """Gets status of security feature"""
-        return self.security_measures_on
+        return self.latest_status
 
     def security_risk_detected(self, long_url: str) -> bool:
         """Checks a url with a security risk API. In this case,
@@ -214,6 +224,7 @@ class SecurityClient:
         """
 
         if self.security_measures_on is False:
+            self.latest_status = "OFF"
             return False
 
         url_status = self.get_status_of_url(long_url)
@@ -223,7 +234,7 @@ class SecurityClient:
         if url_status == DetectedLinkStatus.APPROVED.value:
             return False
 
-        API_KEY = current_app.config['GOOGLE_SAFE_BROWSING_API']
+        API_KEY = self.google_safe_browsing_api
 
         postBody = {
             'client': {
@@ -242,20 +253,27 @@ class SecurityClient:
             }
         }
 
+        message = "ON"
         try:
             r = requests.post(
                 'https://safebrowsing.googleapis.com/v4/threatMatches:find?key={}'.format(API_KEY),
                 data=json.dumps(postBody)
                 )
             r.raise_for_status()
+            self.latest_status = message
             return len(r.json()['matches']) > 0
         except requests.exceptions.HTTPError as err:
-            current_app.logger.warning('Google Safe Browsing API request failed. Status code: {}'.format(r.status_code))
+            message = 'Google Safe Browsing API request failed. Status code: {}'.format(r.status_code)
+            current_app.logger.warning(message)
             current_app.logger.warning(err)
         except KeyError as err:
-            current_app.logger.warning('ERROR: The key {} did not exist in the JSON response'.format(err))
+            message = 'ERROR: The key {} did not exist in the JSON response'.format(err)
+            current_app.logger.warning(message)
         except Exception as err:
-            current_app.logger.warning('An unknown error was detected when calling Google Safe Browsing API')
+            message = 'An unknown error was detected when calling Google Safe Browsing API'
+            current_app.logger.warning(message)
             current_app.logger.warning(err)
+
+        self.latest_status = message
 
         return False
