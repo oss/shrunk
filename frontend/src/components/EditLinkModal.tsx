@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import moment from 'moment';
 import {
   Modal,
@@ -13,7 +13,7 @@ import {
   DatePicker,
   Space,
   Popconfirm,
-} from 'antd';
+} from 'antd/lib';
 import {
   LinkOutlined,
   PlusOutlined,
@@ -158,10 +158,10 @@ export const EditLinkModal: React.FC<Props> = (props) => {
       visible={props.visible}
       title="Edit link"
       onOk={() => {
-        if(ownerInputVal !== initialValues.owner) {
+        if (ownerInputVal !== initialValues.owner) {
           Modal.confirm({
             title: "Link owner modification",
-            icon: <ExclamationCircleFilled/>,
+            icon: <ExclamationCircleFilled />,
             content: "You are about to modify the link owner. Do you wish to proceed?",
             okText: "Yes",
             onOk() {

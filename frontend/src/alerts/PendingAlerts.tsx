@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Modal, Button } from 'antd';
+import { Modal, Button } from 'antd/lib';
 
 import { Orgsv2AlertNewUser, Orgsv2AlertCurrentUser } from './Orgsv2Alerts';
 

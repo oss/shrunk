@@ -16,7 +16,7 @@ import {
   Tooltip,
   Spin,
   BackTop,
-} from 'antd';
+} from 'antd/lib';
 import { ExclamationCircleFilled, PlusCircleFilled } from '@ant-design/icons';
 import { RiLineChartFill, RiToolsFill, RiDeleteBin6Line } from 'react-icons/ri';
 import moment from 'moment';

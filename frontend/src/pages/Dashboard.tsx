@@ -5,7 +5,7 @@
 
 import React from 'react';
 
-import { Row, Col, Pagination, Spin, Dropdown, Button } from 'antd';
+import { Row, Col, Pagination, Spin, Dropdown, Button } from 'antd/lib';
 import { PlusCircleFilled } from '@ant-design/icons';
 
 import moment from 'moment';
@@ -459,19 +459,19 @@ export class Dashboard extends React.Component<Props, State> {
       count: result.count,
       results: result.results.map(
         (output: any) =>
-          ({
-            ...output,
-            created_time: new Date(output.created_time),
-            expiration_time: !output.expiration_time
-              ? null
-              : new Date(output.expiration_time),
-            deletion_info: !output.deletion_info
-              ? null
-              : {
-                  deleted_by: output.deletion_info.deleted_by,
-                  deleted_time: new Date(output.deletion_info.deleted_time),
-                },
-          } as LinkInfo),
+        ({
+          ...output,
+          created_time: new Date(output.created_time),
+          expiration_time: !output.expiration_time
+            ? null
+            : new Date(output.expiration_time),
+          deletion_info: !output.deletion_info
+            ? null
+            : {
+              deleted_by: output.deletion_info.deleted_by,
+              deleted_time: new Date(output.deletion_info.deleted_time),
+            },
+        } as LinkInfo),
       ),
     };
   };

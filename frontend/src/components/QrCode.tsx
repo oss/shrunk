@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Modal, Row, Col, Select, Space, Button } from 'antd';
+import { Modal, Row, Col, Select, Space, Button } from 'antd/lib';
 import QRCodeReact from 'qrcode.react';
 
 import { LinkInfo } from './LinkInfo';
