@@ -91,7 +91,7 @@ def get_pending_links(netid: str, client: ShrunkClient) -> Any:
     """
     if not client.roles.has('admin', netid):
         abort(403)
-    current_app.logger.warning(client.security.get_pending_links())
+
     return jsonify({'pendingLinks': client.security.get_pending_links()}), 200
 
 
