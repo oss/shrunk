@@ -13,7 +13,7 @@ import {
   DatePicker,
   Space,
   Button,
-} from 'antd';
+} from 'antd/lib';
 import { CaretDownOutlined } from '@ant-design/icons';
 import moment from 'moment';
 
@@ -117,7 +117,7 @@ export const FilterDropdown: React.FC<Props> = (props) => {
 
   useEffect(() => {
 
-    if(filterByText !== null && dropdownVisible) {
+    if (filterByText !== null && dropdownVisible) {
       filterByText.current?.classList.toggle('gray-text');
       filterByText.current?.classList.toggle('red-text');
     } else {
@@ -195,8 +195,8 @@ export const FilterDropdown: React.FC<Props> = (props) => {
         placement="bottomLeft"
         trigger={['click']}
       >
-        <Button type="text" style={{ position: 'relative', top: '-1px'}}>
-          <span ref={filterByText}>Filter By</span> <CaretDownOutlined className="caret-style" style={{fontSize:'18px', position: 'relative', top:'1.25px'}}/>
+        <Button type="text" style={{ position: 'relative', top: '-1px' }}>
+          <span ref={filterByText}>Filter By</span> <CaretDownOutlined className="caret-style" style={{ fontSize: '18px', position: 'relative', top: '1.25px' }} />
         </Button>
       </Dropdown>
     </Space>

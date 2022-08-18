@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Spin, Row, Col } from 'antd';
+import { Spin, Row, Col } from 'antd/lib';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 

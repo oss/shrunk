@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Row, Col, Modal, Button } from 'antd';
+import { Row, Col, Modal, Button } from 'antd/lib';
 import moment from 'moment';
 
 import '../Base.less';
@@ -105,7 +105,7 @@ const PendingRequestRow: React.FC<{
  * Props for the [[PendingRequests]] component
  * @interface
  */
-export interface Props {}
+export interface Props { }
 
 /**
  * State for the [[PendingRequests]] component

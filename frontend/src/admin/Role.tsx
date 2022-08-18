@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Row, Col, Spin, Button, Popconfirm, Form, Input, BackTop } from 'antd';
+import { Row, Col, Spin, Button, Popconfirm, Form, Input, BackTop } from 'antd/lib';
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import { IoReturnUpBack } from 'react-icons/io5';
 import base32 from 'hi-base32';
@@ -361,15 +361,15 @@ export class Role extends React.Component<Props, State> {
 
     return (
       <>
-      <BackTop />
+        <BackTop />
         <Row className="primary-row">
           <Col span={24}>
             <Button
-                type="text"
-                href="/app/#/admin"
-                icon={<IoReturnUpBack />}
-                size="large"
-              />
+              type="text"
+              href="/app/#/admin"
+              icon={<IoReturnUpBack />}
+              size="large"
+            />
             <span className="page-title">
               {this.state.roleText.grant_title}
             </span>

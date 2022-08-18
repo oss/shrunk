@@ -5,7 +5,7 @@
 
 import React from 'react';
 
-import { Row, Col, Spin, DatePicker, Form, Button } from 'antd';
+import { Row, Col, Spin, DatePicker, Form, Button } from 'antd/lib';
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { IoReturnUpBack } from 'react-icons/io5';
 import Highcharts from 'highcharts';
@@ -119,7 +119,7 @@ const EndpointChart: React.FC<{ endpointData: EndpointDatum[] | null }> = (
  * Props for the [[AdminStats]] component
  * @interface
  */
-export interface Props {}
+export interface Props { }
 
 /**
  * State for the [[AdminStats]] component
@@ -214,9 +214,9 @@ export class AdminStats extends React.Component<Props, State> {
       range === undefined || range === null
         ? null
         : {
-            begin: range[0],
-            end: range[1],
-          };
+          begin: range[0],
+          end: range[1],
+        };
 
     this.setState({ adminDataRange, adminData: null });
     await this.updateAdminData();
@@ -228,11 +228,11 @@ export class AdminStats extends React.Component<Props, State> {
         <Row className="primary-row">
           <Col span={24}>
             <Button
-                  type="text"
-                  href="/app/#/admin"
-                  icon={<IoReturnUpBack />}
-                  size="large"
-                />
+              type="text"
+              href="/app/#/admin"
+              icon={<IoReturnUpBack />}
+              size="large"
+            />
             <span className="page-title">Admin Statistics</span>
           </Col>
         </Row>

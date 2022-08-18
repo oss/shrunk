@@ -1,5 +1,5 @@
 import ExclamationCircleFilled from '@ant-design/icons/lib/icons/ExclamationCircleFilled';
-import { BackTop, Button, Col, Divider, Popconfirm, Row } from 'antd';
+import { BackTop, Button, Col, Divider, Popconfirm, Row } from 'antd/lib';
 import Spin from 'antd/es/spin';
 import React, { useEffect, useState } from 'react';
 import { IoReturnUpBack } from 'react-icons/io5';

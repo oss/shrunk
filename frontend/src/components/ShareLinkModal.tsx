@@ -16,7 +16,7 @@ import {
   Space,
   Table,
   Tag,
-} from 'antd';
+} from 'antd/lib';
 
 import { FormInstance } from 'antd/lib/form';
 import { PlusCircleFilled, ExclamationCircleFilled } from '@ant-design/icons';

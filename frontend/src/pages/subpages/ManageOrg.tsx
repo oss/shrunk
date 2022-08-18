@@ -19,7 +19,7 @@ import {
   Modal,
   FormInstance,
   BackTop,
-} from 'antd';
+} from 'antd/lib';
 import {
   ExclamationCircleFilled,
   PlusCircleFilled,
@@ -323,9 +323,9 @@ class ManageOrgInner extends React.Component<Props, State> {
    * @method
    * @param newName the new name that the organization will take on
    */
-   onRenameOrg = async (newName: string): Promise<void> => {
+  onRenameOrg = async (newName: string): Promise<void> => {
 
-     await fetch(`/api/v1/org/${this.props.match.params.id}/rename/${newName}`, {
+    await fetch(`/api/v1/org/${this.props.match.params.id}/rename/${newName}`, {
       method: 'PUT'
 
     });
@@ -369,12 +369,12 @@ class ManageOrgInner extends React.Component<Props, State> {
 
     const renameModal = {
       handleOk: async () => {
-        if(this.formRef.current) {
+        if (this.formRef.current) {
           this.formRef.current.validateFields().then(async (values) => {
             console.log(this);
             this.onRenameOrg(values['newName']);
 
-            if(this.formRef.current) this.formRef.current.resetFields();
+            if (this.formRef.current) this.formRef.current.resetFields();
 
             this.setState({
               renameOrgModalVisible: false
@@ -384,7 +384,7 @@ class ManageOrgInner extends React.Component<Props, State> {
       },
 
       handleCancel: () => {
-        if(this.formRef.current)
+        if (this.formRef.current)
           this.formRef.current.resetFields();
         this.setState({
           renameOrgModalVisible: false
@@ -419,7 +419,7 @@ class ManageOrgInner extends React.Component<Props, State> {
           <></>
         ) : userMayNotLeave ? (
           <Menu.Item disabled>
-            <Tooltip placement="left"title="You may not remove the last administrator from an organization">
+            <Tooltip placement="left" title="You may not remove the last administrator from an organization">
               Leave
             </Tooltip>
           </Menu.Item>
@@ -481,17 +481,17 @@ class ManageOrgInner extends React.Component<Props, State> {
           <Form ref={this.formRef}>
             <Form.Item
               name="newName"
-              rules ={[
-                { required: true, message: 'Please input a new name.'},
+              rules={[
+                { required: true, message: 'Please input a new name.' },
                 {
                   pattern: /^[a-zA-Z0-9_.,-]*$/,
                   message:
-                  'Name must consist of letters, numbers, and the characters "_.,-".',
+                    'Name must consist of letters, numbers, and the characters "_.,-".',
                 },
                 {
                   max: 60,
                   message:
-                  'Org names can be at most 60 characters long',
+                    'Org names can be at most 60 characters long',
                 },
                 {
                   validator: serverValidateOrgName
@@ -504,7 +504,7 @@ class ManageOrgInner extends React.Component<Props, State> {
           </Form>
 
         </Modal>
-      <BackTop />
+        <BackTop />
         <Row className="primary-row">
           <Col span={12}>
             <Button
@@ -524,8 +524,8 @@ class ManageOrgInner extends React.Component<Props, State> {
 
           <Col span={12} className="btn-col">
             {!isAdmin ? (
-                <></>
-              ) : (
+              <></>
+            ) : (
               <Dropdown
                 overlay={
                   <AddMemberForm isAdmin={isAdmin} onCreate={this.onAddMember} />
@@ -542,9 +542,9 @@ class ManageOrgInner extends React.Component<Props, State> {
               </Dropdown>
             )}
             <Dropdown overlay={orgOptions}>
-                <Button>
-                  <MoreOutlined />
-                </Button>
+              <Button>
+                <MoreOutlined />
+              </Button>
             </Dropdown>
           </Col>
         </Row>

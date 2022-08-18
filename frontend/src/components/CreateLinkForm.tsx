@@ -6,7 +6,7 @@
 import React from 'react';
 import base32 from 'hi-base32';
 import moment from 'moment';
-import { Form, Input, Button, DatePicker, Space, Tooltip, Spin, Modal } from 'antd';
+import { Form, Input, Button, DatePicker, Space, Tooltip, Spin, Modal } from 'antd/lib';
 import {
   LinkOutlined,
   MinusCircleOutlined,

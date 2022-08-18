@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Tabs, Spin } from 'antd';
+import { Tabs, Spin } from 'antd/lib';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import UsMapData from '@highcharts/map-collection/countries/us/us-all.geo.json';

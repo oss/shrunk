@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Tag, Tooltip } from 'antd';
+import { Tag, Tooltip } from 'antd/lib';
 
 /**
  * A tag indicating the user is an admin of an org

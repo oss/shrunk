@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 import React from 'react';
-import { Row, Col, Table, Collapse } from 'antd';
+import { Row, Col, Table, Collapse } from 'antd/lib';
 import { Link } from 'react-router-dom';
 import * as Data from './FaqData.js';
 
@@ -47,12 +47,12 @@ export class Faq extends React.Component<void> {
             className="question-title"
           >
             <p style={{ paddingLeft: 24 }}>
-            To shorten a link click on the <b>Shrink</b> a Link button, from there you can 
-            give your link a name in the title field, then you can paste your long 
-            link in the <b>Long URL</b> field. After that you can optionally set a time for 
-            your link to expire. Then you have option to set up a description for your 
-            link. Additionaly, with Power user access you can add a custom ending 
-            to your URL.
+              To shorten a link click on the <b>Shrink</b> a Link button, from there you can
+              give your link a name in the title field, then you can paste your long
+              link in the <b>Long URL</b> field. After that you can optionally set a time for
+              your link to expire. Then you have option to set up a description for your
+              link. Additionaly, with Power user access you can add a custom ending
+              to your URL.
             </p>
           </Panel>
 
@@ -65,7 +65,7 @@ export class Faq extends React.Component<void> {
               To create a custom short URL, you must have the &ldquo;power
               user&rdquo; role. This role is available only to faculty and staff
               members. To request to be added to this role, please email&nbsp;
-              <a href="mailto:oss@oss.rutgers.edu">oss@oss.rutgers.edu</a> along 
+              <a href="mailto:oss@oss.rutgers.edu">oss@oss.rutgers.edu</a> along
               with your NetID.
             </p>
           </Panel>
@@ -139,12 +139,12 @@ export class Faq extends React.Component<void> {
             <p style={{ paddingLeft: 24 }}>
               The organizations feature has been changed as of September 2021.
               Previously all user links would be shared within organizations
-              automatically. Now, users must share each individual link to an 
-              organization in order for other members of the organization to 
-              view shared links. If you would like to re-share all your links 
+              automatically. Now, users must share each individual link to an
+              organization in order for other members of the organization to
+              view shared links. If you would like to re-share all your links
               to an organization, please email&nbsp;
-              <a href="mailto:oss@oss.rutgers.edu">oss@oss.rutgers.edu</a>. 
-              
+              <a href="mailto:oss@oss.rutgers.edu">oss@oss.rutgers.edu</a>.
+
             </p>
           </Panel>
           <Panel
@@ -213,7 +213,7 @@ export class Faq extends React.Component<void> {
               columns={Data.cols}
             />
           </Panel>
-          
+
 
 
 

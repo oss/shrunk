@@ -15,7 +15,7 @@ import {
   Tabs,
   Typography,
   Card,
-} from 'antd';
+} from 'antd/lib';
 import {
   ExclamationCircleFilled,
   ClearOutlined,

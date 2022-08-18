@@ -25,10 +25,7 @@ module.exports = {
     '@typescript-eslint/no-empty-interface': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
     'no-nested-ternary': 'off',
-    'no-plusplus': [
-      "error", 
-      { "allowForLoopAfterthoughts": true }
-    ],
+    'no-plusplus': ['error', { allowForLoopAfterthoughts: true }],
     'react/no-access-state-in-setstate': 'off',
   },
 };

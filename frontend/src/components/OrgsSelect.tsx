@@ -4,7 +4,7 @@
  */
 
 import React, { useRef, useState } from 'react';
-import { Select } from 'antd';
+import { Select } from 'antd/lib';
 import { CaretDownOutlined, LoadingOutlined } from '@ant-design/icons';
 import { OrgInfo } from '../api/Org';
 import { SearchSet } from '../pages/Dashboard';
@@ -99,7 +99,7 @@ export const OrgsSelect: React.FC<Props> = (props) => {
                 position: 'relative',
                 color: '#cc0e32',
                 fontSize: '18px',
-                top: '-4px',
+                top: '0px',
               }}
             />
           </div>

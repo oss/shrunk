@@ -13,7 +13,7 @@ import {
   NavLink,
 } from 'react-router-dom';
 import { createBrowserHistory, Location } from 'history';
-import { Layout, Menu, Dropdown, Button, Modal, Typography } from 'antd';
+import { Layout, Menu, Dropdown, Button, Modal, Typography } from 'antd/lib';
 import { UserOutlined, DownOutlined, MenuOutlined } from '@ant-design/icons';
 
 import { Dashboard } from './pages/Dashboard';

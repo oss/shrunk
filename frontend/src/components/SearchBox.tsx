@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { Input } from 'antd';
+import { Input } from 'antd/lib';
 
 /**
  * Props for the [[SearchBox]] component

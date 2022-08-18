@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Row, Col, Button, Popconfirm, Tooltip, Tag } from 'antd';
+import { Row, Col, Button, Popconfirm, Tooltip, Tag } from 'antd/lib';
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import {
   RiEditBoxLine,
