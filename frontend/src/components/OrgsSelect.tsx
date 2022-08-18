@@ -98,8 +98,9 @@ export const OrgsSelect: React.FC<Props> = (props) => {
               style={{
                 position: 'relative',
                 color: '#cc0e32',
-                fontSize: '18px',
+                fontSize: '19px',
                 top: '0px',
+                left: '10px',
               }}
             />
           </div>
