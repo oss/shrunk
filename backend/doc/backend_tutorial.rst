@@ -17,6 +17,10 @@ First, clone the git repo to a local directory (via ssh)::
   $ pip install -r backend/requirements.txt
   $ pip install -r backend/requirements-dev.txt
 
+**Debian/Ubuntu users only:** If you are having trouble installing ``python-ldap``, try running
+
+  $ sudo apt-get install libsasl2-dev libldap2-dev libssl-dev
+
 Setting up Mongo
 ----------------
 
