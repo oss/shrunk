@@ -79,8 +79,6 @@ sphinx:
     - pip install sphinx sphinx_autodoc_typehints
     - cd backend
     - python3 setup.py build_sphinx --warning-is-error --keep-going
-  after_script:
-    - cat /tmp/sphinx-err-*.log
   artifacts:
     paths:
       - backend/build/sphinx/html
