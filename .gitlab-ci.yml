@@ -69,7 +69,7 @@ flake8:
 
 sphinx:
   stage: docs
-  image: python:latest
+  image: python:3.10.9
   needs: []
   script:
     - python -V
