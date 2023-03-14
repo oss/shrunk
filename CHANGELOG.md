@@ -6,13 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- Google Safe Browsing API Integration (Merged)
 - Password Protected Links
 - Link-In-Bio Feature for Organizations
 
 ## [2.3.0]
 
 ### Added
+- Google Safe Browsing Integration to ensure the integrity of shortened links and to protect the Rutgers community
+    - Suspected links will notify Shrunk administrators and will undergo a manual verification process before being shortened
+    - If suspected, the netID, date of creation, and requested link will be known to verifier
+    - A link's status will be remembered, and history of all link verifications (including verifiers) will be stored in a database
 - Administrators are able to easily change ownership of links, preventing risky and manual DB modifications
 - New Vector-based Rutgers Logo in the navigation bar
 - Feedback button
