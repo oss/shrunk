@@ -5,6 +5,25 @@ All notable changes to Shrunk will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+- Google Safe Browsing API Integration (Merged)
+- Password Protected Links
+- Link-In-Bio Feature for Organizations
+
+## [2.3.0]
+
+### Added
+- Administrators are able to easily change ownership of links, preventing risky and manual DB modifications
+- New Vector-based Rutgers Logo in the navigation bar
+- Feedback button
+- Org admins can now change their organization's name
+
+### Changed
+- Re-arranged organization dashboard buttons to improve UX
+
+### Fixed 
+- Organization names are capped at 60 characters long
+
 ## [2.2.1] - 2022-02-02
 
 ### Added
