@@ -61,9 +61,8 @@ html {
 
 .footer {
     position: absolute;
+    padding: 20px;
     bottom: 0;
     width: 100%;
     background-color: #363636;
-    height: 45px;
-    line-height: 45px;
 }
