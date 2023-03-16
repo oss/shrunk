@@ -202,7 +202,7 @@ export class Faq extends React.Component<void> {
             </p>
           </Panel>
           <Panel
-            header="What access does somone have when I make them a viewer or editor?"
+            header="What access does someone have when I make them a viewer or editor?"
             key="13"
             className="question-title"
           >
