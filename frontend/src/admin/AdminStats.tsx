@@ -266,6 +266,9 @@ export class AdminStats extends React.Component<Props, State> {
                   <span className="info">
                     Users: {this.state.adminData.users}
                   </span>
+                  <span className="info">
+                    Version: 2.3.1
+                  </span>
                 </>
               )}
             </Row>
