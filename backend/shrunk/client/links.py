@@ -181,6 +181,9 @@ class LinksClient:
         if title is None and long_url is None and expiration_time is None and owner is None:
             return
 
+        if self.other_clients.security.security_risk_detected(long_url):
+            raise SecurityRiskDetected
+
         link_info = self.get_link_info(link_id)
 
         fields: Dict[str, Any] = {}

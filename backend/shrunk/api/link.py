@@ -282,6 +282,7 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
         client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
+
     if not client.roles.has('admin', netid) and not client.links.may_edit(link_id, netid):
         abort(403)
     if 'owner' in req and not is_valid_netid(req['owner']):
@@ -296,6 +297,11 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
             client.links.remove_expiration_time(link_id)
     except BadLongURLException:
         abort(400)
+    except SecurityRiskDetected:
+        return 'Potential security risk. Please create a new link instead.', 403
+    except LinkIsPendingOrRejected:
+        return 'Potential security risk. Please create a new link instead.', 403
+
     return '', 204
 
 
