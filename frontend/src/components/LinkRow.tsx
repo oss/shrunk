@@ -228,7 +228,9 @@ export class LinkRow extends React.Component<Props, State> {
                     <a href={shortUrl}>{shortUrl}</a>
                     &rarr;
                     {!this.props.linkInfo.is_tracking_pixel_link ? (
-                      this.props.linkInfo.long_url
+                      <a href={this.props.linkInfo.long_url}>
+                        {this.props.linkInfo.long_url}
+                      </a>
                     ) : (
                       <>Tracking Pixel</>
                     )}
