@@ -6,7 +6,7 @@
 import React from 'react';
 import base32 from 'hi-base32';
 import moment from 'moment';
-import { Form, Input, Button, DatePicker, Space, Tooltip, Spin, Modal } from 'antd/lib';
+import { Form, Input, Button, DatePicker, Space, Tooltip, Spin, Modal, Checkbox } from 'antd/lib';
 import {
   LinkOutlined,
   MinusCircleOutlined,
@@ -84,6 +84,12 @@ interface CreateLinkFormValues {
    * @property
    */
   aliases: { alias?: string; description: string }[];
+
+  /**
+   * Whether the link is a tracking pixel link
+   * @property
+   */
+  is_tracking_pixel_link?: boolean;
 }
 
 /**
@@ -110,6 +116,7 @@ export interface Props {
  */
 interface State {
   loading: boolean;
+  tracking_pixel_enabled: boolean;
 }
 
 /**
@@ -123,6 +130,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
     super(props);
     this.state = {
       loading: false,
+      tracking_pixel_enabled: false,
     };
   }
 
@@ -137,7 +145,11 @@ export class CreateLinkForm extends React.Component<Props, State> {
   onSubmitClick = async (): Promise<void> => {
     this.formRef.current!.resetFields();
     await this.props.onFinish();
-    this.setState({ loading: false });
+    this.setState({ loading: false, tracking_pixel_enabled: false });
+  };
+
+  onTrackingPixelChange = (e: any) => {
+    this.setState({ tracking_pixel_enabled: e.target.checked });
   };
 
   /**
@@ -147,10 +159,17 @@ export class CreateLinkForm extends React.Component<Props, State> {
   createLink = async (values: CreateLinkFormValues): Promise<void> => {
     this.toggleLoading();
 
-    const createLinkReq: Record<string, string> = {
+    const createLinkReq: {
+      title: string;
+      long_url: string;
+      expiration_time?: string;
+      is_tracking_pixel_link?: boolean;
+    } = {
       title: values.title,
       long_url: values.long_url,
     };
+
+    createLinkReq.is_tracking_pixel_link = !!values.is_tracking_pixel_link;
 
     if (values.expiration_time !== undefined) {
       createLinkReq.expiration_time = values.expiration_time.format();
@@ -199,6 +218,8 @@ export class CreateLinkForm extends React.Component<Props, State> {
         });
       }),
     );
+
+
     this.onSubmitClick();
   };
 
@@ -223,16 +244,10 @@ export class CreateLinkForm extends React.Component<Props, State> {
             <Input placeholder="Title" />
           </Form.Item>
 
-          <Form.Item
-            label="Long URL"
-            name="long_url"
-            rules={[
-              { required: true, message: 'Please input a URL.' },
-              { type: 'url', message: 'Please enter a valid URL.' },
-              { validator: serverValidateLongUrl },
-            ]}
-          >
-            <Input placeholder="Long URL" prefix={<LinkOutlined />} />
+          <Form.Item name="is_tracking_pixel_link" valuePropName="checked">
+            <Checkbox onChange={this.onTrackingPixelChange}>
+              Make this link a tracking pixel
+            </Checkbox>
           </Form.Item>
 
           <Form.Item label="Expiration time" name="expiration_time">
@@ -244,6 +259,22 @@ export class CreateLinkForm extends React.Component<Props, State> {
               showTime={{ defaultValue: moment() }}
             />
           </Form.Item>
+
+          {!this.state.tracking_pixel_enabled && (
+            <>
+              <Form.Item
+                label="Long URL"
+                name="long_url"
+                rules={[
+                  { required: true, message: 'Please input a URL.' },
+                  { type: 'url', message: 'Please enter a valid URL.' },
+                  { validator: serverValidateLongUrl },
+                ]}
+              >
+                <Input placeholder="Long URL" prefix={<LinkOutlined />} />
+              </Form.Item>
+            </>
+          )}
 
           <Form.List name="aliases">
             {(fields, { add, remove }) => (

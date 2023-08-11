@@ -65,7 +65,7 @@ class SearchClient:
                                                 {'$addFields': {'text_search_score': {'$meta': 'textScore'}}},
                                                 {'$match': {'viewers._id': user_netid}},
                                                 {'$match': {'text_search_score': {'$gt': 0.5}}}]
-                                }}] 
+                                }}]
             else:
                 pipeline += [
                     {'$match': {'members.netid': user_netid}},
@@ -167,6 +167,7 @@ class SearchClient:
                 'aliases': [alias for alias in res['aliases'] if is_alias_visible(alias)],
                 'is_expired': res['is_expired'],
                 'may_edit': self.client.links.may_edit(res['_id'], user_netid),
+                'is_tracking_pixel_link': res['is_tracking_pixel_link'] if 'is_tracking_pixel_link' in res else False,
             }
 
             if res.get('deleted'):
@@ -174,7 +175,7 @@ class SearchClient:
                     'deleted_by': res['deleted_by'],
                     'deleted_time': res['deleted_time'],
                 }
-            
+
             return prepared
 
         result = next(cursor)

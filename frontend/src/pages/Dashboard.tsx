@@ -953,7 +953,7 @@ export class Dashboard extends React.Component<Props, State> {
               trigger={['click']}
             >
               <Button type="primary">
-                <PlusCircleFilled /> Shrink a Link
+                <PlusCircleFilled /> Create a Link
               </Button>
             </Dropdown>
           </Col>

@@ -130,7 +130,8 @@ class LinksClient:
                creator_ip: str,
                viewers: List[Dict[str, Any]] = None,
                editors: List[Dict[str, Any]] = None,
-               bypass_security_measures: bool = False) -> ObjectId:
+               bypass_security_measures: bool = False,
+               is_tracking_pixel_link: bool = False) -> ObjectId:
         if viewers is None:
             viewers = []
         if editors is None:
@@ -159,6 +160,7 @@ class LinksClient:
             'aliases': [],
             'viewers': viewers,
             'editors': editors,
+            'is_tracking_pixel_link': is_tracking_pixel_link,
         }
 
         if not bypass_security_measures and \
@@ -477,15 +479,9 @@ class LinksClient:
     def get_link_info_by_title(self, title: str) -> Any:
         return self.db.urls.find_one({'title': title})
 
-    def get_long_url(self, alias: str) -> Optional[str]:
-        """Given a short URL, returns the long URL.
-
-        Performs a case-insensitive search for the corresponding long URL.
-
-        :param short_url: A shortened URL
-
-        :returns:
-          The long URL, or None if the short URL does not exist.
+    def _verify_link_alias_is_valid(self, alias):
+        """
+        Finds a link by an alias and verifies that it is still valid
         """
         result = self.get_link_info_by_alias(alias)
 
@@ -507,6 +503,31 @@ class LinksClient:
         current_time = datetime.now(timezone.utc)
         if expiration_time and current_time >= expiration_time:
             return None
+
+        return result
+
+    def is_tracking_pixel_link(self, alias: str) -> bool:
+        result = self._verify_link_alias_is_valid(alias)
+
+        if result is None:
+            return False
+
+        return result.get('is_tracking_pixel_link', False)
+
+    def get_long_url(self, alias: str) -> Optional[str]:
+        """Given a short URL, returns the long URL.
+
+        Performs a case-insensitive search for the corresponding long URL.
+
+        :param short_url: A shortened URL
+
+        :returns:
+          The long URL, or None if the short URL does not exist.
+        """
+        result = self._verify_link_alias_is_valid(alias)
+
+        if result is None:
+            return False
 
         # Link exists and is valid; return its long URL
         return cast(str, result['long_url'])

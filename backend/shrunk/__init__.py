@@ -8,7 +8,7 @@ import datetime
 from typing import Any
 
 import flask
-from flask import Flask, current_app, render_template, redirect, request
+from flask import Flask, current_app, render_template, redirect, request, send_file
 from flask.json import JSONEncoder
 from flask.logging import default_handler
 from flask_mailman import Mail
@@ -262,7 +262,8 @@ def create_app(config_path: str = 'config.py', **kwargs: Any) -> Flask:
     def _serve_redirect(alias: str) -> Any:
         client: ShrunkClient = current_app.client
         long_url = client.links.get_long_url(alias)
-        if long_url is None:
+        is_tracking_pixel_link = client.links.is_tracking_pixel_link(alias)
+        if long_url is None and not is_tracking_pixel_link:
             return render_template('404.html'), 404
 
         # Get or generate a tracking id
@@ -276,6 +277,14 @@ def create_app(config_path: str = 'config.py', **kwargs: Any) -> Flask:
                            request.remote_addr,
                            request.headers.get('User-Agent'),
                            request.headers.get('Referer'))
+
+        if is_tracking_pixel_link:
+            filename = './static/img/pixel.gif'
+            response = send_file(filename, mimetype='image/png')
+            response.headers['X-Image-Name'] = 'pixel.png'  # Include the image name in a custom header
+
+            return response
+
         if '://' not in long_url:
             long_url = f'http://{long_url}'
         response = redirect(long_url)

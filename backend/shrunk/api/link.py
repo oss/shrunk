@@ -41,14 +41,15 @@ ACL_ENTRY_SCHEMA = {
 CREATE_LINK_SCHEMA = {
     'type': 'object',
     'additionalProperties': False,
-    'required': ['title', 'long_url'],
+    'required': ['title'],
     'properties': {
         'title': {'type': 'string', 'minLength': 1},
         'long_url': {'type': 'string', 'minLength': 1},
         'expiration_time': {'type': 'string', 'format': 'date-time'},
         'editors': {'type': 'array', 'items': ACL_ENTRY_SCHEMA},
         'viewers': {'type': 'array', 'items': ACL_ENTRY_SCHEMA},
-        'bypass_security_measures': {'type': 'boolean'}
+        'bypass_security_measures': {'type': 'boolean'},
+        'is_tracking_pixel_link': {'type': 'boolean'},
     },
 }
 
@@ -96,6 +97,14 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
     if 'bypass_security_measures' not in req:
         req['bypass_security_measures'] = False
 
+    if 'is_tracking_pixel_link' not in req:
+        req['is_tracking_pixel_link'] = False
+
+    if 'long_url' not in req and req['is_tracking_pixel_link']:
+        req['long_url'] = 'http://example.com'
+    elif 'long_url' not in req and not req['is_tracking_pixel_link']:
+        return jsonify({'errors': ['long_url is missing']}), 400
+
     if not client.roles.has('admin', netid) and req['bypass_security_measures']:
         abort(403)
 
@@ -138,7 +147,8 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
     try:
         link_id = client.links.create(req['title'], req['long_url'], expiration_time, netid,
                                       request.remote_addr, viewers=req['viewers'], editors=req['editors'],
-                                      bypass_security_measures=req['bypass_security_measures'])
+                                      bypass_security_measures=req['bypass_security_measures'],
+                                      is_tracking_pixel_link=req['is_tracking_pixel_link'])
     except BadLongURLException:
         return jsonify({'errors': ['long_url']}), 400
     except SecurityRiskDetected:
