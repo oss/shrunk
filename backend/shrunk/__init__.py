@@ -263,6 +263,7 @@ def create_app(config_path: str = 'config.py', **kwargs: Any) -> Flask:
         client: ShrunkClient = current_app.client
         long_url = client.links.get_long_url(alias)
         is_tracking_pixel_link = client.links.is_tracking_pixel_link(alias)
+
         if long_url is None and not is_tracking_pixel_link:
             return render_template('404.html'), 404
 
@@ -280,14 +281,12 @@ def create_app(config_path: str = 'config.py', **kwargs: Any) -> Flask:
 
         if is_tracking_pixel_link:
             filename = './static/img/pixel.gif'
-            response = send_file(filename, mimetype='image/png')
-            response.headers['X-Image-Name'] = 'pixel.png'  # Include the image name in a custom header
-
-            return response
-
-        if '://' not in long_url:
-            long_url = f'http://{long_url}'
-        response = redirect(long_url)
+            response = send_file(filename, mimetype='image/gif')
+            response.headers['X-Image-Name'] = 'pixel.gif'
+        else:
+            if '://' not in long_url:
+                long_url = f'http://{long_url}'
+            response = redirect(long_url)
 
         # Make sure we don't set the tracking ID cookie if DNT is set
         if request.headers.get('DNT', '0') == '0':
