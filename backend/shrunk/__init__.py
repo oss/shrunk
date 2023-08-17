@@ -283,6 +283,10 @@ def create_app(config_path: str = 'config.py', **kwargs: Any) -> Flask:
             filename = './static/img/pixel.gif'
             response = send_file(filename, mimetype='image/gif')
             response.headers['X-Image-Name'] = 'pixel.gif'
+
+            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
         else:
             if '://' not in long_url:
                 long_url = f'http://{long_url}'
