@@ -527,7 +527,7 @@ class LinksClient:
         result = self._verify_link_alias_is_valid(alias)
 
         if result is None:
-            return False
+            return None
 
         # Link exists and is valid; return its long URL
         return cast(str, result['long_url'])

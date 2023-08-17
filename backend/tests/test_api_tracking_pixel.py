@@ -38,4 +38,4 @@ def test_create_tracking_pixel(client: Client) -> None:
 
         resp = client.get(f'/{alias0}')
         assert resp.status_code == 200
-        assert resp.headers['X-Image-Name'] == 'pixel.png'
+        assert resp.headers['X-Image-Name'] == 'pixel.gif'
