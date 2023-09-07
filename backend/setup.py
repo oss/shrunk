@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 from setuptools.command.build_py import build_py as _build_py
 
 
-VERSION = '2.3.2'
+VERSION = '2.3.3'
 
 AUTHOR = 'Rutgers Open System Solutions'
 
@@ -55,7 +55,7 @@ setup(
     zip_safe=False,
     install_requires=requires,
     author=AUTHOR,
-    author_email='oss@oss.rutgers.edu',
+    author_email='oss@oit.rutgers.edu',
     description='Rutgers University URL Shortener',
     long_description=readme,
     long_description_content_type='text/markdown',
