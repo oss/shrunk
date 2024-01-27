@@ -404,6 +404,7 @@ export class Role extends React.Component<Props, State> {
           </Col>
         </Row>
 
+        {['whitelisted', 'power_user', 'admin', 'facstaff'].includes(this.props.name) && (
         <Row className="primary-row">
           <Col span={24}>
             <Button
@@ -420,6 +421,7 @@ export class Role extends React.Component<Props, State> {
             </Button>
           </Col>
         </Row>
+        )}
 
         {this.state.entities === null ? (
           <Spin size="large" />
