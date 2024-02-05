@@ -20,6 +20,7 @@ import { Dashboard } from './pages/Dashboard';
 import { Admin } from './pages/Admin';
 import { Orgs } from './pages/Orgs';
 import { Faq } from './pages/Faq';
+import { PowerUserRequestForm } from './pages/PowerUserRequestForm';
 
 import { Stats } from './pages/subpages/Stats';
 import { AdminStats } from './admin/AdminStats';
@@ -170,6 +171,8 @@ export class Shrunk extends React.Component<Props, State> {
       } else {
         key = 'admin';
       }
+    } else if (route.startsWith('#/request-power-user-role')) {
+      key = 'request-power-user-role';
     } else if (route.startsWith('#/faq')) {
       key = 'faq';
     }
@@ -282,6 +285,11 @@ export class Shrunk extends React.Component<Props, State> {
                   Organizations
                 </NavLink>
               </Menu.Item>
+              <Menu.Item key="request-power-user-role">
+                <NavLink to="/request-power-user-role" className="nav-text">
+                  Request Power User Role
+                </NavLink>
+              </Menu.Item>
               <Menu.Item key="faq">
                 <NavLink to="/faq" className="nav-text">
                   FAQ
@@ -357,6 +365,13 @@ export class Shrunk extends React.Component<Props, State> {
                   path="/orgs/:id/stats"
                   render={(props) => <OrgStats id={props.match.params.id} />}
                 />
+
+                <Route exact path="/request-power-user-role">
+                  <PowerUserRequestForm 
+                    userPrivileges={this.props.userPrivileges}
+                    netid={this.props.netid}
+                  />
+                </Route>
 
                 <Route exact path="/faq">
                   <Faq />
