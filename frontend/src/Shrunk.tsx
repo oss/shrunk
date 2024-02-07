@@ -28,6 +28,7 @@ import LinkSecurity from './admin/LinkSecurity';
 import { Role } from './admin/Role';
 import { ManageOrg } from './pages/subpages/ManageOrg';
 import { OrgStats } from './pages/subpages/OrgStats';
+import { PendingRoleRequests } from './admin/PendingRoleRequests';
 
 import { PendingAlerts } from './alerts/PendingAlerts';
 import { PendingRequests } from './components/PendingRequests';
@@ -402,6 +403,12 @@ export class Shrunk extends React.Component<Props, State> {
                     <Route exact path="/admin/link_security">
                       <LinkSecurity />
                     </Route>
+                    <Route exact path="/admin/role_requests/power_user">
+                      <PendingRoleRequests
+                        name="power_user"
+                      />
+                    </Route>
+                      
                   </>
                 )}
               </Switch>

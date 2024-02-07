@@ -84,6 +84,7 @@ export class RoleRequestForm extends React.Component<Props, State> {
         console.log('Comment: ' + this.state.comment)
         console.log('NetID: ' + this.props.netid)
         console.log('User privileges: [' + Array.from(this.props.userPrivileges).join(', ') + ']')
+        console.log('Timestamp: ' + new Date().toISOString())
     }
 
     /** 
