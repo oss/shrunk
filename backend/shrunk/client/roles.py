@@ -31,16 +31,13 @@ class RolesClient:
         """
         if role == 'power_user':
             return {
-                'title': 'Power User',
+                'title': 'Request Power User Role',
                 'word': 'power user',
-                'prompt': 'Power users have the ability to create custom aliases for their shortened links. To request the power user role, please fill in and submit the form below. The power user role will only be granted to faculty/staff members. Your request will be manually processed to ensure that you meet this requirement.'
+                'prompt': 'Power users have the ability to create custom aliases for their shortened links. To request the power user role, please fill in and submit the form below. The power user role will only be granted to faculty/staff members. Your request will be manually processed to ensure that you meet this requirement.',
+                'placeholder_text': 'Please provide a brief explanation of why you need the power user role.',
+                'submit_button': 'Request power user role',
             }
-        else:
-            return {
-                'title': 'error',
-                'word': 'error',
-                'prompt': 'error',
-            }
+        return None
 
     @staticmethod
     def _default_text(role: str) -> Any:

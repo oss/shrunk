@@ -8,7 +8,7 @@ import { Row, Col, Button, Input, Form, Spin } from 'antd/lib';
 import { CheckOutlined } from '@ant-design/icons';
 
 /**
- * Props for the [[PowerUserRequestForm]] component
+ * Props for the [[RoleRequestForm]] component
  * @interface
  */
 export interface Props {
@@ -33,6 +33,8 @@ interface RequestText {
     title: string;
     word: string;
     prompt: string;
+    placeholder_text: string;
+    submit_button: string;
 }
 
 /**
@@ -78,7 +80,7 @@ export class RoleRequestForm extends React.Component<Props, State> {
      * @method
      */
     processRequest = () => {
-        console.log('Requesting' + this.state.requestText?.word + 'role')
+        console.log('Requesting ' + this.state.requestText?.word + ' role')
         console.log('Comment: ' + this.state.comment)
         console.log('NetID: ' + this.props.netid)
         console.log('User privileges: [' + Array.from(this.props.userPrivileges).join(', ') + ']')
@@ -111,7 +113,7 @@ export class RoleRequestForm extends React.Component<Props, State> {
             <div>
                 <Row className="primary-row">
                     <Col span={24}>
-                        <span className="page-title">Request {this.state.requestText?.title} Role</span>
+                        <span className="page-title">{this.state.requestText?.title}</span>
                     </Col>
                 </Row>
                 <p>{this.state.requestText?.prompt}</p>
@@ -132,12 +134,12 @@ export class RoleRequestForm extends React.Component<Props, State> {
                             rows={4}
                             value={this.state.comment}
                             onChange={this.handleCommentChange}
-                            placeholder={'Please provide a brief explanation of why you need the ' + this.state.requestText?.word + ' role'}
+                            placeholder={this.state.requestText?.placeholder_text}
                         />
                     </Form.Item>
                     <Form.Item>
                         <Button type="primary" htmlType="submit">
-                            <CheckOutlined /> Request {this.state.requestText?.word} role
+                            <CheckOutlined /> {this.state.requestText?.submit_button}
                         </Button>
                     </Form.Item>
                 </Form>
