@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Row, Col, Button, Input, Form } from 'antd/lib';
+import { Row, Col, Button, Input, Form, Spin } from 'antd/lib';
 import { CheckOutlined } from '@ant-design/icons';
 
 /**
@@ -31,8 +31,8 @@ export interface Props {
 
 interface RequestText {
     title: string;
-    text: string;
-    summary: string;
+    word: string;
+    prompt: string;
 }
 
 /**
@@ -61,13 +61,16 @@ export class RoleRequestForm extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {
-            requestText: { 
-                title: "Power User", 
-                text: "power user", 
-                summary: "Power users have the ability to create custom aliases for their shortened links. To request the power user role, please fill in and submit the form below. The power user role will only be granted to faculty/staff members. Your request will be manually processed to ensure that you meet this requirement." 
-            },
+            requestText: null,
             comment : ''
         };
+    }
+
+    async componentDidMount(): Promise<void>{
+        const result = await fetch(`/api/v1/role/${this.props.name}/request-text`).then(
+            (resp) => resp.json(),
+          );
+          this.setState({ requestText: result.text as RequestText });
     }
 
     /** 
@@ -75,7 +78,7 @@ export class RoleRequestForm extends React.Component<Props, State> {
      * @method
      */
     processRequest = () => {
-        console.log('Requesting' + this.state.requestText?.text + 'role')
+        console.log('Requesting' + this.state.requestText?.word + 'role')
         console.log('Comment: ' + this.state.comment)
         console.log('NetID: ' + this.props.netid)
         console.log('User privileges: [' + Array.from(this.props.userPrivileges).join(', ') + ']')
@@ -101,6 +104,9 @@ export class RoleRequestForm extends React.Component<Props, State> {
     }
 
     render(): React.ReactNode {
+        if (this.state.requestText === null) {
+            return <Spin size="large" />;
+          }
         return (
             <div>
                 <Row className="primary-row">
@@ -108,7 +114,7 @@ export class RoleRequestForm extends React.Component<Props, State> {
                         <span className="page-title">Request {this.state.requestText?.title} Role</span>
                     </Col>
                 </Row>
-                <p>{this.state.requestText?.summary}</p>
+                <p>{this.state.requestText?.prompt}</p>
                 <Form onFinish={this.processRequest}>
                     <Form.Item
                         name="comment"
@@ -126,12 +132,12 @@ export class RoleRequestForm extends React.Component<Props, State> {
                             rows={4}
                             value={this.state.comment}
                             onChange={this.handleCommentChange}
-                            placeholder={'Please provide a brief explanation of why you need the ' + this.state.requestText?.text + ' role'}
+                            placeholder={'Please provide a brief explanation of why you need the ' + this.state.requestText?.word + ' role'}
                         />
                     </Form.Item>
                     <Form.Item>
                         <Button type="primary" htmlType="submit">
-                            <CheckOutlined /> Request {this.state.requestText?.text} role
+                            <CheckOutlined /> Request {this.state.requestText?.word} role
                         </Button>
                     </Form.Item>
                 </Form>

@@ -22,6 +22,25 @@ class RolesClient:
         self.oncreate_for: Dict[str, Callable[[str], None]] = {}
         self.onrevoke_for: Dict[str, Callable[[str], None]] = {}
         self.form_text: Dict[str, Any] = {}
+    
+    @staticmethod
+    def get_request_text(role: str) -> Any:
+        """Get the text for a role request form.
+
+        :param role: Role name
+        """
+        if role == 'power_user':
+            return {
+                'title': 'Power User',
+                'word': 'power user',
+                'prompt': 'Power users have the ability to create custom aliases for their shortened links. To request the power user role, please fill in and submit the form below. The power user role will only be granted to faculty/staff members. Your request will be manually processed to ensure that you meet this requirement.'
+            }
+        else:
+            return {
+                'title': 'error',
+                'word': 'error',
+                'prompt': 'error',
+            }
 
     @staticmethod
     def _default_text(role: str) -> Any:
