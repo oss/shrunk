@@ -1,5 +1,5 @@
 /**
- * Implements the [[PowerUserRequestForm]] component
+ * Implements the [[RoleRequestForm]] component
  * @packageDocumentation
  */
 
@@ -22,13 +22,30 @@ export interface Props {
      * @property
      */
     netid: string;
+    /**
+     * The role to be requested (internal identifier, not the display name)
+     * @property
+     */
+    name: string;
+}
+
+interface RequestText {
+    title: string;
+    text: string;
+    summary: string;
 }
 
 /**
- * State for the [[PowerUserRequestForm]] component
+ * State for the [[RoleRequestForm]] component
  * @interface
  */
 export interface State {
+    /**
+     * The display text for the role
+     * @property
+     */
+    requestText: RequestText | null;
+
     /**
      * The comment inputted by the user
      * @property
@@ -37,23 +54,28 @@ export interface State {
 }
 
 /**
- * The [[PowerUserRequestForm]] component is a form for requesting the power user role
+ * The [[RoleRequestForm]] component is a form for requesting the power user role
  * @class
  */
-export class PowerUserRequestForm extends React.Component<Props, State> {
+export class RoleRequestForm extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {
+            requestText: { 
+                title: "Power User", 
+                text: "power user", 
+                summary: "Power users have the ability to create custom aliases for their shortened links. To request the power user role, please fill in and submit the form below. The power user role will only be granted to faculty/staff members. Your request will be manually processed to ensure that you meet this requirement." 
+            },
             comment : ''
         };
     }
 
     /** 
-     * Process the request for the power user role
+     * Process the request for the role
      * @method
      */
     processRequest = () => {
-        console.log('Requesting power user role')
+        console.log('Requesting' + this.state.requestText?.text + 'role')
         console.log('Comment: ' + this.state.comment)
         console.log('NetID: ' + this.props.netid)
         console.log('User privileges: [' + Array.from(this.props.userPrivileges).join(', ') + ']')
@@ -83,10 +105,10 @@ export class PowerUserRequestForm extends React.Component<Props, State> {
             <div>
                 <Row className="primary-row">
                     <Col span={24}>
-                        <span className="page-title">Request Power User Role</span>
+                        <span className="page-title">Request {this.state.requestText?.title} Role</span>
                     </Col>
                 </Row>
-                <p>Power users have the ability to create custom aliases for their shortened links. To request the power user role, please fill in and submit the form below. The power user role will only be granted to faculty/staff members. Your request will be manually processed to ensure that you meet this requirement.</p>
+                <p>{this.state.requestText?.summary}</p>
                 <Form onFinish={this.processRequest}>
                     <Form.Item
                         name="comment"
@@ -104,12 +126,12 @@ export class PowerUserRequestForm extends React.Component<Props, State> {
                             rows={4}
                             value={this.state.comment}
                             onChange={this.handleCommentChange}
-                            placeholder={'Please provide a brief explanation of why you need the power user role'}
+                            placeholder={'Please provide a brief explanation of why you need the ' + this.state.requestText?.text + ' role'}
                         />
                     </Form.Item>
                     <Form.Item>
                         <Button type="primary" htmlType="submit">
-                            <CheckOutlined /> Request Power User Role
+                            <CheckOutlined /> Request {this.state.requestText?.text} role
                         </Button>
                     </Form.Item>
                 </Form>

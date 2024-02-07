@@ -20,7 +20,7 @@ import { Dashboard } from './pages/Dashboard';
 import { Admin } from './pages/Admin';
 import { Orgs } from './pages/Orgs';
 import { Faq } from './pages/Faq';
-import { PowerUserRequestForm } from './pages/PowerUserRequestForm';
+import { RoleRequestForm } from './pages/RoleRequestForm';
 
 import { Stats } from './pages/subpages/Stats';
 import { AdminStats } from './admin/AdminStats';
@@ -367,9 +367,10 @@ export class Shrunk extends React.Component<Props, State> {
                 />
 
                 <Route exact path="/request-power-user-role">
-                  <PowerUserRequestForm 
+                  <RoleRequestForm
                     userPrivileges={this.props.userPrivileges}
                     netid={this.props.netid}
+                    name="power_user"
                   />
                 </Route>
 
