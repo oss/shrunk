@@ -8,6 +8,42 @@ import { Row, Col, Button, Input, Form, Spin } from 'antd/lib';
 import { CheckOutlined } from '@ant-design/icons';
 
 /**
+ * Data describing the request text for a role
+ * @interface
+ */
+export interface RequestText {
+    /**
+     * The title of the request form
+     * @property
+     */
+    title: string;
+
+    /**
+     * The role as a lowercase word
+     * @property
+     */
+    word: string;
+
+    /**
+     * The prompt for the request
+     * @property
+     */
+    prompt: string;
+
+    /**
+     * The placeholder text for the comment input
+     * @property
+     */
+    placeholder_text: string;
+
+    /**
+     * The text for the submit button
+     * @property
+     */
+    submit_button: string;
+}
+
+/**
  * Props for the [[RoleRequestForm]] component
  * @interface
  */
@@ -27,14 +63,6 @@ export interface Props {
      * @property
      */
     name: string;
-}
-
-interface RequestText {
-    title: string;
-    word: string;
-    prompt: string;
-    placeholder_text: string;
-    submit_button: string;
 }
 
 /**
@@ -69,6 +97,14 @@ export class RoleRequestForm extends React.Component<Props, State> {
     }
 
     async componentDidMount(): Promise<void>{
+        await this.updateRoleRequestText();
+    }
+
+    /**
+     * Fetch the request text for the role from the server
+     * @method
+     */
+    updateRoleRequestText = async (): Promise<void> => {
         const result = await fetch(`/api/v1/role/${this.props.name}/request-text`).then(
             (resp) => resp.json(),
           );
