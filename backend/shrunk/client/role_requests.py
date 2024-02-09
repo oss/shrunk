@@ -47,14 +47,29 @@ class RoleRequestClient:
                 {
                     "role": "string",
                     "entity": "string",
-                    "title": "string",
-                    "employee_types": ["string", "string", ...],
                     "comment": "string",
                     "time_requested": DateTime,
                 }
                 
         """
         return self.db.role_requests.find_one({'role': role, 'entity': entity})
+    
+    def request_role(self, role: str, entity: str, comment: Optional[str] = None) -> None:
+        """ 
+        Request a role for an entity
+        
+        :param role: Role to request
+        :param entity: Identifier of entity requesting role
+        :param comment: Comment, if required
+        
+    
+        """
+        self.db.role_requests.insert_one({
+            'role': role,
+            'entity': entity,
+            'comment': comment if comment is not None else '',
+            'time_requested': datetime.now(timezone.utc),
+        })
     
     def grant_role_request(self, role: str, grantor: str, grantee: str, comment: Optional[str] = None) -> None:
         """
@@ -86,6 +101,17 @@ class RoleRequestClient:
                     self.oncreate_for[role](grantee)
         else:
             raise InvalidEntity
+        
+    def deny_role_request(self, role: str, grantee: str) -> None:
+        """
+        Deny a role request and remember who did it. Delete the request from the database.
+
+        :param role: Role to deny
+        :param grantor: Identifier of entity denying role
+        :param grantee: Entity to which role should be denied
+        :param comment: Comment, if required
+        """
+        self.db.role_requests.delete_one({'role': role, 'entity': grantee})
 
         
     

@@ -245,6 +245,7 @@ def create_app(config_path: str = 'config.py', **kwargs: Any) -> Flask:
     app.register_blueprint(api.alert.bp)
     app.register_blueprint(api.request.bp)
     app.register_blueprint(api.security.bp)
+    app.register_blueprint(api.role_request.bp)
 
     # set up extensions
     mail = Mail()

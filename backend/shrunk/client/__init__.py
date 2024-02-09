@@ -12,7 +12,8 @@ from .orgs import OrgsClient
 from .tracking import TrackingClient
 from .roles import RolesClient
 from .links import LinksClient
-from .alerts import AlertsClient
+from .alerts import AlertsClient    
+from .role_requests import RoleRequestClient
 
 __all__ = ['ShrunkClient']
 
@@ -55,6 +56,7 @@ class ShrunkClient:
         self.security = SecurityClient(db=self.db, other_clients=self,
                                        SECURITY_MEASURES_ON=SECURITY_MEASURES_ON or False,
                                        GOOGLE_SAFE_BROWSING_API=GOOGLE_SAFE_BROWSING_API or None)
+        self.role_requests = RoleRequestClient(db=self.db)
 
     def _ensure_indexes(self) -> None:
         self.db.urls.create_index([('aliases.alias', pymongo.ASCENDING)])
