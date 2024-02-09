@@ -3,8 +3,45 @@
  * @packageDocumentation
  */
 import React, { Component } from 'react';
-import { Row, Col, Button } from 'antd/lib';
+import { Row, Col, Button, BackTop} from 'antd/lib';
 import moment from 'moment';
+import { IoReturnUpBack } from 'react-icons/io5';
+
+/**
+ * Data describing the request text for a role
+ * @interface
+ */
+export interface RequestText {
+    /**
+     * The role being requested capitalized (displayed name)
+     * @property
+     */
+    capitalized_role: string;
+
+    /**
+     * The role being requested (displayed name)
+     * @property
+     */
+    role: string;
+
+    /**
+     * The prompt for the request
+     * @property
+     */
+    prompt: string;
+
+    /**
+     * The placeholder text for the comment input
+     * @property
+     */
+    placeholder_text: string;
+
+    /**
+     * The text for the submit button
+     * @property
+     */
+    submit_button: string;
+}
 
 /**
  * Data describing a pending role request
@@ -148,6 +185,10 @@ export interface State {
      * @property
      */
     hidden: boolean;
+    /**
+     * The display text for the role
+     */
+    requestText: RequestText | null;
 }
 
 /**
@@ -160,11 +201,13 @@ export class PendingRoleRequests extends Component<Props, State> {
         this.state = {
             role_requests: [],
             hidden: false,
+            requestText: null
         };
     }
 
     async componentDidMount(): Promise<void> {
         await this.updatePendingRoleRequests();
+        await this.updateRoleRequestText();
     }
 
     /**
@@ -172,7 +215,7 @@ export class PendingRoleRequests extends Component<Props, State> {
      * @method
      */
     updatePendingRoleRequests = async (): Promise<void> => {
-        const sampleRequests: RoleRequestInfo[] = [
+        /*const sampleRequests: RoleRequestInfo[] = [
             {
                 entity: "Entity 1",
                 title: "Title 1",
@@ -193,10 +236,42 @@ export class PendingRoleRequests extends Component<Props, State> {
                 employeeTypes: ["Employee Type 5", "Employee Type 6"],
                 comment: "Comment 3",
                 time_requested: new Date()
-            }
-        ];
+            },
+            
+        ];*/
+        const sampleRequests: RoleRequestInfo[] = [];
+
+        for (let i = 1; i <= 20; i++) {
+            const entity = `Entity ${i}`;
+            const title = `Title ${i}`;
+            const employeeTypes = [`Employee Type ${i * 2 - 1}`, `Employee Type ${i * 2}`];
+            const comment = `Comment ${i}`;
+            const time_requested = new Date();
+
+            const roleRequest: RoleRequestInfo = {
+                entity,
+                title,
+                employeeTypes,
+                comment,
+                time_requested
+            };
+
+            sampleRequests.push(roleRequest);
+        }
+
 
         this.setState({ role_requests: sampleRequests });
+    }
+
+    /**
+     * Fetch the request text for the role from the server
+     * @method
+     */
+    updateRoleRequestText = async (): Promise<void> => {
+        const result = await fetch(`/api/v1/role/${this.props.name}/request-text`).then(
+            (resp) => resp.json(),
+          );
+          this.setState({ requestText: result.text as RequestText });
     }
 
     onGrant = async (entity: string, grant_message: string): Promise<void> => {
@@ -210,6 +285,18 @@ export class PendingRoleRequests extends Component<Props, State> {
     render() {
         return (
             <div>
+                <BackTop />
+                <Row className="primary-row">
+                    <Col span={24}>
+                        <Button
+                            type="text"
+                            href="/app/#/admin"
+                            icon={<IoReturnUpBack />}
+                            size="large"
+                        />
+                        <span className="page-title">Pending {this.state.requestText?.capitalized_role} Role Requests</span>
+                    </Col>
+                </Row>
                 {this.state.role_requests.map((role_request) => (
                     <PendingRoleRequestRow
                         key={role_request.entity}

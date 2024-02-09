@@ -13,16 +13,16 @@ import { CheckOutlined } from '@ant-design/icons';
  */
 export interface RequestText {
     /**
-     * The title of the request form
+     * The role being requested capitalized (displayed name)
      * @property
      */
-    title: string;
+    capitalized_role: string;
 
     /**
-     * The role as a lowercase word
+     * The role being requested (displayed name)
      * @property
      */
-    word: string;
+    role: string;
 
     /**
      * The prompt for the request
@@ -116,7 +116,7 @@ export class RoleRequestForm extends React.Component<Props, State> {
      * @method
      */
     processRequest = () => {
-        console.log('Requesting ' + this.state.requestText?.word + ' role')
+        console.log('Requesting ' + this.state.requestText?.role + ' role')
         console.log('Comment: ' + this.state.comment)
         console.log('NetID: ' + this.props.netid)
         console.log('User privileges: [' + Array.from(this.props.userPrivileges).join(', ') + ']')
@@ -150,7 +150,7 @@ export class RoleRequestForm extends React.Component<Props, State> {
             <div>
                 <Row className="primary-row">
                     <Col span={24}>
-                        <span className="page-title">{this.state.requestText?.title}</span>
+                        <span className="page-title">Request {this.state.requestText?.capitalized_role} Role</span>
                     </Col>
                 </Row>
                 <p>{this.state.requestText?.prompt}</p>

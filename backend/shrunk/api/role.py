@@ -36,7 +36,7 @@ def get_roles(netid: str, client: ShrunkClient) -> Any:
 def get_role_request_text(netid: str, client: ShrunkClient, role_name: str) -> Any:
     """``GET /api/role/<role_name>/request-text``
     
-    Get the request-ext for a role. Response format:
+    Get the request-text for a role. Response format:
     
     .. code-block:: json
     

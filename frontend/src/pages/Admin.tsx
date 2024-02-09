@@ -106,7 +106,7 @@ export class Admin extends React.Component<Props, State> {
         <Row className="primary-row">
           <Col span={24}>
             <Link to="/admin/role_requests/power_user" className="title">
-              Power User Pending Role Requests
+              Pending Power User Role Requests
             </Link>
           </Col>
         </Row>
