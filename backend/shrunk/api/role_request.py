@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request, Response
 from werkzeug.exceptions import abort
 
 from shrunk.client import ShrunkClient
@@ -12,10 +12,10 @@ from shrunk.util.decorators import require_login
 __all__ = ['role_request']
 bp = Blueprint('role_request', __name__, url_prefix='/api/v1/role_request')
 
-@bp.route('/<role>/pending', methods=['GET'])
+@bp.route('/<role>', methods=['GET'])
 @require_login
 def get_pending_role_requests(netid: str, client: ShrunkClient, role: str) -> Any:
-    """``GET /api/role_request/<role>/pending``
+    """``GET /api/role_request/<role>``
 
     Args:
         netid (str): the netid of the user logged in
@@ -39,10 +39,10 @@ def get_pending_role_requests(netid: str, client: ShrunkClient, role: str) -> An
         abort(403)
     return jsonify({'requests': client.role_requests.get_pending_role_requests(role)})
 
-@bp.route('/<role>/<entity>/pending', methods=['GET'])
+@bp.route('/<role>/<entity>', methods=['GET'])
 @require_login
 def get_pending_role_request_for_entity(netid: str, client: ShrunkClient, entity: str, role: str) -> Any:
-    """``GET /api/role_request/<role>/<entity>/pending``
+    """``GET /api/role_request/<role>/<entity>``
 
     Args:
         netid (str): the netid of the user logged in
@@ -60,32 +60,48 @@ def get_pending_role_request_for_entity(netid: str, client: ShrunkClient, entity
           "time_requested": DateTime,
         }
     """
-    return jsonify(client.role_requests.get_pending_role_request_for_entity(role, entity))
+    result = client.role_requests.get_pending_role_request_for_entity(role, entity)
+    if not result:
+        return jsonify({
+            "message": "No pending role request found."
+        }), 404
+    return jsonify(client.role_requests.get_pending_role_request_for_entity(role, entity)), 200
 
-@bp.route('/<role>/<entity>/request', methods=['POST'])
+@bp.route('', methods=['POST'])
 @require_login
-def request_role(netid: str, client: ShrunkClient, entity: str, role: str) -> Any:
+def request_role(netid: str, client: ShrunkClient) -> Any:
     """``POST /api/role_request/<role>/<entity>/request``
 
     Args:
         netid (str): the netid of the user logged in
         client (ShrunkClient): the client object
-        entity (str): the entity to request the role for
-        role (str): the role to request
 
-    Request a role for an entity. Response format:
+    Request a role for an entity. 
+
+    The request should include a JSON body with the following format:
+
+    .. code-block:: json
+
+       {
+           "role": "<role>",
+           "comment": "<comment>"
+       }
+
+    Response format:
     
     .. code-block:: json
     
        { "message": "Role request submitted successfully." }
     
     """
-    if not client.roles.is_valid_entity_for(role, entity):
-        abort(400)
-    client.role_requests.request_role(role, entity)
-    return jsonify({
-        "message": "Role request submitted successfully."
-    })
+    data = request.get_json()
+    role = data.get('role')
+    comment = data.get('comment')
+    
+    if client.role_requests.get_pending_role_request_for_entity(role, netid):
+        return Response(status=400)
+    client.role_requests.request_role(role, netid, comment)
+    return Response(status=201)
 
 @bp.route('/<role>/<entity>/grant', methods=['POST'])
 @require_login

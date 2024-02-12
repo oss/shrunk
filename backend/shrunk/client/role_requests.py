@@ -54,7 +54,7 @@ class RoleRequestClient:
         """
         return self.db.role_requests.find_one({'role': role, 'entity': entity})
     
-    def request_role(self, role: str, entity: str, comment: Optional[str] = None) -> None:
+    def request_role(self, role: str, entity: str, comment: str) -> None:
         """ 
         Request a role for an entity
         
@@ -67,7 +67,7 @@ class RoleRequestClient:
         self.db.role_requests.insert_one({
             'role': role,
             'entity': entity,
-            'comment': comment if comment is not None else '',
+            'comment': comment,
             'time_requested': datetime.now(timezone.utc),
         })
     

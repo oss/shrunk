@@ -81,6 +81,12 @@ export interface State {
      * @property
      */
     comment: string;
+
+    /**
+     * Whether the request has already been made
+     * @property
+     */
+    requestMade: boolean;
 }
 
 /**
@@ -92,12 +98,14 @@ export class RoleRequestForm extends React.Component<Props, State> {
         super(props);
         this.state = {
             requestText: null,
-            comment : ''
+            comment : '',
+            requestMade: false
         };
     }
 
     async componentDidMount(): Promise<void>{
         await this.updateRoleRequestText();
+        await this.updateRequestMade();
     }
 
     /**
@@ -111,16 +119,47 @@ export class RoleRequestForm extends React.Component<Props, State> {
           this.setState({ requestText: result.text as RequestText });
     }
 
+    /**
+     * Fetch whether the user has already made a request for the role
+     * @method
+     */
+    updateRequestMade = async (): Promise<void> => {
+        fetch(`/api/v1/role_request/${this.props.name}/${this.props.netid}`)
+        .then(response => {
+            if (response.status === 404) {
+                this.setState({ requestMade: false });
+            } else if (response.status === 200) {
+                this.setState({ requestMade: true });
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
     /** 
      * Process the request for the role
      * @method
      */
-    processRequest = () => {
-        console.log('Requesting ' + this.state.requestText?.role + ' role')
-        console.log('Comment: ' + this.state.comment)
-        console.log('NetID: ' + this.props.netid)
-        console.log('User privileges: [' + Array.from(this.props.userPrivileges).join(', ') + ']')
-        console.log('Timestamp: ' + new Date().toISOString())
+    processRequest = async () => {
+        await fetch(`/api/v1/role_request`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                role: this.props.name,
+                comment: this.state.comment
+            })
+        })
+        .then(response => {
+            if (response.status === 201) {
+                this.setState({ requestMade: true });
+                console.log(this.props.netid + ' successfully requested the ' + this.state.requestText?.role + ' role on ' + new Date().toISOString() + ' with comment: ' + this.state.comment);
+
+            } else if (response.status === 400) {
+                console.error('Error: Bad request');
+            }
+        })
+        .catch(error => console.error('Error:', error));
     }
 
     /** 
@@ -172,10 +211,11 @@ export class RoleRequestForm extends React.Component<Props, State> {
                             value={this.state.comment}
                             onChange={this.handleCommentChange}
                             placeholder={this.state.requestText?.placeholder_text}
+                            disabled={this.state.requestMade}
                         />
                     </Form.Item>
                     <Form.Item>
-                        <Button type="primary" htmlType="submit">
+                        <Button type="primary" htmlType="submit" disabled={this.state.requestMade}>
                             <CheckOutlined /> {this.state.requestText?.submit_button}
                         </Button>
                     </Form.Item>
