@@ -71,9 +71,9 @@ class RoleRequestClient:
             'time_requested': datetime.now(timezone.utc),
         })
         
-    def deny_role_request(self, role: str, entity: str) -> None:
+    def delete_role_request(self, role: str, entity: str, granted: bool) -> None:
         """
-        Deny a role request and remember who did it. Delete the request from the database.
+        Delete a role request and remember who did it. Delete the request from the database.
 
         :param role: Role to deny
         :param entity: Entity to which role should be denied

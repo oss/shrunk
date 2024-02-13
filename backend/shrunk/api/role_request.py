@@ -98,7 +98,7 @@ def request_role(netid: str, client: ShrunkClient) -> Any:
 
 @bp.route('', methods=['DELETE'])
 @require_login
-def deny_role_request(netid: str, client: ShrunkClient) -> Any:
+def delete_role_request(netid: str, client: ShrunkClient) -> Any:
     """``DELETE /api/role_request``
 
     Args:
@@ -107,7 +107,7 @@ def deny_role_request(netid: str, client: ShrunkClient) -> Any:
         entity (str): the entity to grant the role to
         role (str): the role to grant
     
-    Deny a role request. 
+    Delete a role request. Granted if granted is true, otherwise denied.
     
     The request should include a JSON body with the following format:
 
@@ -117,17 +117,19 @@ def deny_role_request(netid: str, client: ShrunkClient) -> Any:
            "role": "<role>",
            "entity": "<entity>",
            "comment": "<comment>"
+           "granted": true/false
        }
     """
     data = request.get_json()
     role = data.get('role')
     entity = data.get('entity')
     comment = data.get('comment')
+    granted = data.get('granted')
     
     if not client.roles.has('admin', netid):
         abort(403)
     if not client.role_requests.get_pending_role_request_for_entity(role, entity):
         return Response(status=404)
-    client.role_requests.deny_role_request(role, entity)
+    client.role_requests.delete_role_request(role, entity, granted)
     return Response(status=204)
     

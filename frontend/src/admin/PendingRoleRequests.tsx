@@ -6,6 +6,7 @@ import React, { Component } from 'react';
 import { Row, Col, Button, BackTop} from 'antd/lib';
 import moment from 'moment';
 import { IoReturnUpBack } from 'react-icons/io5';
+import base32 from 'hi-base32';
 
 /**
  * Data describing the request text for a role
@@ -238,10 +239,49 @@ export class PendingRoleRequests extends Component<Props, State> {
           this.setState({ requestText: result.text as RequestText });
     }
 
+    /**
+     * Grant a pending role request
+     * @param entity the entity making the request
+     * @param grant_message the message to include with the grant
+     */
     onGrant = async (entity: string, grant_message: string): Promise<void> => {
-        console.log(`Granting request for ${entity} with message ${grant_message}`);
+        const encodedEntity = base32.encode(entity);
+        await fetch(`/api/v1/role/${this.props.name}/entity/${encodedEntity}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                comment: grant_message,
+                }),
+            });
+
+        await fetch(`/api/v1/role_request`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                role: this.props.name,
+                entity: entity,
+                comment: grant_message,
+                granted: true,
+            })
+        })
+        .then(response => {
+            if (response.status === 204) {
+                console.log(`Granted request for ${entity} with message ${grant_message}`);
+                this.updatePendingRoleRequests();
+            } else {
+                console.error(`Failed to grant request for ${entity} with message "${grant_message}"`);
+            }
+        })
+        .catch(error => console.error('Error:', error));
     }
 
+    /**
+     * Deny a pending role request
+     * @param entity the entity making the request
+     * @param deny_message the message to include with the deny
+     */
     onDeny = async (entity: string, deny_message: string): Promise<void> => {
         await fetch(`/api/v1/role_request`, {
             method: 'DELETE',
@@ -252,6 +292,7 @@ export class PendingRoleRequests extends Component<Props, State> {
                 role: this.props.name,
                 entity: entity,
                 comment: deny_message,
+                granted: false,
             })
         })
         .then(response => {
