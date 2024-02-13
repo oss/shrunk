@@ -62,7 +62,7 @@ def get_pending_role_request_for_entity(netid: str, client: ShrunkClient, entity
     """
     result = client.role_requests.get_pending_role_request_for_entity(role, entity)
     if not result:
-        return Response(status=404)
+        return Response(status=204)
     return jsonify(client.role_requests.get_pending_role_request_for_entity(role, entity)), 200
 
 @bp.route('', methods=['POST'])

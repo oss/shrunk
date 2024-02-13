@@ -128,7 +128,7 @@ export class RoleRequestForm extends React.Component<Props, State> {
         const encodedEntity = base32.encode(this.props.netid)
         fetch(`/api/v1/role_request/${this.props.name}/${encodedEntity}`)
         .then(response => {
-            if (response.status === 404) {
+            if (response.status === 204) {
                 this.setState({ requestMade: false });
             } else if (response.status === 200) {
                 this.setState({ requestMade: true });
