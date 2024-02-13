@@ -37,9 +37,9 @@ def get_pending_role_requests(netid: str, client: ShrunkClient, role: str) -> An
     """
     if not client.roles.has('admin', netid):
         abort(403)
-    return jsonify({'requests': client.role_requests.get_pending_role_requests(role)})
+    return jsonify({'requests': client.role_requests.get_pending_role_requests(role)}), 200
 
-@bp.route('/<role>/<entity>', methods=['GET'])
+@bp.route('/<role>/<b32:entity>', methods=['GET'])
 @require_login
 def get_pending_role_request_for_entity(netid: str, client: ShrunkClient, entity: str, role: str) -> Any:
     """``GET /api/role_request/<role>/<b32:entity>``
@@ -62,9 +62,7 @@ def get_pending_role_request_for_entity(netid: str, client: ShrunkClient, entity
     """
     result = client.role_requests.get_pending_role_request_for_entity(role, entity)
     if not result:
-        return jsonify({
-            "message": "No pending role request found."
-        }), 404
+        return Response(status=404)
     return jsonify(client.role_requests.get_pending_role_request_for_entity(role, entity)), 200
 
 @bp.route('', methods=['POST'])
@@ -86,27 +84,22 @@ def request_role(netid: str, client: ShrunkClient) -> Any:
            "role": "<role>",
            "comment": "<comment>"
        }
-
-    Response format:
-    
-    .. code-block:: json
-    
-       { "message": "Role request submitted successfully." }
-    
     """
     data = request.get_json()
     role = data.get('role')
     comment = data.get('comment')
     
     if client.role_requests.get_pending_role_request_for_entity(role, netid):
-        return Response(status=400)
+        return Response(status=409)
     client.role_requests.request_role(role, netid, comment)
     return Response(status=201)
 
-@bp.route('/<role>/<entity>/grant', methods=['POST'])
+# Granting role requests can be done via the Role API (see backend/shrunk/api/role.py)
+
+@bp.route('', methods=['DELETE'])
 @require_login
-def grant_role_request(netid: str, client: ShrunkClient, entity: str, role: str) -> Any:
-    """``POST /api/role_request/<role>/<entity>/grant``
+def deny_role_request(netid: str, client: ShrunkClient) -> Any:
+    """``DELETE /api/role_request``
 
     Args:
         netid (str): the netid of the user logged in
@@ -114,42 +107,27 @@ def grant_role_request(netid: str, client: ShrunkClient, entity: str, role: str)
         entity (str): the entity to grant the role to
         role (str): the role to grant
     
-    Grant a role request. Response format:
+    Deny a role request. 
     
+    The request should include a JSON body with the following format:
+
     .. code-block:: json
-    
-       { "message": "Role request granted successfully." }
-       
+
+       {
+           "role": "<role>",
+           "entity": "<entity>",
+           "comment": "<comment>"
+       }
     """
+    data = request.get_json()
+    role = data.get('role')
+    entity = data.get('entity')
+    comment = data.get('comment')
+    
     if not client.roles.has('admin', netid):
         abort(403)
-    client.roles_request.grant_role_request(role, entity)
-    return jsonify({
-        "message": "Role request granted successfully."
-    })
-
-@bp.route('/<role>/<entity>/deny', methods=['POST'])
-@require_login
-def deny_role_request(netid: str, client: ShrunkClient, entity: str, role: str) -> Any:
-    """``POST /api/role_request/<role>/<entity>/deny``
-
-    Args:
-        netid (str): the netid of the user logged in
-        client (ShrunkClient): the client object
-        entity (str): the entity to grant the role to
-        role (str): the role to grant
-    
-    Deny a role request. Response format:
-    
-    .. code-block:: json
-    
-       { "message": "Role request denied successfully." }
-       
-    """
-    if not client.roles.has('admin', netid):
-        abort(403)
+    if not client.role_requests.get_pending_role_request_for_entity(role, entity):
+        return Response(status=404)
     client.role_requests.deny_role_request(role, entity)
-    return jsonify({
-        "message": "Role request denied successfully."
-    })
+    return Response(status=204)
     

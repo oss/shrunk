@@ -143,7 +143,7 @@ const PendingRoleRequestRow: React.FC<{
                         await props.onGrant(props.role_request.entity, "Placeholder grant message");
                     }}
                 >
-                    Grant
+                    GRANT
                 </Button>
                 <Button
                     danger
@@ -151,7 +151,7 @@ const PendingRoleRequestRow: React.FC<{
                         await props.onDeny(props.role_request.entity, "Placeholder deny message");
                     }}
                 >
-                    Deny
+                    DENY
                 </Button>
             </Col>
         </Row>
@@ -243,7 +243,26 @@ export class PendingRoleRequests extends Component<Props, State> {
     }
 
     onDeny = async (entity: string, deny_message: string): Promise<void> => {
-        console.log(`Denying request for ${entity} with message ${deny_message}`);
+        await fetch(`/api/v1/role_request`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                role: this.props.name,
+                entity: entity,
+                comment: deny_message,
+            })
+        })
+        .then(response => {
+            if (response.status === 204) {
+                console.log(`Denied request for ${entity} with message ${deny_message}`);
+                this.updatePendingRoleRequests();
+            } else {
+                console.error(`Failed to deny request for ${entity} with message "${deny_message}"`);
+            }
+        })
+        .catch(error => console.error('Error:', error));
     }
 
     render() {
