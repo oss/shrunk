@@ -6,6 +6,7 @@
 import React from 'react';
 import { Row, Col, Button, Input, Form, Spin } from 'antd/lib';
 import { CheckOutlined } from '@ant-design/icons';
+import base32 from 'hi-base32';
 
 /**
  * Data describing the request text for a role
@@ -124,7 +125,8 @@ export class RoleRequestForm extends React.Component<Props, State> {
      * @method
      */
     updateRequestMade = async (): Promise<void> => {
-        fetch(`/api/v1/role_request/${this.props.name}/${this.props.netid}`)
+        const encodedEntity = base32.encode(this.props.netid)
+        fetch(`/api/v1/role_request/${this.props.name}/${encodedEntity}`)
         .then(response => {
             if (response.status === 404) {
                 this.setState({ requestMade: false });

@@ -42,7 +42,7 @@ def get_pending_role_requests(netid: str, client: ShrunkClient, role: str) -> An
 @bp.route('/<role>/<entity>', methods=['GET'])
 @require_login
 def get_pending_role_request_for_entity(netid: str, client: ShrunkClient, entity: str, role: str) -> Any:
-    """``GET /api/role_request/<role>/<entity>``
+    """``GET /api/role_request/<role>/<b32:entity>``
 
     Args:
         netid (str): the netid of the user logged in
@@ -70,7 +70,7 @@ def get_pending_role_request_for_entity(netid: str, client: ShrunkClient, entity
 @bp.route('', methods=['POST'])
 @require_login
 def request_role(netid: str, client: ShrunkClient) -> Any:
-    """``POST /api/role_request/<role>/<entity>/request``
+    """``POST /api/role_request``
 
     Args:
         netid (str): the netid of the user logged in
