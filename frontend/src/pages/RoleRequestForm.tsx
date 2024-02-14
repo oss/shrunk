@@ -6,13 +6,14 @@
 import React from 'react';
 import { Row, Col, Button, Input, Form, Spin } from 'antd/lib';
 import { CheckOutlined } from '@ant-design/icons';
+import { RoleRequestModal } from '../components/RoleRequestModal';
 import base32 from 'hi-base32';
 
 /**
  * Data describing the request text for a role
  * @interface
  */
-export interface RequestText {
+export interface RoleRequestText {
     /**
      * The role being requested capitalized (displayed name)
      * @property
@@ -75,7 +76,7 @@ export interface State {
      * The display text for the role
      * @property
      */
-    requestText: RequestText | null;
+    roleRequestText: RoleRequestText | null;
 
     /**
      * The comment inputted by the user
@@ -87,7 +88,13 @@ export interface State {
      * Whether the request has already been made
      * @property
      */
-    requestMade: boolean;
+    roleRequestSent: boolean;
+
+    /**
+     * The visible state of the role request modal
+     * @property
+     */
+    visible: boolean;
 }
 
 /**
@@ -98,9 +105,10 @@ export class RoleRequestForm extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
         this.state = {
-            requestText: null,
+            roleRequestText: null,
             comment : '',
-            requestMade: false
+            roleRequestSent: false,
+            visible: false
         };
     }
 
@@ -117,7 +125,7 @@ export class RoleRequestForm extends React.Component<Props, State> {
         const result = await fetch(`/api/v1/role/${this.props.name}/request-text`).then(
             (resp) => resp.json(),
           );
-          this.setState({ requestText: result.text as RequestText });
+          this.setState({ roleRequestText: result.text as RoleRequestText });
     }
 
     /**
@@ -129,9 +137,9 @@ export class RoleRequestForm extends React.Component<Props, State> {
         fetch(`/api/v1/role_request/${this.props.name}/${encodedEntity}`)
         .then(response => {
             if (response.status === 204) {
-                this.setState({ requestMade: false });
+                this.setState({ roleRequestSent: false });
             } else if (response.status === 200) {
-                this.setState({ requestMade: true });
+                this.setState({ roleRequestSent: true });
             }
         })
         .catch(error => console.error('Error:', error));
@@ -154,14 +162,35 @@ export class RoleRequestForm extends React.Component<Props, State> {
         })
         .then(response => {
             if (response.status === 201) {
-                this.setState({ requestMade: true });
-                console.log(this.props.netid + ' successfully requested the ' + this.state.requestText?.role + ' role on ' + new Date().toISOString() + ' with comment: ' + this.state.comment);
+                this.setState({ roleRequestSent: true });
+                console.log(this.props.netid + ' successfully requested the ' + this.state.roleRequestText?.role + ' role on ' + new Date().toISOString() + ' with comment: ' + this.state.comment);
 
             } else if (response.status === 400) {
                 console.error('Error: Bad request');
             }
         })
         .catch(error => console.error('Error:', error));
+    }
+
+    /**
+     * Closes the role request modal and redirects to the dashboard if the request was sent successfully
+     * @method
+     */
+    closeRoleRequestModal = () => {
+        this.setState({ visible: false });
+        if (this.state.roleRequestSent) {
+            window.location.href = '/app/#/dash';
+            window.location.reload();
+        }
+    }
+
+    /**
+     * Handle form submission
+     * @method
+     */
+    onFinish = async () => {
+        await this.processRequest();
+        this.setState({ visible: true });
     }
 
     /** 
@@ -184,18 +213,18 @@ export class RoleRequestForm extends React.Component<Props, State> {
     }
 
     render(): React.ReactNode {
-        if (this.state.requestText === null) {
+        if (this.state.roleRequestText === null) {
             return <Spin size="large" />;
           }
         return (
             <div>
                 <Row className="primary-row">
                     <Col span={24}>
-                        <span className="page-title">Request {this.state.requestText?.capitalized_role} Role</span>
+                        <span className="page-title">Request {this.state.roleRequestText?.capitalized_role} Role</span>
                     </Col>
                 </Row>
-                <p>{this.state.requestText?.prompt}</p>
-                <Form onFinish={this.processRequest}>
+                <p>{this.state.roleRequestText?.prompt}</p>
+                <Form onFinish={this.onFinish}>
                     <Form.Item
                         name="comment"
                         rules={[
@@ -212,16 +241,22 @@ export class RoleRequestForm extends React.Component<Props, State> {
                             rows={4}
                             value={this.state.comment}
                             onChange={this.handleCommentChange}
-                            placeholder={this.state.requestText?.placeholder_text}
-                            disabled={this.state.requestMade}
+                            placeholder={this.state.roleRequestText?.placeholder_text}
+                            disabled={this.state.roleRequestSent}
                         />
                     </Form.Item>
                     <Form.Item>
-                        <Button type="primary" htmlType="submit" disabled={this.state.requestMade}>
-                            <CheckOutlined /> {this.state.requestText?.submit_button}
+                        <Button type="primary" htmlType="submit" disabled={this.state.roleRequestSent}>
+                            <CheckOutlined /> {this.state.roleRequestText?.submit_button}
                         </Button>
                     </Form.Item>
                 </Form>
+                <RoleRequestModal
+                    visible={this.state.visible}
+                    roleRequestSent={this.state.roleRequestSent}
+                    roleName={this.state.roleRequestText?.role}
+                    onClose={this.closeRoleRequestModal}
+                />
             </div>
         );
     }
