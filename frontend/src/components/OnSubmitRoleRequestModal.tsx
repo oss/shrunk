@@ -1,5 +1,5 @@
 /**
- * Implement the [[RoleRequestModal]] component
+ * Implement the [[OnSubmitRoleRequestModal]] component
  * @packageDocumentation
  */
 
@@ -7,7 +7,7 @@ import React, { Component } from 'react';
 import { Modal, Button } from 'antd/lib';
 
 /**
- * Props for the [[RoleRequestModal]] component
+ * Props for the [[OnSubmitRoleRequestModal]] component
  */
 interface Props {
     /**
@@ -49,6 +49,9 @@ export class RoleRequestModal extends Component<Props> {
                         Close
                     </Button>,
                 ]}
+                maskClosable={false}
+                closable={false}
+                keyboard={false}
             >
                 {this.props.roleRequestSent ? (
                     <p>Success! Your request for the {this.props.roleName} role has been sent. It will be reviewed by an admin to confirm that you meet the necessary requirements for obtaining this role. After your request is processed, an email will be sent to you. <strong>On closing this modal, you will be redirected to the dashboard.</strong></p>

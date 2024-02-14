@@ -6,7 +6,7 @@
 import React from 'react';
 import { Row, Col, Button, Input, Form, Spin } from 'antd/lib';
 import { CheckOutlined } from '@ant-design/icons';
-import { RoleRequestModal } from '../components/RoleRequestModal';
+import { RoleRequestModal } from '../components/OnSubmitRoleRequestModal';
 import base32 from 'hi-base32';
 
 /**
@@ -173,7 +173,7 @@ export class RoleRequestForm extends React.Component<Props, State> {
     }
 
     /**
-     * Closes the role request modal and redirects to the dashboard if the request was sent successfully
+     * Closes the on-submit role request modal and redirects to the dashboard if the request was sent successfully
      * @method
      */
     closeRoleRequestModal = () => {
