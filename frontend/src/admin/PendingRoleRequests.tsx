@@ -7,6 +7,8 @@ import { Row, Col, Button, BackTop} from 'antd/lib';
 import moment from 'moment';
 import { IoReturnUpBack } from 'react-icons/io5';
 import base32 from 'hi-base32';
+import { ProcessRoleRequestModal } from '../components/ProcessRoleRequestModal';
+import { ConsoleSqlOutlined } from '@ant-design/icons';
 
 /**
  * Data describing the request text for a role
@@ -88,8 +90,8 @@ interface RoleRequestInfo {
  */
 const PendingRoleRequestRow: React.FC<{
     role_request: RoleRequestInfo;
-    onGrant: (entity: string, grant_message : string) => Promise<void>;
-    onDeny: (entity: string, deny_message: string) => Promise<void>;
+    onOpenGrantModal: () => void;
+    onOpenDenyModal: () => void;
 }> = (props) => {
     return (
         <Row className="primary-row">
@@ -140,17 +142,13 @@ const PendingRoleRequestRow: React.FC<{
             <Col span={4} className="btn-col">
                 <Button
                     type="primary"
-                    onClick={async () => {
-                        await props.onGrant(props.role_request.entity, "Placeholder grant message");
-                    }}
+                    onClick={props.onOpenGrantModal}
                 >
                     GRANT
                 </Button>
                 <Button
                     danger
-                    onClick={async () => {
-                        await props.onDeny(props.role_request.entity, "Placeholder deny message");
-                    }}
+                    onClick={props.onOpenDenyModal}
                 >
                     DENY
                 </Button>
@@ -182,14 +180,26 @@ export interface State {
      */
     role_requests: RoleRequestInfo[];
     /**
-     * True if the modal has been closed by the user
+     * Whether the modal is visible
      * @property
      */
-    hidden: boolean;
+    visible: boolean;
     /**
      * The display text for the role
      */
     requestText: RequestText | null;
+
+    /**
+     * The entity that is being processed
+     * @property
+     */
+    selectedEntity: string;
+
+    /**
+     * Whether the process is to grant or deny the role request
+     * @property
+     */
+    toGrant: boolean;
 }
 
 /**
@@ -201,8 +211,10 @@ export class PendingRoleRequests extends Component<Props, State> {
         super(props);
         this.state = {
             role_requests: [],
-            hidden: false,
-            requestText: null
+            visible: false,
+            requestText: null,
+            selectedEntity: '',
+            toGrant: false,
         };
     }
 
@@ -240,70 +252,27 @@ export class PendingRoleRequests extends Component<Props, State> {
     }
 
     /**
-     * Grant a pending role request
-     * @param entity the entity making the request
-     * @param grant_message the message to include with the grant
+     * Open the modal to grant the role request
+     * @method
      */
-    onGrant = async (entity: string, grant_message: string): Promise<void> => {
-        const encodedEntity = base32.encode(entity);
-        await fetch(`/api/v1/role/${this.props.name}/entity/${encodedEntity}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                comment: grant_message,
-                }),
-            });
-
-        await fetch(`/api/v1/role_request`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                role: this.props.name,
-                entity: entity,
-                comment: grant_message,
-                granted: true,
-            })
-        })
-        .then(response => {
-            if (response.status === 204) {
-                console.log(`Granted request for ${entity} with message ${grant_message}`);
-                this.updatePendingRoleRequests();
-            } else {
-                console.error(`Failed to grant request for ${entity} with message "${grant_message}"`);
-            }
-        })
-        .catch(error => console.error('Error:', error));
+    onOpenGrantModal = (entity: string): void => {
+        this.setState({ visible: true, selectedEntity: entity, toGrant: true });
     }
 
     /**
-     * Deny a pending role request
-     * @param entity the entity making the request
-     * @param deny_message the message to include with the deny
+     * Open the modal to deny the role request
+     * @method
      */
-    onDeny = async (entity: string, deny_message: string): Promise<void> => {
-        await fetch(`/api/v1/role_request`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                role: this.props.name,
-                entity: entity,
-                comment: deny_message,
-                granted: false,
-            })
-        })
-        .then(response => {
-            if (response.status === 204) {
-                console.log(`Denied request for ${entity} with message ${deny_message}`);
-                this.updatePendingRoleRequests();
-            } else {
-                console.error(`Failed to deny request for ${entity} with message "${deny_message}"`);
-            }
-        })
-        .catch(error => console.error('Error:', error));
+    onOpenDenyModal = (entity: string): void => {
+        this.setState({ visible: true, selectedEntity: entity, toGrant: false });
+    }
+
+    /**
+     * Close the modal exclusively
+     * @method
+     */
+    closeModal = () => {
+        this.setState({ visible : false });
     }
 
     render() {
@@ -325,10 +294,19 @@ export class PendingRoleRequests extends Component<Props, State> {
                     <PendingRoleRequestRow
                         key={role_request.entity}
                         role_request={role_request}
-                        onGrant={this.onGrant}
-                        onDeny={this.onDeny}
+                        onOpenGrantModal={() => this.onOpenGrantModal(role_request.entity)}
+                        onOpenDenyModal={() => this.onOpenDenyModal(role_request.entity)}
                     />
                 ))}
+                <ProcessRoleRequestModal
+                    name={this.props.name}
+                    visible={this.state.visible}
+                    entity={this.state.selectedEntity}
+                    toGrant={this.state.toGrant}
+                    roleName={this.state.requestText?.role}
+                    onClose={this.closeModal}
+                    updatePendingRoleRequests={this.updatePendingRoleRequests}
+                />
             </div>
         );
     }
