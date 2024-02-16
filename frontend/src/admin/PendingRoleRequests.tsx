@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 import React, { Component } from 'react';
-import { Row, Col, Button, BackTop} from 'antd/lib';
+import { Row, Col, Button, BackTop, Spin } from 'antd/lib';
 import moment from 'moment';
 import { IoReturnUpBack } from 'react-icons/io5';
 import base32 from 'hi-base32';
@@ -167,6 +167,12 @@ export interface Props {
      * @property
      */
     name: string;
+
+    /**
+     * The user's privileges
+     * @property
+     */
+    userPrivileges: Set<string>;
 }
 
 /**
@@ -187,12 +193,6 @@ export interface State {
     visible: boolean;
 
     /**
-     * The grant or deny message
-     * @property
-     */
-    message: string;
-
-    /**
      * The display text for the role
      */
     requestText: RequestText | null;
@@ -208,6 +208,13 @@ export interface State {
      * @property
      */
     toGrant: boolean;
+
+    /**
+     * Whether the user has permission to view this role. If `false`, an error message
+     * is displayed
+     * @property
+     */
+    hasPermission: boolean;
 }
 
 /**
@@ -220,45 +227,18 @@ export class PendingRoleRequests extends Component<Props, State> {
         this.state = {
             role_requests: [],
             visible: false,
-            message: '',
             requestText: null,
             selectedEntity: '',
             toGrant: false,
+            hasPermission: true,
         };
     }
 
     async componentDidMount(): Promise<void> {
         await this.updatePendingRoleRequests();
         await this.updateRoleRequestText();
+        this.updateHasPermission();
     }
-
-    /**
-     * Reset the message to an empty string
-     * @method
-     */
-    resetMessage = (): void => {
-        this.setState({ message: '' });
-    }
-
-    /** 
-     * Handle change in the message input
-     * @method
-     */
-    handleMessageChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-        this.setState({ message: event.target.value });
-    }
-
-    /** 
-     * Validate the message input by ensuring that it does not contain newline characters or tabs
-     * @method
-     */
-    validateSpacing = (_: any, value: string) => {
-        if (!value.includes('\n') && !value.includes('\t')) {
-            return Promise.resolve();
-        }
-        return Promise.reject(new Error('Cannot use newline characters or tabs'));
-    }
-
 
     /**
      * Fetch the list of pending requests for the role from the server
@@ -282,11 +262,30 @@ export class PendingRoleRequests extends Component<Props, State> {
      * @method
      */
     updateRoleRequestText = async (): Promise<void> => {
-        const result = await fetch(`/api/v1/role/${this.props.name}/request-text`).then(
+        const result = await fetch(`/api/v1/role_request/${this.props.name}/request-text`).then(
             (resp) => resp.json(),
-          );
-          this.setState({ requestText: result.text as RequestText });
+        );
+        this.setState({ requestText: result.text as RequestText });
     }
+
+    /**
+   * Determine whether the user has permission to view/edit the given
+   * role based on the role name and the user's permissions
+   * @method
+   */
+    updateHasPermission = (): void => {
+        let hasPermission = false;
+
+        if (this.props.name === 'whitelisted' && this.props.userPrivileges.has('facstaff')) {
+            hasPermission = true;
+        }
+
+        if (this.props.userPrivileges.has('admin')) {
+            hasPermission = true;
+        }
+
+        this.setState({ hasPermission });
+    };
 
     /**
      * Open the modal to grant the role request
@@ -309,10 +308,25 @@ export class PendingRoleRequests extends Component<Props, State> {
      * @method
      */
     closeModal = () => {
-        this.setState({ visible : false });
+        this.setState({ visible: false });
     }
 
     render() {
+        if (!this.state.hasPermission) {
+            return (
+                <Row className="primary-row">
+                    <Col span={24}>
+                        <span className="page-title">
+                            You do not have permission to edit this role.
+                        </span>
+                    </Col>
+                </Row>
+            );
+        }
+
+        if (this.state.requestText === null) {
+            return <Spin size="large" />;
+        }
         return (
             <div>
                 <BackTop />
@@ -336,17 +350,13 @@ export class PendingRoleRequests extends Component<Props, State> {
                     />
                 ))}
                 <ProcessRoleRequestModal
-                    name={this.props.name}
                     visible={this.state.visible}
-                    message={this.state.message}
                     entity={this.state.selectedEntity}
                     toGrant={this.state.toGrant}
+                    name={this.props.name}
                     roleName={this.state.requestText?.role}
                     onClose={this.closeModal}
                     updatePendingRoleRequests={this.updatePendingRoleRequests}
-                    resetMessage={this.resetMessage}
-                    handleMessageChange={this.handleMessageChange}
-                    validateSpacing={this.validateSpacing}
                 />
             </div>
         );

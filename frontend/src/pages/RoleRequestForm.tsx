@@ -106,13 +106,13 @@ export class RoleRequestForm extends React.Component<Props, State> {
         super(props);
         this.state = {
             roleRequestText: null,
-            comment : '',
+            comment: '',
             roleRequestSent: false,
             visible: false
         };
     }
 
-    async componentDidMount(): Promise<void>{
+    async componentDidMount(): Promise<void> {
         await this.updateRoleRequestText();
         await this.updateRequestMade();
     }
@@ -122,10 +122,10 @@ export class RoleRequestForm extends React.Component<Props, State> {
      * @method
      */
     updateRoleRequestText = async (): Promise<void> => {
-        const result = await fetch(`/api/v1/role/${this.props.name}/request-text`).then(
+        const result = await fetch(`/api/v1/role_request/${this.props.name}/request-text`).then(
             (resp) => resp.json(),
-          );
-          this.setState({ roleRequestText: result.text as RoleRequestText });
+        );
+        this.setState({ roleRequestText: result.text as RoleRequestText });
     }
 
     /**
@@ -135,14 +135,14 @@ export class RoleRequestForm extends React.Component<Props, State> {
     updateRequestMade = async (): Promise<void> => {
         const encodedEntity = base32.encode(this.props.netid)
         fetch(`/api/v1/role_request/${this.props.name}/${encodedEntity}`)
-        .then(response => {
-            if (response.status === 204) {
-                this.setState({ roleRequestSent: false });
-            } else if (response.status === 200) {
-                this.setState({ roleRequestSent: true });
-            }
-        })
-        .catch(error => console.error('Error:', error));
+            .then(response => {
+                if (response.status === 204) {
+                    this.setState({ roleRequestSent: false });
+                } else if (response.status === 200) {
+                    this.setState({ roleRequestSent: true });
+                }
+            })
+            .catch(error => console.error('Error:', error));
     }
 
     /** 
@@ -160,16 +160,14 @@ export class RoleRequestForm extends React.Component<Props, State> {
                 comment: this.state.comment
             })
         })
-        .then(response => {
-            if (response.status === 201) {
-                this.setState({ roleRequestSent: true });
-                console.log(this.props.netid + ' successfully requested the ' + this.state.roleRequestText?.role + ' role on ' + new Date().toISOString() + ' with comment: ' + this.state.comment);
-
-            } else if (response.status === 400) {
-                console.error('Error: Bad request');
-            }
-        })
-        .catch(error => console.error('Error:', error));
+            .then(response => {
+                if (response.status === 201) {
+                    this.setState({ roleRequestSent: true });
+                } else if (response.status === 400) {
+                    console.error('Error: Bad request');
+                }
+            })
+            .catch(error => console.error('Error:', error));
     }
 
     /**
@@ -215,7 +213,7 @@ export class RoleRequestForm extends React.Component<Props, State> {
     render(): React.ReactNode {
         if (this.state.roleRequestText === null) {
             return <Spin size="large" />;
-          }
+        }
         return (
             <div>
                 <Row className="primary-row">

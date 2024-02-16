@@ -443,6 +443,7 @@ export class Shrunk extends React.Component<Props, State> {
                     <Route exact path="/admin/role_requests/power_user">
                       <PendingRoleRequests
                         name="power_user"
+                        userPrivileges={this.props.userPrivileges}
                       />
                     </Route>
                       

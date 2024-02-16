@@ -39,6 +39,26 @@ def get_pending_role_requests(netid: str, client: ShrunkClient, role: str) -> An
         abort(403)
     return jsonify({'requests': client.role_requests.get_pending_role_requests(role)}), 200
 
+@bp.route('/<role>/count', methods=['GET'])
+@require_login
+def get_pending_role_requests_count(netid: str, client: ShrunkClient, role: str) -> Any:
+    """``GET /api/role_request/<role>/count``
+
+    Args:
+        netid (str): the netid of the user logged in
+        client (ShrunkClient): the client object
+        role (str): the role to get pending requests count for
+
+    Obtains the count of all pending role requests. Response format:
+    
+    .. code-block:: json
+    
+       { "count": int }
+    """
+    if not client.roles.has('admin', netid):
+        abort(403)
+    return jsonify({'count': client.role_requests.get_pending_role_requests_count(role)}), 200
+
 @bp.route('/<role>/<b32:entity>', methods=['GET'])
 @require_login
 def get_pending_role_request_for_entity(netid: str, client: ShrunkClient, entity: str, role: str) -> Any:
@@ -132,4 +152,24 @@ def delete_role_request(netid: str, client: ShrunkClient) -> Any:
         return Response(status=404)
     client.role_requests.delete_role_request(role, entity, granted)
     return Response(status=204)
+
+@bp.route('/<role_name>/request-text', methods=['GET'])
+@require_login
+def get_role_request_text(netid: str, client: ShrunkClient, role_name: str) -> Any:
+    """``GET /api/role_request/<role_name>/request-text``
+    
+    Get the request-text for a role. Response format:
+    
+    .. code-block:: json
+    
+       { "text": "role-request-text" }
+    
+    For the format of the role request text, see :py:mod:`shrunk.client.roles`.
+    
+    :param netid:
+    :param client:
+    :param role_name:
+    """
+    text = client.roles.get_request_text(role_name)
+    return jsonify({'text': text})
     

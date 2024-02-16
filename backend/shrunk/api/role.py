@@ -31,28 +31,6 @@ def get_roles(netid: str, client: ShrunkClient) -> Any:
         abort(403)
     return jsonify({'roles': client.roles.get_role_names()})
 
-@bp.route('/<role_name>/request-text', methods=['GET'])
-@require_login
-def get_role_request_text(netid: str, client: ShrunkClient, role_name: str) -> Any:
-    """``GET /api/role/<role_name>/request-text``
-    
-    Get the request-text for a role. Response format:
-    
-    .. code-block:: json
-    
-       { "text": "role-request-text" }
-    
-    For the format of the role request text, see :py:mod:`shrunk.client.roles`.
-    
-    :param netid:
-    :param client:
-    :param role_name:
-    """
-    text = client.roles.get_request_text(role_name)
-    return jsonify({'text': text})
-    
-
-
 @bp.route('/<role_name>/text', methods=['GET'])
 @require_login
 def get_role_text(netid: str, client: ShrunkClient, role_name: str) -> Any:
