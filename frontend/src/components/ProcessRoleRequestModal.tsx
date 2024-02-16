@@ -6,6 +6,7 @@
 import React, { Component } from 'react';
 import { Modal, Button, Input, Form } from 'antd/lib';
 import base32 from 'hi-base32';
+import { FormInstance } from 'antd/lib/form';
 
 interface Props {
     /**
@@ -19,6 +20,12 @@ interface Props {
      * @property
      */
     visible: boolean;
+
+    /**
+     * The grant or deny message
+     * @property
+     */
+    message: string;
 
     /**
      * The entity that is being processed
@@ -49,24 +56,39 @@ interface Props {
      * @property
      */
     updatePendingRoleRequests: () => Promise<void>;
-}
 
-interface State {
     /**
-     * The comment for granting or denying the role request
+     * Function to reset the message to an empty string
      * @property
      */
-    comment: string;
+    resetMessage: () => void;
+
+    /** 
+     * Function to handle change in the message input
+     * @property
+     */
+    handleMessageChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
+
+    /**
+     * Function to validate the message input
+     * @property
+     */
+    validateSpacing: (_: any, value: string) => Promise<void>;
 }
 
-export class ProcessRoleRequestModal extends Component<Props, State> { 
+export class ProcessRoleRequestModal extends Component<Props> { 
+    // Create a ref for the form to ensure that the form is reset when the modal is closed
+    formRef = React.createRef<FormInstance>();
+
     constructor(props: Props){
         super(props);
-        this.state = {
-            comment: '',
-        };
     }
 
+    /**
+     * Process the role request, reset the form, and close the modal
+     * @param entity the entity making the request
+     * @param message the message to include with the grant/deny
+     */
     onProcess = async (entity:string, message: string): Promise<void> => {
         if (this.props.toGrant) {
             await this.onGrant(entity, message);
@@ -74,6 +96,16 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
             await this.onDeny(entity, message);
         }
         await this.props.updatePendingRoleRequests();
+        this.onResetFormAndClose();
+    }
+
+    /**
+     * Reset the form and close the modal
+     * @method
+     */
+    onResetFormAndClose = (): void => {
+        this.formRef.current?.resetFields();
+        this.props.resetMessage();
         this.props.onClose();
     }
 
@@ -142,40 +174,19 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
         .catch(error => console.error('Error:', error));
     }
 
-    /** 
-     * Handle change in the comment input
-     * @method
-     */
-    handleCommentChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-        this.setState({ comment: event.target.value });
-    }
-
-    /** 
-     * Validate the comment input by ensuring that it does not contain newline characters or tabs
-     * @method
-     */
-    validateSpacing = (_: any, value: string) => {
-        if (!value.includes('\n') && !value.includes('\t')) {
-            return Promise.resolve();
-        }
-        return Promise.reject(new Error('Cannot use newline characters or tabs'));
-    }
-
     render(){
         return (
             <Modal
                 visible={this.props.visible}
-                title={this.props.toGrant ? `Grant ${this.props.roleName} Role to ${this.props.entity}` : `Deny ${this.props.roleName} Role to ${this.props.entity}`}
+                title={this.props.toGrant ? `Grant ${this.props.roleName} role to ${this.props.entity}` : `Deny ${this.props.roleName} role to ${this.props.entity}`}
                 onCancel={() => {
-                    this.setState({ comment: '' }, () => {
-                        this.props.onClose();
-                    });
+                    this.onResetFormAndClose();
                 }}
                 footer={[
-                    <Button type="default" key="back" onClick={() => {this.props.onClose();}}>
+                    <Button type="default" key="back" onClick={() => {this.onResetFormAndClose();}}>
                         Cancel
                     </Button>,
-                    <Button type="primary" key="submit" onClick={() => {this.onProcess(this.props.entity, this.state.comment)}}>
+                    <Button type="primary" key="submit" onClick={() => {this.onProcess(this.props.entity, this.props.message)}}>
                         Submit
                     </Button>
                 ]}
@@ -183,24 +194,19 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
                 closable={false}
                 keyboard={false}
             >
-                {this.props.toGrant ? (
-                    <p>Include an optional grant comment:</p>
-                ) : (
-                    <p>Include an optional deny comment:</p>
-                )}
-                <Form>
+                <Form ref={this.formRef}>
                     <Form.Item
                         name="comment"
                         rules={[
                             {
-                                validator: this.validateSpacing,
+                                validator: this.props.validateSpacing,
                             },
                         ]}
                     >
                         <Input.TextArea 
-                            value={this.state.comment}
-                            onChange={this.handleCommentChange}
-                            placeholder='Enter a comment (optional)'
+                            value={this.props.message}
+                            onChange={this.props.handleMessageChange}
+                            placeholder='Enter a message (optional)'
                         />
                     </Form.Item>
                 </Form>

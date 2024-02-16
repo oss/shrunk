@@ -179,11 +179,19 @@ export interface State {
      * @property
      */
     role_requests: RoleRequestInfo[];
+
     /**
      * Whether the modal is visible
      * @property
      */
     visible: boolean;
+
+    /**
+     * The grant or deny message
+     * @property
+     */
+    message: string;
+
     /**
      * The display text for the role
      */
@@ -212,6 +220,7 @@ export class PendingRoleRequests extends Component<Props, State> {
         this.state = {
             role_requests: [],
             visible: false,
+            message: '',
             requestText: null,
             selectedEntity: '',
             toGrant: false,
@@ -222,6 +231,34 @@ export class PendingRoleRequests extends Component<Props, State> {
         await this.updatePendingRoleRequests();
         await this.updateRoleRequestText();
     }
+
+    /**
+     * Reset the message to an empty string
+     * @method
+     */
+    resetMessage = (): void => {
+        this.setState({ message: '' });
+    }
+
+    /** 
+     * Handle change in the message input
+     * @method
+     */
+    handleMessageChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+        this.setState({ message: event.target.value });
+    }
+
+    /** 
+     * Validate the message input by ensuring that it does not contain newline characters or tabs
+     * @method
+     */
+    validateSpacing = (_: any, value: string) => {
+        if (!value.includes('\n') && !value.includes('\t')) {
+            return Promise.resolve();
+        }
+        return Promise.reject(new Error('Cannot use newline characters or tabs'));
+    }
+
 
     /**
      * Fetch the list of pending requests for the role from the server
@@ -301,11 +338,15 @@ export class PendingRoleRequests extends Component<Props, State> {
                 <ProcessRoleRequestModal
                     name={this.props.name}
                     visible={this.state.visible}
+                    message={this.state.message}
                     entity={this.state.selectedEntity}
                     toGrant={this.state.toGrant}
                     roleName={this.state.requestText?.role}
                     onClose={this.closeModal}
                     updatePendingRoleRequests={this.updatePendingRoleRequests}
+                    resetMessage={this.resetMessage}
+                    handleMessageChange={this.handleMessageChange}
+                    validateSpacing={this.validateSpacing}
                 />
             </div>
         );
