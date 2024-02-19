@@ -381,7 +381,7 @@ export class Role extends React.Component<Props, State> {
       <>
         <BackTop />
         <Row className="primary-row">
-          <Col span={24}>
+          <Col span={20}>
             <Button
               type="text"
               href="/app/#/admin"
@@ -392,6 +392,22 @@ export class Role extends React.Component<Props, State> {
               {this.state.roleText.grant_title}
             </span>
           </Col>
+          {['whitelisted', 'power_user', 'admin', 'facstaff'].includes(this.props.name) && (
+          <Col span={4} className="btn-col">
+            <Button
+              icon={
+                this.state.loading ? (
+                  <LoadingOutlined spin />
+                ) : (
+                  <CloudDownloadOutlined />
+                )
+              }
+              onClick={this.downloadCsv}
+            >
+            Download users to CSV
+            </Button>
+          </Col>
+          )}
         </Row>
 
         <Row className="primary-row">
@@ -403,25 +419,6 @@ export class Role extends React.Component<Props, State> {
             />
           </Col>
         </Row>
-
-        {['whitelisted', 'power_user', 'admin', 'facstaff'].includes(this.props.name) && (
-        <Row className="primary-row">
-          <Col span={24}>
-            <Button
-              icon={
-                this.state.loading ? (
-                  <LoadingOutlined spin />
-                ) : (
-                  <CloudDownloadOutlined />
-                )
-              }
-              onClick={this.downloadCsv}
-            >
-              Download users as CSV
-            </Button>
-          </Col>
-        </Row>
-        )}
 
         {this.state.entities === null ? (
           <Spin size="large" />
