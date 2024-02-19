@@ -170,6 +170,6 @@ def get_role_request_text(netid: str, client: ShrunkClient, role_name: str) -> A
     :param client:
     :param role_name:
     """
-    text = client.roles.get_request_text(role_name)
+    text = client.role_requests.get_request_text(role_name)
     return jsonify({'text': text})
     
