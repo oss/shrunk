@@ -54,7 +54,7 @@ export class RoleRequestModal extends Component<Props> {
                 keyboard={false}
             >
                 {this.props.roleRequestSent ? (
-                    <p>Success! Your request for the {this.props.roleName} role has been sent. It will be reviewed by an admin to confirm that you meet the necessary requirements for obtaining this role. After your request is processed, an email will be sent to you. <strong>On closing this modal, you will be redirected to the dashboard.</strong></p>
+                    <p>Success! You should receive a confirmation email from <strong>noreply@go.rutgers.edu</strong> for your {this.props.roleName} role request. On closing this modal, you will be redirected to the dashboard.</p>
                 ) : (
                     <p>An unexpected error has occurred when trying to send a request for the {this.props.roleName} role. Please contact <a href="mailto:oss@oit.rutgers.edu">oss@oit.rutgers.edu</a></p>
                 )}

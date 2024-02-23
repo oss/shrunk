@@ -114,12 +114,13 @@ class RoleRequestClient:
         display_role_name = ''
         if role_name == 'power_user':
             display_role_name = 'power user'
+            capitalized_role_name = 'Power User'
         plaintext_message = f"""
         
         
         Dear {requesting_netid},
         
-        You are receiving this email because you have requested the {display_role_name} role. Your request will be manually processed to ensure that you meet the requirements for this role. You will receive an email when your request has been processed.
+        This email is to confirm your request for the {display_role_name} role. Please wait for your request to be processed, as an admin needs to manually check whether you meet the necessary requirements for this role. You will receive another email on your request's approval/denial.
         
         Sincerely,
         The OSS Team
@@ -160,7 +161,7 @@ class RoleRequestClient:
             <body>
                 <p>Dear {requesting_netid},</p>
 
-                <p>You are receiving this email because you have requested the <span class="requested-role">{display_role_name}</span> role. Your request will be manually processed to ensure that you meet the requirements for this role. You will receive an email when your request has been processed.</p>
+                <p>This email is to confirm your request for the <span class="requested-role">{display_role_name}</span> role. Please wait for your request to be processed, as an admin needs to manually check whether you meet the necessary requirements for this role. You will receive another email on your request's approval/denial.</p>
                 
                 <p>Sincerely,</p>
                 <p>The OSS Team</p>
@@ -173,7 +174,7 @@ class RoleRequestClient:
         """
         
         mail.send_mail(
-            subject=f'Your {display_role_name} role request confirmation',
+            subject=f'Go: Rutgers University URL Shortener - {capitalized_role_name} Role Request Confirmation',
             body=plaintext_message,
             html_message=html_message,
             from_email='noreply@go.rutgers.edu',
