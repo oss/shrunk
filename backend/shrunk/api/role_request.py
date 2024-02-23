@@ -6,7 +6,9 @@ from flask import Blueprint, jsonify, request, Response
 from werkzeug.exceptions import abort
 
 from shrunk.client import ShrunkClient
-from shrunk.util.decorators import require_login
+from shrunk.util.decorators import require_login, require_mail
+
+from flask_mailman import Mail
 
 
 __all__ = ['role_request']
@@ -114,7 +116,7 @@ def request_role(netid: str, client: ShrunkClient) -> Any:
     client.role_requests.request_role(role, netid, comment)
     return Response(status=201)
 
-# Granting role requests can be done via the Role API (see backend/shrunk/api/role.py)
+# Approving role requests can be done via the Role API (see backend/shrunk/api/role.py)
 
 @bp.route('', methods=['DELETE'])
 @require_login
@@ -124,10 +126,10 @@ def delete_role_request(netid: str, client: ShrunkClient) -> Any:
     Args:
         netid (str): the netid of the user logged in
         client (ShrunkClient): the client object
-        entity (str): the entity to grant the role to
-        role (str): the role to grant
+        entity (str): the entity to approve the role to
+        role (str): the role to approve
     
-    Delete a role request. Granted if granted is true, otherwise denied.
+    Delete a role request.
     
     The request should include a JSON body with the following format:
 
@@ -136,21 +138,17 @@ def delete_role_request(netid: str, client: ShrunkClient) -> Any:
        {
            "role": "<role>",
            "entity": "<entity>",
-           "comment": "<comment>"
-           "granted": true/false
        }
     """
     data = request.get_json()
     role = data.get('role')
     entity = data.get('entity')
-    comment = data.get('comment')
-    granted = data.get('granted')
     
     if not client.roles.has('admin', netid):
         abort(403)
     if not client.role_requests.get_pending_role_request_for_entity(role, entity):
         return Response(status=404)
-    client.role_requests.delete_role_request(role, entity, granted)
+    client.role_requests.delete_role_request(role, entity)
     return Response(status=204)
 
 @bp.route('/<role_name>/request-text', methods=['GET'])
@@ -170,6 +168,32 @@ def get_role_request_text(netid: str, client: ShrunkClient, role_name: str) -> A
     :param client:
     :param role_name:
     """
-    text = client.role_requests.get_request_text(role_name)
+    text = client.role_requests.get_role_request_text(role_name)
     return jsonify({'text': text})
+
+@bp.route('/confirmation', methods=['POST'])
+@require_mail
+@require_login
+def confirm_role_request(netid: str, client: ShrunkClient, mail: Mail) -> Any:
+    """``POST /api/role_request/<role_name>/confirmation``
+    
+    Send a confirmation email for a role request. 
+    
+    The request should include a JSON body with the following format:
+    
+    .. code-block:: json
+    
+       {"role_name": "<role_name>"}
+    
+    :param netid: the netid of the user logged in
+    :param client: the client object
+    :param mail: the mail object
+    """
+    data = request.get_json()
+    role_name = data.get('role_name')
+    
+    if not client.role_requests.get_pending_role_request_for_entity(role_name, netid):
+        return Response(status=404)
+    client.role_requests.send_role_request_confirmation(netid, mail, role_name)
+    return Response(status=200)
     

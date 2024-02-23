@@ -23,10 +23,10 @@ interface Props {
     entity: string;
 
     /**
-     * Whether the process is to grant or deny the role request
+     * Whether the process is to approve or deny the role request
      * @property
      */
-    toGrant: boolean;
+    toApprove: boolean;
 
     /**
      * The role name (The internal identifier, not the display name)
@@ -55,7 +55,7 @@ interface Props {
 
 interface State {
     /**
-     * The comment to include with the grant/deny
+     * The comment to include with the approve/deny
      * @property
      */
     comment: string;
@@ -76,11 +76,11 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
     /**
      * Process the role request, reset the form, and close the modal
      * @param entity the entity making the request
-     * @param comment the comment to include with the grant/deny
+     * @param comment the comment to include with the approve/deny
      */
     onProcess = async (entity: string, comment: string): Promise<void> => {
-        if (this.props.toGrant) {
-            await this.onGrant(entity, comment);
+        if (this.props.toApprove) {
+            await this.onApprove(entity, comment);
         } else {
             await this.onDeny(entity, comment);
         }
@@ -99,17 +99,17 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
     }
 
     /**
-     * Grant a pending role request
+     * Approve a pending role request
      * @param entity the entity making the request
-     * @param grant_comment the comment to include with the grant
+     * @param approve_comment the comment to include with the approval
      */
-    onGrant = async (entity: string, grant_comment: string): Promise<void> => {
+    onApprove = async (entity: string, approve_comment: string): Promise<void> => {
         const encodedEntity = base32.encode(entity);
         await fetch(`/api/v1/role/${this.props.name}/entity/${encodedEntity}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(
-                grant_comment !== '' ? { comment: grant_comment } : {}
+                approve_comment !== '' ? { comment: approve_comment } : {}
             ),
         });
 
@@ -121,8 +121,6 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
             body: JSON.stringify({
                 role: this.props.name,
                 entity: entity,
-                comment: grant_comment !== '' ? grant_comment : undefined,
-                granted: true,
             })
         })
             .then(response => {
@@ -149,8 +147,6 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
             body: JSON.stringify({
                 role: this.props.name,
                 entity: entity,
-                comment: deny_comment !== '' ? deny_comment : undefined,
-                granted: false,
             })
         })
             .then(response => {
@@ -194,7 +190,7 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
         return (
             <Modal
                 visible={this.props.visible}
-                title={this.props.toGrant ? `Grant ${this.props.roleName} role to ${this.props.entity}` : `Deny ${this.props.roleName} role to ${this.props.entity}`}
+                title={this.props.toApprove ? `Approve ${this.props.roleName} role request for ${this.props.entity}` : `Deny ${this.props.roleName} role request for ${this.props.entity}`}
                 onCancel={() => {
                     this.onResetFormAndClose();
                 }}

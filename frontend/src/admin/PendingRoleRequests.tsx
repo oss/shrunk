@@ -90,7 +90,7 @@ interface RoleRequestInfo {
  */
 const PendingRoleRequestRow: React.FC<{
     role_request: RoleRequestInfo;
-    onOpenGrantModal: () => void;
+    onOpenApproveModal: () => void;
     onOpenDenyModal: () => void;
 }> = (props) => {
     return (
@@ -142,9 +142,9 @@ const PendingRoleRequestRow: React.FC<{
             <Col span={4} className="btn-col">
                 <Button
                     type="primary"
-                    onClick={props.onOpenGrantModal}
+                    onClick={props.onOpenApproveModal}
                 >
-                    GRANT
+                    APPROVE
                 </Button>
                 <Button
                     danger
@@ -204,10 +204,10 @@ export interface State {
     selectedEntity: string;
 
     /**
-     * Whether the process is to grant or deny the role request
+     * Whether the process is to approve or deny the role request
      * @property
      */
-    toGrant: boolean;
+    toApprove: boolean;
 
     /**
      * Whether the user has permission to view this role. If `false`, an error message
@@ -229,7 +229,7 @@ export class PendingRoleRequests extends Component<Props, State> {
             visible: false,
             requestText: null,
             selectedEntity: '',
-            toGrant: false,
+            toApprove: false,
             hasPermission: true,
         };
     }
@@ -288,11 +288,11 @@ export class PendingRoleRequests extends Component<Props, State> {
     };
 
     /**
-     * Open the modal to grant the role request
+     * Open the modal to approve the role request
      * @method
      */
-    onOpenGrantModal = (entity: string): void => {
-        this.setState({ visible: true, selectedEntity: entity, toGrant: true });
+    onOpenApproveModal = (entity: string): void => {
+        this.setState({ visible: true, selectedEntity: entity, toApprove: true });
     }
 
     /**
@@ -300,7 +300,7 @@ export class PendingRoleRequests extends Component<Props, State> {
      * @method
      */
     onOpenDenyModal = (entity: string): void => {
-        this.setState({ visible: true, selectedEntity: entity, toGrant: false });
+        this.setState({ visible: true, selectedEntity: entity, toApprove: false });
     }
 
     /**
@@ -345,14 +345,14 @@ export class PendingRoleRequests extends Component<Props, State> {
                     <PendingRoleRequestRow
                         key={role_request.entity}
                         role_request={role_request}
-                        onOpenGrantModal={() => this.onOpenGrantModal(role_request.entity)}
+                        onOpenApproveModal={() => this.onOpenApproveModal(role_request.entity)}
                         onOpenDenyModal={() => this.onOpenDenyModal(role_request.entity)}
                     />
                 ))}
                 <ProcessRoleRequestModal
                     visible={this.state.visible}
                     entity={this.state.selectedEntity}
-                    toGrant={this.state.toGrant}
+                    toApprove={this.state.toApprove}
                     name={this.props.name}
                     roleName={this.state.requestText?.role}
                     onClose={this.closeModal}

@@ -5,6 +5,8 @@ from .exceptions import InvalidEntity
 
 import pymongo
 
+from flask_mailman import Mail
+
 __all__ = ['RoleRequestClient']
 
 class RoleRequestClient:
@@ -81,7 +83,7 @@ class RoleRequestClient:
             'time_requested': datetime.now(timezone.utc),
         })
         
-    def delete_role_request(self, role: str, entity: str, granted: bool) -> None:
+    def delete_role_request(self, role: str, entity: str) -> None:
         """
         Delete a role request and remember who did it. Delete the request from the database.
 
@@ -92,7 +94,7 @@ class RoleRequestClient:
         self.db.role_requests.delete_one({'role': role, 'entity': entity})
         
     @staticmethod
-    def get_request_text(role: str) -> Any:
+    def get_role_request_text(role: str) -> Any:
         """Get the text for a role request form.
 
         :param role: Role name
@@ -106,6 +108,79 @@ class RoleRequestClient:
                 'submit_button': 'Request power user role',
             }
         return None
+    
+    @staticmethod
+    def send_role_request_confirmation(requesting_netid: str, mail: Mail, role_name: str) -> None:
+        display_role_name = ''
+        if role_name == 'power_user':
+            display_role_name = 'power user'
+        plaintext_message = f"""
+        
+        
+        Dear {requesting_netid},
+        
+        You are receiving this email because you have requested the {display_role_name} role. Your request will be manually processed to ensure that you meet the requirements for this role. You will receive an email when your request has been processed.
+        
+        Sincerely,
+        The OSS Team
+        
+        Please do not reply to this email. You may direct any questions to oss@oit.rutgers.edu.
+        
+        """
+        
+        html_message = f"""
+        
+        <!DOCTYPE html>
+        <html lang="en-US">
+            <head>
+                <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+                <style>
+                    * {{
+                        font-family: Arial, sans-serif;
+                    }}
+
+                    .requested-role {{
+                        font-weight: bold;
+                    }}
+
+                    .btn {{
+                        display: block;
+                        padding: 10px;
+                        width: 200px;
+                        text-align: center;
+                        color: white;
+                        font-weight: bold;
+                        text-decoration: none;
+                        border-radius: 3px;
+                        transition: background-color 0.3s ease-in-out;
+                    }}
+                </style>
+            </head>
+            <body>
+                <p>Dear {requesting_netid},</p>
+
+                <p>You are receiving this email because you have requested the <span class="requested-role">{display_role_name}</span> role. Your request will be manually processed to ensure that you meet the requirements for this role. You will receive an email when your request has been processed.</p>
+                
+                <p>Sincerely,</p>
+                <p>The OSS Team</p>
+
+                <p>Please do not reply to this email. You may direct any questions to
+                <a href="mailto:oss@oit.rutgers.edu">oss@oit.rutgers.edu</a>.</p>
+            </body>
+        </html>
+
+        """
+        
+        mail.send_mail(
+            subject=f'Your {display_role_name} role request confirmation',
+            body=plaintext_message,
+            html_message=html_message,
+            from_email='noreply@go.rutgers.edu',
+            recipient_list=[f'{requesting_netid}@rutgers.edu'],
+        )
+
+
 
         
     

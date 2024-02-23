@@ -163,11 +163,34 @@ export class RoleRequestForm extends React.Component<Props, State> {
             .then(response => {
                 if (response.status === 201) {
                     this.setState({ roleRequestSent: true });
+                    this.confirmRequest();
                 } else if (response.status === 400) {
                     console.error('Error: Bad request');
                 }
             })
             .catch(error => console.error('Error:', error));
+    }
+
+    /**
+     * Confirm the request for the role by sending an email
+     * @method
+     */
+    confirmRequest = async () => {
+        await fetch(`/api/v1/role_request/confirmation`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                role_name: this.props.name,
+            })
+        }).then(response => {
+            if (response.status === 200) {
+                console.log('Confirmation email sent successfully');
+            } else if (response.status === 404) {
+                console.error('Error: email failed to send');
+            }
+        })
     }
 
     /**
