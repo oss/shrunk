@@ -5,7 +5,15 @@
 
 import React from 'react';
 
-import { Row, Col, Pagination, Spin, Dropdown, Button } from 'antd/lib';
+import {
+  Row,
+  Col,
+  Pagination,
+  Spin,
+  Dropdown,
+  Button,
+  message,
+} from 'antd/lib';
 import { PlusCircleFilled } from '@ant-design/icons';
 
 import moment from 'moment';
@@ -705,14 +713,22 @@ export class Dashboard extends React.Component<Props, State> {
     }
 
     const promises = [];
+    const patchRequest = await fetch(`/api/v1/link/${oldLinkInfo.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patchReq),
+    });
 
-    promises.push(
-      fetch(`/api/v1/link/${oldLinkInfo.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(patchReq),
-      }),
-    );
+    // //get the status and the json message
+    const patchRequestStatus = patchRequest.status;
+
+    if (patchRequestStatus !== 204) {
+      message.error(
+        'There was an error editing the link. If modifying long URL, you might need to create a new link.',
+        4,
+      );
+      return;
+    }
 
     const oldAliases = new Map(
       oldLinkInfo.aliases.map((alias) => [alias.alias, alias]),

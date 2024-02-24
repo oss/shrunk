@@ -144,11 +144,11 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
     except SecurityRiskDetected:
         return jsonify({'errors': ['This url has been detected to be a potential security \
             risk and requires manual verification. We apologize for the inconvenience and we\'ll\
-            verify the link as soon as possible. For more information, contact us at oss@oss.rutgers.edu']}), 403
+            verify the link as soon as possible. For more information, contact us at oss@oit.rutgers.edu']}), 403
     except LinkIsPendingOrRejected:
         return jsonify({'errors': ['This url was previously detected to be a potential security risk. \
             The url either is pending verification or has been rejected. For more information, contact us at \
-            oss@oss.rutgers.edu']}), 403
+            oss@oit.rutgers.edu']}), 403
     except NotUserOrOrg as e:
         return jsonify({'errors': [str(e)]}), 400
     return jsonify({'id': str(link_id)})
@@ -282,6 +282,7 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
         client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
+
     if not client.roles.has('admin', netid) and not client.links.may_edit(link_id, netid):
         abort(403)
     if 'owner' in req and not is_valid_netid(req['owner']):
@@ -296,6 +297,11 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
             client.links.remove_expiration_time(link_id)
     except BadLongURLException:
         abort(400)
+    except SecurityRiskDetected:
+        return 'Potential security risk. Please create a new link instead.', 403
+    except LinkIsPendingOrRejected:
+        return 'Potential security risk. Please create a new link instead.', 403
+
     return '', 204
 
 

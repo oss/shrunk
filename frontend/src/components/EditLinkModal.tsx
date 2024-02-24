@@ -132,7 +132,8 @@ export const EditLinkModal: React.FC<Props> = (props) => {
         : moment(props.linkInfo.expiration_time),
     aliases: props.linkInfo.aliases.filter((alias) => !alias.deleted),
   };
-  const mayEditOwner = props.netid === initialValues.owner;
+  const mayEditOwner =
+    props.netid === initialValues.owner || props.userPrivileges.has('admin');
   const isAnInitialAlias = (alias: any) => {
     if (
       initialValues.aliases.some((obj: { alias: any }) => obj.alias === alias)
@@ -151,7 +152,7 @@ export const EditLinkModal: React.FC<Props> = (props) => {
     form.validateFields().then((values) => {
       props.onOk(values as EditLinkFormValues);
     });
-  }
+  };
 
   return (
     <Modal

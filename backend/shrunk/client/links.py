@@ -181,6 +181,9 @@ class LinksClient:
         if title is None and long_url is None and expiration_time is None and owner is None:
             return
 
+        if self.other_clients.security.security_risk_detected(long_url):
+            raise SecurityRiskDetected
+
         link_info = self.get_link_info(link_id)
 
         fields: Dict[str, Any] = {}
@@ -625,7 +628,7 @@ You may follow the following link to accept the request:
 or the following link to deny the request:
     {deny_url}
 
-Please do not reply to this email. You may direct any questions to oss@oss.rutgers.edu.
+Please do not reply to this email. You may direct any questions to oss@oit.rutgers.edu.
 """
 
         html_message = f"""
@@ -689,7 +692,7 @@ Please do not reply to this email. You may direct any questions to oss@oss.rutge
         </div>
 
         <p>Please do not reply to this email. You may direct any questions to
-        <a href="mailto:oss@oss.rutgers.edu">oss@oss.rutgers.edu</a>.</p>
+        <a href="mailto:oss@oit.rutgers.edu">oss@oit.rutgers.edu</a>.</p>
     </body>
 </html>
 """

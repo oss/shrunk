@@ -418,7 +418,7 @@ export class Shrunk extends React.Component<Props, State> {
               Rutgers, The State University of New Jersey
             </a>
             &mdash;Questions? Bugs? Contact us:&nbsp;
-            <a href="mailto:oss@oss.rutgers.edu">oss@oss.rutgers.edu</a>
+            <a href="mailto:oss@oit.rutgers.edu">oss@oit.rutgers.edu</a>
           </Footer>
         </Layout>
       </HashRouter>
