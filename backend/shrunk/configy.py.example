@@ -120,3 +120,7 @@ SECURITY_MEASURES_ON = False
 You would this to be set to True when performing unit tests
 or you'll fail the security tests. However, in prod it can be whatever."""
 
+GITHUB_OUTLOOK_WEBHOOK_UPDATE_SECRET = "BLAH"
+"""The secret for authenticating the webhook API for updating
+the Outlook Add-In version so that only GitHub Webhooks
+can make the scripts run to download new version of Outlook Add-In"""

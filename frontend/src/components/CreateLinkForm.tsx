@@ -6,7 +6,7 @@
 import React from 'react';
 import base32 from 'hi-base32';
 import moment from 'moment';
-import { Form, Input, Button, DatePicker, Space, Tooltip, Spin, Modal, Checkbox } from 'antd/lib';
+import { Form, Input, Button, DatePicker, Space, Tooltip, Spin, Modal, Checkbox, Radio, RadioChangeEvent } from 'antd/lib';
 import {
   LinkOutlined,
   MinusCircleOutlined,
@@ -117,6 +117,7 @@ export interface Props {
 interface State {
   loading: boolean;
   tracking_pixel_enabled: boolean;
+  tracking_pixel_extension: string;
 }
 
 /**
@@ -131,6 +132,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
     this.state = {
       loading: false,
       tracking_pixel_enabled: false,
+      tracking_pixel_extension: '.png'
     };
   }
 
@@ -150,6 +152,10 @@ export class CreateLinkForm extends React.Component<Props, State> {
 
   onTrackingPixelChange = (e: any) => {
     this.setState({ tracking_pixel_enabled: e.target.checked });
+  };
+
+  onTrackingPixelExtensionChange = (e: RadioChangeEvent) => {
+    this.setState({ tracking_pixel_extension: e.target.value });
   };
 
   /**
@@ -211,6 +217,10 @@ export class CreateLinkForm extends React.Component<Props, State> {
         if (alias.alias !== undefined && result.valid) {
           createAliasReq.alias = alias.alias;
         }
+        if (this.state.tracking_pixel_enabled){
+          createAliasReq.extension = this.state.tracking_pixel_extension;
+        }
+        console.log(createAliasReq);
         await fetch(`/api/v1/link/${linkId}/alias`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -275,7 +285,18 @@ export class CreateLinkForm extends React.Component<Props, State> {
               </Form.Item>
             </>
           )}
-
+          {
+            this.state.tracking_pixel_enabled && (
+             <>
+              <Form.Item name="tracking_pixel_extension" label="Extension">
+                <Radio.Group onChange={this.onTrackingPixelExtensionChange} options={[
+                  { label: '.png', value: '.png' },
+                  { label: '.gif', value: '.gif' }
+                ]} defaultValue={".png"} />
+              </Form.Item>
+             </>
+            )
+          }
           <Form.List name="aliases">
             {(fields, { add, remove }) => (
               <div className="fix-alias-remove-button">

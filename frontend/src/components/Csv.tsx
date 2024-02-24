@@ -30,7 +30,7 @@ function createVisitsCsv(visits: AnonymizedVisit[]): string {
     header: [
       { id: 'link_id', title: 'Link ID' },
       { id: 'alias', title: 'Alias' },
-      { id: 'visitor_id', title: 'Visitor ID' },
+      { id: 'visitor_id', title: 'IP Address ID' },
       { id: 'user_agent', title: 'User Agent' },
       { id: 'referer', title: 'Referrer' },
       { id: 'state_code', title: 'State' },

@@ -621,6 +621,7 @@ CREATE_ALIAS_SCHEMA = {
             'pattern': '^[a-zA-Z0-9_.,-]*$',
         },
         'description': {'type': 'string'},
+        'extension': {'type': 'string'}
     },
 }
 
@@ -635,7 +636,7 @@ def create_alias(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) 
 
     .. code-block:: json
 
-       { "alias?": "string", "description?": "string" }
+       { "alias?": "string", "description?": "string", "extension?" : "string" }
 
     If the ``"alias"`` field is omitted, the server will generate a random alias. If the ``"description"`` field is
     omitted, it will default to the empty string. Success response format:
@@ -662,9 +663,14 @@ def create_alias(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) 
     # If a custom URL is specified, check that user has power_user or admin role.
     if 'alias' in req and not client.roles.has_some(['admin', 'power_user'], netid):
         abort(403)
-
+    alias = None
+    print(f"REQ: {req}")
     try:
-        alias = client.links.create_or_modify_alias(link_id, req.get('alias'), req.get('description', ''))
+        if 'extension' in req:
+            alias = client.links.create_or_modify_alias(link_id, req.get('alias'), req.get('description', ''),
+                                                        req.get('extension'))
+        else:
+            alias = client.links.create_or_modify_alias(link_id, req.get('alias'), req.get('description', ''), None)
     except BadAliasException:
         abort(400)
 
