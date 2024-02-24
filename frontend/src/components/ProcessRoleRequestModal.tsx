@@ -81,6 +81,7 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
     onProcess = async (entity: string, comment: string): Promise<void> => {
         if (this.props.toApprove) {
             await this.onApprove(entity, comment);
+            await this.sendApprovalEmail();
         } else {
             await this.onDeny(entity, comment);
         }
@@ -157,6 +158,29 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
                 }
             })
             .catch(error => console.error('Error:', error));
+    }
+
+    /**
+     * Send an approval email to the entity
+     * @method
+     */
+    sendApprovalEmail = async (): Promise<void> => {
+        await fetch(`/api/v1/role_request/approval`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                role_name: this.props.name,
+                entity: this.props.entity,
+            })
+        }).then(response => {
+                if (response.status === 200) {
+                    console.log('Approval email sent');
+                } else {
+                    console.error(`${response.status}: Approval email failed to send`);
+                }
+        }).catch(error => console.error('Error:', error));
     }
 
     /**
