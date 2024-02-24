@@ -212,6 +212,7 @@ def send_role_request_approval(netid: str, client: ShrunkClient, mail: Mail) -> 
        {
            "role_name": "<role_name>"
            "entity": "<entity>"
+           "comment": "<comment>"
        }
     
     :param netid: the netid of the user logged in
@@ -221,10 +222,49 @@ def send_role_request_approval(netid: str, client: ShrunkClient, mail: Mail) -> 
     data = request.get_json()
     role_name = data.get('role_name')
     entity = data.get('entity')
+    comment = data.get('comment')
+    
+    if not comment or comment == '':
+        comment = 'none'
     
     if not client.roles.has('admin', netid):
         return Response(status=403)
-    client.role_requests.send_role_request_approval(entity, mail, role_name)
+    client.role_requests.send_role_request_approval(entity, mail, role_name, comment)
+    return Response(status=200)
+
+@bp.route('/denial', methods=['POST'])
+@require_mail
+@require_login
+def send_role_request_denial(netid: str, client: ShrunkClient, mail: Mail) -> Any:
+    """``POST /api/role_request/approval``
+    
+    Send an email to the requesting-user confirming that their role request is approved.
+    
+    The request should include a JSON body with the following format:
+    
+    .. code-block:: json
+    
+       {
+           "role_name": "<role_name>"
+           "entity": "<entity>"
+           "comment": "<comment>"
+       }
+    
+    :param netid: the netid of the user logged in
+    :param client: the client object
+    :param mail: the mail object
+    """
+    data = request.get_json()
+    role_name = data.get('role_name')
+    entity = data.get('entity')
+    comment = data.get('comment')
+    
+    if not comment or comment == '':
+        comment = 'none'
+    
+    if not client.roles.has('admin', netid):
+        return Response(status=403)
+    client.role_requests.send_role_request_denial(entity, mail, role_name, comment)
     return Response(status=200)
 
     

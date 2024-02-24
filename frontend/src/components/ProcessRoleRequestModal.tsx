@@ -84,6 +84,7 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
             await this.sendApprovalEmail();
         } else {
             await this.onDeny(entity, comment);
+            await this.sendDenialEmail();
         }
         await this.props.updatePendingRoleRequests();
         this.onResetFormAndClose();
@@ -173,12 +174,37 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
             body: JSON.stringify({
                 role_name: this.props.name,
                 entity: this.props.entity,
+                comment: this.state.comment !== '' ? this.state.comment : undefined,
             })
         }).then(response => {
                 if (response.status === 200) {
                     console.log('Approval email sent');
                 } else {
                     console.error(`${response.status}: Approval email failed to send`);
+                }
+        }).catch(error => console.error('Error:', error));
+    }
+
+    /**
+     * Send a denial email to the entity
+     * @method
+     */
+    sendDenialEmail = async (): Promise<void> => {
+        await fetch(`/api/v1/role_request/denial`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                role_name: this.props.name,
+                entity: this.props.entity,
+                comment: this.state.comment !== '' ? this.state.comment : undefined,
+            })
+        }).then(response => {
+                if (response.status === 200) {
+                    console.log('Denial email sent');
+                } else {
+                    console.error(`${response.status}: Denial email failed to send`);
                 }
         }).catch(error => console.error('Error:', error));
     }
