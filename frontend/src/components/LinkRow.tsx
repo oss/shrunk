@@ -181,7 +181,7 @@ export class LinkRow extends React.Component<Props, State> {
                 <span className="info">Owner: {this.props.linkInfo.owner}</span>
 
                 <span className="info">
-                  Visits: {this.props.linkInfo.visits}
+                  Total visits: {this.props.linkInfo.visits}
                 </span>
 
                 <span className="info">
@@ -209,7 +209,10 @@ export class LinkRow extends React.Component<Props, State> {
             </Col>
           </Row>
           {this.props.linkInfo.aliases.map((alias) => {
-            const shortUrl = `https://${document.location.host}/${alias.alias}`;
+            const isDev = process.env.NODE_ENV === 'development';
+            const protocol = isDev ? 'http' : 'https';
+
+            const shortUrl = `${protocol}://${document.location.host}/${alias.alias}`;
             const className =
               isLinkDeleted || isLinkExpired || alias.deleted
                 ? 'alias deleted'

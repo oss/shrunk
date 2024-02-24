@@ -345,11 +345,15 @@ class LinksClient:
             result = self.db.visits.find({'link_id': link_id, 'alias': alias})
         return list(result)
 
-    def create_random_alias(self, link_id: ObjectId, description: str) -> str:
+    def create_random_alias(self, link_id: ObjectId, description: str, extension: Optional[str] = None) -> str:
         while True:
             alias = self._generate_unique_key()
+            if extension:
+                alias += extension
             while self.alias_is_reserved(alias):
                 alias = self._generate_unique_key()
+                if extension:
+                    alias += extension
             try:
                 result = self.db.urls.update_one({'_id': link_id},
                                                  {'$push': {'aliases': {
@@ -362,11 +366,13 @@ class LinksClient:
             except pymongo.errors.DuplicateKeyError:
                 pass
 
-    def create_or_modify_alias(self, link_id: ObjectId, alias: Optional[str], description: str) -> str:
+    def create_or_modify_alias(self, link_id: ObjectId, alias: Optional[str], description: str, extension: Optional[str]) -> str:
         if alias is None:
-            return self.create_random_alias(link_id, description)
+            return self.create_random_alias(link_id, description, extension)
 
         # If alias is reserved word
+        if extension:
+            alias += extension
         if self.alias_is_reserved(alias):
             raise BadAliasException
 
