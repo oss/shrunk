@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Row, Col, Spin, Button, Popconfirm, Form, Input, BackTop } from 'antd/lib';
+import { Row, Col, Spin, Button, Popconfirm, Form, Input, BackTop, Tooltip } from 'antd/lib';
 import { ExclamationCircleFilled, CloudDownloadOutlined, LoadingOutlined} from '@ant-design/icons';
 import { IoReturnUpBack } from 'react-icons/io5';
 import { downloadGrantedUsersCsv } from '../components/GrantedUserCsv';
@@ -394,18 +394,18 @@ export class Role extends React.Component<Props, State> {
           </Col>
           {['whitelisted', 'power_user', 'admin', 'facstaff'].includes(this.props.name) && (
           <Col span={4} className="btn-col">
-            <Button
-              icon={
-                this.state.loading ? (
-                  <LoadingOutlined spin />
-                ) : (
-                  <CloudDownloadOutlined />
-                )
-              }
-              onClick={this.downloadCsv}
-            >
-            Download users to CSV
-            </Button>
+            <Tooltip title="Export to CSV">
+              <Button
+                icon={
+                  this.state.loading ? (
+                    <LoadingOutlined spin />
+                  ) : (
+                    <CloudDownloadOutlined />
+                  )
+                }
+                onClick={this.downloadCsv}
+              />
+            </Tooltip>
           </Col>
           )}
         </Row>
