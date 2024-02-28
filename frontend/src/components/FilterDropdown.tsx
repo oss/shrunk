@@ -79,7 +79,7 @@ export const FilterDropdown: React.FC<Props> = (props) => {
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [showExpired, setShowExpired] = useState(false);
   const [showDeleted, setShowDeleted] = useState(false);
-  const [sortKey, setSortKey] = useState('created_time');
+  const [sortKey, setSortKey] = useState('relevance');
   const [sortOrder, setSortOrder] = useState('descending');
   const [beginTime, setBeginTime] = useState<moment.Moment | null>(null);
   const [endTime, setEndTime] = useState<moment.Moment | null>(null);
@@ -133,7 +133,7 @@ export const FilterDropdown: React.FC<Props> = (props) => {
         layout="vertical"
         initialValues={{
           org: isAdmin ? 1 : 0,
-          sortKey: 'created_time',
+          sortKey: 'relevance',
           sortOrder: 'descending',
         }}
       >

@@ -33,7 +33,23 @@ class SearchClient:
         if 'query' in query and query['query'] != '' and query['set']['set'] != 'shared':
             pipeline += [
                 {'$match': {'$text': {'$search': query['query']}}},
-                {'$addFields': {'text_search_score': {'$meta': 'textScore'}}},
+                {'$addFields': { 'text_search_score': {
+                                    '$add':[
+                                                # add textScore + (100 if there is an exact match in any of the fields, else 0)
+                                                {'$meta': 'textScore'},
+                                                {'$cond': {
+                                                    'if': {'$or':[{'$eq': ['$title', query['query']]}, 
+                                                                    {'$eq': ['$long_url', query['query']]},
+                                                                    {'$eq': ['$netid', query['query']]},
+                                                                    {'$eq': ['$aliases.alias', query['query']]},
+                                                                    ]},
+                                                    'then': 100, 'else': 0
+                                                    }
+                                                }
+                                            ]
+                                    }
+                                }
+                 },
             ]
 
         # Filter the appropriate links set.
@@ -83,7 +99,7 @@ class SearchClient:
                     }}]
         elif query['set']['set'] == 'org':  # search within the given org
             pipeline.append({'$match': {'viewers.type': 'org', 'viewers._id': query['set']['org']}})
-
+        
         # Sort results.
         sort_order = 1 if query['sort']['order'] == 'ascending' else -1
         if query['sort']['key'] == 'created_time':
@@ -94,9 +110,12 @@ class SearchClient:
             sort_key = 'visits'
         elif query['sort']['key'] == 'relevance':
             sort_key = 'text_search_score'
+            if query['query'] == '':
+                sort_key = 'timeCreated'
         else:
             # This should never happen
             raise RuntimeError(f'Bad sort key {query["sort"]["key"]}')
+
         pipeline.append({'$sort': {sort_key: sort_order, '_id': sort_order}})
 
         # Add is_expired field
