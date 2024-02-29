@@ -5,6 +5,7 @@
 
 import { createObjectCsvStringifier } from 'csv-writer';
 import { EntityInfo } from '../admin/Role';
+import { doDownload } from '../lib/utils';
 
 /**
  * Create a CSV string from an array of user data
@@ -24,21 +25,6 @@ function createGrantedUsersCsv(users: EntityInfo[]): string {
   return (
     csvStringifier.getHeaderString() + csvStringifier.stringifyRecords(users)
   );
-}
-
-/**
- * Initiate a download of CSV data
- * @function
- * @param filename The suggested filename
- * @param csvString The contents of the file
- */
-function doDownload(filename: string, csvString: string): void {
-  const dataUrl = `data:text/csv;base64,${btoa(csvString)}`;
-  const dlLink = document.createElement('a');
-  dlLink.download = filename;
-  dlLink.href = dataUrl;
-  document.body.appendChild(dlLink);
-  dlLink.click();
 }
 
 /**
