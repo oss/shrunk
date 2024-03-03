@@ -21,6 +21,7 @@ import {
 } from '../Validators';
 import '../Base.less';
 import './FixAliasRemoveButton.less';
+import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 
 /**
  * Displays a label with the text "Custom Alias" and a tooltip with extended help text
@@ -150,8 +151,8 @@ export class CreateLinkForm extends React.Component<Props, State> {
     this.setState({ loading: false, tracking_pixel_enabled: false });
   };
 
-  onTrackingPixelChange = (e: any) => {
-    this.setState({ tracking_pixel_enabled: e.target.checked });
+  onTrackingPixelChange = (e: RadioChangeEvent) => {
+    this.setState({ tracking_pixel_enabled: e.target.value === 'pixel'});
   };
 
   onTrackingPixelExtensionChange = (e: RadioChangeEvent) => {
@@ -255,9 +256,13 @@ export class CreateLinkForm extends React.Component<Props, State> {
           </Form.Item>
 
           <Form.Item name="is_tracking_pixel_link" valuePropName="checked">
-            <Checkbox onChange={this.onTrackingPixelChange}>
+            {/* <Checkbox onChange={this.onTrackingPixelChange}>
               Make this link a tracking pixel
-            </Checkbox>
+            </Checkbox> */}
+                <Radio.Group onChange={this.onTrackingPixelChange} options={[
+                  { label: 'URL', value: 'url' },
+                  { label: 'Tracking Pixel', value: 'pixel' },
+                ]} defaultValue={"url"} />  
           </Form.Item>
 
           <Form.Item label="Expiration time" name="expiration_time">
@@ -383,7 +388,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
                 htmlType="submit"
                 style={{ width: '100%' }}
               >
-                Shrink!
+                {this.state.tracking_pixel_enabled?"Create Pixel!":"Shrink!"}
               </Button>
             </Spin>
           </Form.Item>
