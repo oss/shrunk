@@ -245,14 +245,22 @@ export class CreateLinkForm extends React.Component<Props, State> {
             />
           </Form.Item>
 
-          <Form.List name="aliases">
+          <Form.List
+            name="aliases"
+          >
             {(fields, { add, remove }) => (
-              <div className="fix-alias-remove-button">
+              <div
+                className="fix-alias-remove-button"
+              // style={{
+              //   background: "black"
+              // }}
+              >
                 {fields.map((field, index) => (
                   <Space
                     key={field.key}
                     style={{ display: 'flex', marginBottom: 8 }}
                     align="start"
+                    direction='vertical'
                   >
                     {!mayUseCustomAliases ? (
                       <></>
@@ -291,7 +299,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
                           !mayUseCustomAliases ? (
                             <AliasLabel />
                           ) : (
-                            'Description'
+                            ''
                           )
                         ) : (
                           ''
