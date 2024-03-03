@@ -226,7 +226,7 @@ export class Dashboard extends React.Component<Props, State> {
         set: { set: this.props.userPrivileges.has('admin') ? 'all' : 'user' },
         show_expired_links: false,
         show_deleted_links: false,
-        sort: { key: 'created_time', order: 'descending' },
+        sort: { key: 'relevance', order: 'descending' },
         begin_time: null,
         end_time: null,
       },
@@ -953,7 +953,7 @@ export class Dashboard extends React.Component<Props, State> {
               trigger={['click']}
             >
               <Button type="primary">
-                <PlusCircleFilled /> Shrink a Link
+                <PlusCircleFilled /> Create a Link
               </Button>
             </Dropdown>
           </Col>
