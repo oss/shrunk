@@ -55,7 +55,7 @@ setup(
     zip_safe=False,
     install_requires=requires,
     author=AUTHOR,
-    author_email='oss@oss.rutgers.edu',
+    author_email='oss@oit.rutgers.edu',
     description='Rutgers University URL Shortener',
     long_description=readme,
     long_description_content_type='text/markdown',

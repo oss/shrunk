@@ -65,7 +65,7 @@ export class Faq extends React.Component<void> {
               To create a custom short URL, you must have the &ldquo;power
               user&rdquo; role. This role is available only to faculty and staff
               members. To request to be added to this role, please email&nbsp;
-              <a href="mailto:oss@oss.rutgers.edu">oss@oss.rutgers.edu</a> along
+              <a href="mailto:oss@oit.rutgers.edu">oss@oit.rutgers.edu</a> along
               with your NetID.
             </p>
           </Panel>
@@ -143,7 +143,7 @@ export class Faq extends React.Component<void> {
               organization in order for other members of the organization to
               view shared links. If you would like to re-share all your links
               to an organization, please email&nbsp;
-              <a href="mailto:oss@oss.rutgers.edu">oss@oss.rutgers.edu</a>.
+              <a href="mailto:oss@oit.rutgers.edu">oss@oit.rutgers.edu</a>.
 
             </p>
           </Panel>

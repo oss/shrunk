@@ -27,7 +27,7 @@ import { CheckboxChangeEvent } from 'antd/lib/checkbox';
  * Displays a label with the text "Custom Alias" and a tooltip with extended help text
  * @param _props Props
  */
-const CustomAliasLabel: React.FC = (_props) => {
+const CustomAliasLabel: React.FC = (props) => {
   const customAliasHelp = `
   An alias is the shortened part of the URL. For example, for
   the link 'go.rutgers.edu/abc123' the alias is 'abc123'. If you
@@ -127,6 +127,7 @@ interface State {
  */
 export class CreateLinkForm extends React.Component<Props, State> {
   formRef = React.createRef<FormInstance>();
+  textBoxWidth = 200;
 
   constructor(props: Props) {
     super(props);
@@ -267,6 +268,8 @@ export class CreateLinkForm extends React.Component<Props, State> {
 
           <Form.Item label="Expiration time" name="expiration_time">
             <DatePicker
+              placeholder='Select date and time'
+              style={{ width: '100%' }}
               format="YYYY-MM-DD HH:mm:ss"
               disabledDate={(current) =>
                 current && current < moment().startOf('day')
@@ -304,51 +307,83 @@ export class CreateLinkForm extends React.Component<Props, State> {
           }
           <Form.List name="aliases">
             {(fields, { add, remove }) => (
-              <div className="fix-alias-remove-button">
+              <div
+                className="fix-alias-remove-button"
+              >
                 {fields.map((field, index) => (
                   <Space
                     key={field.key}
                     style={{ display: 'flex', marginBottom: 8 }}
                     align="start"
+                    direction='vertical'
+                    size={0}
                   >
                     {!mayUseCustomAliases ? (
                       <></>
                     ) : (
-                      <Form.Item
-                        label={index === 0 ? <CustomAliasLabel /> : ''}
-                        name={[field.name, 'alias']}
-                        fieldKey={field.fieldKey}
-                        rules={[
-                          {
-                            min: 5,
-                            message:
-                              'Aliases may be no shorter than 5 characters.',
-                          },
-                          {
-                            max: 60,
-                            message:
-                              'Aliases may be no longer than 60 characters.',
-                          },
-                          {
-                            pattern: /^[a-zA-Z0-9_.,-]*$/,
-                            message:
-                              'Aliases may consist only of numbers, letters, and the punctuation marks “.,-_”.',
-                          },
-                          { validator: serverValidateReservedAlias },
-                          { validator: serverValidateDuplicateAlias },
-                        ]}
-                      >
-                        <Input placeholder="alias" />
-                      </Form.Item>
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'row',
+                        // justifyContent: 'space-between',
+                        alignItems: 'start',
+                        // height: '400px'
+                      }}>
+                        <Form.Item
+                          style={{
+                            width: `${this.textBoxWidth}px`,
+                          }}
+                          label={index === 0 ?
+                            <CustomAliasLabel />
+                            :
+                            ''}
+                          name={[field.name, 'alias']}
+                          fieldKey={field.fieldKey}
+                          rules={[
+                            {
+                              min: 5,
+                              message:
+                                'Aliases may be no shorter than 5 characters.',
+                            },
+                            {
+                              max: 60,
+                              message:
+                                'Aliases may be no longer than 60 characters.',
+                            },
+                            {
+                              pattern: /^[a-zA-Z0-9_.,-]*$/,
+                              message:
+                                'Aliases may consist only of numbers, letters, and the punctuation marks “.,-_”.',
+                            },
+                            { validator: serverValidateReservedAlias },
+                            { validator: serverValidateDuplicateAlias },
+                          ]}
+                        >
+                          <Input placeholder="alias" />
+
+                        </Form.Item>
+                        <Button
+                          disabled={fields.length === 1}
+                          type="text"
+                          icon={<MinusCircleOutlined />}
+                          onClick={() => remove(field.name)}
+                          style={{
+                            marginTop: index === 0 ? '28px' : '0px',
+                          }}
+                        />
+                      </div>
                     )}
 
                     <Form.Item
+                      style={{
+                        width: `230px`,
+                        marginRight: '0px'
+                      }}
                       label={
                         index === 0 ? (
                           !mayUseCustomAliases ? (
                             <AliasLabel />
                           ) : (
-                            'Description'
+                            ''
                           )
                         ) : (
                           ''
@@ -357,15 +392,12 @@ export class CreateLinkForm extends React.Component<Props, State> {
                       name={[field.name, 'description']}
                       fieldKey={field.fieldKey}
                     >
-                      <Input placeholder="Description" />
+                      <Input
+                        placeholder="Description"
+                      />
                     </Form.Item>
 
-                    <Button
-                      disabled={fields.length === 1}
-                      type="text"
-                      icon={<MinusCircleOutlined />}
-                      onClick={() => remove(field.name)}
-                    />
+
                   </Space>
                 ))}
                 {fields.length >= 6 ? (

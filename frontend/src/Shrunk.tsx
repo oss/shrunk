@@ -190,9 +190,9 @@ export class Shrunk extends React.Component<Props, State> {
               <Link to="/dash">
                 <img
                   alt="Rutgers"
-                  src="/app/static/img/RU_LOGOTYPE_REVWHITE.png"
+                  src="/app/static/img/rutgers.png"
                   width="175px"
-                  srcSet="/app/static/img/rutgers.svg"
+                  srcSet="/app/static/img/rutgers.png"
                 />
               </Link>
             </div>
@@ -418,7 +418,7 @@ export class Shrunk extends React.Component<Props, State> {
               Rutgers, The State University of New Jersey
             </a>
             &mdash;Questions? Bugs? Contact us:&nbsp;
-            <a href="mailto:oss@oss.rutgers.edu">oss@oss.rutgers.edu</a>
+            <a href="mailto:oss@oit.rutgers.edu">oss@oit.rutgers.edu</a>
           </Footer>
         </Layout>
       </HashRouter>
