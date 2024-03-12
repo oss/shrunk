@@ -22,15 +22,6 @@ If you are having trouble installing ``python-ldap``, run
    ``backend/shrunk/config.py.example``
 4. Copy ``backend/GeoLite2-City.mmdb`` into your ``/usr/share/GeoIP``
    directory
-5. Create symbolic links by running these commands
-
-.. code:: shell
-
-   cd backend/shrunk/static
-   ln -s ../../../frontend/dist
-   cd backend/shrunk/templates
-   rm index.html
-   ln -s ../../../frontend/dist/index.html
 
 6. Install and run ``Docker Desktop`` to run MongoDB in a separate
    terminal
