@@ -33,5 +33,3 @@ services:
     image: mongo:latest
     ports:
       - '27017:27017'
-
-# TODO: In an article i'll write, depends_on breaks the volume connection.
