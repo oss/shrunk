@@ -9,6 +9,7 @@ from flask import (Blueprint,
                    redirect,
                    session,
                    render_template,
+                   send_from_directory,
                    current_app,
                    make_response,
                    url_for)
@@ -45,8 +46,9 @@ def index() -> Any:
         if os.environ.get("FLASK_ENV") == "dev":
             secure_cookie = False
 
-    resp = make_response(render_template('index.html'))
+    resp = make_response(send_from_directory('../../frontend/dist/', 'index.html'))
     resp.set_cookie('shrunk_params', shrunk_params, secure=secure_cookie, samesite='Strict')
+    
     return resp
 
 
