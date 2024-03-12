@@ -58,16 +58,19 @@ interface RoleRequestInfo {
     entity: string;
 
     /**
-     * The title of the entity
-     * @property
+     * The title of the entity making the request
      */
     title: string;
 
     /**
-     * The different employee types the entity has been
-     * @property
+     * The employee types of the entity making the request
      */
     employeeTypes: string[];
+
+    /**
+     * The department of the entity making the request
+     */
+    department: string;
 
     /**
      * The comment explaining the request
@@ -93,6 +96,7 @@ const PendingRoleRequestRow: React.FC<{
     onOpenApproveModal: () => void;
     onOpenDenyModal: () => void;
 }> = (props) => {
+    
     return (
         <Row className="primary-row">
             <Col span={20}>
@@ -112,6 +116,13 @@ const PendingRoleRequestRow: React.FC<{
                     <Col span={24}>
                         <span>
                             <em>Employee Types:</em>&nbsp;{props.role_request.employeeTypes.join(", ")}
+                        </span>
+                    </Col>
+                </Row>
+                <Row>
+                    <Col span={24}>
+                        <span>
+                            <em>Department:</em>&nbsp;{props.role_request.department}
                         </span>
                     </Col>
                 </Row>
@@ -255,6 +266,17 @@ export class PendingRoleRequests extends Component<Props, State> {
                 }));
                 this.setState({ role_requests: fullRequests as RoleRequestInfo[] });
             });
+    }
+
+    /**
+     * Fetch the user position info from the server
+     * @method
+     */
+    updateEntityPositionInfo = async (entity: string): Promise<void> => {
+        const result = await fetch(`/api/v1/position/${base32.encode(entity)}`).then(
+            (resp) => resp.json(),
+        );
+        return result;
     }
 
     /**

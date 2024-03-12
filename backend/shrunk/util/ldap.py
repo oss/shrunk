@@ -59,3 +59,28 @@ def query_given_name(netid: str) -> str:
         return given_name
     except (IndexError, KeyError, UnicodeDecodeError):
         return netid
+
+def query_position_info(netid: str) -> Dict[str, List[str]]:
+    """Query LDAP for position info of a given netid. Return a dictionary of attributes.
+
+    Args:
+        netid (str): The netid of the user to query position info for.
+
+    Returns:
+        Dict[str, List[str]]: A dictionary containing the position information of the user.
+            The keys of the dictionary represent the attribute names, and the values are lists
+            of attribute values.
+    """
+    intermediate = _query_netid(netid)
+    if intermediate is None:
+        return {}
+
+    # The attributes that relate to the user's position in the university
+    attributes = ['uid', 'department', 'title', 'businessCategory']
+    
+    result = {}
+    
+    for attr in attributes:
+        if attr in intermediate[0][1] and intermediate[0][1][attr]:
+            result[attr] = [str(x, 'utf8') for x in intermediate[0][1][attr]]
+    return result
