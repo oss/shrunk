@@ -306,9 +306,9 @@ def get_position_info(netid: str, client: ShrunkClient, entity: str) -> Any:
 
        {
            "uid": "List[str]",
-           "department": "List[str]",
+           "rutgersEduStaffDepartment": "List[str]",
            "title": "List[str]",
-           "businessCategory": "List[str]",
+           "employeeType": "List[str]",
        }
     """
     if not client.roles.has("admin", netid):

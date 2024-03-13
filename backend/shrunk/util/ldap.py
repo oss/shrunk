@@ -71,12 +71,15 @@ def query_position_info(netid: str) -> Dict[str, List[str]]:
             The keys of the dictionary represent the attribute names, and the values are lists
             of attribute values.
     """
+    if(not is_valid_netid(netid)):
+        return {}
+    
     intermediate = _query_netid(netid)
     if intermediate is None:
         return {}
 
     # The attributes that relate to the user's position in the university
-    attributes = ['uid', 'department', 'title', 'businessCategory']
+    attributes = ['uid', 'title', 'rutgersEduStaffDepartment', 'employeeType']
     
     result = {}
     

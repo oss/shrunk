@@ -63,14 +63,14 @@ interface RoleRequestInfo {
     title: string;
 
     /**
-     * The employee types of the entity making the request
-     */
-    employeeTypes: string[];
-
-    /**
      * The department of the entity making the request
      */
     department: string;
+
+    /**
+     * The employee types of the entity making the request
+     */
+    employeeTypes: string[];
 
     /**
      * The comment explaining the request
@@ -115,14 +115,14 @@ const PendingRoleRequestRow: React.FC<{
                 <Row>
                     <Col span={24}>
                         <span>
-                            <em>Employee Types:</em>&nbsp;{props.role_request.employeeTypes.join(", ")}
+                            <em>Department:</em>&nbsp;{props.role_request.department}
                         </span>
                     </Col>
                 </Row>
                 <Row>
                     <Col span={24}>
                         <span>
-                            <em>Department:</em>&nbsp;{props.role_request.department}
+                            <em>Employee Types:</em>&nbsp;{props.role_request.employeeTypes.join(", ")}
                         </span>
                     </Col>
                 </Row>
@@ -256,26 +256,44 @@ export class PendingRoleRequests extends Component<Props, State> {
      * @method
      */
     updatePendingRoleRequests = async (): Promise<void> => {
-        await fetch(`/api/v1/role_request/${this.props.name}`)
-            .then((resp) => resp.json())
-            .then((result) => {
-                const fullRequests = result.requests.map((request: any) => ({
-                    ...request,
-                    title: 'Default Title',  // TODO fetch title from external source
-                    employeeTypes: ['Default Employee Type 1, Default Employee Type 2'],  // TODO fetch employeeTypes from external source
-                }));
-                this.setState({ role_requests: fullRequests as RoleRequestInfo[] });
-            });
+        const result = await fetch(`/api/v1/role_request/${this.props.name}`).then(
+            (resp) => resp.json(),
+        );
+
+        const fullRequests = await Promise.all(result.requests.map(async (request: RoleRequestInfo) => {
+            const positionInfo = await this.updateEntityPositionInfo(request.entity);
+            const mappedInfo = {
+                title: positionInfo.title[0],
+                department: positionInfo.rutgersEduStaffDepartment[0],
+                employeeTypes: positionInfo.employeeType,
+            };
+            return { ...request, ...mappedInfo };
+        }));
+
+        this.setState({ role_requests: fullRequests });
     }
 
     /**
      * Fetch the user position info from the server
      * @method
      */
-    updateEntityPositionInfo = async (entity: string): Promise<void> => {
-        const result = await fetch(`/api/v1/position/${base32.encode(entity)}`).then(
+    updateEntityPositionInfo = async (entity: string): Promise<any> => {
+        const intermediate_result = await fetch(`/api/v1/role_request/position/${base32.encode(entity)}`).then(
             (resp) => resp.json(),
         );
+        const attributes = ['title',  'rutgersEduStaffDepartment', 'employeeType'];
+        const result: any = {};
+
+        attributes.forEach(attribute => {
+            if (!intermediate_result[attribute]) {
+                result[attribute] = attribute === 'title' ? ['Cannot find title'] : attribute === 'employeeType' ? ['Cannot find employee types'] : ['Cannot find department'];
+            } else if (intermediate_result[attribute].length === 0) {
+                result[attribute] = ['N/A'];
+            } else {
+                result[attribute] = intermediate_result[attribute];
+            }
+        });
+    
         return result;
     }
 
