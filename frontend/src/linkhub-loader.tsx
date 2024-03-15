@@ -1,9 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import LinkHubViewer from './components/LinkHubViewer';
 
 ReactDOM.render(
-  <div>
-    It works.
-  </div>,
+  <LinkHubViewer/>,
   document.getElementById('react'),
 );

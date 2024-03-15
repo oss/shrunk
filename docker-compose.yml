@@ -26,6 +26,7 @@ services:
     volumes:
       - shrunk-volume:/usr/shrunk/
       - ./frontend:/usr/shrunk/frontend
+      - ./backend/shrunk/static/dist:/usr/shrunk/backend/shrunk/static/dist
 
   database:
     hostname: mongodb

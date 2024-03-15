@@ -3,8 +3,8 @@
   "version": "2.2.1",
   "description": "Rutgers University URL Shortener",
   "scripts": {
-    "build": "node src/lib/fix-antd-table.js && parcel build --no-source-maps --no-content-hash --public-url=./static/dist/ src/index.html src/linkhub-loader.html",
-    "watch": "parcel watch --public-url=./static/dist/ src/index.html src/linkhub-loader.html",
+    "build": "node src/lib/fix-antd-table.js && parcel build --no-source-maps --no-content-hash --public-url=./static/dist/ --dist-dir=../backend/shrunk/static/dist src/index.html src/linkhub-loader.html",
+    "watch": "parcel watch --public-url=./static/dist/ --dist-dir=../backend/shrunk/static/dist src/index.html src/linkhub-loader.html",
     "doc": "node ./typedocRunner.ts",
     "lint": "eslint ./src --ext .ts,tsx --ignore-path ../.gitignore",
     "lint-fix": "eslint ./src --ext .ts,tsx --fix --ignore-path ../.gitignore",
