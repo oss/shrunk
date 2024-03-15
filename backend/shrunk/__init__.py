@@ -20,6 +20,7 @@ from backports import datetime_fromisoformat
 
 # Blueprints
 from . import views
+from . import linkhub_viewer
 from . import dev_logins
 from . import api
 
@@ -208,7 +209,7 @@ def create_app(config_path: str = 'config.py', **kwargs: Any) -> Flask:
     # once we update to Python 3.7+.
     datetime_fromisoformat.MonkeyPatch.patch_fromisoformat()
 
-    app = Flask(__name__, static_url_path='/app/static')
+    app = Flask(__name__, static_url_path='/static')
     app.config.from_pyfile(config_path, silent=False)
     app.config.update(kwargs)
 
@@ -235,6 +236,7 @@ def create_app(config_path: str = 'config.py', **kwargs: Any) -> Flask:
 
     # set up blueprints
     app.register_blueprint(views.bp)
+    app.register_blueprint(linkhub_viewer.bp)
     if app.config.get('DEV_LOGINS', False) is True:
         app.register_blueprint(dev_logins.bp)
     app.register_blueprint(api.link.bp)
@@ -256,6 +258,7 @@ def create_app(config_path: str = 'config.py', **kwargs: Any) -> Flask:
     @app.route('/', methods=['GET'])
     def _redirect_to_real_index() -> Any:
         return redirect('/app')
+
 
     # serve redirects
     @app.route('/<alias>', methods=['GET'])

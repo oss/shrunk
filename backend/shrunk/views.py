@@ -46,7 +46,7 @@ def index() -> Any:
         if os.environ.get("FLASK_ENV") == "dev":
             secure_cookie = False
 
-    resp = make_response(send_from_directory('../../frontend/dist/', 'index.html'))
+    resp = make_response(send_from_directory('static/dist', 'index.html'))
     resp.set_cookie('shrunk_params', shrunk_params, secure=secure_cookie, samesite='Strict')
     
     return resp

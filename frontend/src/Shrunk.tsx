@@ -190,9 +190,9 @@ export class Shrunk extends React.Component<Props, State> {
               <Link to="/dash">
                 <img
                   alt="Rutgers"
-                  src="/app/static/img/rutgers.png"
+                  src="/static/img/rutgers.png"
                   width="175px"
-                  srcSet="/app/static/img/rutgers.png"
+                  srcSet="/static/img/rutgers.png"
                 />
               </Link>
             </div>
