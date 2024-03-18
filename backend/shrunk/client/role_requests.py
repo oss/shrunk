@@ -329,6 +329,64 @@ class RoleRequestClient:
             recipient_list=[f'{requesting_netid}@rutgers.edu'],
         )
         
+    @staticmethod
+    def send_role_request_notify(requesting_netid: str, mail: Mail, role_name: str) -> None:
+        """Send an email to the OSS team notifying them that a role request has been made.
+        
+        :param requesting_netid: NetID of the requesting user
+        :param mail: The mail object
+        :param role_name: The role name being requested
+        """
+        display_role_name = ''
+        if role_name == 'power_user':
+            display_role_name = 'power user'
+            capitalized_role_name = 'Power User'
+        plaintext_message = f"""
+        
+        
+
+        
+        The user {requesting_netid} has requested the {display_role_name} role. Please process their request.
+        
+        Please do not reply to this email. You may direct any questions to oss@oit.rutgers.edu.
+        
+        """
+        
+        html_message = f"""
+        
+        <!DOCTYPE html>
+        <html lang="en-US">
+            <head>
+                <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+                <style>
+                    * {{
+                        font-family: Arial, sans-serif;
+                    }}
+
+                    .requested-role {{
+                        font-weight: bold;
+                    }}
+                </style>
+            </head>
+            <body>
+                <p>The user {requesting_netid} has requested the <span class="requested-role">{display_role_name}</span> role. Please process their request.</p>
+
+                <p><i>Please do not reply to this email. You may direct any questions to
+                <a href="mailto:oss@oit.rutgers.edu">oss@oit.rutgers.edu</a>.</i></p>
+            </body>
+        </html>
+
+        """
+        
+        mail.send_mail(
+            subject=f'Go: Rutgers University URL Shortener - New Pending Role Request for {capitalized_role_name} Role',
+            body=plaintext_message,
+            html_message=html_message,
+            from_email='noreply@go.rutgers.edu',
+            recipient_list=['oss@oit.rutgers.edu'],
+        )
+        
     
 
 

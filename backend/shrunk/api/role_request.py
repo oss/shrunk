@@ -215,6 +215,7 @@ def confirm_role_request(netid: str, client: ShrunkClient, mail: Mail) -> Any:
     if not client.role_requests.get_pending_role_request_for_entity(role_name, netid):
         return Response(status=404)
     client.role_requests.send_role_request_confirmation(netid, mail, role_name)
+    client.role_requests.send_role_request_notify(netid, mail, role_name)
     return Response(status=200)
 
 
