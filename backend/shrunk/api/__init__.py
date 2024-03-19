@@ -10,6 +10,7 @@ from . import (
     linkhub,
     role_request,
     position,
+    user,
 )
 
 __all__ = [
@@ -24,4 +25,5 @@ __all__ = [
     "linkhub",
     "role_request",
     "position",
+    "user",
 ]

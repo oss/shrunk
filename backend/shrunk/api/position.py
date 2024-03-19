@@ -9,7 +9,7 @@ from shrunk.client import ShrunkClient
 from shrunk.util.decorators import require_login
 
 
-__all__ = ["position"]
+__all__ = ["bp"]
 bp = Blueprint("position", __name__, url_prefix="/api/v1/position")
 
 
