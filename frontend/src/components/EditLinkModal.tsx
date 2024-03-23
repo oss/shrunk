@@ -238,9 +238,31 @@ export const EditLinkModal: React.FC<Props> = (props) => {
                   key={field.key}
                   style={{ display: 'flex', marginBottom: 8 }}
                   align="start"
+                  direction='vertical'
                 >
                   <Form.Item
-                    label={index === 0 ? 'Alias' : ''}
+                    style={{
+                      width: '470px'
+                    }}
+                    label={
+                      <>
+                        Alias
+                        <Popconfirm
+                          placement="topRight"
+                          title="Are you sure you want to delete this alias?"
+                          onConfirm={() => remove(field.name)}
+                          icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
+                          disabled={fields.length === 1}
+                        >
+                          <Button
+                            disabled={fields.length === 1}
+                            type="text"
+                            icon={<MinusCircleOutlined />}
+                            size="middle"
+                          />
+                        </Popconfirm>
+                      </>
+                    }
                     name={[field.name, 'alias']}
                     fieldKey={field.fieldKey}
                     rules={[
@@ -280,6 +302,9 @@ export const EditLinkModal: React.FC<Props> = (props) => {
                   </Form.Item>
 
                   <Form.Item
+                    style={{
+                      width: '470px'
+                    }}
                     label={index === 0 ? 'Description' : ''}
                     name={[field.name, 'description']}
                     fieldKey={field.fieldKey}
@@ -289,20 +314,6 @@ export const EditLinkModal: React.FC<Props> = (props) => {
                       placeholder="Description"
                     />
                   </Form.Item>
-
-                  <Popconfirm
-                    placement="topRight"
-                    title="Are you sure you want to delete this alias?"
-                    onConfirm={() => remove(field.name)}
-                    icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
-                    disabled={fields.length === 1}
-                  >
-                    <Button
-                      disabled={fields.length === 1}
-                      type="text"
-                      icon={<MinusCircleOutlined />}
-                    />
-                  </Popconfirm>
                 </Space>
               ))}
 
