@@ -897,7 +897,7 @@ export class Dashboard extends React.Component<Props, State> {
       <>
         <Row className="dashboard-title">
           <Col>
-            <span className="page-title">URL Dashboard</span>
+            <span className="page-title">URL Penis</span>
           </Col>
         </Row>
         <Row className="primary-row" gutter={[8, 24]}>
@@ -953,7 +953,7 @@ export class Dashboard extends React.Component<Props, State> {
               trigger={['click']}
             >
               <Button type="primary">
-                <PlusCircleFilled /> Create a Link
+                <PlusCircleFilled /> Create Link
               </Button>
             </Dropdown>
           </Col>
