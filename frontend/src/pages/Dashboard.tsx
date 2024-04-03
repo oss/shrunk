@@ -897,7 +897,7 @@ export class Dashboard extends React.Component<Props, State> {
       <>
         <Row className="dashboard-title">
           <Col>
-            <span className="page-title">URL Penis</span>
+            <span className="page-title">URL Dashboard</span>
           </Col>
         </Row>
         <Row className="primary-row" gutter={[8, 24]}>
