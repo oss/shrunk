@@ -33,6 +33,7 @@ import { PendingRequests } from './components/PendingRequests';
 
 import './antd_themed.less';
 import './Shrunk.less';
+import LinkHubDashboard from './pages/LinkHubDashboard';
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -160,6 +161,8 @@ export class Shrunk extends React.Component<Props, State> {
     let key: string | null = null;
     if (route.startsWith('#/dash') || route.startsWith('#/stats')) {
       key = 'dash';
+    } else if (route.startsWith('#/linkhubs')) {
+      key = 'linkhubs';
     } else if (route.startsWith('#/orgs')) {
       key = 'orgs';
     } else if (route.startsWith('#/admin')) {
@@ -333,6 +336,10 @@ export class Shrunk extends React.Component<Props, State> {
                     userPrivileges={this.props.userPrivileges}
                     netid={this.props.netid}
                   />
+                </Route>
+
+                <Route exact path="/linkhubs">
+                  <LinkHubDashboard />
                 </Route>
 
                 <Route
