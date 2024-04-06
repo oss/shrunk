@@ -13,6 +13,7 @@ from .tracking import TrackingClient
 from .roles import RolesClient
 from .links import LinksClient
 from .alerts import AlertsClient
+from .linkhub import LinkHubClient
 
 __all__ = ['ShrunkClient']
 
@@ -47,6 +48,7 @@ class ShrunkClient:
                                  BANNED_REGEXES=BANNED_REGEXES or [],
                                  REDIRECT_CHECK_TIMEOUT=REDIRECT_CHECK_TIMEOUT or 0.5,
                                  other_clients=self)
+        self.linkhubs = LinkHubClient(db=self.db)
         self.roles = RolesClient(db=self.db)
         self.tracking = TrackingClient(db=self.db)
         self.orgs = OrgsClient(db=self.db)

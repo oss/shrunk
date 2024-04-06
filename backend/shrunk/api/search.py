@@ -15,7 +15,7 @@ __all__ = ['bp']
 
 bp = Blueprint('search', __name__, url_prefix='/api/v1/search')
 
-SEARCH_SCHEMA = {
+SEARCH_URLS_SCHEMA = {
     'type': 'object',
     'additionalProperties': False,
     'required': ['set', 'show_expired_links', 'show_deleted_links', 'sort'],
@@ -105,9 +105,9 @@ SEARCH_SCHEMA = {
 
 
 @bp.route('', methods=['POST'])
-@request_schema(SEARCH_SCHEMA)
+@request_schema(SEARCH_URLS_SCHEMA)
 @require_login
-def post_search(netid: str, client: ShrunkClient, req: Any) -> Any:
+def post_search_urls(netid: str, client: ShrunkClient, req: Any) -> Any:
     """``POST /api/search``
 
     Execute a search query. Request format:
@@ -187,5 +187,5 @@ def post_search(netid: str, client: ShrunkClient, req: Any) -> Any:
     if 'end_time' in req:
         req['end_time'] = datetime.fromisoformat(req['end_time'])
 
-    result = client.search.execute(netid, req)
+    result = client.search.execute_url(netid, req)
     return jsonify(result)
