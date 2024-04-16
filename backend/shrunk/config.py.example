@@ -105,6 +105,10 @@ disallowed, and do not need to be added to this list."""
 REQUIRE_2FA = True
 """Whether Duo 2FA should be required."""
 
+SEND_MAIL_ON = False
+"""Whether to send mail. This is exclusively for handling power user role requests. It
+is not for requesting edit access to a link. When toggled on, emails are sent."""
+
 MAIL_BACKEND = "file"
 """Which backend to use to send mail. File will write to disk."""
 

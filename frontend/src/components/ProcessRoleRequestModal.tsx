@@ -177,9 +177,7 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
                 comment: this.state.comment !== '' ? this.state.comment : undefined,
             })
         }).then(response => {
-                if (response.status === 200) {
-                    console.log('Approval email sent');
-                } else {
+                if (response.status !== 200) {
                     console.error(`${response.status}: Approval email failed to send`);
                 }
         }).catch(error => console.error('Error:', error));
@@ -201,9 +199,7 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
                 comment: this.state.comment !== '' ? this.state.comment : undefined,
             })
         }).then(response => {
-                if (response.status === 200) {
-                    console.log('Denial email sent');
-                } else {
+                if (response.status !== 200) {
                     console.error(`${response.status}: Denial email failed to send`);
                 }
         }).catch(error => console.error('Error:', error));

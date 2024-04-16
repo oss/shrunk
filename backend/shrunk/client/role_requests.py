@@ -12,8 +12,10 @@ __all__ = ['RoleRequestClient']
 class RoleRequestClient:
     """This class implements the Shrunk role request system"""
     
-    def __init__(self, db: pymongo.database.Database):
+    def __init__(self, db: pymongo.database.Database,
+                 SEND_MAIL_ON: bool):
         self.db = db
+        self.send_mail_on = SEND_MAIL_ON
     
     def get_pending_role_requests(self, role: str) -> List[Any]:
         """Get all pending role requests for a role
@@ -387,12 +389,6 @@ class RoleRequestClient:
             recipient_list=['oss@oit.rutgers.edu'],
         )
         
-    
-
-
-        
-
-
-
-        
-    
+    def get_send_mail_on(self) -> bool:
+        """Get the value of the send_mail_on attribute"""
+        return self.send_mail_on 

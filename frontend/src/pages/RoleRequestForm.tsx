@@ -185,10 +185,8 @@ export class RoleRequestForm extends React.Component<Props, State> {
                 role_name: this.props.name,
             })
         }).then(response => {
-            if (response.status === 200) {
-                console.log('Confirmation email sent successfully');
-            } else if (response.status === 404) {
-                console.error('Error: email failed to send');
+            if(response.status !== 200) {
+                console.error(`${response.status}: Confirmation email failed to send`);
             }
         })
     }
