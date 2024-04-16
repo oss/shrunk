@@ -319,3 +319,20 @@ def get_position_info(netid: str, client: ShrunkClient, entity: str) -> Any:
     if not client.roles.has("admin", netid):
         abort(403)
     return jsonify(query_position_info(entity))
+
+@bp.route("/send_mail_on", methods=["GET"])
+@require_login
+def get_send_mail_on(netid: str, client: ShrunkClient) -> Any:
+    """``GET /api/role_request/send_mail_on``
+
+    Args:
+        netid (str): the netid of the user logged in
+        client (ShrunkClient): the client object
+
+    Get the status of the send_mail_on flag. Response format:
+
+    .. code-block:: json
+
+       { "send_mail_on": bool }
+    """
+    return jsonify({"send_mail_on": client.role_requests.get_send_mail_on()})
