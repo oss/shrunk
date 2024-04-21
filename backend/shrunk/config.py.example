@@ -124,3 +124,8 @@ SECURITY_MEASURES_ON = False
 You would this to be set to True when performing unit tests
 or you'll fail the security tests. However, in prod it can be whatever."""
 
+SLACK_INTEGRATION_ON = False
+"""Whether the slack integration is turned on or off."""
+
+SLACK_WEBHOOK_URL = ""
+"""The webhook URL for the slack integration."""

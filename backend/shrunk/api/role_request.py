@@ -216,8 +216,11 @@ def confirm_role_request(netid: str, client: ShrunkClient, mail: Mail) -> Any:
         return Response(status=404)
     
     if client.role_requests.get_send_mail_on():
-        client.role_requests.send_role_request_confirmation(netid, mail, role_name)
-        client.role_requests.send_role_request_notify(netid, mail, role_name)
+        client.role_requests.send_role_request_confirmation_mail(netid, mail, role_name)
+        client.role_requests.send_role_request_notify_mail(netid, mail, role_name)
+        
+    if client.role_requests.get_slack_integration_on():
+        client.role_requests.send_role_request_notify_slack(netid, role_name)
     return Response(status=200)
 
 
@@ -254,7 +257,7 @@ def send_role_request_approval(netid: str, client: ShrunkClient, mail: Mail) -> 
     if not client.roles.has("admin", netid):
         return Response(status=403)
     if client.role_requests.get_send_mail_on():
-        client.role_requests.send_role_request_approval(entity, mail, role_name, comment)
+        client.role_requests.send_role_request_approval_mail(entity, mail, role_name, comment)
     return Response(status=200)
 
 
@@ -291,7 +294,7 @@ def send_role_request_denial(netid: str, client: ShrunkClient, mail: Mail) -> An
     if not client.roles.has("admin", netid):
         return Response(status=403)
     if client.role_requests.get_send_mail_on():
-        client.role_requests.send_role_request_denial(entity, mail, role_name, comment)
+        client.role_requests.send_role_request_denial_mail(entity, mail, role_name, comment)
     return Response(status=200)
 
 
