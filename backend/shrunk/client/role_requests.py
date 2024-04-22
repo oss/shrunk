@@ -5,6 +5,8 @@ import pymongo
 import requests
 from flask_mailman import Mail
 
+from shrunk.util.ldap import query_position_info
+
 from .exceptions import InvalidEntity
 
 __all__ = ["RoleRequestClient"]
@@ -422,8 +424,35 @@ class RoleRequestClient:
         display_role_name = ""
         if role_name == "power_user":
             display_role_name = "power user"
+
+        intermediate_position_info = query_position_info(requesting_netid)
+        attributes = ["title", "rutgersEduStaffDepartment", "employeeType"]
+        position_info = dict()
+        if intermediate_position_info is not None:
+            for attribute in attributes:
+                if (
+                    attribute not in intermediate_position_info
+                    or not intermediate_position_info[attribute]
+                ):
+                    if attribute == "title":
+                        position_info[attribute] = ["Cannot find title"]
+                    elif attribute == "employeeType":
+                        position_info[attribute] = ["Cannot find employee types"]
+                    else:
+                        position_info[attribute] = ["Cannot find department"]
+                elif len(intermediate_position_info[attribute]) == 0:
+                    position_info[attribute] = ["N/A"]
+                else:
+                    position_info[attribute] = intermediate_position_info[attribute]
+        else:
+            position_info = {attr: "(cannot find attribute)" for attr in attributes}
+
         message = f"""
         The user {requesting_netid} has requested the {display_role_name} role. Please process their request.
+
+        • Title: {', '.join(position_info['title'])}
+        • Department: {', '.join(position_info['rutgersEduStaffDepartment'])}
+        • Employee Type: {', '.join(position_info['employeeType'])}
         """
         headers = {
             "Content-Type": "application/json",
