@@ -585,11 +585,11 @@ export class Stats extends React.Component<Props, State> {
                   <Col>
                     <Typography.Title level={3}>Visits</Typography.Title>
                     <InfoBox
-                      infoLabel="Total Visits"
+                      infoLabel="Total visits"
                       data={this.state.overallStats.total_visits.toString()}
                     />
                     <InfoBox
-                      infoLabel="First Time Visits"
+                      infoLabel="Unique visits"
                       data={this.state.overallStats.unique_visits.toString()}
                     />
                     <Space
