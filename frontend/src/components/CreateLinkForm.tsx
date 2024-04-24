@@ -255,16 +255,13 @@ export class CreateLinkForm extends React.Component<Props, State> {
           >
             <Input placeholder="Title" />
           </Form.Item>
-
+        {/* 
           <Form.Item name="is_tracking_pixel_link" valuePropName="checked">
-            {/* <Checkbox onChange={this.onTrackingPixelChange}>
-              Make this link a tracking pixel
-            </Checkbox> */}
                 <Radio.Group onChange={this.onTrackingPixelChange} options={[
                   { label: 'URL', value: 'url' },
                   { label: 'Tracking Pixel', value: 'pixel' },
                 ]} defaultValue={"url"} />  
-          </Form.Item>
+          </Form.Item> */}
 
           <Form.Item label="Expiration time" name="expiration_time">
             <DatePicker

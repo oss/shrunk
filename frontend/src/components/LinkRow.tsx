@@ -223,7 +223,7 @@ export class LinkRow extends React.Component<Props, State> {
                   <div className={className}>
                     <CopyToClipboard text={shortUrl}>
                       <Tooltip title="Copy shortened URL">
-                        <Button type="text" icon={<RiFileCopy2Fill />} />
+                        <Button aria-label="copy-to-clipboard" type="text" icon={<RiFileCopy2Fill />} />
                       </Tooltip>
                     </CopyToClipboard>
                     {alias.description ? <em>({alias.description})</em> : ''}
@@ -250,6 +250,7 @@ export class LinkRow extends React.Component<Props, State> {
           ) : (
             <Tooltip title="Edit link">
               <Button
+                aria-label='edit-link'
                 type="text"
                 icon={<RiEditBoxLine size="1.1em" />}
                 onClick={(_ev) => this.props.showEditModal(this.props.linkInfo)}
@@ -262,6 +263,7 @@ export class LinkRow extends React.Component<Props, State> {
           ) : (
             <Tooltip title="Manage sharing">
               <Button
+                aria-label='share-link'
                 type="text"
                 icon={<RiTeamLine size="1.1em" />}
                 onClick={(_ev) =>
@@ -272,6 +274,7 @@ export class LinkRow extends React.Component<Props, State> {
           )}
           <Tooltip title="Link stats">
             <Button
+              aria-label='link-stats'
               type="text"
               icon={<RiFileChartLine size="1.1em" />}
               href={`/app/#/stats/${this.props.linkInfo.id}`}
@@ -279,6 +282,7 @@ export class LinkRow extends React.Component<Props, State> {
           </Tooltip>
           <Tooltip title="QR code">
             <Button
+              aria-label='qr-code'
               type="text"
               icon={<RiQrCodeLine size="1.1em" />}
               onClick={(_ev) => this.props.showQrModal(this.props.linkInfo)}
@@ -295,6 +299,7 @@ export class LinkRow extends React.Component<Props, State> {
             >
               <Tooltip title="Delete link">
                 <Button
+                  aria-label='delete-link'
                   danger
                   type="text"
                   icon={<RiDeleteBin6Line size="1.1em" />}

@@ -303,10 +303,11 @@ def create_app(config_path: str = 'config.py', **kwargs: Any) -> Flask:
 
     @app.route('/outlook/assets/<string:env>/<path:filename>', methods=['GET'])
     def _outlook_assets_prod(env: str, filename: str) -> Any:
+        OUTLOOK_PATH=f"/var/www/outlook/{env}"
         if env == 'dev':
-            return send_file(f'/tmp/shrunk_outlook/shrunk-test-dist/{filename}')
+            return send_file(f'{OUTLOOK_PATH}/{filename}')
         elif env == 'prod':
-            return send_file(f'/tmp/shrunk_outlook/shrunk-prod-dist{filename}')
+            return send_file(f'{OUTLOOK_PATH}/{filename}')
         else:
             return 'Bad Request. Env variable was invalid.', 400
 

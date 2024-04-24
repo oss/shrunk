@@ -220,7 +220,7 @@ export class Shrunk extends React.Component<Props, State> {
                   </Menu>
                 }
               >
-                <Button type="text" className="filter-btn">
+                <Button type="text" aria-label={this.props.netid} className="filter-btn">
                   {this.props.netid} <DownOutlined />
                 </Button>
               </Dropdown>
@@ -243,6 +243,7 @@ export class Shrunk extends React.Component<Props, State> {
                 <Button
                   type="text"
                   className="user-btn"
+                  aria-label='user profile'
                   icon={<UserOutlined style={{ color: '#f0b1b9' }} />}
                 />
               </Dropdown>
@@ -397,7 +398,7 @@ export class Shrunk extends React.Component<Props, State> {
               style={{ background: 'white' }}
             />
           </Layout>
-          <Footer style={{ textAlign: 'center', color: '#f0f0f0' }}>
+          <Footer style={{ textAlign: 'center', color: 'white', backgroundColor: "black"}}>
             <p>
               Rutgers is an equal access/equal opportunity institution.
               Individuals with disabilities are encouraged to direct
