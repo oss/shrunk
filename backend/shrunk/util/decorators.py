@@ -27,7 +27,6 @@ def require_login(func: Any) -> Any:
         return func(netid, client, *args, **kwargs)
     return wrapper
 
-
 def require_mail(func: Any) -> Any:
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -50,3 +49,22 @@ def request_schema(schema: Any) -> Any:
             return func(req, *args, **kwargs)
         return wrapper
     return check_body
+
+def require_api_key(func: Any) -> Any:
+    """Decorator to require an API key in the headers of the request.
+
+    Args:
+        func (Any): the function to decorate
+
+    Returns:
+        Any: the decorated function
+    """
+    @functools.wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        api_key = request.headers.get('x-api-key')
+        if not api_key:
+            abort(401)
+        if api_key != current_app.config['SLACK_INTEGRATION_API_KEY']:
+            abort(403)
+        return func(*args, **kwargs)
+    return wrapper

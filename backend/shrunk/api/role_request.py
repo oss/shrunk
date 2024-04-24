@@ -2,11 +2,11 @@
 
 from typing import Any
 
-from flask import Blueprint, jsonify, request, Response
+from flask import Blueprint, jsonify, request, Response, current_app
 from werkzeug.exceptions import abort
 
 from shrunk.client import ShrunkClient
-from shrunk.util.decorators import require_login, require_mail
+from shrunk.util.decorators import require_login, require_mail, require_api_key
 from shrunk.util.ldap import query_position_info
 
 from flask_mailman import Mail
@@ -339,3 +339,25 @@ def get_send_mail_on(netid: str, client: ShrunkClient) -> Any:
        { "send_mail_on": bool }
     """
     return jsonify({"send_mail_on": client.role_requests.get_send_mail_on()})
+
+@bp.route("/slack/<role>/count", methods=["GET"])
+@require_api_key
+def get_pending_role_requests_count_slack(role: str) -> Any:
+    """``GET /api/role_request/slack/<role>/count``
+
+    Args:
+        netid (str): the netid of the user logged in
+        client (ShrunkClient): the client object
+        role (str): the role to get pending requests count for
+
+    Duplicate of ``GET /api/role_request/<role>/count`` but for slack integration. Response format:
+
+    .. code-block:: json
+
+       { "count": int }
+    """
+    client = current_app.client
+    return (
+        jsonify({"count": client.role_requests.get_pending_role_requests_count(role)}),
+        200,
+    )

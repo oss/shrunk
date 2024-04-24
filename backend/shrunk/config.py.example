@@ -129,3 +129,7 @@ SLACK_INTEGRATION_ON = False
 
 SLACK_WEBHOOK_URL = ""
 """The webhook URL for the slack integration."""
+
+SLACK_INTEGRATION_API_KEY = "test123"
+"""The API key for the slack integration. This is used to authenticate requests made by the slack bot.
+This key should be a lot more complex in prod."""
