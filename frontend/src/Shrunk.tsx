@@ -259,7 +259,12 @@ export class Shrunk extends React.Component<Props, State> {
             >
               <Menu.Item key="dash">
                 <NavLink to="/dash" className="nav-text">
-                  Dashboard
+                  Url Shortener
+                </NavLink>
+              </Menu.Item>
+              <Menu.Item key="linkhubs">
+                <NavLink to="/linkhubs" className="nav-text">
+                  LinkHub
                 </NavLink>
               </Menu.Item>
               {!this.state.showAdminTab ? (
