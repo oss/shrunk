@@ -31,7 +31,6 @@ def get_roles(netid: str, client: ShrunkClient) -> Any:
         abort(403)
     return jsonify({'roles': client.roles.get_role_names()})
 
-
 @bp.route('/<role_name>/text', methods=['GET'])
 @require_login
 def get_role_text(netid: str, client: ShrunkClient, role_name: str) -> Any:

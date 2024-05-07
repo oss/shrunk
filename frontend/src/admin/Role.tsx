@@ -4,9 +4,10 @@
  */
 
 import React from 'react';
-import { Row, Col, Spin, Button, Popconfirm, Form, Input, BackTop } from 'antd/lib';
-import { ExclamationCircleFilled } from '@ant-design/icons';
+import { Row, Col, Spin, Button, Popconfirm, Form, Input, BackTop, Tooltip } from 'antd/lib';
+import { ExclamationCircleFilled, CloudDownloadOutlined, LoadingOutlined} from '@ant-design/icons';
 import { IoReturnUpBack } from 'react-icons/io5';
+import { downloadGrantedUsersCsv } from '../components/GrantedUserCsv';
 import base32 from 'hi-base32';
 import moment from 'moment';
 
@@ -51,7 +52,7 @@ interface RoleText {
  * Entity information as fetched from the backend
  * @interface
  */
-interface EntityInfo {
+export interface EntityInfo {
   /**
    * The name of the entity
    * @property
@@ -230,6 +231,12 @@ interface State {
    * @property
    */
   entities: EntityInfo[] | null;
+  
+  /**
+   * Loading state for the download button
+   * @property
+   */
+  loading: boolean;
 }
 
 /**
@@ -244,6 +251,7 @@ export class Role extends React.Component<Props, State> {
       hasPermission: true,
       roleText: null,
       entities: null,
+      loading: false,
     };
   }
 
@@ -342,6 +350,16 @@ export class Role extends React.Component<Props, State> {
     await this.updateRoleEntities();
   };
 
+  /**
+   * Prompt the user to download a CSV file of the role's entities
+   * @method
+   */
+  downloadCsv = async (): Promise<void> => {
+    this.setState({ loading: true });
+    await downloadGrantedUsersCsv(this.props.name);
+    this.setState({ loading: false });
+  }
+
   render(): React.ReactNode {
     if (!this.state.hasPermission) {
       return (
@@ -363,7 +381,7 @@ export class Role extends React.Component<Props, State> {
       <>
         <BackTop />
         <Row className="primary-row">
-          <Col span={24}>
+          <Col span={20}>
             <Button
               type="text"
               href="/app/#/admin"
@@ -374,6 +392,22 @@ export class Role extends React.Component<Props, State> {
               {this.state.roleText.grant_title}
             </span>
           </Col>
+          {['whitelisted', 'power_user', 'admin', 'facstaff'].includes(this.props.name) && (
+          <Col span={4} className="btn-col">
+            <Tooltip title="Export to CSV">
+              <Button
+                icon={
+                  this.state.loading ? (
+                    <LoadingOutlined spin />
+                  ) : (
+                    <CloudDownloadOutlined />
+                  )
+                }
+                onClick={this.downloadCsv}
+              />
+            </Tooltip>
+          </Col>
+          )}
         </Row>
 
         <Row className="primary-row">

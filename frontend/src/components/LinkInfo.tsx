@@ -66,4 +66,5 @@ export interface LinkInfo {
   owner: string;
   aliases: AliasInfo[];
   may_edit: boolean;
+  is_tracking_pixel_link: boolean;
 }

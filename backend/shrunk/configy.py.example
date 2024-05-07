@@ -5,8 +5,7 @@ it as config.py.
 """
 
 DB_HOST = "localhost"
-"""The host machine for the database.
-If you're using Docker, set it to "mongodb"."""
+"""The host machine for the database."""
 
 DB_PORT = 27017
 """The database's port on the host machine."""
@@ -106,10 +105,6 @@ disallowed, and do not need to be added to this list."""
 REQUIRE_2FA = True
 """Whether Duo 2FA should be required."""
 
-SEND_MAIL_ON = False
-"""Whether to send mail. This is exclusively for handling power user role requests. It
-is not for requesting edit access to a link. When toggled on, emails are sent."""
-
 MAIL_BACKEND = "file"
 """Which backend to use to send mail. File will write to disk."""
 
@@ -125,3 +120,7 @@ SECURITY_MEASURES_ON = False
 You would this to be set to True when performing unit tests
 or you'll fail the security tests. However, in prod it can be whatever."""
 
+GITHUB_OUTLOOK_WEBHOOK_UPDATE_SECRET = "BLAH"
+"""The secret for authenticating the webhook API for updating
+the Outlook Add-In version so that only GitHub Webhooks
+can make the scripts run to download new version of Outlook Add-In"""

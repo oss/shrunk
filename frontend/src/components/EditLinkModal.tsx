@@ -143,6 +143,8 @@ export const EditLinkModal: React.FC<Props> = (props) => {
     return false;
   };
 
+  const isTrackingPixelLink = props.linkInfo.is_tracking_pixel_link;
+
   const [ownerInputVal, setOwnerInputVal] = useState(initialValues.owner);
   const handleChange = (e: any) => {
     setOwnerInputVal(e.target.value);
@@ -188,7 +190,11 @@ export const EditLinkModal: React.FC<Props> = (props) => {
         </Form.Item>
 
         <Form.Item
-          label="Long URL"
+          label={
+            isTrackingPixelLink
+              ? 'Long URL (tracking pixel link)'
+              : 'Long URL (redirect link)'
+          }
           name="long_url"
           rules={[
             { required: true, message: 'Please input a URL.' },
@@ -199,6 +205,7 @@ export const EditLinkModal: React.FC<Props> = (props) => {
           <Input
             placeholder="Long URL"
             prefix={<LinkOutlined className="site-from-item-icon" />}
+            disabled={isTrackingPixelLink}
           />
         </Form.Item>
 
@@ -231,9 +238,31 @@ export const EditLinkModal: React.FC<Props> = (props) => {
                   key={field.key}
                   style={{ display: 'flex', marginBottom: 8 }}
                   align="start"
+                  direction='vertical'
                 >
                   <Form.Item
-                    label={index === 0 ? 'Alias' : ''}
+                    style={{
+                      width: '470px'
+                    }}
+                    label={
+                      <>
+                        Alias
+                        <Popconfirm
+                          placement="topRight"
+                          title="Are you sure you want to delete this alias?"
+                          onConfirm={() => remove(field.name)}
+                          icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
+                          disabled={fields.length === 1}
+                        >
+                          <Button
+                            disabled={fields.length === 1}
+                            type="text"
+                            icon={<MinusCircleOutlined />}
+                            size="middle"
+                          />
+                        </Popconfirm>
+                      </>
+                    }
                     name={[field.name, 'alias']}
                     fieldKey={field.fieldKey}
                     rules={[
@@ -273,6 +302,9 @@ export const EditLinkModal: React.FC<Props> = (props) => {
                   </Form.Item>
 
                   <Form.Item
+                    style={{
+                      width: '470px'
+                    }}
                     label={index === 0 ? 'Description' : ''}
                     name={[field.name, 'description']}
                     fieldKey={field.fieldKey}
@@ -282,20 +314,6 @@ export const EditLinkModal: React.FC<Props> = (props) => {
                       placeholder="Description"
                     />
                   </Form.Item>
-
-                  <Popconfirm
-                    placement="topRight"
-                    title="Are you sure you want to delete this alias?"
-                    onConfirm={() => remove(field.name)}
-                    icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
-                    disabled={fields.length === 1}
-                  >
-                    <Button
-                      disabled={fields.length === 1}
-                      type="text"
-                      icon={<MinusCircleOutlined />}
-                    />
-                  </Popconfirm>
                 </Space>
               ))}
 

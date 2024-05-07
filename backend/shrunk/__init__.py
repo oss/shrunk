@@ -5,10 +5,11 @@ import base64
 import binascii
 import codecs
 import datetime
+import json
 from typing import Any
 
 import flask
-from flask import Flask, current_app, render_template, redirect, request
+from flask import Flask, current_app, render_template, redirect, request, send_file
 from flask.json import JSONEncoder
 from flask.logging import default_handler
 from flask_mailman import Mail
@@ -17,6 +18,10 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from bson import ObjectId
 import bson.errors
 from backports import datetime_fromisoformat
+
+from .util.github import pull_outlook_assets_from_github
+
+from .util.verification import verify_signature
 
 # Blueprints
 from . import views
@@ -248,6 +253,7 @@ def create_app(config_path: str = 'config.py', **kwargs: Any) -> Flask:
     app.register_blueprint(api.request.bp)
     app.register_blueprint(api.security.bp)
     app.register_blueprint(api.linkhub.bp)
+    app.register_blueprint(api.role_request.bp)
 
     # set up extensions
     mail = Mail()
@@ -260,33 +266,95 @@ def create_app(config_path: str = 'config.py', **kwargs: Any) -> Flask:
     def _redirect_to_real_index() -> Any:
         return redirect('/app')
 
+    # webhook for GitHub Actions to alert server of new Outlook add-in release
+    @app.route('/outlook/update', methods=['POST'])
+    def _outlook_webhook() -> Any:
+        pull_outlook_assets_from_github()
+        try:
+            data = request.get_data()
+            data_json = json.loads(data)
+            app.logger.info(current_app.config['GITHUB_OUTLOOK_WEBHOOK_UPDATE_SECRET'])
+
+            verify_signature(
+                data,
+                current_app.config['GITHUB_OUTLOOK_WEBHOOK_UPDATE_SECRET'],
+                request.headers.get('X-Hub-Signature-256')
+            )
+
+            app.logger.info("Signature verified. Proceeding with updating Outlook add-in version.")
+        except Exception as e:
+            app.logger.error("Signature was incorrect or unable to be verified.\n")
+            return 'Unauthorized', 401
+
+        github_event = request.headers.get('X-GitHub-Event')
+
+        def run_update_outlook_script():
+            try:
+                pull_outlook_assets_from_github()
+            except Exception as e:
+                app.logger.error("Unable to run outlook update function.\n", e)
+                return 'Server Error', 500
+
+        if github_event == 'create':
+            ref_type = data_json['ref_type']
+            if ref_type == "tag":
+                run_update_outlook_script()
+        else:
+            print("Not a create event. Ignoring.")
+            return 'OK'
+
+        return 'OK'
+
+    @app.route('/outlook/assets/<string:env>/<path:filename>', methods=['GET'])
+    def _outlook_assets_prod(env: str, filename: str) -> Any:
+        OUTLOOK_PATH=f"/var/www/outlook/{env}"
+        if env == 'dev':
+            return send_file(f'{OUTLOOK_PATH}/{filename}')
+        elif env == 'prod':
+            return send_file(f'{OUTLOOK_PATH}/{filename}')
+        else:
+            return 'Bad Request. Env variable was invalid.', 400
 
     # serve redirects
     @app.route('/<alias>', methods=['GET'])
     def _serve_redirect(alias: str) -> Any:
         client: ShrunkClient = current_app.client
         long_url = client.links.get_long_url(alias)
-        if long_url is None:
+        is_tracking_pixel_link = client.links.is_tracking_pixel_link(alias)
+
+        if long_url is None and not is_tracking_pixel_link:
             return render_template('404.html'), 404
 
         # Get or generate a tracking id
         tracking_id = request.cookies.get('shrunkid') or client.tracking.get_new_id()
-        if request.headers.get('DNT', '0') != '0':
-            # If DNT is set, generate a unique ID for each visit
-            tracking_id = client.tracking.get_new_id()
 
         client.links.visit(alias,
                            tracking_id,
                            request.remote_addr,
                            request.headers.get('User-Agent'),
                            request.headers.get('Referer'))
-        if '://' not in long_url:
-            long_url = f'http://{long_url}'
-        response = redirect(long_url)
 
-        # Make sure we don't set the tracking ID cookie if DNT is set
-        if request.headers.get('DNT', '0') == '0':
-            response.set_cookie('shrunkid', tracking_id)
+        if is_tracking_pixel_link:
+            extension = None
+
+            if '.' in alias:
+                extension = alias.split('.')[-1]
+            else:
+                extension = 'gif'
+
+            filename = './static/img/pixel.{}'.format(extension)
+            response = send_file(filename, mimetype='image/{}'.format(extension))
+            response.headers['X-Image-Name'] = 'pixel.{}'.format(extension)
+
+            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Expires"] = "0"
+        else:
+            if '://' not in long_url:
+                long_url = f'http://{long_url}'
+            response = redirect(long_url)
+
+        response.set_cookie('shrunkid', tracking_id)
 
         return response
 

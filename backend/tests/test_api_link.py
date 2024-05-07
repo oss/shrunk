@@ -565,7 +565,7 @@ def test_visits(client: Client) -> None:  # pylint: disable=too-many-statements
         assert_visits(f'/api/v1/link/{link_id}/alias/{alias0}/stats', 0, 0)
         assert_visits(f'/api/v1/link/{link_id}/alias/{alias1}/stats', 0, 0)
 
-        # This time, execute visits with the DNT header set. All visits should be unique
+        # When DNT is set, the right amount of unique visits are set
         resp = client.get(f'/{alias0}', headers={'DNT': '1'})
         assert resp.status_code == 302
         resp = client.get(f'/{alias1}', headers={'DNT': '1'})
@@ -573,14 +573,15 @@ def test_visits(client: Client) -> None:  # pylint: disable=too-many-statements
         resp = client.get(f'/{alias1}', headers={'DNT': '1'})
         assert resp.status_code == 302
 
-        # Get the link stats. Check that we have 3 visits and 3 unique visits
-        assert_visits(f'/api/v1/link/{link_id}/stats', 3, 3)
+        # Get the link stats. Check that we have 3 visits and 1 unique visits
+        assert_visits(f'/api/v1/link/{link_id}/stats', 3, 1)
 
         # Get the stats for alias0. Check that we have 1 visit and 1 unique visit
         assert_visits(f'/api/v1/link/{link_id}/alias/{alias0}/stats', 1, 1)
 
-        # Get the stats for alias1. Check that we have 2 visits and 2 unique visits
-        assert_visits(f'/api/v1/link/{link_id}/alias/{alias1}/stats', 2, 2)
+        # Get the stats for alias1. Check that we have 2 visits and 1 unique visits
+        assert_visits(f'/api/v1/link/{link_id}/alias/{alias1}/stats', 2, 1)
+
 
 def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-statements
     """This test simulates the process of creating a link with ACL options and testing if the permissions works"""

@@ -44,6 +44,12 @@ interface State {
    */
   roles: RoleInfo[] | null;
   linksToBeVerified: number;
+
+  /**
+   * The number of pending power user requests to process
+   * @property
+   */
+  powerUserRequestsCount: number;
 }
 
 /**
@@ -57,6 +63,8 @@ export class Admin extends React.Component<Props, State> {
     this.state = {
       roles: null,
       linksToBeVerified: -1,
+      powerUserRequestsCount: -1,
+
     };
   }
 
@@ -71,6 +79,21 @@ export class Admin extends React.Component<Props, State> {
     await fetch('/api/v1/role')
       .then((resp) => resp.json())
       .then((json) => this.setState({ roles: json.roles as RoleInfo[] }));
+    await this.updatePendingPowerUserRequestsCount();
+  }
+
+  /**
+   * Update the number of pending power user requests
+   * @method
+   */
+  updatePendingPowerUserRequestsCount = (): void => {
+    fetch('/api/v1/role_request/power_user/count')
+      .then((resp) => resp.json())
+      .then((json) =>
+        this.setState({
+          powerUserRequestsCount: json.count,
+        }),
+      );
   }
 
   render(): React.ReactNode {
@@ -98,6 +121,19 @@ export class Admin extends React.Component<Props, State> {
                 <Spin size="small" />
               ) : (
                 <Badge count={this.state.linksToBeVerified} offset={[8, -20]} />
+              )}
+            </Link>
+          </Col>
+        </Row>
+
+        <Row className="primary-row">
+          <Col span={24}>
+            <Link to="/admin/role_requests/power_user" className="title">
+              Pending Power User Role Requests 
+              {this.state.powerUserRequestsCount === -1 ? (
+                <Spin size="small" />
+              ) : (
+                <Badge count={this.state.powerUserRequestsCount} offset={[8, -20]} />
               )}
             </Link>
           </Col>

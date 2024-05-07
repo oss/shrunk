@@ -20,6 +20,7 @@ import { Dashboard } from './pages/Dashboard';
 import { Admin } from './pages/Admin';
 import { Orgs } from './pages/Orgs';
 import { Faq } from './pages/Faq';
+import { RoleRequestForm } from './pages/RoleRequestForm';
 
 import { Stats } from './pages/subpages/Stats';
 import { AdminStats } from './admin/AdminStats';
@@ -27,9 +28,12 @@ import LinkSecurity from './admin/LinkSecurity';
 import { Role } from './admin/Role';
 import { ManageOrg } from './pages/subpages/ManageOrg';
 import { OrgStats } from './pages/subpages/OrgStats';
+import { PendingRoleRequests } from './admin/PendingRoleRequests';
 
 import { PendingAlerts } from './alerts/PendingAlerts';
 import { PendingRequests } from './components/PendingRequests';
+
+import base32 from 'hi-base32';
 
 import './antd_themed.less';
 import './Shrunk.less';
@@ -81,6 +85,13 @@ interface State {
   showWhitelistTab: boolean;
 
   /**
+   * Whether the "Request Power User Role" tab should be shown in the top navbar. This is
+   * determined based on whether the user has the power user role and whether the user has
+   * already requested the power user role.
+   */
+  showRequestPowerUserRoleTab: boolean;
+
+  /**
    * This determines which tabs in the navbar are highlighted. This is determined
    * based on the active route.
    * @property
@@ -112,6 +123,7 @@ export class Shrunk extends React.Component<Props, State> {
     const showAdminTab = this.props.userPrivileges.has('admin');
     const showWhitelistTab =
       !showAdminTab && this.props.userPrivileges.has('facstaff');
+    const showRequestPowerUserRoleTab = !this.props.userPrivileges.has('power_user') && !this.props.userPrivileges.has('admin');
     const role =
       this.props.userPrivileges.size === 0
         ? 'Whitelisted User'
@@ -124,6 +136,7 @@ export class Shrunk extends React.Component<Props, State> {
     this.state = {
       showAdminTab,
       showWhitelistTab,
+      showRequestPowerUserRoleTab,
       selectedKeys: ['dashboard'],
       pendingAlerts: [],
       role,
@@ -132,6 +145,7 @@ export class Shrunk extends React.Component<Props, State> {
 
   async componentDidMount(): Promise<void> {
     await this.updatePendingAlerts();
+    await this.updatePowerUserRoleRequestMade();
     const history = createBrowserHistory();
     this.setSelectedKeysFromLocation(history.location);
     history.listen(({ location }) =>
@@ -150,6 +164,25 @@ export class Shrunk extends React.Component<Props, State> {
         this.setState({ pendingAlerts: json.pending_alerts as Array<string> }),
       );
   };
+
+  /**
+   * Fetches whether the user has already made a request for the power user role and updates state.
+   * @method
+   */
+  updatePowerUserRoleRequestMade = async (): Promise<void> => {
+    const encodedEntity = base32.encode(this.props.netid)
+        fetch(`/api/v1/role_request/power_user/${encodedEntity}`)
+        .then(response => {
+            if (response.status === 204) {
+              if (!this.props.userPrivileges.has('power_user') && !this.props.userPrivileges.has('admin')){
+                this.setState({ showRequestPowerUserRoleTab: true });
+              }
+            } else if (response.status === 200) {
+                this.setState({ showRequestPowerUserRoleTab: false });
+            }
+        })
+        .catch(error => console.error('Error:', error));
+  }
 
   /**
    * Sets the active tabs in the navbar based on the current view.
@@ -173,6 +206,8 @@ export class Shrunk extends React.Component<Props, State> {
       } else {
         key = 'admin';
       }
+    } else if (route.startsWith('#/request-power-user-role')) {
+      key = 'request-power-user-role';
     } else if (route.startsWith('#/faq')) {
       key = 'faq';
     }
@@ -223,7 +258,7 @@ export class Shrunk extends React.Component<Props, State> {
                   </Menu>
                 }
               >
-                <Button type="text" className="filter-btn">
+                <Button type="text" aria-label={this.props.netid} className="filter-btn">
                   {this.props.netid} <DownOutlined />
                 </Button>
               </Dropdown>
@@ -246,6 +281,7 @@ export class Shrunk extends React.Component<Props, State> {
                 <Button
                   type="text"
                   className="user-btn"
+                  aria-label='user profile'
                   icon={<UserOutlined style={{ color: '#f0b1b9' }} />}
                 />
               </Dropdown>
@@ -290,6 +326,15 @@ export class Shrunk extends React.Component<Props, State> {
                   Organizations
                 </NavLink>
               </Menu.Item>
+              {!this.state.showRequestPowerUserRoleTab ? (
+                <></>
+              ) : (
+                <Menu.Item key="request-power-user-role">
+                  <NavLink to="/request-power-user-role" className="nav-text">
+                    Request Power User Role
+                  </NavLink>
+                </Menu.Item>
+              )}
               <Menu.Item key="faq">
                 <NavLink to="/faq" className="nav-text">
                   FAQ
@@ -370,6 +415,16 @@ export class Shrunk extends React.Component<Props, State> {
                   render={(props) => <OrgStats id={props.match.params.id} />}
                 />
 
+                <Route exact path="/request-power-user-role">
+                  {this.state.showRequestPowerUserRoleTab && (
+                    <RoleRequestForm
+                      userPrivileges={this.props.userPrivileges}
+                      netid={this.props.netid}
+                      name="power_user"
+                    />
+                  )}
+                </Route>
+
                 <Route exact path="/faq">
                   <Faq />
                 </Route>
@@ -398,6 +453,13 @@ export class Shrunk extends React.Component<Props, State> {
                     <Route exact path="/admin/link_security">
                       <LinkSecurity />
                     </Route>
+                    <Route exact path="/admin/role_requests/power_user">
+                      <PendingRoleRequests
+                        name="power_user"
+                        userPrivileges={this.props.userPrivileges}
+                      />
+                    </Route>
+                      
                   </>
                 )}
               </Switch>
@@ -409,7 +471,7 @@ export class Shrunk extends React.Component<Props, State> {
               style={{ background: 'white' }}
             />
           </Layout>
-          <Footer style={{ textAlign: 'center', color: '#f0f0f0' }}>
+          <Footer style={{ textAlign: 'center', color: 'white', backgroundColor: "black"}}>
             <p>
               Rutgers is an equal access/equal opportunity institution.
               Individuals with disabilities are encouraged to direct
