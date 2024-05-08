@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import Any, List, Optional
+from typing import Any, List
 
 import pymongo
 import requests
@@ -20,12 +20,10 @@ class RoleRequestClient:
         db: pymongo.database.Database,
         SEND_MAIL_ON: bool,
         SLACK_INTEGRATION_ON: bool,
-        SLACK_WEBHOOK_URL: Optional[str] = None,
     ):
         self.db = db
         self.send_mail_on = SEND_MAIL_ON
         self.slack_integration_on = SLACK_INTEGRATION_ON
-        self.slack_webhook_url = SLACK_WEBHOOK_URL
 
     def get_pending_role_requests(self, role: str) -> List[Any]:
         """Get all pending role requests for a role
@@ -454,17 +452,8 @@ class RoleRequestClient:
         • Department: {', '.join(position_info['rutgersEduStaffDepartment'])}
         • Employee Type: {', '.join(position_info['employeeType'])}
         """
-        headers = {
-            "Content-Type": "application/json",
-        }
-        data = {
-            "text": message,
-        }
 
-        response = requests.post(self.slack_webhook_url, headers=headers, json=data)
-
-        if response.status_code != 200:
-            raise InvalidEntity("Slack integration failed")
+        # TODO: Change implementation from "incoming webhook" to bot message
 
     def get_slack_integration_on(self) -> bool:
         """Get the value of the slack_integration_on attribute. This is to adjust the modal message for the user after they submit a role request."""

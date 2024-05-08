@@ -127,9 +127,6 @@ or you'll fail the security tests. However, in prod it can be whatever."""
 SLACK_INTEGRATION_ON = False
 """Whether the slack integration is turned on or off."""
 
-SLACK_WEBHOOK_URL = ""
-"""The webhook URL for the slack integration."""
-
 SLACK_INTEGRATION_API_KEY = "test123"
 """The API key for the slack integration. This is used to authenticate requests made by the slack bot.
 This key should be a lot more complex in prod."""
