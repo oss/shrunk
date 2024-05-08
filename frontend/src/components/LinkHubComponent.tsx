@@ -30,6 +30,7 @@ export default function LinkHubComponent(props: Props) {
             fontSize: '3em',
             color: 'rgb(255,255,255)',
             marginTop: '25px',
+            lineHeight: '1.2em',
           }}
         >
           {props.title}

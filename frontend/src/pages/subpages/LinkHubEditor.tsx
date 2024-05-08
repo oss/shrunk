@@ -17,7 +17,6 @@ interface PLinkHubEditRow {
 }
 
 function LinkHubEditRow(props: PLinkHubEditRow) {
-  console.log(props.link);
   return (
     <div
       style={{
@@ -103,7 +102,11 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
     setLinks(newLinks);
   }
 
-  console.log(links);
+  function addDisplayLink(value: DisplayLink) {
+    let newLinks: DisplayLink[] = JSON.parse(JSON.stringify(links));
+    newLinks.push(value);
+    setLinks(newLinks);
+  }
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -127,7 +130,13 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
         <Button
           style={{ marginRight: '10px' }}
           type="default"
-          onClick={() => {}}
+          onClick={() => {
+            const link: DisplayLink = {
+              title: 'click here to sell your soul',
+              url: 'https://overwatch.blizzard.com/en-us/',
+            };
+            addDisplayLink(link);
+          }}
         >
           <PlusCircleOutlined /> Add
         </Button>
@@ -137,11 +146,8 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
       </div>
       <div
         style={{
-          border: 'solid',
-          borderWidth: '5px',
-          borderRadius: '20px',
-          width: '21vw',
-          height: '40vw',
+          width: '400px',
+          height: '710px',
           textAlign: 'center',
         }}
       >
