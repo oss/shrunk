@@ -11,6 +11,7 @@ import { Input } from 'antd/lib';
  * @interface
  */
 export interface Props {
+  placeholder: string;
   /**
    * Callback called when the user executes a new search query
    * @property
@@ -37,7 +38,7 @@ export const SearchBox: React.FC<Props> = (props) => {
 
   return (
     <Search
-      placeholder="Search URLs..."
+      placeholder={props.placeholder}
       loading={loading}
       allowClear
       onSearch={onSearch}
