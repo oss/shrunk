@@ -4,7 +4,6 @@ import LinkHubComponent, {
 } from '../../components/LinkHubComponent';
 import { Button, Form, Input } from 'antd/lib';
 import {
-  EditOutlined,
   DeleteOutlined,
   SaveOutlined,
   PlusCircleOutlined,
@@ -12,10 +11,13 @@ import {
 
 interface PLinkHubEditRow {
   link: DisplayLink;
-  key: number;
+  index: number;
+  onDisplayLinkChange(value: DisplayLink, index: number): void;
+  onDeleteDisplayLink(index: number): void;
 }
 
 function LinkHubEditRow(props: PLinkHubEditRow) {
+  console.log(props.link);
   return (
     <div
       style={{
@@ -29,22 +31,37 @@ function LinkHubEditRow(props: PLinkHubEditRow) {
       <div style={{ marginRight: '10px' }}>
         <input
           type="text"
-          name={`linkhub-link-title-${props.key}`}
+          name={`linkhub-link-title-${props.index}`}
           defaultValue={props.link.title}
-          style={{ border: 'none' }}
+          style={{ border: 'none', width: '256px' }}
+          onChange={(e: any) => {
+            const displayLink: DisplayLink = {
+              title: e.target.value,
+              url: props.link.url,
+            };
+            props.onDisplayLinkChange(displayLink, props.index);
+          }}
         />
         <br />
         <input
           type="text"
-          name={`linkhub-link-url-${props.key}`}
+          name={`linkhub-link-url-${props.index}`}
           defaultValue={props.link.url}
-          style={{ border: 'none' }}
+          style={{ border: 'none', width: '256px' }}
+          onChange={(e: any) => {
+            const displayLink: DisplayLink = {
+              title: props.link.title,
+              url: e.target.value,
+            };
+            props.onDisplayLinkChange(displayLink, props.index);
+          }}
         />
       </div>
-      <div style={{ display: 'flex' }}>
-        <EditOutlined style={{ marginRight: '5px' }} />
-        <DeleteOutlined style={{ marginRight: '5px' }} />
-      </div>
+      <DeleteOutlined
+        onClick={() => {
+          props.onDeleteDisplayLink(props.index);
+        }}
+      />
     </div>
   );
 }
@@ -74,25 +91,37 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
     setTitle(e.target.value);
   }
 
+  function onDisplayLinkChange(value: DisplayLink, index: number) {
+    let newLinks: DisplayLink[] = JSON.parse(JSON.stringify(links));
+    newLinks[index] = value;
+    setLinks(newLinks);
+  }
+
+  function onDeleteDisplayLink(index: number) {
+    let newLinks: DisplayLink[] = JSON.parse(JSON.stringify(links));
+    newLinks.splice(index, 1);
+    setLinks(newLinks);
+  }
+
+  console.log(links);
+
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-      <div style={{ marginRight: '20px' }}>
-        <p>
-          Your LinkHub is live at{' '}
-          <a href="https://go.rutgers.edu/h/{props.alias}">
-            go.rutgers.edu/h/{props.alias}
-          </a>
-        </p>
+    <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <div style={{ marginRight: '64px' }}>
         <Form.Item label="Title" name="linkhub-title">
-          <Input
-            max={64}
-            defaultValue="My Collection of Links"
-            onChange={onTitleChange}
-          />
+          <Input max={64} defaultValue={title} onChange={onTitleChange} />
         </Form.Item>
         <div>
-          {links.map((value, key) => {
-            return <LinkHubEditRow link={value} key={key} />;
+          {links.map((value, index) => {
+            return (
+              <LinkHubEditRow
+                link={value}
+                index={index}
+                key={index}
+                onDisplayLinkChange={onDisplayLinkChange}
+                onDeleteDisplayLink={onDeleteDisplayLink}
+              />
+            );
           })}
         </div>
         <Button
@@ -113,9 +142,15 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
           borderRadius: '20px',
           width: '21vw',
           height: '40vw',
+          textAlign: 'center',
         }}
       >
         <LinkHubComponent title={title} links={links} />
+        <p style={{ marginTop: '10px' }}>
+          <a href="https://go.rutgers.edu/h/{props.alias}">
+            go.rutgers.edu/h/{props.alias}
+          </a>
+        </p>
       </div>
     </div>
   );

@@ -38,9 +38,9 @@ export default function LinkHubComponent(props: Props) {
           style={{ display: 'flex', justifyContent: 'center', width: '100%' }}
         >
           <div style={{ minWidth: '400px', width: '30%' }}>
-            {props.links.map((value, _) => {
+            {props.links.map((value, index) => {
               return (
-                <a href={value.url}>
+                <a href={value.url} key={index}>
                   <div
                     style={{
                       border: 'solid',
