@@ -81,10 +81,8 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
     onProcess = async (entity: string, comment: string): Promise<void> => {
         if (this.props.toApprove) {
             await this.onApprove(entity, comment);
-            await this.sendApprovalEmail();
         } else {
             await this.onDeny(entity, comment);
-            await this.sendDenialEmail();
         }
         await this.props.updatePendingRoleRequests();
         this.onResetFormAndClose();
@@ -106,27 +104,19 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
      * @param approve_comment the comment to include with the approval
      */
     onApprove = async (entity: string, approve_comment: string): Promise<void> => {
-        const encodedEntity = base32.encode(entity);
-        await fetch(`/api/v1/role/${this.props.name}/entity/${encodedEntity}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(
-                approve_comment !== '' ? { comment: approve_comment } : {}
-            ),
-        });
-
-        await fetch(`/api/v1/role_request`, {
-            method: 'DELETE',
+        await fetch(`/api/v1/role_request/approve`, {
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
                 role: this.props.name,
                 entity: entity,
+                comment: approve_comment
             })
         })
             .then(response => {
-                if (response.status === 204) {
+                if (response.status === 200) {
                     message.success(`Succesfully granted ${this.props.roleName} role to ${entity}`, 2)
                 } else {
                     message.error(`Failed to grant ${this.props.roleName} role to ${entity}`, 2)
@@ -141,7 +131,7 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
      * @param deny_comment the comment to include with the deny
      */
     onDeny = async (entity: string, deny_comment: string): Promise<void> => {
-        await fetch(`/api/v1/role_request`, {
+        await fetch(`/api/v1/role_request/deny`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -149,6 +139,7 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
             body: JSON.stringify({
                 role: this.props.name,
                 entity: entity,
+                comment: deny_comment
             })
         })
             .then(response => {
@@ -159,50 +150,6 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
                 }
             })
             .catch(error => console.error('Error:', error));
-    }
-
-    /**
-     * Send an approval email to the entity
-     * @method
-     */
-    sendApprovalEmail = async (): Promise<void> => {
-        await fetch(`/api/v1/role_request/approval`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                role_name: this.props.name,
-                entity: this.props.entity,
-                comment: this.state.comment !== '' ? this.state.comment : undefined,
-            })
-        }).then(response => {
-                if (response.status !== 200) {
-                    console.error(`${response.status}: Approval email failed to send`);
-                }
-        }).catch(error => console.error('Error:', error));
-    }
-
-    /**
-     * Send a denial email to the entity
-     * @method
-     */
-    sendDenialEmail = async (): Promise<void> => {
-        await fetch(`/api/v1/role_request/denial`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                role_name: this.props.name,
-                entity: this.props.entity,
-                comment: this.state.comment !== '' ? this.state.comment : undefined,
-            })
-        }).then(response => {
-                if (response.status !== 200) {
-                    console.error(`${response.status}: Denial email failed to send`);
-                }
-        }).catch(error => console.error('Error:', error));
     }
 
     /**

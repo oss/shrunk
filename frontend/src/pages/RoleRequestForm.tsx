@@ -146,10 +146,10 @@ export class RoleRequestForm extends React.Component<Props, State> {
     }
 
     /** 
-     * Process the request for the role
+     * Send the request to the OSS team
      * @method
      */
-    processRequest = async () => {
+    sendRequest = async () => {
         await fetch(`/api/v1/role_request`, {
             method: 'POST',
             headers: {
@@ -163,32 +163,11 @@ export class RoleRequestForm extends React.Component<Props, State> {
             .then(response => {
                 if (response.status === 201) {
                     this.setState({ roleRequestSent: true });
-                    this.confirmRequest();
                 } else if (response.status === 400) {
                     console.error('Error: Bad request');
                 }
             })
             .catch(error => console.error('Error:', error));
-    }
-
-    /**
-     * Confirm the request for the role by sending an email
-     * @method
-     */
-    confirmRequest = async () => {
-        await fetch(`/api/v1/role_request/confirmation`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                role_name: this.props.name,
-            })
-        }).then(response => {
-            if(response.status !== 200) {
-                console.error(`${response.status}: Confirmation email failed to send`);
-            }
-        })
     }
 
     /**
@@ -208,7 +187,7 @@ export class RoleRequestForm extends React.Component<Props, State> {
      * @method
      */
     onFinish = async () => {
-        await this.processRequest();
+        await this.sendRequest();
         this.setState({ visible: true });
     }
 

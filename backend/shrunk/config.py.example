@@ -125,7 +125,10 @@ You would this to be set to True when performing unit tests
 or you'll fail the security tests. However, in prod it can be whatever."""
 
 SLACK_INTEGRATION_ON = False
-"""Whether the slack integration is turned on or off."""
+"""Whether the slack integration is turned on or off. This will override the value of SEND_MAIL_ON
+for messages sent to the OSS team. This includes when the OSS team is notified of new pending role requests.
+This does NOT include when the slack bot is fetching information from shrunk such as the number of pending 
+role requests."""
 
 SLACK_INTEGRATION_API_KEY = "test123"
 """The API key for the slack integration. This is used to authenticate requests made by the slack bot.

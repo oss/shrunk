@@ -2,12 +2,9 @@ from datetime import datetime, timezone
 from typing import Any, List
 
 import pymongo
-import requests
 from flask_mailman import Mail
 
 from shrunk.util.ldap import query_position_info
-
-from .exceptions import InvalidEntity
 
 __all__ = ["RoleRequestClient"]
 
@@ -56,7 +53,7 @@ class RoleRequestClient:
         """
         return self.db.role_requests.count_documents({"role": role})
 
-    def get_pending_role_request_for_entity(self, role: str, entity: str) -> dict:
+    def get_pending_role_request_for_entity(self, entity: str, role: str) -> dict:
         """Get a single pending role requests for a role and entity
 
         :param role: Role requested
@@ -76,7 +73,7 @@ class RoleRequestClient:
         """
         return self.db.role_requests.find_one({"role": role, "entity": entity})
 
-    def request_role(self, role: str, entity: str, comment: str) -> None:
+    def create_role_request(self, entity: str, role: str, comment: str) -> None:
         """
         Request a role for an entity
 
@@ -95,7 +92,7 @@ class RoleRequestClient:
             }
         )
 
-    def delete_role_request(self, role: str, entity: str) -> None:
+    def delete_role_request(self, entity: str, role: str) -> None:
         """
         Delete a role request and remember who did it. Delete the request from the database.
 
@@ -123,7 +120,7 @@ class RoleRequestClient:
 
     @staticmethod
     def send_role_request_confirmation_mail(
-        requesting_netid: str, mail: Mail, role_name: str
+        requesting_netid: str, role_name: str, mail: Mail
     ) -> None:
         """Send an email to the requesting-user confirming that a role request has been sent to be manually processed.
 
@@ -195,7 +192,7 @@ class RoleRequestClient:
 
     @staticmethod
     def send_role_request_approval_mail(
-        requesting_netid: str, mail: Mail, role_name: str, comment: str
+        requesting_netid: str, role_name: str, comment: str, mail: Mail
     ) -> None:
         """Send an email to the requesting-user confirming that their role request is approved.
 
@@ -272,7 +269,7 @@ class RoleRequestClient:
 
     @staticmethod
     def send_role_request_denial_mail(
-        requesting_netid: str, mail: Mail, role_name: str, comment: str
+        requesting_netid: str, role_name: str, comment: str, mail: Mail
     ) -> None:
         """Send an email to the requesting-user confirming that their role request is denied.
 
@@ -347,9 +344,8 @@ class RoleRequestClient:
             recipient_list=[f"{requesting_netid}@rutgers.edu"],
         )
 
-    @staticmethod
-    def send_role_request_notify_mail(
-        requesting_netid: str, mail: Mail, role_name: str
+    def send_role_request_notification_mail(
+        self, requesting_netid: str, role_name: str, mail: Mail
     ) -> None:
         """Send an email to the OSS team notifying them that a role request has been made.
 
@@ -411,18 +407,28 @@ class RoleRequestClient:
         """Get the value of the send_mail_on attribute. This is to adjust the modal message for the user after they submit a role request."""
         return self.send_mail_on
 
-    def send_role_request_notify_slack(
-        self, requesting_netid: str, role_name: str
-    ) -> None:
-        """Send a message to the OSS team's Slack channel notifying them that a role request has been made.
+    def get_slack_integration_on(self) -> bool:
+        """Get the value of the slack_integration_on attribute. This is to adjust the modal message for the user after they submit a role request."""
+        return self.slack_integration_on
 
+    def generate_role_request_blocks(
+        self, requesting_netid: str, role_name: str
+    ) -> List[Any]:
+        """
+        Generate the role request blocks needed for shrunk to send a formatted, interactive Slack message.
+
+        Args:
         :param requesting_netid: NetID of the requesting user
         :param role_name: The role name being requested
-        """
-        display_role_name = ""
-        if role_name == "power_user":
-            display_role_name = "power user"
 
+        Returns:
+        :returns: A dictionary containing the blocks needed for the Slack message. The `blocks` field of the message should be initialized to what is returned by this function
+        """
+        # Get the display attributes for the role request
+        display_attributes = self.get_role_request_text(role_name)
+        display_role_name = display_attributes["capitalized_role"]
+
+        # Get the position info of the requesting user using LDAP
         intermediate_position_info = query_position_info(requesting_netid)
         attributes = ["title", "rutgersEduStaffDepartment", "employeeType"]
         position_info = dict()
@@ -445,16 +451,70 @@ class RoleRequestClient:
         else:
             position_info = {attr: "(cannot find attribute)" for attr in attributes}
 
-        message = f"""
-        The user {requesting_netid} has requested the {display_role_name} role. Please process their request.
+        # Generate the blocks
+        return [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": "The user *{}* has requested the {} role. Please process their request:".format(
+                        requesting_netid, display_role_name
+                    ),
+                },
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": "*Title(s):* {}\n*Department(s):* {}\n*Employee Type(s):* {}\n*Comment:* {}".format(
+                        ", ".join(position_info["title"]),
+                        ", ".join(position_info["rutgersEduStaffDepartment"]),
+                        ", ".join(position_info["employeeType"]),
+                        "N/A",
+                    ),
+                },
+            },
+            {"type": "divider"},
+            {
+                "type": "input",
+                "element": {
+                    "type": "plain_text_input",
+                    "multiline": True,
+                    "action_id": "plain_text_input-action",
+                },
+                "label": {
+                    "type": "plain_text",
+                    "text": "Include an approval/denial comment (optional):",
+                },
+            },
+            {
+                "type": "actions",
+                "elements": [
+                    {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Approve",
+                        },
+                        "style": "primary",
+                        "value": "click_me_123",
+                    },
+                    {
+                        "type": "button",
+                        "text": {"type": "plain_text", "text": "Deny"},
+                        "style": "danger",
+                        "value": "click_me_123",
+                    },
+                ],
+            },
+        ]
 
-        • Title: {', '.join(position_info['title'])}
-        • Department: {', '.join(position_info['rutgersEduStaffDepartment'])}
-        • Employee Type: {', '.join(position_info['employeeType'])}
+    def send_role_request_notification_slack(
+        self, requesting_netid: str, role_name: str
+    ) -> None:
+        """Send a message to the OSS team's Slack channel notifying them that a role request has been made.
+
+        :param requesting_netid: NetID of the requesting user
+        :param role_name: The role name being requested
         """
-
-        # TODO: Change implementation from "incoming webhook" to bot message
-
-    def get_slack_integration_on(self) -> bool:
-        """Get the value of the slack_integration_on attribute. This is to adjust the modal message for the user after they submit a role request."""
-        return self.slack_integration_on
+        print("Slack notification")
