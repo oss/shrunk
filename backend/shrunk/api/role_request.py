@@ -94,7 +94,7 @@ def get_pending_role_request_for_entity(
           "time_requested": DateTime,
         }
     """
-    result = client.role_requests.get_pending_role_request_for_entity(entity, role)
+    result = client.role_requests.get_pending_role_request_for_entity(role, entity)
     if not result:
         return Response(status=204)
     return (
@@ -129,20 +129,23 @@ def make_role_request(netid: str, client: ShrunkClient, mail: Mail) -> Any:
     comment = data.get("comment")
 
     # If the user already has a pending role request for the given role, return 409
-    if client.role_requests.get_pending_role_request_for_entity(netid, role):
+    if client.role_requests.get_pending_role_request_for_entity(role, netid):
         return Response(status=409)
     
     # Otherwise, create the request. It should return 201
-    client.role_requests.create_role_request(netid, role, comment)
+    client.role_requests.create_role_request(role, netid, comment)
     
     # If emails are toggled on, a confirmation email will be sent to the user and a notification email will be sent
     # to the OSS team. The notification email will be overriden by a slack notification if slack integration is on.
     if client.role_requests.get_send_mail_on():
-        client.role_requests.send_role_request_confirmation_mail(netid, role, mail)
+        client.role_requests.send_role_request_confirmation_mail(role, netid, mail)
         if client.role_requests.get_slack_integration_on():
-            client.role_requests.send_role_request_notification_slack(netid, role)
+            client.role_requests.send_role_request_notification_slack(role, netid)
         else:
-            client.role_requests.send_role_request_notification_mail(netid, role, mail)
+            client.role_requests.send_role_request_notification_mail(role, netid, mail)
+    else:
+        if client.role_requests.get_slack_integration_on():
+            client.role_requests.send_role_request_notification_slack(role, netid)
         
     return Response(status=201)
 
@@ -183,16 +186,21 @@ def approve_role_request(netid: str, client: ShrunkClient, mail: Mail) -> Any:
         abort(403)
       
     # If there is not a pending role request from the user for this role, return 404  
-    if not client.role_requests.get_pending_role_request_for_entity(entity, role):
+    if not client.role_requests.get_pending_role_request_for_entity(role, entity):
         return Response(status=404)
     
     # Otherwise, grant the role and delete the request
     client.roles.grant(role, netid, entity, comment)
-    client.role_requests.delete_role_request(entity, role)
+    
+    # If slack integration is toggled on, delete the request message from Slack
+    if client.role_requests.get_slack_integration_on():
+        client.role_requests.delete_role_request_notification_slack(role, entity, True)
+    
+    client.role_requests.delete_role_request(role, entity)
     
     # If emails are toggled on, a denial email will be sent to the user
     if client.role_requests.get_send_mail_on():
-        client.role_requests.send_role_request_approval_mail(entity, role, comment, mail)
+        client.role_requests.send_role_request_approval_mail(role, netid, comment, mail)
     
     return Response(status=200)
     
@@ -234,15 +242,20 @@ def deny_role_request(netid: str, client: ShrunkClient, mail: Mail) -> Any:
         abort(403)
       
     # If there is not a pending role request from the user for this role, return 404  
-    if not client.role_requests.get_pending_role_request_for_entity(entity, role):
+    if not client.role_requests.get_pending_role_request_for_entity(role, entity):
         return Response(status=404)
     
+    # If slack integration is toggled on, delete the request message from Slack
+    if client.role_requests.get_slack_integration_on():
+        client.role_requests.delete_role_request_notification_slack(role, entity, False)
+    
     # Otherwise, delete the request. It should return 204
-    client.role_requests.delete_role_request(entity, role)
+    client.role_requests.delete_role_request(role, entity)
+    
     
     # If emails are toggled on, a denial email will be sent to the user
     if client.role_requests.get_send_mail_on():
-        client.role_requests.send_role_request_denial_mail(entity, role, comment, mail)
+        client.role_requests.send_role_request_denial_mail(role, entity, comment, mail)
     
     return Response(status=204)
 

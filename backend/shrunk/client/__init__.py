@@ -37,6 +37,8 @@ class ShrunkClient:
                  SEND_MAIL_ON: Optional[bool] = False,
                  GOOGLE_SAFE_BROWSING_API: Optional[str] = None,
                  SLACK_INTEGRATION_ON: Optional[bool] = False,
+                 SLACK_BOT_TOKEN: Optional[str] = None,
+                 SLACK_SHRUNK_CHANNEL_ID: Optional[str] = None,
                  **_kwargs: Any):
         self.conn = pymongo.MongoClient(DB_HOST, DB_PORT, username=DB_USERNAME,
                                         password=DB_PASSWORD, authSource='admin',
@@ -60,7 +62,9 @@ class ShrunkClient:
                                        GOOGLE_SAFE_BROWSING_API=GOOGLE_SAFE_BROWSING_API or None)
         self.role_requests = RoleRequestClient(db=self.db,
                                                SEND_MAIL_ON=SEND_MAIL_ON or False,
-                                               SLACK_INTEGRATION_ON=SLACK_INTEGRATION_ON or False)
+                                               SLACK_INTEGRATION_ON=SLACK_INTEGRATION_ON or False,
+                                               SLACK_BOT_TOKEN=SLACK_BOT_TOKEN or None,
+                                               SLACK_SHRUNK_CHANNEL_ID=SLACK_SHRUNK_CHANNEL_ID or None)
 
     def _ensure_indexes(self) -> None:
         self.db.urls.create_index([('aliases.alias', pymongo.ASCENDING)])

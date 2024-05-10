@@ -133,3 +133,9 @@ role requests."""
 SLACK_INTEGRATION_API_KEY = "test123"
 """The API key for the slack integration. This is used to authenticate requests made by the slack bot.
 This key should be a lot more complex in prod."""
+
+SLACK_BOT_TOKEN = ""
+"""The Bot User OAuth Token - used to authenticate the bot with the Slack API. Typically starts with `xoxb-`."""
+
+SLACK_SHRUNK_CHANNEL_ID=""
+"""The channel ID where all shrunk-related information will be posted in. This will be limit where slash commands can be executed."""

@@ -13,3 +13,4 @@ python-ldap==3.3.1
 jsonschema==3.2.0
 backports-datetime-fromisoformat==1.0.0
 requests==2.24.0
+slack_sdk==3.27.1

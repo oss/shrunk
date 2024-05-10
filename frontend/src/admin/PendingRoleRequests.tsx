@@ -144,7 +144,7 @@ const PendingRoleRequestRow: React.FC<{
                         <Col span={24}>
                             <span>
                                 <em>Date Requested:</em>&nbsp;
-                                {moment(props.role_request.time_requested).format('MMM D, YYYY')}
+                                {moment(new Date(Number(props.role_request.time_requested) * 1000)).format('MMM D, YYYY, h:mm a')}
                             </span>
                         </Col>
                     </Row>
