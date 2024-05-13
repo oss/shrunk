@@ -2,15 +2,12 @@
 
 from typing import Any
 
-from flask import Blueprint, jsonify, request, Response, current_app
+from flask import Blueprint, Response, current_app, jsonify, request
+from flask_mailman import Mail
 from werkzeug.exceptions import abort
 
 from shrunk.client import ShrunkClient
-from shrunk.util.decorators import require_login, require_mail, require_api_key
-from shrunk.util.ldap import query_position_info
-
-from flask_mailman import Mail
-
+from shrunk.util.decorators import require_api_key, require_login, require_mail
 
 __all__ = ["role_request"]
 bp = Blueprint("role_request", __name__, url_prefix="/api/v1/role_request")
@@ -57,7 +54,7 @@ def get_pending_role_requests_count(netid: str, client: ShrunkClient, role: str)
         client (ShrunkClient): the client object
         role (str): the role to get pending requests count for
 
-    Obtains the count of all pending role requests. Response format:
+    Obtains the number of pending role requests for a given role. Response format:
 
     .. code-block:: json
 
@@ -131,10 +128,10 @@ def make_role_request(netid: str, client: ShrunkClient, mail: Mail) -> Any:
     # If the user already has a pending role request for the given role, return 409
     if client.role_requests.get_pending_role_request_for_entity(role, netid):
         return Response(status=409)
-    
+
     # Otherwise, create the request. It should return 201
     client.role_requests.create_role_request(role, netid, comment)
-    
+
     # If emails are toggled on, a confirmation email will be sent to the user and a notification email will be sent
     # to the OSS team. The notification email will be overriden by a slack notification if slack integration is on.
     if client.role_requests.get_send_mail_on():
@@ -146,28 +143,26 @@ def make_role_request(netid: str, client: ShrunkClient, mail: Mail) -> Any:
     else:
         if client.role_requests.get_slack_integration_on():
             client.role_requests.send_role_request_notification_slack(role, netid)
-        
+
     return Response(status=201)
 
-
-# Approving role requests can be done via the Role API (see backend/shrunk/api/role.py)
 
 @bp.route("approve", methods=["POST"])
 @require_mail
 @require_login
 def approve_role_request(netid: str, client: ShrunkClient, mail: Mail) -> Any:
     """``POST /api/role_request/approve``
-    
+
     Args:
         netid (str): the netid of the user logged in
         client (ShrunkClient): the client object
         entity (str): the entity to approve the role to
         role (str): the role to approve
-        
+
     Approve a role request by granting the role, then deleting it.
-    
+
     The request should include a JSON body with the following format:
-    
+
     .. code-block:: json
 
        {
@@ -180,32 +175,29 @@ def approve_role_request(netid: str, client: ShrunkClient, mail: Mail) -> Any:
     role = data.get("role")
     entity = data.get("entity")
     comment = data.get("comment")
-    
+
     # If the user does not have the admin role, return 403
     if not client.roles.has("admin", netid):
         abort(403)
-      
-    # If there is not a pending role request from the user for this role, return 404  
+
+    # If there is not a pending role request from the user for this role, return 404
     if not client.role_requests.get_pending_role_request_for_entity(role, entity):
         return Response(status=404)
-    
+
     # Otherwise, grant the role and delete the request
     client.roles.grant(role, netid, entity, comment)
-    
+
     # If slack integration is toggled on, delete the request message from Slack
     if client.role_requests.get_slack_integration_on():
         client.role_requests.delete_role_request_notification_slack(role, entity, True)
-    
+
     client.role_requests.delete_role_request(role, entity)
-    
+
     # If emails are toggled on, a denial email will be sent to the user
     if client.role_requests.get_send_mail_on():
         client.role_requests.send_role_request_approval_mail(role, netid, comment, mail)
-    
+
     return Response(status=200)
-    
-    
-    
 
 
 @bp.route("deny", methods=["DELETE"])
@@ -240,23 +232,22 @@ def deny_role_request(netid: str, client: ShrunkClient, mail: Mail) -> Any:
     # If the user does not have the admin role, return 403
     if not client.roles.has("admin", netid):
         abort(403)
-      
-    # If there is not a pending role request from the user for this role, return 404  
+
+    # If there is not a pending role request from the user for this role, return 404
     if not client.role_requests.get_pending_role_request_for_entity(role, entity):
         return Response(status=404)
-    
+
     # If slack integration is toggled on, delete the request message from Slack
     if client.role_requests.get_slack_integration_on():
         client.role_requests.delete_role_request_notification_slack(role, entity, False)
-    
+
     # Otherwise, delete the request. It should return 204
     client.role_requests.delete_role_request(role, entity)
-    
-    
+
     # If emails are toggled on, a denial email will be sent to the user
     if client.role_requests.get_send_mail_on():
         client.role_requests.send_role_request_denial_mail(role, entity, comment, mail)
-    
+
     return Response(status=204)
 
 
@@ -280,32 +271,6 @@ def get_role_request_text(netid: str, client: ShrunkClient, role_name: str) -> A
     text = client.role_requests.get_role_request_text(role_name)
     return jsonify({"text": text})
 
-
-@bp.route("/position/<b32:entity>", methods=["GET"])
-@require_login
-def get_position_info(netid: str, client: ShrunkClient, entity: str) -> Any:
-    """``GET /api/role_request/position/<b32:entity>``
-
-    Args:
-        netid (str): the netid of the user logged in
-        client (ShrunkClient): the client object
-        entity (str): the netid of the user to get position info for
-
-    Get the position info for a user needed to make role request decisions. Response format:
-
-    .. code-block:: json
-
-       {
-           "uid": List[str],
-           "rutgersEduStaffDepartment": List[str],
-           "title": List[str],
-           "employeeType": List[str],
-       }
-    """
-    if not client.roles.has("admin", netid):
-        abort(403)
-    return jsonify(query_position_info(entity))
-
 @bp.route("/send_mail_on", methods=["GET"])
 @require_login
 def get_send_mail_on(netid: str, client: ShrunkClient) -> Any:
@@ -322,6 +287,7 @@ def get_send_mail_on(netid: str, client: ShrunkClient) -> Any:
        { "send_mail_on": bool }
     """
     return jsonify({"send_mail_on": client.role_requests.get_send_mail_on()})
+
 
 @bp.route("/slack/<role>/count", methods=["GET"])
 @require_api_key

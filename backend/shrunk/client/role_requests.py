@@ -1,11 +1,10 @@
-from datetime import datetime, timezone
-from typing import Any, List, Dict
-
-from slack_sdk import WebClient
-from slack_sdk.errors import SlackApiError
+import time
+from typing import Any, Dict, List
 
 import pymongo
 from flask_mailman import Mail
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
 
 from shrunk.util.ldap import query_position_info
 
@@ -32,9 +31,9 @@ class RoleRequestClient:
     def get_pending_role_requests(self, role: str) -> List[Any]:
         """Get all pending role requests for a role
 
-        :param role: Role requested
+        :param role: The internal name for the role
 
-        :returns: A list of pending role requests in the form
+        :returns: A list of pending role requests, where each request is formatted as follows:
 
         .. code-block:: json
 
@@ -90,11 +89,13 @@ class RoleRequestClient:
 
 
         """
+        timestamp = str(time.time())
         self.db.role_requests.insert_one(
             {
                 "role": role,
                 "entity": entity,
                 "comment": comment,
+                "time_requested": timestamp,
             }
         )
 
@@ -122,6 +123,9 @@ class RoleRequestClient:
                 "placeholder_text": "Please provide a brief explanation of why you need the power user role.",
                 "submit_button": "Request power user role",
             }
+
+        # TODO: Implement this function for all roles. Currently only implemented for power_user
+
         return None
 
     def send_role_request_confirmation_mail(
@@ -425,28 +429,18 @@ class RoleRequestClient:
         display_attributes = self.get_role_request_text(role)
         uppercase_role_name = display_attributes["uppercase_role"]
 
-        # Get the position info of the requesting user using LDAP
+        # Get the position info of the requesting user using LDAP. If the user's position info cannot be found, display an error message. If a specific attribute cannot be found, display "N/A".
         intermediate_position_info = query_position_info(entity)
         attributes = ["title", "rutgersEduStaffDepartment", "employeeType"]
         position_info = dict()
-        if intermediate_position_info is not None:
-            for attribute in attributes:
-                if (
-                    attribute not in intermediate_position_info
-                    or not intermediate_position_info[attribute]
-                ):
-                    if attribute == "title":
-                        position_info[attribute] = ["Cannot find title(s)"]
-                    elif attribute == "employeeType":
-                        position_info[attribute] = ["Cannot find employee type(s)"]
-                    else:
-                        position_info[attribute] = ["Cannot find department(s)"]
-                elif len(intermediate_position_info[attribute]) == 0:
-                    position_info[attribute] = ["N/A"]
-                else:
-                    position_info[attribute] = intermediate_position_info[attribute]
+        if not intermediate_position_info:
+            position_info = {attr: ["Cannot find attribute"] for attr in attributes}
         else:
-            position_info = {attr: "(cannot find attribute)" for attr in attributes}
+            for attr in attributes:
+                if attr in intermediate_position_info.keys() and intermediate_position_info[attr]:
+                    position_info[attr] = intermediate_position_info[attr]
+                else:
+                    position_info[attr] = ["N/A"]
 
         # Generate the blocks
         blocks = [
@@ -467,7 +461,7 @@ class RoleRequestClient:
                         ", ".join(position_info["title"]),
                         ", ".join(position_info["rutgersEduStaffDepartment"]),
                         ", ".join(position_info["employeeType"]),
-                        "N/A",
+                        self.get_pending_role_request_for_entity(role, entity).get("comment", "N/A"), # should never be N/A since the comment is required
                     ),
                 },
             },
@@ -551,7 +545,6 @@ class RoleRequestClient:
         # Get the display attributes for the role request
         display_attributes = self.get_role_request_text(role)
         uppercase_role_name = display_attributes["uppercase_role"]
-        
 
         if approved:
             text = f"The {uppercase_role_name} role request from *{entity}* was approved from within shrunk"
