@@ -446,6 +446,7 @@ class RoleRequestClient:
         blocks = [
             {
                 "type": "section",
+                "block_id": "role_request_prompt",
                 "text": {
                     "type": "mrkdwn",
                     "text": "The user *{}* has requested the {} role. Please process their request:".format(
@@ -455,6 +456,7 @@ class RoleRequestClient:
             },
             {
                 "type": "section",
+                "block_id": "role_request_position_info",
                 "text": {
                     "type": "mrkdwn",
                     "text": "*Title(s):* {}\n*Department(s):* {}\n*Employee Type(s):* {}\n*Comment:* {}".format(
@@ -468,10 +470,12 @@ class RoleRequestClient:
             {"type": "divider"},
             {
                 "type": "input",
+                "block_id": "role_request_comment_input",
                 "element": {
                     "type": "plain_text_input",
                     "multiline": True,
-                    "action_id": "plain_text_input-action",
+                    "action_id": "comment_input",
+                    "max_length": 500
                 },
                 "label": {
                     "type": "plain_text",
@@ -480,6 +484,7 @@ class RoleRequestClient:
             },
             {
                 "type": "actions",
+                "block_id": "role_request_actions",
                 "elements": [
                     {
                         "type": "button",
@@ -488,13 +493,15 @@ class RoleRequestClient:
                             "text": "Approve",
                         },
                         "style": "primary",
-                        "value": "click_me_123",
+                        "value": "{}|{}".format(role, entity),
+                        "action_id": "rra_button_click"
                     },
                     {
                         "type": "button",
                         "text": {"type": "plain_text", "text": "Deny"},
                         "style": "danger",
-                        "value": "click_me_123",
+                        "value": "{}|{}".format(role, entity),
+                        "action_id": "rrd_button_click"
                     },
                 ],
             },
@@ -547,12 +554,12 @@ class RoleRequestClient:
         uppercase_role_name = display_attributes["uppercase_role"]
 
         if approved:
-            text = f"The {uppercase_role_name} role request from *{entity}* was approved from within shrunk"
+            text = f"The {uppercase_role_name} role request from *{entity}* was approved"
         else:
-            text = f"The {uppercase_role_name} role request from *{entity}* was denied from within shrunk"
+            text = f"The {uppercase_role_name} role request from *{entity}* was denied"
 
         try:
-            response = client.chat_update(
+            client.chat_update(
                 channel=self.slack_shrunk_channel_id,
                 ts=message_timestamp,
                 text=text,

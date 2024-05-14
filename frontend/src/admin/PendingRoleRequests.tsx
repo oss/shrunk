@@ -278,13 +278,16 @@ export class PendingRoleRequests extends Component<Props, State> {
      * @method
      */
     updateEntityPositionInfo = async (entity: string): Promise<any> => {
-        const intermediate_result = await fetch(`/api/v1/position/role_request/${base32.encode(entity)}`).then(
-            (resp) => resp.json(),
-        );
+        const response = await fetch(`/api/v1/position/role_request/${base32.encode(entity)}`);
+        if (!response.ok) {
+            console.error(`Server responded with status ${response.status}`);
+            return;
+        }
+        const intermediate_result = await response.json();
         const attributes = ['title',  'rutgersEduStaffDepartment', 'employeeType'];
         const result: any = {};
 
-        if (!intermediate_result) {
+        if (!intermediate_result || intermediate_result.error || !intermediate_result[attributes[0]]) {
             attributes.forEach(attribute => {
                 result[attribute] = ['Cannot find attribute'];
             });

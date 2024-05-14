@@ -195,7 +195,7 @@ def approve_role_request(netid: str, client: ShrunkClient, mail: Mail) -> Any:
 
     # If emails are toggled on, a denial email will be sent to the user
     if client.role_requests.get_send_mail_on():
-        client.role_requests.send_role_request_approval_mail(role, netid, comment, mail)
+        client.role_requests.send_role_request_approval_mail(role, entity, comment, mail)
 
     return Response(status=200)
 
@@ -310,3 +310,93 @@ def get_pending_role_requests_count_slack(role: str) -> Any:
         jsonify({"count": client.role_requests.get_pending_role_requests_count(role)}),
         200,
     )
+    
+@bp.route("/slack/approve", methods=["POST"])
+@require_mail
+@require_api_key
+def approve_role_request_slack(mail: Mail) -> Any:
+    """``POST /api/role_request/slack/approve``
+
+    Args:
+        netid (str): the netid of the user logged in
+        client (ShrunkClient): the client object
+        entity (str): the entity to approve the role to
+        role (str): the role to approve
+
+    Duplicate of ``POST /api/role_request/approve`` but for slack integration.
+
+    The request should include a JSON body with the following format:
+
+    .. code-block:: json
+
+       {
+           "role": str,
+           "entity": str,
+           "comment": str
+       }
+    """
+    client = current_app.client
+    data = request.get_json()
+    role = data.get("role")
+    entity = data.get("entity")
+    comment = data.get("comment")
+
+    # If there is not a pending role request from the user for this role, return 404
+    if not client.role_requests.get_pending_role_request_for_entity(role, entity):
+        return Response(status=404)
+
+    # Otherwise, grant the role and delete the request
+    client.roles.grant(role, "Slack", entity, comment)
+    client.role_requests.delete_role_request_notification_slack(role, entity, True)
+    client.role_requests.delete_role_request(role, entity)
+
+    # If emails are toggled on, a denial email will be sent to the user
+    if client.role_requests.get_send_mail_on():
+        client.role_requests.send_role_request_approval_mail(role, entity, comment, mail)
+
+    return Response(status=200)
+
+
+@bp.route("/slack/deny", methods=["DELETE"])
+@require_mail
+@require_api_key
+def deny_role_request_slack(mail: Mail) -> Any:
+    """``DELETE /api/role_request/slack/deny``
+
+    Args:
+        netid (str): the netid of the user logged in
+        client (ShrunkClient): the client object
+        entity (str): the entity to approve the role to
+        role (str): the role to approve
+
+    Duplicate of ``DELETE /api/role_request/deny`` but for slack integration.
+
+    The request should include a JSON body with the following format:
+
+    .. code-block:: json
+
+       {
+           "role": str,
+           "entity": str,
+           "comment": str"
+       }
+    """
+    client = current_app.client
+    data = request.get_json()
+    role = data.get("role")
+    entity = data.get("entity")
+    comment = data.get("comment")
+
+    # If there is not a pending role request from the user for this role, return 404
+    if not client.role_requests.get_pending_role_request_for_entity(role, entity):
+        return Response(status=404)
+
+    # Otherwise, just delete the request
+    client.role_requests.delete_role_request_notification_slack(role, entity, False)
+    client.role_requests.delete_role_request(role, entity)
+
+    # If emails are toggled on, a denial email will be sent to the user
+    if client.role_requests.get_send_mail_on():
+        client.role_requests.send_role_request_denial_mail(role, entity, comment, mail)
+
+    return Response(status=204)
