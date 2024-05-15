@@ -203,6 +203,12 @@ export interface State {
    * @property
    */
   createLinkDropdownVisible: boolean;
+
+  /**
+   * Whether the tracking pixel feature is enabled
+   * @property
+   */
+  trackingPixelEnabled: boolean;
 }
 
 /**
@@ -249,11 +255,13 @@ export class Dashboard extends React.Component<Props, State> {
         linkInfo: null,
       },
       createLinkDropdownVisible: false,
+      trackingPixelEnabled: false,
     };
   }
 
   async componentDidMount(): Promise<void> {
     await Promise.all([this.fetchUserOrgs(), this.refreshResults()]);
+    await this.trackingPixelEnabledOnUI();
   }
 
   /**
@@ -483,6 +491,20 @@ export class Dashboard extends React.Component<Props, State> {
       ),
     };
   };
+
+  /**
+   * Check if tracking pixel ui is enabled
+   * @method
+   */
+  trackingPixelEnabledOnUI = async () => {
+    const result = await fetch('/api/v1/link/tracking_pixel_ui_enabled', {
+      method: 'GET',
+    }).then((resp) => resp.json());
+
+    const is_enabled = result.enabled;
+    this.setState({ trackingPixelEnabled: is_enabled });
+    console.log(is_enabled);
+  }
 
   /**
    * Displays the edit link modal
@@ -943,6 +965,7 @@ export class Dashboard extends React.Component<Props, State> {
                     this.setState({ createLinkDropdownVisible: false });
                     await this.refreshResults();
                   }}
+                  tracking_pixel_ui_enabled={this.state.trackingPixelEnabled}
                 />
               }
               visible={this.state.createLinkDropdownVisible}

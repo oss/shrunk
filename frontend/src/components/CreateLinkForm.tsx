@@ -109,6 +109,18 @@ export interface Props {
    * @property
    */
   onFinish: () => Promise<void>;
+
+
+  /**
+   * Per request of Jack: We want a way to enable/disable the tracking pixel UI
+   * by using the config in the backend. There exists an API call
+   * called /api/v1/get_pixel_ui_enabled that returns a boolean value. This is temporary
+   * as we roll out. This is DIFFERENT from "tracking_pixel_enabled".
+   *
+   * tracking_pixel_enabled is a boolean value that is set by the user through the radio buttons.
+   * tracking_pixel_ui_enabled is a boolean value that is set by the backend.
+   */
+  tracking_pixel_ui_enabled: boolean;
 }
 
 /**
@@ -134,7 +146,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
     this.state = {
       loading: false,
       tracking_pixel_enabled: false,
-      tracking_pixel_extension: '.png'
+      tracking_pixel_extension: '.png',
     };
   }
 
@@ -153,7 +165,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
   };
 
   onTrackingPixelChange = (e: RadioChangeEvent) => {
-    this.setState({ tracking_pixel_enabled: e.target.value === 'pixel'});
+    this.setState({ tracking_pixel_enabled: e.target.value === 'pixel' });
   };
 
   onTrackingPixelExtensionChange = (e: RadioChangeEvent) => {
@@ -219,7 +231,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
         if (alias.alias !== undefined && result.valid) {
           createAliasReq.alias = alias.alias;
         }
-        if (this.state.tracking_pixel_enabled){
+        if (this.state.tracking_pixel_enabled) {
           createAliasReq.extension = this.state.tracking_pixel_extension;
         }
         console.log(createAliasReq);
@@ -255,13 +267,15 @@ export class CreateLinkForm extends React.Component<Props, State> {
           >
             <Input placeholder="Title" />
           </Form.Item>
-        {/* 
-          <Form.Item name="is_tracking_pixel_link" valuePropName="checked">
-                <Radio.Group onChange={this.onTrackingPixelChange} options={[
-                  { label: 'URL', value: 'url' },
-                  { label: 'Tracking Pixel', value: 'pixel' },
-                ]} defaultValue={"url"} />  
-          </Form.Item> */}
+
+          {this.props.tracking_pixel_ui_enabled &&
+            (<Form.Item name="is_tracking_pixel_link" valuePropName="checked">
+              <Radio.Group onChange={this.onTrackingPixelChange} options={[
+                { label: 'URL', value: 'url' },
+                { label: 'Tracking Pixel', value: 'pixel' },
+              ]} defaultValue={"url"} />
+            </Form.Item>)
+          }
 
           <Form.Item label="Expiration time" name="expiration_time">
             <DatePicker
@@ -292,14 +306,14 @@ export class CreateLinkForm extends React.Component<Props, State> {
           )}
           {
             this.state.tracking_pixel_enabled && (
-             <>
-              <Form.Item name="tracking_pixel_extension" label="Extension">
-                <Radio.Group onChange={this.onTrackingPixelExtensionChange} options={[
-                  { label: '.png', value: '.png' },
-                  { label: '.gif', value: '.gif' }
-                ]} defaultValue={".png"} />
-              </Form.Item>
-             </>
+              <>
+                <Form.Item name="tracking_pixel_extension" label="Extension">
+                  <Radio.Group onChange={this.onTrackingPixelExtensionChange} options={[
+                    { label: '.png', value: '.png' },
+                    { label: '.gif', value: '.gif' }
+                  ]} defaultValue={".png"} />
+                </Form.Item>
+              </>
             )
           }
           <Form.List name="aliases">
@@ -417,7 +431,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
                 htmlType="submit"
                 style={{ width: '100%' }}
               >
-                {this.state.tracking_pixel_enabled?"Create Pixel!":"Shrink!"}
+                {this.state.tracking_pixel_enabled ? "Create Pixel!" : "Shrink!"}
               </Button>
             </Spin>
           </Form.Item>
