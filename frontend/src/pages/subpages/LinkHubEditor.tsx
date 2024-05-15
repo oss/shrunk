@@ -75,14 +75,17 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
     {
       title: 'Graphic Design Application',
       url: 'https://google.com/',
+      originId: Math.random(),
     },
     {
       title: 'Caster Application',
       url: 'https://google.com/',
+      originId: Math.random(),
     },
     {
       title: 'Marketing Application',
       url: 'https://google.com/',
+      originId: Math.random(),
     },
   ]);
 
@@ -120,7 +123,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
               <LinkHubEditRow
                 link={value}
                 index={index}
-                key={index}
+                key={value.originId}
                 onDisplayLinkChange={onDisplayLinkChange}
                 onDeleteDisplayLink={onDeleteDisplayLink}
               />
@@ -134,6 +137,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
             const link: DisplayLink = {
               title: 'click here to sell your soul',
               url: 'https://overwatch.blizzard.com/en-us/',
+              originId: Math.random(), // TODO: This is stupid; clean this up later.
             };
             addDisplayLink(link);
           }}

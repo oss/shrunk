@@ -3,6 +3,7 @@ import { useParams } from 'react-router';
 import './LinkHubComponent.less';
 
 export interface DisplayLink {
+  originId?: number; // Used for keys when displaying a link.
   title: string;
   url: string;
 }
