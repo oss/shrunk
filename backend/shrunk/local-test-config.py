@@ -79,3 +79,8 @@ GOOGLE_SAFE_BROWSING_API = "Ask around for this key"
 TESTING = True
 
 WTF_CSRF_ENABLED = False
+
+TRACKING_PIXEL_UI_ENABLED = False
+"""
+Temporary flag to enable or disable the tracking pixel creation feature on user's dashboard.
+"""

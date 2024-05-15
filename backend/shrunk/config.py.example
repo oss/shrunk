@@ -124,3 +124,7 @@ SECURITY_MEASURES_ON = False
 You would this to be set to True when performing unit tests
 or you'll fail the security tests. However, in prod it can be whatever."""
 
+TRACKING_PIXEL_UI_ENABLED = False
+"""
+Temporary flag to enable or disable the tracking pixel creation feature on user's dashboard.
+"""

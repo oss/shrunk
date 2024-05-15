@@ -63,12 +63,14 @@ class LinksClient:
                  RESERVED_WORDS: Set[str],
                  BANNED_REGEXES: List[str],
                  REDIRECT_CHECK_TIMEOUT: float,
+                 TRACKING_PIXEL_UI_ENABLED: bool,
                  other_clients: Any):
         self.db = db
         self.geoip = geoip
         self.reserved_words = RESERVED_WORDS
         self.banned_regexes = [re.compile(regex, re.IGNORECASE) for regex in BANNED_REGEXES]
         self.redirect_check_timeout = REDIRECT_CHECK_TIMEOUT
+        self.tracking_pixel_ui_enabled = TRACKING_PIXEL_UI_ENABLED
         self.other_clients = other_clients
 
     def alias_is_reserved(self, alias: str) -> bool:
@@ -791,6 +793,9 @@ Please do not reply to this email. You may direct any questions to oss@oit.rutge
             {'$unwind': '$request'},
             {'$match': {'request.state': 'pending'}},
         ]))
+
+    def get_tracking_pixel_ui_status(self) -> bool:
+        return self.tracking_pixel_ui_enabled
 
     @classmethod
     def _generate_unique_key(cls) -> str:

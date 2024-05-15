@@ -831,3 +831,16 @@ def get_alias_browser_stats(netid: str, client: ShrunkClient, link_id: ObjectId,
     visits = client.links.get_visits(link_id, alias)
     stats = browser_stats_from_visits(visits)
     return jsonify(stats)
+
+
+@bp.route('/tracking_pixel_ui_enabled', methods=['GET'])
+@require_login
+def tracking_pixel_ui_enabled(netid: str, client: ShrunkClient) -> Any:
+    """
+    ``GET /api/link/tracking_pixel_ui_enabled``
+
+    Check if the tracking pixel UI is enabled.
+    """
+    is_enabled = client.links.get_tracking_pixel_ui_status()
+
+    return jsonify({'enabled': is_enabled})

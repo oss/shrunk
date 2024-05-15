@@ -12,7 +12,7 @@ from .orgs import OrgsClient
 from .tracking import TrackingClient
 from .roles import RolesClient
 from .links import LinksClient
-from .alerts import AlertsClient    
+from .alerts import AlertsClient
 from .role_requests import RoleRequestClient
 
 __all__ = ['ShrunkClient']
@@ -36,6 +36,7 @@ class ShrunkClient:
                  SECURITY_MEASURES_ON: Optional[bool] = False,
                  SEND_MAIL_ON: Optional[bool] = False,
                  GOOGLE_SAFE_BROWSING_API: Optional[str] = None,
+                 TRACKING_PIXEL_UI_ENABLED: Optional[bool] = False,
                  **_kwargs: Any):
         self.conn = pymongo.MongoClient(DB_HOST, DB_PORT, username=DB_USERNAME,
                                         password=DB_PASSWORD, authSource='admin',
@@ -47,6 +48,7 @@ class ShrunkClient:
         self.links = LinksClient(db=self.db, geoip=self.geoip,
                                  RESERVED_WORDS=RESERVED_WORDS or set(),
                                  BANNED_REGEXES=BANNED_REGEXES or [],
+                                 TRACKING_PIXEL_UI_ENABLED=TRACKING_PIXEL_UI_ENABLED or False,
                                  REDIRECT_CHECK_TIMEOUT=REDIRECT_CHECK_TIMEOUT or 0.5,
                                  other_clients=self)
         self.roles = RolesClient(db=self.db)
