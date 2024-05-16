@@ -14,7 +14,15 @@ import {
 } from 'react-router-dom';
 import { createBrowserHistory, Location } from 'history';
 import { Layout, Menu, Dropdown, Button, Modal, Typography } from 'antd/lib';
-import { UserOutlined, DownOutlined, MenuOutlined } from '@ant-design/icons';
+import {
+  UserOutlined,
+  DownOutlined,
+  MenuOutlined,
+  TeamOutlined,
+  BookOutlined,
+  BulbOutlined,
+  LogoutOutlined,
+} from '@ant-design/icons';
 
 import { Dashboard } from './pages/Dashboard';
 import { Admin } from './pages/Admin';
@@ -242,23 +250,56 @@ export class Shrunk extends React.Component<Props, State> {
             </div>
             <div className="user-name">
               <Dropdown
-                className="logout-menu"
+                className="profile-menu"
                 overlay={
-                  <Menu className="customclass">
+                  <Menu>
                     <Menu.Item
-                      key="1"
+                      key="role-status"
                       disabled
-                      icon={<UserOutlined />}
                       style={{
                         textAlign: 'center',
                         cursor: 'default',
                         color: 'black',
                       }}
                     >
-                      {this.state.role}
+                      <p style={{ margin: 0, marginBottom: '-4px' }}>
+                        {this.props.netid}
+                      </p>
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: '0.8em',
+                          color: '#383838',
+                        }}
+                      >
+                        {this.state.role}
+                      </p>
                     </Menu.Item>
+
                     <Menu.Divider />
-                    <Menu.Item key="2" style={{ textAlign: 'center' }}>
+
+                    <Menu.Item icon={<TeamOutlined />} key="orgs">
+                      <NavLink to="/orgs">Organizations</NavLink>
+                    </Menu.Item>
+                    {!this.state.showRequestPowerUserRoleTab ? (
+                      <></>
+                    ) : (
+                      <Menu.Item key="request-power-user-role">
+                        <NavLink to="/request-power-user-role">
+                          Request Power User Role
+                        </NavLink>
+                      </Menu.Item>
+                    )}
+                    <Menu.Item key="feedback" icon={<BulbOutlined />}>
+                      <a href="https://forms.gle/Gv1L1bNZWtLS21wW8">Feedback</a>
+                    </Menu.Item>
+                    <Menu.Item key="faq" icon={<BookOutlined />}>
+                      <NavLink to="/faq">FAQ</NavLink>
+                    </Menu.Item>
+
+                    <Menu.Divider />
+
+                    <Menu.Item key="logout" icon={<LogoutOutlined />}>
                       <a href="/app/logout">Logout</a>
                     </Menu.Item>
                   </Menu>
@@ -331,35 +372,6 @@ export class Shrunk extends React.Component<Props, State> {
                   </NavLink>
                 </Menu.Item>
               )}
-              <Menu.Item key="orgs">
-                <NavLink to="/orgs" className="nav-text">
-                  Organizations
-                </NavLink>
-              </Menu.Item>
-              {!this.state.showRequestPowerUserRoleTab ? (
-                <></>
-              ) : (
-                <Menu.Item key="request-power-user-role">
-                  <NavLink to="/request-power-user-role" className="nav-text">
-                    Request Power User Role
-                  </NavLink>
-                </Menu.Item>
-              )}
-              <Menu.Item key="faq">
-                <NavLink to="/faq" className="nav-text">
-                  FAQ
-                </NavLink>
-              </Menu.Item>
-              <Menu.Item key="feedback">
-                <a
-                  href="https://forms.gle/Gv1L1bNZWtLS21wW8"
-                  className="nav-text"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Feedback
-                </a>
-              </Menu.Item>
             </Menu>
           </Header>
           <Layout>
