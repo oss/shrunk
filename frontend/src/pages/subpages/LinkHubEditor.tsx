@@ -5,8 +5,8 @@ import LinkHubComponent, {
 import { Button, Form, Input } from 'antd/lib';
 import {
   DeleteOutlined,
-  SaveOutlined,
   PlusCircleOutlined,
+  CloudUploadOutlined,
 } from '@ant-design/icons';
 
 interface PLinkHubEditRow {
@@ -145,7 +145,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
           <PlusCircleOutlined /> Add
         </Button>
         <Button type="primary" onClick={() => {}}>
-          <SaveOutlined /> Save
+          <CloudUploadOutlined /> Publish
         </Button>
       </div>
       <div
