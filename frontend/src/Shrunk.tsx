@@ -22,6 +22,7 @@ import {
   BookOutlined,
   BulbOutlined,
   LogoutOutlined,
+  SafetyOutlined,
 } from '@ant-design/icons';
 
 import { Dashboard } from './pages/Dashboard';
@@ -260,6 +261,8 @@ export class Shrunk extends React.Component<Props, State> {
                         textAlign: 'center',
                         cursor: 'default',
                         color: 'black',
+                        paddingTop: '8px',
+                        paddingBottom: '8px',
                       }}
                     >
                       <p style={{ margin: 0, marginBottom: '-4px' }}>
@@ -279,12 +282,15 @@ export class Shrunk extends React.Component<Props, State> {
                     <Menu.Divider />
 
                     <Menu.Item icon={<TeamOutlined />} key="orgs">
-                      <NavLink to="/orgs">Organizations</NavLink>
+                      <NavLink to="/orgs">My Organizations</NavLink>
                     </Menu.Item>
                     {!this.state.showRequestPowerUserRoleTab ? (
                       <></>
                     ) : (
-                      <Menu.Item key="request-power-user-role">
+                      <Menu.Item
+                        icon={<SafetyOutlined />}
+                        key="request-power-user-role"
+                      >
                         <NavLink to="/request-power-user-role">
                           Request Power User Role
                         </NavLink>
@@ -309,6 +315,7 @@ export class Shrunk extends React.Component<Props, State> {
                   type="text"
                   aria-label={this.props.netid}
                   className="filter-btn"
+                  style={{ textAlign: 'right' }}
                 >
                   {this.props.netid} <DownOutlined />
                 </Button>
