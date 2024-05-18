@@ -70,7 +70,7 @@ interface PLinkHubEditor {
 }
 
 export default function LinkHubEditor(props: PLinkHubEditor) {
-  const [title, setTitle] = useState<string>('StarCraft II Tournament @ RU');
+  const [title, setTitle] = useState<string>();
   const [alias, setAlias] = useState<string>(props.alias);
   const [links, setLinks] = useState<DisplayLink[]>([
     {
@@ -122,9 +122,17 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     }).then((resp) => resp.json());
+    return result;
   }
 
-  getLinkHub(props.alias);
+  getLinkHub(props.alias).then((value: any) => {
+    setTitle(value.title);
+    setAlias(value.alias);
+  });
+
+  if (title === undefined) {
+    return <></>;
+  }
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center' }}>
