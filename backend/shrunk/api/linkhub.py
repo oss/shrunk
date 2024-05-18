@@ -27,32 +27,29 @@ ACL_ENTRY_SCHEMA = {
 CREATE_LINKHUB_SCHEMA = {
     'type': 'object',
     'additionalProperties': False,
-    'required': ['title', 'alias', 'owners'],
+    'required': ['title'],
     'properties': {
         'title': {'type': 'string', 'minLength': 1},
         'alias': {'type': 'string', 'minLength': 1},
-        'owners': {'type': 'array', 'items': ACL_ENTRY_SCHEMA},
     },
 }
 
-@bp.route('/', methods=['POST'])
+@bp.route('', methods=['POST'])
 @request_schema(CREATE_LINKHUB_SCHEMA)
 @require_login
 def create_linkhub(netid: str, client: ShrunkClient, req: Any) -> Any:
-    client.linkhubs.create(req['title'], req['alias'], req['owners'])
-    return jsonify({})
+    alias = None
+    if 'alias' in req:
+        alias = req['alias']
 
-
-GET_LINKHUB_SCHEMA = {
-    'type': 'object',
-    'additionalProperties': False,
-    'required': ['alias'],
-    'properties': {
-        'alias': {'type': 'string', 'minLength': 1},
-    },
-}
+    result_id, alias = client.linkhubs.create(req['title'], netid, alias=alias)
+    return jsonify({"id": result_id, "alias": alias})
 
 @bp.route('/<string:alias>', methods=['GET'])
-@request_schema(GET_LINKHUB_SCHEMA)
-def get_linkhub(client: ShrunkClient, req: Any) -> Any:
-    return jsonify(client.linkhubs.get(req['alias']))
+@require_login
+def get_linkhub(_netid: str, client: ShrunkClient, alias: str) -> Any:
+    result = client.linkhubs.get_by_alias(alias)
+    if result is None:
+        return jsonify({"error": "does not exist"})  # TODO: make cleaner.
+
+    return jsonify(result)

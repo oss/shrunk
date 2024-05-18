@@ -70,6 +70,12 @@ class ShrunkClient:
                                    ('netid', pymongo.TEXT),
                                    ('aliases.alias', pymongo.TEXT)])
 
+        self.db.linkhubs.create_index([('title', pymongo.TEXT),
+                                       ('alias', pymongo.TEXT),
+                                       ('owner', pymongo.TEXT)])
+        self.db.linkhubs.create_index([('links', pymongo.ASCENDING)])
+        self.db.linkhubs.create_index([('collaborators', pymongo.ASCENDING)])
+
         self.db.unsafe_links.create_index([('long_url', pymongo.TEXT)])
         self.db.unsafe_links.create_index([('netid', pymongo.ASCENDING)])
 
@@ -92,7 +98,7 @@ class ShrunkClient:
 
     def reset_database(self) -> None:
         """Delete all documents from all collections in the shrunk database."""
-        for col in ['grants', 'organizations', 'urls', 'visitors', 'visits', 'unsafe_links']:
+        for col in ['grants', 'organizations', 'urls', 'visitors', 'visits', 'unsafe_links', 'linkhubs']:
             self.db[col].delete_many({})
 
     def admin_stats(self, begin: Optional[datetime] = None, end: Optional[datetime] = None) -> Any:

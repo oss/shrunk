@@ -70,7 +70,8 @@ interface PLinkHubEditor {
 }
 
 export default function LinkHubEditor(props: PLinkHubEditor) {
-  const [title, setTitle] = useState('StarCraft II Tournament @ RU');
+  const [title, setTitle] = useState<string>('StarCraft II Tournament @ RU');
+  const [alias, setAlias] = useState<string>(props.alias);
   const [links, setLinks] = useState<DisplayLink[]>([
     {
       title: 'Graphic Design Application',
@@ -93,6 +94,11 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
     setTitle(e.target.value);
   }
 
+  function onAliasChange(e: any) {
+    // TODO: Check if alias is valid or not.
+    setAlias(e.target.value);
+  }
+
   function onDisplayLinkChange(value: DisplayLink, index: number) {
     let newLinks: DisplayLink[] = JSON.parse(JSON.stringify(links));
     newLinks[index] = value;
@@ -111,11 +117,23 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
     setLinks(newLinks);
   }
 
+  async function getLinkHub(alias: string) {
+    const result = await fetch(`/api/v1/linkhub/${alias}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    }).then((resp) => resp.json());
+  }
+
+  getLinkHub(props.alias);
+
   return (
     <div style={{ display: 'flex', justifyContent: 'center' }}>
       <div style={{ marginRight: '64px' }}>
         <Form.Item label="Title" name="linkhub-title">
           <Input max={64} defaultValue={title} onChange={onTitleChange} />
+        </Form.Item>
+        <Form.Item label="Alias" name="linkhub-alias">
+          <Input max={32} defaultValue={alias} onChange={onAliasChange} />
         </Form.Item>
         <div>
           {links.map((value, index) => {
@@ -158,7 +176,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
         <LinkHubComponent title={title} links={links} />
         <p style={{ marginTop: '10px' }}>
           <a href="https://go.rutgers.edu/h/{props.alias}">
-            go.rutgers.edu/h/{props.alias}
+            go.rutgers.edu/h/{alias}
           </a>
         </p>
       </div>

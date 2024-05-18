@@ -22,7 +22,7 @@ export default function LinkHubPage(props: Props) {
       url: 'https://google.com/',
     },
   ]);
-  const [owners, setOwners] = useState([]);
+  const [owner, setOwner] = useState('');
 
   let { alias } = useParams<{ alias: string }>();
 
