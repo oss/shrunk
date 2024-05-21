@@ -53,3 +53,39 @@ def get_linkhub(_netid: str, client: ShrunkClient, alias: str) -> Any:
         return jsonify({"error": "does not exist"})  # TODO: make cleaner.
 
     return jsonify(result)
+
+ADD_LINK_TO_LINKHUB_SCHEMA = {
+    'type': 'object',
+    'additionalProperties': False,
+    'required': ['title', 'url'],
+    'properties': {
+        'title': {'type': 'string', 'minLength': 1},
+        'url': {'type': 'string', 'minLength': 1},
+        'index': {'type': 'integer', 'minimum': 0},
+    }
+}
+
+@bp.route('/<string:alias>/add-element', methods=['POST'])
+@request_schema(ADD_LINK_TO_LINKHUB_SCHEMA)
+@require_login
+def add_link_to_linkhub(_netid: str, client: ShrunkClient, req: Any, alias: str) -> Any:
+    # TODO: Add security.
+
+    client.linkhubs.add_link_to_linkhub(alias, req['title'], req['url'])
+
+CHANGE_LINKHUB_TITLE_SCHEMA = {
+    'type': 'object',
+    'additionalProperties': False,
+    'required': ['title'],
+    'properties': {
+        'title': {'type': 'string', 'minLength': 1},
+    }
+}
+
+@bp.route('/<string:alias>/title', methods=['POST'])
+@request_schema(CHANGE_LINKHUB_TITLE_SCHEMA)
+@require_login
+def change_linkhub_title(_netid: str, client: ShrunkClient, req: Any, alias: str) -> Any:
+    # TODO: Add security.
+
+    client.linkhubs.change_title(alias, req['title'])

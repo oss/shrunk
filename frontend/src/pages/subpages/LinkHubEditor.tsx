@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import LinkHubComponent, {
   DisplayLink,
 } from '../../components/LinkHubComponent';
-import { Button, Form, Input } from 'antd/lib';
+import { Typography, Button, Card, Form, Input, Tabs } from 'antd/lib';
 import {
-  DeleteOutlined,
-  PlusCircleOutlined,
   CloudUploadOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  PlusCircleOutlined,
 } from '@ant-design/icons';
 
 interface PLinkHubEditRow {
@@ -14,6 +15,7 @@ interface PLinkHubEditRow {
   index: number;
   onDisplayLinkChange(value: DisplayLink, index: number): void;
   onDeleteDisplayLink(index: number): void;
+  disabled?: boolean;
 }
 
 function LinkHubEditRow(props: PLinkHubEditRow) {
@@ -22,14 +24,14 @@ function LinkHubEditRow(props: PLinkHubEditRow) {
       style={{
         display: 'flex',
         alignItems: 'center',
-        width: '400px',
         justifyContent: 'space-between',
-        marginBottom: '10px',
+        marginTop: '10px',
       }}
     >
-      <div style={{ marginRight: '10px' }}>
+      <div style={{ marginRight: '10px', width: '100%' }}>
         <input
           type="text"
+          disabled={props.disabled}
           name={`linkhub-link-title-${props.index}`}
           defaultValue={props.link.title}
           style={{ border: 'none', width: '256px' }}
@@ -44,9 +46,10 @@ function LinkHubEditRow(props: PLinkHubEditRow) {
         <br />
         <input
           type="text"
+          disabled={props.disabled}
           name={`linkhub-link-url-${props.index}`}
           defaultValue={props.link.url}
-          style={{ border: 'none', width: '256px' }}
+          style={{ border: 'none', width: '100%' }}
           onChange={(e: any) => {
             const displayLink: DisplayLink = {
               title: props.link.title,
@@ -56,7 +59,9 @@ function LinkHubEditRow(props: PLinkHubEditRow) {
           }}
         />
       </div>
+      <EditOutlined />
       <DeleteOutlined
+        style={{ marginLeft: '8px' }}
         onClick={() => {
           props.onDeleteDisplayLink(props.index);
         }}
@@ -69,26 +74,73 @@ interface PLinkHubEditor {
   alias: string;
 }
 
+async function getLinkHub(alias: string) {
+  const result = await fetch(`/api/v1/linkhub/${alias}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  }).then((resp) => resp.json());
+  return result;
+}
+
+async function addLinkToLinkHub(
+  linkHubAlias: string,
+  title: string,
+  url: string,
+) {
+  const result = await fetch(`/api/v1/linkhub/${linkHubAlias}/add-element`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      title: title,
+      url: url,
+    }),
+  }).then((resp) => resp.json());
+  return result;
+}
+
+async function changeLinkHubTitle(linkHubAlias: string, title: string) {
+  const result = await fetch(`/api/v1/linkhub/${linkHubAlias}/title`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      title: title,
+    }),
+  }).then((resp) => resp.json());
+  return result;
+}
+
 export default function LinkHubEditor(props: PLinkHubEditor) {
   const [title, setTitle] = useState<string>();
+  const [oldTitle, setOldTitle] = useState<string>(); // Used for detecting changes
+
   const [alias, setAlias] = useState<string>(props.alias);
-  const [links, setLinks] = useState<DisplayLink[]>([
-    {
-      title: 'Graphic Design Application',
-      url: 'https://google.com/',
-      originId: Math.random(),
-    },
-    {
-      title: 'Caster Application',
-      url: 'https://google.com/',
-      originId: Math.random(),
-    },
-    {
-      title: 'Marketing Application',
-      url: 'https://google.com/',
-      originId: Math.random(),
-    },
-  ]);
+  const [links, setLinks] = useState<DisplayLink[]>([]);
+  const [backgroundColor, setBackgroundColor] = useState<string>('#2A3235');
+
+  useEffect(() => {
+    getLinkHub(props.alias).then((value: any) => {
+      setTitle(value.title);
+      setOldTitle(value.title);
+      setAlias(value.alias);
+      const fetchingLinks: DisplayLink[] = [];
+      value.links.map((value: any) => {
+        fetchingLinks.push({
+          url: value.url,
+          title: value.title,
+        });
+      });
+      setLinks(fetchingLinks);
+    });
+  }, []);
+
+  const { Title } = Typography;
+
+  function addDisplayLink(value: DisplayLink) {
+    let newLinks: DisplayLink[] = JSON.parse(JSON.stringify(links));
+    newLinks.push(value);
+    setLinks(newLinks);
+    addLinkToLinkHub(alias, value.title, value.url);
+  }
 
   function onTitleChange(e: any) {
     setTitle(e.target.value);
@@ -97,6 +149,19 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
   function onAliasChange(e: any) {
     // TODO: Check if alias is valid or not.
     setAlias(e.target.value);
+  }
+
+  function onProfileSave() {
+    if (title === undefined) {
+      return;
+    }
+
+    changeLinkHubTitle(alias, title);
+    setOldTitle(title);
+  }
+
+  function isProfileSaved() {
+    return title === oldTitle;
   }
 
   function onDisplayLinkChange(value: DisplayLink, index: number) {
@@ -111,83 +176,153 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
     setLinks(newLinks);
   }
 
-  function addDisplayLink(value: DisplayLink) {
-    let newLinks: DisplayLink[] = JSON.parse(JSON.stringify(links));
-    newLinks.push(value);
-    setLinks(newLinks);
+  function onAddDisplayLink() {
+    const link: DisplayLink = {
+      title: 'click here to sell your soul',
+      url: 'https://overwatch.blizzard.com/en-us/',
+      originId: Math.random(), // TODO: This is stupid; clean this up later.
+    };
+    addDisplayLink(link);
   }
 
-  async function getLinkHub(alias: string) {
-    const result = await fetch(`/api/v1/linkhub/${alias}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-    }).then((resp) => resp.json());
-    return result;
-  }
-
-  getLinkHub(props.alias).then((value: any) => {
-    setTitle(value.title);
-    setAlias(value.alias);
-  });
+  function onPublish() {}
 
   if (title === undefined) {
     return <></>;
   }
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center' }}>
-      <div style={{ marginRight: '64px' }}>
-        <Form.Item label="Title" name="linkhub-title">
-          <Input max={64} defaultValue={title} onChange={onTitleChange} />
-        </Form.Item>
-        <Form.Item label="Alias" name="linkhub-alias">
-          <Input max={32} defaultValue={alias} onChange={onAliasChange} />
-        </Form.Item>
-        <div>
-          {links.map((value, index) => {
-            return (
-              <LinkHubEditRow
-                link={value}
-                index={index}
-                key={value.originId}
-                onDisplayLinkChange={onDisplayLinkChange}
-                onDeleteDisplayLink={onDeleteDisplayLink}
-              />
-            );
-          })}
-        </div>
-        <Button
-          style={{ marginRight: '10px' }}
-          type="default"
-          onClick={() => {
-            const link: DisplayLink = {
-              title: 'click here to sell your soul',
-              url: 'https://overwatch.blizzard.com/en-us/',
-              originId: Math.random(), // TODO: This is stupid; clean this up later.
-            };
-            addDisplayLink(link);
-          }}
-        >
-          <PlusCircleOutlined /> Add
-        </Button>
-        <Button type="primary" onClick={() => {}}>
-          <CloudUploadOutlined /> Publish
-        </Button>
-      </div>
+    <>
       <div
         style={{
-          width: '400px',
-          height: '710px',
-          textAlign: 'center',
+          display: 'flex',
+          justifyContent: 'center',
+          height: '100%',
+          width: '100%',
         }}
       >
-        <LinkHubComponent title={title} links={links} />
-        <p style={{ marginTop: '10px' }}>
-          <a href="https://go.rutgers.edu/h/{props.alias}">
-            go.rutgers.edu/h/{alias}
-          </a>
-        </p>
+        <div style={{ marginRight: '64px', width: '30%' }}>
+          <Tabs defaultActiveKey="edit">
+            <Tabs.TabPane tab="Edit" key="edit">
+              <Button
+                icon={<PlusCircleOutlined />}
+                style={{ marginRight: '10px', width: '100%' }}
+                type="default"
+                onClick={onAddDisplayLink}
+              >
+                Add
+              </Button>
+              <div
+                style={{
+                  width: '100%',
+                  height: '500px',
+                  overflow: 'scroll',
+                  marginBottom: '8px',
+                }}
+              >
+                {links.map((value, index) => {
+                  return (
+                    <LinkHubEditRow
+                      link={value}
+                      index={index}
+                      key={value.originId}
+                      onDisplayLinkChange={onDisplayLinkChange}
+                      onDeleteDisplayLink={onDeleteDisplayLink}
+                    />
+                  );
+                })}
+                {links.length === 0 ? (
+                  <p
+                    style={{
+                      textAlign: 'center',
+                      paddingTop: '16px',
+                      paddingBottom: '16px',
+                    }}
+                  >
+                    You have no links.
+                  </p>
+                ) : (
+                  <></>
+                )}
+              </div>
+            </Tabs.TabPane>
+            <Tabs.TabPane disabled tab="Design" key="design" />
+            <Tabs.TabPane disabled tab="Stats" key="stats" />
+            <Tabs.TabPane tab="Settings" key="settings">
+              <Form layout="vertical">
+                <Title level={3}>Profile</Title>
+                <Form.Item label="Title" name="linkhub-title">
+                  <Input
+                    max={64}
+                    defaultValue={title}
+                    onChange={onTitleChange}
+                  />
+                </Form.Item>
+                <Form.Item label="Alias" name="linkhub-alias">
+                  <Input
+                    addonBefore="https://go.rutgers.edu/h/"
+                    max={32}
+                    defaultValue={alias}
+                    onChange={onAliasChange}
+                  />
+                </Form.Item>
+                <Form.Item>
+                  <Button disabled={isProfileSaved()} onClick={onProfileSave}>
+                    Save
+                  </Button>
+                </Form.Item>
+                <Title level={3}>Visibility</Title>
+                <Form.Item name="linkhub-visibility">
+                  <div style={{ marginBottom: '12px' }}>
+                    <p style={{ margin: 0, marginBottom: '4px' }}>
+                      You can publish your LinkHub to be viewed by others.
+                    </p>
+                    <Button>Publish</Button>
+                  </div>
+                  <div style={{ marginBottom: '12px' }}>
+                    <p style={{ margin: 0, marginBottom: '4px' }}>
+                      Deleting your LinkHub is irreversible.
+                    </p>
+                    <Button danger>Delete</Button>
+                  </div>
+                </Form.Item>
+              </Form>
+            </Tabs.TabPane>
+          </Tabs>
+        </div>
+        <div>
+          <Card
+            title="Live Preview"
+            extra={<a href="https://playvalorant.com/">View Desktop Layout</a>}
+          >
+            <div
+              style={{
+                borderRadius: '18px',
+                overflow: 'hidden',
+                width: '400px',
+                height: '710px',
+              }}
+            >
+              <LinkHubComponent
+                title={title}
+                links={links}
+                backgroundColor={backgroundColor}
+              />
+            </div>
+            <p
+              style={{
+                margin: '0',
+                paddingTop: '10px',
+                textAlign: 'center',
+              }}
+            >
+              <a href="https://go.rutgers.edu/h/{props.alias}">
+                go.rutgers.edu/h/{alias}
+              </a>
+            </p>
+          </Card>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

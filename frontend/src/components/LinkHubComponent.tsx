@@ -11,6 +11,7 @@ export interface DisplayLink {
 interface Props {
   title: string;
   links: DisplayLink[];
+  backgroundColor?: string;
 }
 
 export default function LinkHubComponent(props: Props) {
@@ -21,7 +22,10 @@ export default function LinkHubComponent(props: Props) {
         justifyContent: 'center',
         width: '100%',
         height: '100%',
-        backgroundColor: '#2A3235',
+        backgroundColor:
+          props.backgroundColor === undefined
+            ? '#2A3235'
+            : props.backgroundColor,
       }}
     >
       <div style={{ textAlign: 'center', width: '100%' }}>
