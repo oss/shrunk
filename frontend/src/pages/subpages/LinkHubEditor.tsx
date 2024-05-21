@@ -9,11 +9,14 @@ import {
   EditOutlined,
   PlusCircleOutlined,
 } from '@ant-design/icons';
+import EditLinkFromLinkHubModal, {
+  EditLinkData,
+} from '../../components/EditLinkFromLinkHubModal';
 
 interface PLinkHubEditRow {
   link: DisplayLink;
   index: number;
-  onDisplayLinkChange(value: DisplayLink, index: number): void;
+  onOpenEditDisplayLink(index: number, newLink: DisplayLink): void;
   onDeleteDisplayLink(index: number): void;
   disabled?: boolean;
 }
@@ -29,37 +32,14 @@ function LinkHubEditRow(props: PLinkHubEditRow) {
       }}
     >
       <div style={{ marginRight: '10px', width: '100%' }}>
-        <input
-          type="text"
-          disabled={props.disabled}
-          name={`linkhub-link-title-${props.index}`}
-          defaultValue={props.link.title}
-          style={{ border: 'none', width: '256px' }}
-          onChange={(e: any) => {
-            const displayLink: DisplayLink = {
-              title: e.target.value,
-              url: props.link.url,
-            };
-            props.onDisplayLinkChange(displayLink, props.index);
-          }}
-        />
-        <br />
-        <input
-          type="text"
-          disabled={props.disabled}
-          name={`linkhub-link-url-${props.index}`}
-          defaultValue={props.link.url}
-          style={{ border: 'none', width: '100%' }}
-          onChange={(e: any) => {
-            const displayLink: DisplayLink = {
-              title: props.link.title,
-              url: e.target.value,
-            };
-            props.onDisplayLinkChange(displayLink, props.index);
-          }}
-        />
+        <p style={{ margin: 0 }}>{props.link.title}</p>
+        <p style={{ margin: 0 }}>{props.link.url}</p>
       </div>
-      <EditOutlined />
+      <EditOutlined
+        onClick={() => {
+          props.onOpenEditDisplayLink(props.index, props.link);
+        }}
+      />
       <DeleteOutlined
         style={{ marginLeft: '8px' }}
         onClick={() => {
@@ -117,6 +97,10 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
   const [links, setLinks] = useState<DisplayLink[]>([]);
   const [backgroundColor, setBackgroundColor] = useState<string>('#2A3235');
 
+  const [editLinkData, setEditLinkData] = useState<EditLinkData>();
+  const [isEditLinkModalVisible, setIsEditLinkModalVisible] =
+    useState<boolean>(false);
+
   useEffect(() => {
     getLinkHub(props.alias).then((value: any) => {
       setTitle(value.title);
@@ -166,8 +150,14 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
 
   function onDisplayLinkChange(value: DisplayLink, index: number) {
     let newLinks: DisplayLink[] = JSON.parse(JSON.stringify(links));
+    value.originId = newLinks[index].originId;
     newLinks[index] = value;
     setLinks(newLinks);
+  }
+
+  function onOpenEditDisplayLink(index: number, newLink: DisplayLink) {
+    setEditLinkData({ index: index, displayLink: newLink });
+    setIsEditLinkModalVisible(true);
   }
 
   function onDeleteDisplayLink(index: number) {
@@ -226,7 +216,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
                       link={value}
                       index={index}
                       key={value.originId}
-                      onDisplayLinkChange={onDisplayLinkChange}
+                      onOpenEditDisplayLink={onOpenEditDisplayLink}
                       onDeleteDisplayLink={onDeleteDisplayLink}
                     />
                   );
@@ -323,6 +313,21 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
           </Card>
         </div>
       </div>
+      {editLinkData !== undefined ? (
+        <EditLinkFromLinkHubModal
+          editLinkData={editLinkData}
+          onOkay={() => {
+            onDisplayLinkChange(editLinkData.displayLink, editLinkData.index);
+            setIsEditLinkModalVisible(false);
+          }}
+          onCancel={() => {
+            setIsEditLinkModalVisible(false);
+          }}
+          visible={isEditLinkModalVisible}
+        />
+      ) : (
+        <></>
+      )}
     </>
   );
 }
