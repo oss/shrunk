@@ -23,6 +23,7 @@ import {
   BulbOutlined,
   LogoutOutlined,
   SafetyOutlined,
+  SlidersOutlined,
 } from '@ant-design/icons';
 
 import { Dashboard } from './pages/Dashboard';
@@ -296,6 +297,20 @@ export class Shrunk extends React.Component<Props, State> {
                         </NavLink>
                       </Menu.Item>
                     )}
+
+                    {this.state.showAdminTab ? (
+                      <Menu.Item
+                        key="admin-dashboard"
+                        icon={<SlidersOutlined />}
+                      >
+                        <NavLink to="/admin">Admin Dashboard</NavLink>
+                      </Menu.Item>
+                    ) : (
+                      <></>
+                    )}
+
+                    <Menu.Divider />
+
                     <Menu.Item key="feedback" icon={<BulbOutlined />}>
                       <a href="https://forms.gle/Gv1L1bNZWtLS21wW8">Feedback</a>
                     </Menu.Item>
@@ -361,15 +376,6 @@ export class Shrunk extends React.Component<Props, State> {
                   LinkHub
                 </NavLink>
               </Menu.Item>
-              {!this.state.showAdminTab ? (
-                <></>
-              ) : (
-                <Menu.Item key="admin">
-                  <NavLink to="/admin" className="nav-text">
-                    Admin
-                  </NavLink>
-                </Menu.Item>
-              )}
               {!this.state.showWhitelistTab ? (
                 <></>
               ) : (
