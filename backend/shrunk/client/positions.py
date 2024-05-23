@@ -15,7 +15,7 @@ class PositionClient:
     ):
         pass
 
-    def get_role_request_position_info(self, entity: str) -> Dict[str, List[str]]:
+    def get_position_info(self, entity: str) -> Dict[str, List[str]]:
         """Get the position info for a user needed to make role request decisions.
         
         :param entity: The entity to get the position info for.

@@ -9,12 +9,12 @@ from shrunk.client import ShrunkClient
 from shrunk.util.decorators import require_login
 
 
-__all__ = ["role_request"]
+__all__ = ["position"]
 bp = Blueprint("position", __name__, url_prefix="/api/v1/position")
 
-@bp.route("/role_request/<b32:entity>", methods=["GET"])
+@bp.route("/<b32:entity>", methods=["GET"])
 @require_login
-def get_role_request_position_info(netid: str, client: ShrunkClient, entity: str) -> Any:
+def get_position_info(netid: str, client: ShrunkClient, entity: str) -> Any:
     """``GET /api/position/<b32:entity>``
 
     Args:
@@ -22,7 +22,7 @@ def get_role_request_position_info(netid: str, client: ShrunkClient, entity: str
         client (ShrunkClient): the client object
         entity (str): the netid of the user to get position info for
 
-    Get the position info for a user needed to make role request decisions. Response format:
+    Get the position info for a user. Response format:
 
     .. code-block:: json
 
@@ -35,4 +35,4 @@ def get_role_request_position_info(netid: str, client: ShrunkClient, entity: str
     """
     if not client.roles.has("admin", netid):
         abort(403)
-    return jsonify(client.positions.get_role_request_position_info(entity))
+    return jsonify(client.positions.get_position_info(entity))

@@ -278,7 +278,7 @@ export class PendingRoleRequests extends Component<Props, State> {
      * @method
      */
     updateEntityPositionInfo = async (entity: string): Promise<any> => {
-        const response = await fetch(`/api/v1/position/role_request/${base32.encode(entity)}`);
+        const response = await fetch(`/api/v1/position/${base32.encode(entity)}`);
         if (!response.ok) {
             console.error(`Server responded with status ${response.status}`);
             return;
