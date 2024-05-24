@@ -139,3 +139,8 @@ SLACK_BOT_TOKEN = ""
 
 SLACK_SHRUNK_CHANNEL_ID=""
 """The channel ID where all shrunk-related information will be posted in. This will be limit where slash commands can be executed."""
+
+TRACKING_PIXEL_UI_ENABLED = False
+"""
+Temporary flag to enable or disable the tracking pixel creation feature on user's dashboard.
+"""

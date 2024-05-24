@@ -143,6 +143,8 @@ export const EditLinkModal: React.FC<Props> = (props) => {
     return false;
   };
 
+  const isTrackingPixelLink = props.linkInfo.is_tracking_pixel_link;
+
   const [ownerInputVal, setOwnerInputVal] = useState(initialValues.owner);
   const handleChange = (e: any) => {
     setOwnerInputVal(e.target.value);
@@ -188,7 +190,11 @@ export const EditLinkModal: React.FC<Props> = (props) => {
         </Form.Item>
 
         <Form.Item
-          label="Long URL"
+          label={
+            isTrackingPixelLink
+              ? 'Long URL (tracking pixel link)'
+              : 'Long URL (redirect link)'
+          }
           name="long_url"
           rules={[
             { required: true, message: 'Please input a URL.' },
@@ -199,6 +205,7 @@ export const EditLinkModal: React.FC<Props> = (props) => {
           <Input
             placeholder="Long URL"
             prefix={<LinkOutlined className="site-from-item-icon" />}
+            disabled={isTrackingPixelLink}
           />
         </Form.Item>
 

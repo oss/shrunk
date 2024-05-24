@@ -55,6 +55,7 @@ shrunk/shrunk/static/out
 
 node_modules/
 backend/shrunk/static/dist/
+backend/shrunk/static/outlook
 webpack-stats.json
 dist-newstyle
 .mypy_cache/

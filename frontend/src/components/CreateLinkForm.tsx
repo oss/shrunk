@@ -6,7 +6,7 @@
 import React from 'react';
 import base32 from 'hi-base32';
 import moment from 'moment';
-import { Form, Input, Button, DatePicker, Space, Tooltip, Spin, Modal } from 'antd/lib';
+import { Form, Input, Button, DatePicker, Space, Tooltip, Spin, Modal, Checkbox, Radio, RadioChangeEvent } from 'antd/lib';
 import {
   LinkOutlined,
   MinusCircleOutlined,
@@ -21,6 +21,7 @@ import {
 } from '../Validators';
 import '../Base.less';
 import './FixAliasRemoveButton.less';
+import { CheckboxChangeEvent } from 'antd/lib/checkbox';
 
 /**
  * Displays a label with the text "Custom Alias" and a tooltip with extended help text
@@ -84,6 +85,12 @@ interface CreateLinkFormValues {
    * @property
    */
   aliases: { alias?: string; description: string }[];
+
+  /**
+   * Whether the link is a tracking pixel link
+   * @property
+   */
+  is_tracking_pixel_link?: boolean;
 }
 
 /**
@@ -102,6 +109,18 @@ export interface Props {
    * @property
    */
   onFinish: () => Promise<void>;
+
+
+  /**
+   * Per request of Jack: We want a way to enable/disable the tracking pixel UI
+   * by using the config in the backend. There exists an API call
+   * called /api/v1/get_pixel_ui_enabled that returns a boolean value. This is temporary
+   * as we roll out. This is DIFFERENT from "tracking_pixel_enabled".
+   *
+   * tracking_pixel_enabled is a boolean value that is set by the user through the radio buttons.
+   * tracking_pixel_ui_enabled is a boolean value that is set by the backend.
+   */
+  tracking_pixel_ui_enabled: boolean;
 }
 
 /**
@@ -110,6 +129,8 @@ export interface Props {
  */
 interface State {
   loading: boolean;
+  tracking_pixel_enabled: boolean;
+  tracking_pixel_extension: string;
 }
 
 /**
@@ -124,6 +145,8 @@ export class CreateLinkForm extends React.Component<Props, State> {
     super(props);
     this.state = {
       loading: false,
+      tracking_pixel_enabled: false,
+      tracking_pixel_extension: '.png',
     };
   }
 
@@ -138,7 +161,15 @@ export class CreateLinkForm extends React.Component<Props, State> {
   onSubmitClick = async (): Promise<void> => {
     this.formRef.current!.resetFields();
     await this.props.onFinish();
-    this.setState({ loading: false });
+    this.setState({ loading: false, tracking_pixel_enabled: false });
+  };
+
+  onTrackingPixelChange = (e: RadioChangeEvent) => {
+    this.setState({ tracking_pixel_enabled: e.target.value === 'pixel' });
+  };
+
+  onTrackingPixelExtensionChange = (e: RadioChangeEvent) => {
+    this.setState({ tracking_pixel_extension: e.target.value });
   };
 
   /**
@@ -148,10 +179,17 @@ export class CreateLinkForm extends React.Component<Props, State> {
   createLink = async (values: CreateLinkFormValues): Promise<void> => {
     this.toggleLoading();
 
-    const createLinkReq: Record<string, string> = {
+    const createLinkReq: {
+      title: string;
+      long_url: string;
+      expiration_time?: string;
+      is_tracking_pixel_link?: boolean;
+    } = {
       title: values.title,
       long_url: values.long_url,
     };
+
+    createLinkReq.is_tracking_pixel_link = !!values.is_tracking_pixel_link;
 
     if (values.expiration_time !== undefined) {
       createLinkReq.expiration_time = values.expiration_time.format();
@@ -193,6 +231,10 @@ export class CreateLinkForm extends React.Component<Props, State> {
         if (alias.alias !== undefined && result.valid) {
           createAliasReq.alias = alias.alias;
         }
+        if (this.state.tracking_pixel_enabled) {
+          createAliasReq.extension = this.state.tracking_pixel_extension;
+        }
+        console.log(createAliasReq);
         await fetch(`/api/v1/link/${linkId}/alias`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -200,6 +242,8 @@ export class CreateLinkForm extends React.Component<Props, State> {
         });
       }),
     );
+
+
     this.onSubmitClick();
   };
 
@@ -224,17 +268,14 @@ export class CreateLinkForm extends React.Component<Props, State> {
             <Input placeholder="Title" />
           </Form.Item>
 
-          <Form.Item
-            label="Long URL"
-            name="long_url"
-            rules={[
-              { required: true, message: 'Please input a URL.' },
-              { type: 'url', message: 'Please enter a valid URL.' },
-              { validator: serverValidateLongUrl },
-            ]}
-          >
-            <Input placeholder="Long URL" prefix={<LinkOutlined />} />
-          </Form.Item>
+          {this.props.tracking_pixel_ui_enabled &&
+            (<Form.Item name="is_tracking_pixel_link" valuePropName="checked">
+              <Radio.Group onChange={this.onTrackingPixelChange} options={[
+                { label: 'URL', value: 'url' },
+                { label: 'Tracking Pixel', value: 'pixel' },
+              ]} defaultValue={"url"} />
+            </Form.Item>)
+          }
 
           <Form.Item label="Expiration time" name="expiration_time">
             <DatePicker
@@ -248,9 +289,34 @@ export class CreateLinkForm extends React.Component<Props, State> {
             />
           </Form.Item>
 
-          <Form.List
-            name="aliases"
-          >
+          {!this.state.tracking_pixel_enabled && (
+            <>
+              <Form.Item
+                label="Long URL"
+                name="long_url"
+                rules={[
+                  { required: true, message: 'Please input a URL.' },
+                  { type: 'url', message: 'Please enter a valid URL.' },
+                  { validator: serverValidateLongUrl },
+                ]}
+              >
+                <Input placeholder="Long URL" prefix={<LinkOutlined />} />
+              </Form.Item>
+            </>
+          )}
+          {
+            this.state.tracking_pixel_enabled && (
+              <>
+                <Form.Item name="tracking_pixel_extension" label="Extension">
+                  <Radio.Group onChange={this.onTrackingPixelExtensionChange} options={[
+                    { label: '.png', value: '.png' },
+                    { label: '.gif', value: '.gif' }
+                  ]} defaultValue={".png"} />
+                </Form.Item>
+              </>
+            )
+          }
+          <Form.List name="aliases">
             {(fields, { add, remove }) => (
               <div
                 className="fix-alias-remove-button"
@@ -365,7 +431,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
                 htmlType="submit"
                 style={{ width: '100%' }}
               >
-                Shrink!
+                {this.state.tracking_pixel_enabled ? "Create Pixel!" : "Shrink!"}
               </Button>
             </Spin>
           </Form.Item>

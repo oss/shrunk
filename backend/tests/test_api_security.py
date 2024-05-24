@@ -108,7 +108,7 @@ def test_security_api_permissions(client: Client, permission: str) -> None:
 
 def test_verification_process(client: Client) -> None:
     unsafe_link = 'http://malware.testing.google.test/testing/malware/*'
-    second_unsafe_link = 'http://malware.wicar.org/data/ms09_072_style_object.html'
+    second_unsafe_link = 'http://malware.testing.google.test/testing/malware/*/'
 
     unsafe_link_title = 'unsafe link'
     unsafe_link_title_b32 = str(base64.b32encode(bytes(unsafe_link_title, 'utf8')), 'utf8')

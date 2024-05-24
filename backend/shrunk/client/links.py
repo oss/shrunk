@@ -63,12 +63,14 @@ class LinksClient:
                  RESERVED_WORDS: Set[str],
                  BANNED_REGEXES: List[str],
                  REDIRECT_CHECK_TIMEOUT: float,
+                 TRACKING_PIXEL_UI_ENABLED: bool,
                  other_clients: Any):
         self.db = db
         self.geoip = geoip
         self.reserved_words = RESERVED_WORDS
         self.banned_regexes = [re.compile(regex, re.IGNORECASE) for regex in BANNED_REGEXES]
         self.redirect_check_timeout = REDIRECT_CHECK_TIMEOUT
+        self.tracking_pixel_ui_enabled = TRACKING_PIXEL_UI_ENABLED
         self.other_clients = other_clients
 
     def alias_is_reserved(self, alias: str) -> bool:
@@ -119,7 +121,7 @@ class LinksClient:
         """Get the ``_id`` field associated with the short url.
         :param short_url: a short url
         :returns: An :py:class:`~bson.objectid.ObjectId` if the short url exists, or None otherwise."""
-        result = self.db.urls.find_one({'aliases.alias': alias})
+        result = self.get_link_info_by_alias(alias)
         return result['_id'] if result is not None else None
 
     def create(self,
@@ -130,7 +132,8 @@ class LinksClient:
                creator_ip: str,
                viewers: List[Dict[str, Any]] = None,
                editors: List[Dict[str, Any]] = None,
-               bypass_security_measures: bool = False) -> ObjectId:
+               bypass_security_measures: bool = False,
+               is_tracking_pixel_link: bool = False) -> ObjectId:
         if viewers is None:
             viewers = []
         if editors is None:
@@ -159,6 +162,7 @@ class LinksClient:
             'aliases': [],
             'viewers': viewers,
             'editors': editors,
+            'is_tracking_pixel_link': is_tracking_pixel_link,
         }
 
         if not bypass_security_measures and \
@@ -343,11 +347,15 @@ class LinksClient:
             result = self.db.visits.find({'link_id': link_id, 'alias': alias})
         return list(result)
 
-    def create_random_alias(self, link_id: ObjectId, description: str) -> str:
+    def create_random_alias(self, link_id: ObjectId, description: str, extension: Optional[str] = None) -> str:
         while True:
             alias = self._generate_unique_key()
+            if extension:
+                alias += extension
             while self.alias_is_reserved(alias):
                 alias = self._generate_unique_key()
+                if extension:
+                    alias += extension
             try:
                 result = self.db.urls.update_one({'_id': link_id},
                                                  {'$push': {'aliases': {
@@ -360,11 +368,13 @@ class LinksClient:
             except pymongo.errors.DuplicateKeyError:
                 pass
 
-    def create_or_modify_alias(self, link_id: ObjectId, alias: Optional[str], description: str) -> str:
+    def create_or_modify_alias(self, link_id: ObjectId, alias: Optional[str], description: str, extension: Optional[str]) -> str:
         if alias is None:
-            return self.create_random_alias(link_id, description)
+            return self.create_random_alias(link_id, description, extension)
 
         # If alias is reserved word
+        if extension:
+            alias += extension
         if self.alias_is_reserved(alias):
             raise BadAliasException
 
@@ -472,20 +482,21 @@ class LinksClient:
         return result
 
     def get_link_info_by_alias(self, alias: str) -> Any:
-        return self.db.urls.find_one({'$and': [{'aliases.alias': alias, 'aliases.deleted': False}]})
+        documents = self.db.urls.find({'aliases.alias': alias})
+
+        for document in documents:
+            for alias_entry in document['aliases']:
+                if alias_entry['alias'] == alias and not alias_entry['deleted']:
+                    return document
+
+        return None
 
     def get_link_info_by_title(self, title: str) -> Any:
         return self.db.urls.find_one({'title': title})
 
-    def get_long_url(self, alias: str) -> Optional[str]:
-        """Given a short URL, returns the long URL.
-
-        Performs a case-insensitive search for the corresponding long URL.
-
-        :param short_url: A shortened URL
-
-        :returns:
-          The long URL, or None if the short URL does not exist.
+    def _verify_link_alias_is_valid(self, alias):
+        """
+        Finds a link by an alias and verifies that it is still valid
         """
         result = self.get_link_info_by_alias(alias)
 
@@ -506,6 +517,31 @@ class LinksClient:
         expiration_time = result.get('expiration_time')
         current_time = datetime.now(timezone.utc)
         if expiration_time and current_time >= expiration_time:
+            return None
+
+        return result
+
+    def is_tracking_pixel_link(self, alias: str) -> bool:
+        result = self._verify_link_alias_is_valid(alias)
+
+        if result is None:
+            return False
+
+        return result.get('is_tracking_pixel_link', False)
+
+    def get_long_url(self, alias: str) -> Optional[str]:
+        """Given a short URL, returns the long URL.
+
+        Performs a case-insensitive search for the corresponding long URL.
+
+        :param short_url: A shortened URL
+
+        :returns:
+          The long URL, or None if the short URL does not exist.
+        """
+        result = self._verify_link_alias_is_valid(alias)
+
+        if result is None:
             return None
 
         # Link exists and is valid; return its long URL
@@ -534,13 +570,14 @@ class LinksClient:
         :param referer: The client's referer
 
         """
+        resp = self.get_link_info_by_alias(alias)
+        print(resp)
 
-        resp = self.db.urls.find_one({'aliases.alias': alias})
         if not self.db.visits.find_one({'link_id': resp['_id'], 'tracking_id': tracking_id}):
-            self.db.urls.update_one({'aliases.alias': alias},
+            self.db.urls.update_one({'_id': resp['_id']},
                                     {'$inc': {'visits': 1, 'unique_visits': 1}})
         else:
-            self.db.urls.update_one({'aliases.alias': alias}, {'$inc': {'visits': 1}})
+            self.db.urls.update_one({'_id': resp['_id']}, {'$inc': {'visits': 1}})
 
         state_code, country_code = self.geoip.get_location_codes(source_ip)
         self.db.visits.insert_one({
@@ -764,6 +801,9 @@ Please do not reply to this email. You may direct any questions to oss@oit.rutge
             {'$unwind': '$request'},
             {'$match': {'request.state': 'pending'}},
         ]))
+
+    def get_tracking_pixel_ui_status(self) -> bool:
+        return self.tracking_pixel_ui_enabled
 
     @classmethod
     def _generate_unique_key(cls) -> str:
