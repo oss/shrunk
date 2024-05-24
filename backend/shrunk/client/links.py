@@ -121,7 +121,7 @@ class LinksClient:
         """Get the ``_id`` field associated with the short url.
         :param short_url: a short url
         :returns: An :py:class:`~bson.objectid.ObjectId` if the short url exists, or None otherwise."""
-        result = self.db.urls.find_one({'aliases.alias': alias})
+        result = self.get_link_info_by_alias(alias)
         return result['_id'] if result is not None else None
 
     def create(self,
@@ -482,7 +482,14 @@ class LinksClient:
         return result
 
     def get_link_info_by_alias(self, alias: str) -> Any:
-        return self.db.urls.find_one({'$and': [{'aliases.alias': alias, 'aliases.deleted': False}]})
+        documents = self.db.urls.find({'aliases.alias': alias})
+
+        for document in documents:
+            for alias_entry in document['aliases']:
+                if alias_entry['alias'] == alias and not alias_entry['deleted']:
+                    return document
+
+        return None
 
     def get_link_info_by_title(self, title: str) -> Any:
         return self.db.urls.find_one({'title': title})
@@ -563,13 +570,14 @@ class LinksClient:
         :param referer: The client's referer
 
         """
+        resp = self.get_link_info_by_alias(alias)
+        print(resp)
 
-        resp = self.db.urls.find_one({'aliases.alias': alias})
         if not self.db.visits.find_one({'link_id': resp['_id'], 'tracking_id': tracking_id}):
-            self.db.urls.update_one({'aliases.alias': alias},
+            self.db.urls.update_one({'_id': resp['_id']},
                                     {'$inc': {'visits': 1, 'unique_visits': 1}})
         else:
-            self.db.urls.update_one({'aliases.alias': alias}, {'$inc': {'visits': 1}})
+            self.db.urls.update_one({'_id': resp['_id']}, {'$inc': {'visits': 1}})
 
         state_code, country_code = self.geoip.get_location_codes(source_ip)
         self.db.visits.insert_one({
