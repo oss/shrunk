@@ -14,6 +14,7 @@ from .roles import RolesClient
 from .links import LinksClient
 from .alerts import AlertsClient
 from .role_requests import RoleRequestClient
+from .positions import PositionClient
 
 __all__ = ['ShrunkClient']
 
@@ -36,6 +37,9 @@ class ShrunkClient:
                  SECURITY_MEASURES_ON: Optional[bool] = False,
                  SEND_MAIL_ON: Optional[bool] = False,
                  GOOGLE_SAFE_BROWSING_API: Optional[str] = None,
+                 SLACK_INTEGRATION_ON: Optional[bool] = False,
+                 SLACK_BOT_TOKEN: Optional[str] = None,
+                 SLACK_SHRUNK_CHANNEL_ID: Optional[str] = None,
                  TRACKING_PIXEL_UI_ENABLED: Optional[bool] = False,
                  **_kwargs: Any):
         self.conn = pymongo.MongoClient(DB_HOST, DB_PORT, username=DB_USERNAME,
@@ -60,7 +64,11 @@ class ShrunkClient:
                                        SECURITY_MEASURES_ON=SECURITY_MEASURES_ON or False,
                                        GOOGLE_SAFE_BROWSING_API=GOOGLE_SAFE_BROWSING_API or None)
         self.role_requests = RoleRequestClient(db=self.db,
-                                               SEND_MAIL_ON=SEND_MAIL_ON or False)
+                                               SEND_MAIL_ON=SEND_MAIL_ON or False,
+                                               SLACK_INTEGRATION_ON=SLACK_INTEGRATION_ON or False,
+                                               SLACK_BOT_TOKEN=SLACK_BOT_TOKEN or None,
+                                               SLACK_SHRUNK_CHANNEL_ID=SLACK_SHRUNK_CHANNEL_ID or None)
+        self.positions = PositionClient()
 
     def _ensure_indexes(self) -> None:
         self.db.urls.create_index([('aliases.alias', pymongo.ASCENDING)])

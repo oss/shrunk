@@ -144,7 +144,7 @@ const PendingRoleRequestRow: React.FC<{
                         <Col span={24}>
                             <span>
                                 <em>Date Requested:</em>&nbsp;
-                                {moment(props.role_request.time_requested).format('MMM D, YYYY')}
+                                {moment(new Date(Number(props.role_request.time_requested) * 1000)).format('MMM D, YYYY, h:mm a')}
                             </span>
                         </Col>
                     </Row>
@@ -278,21 +278,25 @@ export class PendingRoleRequests extends Component<Props, State> {
      * @method
      */
     updateEntityPositionInfo = async (entity: string): Promise<any> => {
-        const intermediate_result = await fetch(`/api/v1/role_request/position/${base32.encode(entity)}`).then(
-            (resp) => resp.json(),
-        );
+        const response = await fetch(`/api/v1/position/${base32.encode(entity)}`);
+        if (!response.ok) {
+            console.error(`Server responded with status ${response.status}`);
+            return;
+        }
+        const intermediate_result = await response.json();
         const attributes = ['title',  'rutgersEduStaffDepartment', 'employeeType'];
         const result: any = {};
 
-        attributes.forEach(attribute => {
-            if (!intermediate_result[attribute]) {
-                result[attribute] = attribute === 'title' ? ['Cannot find title'] : attribute === 'employeeType' ? ['Cannot find employee types'] : ['Cannot find department'];
-            } else if (intermediate_result[attribute].length === 0) {
-                result[attribute] = ['N/A'];
-            } else {
-                result[attribute] = intermediate_result[attribute];
-            }
-        });
+        if (!intermediate_result || intermediate_result.error || !intermediate_result[attributes[0]]) {
+            attributes.forEach(attribute => {
+                result[attribute] = ['Cannot find attribute'];
+            });
+            return result;
+        } else {
+            attributes.forEach(attribute => {
+                result[attribute] = intermediate_result[attribute] ? intermediate_result[attribute] : ['N/A'];
+            })
+        }
     
         return result;
     }

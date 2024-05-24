@@ -71,7 +71,7 @@ def query_position_info(netid: str) -> Dict[str, List[str]]:
             The keys of the dictionary represent the attribute names, and the values are lists
             of attribute values.
     """
-    if(not is_valid_netid(netid)):
+    if not is_valid_netid(netid) or not current_app.config.get('LDAP_VALIDATE_NETIDS', False):
         return {}
     
     intermediate = _query_netid(netid)
