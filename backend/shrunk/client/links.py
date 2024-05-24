@@ -482,6 +482,7 @@ class LinksClient:
         return result
 
     def get_link_info_by_alias(self, alias: str) -> Any:
+        # TODO: When visiting the non-deleted link, the deleted link's statistic goes up.
         documents = self.db.urls.find({'aliases.alias': alias})
 
         for document in documents:
