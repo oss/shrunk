@@ -482,7 +482,14 @@ class LinksClient:
         return result
 
     def get_link_info_by_alias(self, alias: str) -> Any:
-        return self.db.urls.find_one({'$and': [{'aliases.alias': alias, 'aliases.deleted': False}]})
+        documents = self.db.urls.find({'aliases.alias': alias})
+
+        for document in documents:
+            for alias_entry in document['aliases']:
+                if alias_entry['alias'] == alias and not alias_entry['deleted']:
+                    return document
+
+        return None
 
     def get_link_info_by_title(self, title: str) -> Any:
         return self.db.urls.find_one({'title': title})
