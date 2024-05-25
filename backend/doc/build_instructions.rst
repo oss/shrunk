@@ -41,7 +41,7 @@ If you are having trouble installing ``python-ldap``, run
 .. code:: shell
 
    cd backend
-   flask run
+   python3 -m flask run
 
 You should be able to see the line
 
