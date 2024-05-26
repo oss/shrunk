@@ -60,7 +60,6 @@ webpack-stats.json
 dist-newstyle
 .mypy_cache/
 .pytest_cache/
-.vscode/
 
 backend/mail
 
