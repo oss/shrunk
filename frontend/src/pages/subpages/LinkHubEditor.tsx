@@ -206,7 +206,6 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
                 style={{
                   width: '100%',
                   height: '500px',
-                  overflow: 'scroll',
                   marginBottom: '8px',
                 }}
               >
