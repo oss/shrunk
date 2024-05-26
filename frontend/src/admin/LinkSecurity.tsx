@@ -110,10 +110,11 @@ function PendingLinkRow(props: PendingRowProps) {
 }
 
 function LinkSecurity() {
-  const [pendingLinks, setPendingLinks] =
-    useState<Array<PendingLink> | null>(null);
+  const [pendingLinks, setPendingLinks] = useState<Array<PendingLink> | null>(
+    null,
+  );
 
-  const [securityStatus, setSecurityStatus] = useState<string>("OFF");
+  const [securityStatus, setSecurityStatus] = useState<string>('OFF');
 
   useEffect(() => {
     fetch('/api/v1/security/pending_links')

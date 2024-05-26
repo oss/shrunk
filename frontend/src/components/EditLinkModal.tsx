@@ -163,13 +163,14 @@ export const EditLinkModal: React.FC<Props> = (props) => {
       onOk={() => {
         if (ownerInputVal !== initialValues.owner) {
           Modal.confirm({
-            title: "Link owner modification",
+            title: 'Link owner modification',
             icon: <ExclamationCircleFilled />,
-            content: "You are about to modify the link owner. Do you wish to proceed?",
-            okText: "Yes",
+            content:
+              'You are about to modify the link owner. Do you wish to proceed?',
+            okText: 'Yes',
             onOk() {
               handleSubmit();
-            }
+            },
           });
         } else {
           handleSubmit();
@@ -227,7 +228,11 @@ export const EditLinkModal: React.FC<Props> = (props) => {
             { validator: serverValidateNetId },
           ]}
         >
-          <Input placeholder="Link owner" onChange={handleChange} disabled={!mayEditOwner} />
+          <Input
+            placeholder="Link owner"
+            onChange={handleChange}
+            disabled={!mayEditOwner}
+          />
         </Form.Item>
 
         <Form.List name="aliases">
@@ -238,11 +243,11 @@ export const EditLinkModal: React.FC<Props> = (props) => {
                   key={field.key}
                   style={{ display: 'flex', marginBottom: 8 }}
                   align="start"
-                  direction='vertical'
+                  direction="vertical"
                 >
                   <Form.Item
                     style={{
-                      width: '470px'
+                      width: '470px',
                     }}
                     label={
                       <>
@@ -251,7 +256,9 @@ export const EditLinkModal: React.FC<Props> = (props) => {
                           placement="topRight"
                           title="Are you sure you want to delete this alias?"
                           onConfirm={() => remove(field.name)}
-                          icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
+                          icon={
+                            <ExclamationCircleFilled style={{ color: 'red' }} />
+                          }
                           disabled={fields.length === 1}
                         >
                           <Button
@@ -303,7 +310,7 @@ export const EditLinkModal: React.FC<Props> = (props) => {
 
                   <Form.Item
                     style={{
-                      width: '470px'
+                      width: '470px',
                     }}
                     label={index === 0 ? 'Description' : ''}
                     name={[field.name, 'description']}

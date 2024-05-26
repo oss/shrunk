@@ -5,7 +5,7 @@ from typing import Optional, Tuple
 import geoip2.errors
 import geoip2.database
 
-__all__ = ['GeoipClient']
+__all__ = ["GeoipClient"]
 
 
 class GeoipClient:
@@ -28,19 +28,19 @@ class GeoipClient:
           be determined.
         """
 
-        unk = 'unknown'
+        unk = "unknown"
 
         if self._geoip is None:
             return unk
 
-        if ipaddr.startswith('172.31'):  # RUWireless (NB)
-            return 'Rutgers New Brunswick, New Jersey, United States'
-        if ipaddr.startswith('172.27'):  # RUWireless (NWK)
-            return 'Rutgers Newark, New Jersey, United States'
-        if ipaddr.startswith('172.24'):  # "Camden Computing Services"
-            return 'Rutgers Camden, New Jersey, United States'
-        if ipaddr.startswith('172.'):
-            return 'New Jersey, United States'
+        if ipaddr.startswith("172.31"):  # RUWireless (NB)
+            return "Rutgers New Brunswick, New Jersey, United States"
+        if ipaddr.startswith("172.27"):  # RUWireless (NWK)
+            return "Rutgers Newark, New Jersey, United States"
+        if ipaddr.startswith("172.24"):  # "Camden Computing Services"
+            return "Rutgers Camden, New Jersey, United States"
+        if ipaddr.startswith("172."):
+            return "New Jersey, United States"
 
         try:
             resp = self._geoip.city(ipaddr)
@@ -59,20 +59,24 @@ class GeoipClient:
             if not components:
                 return unk
 
-            return ', '.join(components)
+            return ", ".join(components)
         except geoip2.errors.AddressNotFoundError:
             return unk
 
     def get_location_codes(self, ipaddr: str) -> Tuple[Optional[str], Optional[str]]:
         if self._geoip is None:
             return None, None
-        if ipaddr.startswith('172.'):
-            return 'NJ', 'US'
+        if ipaddr.startswith("172."):
+            return "NJ", "US"
         try:
             resp = self._geoip.city(ipaddr)
             country = resp.country.iso_code
             try:
-                state = resp.subdivisions.most_specific.iso_code if country == 'US' else None
+                state = (
+                    resp.subdivisions.most_specific.iso_code
+                    if country == "US"
+                    else None
+                )
             except AttributeError:
                 state = None
             return state, country

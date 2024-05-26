@@ -87,12 +87,12 @@ export const OrgsSelect: React.FC<Props> = (props) => {
         loading ? (
           <LoadingOutlined spin />
         ) : (
-          <div onClick={() => {
-            if (linkDropDown.current !== null) {
-              linkDropDown.current.focus();
-            }
-
-          }}
+          <div
+            onClick={() => {
+              if (linkDropDown.current !== null) {
+                linkDropDown.current.focus();
+              }
+            }}
           >
             <CaretDownOutlined
               style={{

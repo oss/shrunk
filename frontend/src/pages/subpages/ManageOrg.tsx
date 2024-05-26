@@ -40,8 +40,6 @@ import '../../Base.less';
 import './ManageOrg.less';
 import { serverValidateNetId, serverValidateOrgName } from '../../Validators';
 
-
-
 /**
  * Props for the [[ManageOrg]] component
  * @interface
@@ -324,14 +322,12 @@ class ManageOrgInner extends React.Component<Props, State> {
    * @param newName the new name that the organization will take on
    */
   onRenameOrg = async (newName: string): Promise<void> => {
-
     await fetch(`/api/v1/org/${this.props.match.params.id}/rename/${newName}`, {
-      method: 'PUT'
-
+      method: 'PUT',
     });
     this.props.history.push('/orgs');
     await this.refreshOrgInfo();
-  }
+  };
 
   /**
    * Execute API requests to remove the current user from the org, then navigate
@@ -370,33 +366,37 @@ class ManageOrgInner extends React.Component<Props, State> {
     const renameModal = {
       handleOk: async () => {
         if (this.formRef.current) {
-          this.formRef.current.validateFields().then(async (values) => {
-            console.log(this);
-            this.onRenameOrg(values['newName']);
+          this.formRef.current
+            .validateFields()
+            .then(async (values) => {
+              console.log(this);
+              this.onRenameOrg(values['newName']);
 
-            if (this.formRef.current) this.formRef.current.resetFields();
+              if (this.formRef.current) this.formRef.current.resetFields();
 
-            this.setState({
-              renameOrgModalVisible: false
-            });
-          }).catch(() => console.log("Input value for renaming encountered an error"));
+              this.setState({
+                renameOrgModalVisible: false,
+              });
+            })
+            .catch(() =>
+              console.log('Input value for renaming encountered an error'),
+            );
         }
       },
 
       handleCancel: () => {
-        if (this.formRef.current)
-          this.formRef.current.resetFields();
+        if (this.formRef.current) this.formRef.current.resetFields();
         this.setState({
-          renameOrgModalVisible: false
+          renameOrgModalVisible: false,
         });
       },
 
       setVisible: (visible: boolean) => {
         this.setState({
-          renameOrgModalVisible: visible
+          renameOrgModalVisible: visible,
         });
-      }
-    }
+      },
+    };
 
     const orgOptions = (
       <Menu>
@@ -404,7 +404,10 @@ class ManageOrgInner extends React.Component<Props, State> {
           <></>
         ) : (
           <Menu.Item
-            onClick={() => renameModal.setVisible(!this.state.renameOrgModalVisible)}>
+            onClick={() =>
+              renameModal.setVisible(!this.state.renameOrgModalVisible)
+            }
+          >
             Rename
           </Menu.Item>
         )}
@@ -419,34 +422,42 @@ class ManageOrgInner extends React.Component<Props, State> {
           <></>
         ) : userMayNotLeave ? (
           <Menu.Item disabled>
-            <Tooltip placement="left" title="You may not remove the last administrator from an organization">
+            <Tooltip
+              placement="left"
+              title="You may not remove the last administrator from an organization"
+            >
               Leave
             </Tooltip>
           </Menu.Item>
         ) : (
-          <Menu.Item danger onClick={() => {
-            Modal.confirm({
-              title: 'Do you want to leave this organization?',
-              icon: <ExclamationCircleOutlined />,
-              content: 'By pressing Yes, you will no longer be a member of this organization.',
-              okText: 'Yes',
-              onOk: this.leaveOrg
-            });
-          }}>
+          <Menu.Item
+            danger
+            onClick={() => {
+              Modal.confirm({
+                title: 'Do you want to leave this organization?',
+                icon: <ExclamationCircleOutlined />,
+                content:
+                  'By pressing Yes, you will no longer be a member of this organization.',
+                okText: 'Yes',
+                onOk: this.leaveOrg,
+              });
+            }}
+          >
             Leave
           </Menu.Item>
-        )
-        }
+        )}
 
-        {
-          !isAdmin ? (
-            <></>
-          ) : (
-            <Menu.Item danger onClick={() => {
+        {!isAdmin ? (
+          <></>
+        ) : (
+          <Menu.Item
+            danger
+            onClick={() => {
               Modal.confirm({
                 title: 'Do you want to delete this organization?',
                 icon: <ExclamationCircleOutlined />,
-                content: 'By pressing Yes, you will delete this organization and all of the content within it will be gone. This includes member list and links.',
+                content:
+                  'By pressing Yes, you will delete this organization and all of the content within it will be gone. This includes member list and links.',
                 okText: 'Yes',
                 /**
                  * The act of deleting an organization has two warning pop ups. That is why
@@ -457,18 +468,19 @@ class ManageOrgInner extends React.Component<Props, State> {
                     title: 'Are you absolutely sure?',
                     okText: 'Yes',
                     icon: <WarningFilled />,
-                    content: 'This is your last warning. If you press Yes, you will delete this organization.',
-                    onOk: this.deleteOrg
-                  })
-                }
+                    content:
+                      'This is your last warning. If you press Yes, you will delete this organization.',
+                    onOk: this.deleteOrg,
+                  });
+                },
               });
-            }}>
-              Delete
-            </Menu.Item>
-          )
-        }
+            }}
+          >
+            Delete
+          </Menu.Item>
+        )}
       </Menu>
-    )
+    );
 
     return (
       <>
@@ -490,19 +502,16 @@ class ManageOrgInner extends React.Component<Props, State> {
                 },
                 {
                   max: 60,
-                  message:
-                    'Org names can be at most 60 characters long',
+                  message: 'Org names can be at most 60 characters long',
                 },
                 {
-                  validator: serverValidateOrgName
+                  validator: serverValidateOrgName,
                 },
               ]}
-
             >
               <Input placeholder="Name" />
             </Form.Item>
           </Form>
-
         </Modal>
         <BackTop />
         <Row className="primary-row">
@@ -528,7 +537,10 @@ class ManageOrgInner extends React.Component<Props, State> {
             ) : (
               <Dropdown
                 overlay={
-                  <AddMemberForm isAdmin={isAdmin} onCreate={this.onAddMember} />
+                  <AddMemberForm
+                    isAdmin={isAdmin}
+                    onCreate={this.onAddMember}
+                  />
                 }
                 visible={this.state.addMemberFormVisible}
                 onVisibleChange={(flag) =>

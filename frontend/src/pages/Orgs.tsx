@@ -72,7 +72,6 @@ interface State {
 const CreateOrgForm: React.FC<{ onCreate: (name: string) => Promise<void> }> = (
   props,
 ) => {
-
   const onFinish = async (values: { name: string }) =>
     props.onCreate(values.name);
   return (
@@ -90,8 +89,7 @@ const CreateOrgForm: React.FC<{ onCreate: (name: string) => Promise<void> }> = (
               },
               {
                 max: 60,
-                message:
-                  'Org names can be at most 60 characters long',
+                message: 'Org names can be at most 60 characters long',
               },
               { validator: serverValidateOrgName },
             ]}
