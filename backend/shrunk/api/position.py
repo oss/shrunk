@@ -12,6 +12,7 @@ from shrunk.util.decorators import require_login
 __all__ = ["position"]
 bp = Blueprint("position", __name__, url_prefix="/api/v1/position")
 
+
 @bp.route("/<b32:entity>", methods=["GET"])
 @require_login
 def get_position_info(netid: str, client: ShrunkClient, entity: str) -> Any:

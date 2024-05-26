@@ -10,50 +10,56 @@ import bson
 from werkzeug.exceptions import abort
 
 from shrunk.client import ShrunkClient
-from shrunk.client.exceptions import (BadLongURLException,
-                                      BadAliasException,
-                                      NoSuchObjectException,
-                                      InvalidACL,
-                                      NotUserOrOrg,
-                                      SecurityRiskDetected,
-                                      LinkIsPendingOrRejected)
-from shrunk.util.stats import get_human_readable_referer_domain, browser_stats_from_visits
+from shrunk.client.exceptions import (
+    BadLongURLException,
+    BadAliasException,
+    NoSuchObjectException,
+    InvalidACL,
+    NotUserOrOrg,
+    SecurityRiskDetected,
+    LinkIsPendingOrRejected,
+)
+from shrunk.util.stats import (
+    get_human_readable_referer_domain,
+    browser_stats_from_visits,
+)
 from shrunk.util.ldap import is_valid_netid
 from shrunk.util.decorators import require_login, require_mail, request_schema
 
-__all__ = ['bp']
+__all__ = ["bp"]
 
-bp = Blueprint('link', __name__, url_prefix='/api/v1/link')
+bp = Blueprint("link", __name__, url_prefix="/api/v1/link")
 
 MIN_ALIAS_LENGTH = 5
 
 MAX_ALIAS_LENGTH = 60
 
 ACL_ENTRY_SCHEMA = {
-    'type': 'object',
-    'required': ['_id', 'type'],
-    'properties' : {
-        '_id': {'type': 'string'},
-        'type': {'type': 'string', 'enum': ['org', 'netid']}
-    }
-}
-
-CREATE_LINK_SCHEMA = {
-    'type': 'object',
-    'additionalProperties': False,
-    'required': ['title'],
-    'properties': {
-        'title': {'type': 'string', 'minLength': 1},
-        'long_url': {'type': 'string', 'minLength': 1},
-        'expiration_time': {'type': 'string', 'format': 'date-time'},
-        'editors': {'type': 'array', 'items': ACL_ENTRY_SCHEMA},
-        'viewers': {'type': 'array', 'items': ACL_ENTRY_SCHEMA},
-        'bypass_security_measures': {'type': 'boolean'},
-        'is_tracking_pixel_link': {'type': 'boolean'},
+    "type": "object",
+    "required": ["_id", "type"],
+    "properties": {
+        "_id": {"type": "string"},
+        "type": {"type": "string", "enum": ["org", "netid"]},
     },
 }
 
-@bp.route('', methods=['POST'])
+CREATE_LINK_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["title"],
+    "properties": {
+        "title": {"type": "string", "minLength": 1},
+        "long_url": {"type": "string", "minLength": 1},
+        "expiration_time": {"type": "string", "format": "date-time"},
+        "editors": {"type": "array", "items": ACL_ENTRY_SCHEMA},
+        "viewers": {"type": "array", "items": ACL_ENTRY_SCHEMA},
+        "bypass_security_measures": {"type": "boolean"},
+        "is_tracking_pixel_link": {"type": "boolean"},
+    },
+}
+
+
+@bp.route("", methods=["POST"])
 @request_schema(CREATE_LINK_SCHEMA)
 @require_login
 def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
@@ -89,82 +95,117 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
     :param client:
     :param req:
     """
-    if 'editors' not in req:
-        req['editors'] = []
-    if 'viewers' not in req:
-        req['viewers'] = []
+    if "editors" not in req:
+        req["editors"] = []
+    if "viewers" not in req:
+        req["viewers"] = []
 
-    if 'bypass_security_measures' not in req:
-        req['bypass_security_measures'] = False
+    if "bypass_security_measures" not in req:
+        req["bypass_security_measures"] = False
 
-    if 'is_tracking_pixel_link' not in req:
-        req['is_tracking_pixel_link'] = False
+    if "is_tracking_pixel_link" not in req:
+        req["is_tracking_pixel_link"] = False
 
-    if 'long_url' not in req and req['is_tracking_pixel_link']:
-        req['long_url'] = 'http://example.com'
-    elif 'long_url' not in req and not req['is_tracking_pixel_link']:
-        return jsonify({'errors': ['long_url is missing']}), 400
+    if "long_url" not in req and req["is_tracking_pixel_link"]:
+        req["long_url"] = "http://example.com"
+    elif "long_url" not in req and not req["is_tracking_pixel_link"]:
+        return jsonify({"errors": ["long_url is missing"]}), 400
 
-    if not client.roles.has('admin', netid) and req['bypass_security_measures']:
+    if not client.roles.has("admin", netid) and req["bypass_security_measures"]:
         abort(403)
 
-    if 'expiration_time' in req:
-        expiration_time: Optional[datetime] = datetime.fromisoformat(req['expiration_time'])
+    if "expiration_time" in req:
+        expiration_time: Optional[datetime] = datetime.fromisoformat(
+            req["expiration_time"]
+        )
     else:
         expiration_time = None
 
     # convert _id to objectid for orgs in acls
     try:
+
         def str2ObjectId(acl):
-            return [{'_id': ObjectId(entry['_id']), 'type': entry['type']}
-                    if entry['type'] == 'org'
-                    else entry
-                    for entry in acl]
-        req['editors'] = str2ObjectId(req['editors'])
-        req['viewers'] = str2ObjectId(req['viewers'])
+            return [
+                {"_id": ObjectId(entry["_id"]), "type": entry["type"]}
+                if entry["type"] == "org"
+                else entry
+                for entry in acl
+            ]
+
+        req["editors"] = str2ObjectId(req["editors"])
+        req["viewers"] = str2ObjectId(req["viewers"])
     except bson.errors.InvalidId as e:
-        return jsonify({'errors': ['type org requires _id to be an ObjectId: ' + str(e)]}), 400
+        return (
+            jsonify({"errors": ["type org requires _id to be an ObjectId: " + str(e)]}),
+            400,
+        )
 
     # deduplicate
     def dedupe(acl):
         ids = set()
         result = []
         for entry in acl:
-            if entry['_id'] not in ids:
+            if entry["_id"] not in ids:
                 result.append(entry)
-                ids.add(entry['_id'])
+                ids.add(entry["_id"])
         return result
-    req['editors'] = dedupe(req['editors'])
-    req['viewers'] = dedupe(req['viewers'])
+
+    req["editors"] = dedupe(req["editors"])
+    req["viewers"] = dedupe(req["viewers"])
 
     # make sure editors also have viewer permissions
-    viewer_ids = {viewer['_id'] for viewer in req['viewers']}
-    for editor in req['editors']:
-        if editor['_id'] not in viewer_ids:
-            viewer_ids.add(editor['_id'])
-            req['viewers'].append(editor)
+    viewer_ids = {viewer["_id"] for viewer in req["viewers"]}
+    for editor in req["editors"]:
+        if editor["_id"] not in viewer_ids:
+            viewer_ids.add(editor["_id"])
+            req["viewers"].append(editor)
 
     try:
-        link_id = client.links.create(req['title'], req['long_url'], expiration_time, netid,
-                                      request.remote_addr, viewers=req['viewers'], editors=req['editors'],
-                                      bypass_security_measures=req['bypass_security_measures'],
-                                      is_tracking_pixel_link=req['is_tracking_pixel_link'])
+        link_id = client.links.create(
+            req["title"],
+            req["long_url"],
+            expiration_time,
+            netid,
+            request.remote_addr,
+            viewers=req["viewers"],
+            editors=req["editors"],
+            bypass_security_measures=req["bypass_security_measures"],
+            is_tracking_pixel_link=req["is_tracking_pixel_link"],
+        )
     except BadLongURLException:
-        return jsonify({'errors': ['long_url']}), 400
+        return jsonify({"errors": ["long_url"]}), 400
     except SecurityRiskDetected:
-        return jsonify({'errors': ['This url has been detected to be a potential security \
-            risk and requires manual verification. We apologize for the inconvenience and we\'ll\
-            verify the link as soon as possible. For more information, contact us at oss@oit.rutgers.edu']}), 403
+        return (
+            jsonify(
+                {
+                    "errors": [
+                        "This url has been detected to be a potential security \
+            risk and requires manual verification. We apologize for the inconvenience and we'll\
+            verify the link as soon as possible. For more information, contact us at oss@oit.rutgers.edu"
+                    ]
+                }
+            ),
+            403,
+        )
     except LinkIsPendingOrRejected:
-        return jsonify({'errors': ['This url was previously detected to be a potential security risk. \
+        return (
+            jsonify(
+                {
+                    "errors": [
+                        "This url was previously detected to be a potential security risk. \
             The url either is pending verification or has been rejected. For more information, contact us at \
-            oss@oit.rutgers.edu']}), 403
+            oss@oit.rutgers.edu"
+                    ]
+                }
+            ),
+            403,
+        )
     except NotUserOrOrg as e:
-        return jsonify({'errors': [str(e)]}), 400
-    return jsonify({'id': str(link_id)})
+        return jsonify({"errors": [str(e)]}), 400
+    return jsonify({"id": str(link_id)})
 
 
-@bp.route('/validate_long_url/<b32:long_url>', methods=['GET'])
+@bp.route("/validate_long_url/<b32:long_url>", methods=["GET"])
 @require_login
 def validate_long_url(_netid: str, client: ShrunkClient, long_url: str) -> Any:
     """``GET /api/validate_long_url/<b32:long_url>``
@@ -180,13 +221,13 @@ def validate_long_url(_netid: str, client: ShrunkClient, long_url: str) -> Any:
     :param long_url:
     """
     valid = not client.links.long_url_is_blocked(long_url)
-    response: Dict[str, Any] = {'valid': valid}
+    response: Dict[str, Any] = {"valid": valid}
     if not valid:
-        response['reason'] = 'That long URL is not allowed.'
+        response["reason"] = "That long URL is not allowed."
     return jsonify(response)
 
 
-@bp.route('/<ObjectId:link_id>', methods=['GET'])
+@bp.route("/<ObjectId:link_id>", methods=["GET"])
 @require_login
 def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     """``GET /api/link/<link_id>``
@@ -201,34 +242,49 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         info = client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
-    if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
+    if not client.roles.has("admin", netid) and not client.links.may_view(
+        link_id, netid
+    ):
         abort(403)
-    if not client.roles.has('admin', netid):
-        if info['deleted']:
+    if not client.roles.has("admin", netid):
+        if info["deleted"]:
             abort(404)
-        aliases = [{'alias': alias['alias'], 'description': alias.get('description', ''), 'deleted': False}
-                   for alias in info['aliases'] if not alias['deleted']]
+        aliases = [
+            {
+                "alias": alias["alias"],
+                "description": alias.get("description", ""),
+                "deleted": False,
+            }
+            for alias in info["aliases"]
+            if not alias["deleted"]
+        ]
     else:
-        aliases = [{'alias': alias['alias'], 'description': alias.get('description', ''), 'deleted': alias['deleted']}
-                   for alias in info['aliases']]
+        aliases = [
+            {
+                "alias": alias["alias"],
+                "description": alias.get("description", ""),
+                "deleted": alias["deleted"],
+            }
+            for alias in info["aliases"]
+        ]
 
     # Get rid of types that cannot safely be passed to jsonify
     json_info = {
-        '_id': info['_id'],
-        'title': info['title'],
-        'long_url': info['long_url'],
-        'owner': client.links.get_owner(link_id),
-        'created_time': info['timeCreated'],
-        'aliases': aliases,
-        'deleted': info.get('deleted', False),
-        'editors': info['editors'] if 'editors' in info else [],
-        'viewers': info['viewers'] if 'viewers' in info else []
+        "_id": info["_id"],
+        "title": info["title"],
+        "long_url": info["long_url"],
+        "owner": client.links.get_owner(link_id),
+        "created_time": info["timeCreated"],
+        "aliases": aliases,
+        "deleted": info.get("deleted", False),
+        "editors": info["editors"] if "editors" in info else [],
+        "viewers": info["viewers"] if "viewers" in info else [],
     }
 
     return jsonify(json_info)
 
 
-@bp.route('/search_by_title/<b32:title>')
+@bp.route("/search_by_title/<b32:title>")
 @require_login
 def get_link_by_title(netid: str, client: ShrunkClient, title: ObjectId) -> Any:
     """``GET /api/link/search_by_title/<title>``
@@ -241,7 +297,7 @@ def get_link_by_title(netid: str, client: ShrunkClient, title: ObjectId) -> Any:
     :param client:
     :param link_id:
     """
-    if not client.roles.has('admin', netid):
+    if not client.roles.has("admin", netid):
         abort(403)
 
     doc = client.links.get_link_info_by_title(title)
@@ -253,19 +309,19 @@ def get_link_by_title(netid: str, client: ShrunkClient, title: ObjectId) -> Any:
 
 
 MODIFY_LINK_SCHEMA = {
-    'type': 'object',
-    'additionalProperties': False,
-    'properties': {
-        'title': {'type': 'string', 'minLength': 1},
-        'long_url': {'type': 'string', 'format': 'uri'},
-        'expiration_time': {'type': ['string', 'null'], 'format': 'date-time'},
-        'created_time': {'type': ['string', 'null'], 'format': 'date-time'},
-        'owner': {'type': 'string', 'minLength': 1},
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "title": {"type": "string", "minLength": 1},
+        "long_url": {"type": "string", "format": "uri"},
+        "expiration_time": {"type": ["string", "null"], "format": "date-time"},
+        "created_time": {"type": ["string", "null"], "format": "date-time"},
+        "owner": {"type": "string", "minLength": 1},
     },
 }
 
 
-@bp.route('/<ObjectId:link_id>', methods=['PATCH'])
+@bp.route("/<ObjectId:link_id>", methods=["PATCH"])
 @request_schema(MODIFY_LINK_SCHEMA)
 @require_login
 def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -> Any:
@@ -286,52 +342,55 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
     :param req:
     :param link_id:
     """
-    if 'expiration_time' in req and req['expiration_time'] is not None:
-        req['expiration_time'] = datetime.fromisoformat(req['expiration_time'])
+    if "expiration_time" in req and req["expiration_time"] is not None:
+        req["expiration_time"] = datetime.fromisoformat(req["expiration_time"])
     try:
         client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
 
-    if not client.roles.has('admin', netid) and not client.links.may_edit(link_id, netid):
+    if not client.roles.has("admin", netid) and not client.links.may_edit(
+        link_id, netid
+    ):
         abort(403)
-    if 'owner' in req and not is_valid_netid(req['owner']):
+    if "owner" in req and not is_valid_netid(req["owner"]):
         abort(400)
     try:
-        client.links.modify(link_id,
-                            title=req.get('title'),
-                            long_url=req.get('long_url'),
-                            expiration_time=req.get('expiration_time'),
-                            owner=req.get('owner'))
-        if 'expiration_time' in req and req['expiration_time'] is None:
+        client.links.modify(
+            link_id,
+            title=req.get("title"),
+            long_url=req.get("long_url"),
+            expiration_time=req.get("expiration_time"),
+            owner=req.get("owner"),
+        )
+        if "expiration_time" in req and req["expiration_time"] is None:
             client.links.remove_expiration_time(link_id)
     except BadLongURLException:
         abort(400)
     except SecurityRiskDetected:
-        return 'Potential security risk. Please create a new link instead.', 403
+        return "Potential security risk. Please create a new link instead.", 403
     except LinkIsPendingOrRejected:
-        return 'Potential security risk. Please create a new link instead.', 403
+        return "Potential security risk. Please create a new link instead.", 403
 
-    return '', 204
+    return "", 204
 
 
 MODIFY_ACL_SCHEMA = {
-    'type': 'object',
-    'additionalProperties': False,
-    'required': ['entry', 'acl', 'action'],
-    'properties': {
-        'entry': ACL_ENTRY_SCHEMA,
-        'acl': {'type': 'string', 'enum': ['editors', 'viewers']},
-        'action': {'type': 'string', 'enum': ['add', 'remove']}
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["entry", "acl", "action"],
+    "properties": {
+        "entry": ACL_ENTRY_SCHEMA,
+        "acl": {"type": "string", "enum": ["editors", "viewers"]},
+        "action": {"type": "string", "enum": ["add", "remove"]},
     },
 }
 
 
-@bp.route('/<ObjectId:link_id>/acl', methods=['PATCH'])
+@bp.route("/<ObjectId:link_id>/acl", methods=["PATCH"])
 @request_schema(MODIFY_ACL_SCHEMA)
 @require_login
-def modify_acl(netid: str, client: ShrunkClient,
-               req: Any, link_id: ObjectId) -> Any:
+def modify_acl(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -> Any:
     """``PATCH /api/link/<link_id>/acl``
 
     Modify an existing link's acl. Returns 204 on success or 403 on error.
@@ -357,30 +416,30 @@ def modify_acl(netid: str, client: ShrunkClient,
         client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
-    if not client.roles.has('admin', netid) and \
-       not client.links.may_edit(link_id, netid):
+    if not client.roles.has("admin", netid) and not client.links.may_edit(
+        link_id, netid
+    ):
         abort(403)
     try:
-        if req['entry']['type'] == 'org':
-            req['entry']['_id'] = ObjectId(req['entry']['_id'])
+        if req["entry"]["type"] == "org":
+            req["entry"]["_id"] = ObjectId(req["entry"]["_id"])
     except bson.errors.InvalidId as e:
-        return jsonify({
-            'errors': ['org entry requires _id to be ObjectId: ' + str(e)]
-        }), 400
+        return (
+            jsonify({"errors": ["org entry requires _id to be ObjectId: " + str(e)]}),
+            400,
+        )
     try:
-        client.links.modify_acl(link_id,
-                                req['entry'],
-                                req['action'] == 'add',
-                                req['acl'],
-                                netid)
+        client.links.modify_acl(
+            link_id, req["entry"], req["action"] == "add", req["acl"], netid
+        )
     except InvalidACL:
-        return jsonify({'errors': ['invalid acl']})
+        return jsonify({"errors": ["invalid acl"]})
     except NotUserOrOrg as e:
-        return jsonify({'errors': ['not user or org: ' + str(e)]}), 400
-    return '', 204
+        return jsonify({"errors": ["not user or org: " + str(e)]}), 400
+    return "", 204
 
 
-@bp.route('/<ObjectId:link_id>', methods=['DELETE'])
+@bp.route("/<ObjectId:link_id>", methods=["DELETE"])
 @require_login
 def delete_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     """``DELETE /api/<link_id>``
@@ -395,13 +454,15 @@ def delete_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
-    if not client.roles.has('admin', netid) and not client.links.is_owner(link_id, netid):
+    if not client.roles.has("admin", netid) and not client.links.is_owner(
+        link_id, netid
+    ):
         abort(403)
     client.links.delete(link_id, netid)
-    return '', 204
+    return "", 204
 
 
-@bp.route('/<ObjectId:link_id>/clear_visits', methods=['POST'])
+@bp.route("/<ObjectId:link_id>/clear_visits", methods=["POST"])
 @require_login
 def post_clear_visits(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     """``POST /link/<link_id>/clear_visits``
@@ -416,51 +477,67 @@ def post_clear_visits(netid: str, client: ShrunkClient, link_id: ObjectId) -> An
         client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
-    if not client.roles.has('admin', netid) and not client.links.is_owner(link_id, netid):
+    if not client.roles.has("admin", netid) and not client.links.is_owner(
+        link_id, netid
+    ):
         abort(403)
     client.links.clear_visits(link_id)
-    return '', 204
+    return "", 204
 
 
-@bp.route('/<ObjectId:link_id>/request_edit_access', methods=['POST'])
+@bp.route("/<ObjectId:link_id>/request_edit_access", methods=["POST"])
 @require_mail
 @require_login
-def post_request_edit(netid: str, client: ShrunkClient, mail: Mail, link_id: ObjectId) -> Any:
+def post_request_edit(
+    netid: str, client: ShrunkClient, mail: Mail, link_id: ObjectId
+) -> Any:
     try:
         client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
-    if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
+    if not client.roles.has("admin", netid) and not client.links.may_view(
+        link_id, netid
+    ):
         abort(403)
     client.links.request_edit_access(mail, link_id, netid)
-    return '', 204
+    return "", 204
 
 
-@bp.route('/<ObjectId:link_id>/cancel_request_edit_access', methods=['POST'])
+@bp.route("/<ObjectId:link_id>/cancel_request_edit_access", methods=["POST"])
 @require_mail
 @require_login
-def cancel_request_edit(netid: str, client: ShrunkClient, mail: Mail, link_id: ObjectId) -> Any:
+def cancel_request_edit(
+    netid: str, client: ShrunkClient, mail: Mail, link_id: ObjectId
+) -> Any:
     try:
         client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
-    if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
+    if not client.roles.has("admin", netid) and not client.links.may_view(
+        link_id, netid
+    ):
         abort(403)
     client.links.cancel_request_edit_access(mail, link_id, netid)
-    return '', 204
+    return "", 204
 
-@bp.route('/<ObjectId:link_id>/active_request_exists', methods=['GET'])
+
+@bp.route("/<ObjectId:link_id>/active_request_exists", methods=["GET"])
 @require_mail
 @require_login
-def request_exists(netid: str, client: ShrunkClient, mail: Mail, link_id: ObjectId) -> bool:
+def request_exists(
+    netid: str, client: ShrunkClient, mail: Mail, link_id: ObjectId
+) -> bool:
     try:
         client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
-    if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
+    if not client.roles.has("admin", netid) and not client.links.may_view(
+        link_id, netid
+    ):
         abort(403)
     exists = client.links.active_request_exists(mail, link_id, netid)
     return jsonify(exists)
+
 
 def anonymize_visit(client: ShrunkClient, visit: Any) -> Any:
     """Anonymize a visit by replacing its source IP with an opaque visitor ID.
@@ -469,18 +546,20 @@ def anonymize_visit(client: ShrunkClient, visit: Any) -> Any:
     :param visit:
     """
     return {
-        'link_id': visit['link_id'],
-        'alias': visit['alias'],
-        'visitor_id': client.links.get_visitor_id(visit['source_ip']),
-        'user_agent': visit.get('user_agent', 'Unknown'),
-        'referer': get_human_readable_referer_domain(visit),
-        'state_code': visit.get('state_code', 'Unknown') if visit.get('country_code') == 'US' else 'Unknown',
-        'country_code': visit.get('country_code', 'Unknown'),
-        'time': visit['time'],
+        "link_id": visit["link_id"],
+        "alias": visit["alias"],
+        "visitor_id": client.links.get_visitor_id(visit["source_ip"]),
+        "user_agent": visit.get("user_agent", "Unknown"),
+        "referer": get_human_readable_referer_domain(visit),
+        "state_code": visit.get("state_code", "Unknown")
+        if visit.get("country_code") == "US"
+        else "Unknown",
+        "country_code": visit.get("country_code", "Unknown"),
+        "time": visit["time"],
     }
 
 
-@bp.route('/<ObjectId:link_id>/visits', methods=['GET'])
+@bp.route("/<ObjectId:link_id>/visits", methods=["GET"])
 @require_login
 def get_link_visits(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     """``GET /api/link/<link_id>/visits``
@@ -504,14 +583,16 @@ def get_link_visits(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     :param client:
     :param link_id:
     """
-    if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
+    if not client.roles.has("admin", netid) and not client.links.may_view(
+        link_id, netid
+    ):
         abort(403)
     visits = client.links.get_visits(link_id)
     anonymized_visits = [anonymize_visit(client, visit) for visit in visits]
-    return jsonify({'visits': anonymized_visits})
+    return jsonify({"visits": anonymized_visits})
 
 
-@bp.route('/<ObjectId:link_id>/stats', methods=['GET'])
+@bp.route("/<ObjectId:link_id>/stats", methods=["GET"])
 @require_login
 def get_link_overall_stats(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     """``GET /api/link/<link_id>/stats``
@@ -526,13 +607,15 @@ def get_link_overall_stats(netid: str, client: ShrunkClient, link_id: ObjectId) 
     :param client:
     :param link_id:
     """
-    if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
+    if not client.roles.has("admin", netid) and not client.links.may_view(
+        link_id, netid
+    ):
         abort(403)
     stats = client.links.get_overall_visits(link_id)
     return jsonify(stats)
 
 
-@bp.route('/<ObjectId:link_id>/stats/visits', methods=['GET'])
+@bp.route("/<ObjectId:link_id>/stats/visits", methods=["GET"])
 @require_login
 def get_link_visit_stats(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     """``GET /api/link/<link_id>/stats/visits``
@@ -551,13 +634,15 @@ def get_link_visit_stats(netid: str, client: ShrunkClient, link_id: ObjectId) ->
     :param client:
     :param link_id:
     """
-    if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
+    if not client.roles.has("admin", netid) and not client.links.may_view(
+        link_id, netid
+    ):
         abort(403)
     visits = client.links.get_daily_visits(link_id)
-    return jsonify({'visits': visits})
+    return jsonify({"visits": visits})
 
 
-@bp.route('/<ObjectId:link_id>/stats/geoip', methods=['GET'])
+@bp.route("/<ObjectId:link_id>/stats/geoip", methods=["GET"])
 @require_login
 def get_link_geoip_stats(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     """``GET /api/link/<link_id>/stats/geoip``
@@ -578,13 +663,15 @@ def get_link_geoip_stats(netid: str, client: ShrunkClient, link_id: ObjectId) ->
     :param client:
     :param link_id:
     """
-    if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
+    if not client.roles.has("admin", netid) and not client.links.may_view(
+        link_id, netid
+    ):
         abort(403)
     geoip = client.links.get_geoip_stats(link_id)
     return jsonify(geoip)
 
 
-@bp.route('/<ObjectId:link_id>/stats/browser', methods=['GET'])
+@bp.route("/<ObjectId:link_id>/stats/browser", methods=["GET"])
 @require_login
 def get_link_browser_stats(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     """``GET /api/link/<link_id>/stats/browser``
@@ -603,7 +690,9 @@ def get_link_browser_stats(netid: str, client: ShrunkClient, link_id: ObjectId) 
     :param client:
     :param link_id:
     """
-    if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
+    if not client.roles.has("admin", netid) and not client.links.may_view(
+        link_id, netid
+    ):
         abort(403)
     visits = client.links.get_visits(link_id)
     stats = browser_stats_from_visits(visits)
@@ -611,22 +700,22 @@ def get_link_browser_stats(netid: str, client: ShrunkClient, link_id: ObjectId) 
 
 
 CREATE_ALIAS_SCHEMA = {
-    'type': 'object',
-    'additionalProperties': False,
-    'properties': {
-        'alias': {
-            'type': 'string',
-            'minLength': MIN_ALIAS_LENGTH,
-            'maxLength': MAX_ALIAS_LENGTH,
-            'pattern': '^[a-zA-Z0-9_.,-]*$',
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "alias": {
+            "type": "string",
+            "minLength": MIN_ALIAS_LENGTH,
+            "maxLength": MAX_ALIAS_LENGTH,
+            "pattern": "^[a-zA-Z0-9_.,-]*$",
         },
-        'description': {'type': 'string'},
-        'extension': {'type': 'string'}
+        "description": {"type": "string"},
+        "extension": {"type": "string"},
     },
 }
 
 
-@bp.route('/<ObjectId:link_id>/alias', methods=['POST'])
+@bp.route("/<ObjectId:link_id>/alias", methods=["POST"])
 @request_schema(CREATE_ALIAS_SCHEMA)
 @require_login
 def create_alias(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -> Any:
@@ -657,27 +746,35 @@ def create_alias(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) 
     :param link_id:
     """
     # Check that netid is able to modify link_id
-    if not client.roles.has('admin', netid) and not client.links.may_edit(link_id, netid):
+    if not client.roles.has("admin", netid) and not client.links.may_edit(
+        link_id, netid
+    ):
         abort(403)
 
     # If a custom URL is specified, check that user has power_user or admin role.
-    if 'alias' in req and not client.roles.has_some(['admin', 'power_user'], netid):
+    if "alias" in req and not client.roles.has_some(["admin", "power_user"], netid):
         abort(403)
     alias = None
     print(f"REQ: {req}")
     try:
-        if 'extension' in req:
-            alias = client.links.create_or_modify_alias(link_id, req.get('alias'), req.get('description', ''),
-                                                        req.get('extension'))
+        if "extension" in req:
+            alias = client.links.create_or_modify_alias(
+                link_id,
+                req.get("alias"),
+                req.get("description", ""),
+                req.get("extension"),
+            )
         else:
-            alias = client.links.create_or_modify_alias(link_id, req.get('alias'), req.get('description', ''), None)
+            alias = client.links.create_or_modify_alias(
+                link_id, req.get("alias"), req.get("description", ""), None
+            )
     except BadAliasException:
         abort(400)
 
-    return jsonify({'alias': alias})
+    return jsonify({"alias": alias})
 
 
-@bp.route('/validate_reserved_alias/<b32:alias>', methods=['GET'])
+@bp.route("/validate_reserved_alias/<b32:alias>", methods=["GET"])
 @require_login
 def validate_reserved_alias(_netid: str, client: ShrunkClient, alias: str) -> Any:
     """``GET /api/validate_reserved_alias/<b32:alias>``
@@ -693,14 +790,14 @@ def validate_reserved_alias(_netid: str, client: ShrunkClient, alias: str) -> An
     :param alias:
     """
     valid = not client.links.alias_is_reserved(alias)
-    response: Dict[str, Any] = {'valid': valid}
+    response: Dict[str, Any] = {"valid": valid}
 
     if not valid:
-        response['reason'] = 'That alias cannot be used.'
+        response["reason"] = "That alias cannot be used."
     return jsonify(response)
 
 
-@bp.route('/validate_duplicate_alias/<b32:alias>', methods=['GET'])
+@bp.route("/validate_duplicate_alias/<b32:alias>", methods=["GET"])
 @require_login
 def validate_duplicate_alias(_netid: str, client: ShrunkClient, alias: str) -> Any:
     """``GET /api/validate_duplicate_alias/<b32:alias>``
@@ -716,16 +813,18 @@ def validate_duplicate_alias(_netid: str, client: ShrunkClient, alias: str) -> A
     :param alias:
     """
     valid = not client.links.alias_is_duplicate(alias)
-    response: Dict[str, Any] = {'valid': valid}
+    response: Dict[str, Any] = {"valid": valid}
 
     if not valid:
-        response['reason'] = 'That alias already exists.'
+        response["reason"] = "That alias already exists."
     return jsonify(response)
 
 
-@bp.route('/<ObjectId:link_id>/alias/<alias>', methods=['DELETE'])
+@bp.route("/<ObjectId:link_id>/alias/<alias>", methods=["DELETE"])
 @require_login
-def delete_alias(netid: str, client: ShrunkClient, link_id: ObjectId, alias: str) -> Any:
+def delete_alias(
+    netid: str, client: ShrunkClient, link_id: ObjectId, alias: str
+) -> Any:
     """``DELETE /api/link/<link_id>/alias/<alias>``
 
     Delete an alias. Returns 204 on success or 4xx on error.
@@ -735,15 +834,19 @@ def delete_alias(netid: str, client: ShrunkClient, link_id: ObjectId, alias: str
     :param link_id:
     :param alias:
     """
-    if not client.roles.has('admin', netid) and not client.links.is_owner(link_id, netid):
+    if not client.roles.has("admin", netid) and not client.links.is_owner(
+        link_id, netid
+    ):
         abort(403)
     client.links.delete_alias(link_id, alias)
-    return '', 204
+    return "", 204
 
 
-@bp.route('/<ObjectId:link_id>/alias/<alias>/visits', methods=['GET'])
+@bp.route("/<ObjectId:link_id>/alias/<alias>/visits", methods=["GET"])
 @require_login
-def get_alias_visits(netid: str, client: ShrunkClient, link_id: ObjectId, alias: str) -> Any:
+def get_alias_visits(
+    netid: str, client: ShrunkClient, link_id: ObjectId, alias: str
+) -> Any:
     """``GET /api/link/<link_id>/alias/<alias>/visits``
 
     Get anonymized visits for an alias. For response format, see :py:func:`get_link_visits`.
@@ -753,16 +856,20 @@ def get_alias_visits(netid: str, client: ShrunkClient, link_id: ObjectId, alias:
     :param link_id:
     :param alias:
     """
-    if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
+    if not client.roles.has("admin", netid) and not client.links.may_view(
+        link_id, netid
+    ):
         abort(403)
     visits = client.links.get_visits(link_id, alias)
     anonymized_visits = [anonymize_visit(client, visit) for visit in visits]
-    return jsonify({'visits': anonymized_visits})
+    return jsonify({"visits": anonymized_visits})
 
 
-@bp.route('/<ObjectId:link_id>/alias/<alias>/stats', methods=['GET'])
+@bp.route("/<ObjectId:link_id>/alias/<alias>/stats", methods=["GET"])
 @require_login
-def get_alias_overall_stats(netid: str, client: ShrunkClient, link_id: ObjectId, alias: str) -> Any:
+def get_alias_overall_stats(
+    netid: str, client: ShrunkClient, link_id: ObjectId, alias: str
+) -> Any:
     """``GET /api/link/<link_id>/alias/<alias>/stats``
 
     Get number of total and unique visits to an alias. For response format, see :py:func:`get_link_overall_stats`.
@@ -772,15 +879,19 @@ def get_alias_overall_stats(netid: str, client: ShrunkClient, link_id: ObjectId,
     :param link_id:
     :param alias:
     """
-    if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
+    if not client.roles.has("admin", netid) and not client.links.may_view(
+        link_id, netid
+    ):
         abort(403)
     stats = client.links.get_overall_visits(link_id, alias)
     return jsonify(stats)
 
 
-@bp.route('/<ObjectId:link_id>/alias/<alias>/stats/visits', methods=['GET'])
+@bp.route("/<ObjectId:link_id>/alias/<alias>/stats/visits", methods=["GET"])
 @require_login
-def get_alias_visit_stats(netid: str, client: ShrunkClient, link_id: ObjectId, alias: str) -> Any:
+def get_alias_visit_stats(
+    netid: str, client: ShrunkClient, link_id: ObjectId, alias: str
+) -> Any:
     """``GET /api/link/<link_id>/alias/<alias>/stats/visits``
 
     Get visit statistics for an alias. For response format, see :py:func:`get_alias_visit_stats`.
@@ -790,15 +901,19 @@ def get_alias_visit_stats(netid: str, client: ShrunkClient, link_id: ObjectId, a
     :param link_id:
     :param alias:
     """
-    if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
+    if not client.roles.has("admin", netid) and not client.links.may_view(
+        link_id, netid
+    ):
         abort(403)
     visits = client.links.get_daily_visits(link_id, alias)
-    return jsonify({'visits': visits})
+    return jsonify({"visits": visits})
 
 
-@bp.route('/<ObjectId:link_id>/alias/<alias>/stats/geoip', methods=['GET'])
+@bp.route("/<ObjectId:link_id>/alias/<alias>/stats/geoip", methods=["GET"])
 @require_login
-def get_alias_geoip_stats(netid: str, client: ShrunkClient, link_id: ObjectId, alias: str) -> Any:
+def get_alias_geoip_stats(
+    netid: str, client: ShrunkClient, link_id: ObjectId, alias: str
+) -> Any:
     """``GET /api/link/<link_id>/alias/<alias>/stats/geoip``
 
     Get GeoIP statistics for an alias. For response format, see :py:func:`get_link_geoip_stats`.
@@ -808,15 +923,19 @@ def get_alias_geoip_stats(netid: str, client: ShrunkClient, link_id: ObjectId, a
     :param link_id:
     :param alias:
     """
-    if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
+    if not client.roles.has("admin", netid) and not client.links.may_view(
+        link_id, netid
+    ):
         abort(403)
     geoip = client.links.get_geoip_stats(link_id, alias)
     return jsonify(geoip)
 
 
-@bp.route('/<ObjectId:link_id>/alias/<alias>/stats/browser', methods=['GET'])
+@bp.route("/<ObjectId:link_id>/alias/<alias>/stats/browser", methods=["GET"])
 @require_login
-def get_alias_browser_stats(netid: str, client: ShrunkClient, link_id: ObjectId, alias: str) -> Any:
+def get_alias_browser_stats(
+    netid: str, client: ShrunkClient, link_id: ObjectId, alias: str
+) -> Any:
     """``GET /api/link/<link_id>/alias/<alias>/stats/browser``
 
     Get stats about browsers and referers of visitors. For response format, see :py:func:`get_link_browser_stats`.
@@ -826,14 +945,16 @@ def get_alias_browser_stats(netid: str, client: ShrunkClient, link_id: ObjectId,
     :param link_id:
     :param alias:
     """
-    if not client.roles.has('admin', netid) and not client.links.may_view(link_id, netid):
+    if not client.roles.has("admin", netid) and not client.links.may_view(
+        link_id, netid
+    ):
         abort(403)
     visits = client.links.get_visits(link_id, alias)
     stats = browser_stats_from_visits(visits)
     return jsonify(stats)
 
 
-@bp.route('/tracking_pixel_ui_enabled', methods=['GET'])
+@bp.route("/tracking_pixel_ui_enabled", methods=["GET"])
 @require_login
 def tracking_pixel_ui_enabled(netid: str, client: ShrunkClient) -> Any:
     """
@@ -843,4 +964,4 @@ def tracking_pixel_ui_enabled(netid: str, client: ShrunkClient) -> Any:
     """
     is_enabled = client.links.get_tracking_pixel_ui_status()
 
-    return jsonify({'enabled': is_enabled})
+    return jsonify({"enabled": is_enabled})

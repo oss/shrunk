@@ -195,7 +195,9 @@ def approve_role_request(netid: str, client: ShrunkClient, mail: Mail) -> Any:
 
     # If emails are toggled on, a denial email will be sent to the user
     if client.role_requests.get_send_mail_on():
-        client.role_requests.send_role_request_approval_mail(role, entity, comment, mail)
+        client.role_requests.send_role_request_approval_mail(
+            role, entity, comment, mail
+        )
 
     return Response(status=200)
 
@@ -271,6 +273,7 @@ def get_role_request_text(netid: str, client: ShrunkClient, role_name: str) -> A
     text = client.role_requests.get_role_request_text(role_name)
     return jsonify({"text": text})
 
+
 @bp.route("/send_mail_on", methods=["GET"])
 @require_login
 def get_send_mail_on(netid: str, client: ShrunkClient) -> Any:
@@ -310,7 +313,8 @@ def get_pending_role_requests_count_slack(role: str) -> Any:
         jsonify({"count": client.role_requests.get_pending_role_requests_count(role)}),
         200,
     )
-    
+
+
 @bp.route("/slack/approve", methods=["POST"])
 @require_mail
 @require_api_key
@@ -352,7 +356,9 @@ def approve_role_request_slack(mail: Mail) -> Any:
 
     # If emails are toggled on, a denial email will be sent to the user
     if client.role_requests.get_send_mail_on():
-        client.role_requests.send_role_request_approval_mail(role, entity, comment, mail)
+        client.role_requests.send_role_request_approval_mail(
+            role, entity, comment, mail
+        )
 
     return Response(status=200)
 

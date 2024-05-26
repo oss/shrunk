@@ -100,8 +100,6 @@ export const serverValidateNetId = async (
   }
 };
 
-
-
 //checks if an organization name is used
 export const serverValidateOrgName = async (
   _rule: any,

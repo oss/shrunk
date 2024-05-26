@@ -1,9 +1,17 @@
 """Database-related exceptions."""
 
-__all__ = ['ShrunkException', 'NoSuchObjectException', 'BadAliasException',
-           'BadLongURLException', 'InvalidEntity', 'InvalidACL',
-           'SecurityRiskDetected', 'InvalidStateChange', 'NotUserOrOrg',
-           'LinkIsPendingOrRejected']
+__all__ = [
+    "ShrunkException",
+    "NoSuchObjectException",
+    "BadAliasException",
+    "BadLongURLException",
+    "InvalidEntity",
+    "InvalidACL",
+    "SecurityRiskDetected",
+    "InvalidStateChange",
+    "NotUserOrOrg",
+    "LinkIsPendingOrRejected",
+]
 
 
 class ShrunkException(Exception):

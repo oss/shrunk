@@ -437,7 +437,10 @@ class RoleRequestClient:
             position_info = {attr: ["Cannot find attribute"] for attr in attributes}
         else:
             for attr in attributes:
-                if attr in intermediate_position_info.keys() and intermediate_position_info[attr]:
+                if (
+                    attr in intermediate_position_info.keys()
+                    and intermediate_position_info[attr]
+                ):
                     position_info[attr] = intermediate_position_info[attr]
                 else:
                     position_info[attr] = ["N/A"]
@@ -463,7 +466,9 @@ class RoleRequestClient:
                         ", ".join(position_info["title"]),
                         ", ".join(position_info["rutgersEduStaffDepartment"]),
                         ", ".join(position_info["employeeType"]),
-                        self.get_pending_role_request_for_entity(role, entity).get("comment", "N/A"), # should never be N/A since the comment is required
+                        self.get_pending_role_request_for_entity(role, entity).get(
+                            "comment", "N/A"
+                        ),  # should never be N/A since the comment is required
                     ),
                 },
             },
@@ -475,7 +480,7 @@ class RoleRequestClient:
                     "type": "plain_text_input",
                     "multiline": True,
                     "action_id": "comment_input",
-                    "max_length": 500
+                    "max_length": 500,
                 },
                 "label": {
                     "type": "plain_text",
@@ -494,14 +499,14 @@ class RoleRequestClient:
                         },
                         "style": "primary",
                         "value": "{}|{}".format(role, entity),
-                        "action_id": "rra_button_click"
+                        "action_id": "rra_button_click",
                     },
                     {
                         "type": "button",
                         "text": {"type": "plain_text", "text": "Deny"},
                         "style": "danger",
                         "value": "{}|{}".format(role, entity),
-                        "action_id": "rrd_button_click"
+                        "action_id": "rrd_button_click",
                     },
                 ],
             },
@@ -554,7 +559,9 @@ class RoleRequestClient:
         uppercase_role_name = display_attributes["uppercase_role"]
 
         if approved:
-            text = f"The {uppercase_role_name} role request from *{entity}* was approved"
+            text = (
+                f"The {uppercase_role_name} role request from *{entity}* was approved"
+            )
         else:
             text = f"The {uppercase_role_name} role request from *{entity}* was denied"
 

@@ -119,7 +119,7 @@ const EndpointChart: React.FC<{ endpointData: EndpointDatum[] | null }> = (
  * Props for the [[AdminStats]] component
  * @interface
  */
-export interface Props { }
+export interface Props {}
 
 /**
  * State for the [[AdminStats]] component
@@ -214,9 +214,9 @@ export class AdminStats extends React.Component<Props, State> {
       range === undefined || range === null
         ? null
         : {
-          begin: range[0],
-          end: range[1],
-        };
+            begin: range[0],
+            end: range[1],
+          };
 
     this.setState({ adminDataRange, adminData: null });
     await this.updateAdminData();
@@ -266,9 +266,7 @@ export class AdminStats extends React.Component<Props, State> {
                   <span className="info">
                     Users: {this.state.adminData.users}
                   </span>
-                  <span className="info">
-                    Version: 2.3.1
-                  </span>
+                  <span className="info">Version: 2.3.1</span>
                 </>
               )}
             </Row>

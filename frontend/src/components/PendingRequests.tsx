@@ -105,7 +105,7 @@ const PendingRequestRow: React.FC<{
  * Props for the [[PendingRequests]] component
  * @interface
  */
-export interface Props { }
+export interface Props {}
 
 /**
  * State for the [[PendingRequests]] component

@@ -122,7 +122,9 @@ export class Shrunk extends React.Component<Props, State> {
     const showAdminTab = this.props.userPrivileges.has('admin');
     const showWhitelistTab =
       !showAdminTab && this.props.userPrivileges.has('facstaff');
-    const showRequestPowerUserRoleTab = !this.props.userPrivileges.has('power_user') && !this.props.userPrivileges.has('admin');
+    const showRequestPowerUserRoleTab =
+      !this.props.userPrivileges.has('power_user') &&
+      !this.props.userPrivileges.has('admin');
     const role =
       this.props.userPrivileges.size === 0
         ? 'Whitelisted User'
@@ -169,19 +171,22 @@ export class Shrunk extends React.Component<Props, State> {
    * @method
    */
   updatePowerUserRoleRequestMade = async (): Promise<void> => {
-    const encodedEntity = base32.encode(this.props.netid)
-        fetch(`/api/v1/role_request/power_user/${encodedEntity}`)
-        .then(response => {
-            if (response.status === 204) {
-              if (!this.props.userPrivileges.has('power_user') && !this.props.userPrivileges.has('admin')){
-                this.setState({ showRequestPowerUserRoleTab: true });
-              }
-            } else if (response.status === 200) {
-                this.setState({ showRequestPowerUserRoleTab: false });
-            }
-        })
-        .catch(error => console.error('Error:', error));
-  }
+    const encodedEntity = base32.encode(this.props.netid);
+    fetch(`/api/v1/role_request/power_user/${encodedEntity}`)
+      .then((response) => {
+        if (response.status === 204) {
+          if (
+            !this.props.userPrivileges.has('power_user') &&
+            !this.props.userPrivileges.has('admin')
+          ) {
+            this.setState({ showRequestPowerUserRoleTab: true });
+          }
+        } else if (response.status === 200) {
+          this.setState({ showRequestPowerUserRoleTab: false });
+        }
+      })
+      .catch((error) => console.error('Error:', error));
+  };
 
   /**
    * Sets the active tabs in the navbar based on the current view.
@@ -255,7 +260,11 @@ export class Shrunk extends React.Component<Props, State> {
                   </Menu>
                 }
               >
-                <Button type="text" aria-label={this.props.netid} className="filter-btn">
+                <Button
+                  type="text"
+                  aria-label={this.props.netid}
+                  className="filter-btn"
+                >
                   {this.props.netid} <DownOutlined />
                 </Button>
               </Dropdown>
@@ -278,7 +287,7 @@ export class Shrunk extends React.Component<Props, State> {
                 <Button
                   type="text"
                   className="user-btn"
-                  aria-label='user profile'
+                  aria-label="user profile"
                   icon={<UserOutlined style={{ color: '#f0b1b9' }} />}
                 />
               </Dropdown>
@@ -447,7 +456,6 @@ export class Shrunk extends React.Component<Props, State> {
                         userPrivileges={this.props.userPrivileges}
                       />
                     </Route>
-                      
                   </>
                 )}
               </Switch>
@@ -459,7 +467,13 @@ export class Shrunk extends React.Component<Props, State> {
               style={{ background: 'white' }}
             />
           </Layout>
-          <Footer style={{ textAlign: 'center', color: 'white', backgroundColor: "black"}}>
+          <Footer
+            style={{
+              textAlign: 'center',
+              color: 'white',
+              backgroundColor: 'black',
+            }}
+          >
             <p>
               Rutgers is an equal access/equal opportunity institution.
               Individuals with disabilities are encouraged to direct

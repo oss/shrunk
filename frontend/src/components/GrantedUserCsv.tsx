@@ -15,10 +15,10 @@ import { doDownload } from '../lib/utils';
 function createGrantedUsersCsv(users: EntityInfo[]): string {
   const csvStringifier = createObjectCsvStringifier({
     header: [
-        { id: 'entity', title: 'Grantee NetID' },
-        { id: 'granted_by', title: 'Granter NetID' },
-        { id: 'comment', title: 'Comment' },
-        { id: 'time_granted', title: 'Time Granted' },
+      { id: 'entity', title: 'Grantee NetID' },
+      { id: 'granted_by', title: 'Granter NetID' },
+      { id: 'comment', title: 'Comment' },
+      { id: 'time_granted', title: 'Time Granted' },
     ],
   });
 

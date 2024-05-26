@@ -4,8 +4,22 @@
  */
 
 import React from 'react';
-import { Row, Col, Spin, Button, Popconfirm, Form, Input, BackTop, Tooltip } from 'antd/lib';
-import { ExclamationCircleFilled, CloudDownloadOutlined, LoadingOutlined} from '@ant-design/icons';
+import {
+  Row,
+  Col,
+  Spin,
+  Button,
+  Popconfirm,
+  Form,
+  Input,
+  BackTop,
+  Tooltip,
+} from 'antd/lib';
+import {
+  ExclamationCircleFilled,
+  CloudDownloadOutlined,
+  LoadingOutlined,
+} from '@ant-design/icons';
 import { IoReturnUpBack } from 'react-icons/io5';
 import { downloadGrantedUsersCsv } from '../components/GrantedUserCsv';
 import base32 from 'hi-base32';
@@ -231,7 +245,7 @@ interface State {
    * @property
    */
   entities: EntityInfo[] | null;
-  
+
   /**
    * Loading state for the download button
    * @property
@@ -358,7 +372,7 @@ export class Role extends React.Component<Props, State> {
     this.setState({ loading: true });
     await downloadGrantedUsersCsv(this.props.name);
     this.setState({ loading: false });
-  }
+  };
 
   render(): React.ReactNode {
     if (!this.state.hasPermission) {
@@ -392,21 +406,23 @@ export class Role extends React.Component<Props, State> {
               {this.state.roleText.grant_title}
             </span>
           </Col>
-          {['whitelisted', 'power_user', 'admin', 'facstaff'].includes(this.props.name) && (
-          <Col span={4} className="btn-col">
-            <Tooltip title="Export to CSV">
-              <Button
-                icon={
-                  this.state.loading ? (
-                    <LoadingOutlined spin />
-                  ) : (
-                    <CloudDownloadOutlined />
-                  )
-                }
-                onClick={this.downloadCsv}
-              />
-            </Tooltip>
-          </Col>
+          {['whitelisted', 'power_user', 'admin', 'facstaff'].includes(
+            this.props.name,
+          ) && (
+            <Col span={4} className="btn-col">
+              <Tooltip title="Export to CSV">
+                <Button
+                  icon={
+                    this.state.loading ? (
+                      <LoadingOutlined spin />
+                    ) : (
+                      <CloudDownloadOutlined />
+                    )
+                  }
+                  onClick={this.downloadCsv}
+                />
+              </Tooltip>
+            </Col>
           )}
         </Row>
 

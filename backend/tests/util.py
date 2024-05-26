@@ -7,7 +7,7 @@ from werkzeug.test import Client
 
 def assert_redirect(resp: Response, location_pat: str) -> None:
     assert resp.status_code == 302
-    assert location_pat in resp.headers['Location']
+    assert location_pat in resp.headers["Location"]
 
 
 def assert_status(resp: Response, status: int) -> None:
@@ -23,7 +23,7 @@ def assert_not_500(resp: Response) -> None:
 
 
 def assert_in_resp(resp: Response, string: str) -> None:
-    assert string in str(resp.get_data(), 'utf8')
+    assert string in str(resp.get_data(), "utf8")
 
 
 def assert_json(resp: Response, expected: Any) -> None:
@@ -32,8 +32,8 @@ def assert_json(resp: Response, expected: Any) -> None:
 
 @contextlib.contextmanager
 def dev_login(client: Client, login: str) -> Generator[None, None, None]:
-    assert_status(client.get(f'/app/devlogins/{login}'), 302)
+    assert_status(client.get(f"/app/devlogins/{login}"), 302)
     try:
         yield
     finally:
-        assert_status(client.get('/app/logout'), 302)
+        assert_status(client.get("/app/logout"), 302)

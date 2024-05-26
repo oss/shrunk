@@ -6,7 +6,19 @@
 import React from 'react';
 import base32 from 'hi-base32';
 import moment from 'moment';
-import { Form, Input, Button, DatePicker, Space, Tooltip, Spin, Modal, Checkbox, Radio, RadioChangeEvent } from 'antd/lib';
+import {
+  Form,
+  Input,
+  Button,
+  DatePicker,
+  Space,
+  Tooltip,
+  Spin,
+  Modal,
+  Checkbox,
+  Radio,
+  RadioChangeEvent,
+} from 'antd/lib';
 import {
   LinkOutlined,
   MinusCircleOutlined,
@@ -109,7 +121,6 @@ export interface Props {
    * @property
    */
   onFinish: () => Promise<void>;
-
 
   /**
    * Per request of Jack: We want a way to enable/disable the tracking pixel UI
@@ -243,7 +254,6 @@ export class CreateLinkForm extends React.Component<Props, State> {
       }),
     );
 
-
     this.onSubmitClick();
   };
 
@@ -268,18 +278,22 @@ export class CreateLinkForm extends React.Component<Props, State> {
             <Input placeholder="Title" />
           </Form.Item>
 
-          {this.props.tracking_pixel_ui_enabled &&
-            (<Form.Item name="is_tracking_pixel_link" valuePropName="checked">
-              <Radio.Group onChange={this.onTrackingPixelChange} options={[
-                { label: 'URL', value: 'url' },
-                { label: 'Tracking Pixel', value: 'pixel' },
-              ]} defaultValue={"url"} />
-            </Form.Item>)
-          }
+          {this.props.tracking_pixel_ui_enabled && (
+            <Form.Item name="is_tracking_pixel_link" valuePropName="checked">
+              <Radio.Group
+                onChange={this.onTrackingPixelChange}
+                options={[
+                  { label: 'URL', value: 'url' },
+                  { label: 'Tracking Pixel', value: 'pixel' },
+                ]}
+                defaultValue={'url'}
+              />
+            </Form.Item>
+          )}
 
           <Form.Item label="Expiration time" name="expiration_time">
             <DatePicker
-              placeholder='Select date and time'
+              placeholder="Select date and time"
               style={{ width: '100%' }}
               format="YYYY-MM-DD HH:mm:ss"
               disabledDate={(current) =>
@@ -304,49 +318,48 @@ export class CreateLinkForm extends React.Component<Props, State> {
               </Form.Item>
             </>
           )}
-          {
-            this.state.tracking_pixel_enabled && (
-              <>
-                <Form.Item name="tracking_pixel_extension" label="Extension">
-                  <Radio.Group onChange={this.onTrackingPixelExtensionChange} options={[
+          {this.state.tracking_pixel_enabled && (
+            <>
+              <Form.Item name="tracking_pixel_extension" label="Extension">
+                <Radio.Group
+                  onChange={this.onTrackingPixelExtensionChange}
+                  options={[
                     { label: '.png', value: '.png' },
-                    { label: '.gif', value: '.gif' }
-                  ]} defaultValue={".png"} />
-                </Form.Item>
-              </>
-            )
-          }
+                    { label: '.gif', value: '.gif' },
+                  ]}
+                  defaultValue={'.png'}
+                />
+              </Form.Item>
+            </>
+          )}
           <Form.List name="aliases">
             {(fields, { add, remove }) => (
-              <div
-                className="fix-alias-remove-button"
-              >
+              <div className="fix-alias-remove-button">
                 {fields.map((field, index) => (
                   <Space
                     key={field.key}
                     style={{ display: 'flex', marginBottom: 8 }}
                     align="start"
-                    direction='vertical'
+                    direction="vertical"
                     size={0}
                   >
                     {!mayUseCustomAliases ? (
                       <></>
                     ) : (
-                      <div style={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        // justifyContent: 'space-between',
-                        alignItems: 'start',
-                        // height: '400px'
-                      }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'row',
+                          // justifyContent: 'space-between',
+                          alignItems: 'start',
+                          // height: '400px'
+                        }}
+                      >
                         <Form.Item
                           style={{
                             width: `${this.textBoxWidth}px`,
                           }}
-                          label={index === 0 ?
-                            <CustomAliasLabel />
-                            :
-                            ''}
+                          label={index === 0 ? <CustomAliasLabel /> : ''}
                           name={[field.name, 'alias']}
                           fieldKey={field.fieldKey}
                           rules={[
@@ -370,7 +383,6 @@ export class CreateLinkForm extends React.Component<Props, State> {
                           ]}
                         >
                           <Input placeholder="alias" />
-
                         </Form.Item>
                         <Button
                           disabled={fields.length === 1}
@@ -387,7 +399,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
                     <Form.Item
                       style={{
                         width: `230px`,
-                        marginRight: '0px'
+                        marginRight: '0px',
                       }}
                       label={
                         index === 0 ? (
@@ -403,12 +415,8 @@ export class CreateLinkForm extends React.Component<Props, State> {
                       name={[field.name, 'description']}
                       fieldKey={field.fieldKey}
                     >
-                      <Input
-                        placeholder="Description"
-                      />
+                      <Input placeholder="Description" />
                     </Form.Item>
-
-
                   </Space>
                 ))}
                 {fields.length >= 6 ? (
@@ -431,7 +439,9 @@ export class CreateLinkForm extends React.Component<Props, State> {
                 htmlType="submit"
                 style={{ width: '100%' }}
               >
-                {this.state.tracking_pixel_enabled ? "Create Pixel!" : "Shrink!"}
+                {this.state.tracking_pixel_enabled
+                  ? 'Create Pixel!'
+                  : 'Shrink!'}
               </Button>
             </Spin>
           </Form.Item>
