@@ -2,15 +2,17 @@ from typing import Optional, Any, Tuple
 import pymongo
 import random
 
-__all__ = ['LinkHubClient']
+__all__ = ["LinkHubClient"]
+
 
 class LinkHubClient:
     def __init__(self, *, db: pymongo.database.Database) -> None:
         self.db = db
 
-    def create(self, title: str, owner: str, alias: Optional[str] = None) -> Tuple[Any, str]:
-        """Returns the inserted_id and the alias
-        """
+    def create(
+        self, title: str, owner: str, alias: Optional[str] = None
+    ) -> Tuple[Any, str]:
+        """Returns the inserted_id and the alias"""
         if alias is None:
             alias = self._generate_unique_key()
 
@@ -19,9 +21,9 @@ class LinkHubClient:
             "alias": alias,
             "links": [],
             "owner": owner,
-            "collaborators": []
+            "collaborators": [],
         }
-        
+
         result = self.db.linkhubs.insert_one(document)
         return result.inserted_id, alias
 
@@ -37,7 +39,7 @@ class LinkHubClient:
         if result is None:
             return None
 
-        del result['_id']
+        del result["_id"]
         return result
 
     def add_link_to_linkhub(self, linkhub_alias: str, title: str, url: str) -> None:
@@ -46,7 +48,9 @@ class LinkHubClient:
         collection = self.db.linkhubs
         collection.update_one({"alias": linkhub_alias}, {"$push": {"links": new_link}})
 
-    def set_data_at_link_to_linkhub(self, linkhub_alias: str, index: int, title: str = None, url: str = None) -> None:
+    def set_data_at_link_to_linkhub(
+        self, linkhub_alias: str, index: int, title: str = None, url: str = None
+    ) -> None:
         new_link = {"title": title, "url": url}
 
         collection = self.db.linkhubs

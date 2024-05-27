@@ -16,7 +16,9 @@ class SearchClient:
         self.db = db
         self.client = client
 
-    def execute_url(self, user_netid: str, query: Any) -> Any:  # pylint: disable=too-many-branches,too-many-statements
+    def execute_url(
+        self, user_netid: str, query: Any
+    ) -> Any:  # pylint: disable=too-many-branches,too-many-statements
         """Execute a search query for shortened URLs.
 
         :param user_netid: The NetID of the user performing the search
@@ -259,15 +261,15 @@ class SearchClient:
         count = count - diff
 
         return {
-            'count': count,
-            'results': unique_results,
+            "count": count,
+            "results": unique_results,
         }
 
     def execute_linkhub(self, user_netid: str, query: Any) -> Any:
         """Execute a search query for LinkHubs.
-        
+
         Currently returns all existing LinkHubs. lol
-        
+
         :param user_netid: The NetID of the user performing the search
         :param query: The search query.
         """
@@ -275,6 +277,6 @@ class SearchClient:
         unique_results = list(self.db.linkhubs.find({}))
 
         return {
-            'count': len(unique_results),
+            "count": len(unique_results),
             "results": unique_results,
         }

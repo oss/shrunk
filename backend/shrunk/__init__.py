@@ -254,7 +254,7 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
     # once we update to Python 3.7+.
     datetime_fromisoformat.MonkeyPatch.patch_fromisoformat()
 
-    app = Flask(__name__, static_url_path='/static')
+    app = Flask(__name__, static_url_path="/static")
     app.config.from_pyfile(config_path, silent=False)
     app.config.update(kwargs)
 
@@ -282,7 +282,7 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
     # set up blueprints
     app.register_blueprint(views.bp)
     app.register_blueprint(linkhub_viewer.bp)
-    if app.config.get('DEV_LOGINS', False) is True:
+    if app.config.get("DEV_LOGINS", False) is True:
         app.register_blueprint(dev_logins.bp)
     app.register_blueprint(api.link.bp)
     app.register_blueprint(api.org.bp)
