@@ -109,6 +109,9 @@ class ShrunkClient:
         self.db.unsafe_links.create_index([("long_url", pymongo.TEXT)])
         self.db.unsafe_links.create_index([("netid", pymongo.ASCENDING)])
 
+        self.db.unsafe_links.create_index([("long_url", pymongo.TEXT)])
+        self.db.unsafe_links.create_index([("netid", pymongo.ASCENDING)])
+
         self.db.visits.create_index([("link_id", pymongo.ASCENDING)])
         self.db.visits.create_index([("source_ip", pymongo.ASCENDING)])
         self.db.visitors.create_index([("ip", pymongo.ASCENDING)], unique=True)

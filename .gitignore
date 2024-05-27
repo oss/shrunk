@@ -2,12 +2,8 @@
 *.sw[op]
 *~
 
-# Frontend doc
 frontend/typedoc.json
 frontend/.cache
-frontend/docs
-# in case frontend/docs doesn't work
-docs
 
 # Cache
 .cache
@@ -54,7 +50,6 @@ shrunk/shrunk/static/out
 *.egg-info
 
 node_modules/
-backend/shrunk/static/dist/
 backend/shrunk/static/outlook
 webpack-stats.json
 dist-newstyle

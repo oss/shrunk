@@ -62,7 +62,7 @@ flake8:
   script:
     - python -V
     - pip install flake8 flake8-quotes flake8-commas flake8-pytest-style flake8-formatter-junit-xml
-    - flake8 --exit-zero --format=junit-xml backend/shrunk backend/tests > flake8.xml
+    - flake8 --format=pylint --config=setup.cfg --exit-zero --format=junit-xml backend/shrunk backend/tests > flake8.xml
   artifacts:
     reports:
       junit: flake8.xml
@@ -71,17 +71,18 @@ sphinx:
   stage: docs
   image: python:3.6
   needs: []
+  before_script:
+    - python --version
+    - pip install virtualenv
+    - virtualenv venv
+    - source venv/bin/activate
   script:
-    - python -V
-    - apt-get update
-    - apt-get install -y libldap2-dev libsasl2-dev
-    - pip install -r backend/requirements.txt
-    - pip install sphinx sphinx_autodoc_typehints
-    - cd backend
-    - python3 setup.py build_sphinx --warning-is-error --keep-going
+    - cd docs
+    - pip install -r requirements.txt
+    - sphinx-build -b html . _build/html
   artifacts:
     paths:
-      - backend/build/sphinx/html
+      - docs/_build/html
 
 typedoc:
   stage: docs

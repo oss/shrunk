@@ -20,7 +20,7 @@ Set up a virtual environment for the backend and install the python dependencies
     $ cd backend/
     $ virtualenv --no-site-packages --python="python3" venv
     $ source venv/bin/activate
-	$ pip install wheel
+    $ pip install wheel
     $ pip install -r backend/requirements.txt
     $ pip install -r backend/requirements-dev.txt
 
@@ -55,31 +55,3 @@ The backend docs are written with reStructuredText. Here's a [cheatsheat](https:
 ### ACL link permissions by endpoint
 
 - you can list all the endpoint with `flask routes`
-
-users
-link.validate_alias           GET      /api/v1/link/validate_alias/<b32:alias>
-link.validate_long_url        GET      /api/v1/link/validate_long_url/<b32:long_url>
-link.create_link              POST     /api/v1/link
-
-viewers
-link.get_alias_browser_stats  GET      /api/v1/link/<ObjectId:link_id>/alias/<alias>/stats/browser
-link.get_alias_geoip_stats    GET      /api/v1/link/<ObjectId:link_id>/alias/<alias>/stats/geoip
-link.get_alias_overall_stats  GET      /api/v1/link/<ObjectId:link_id>/alias/<alias>/stats
-link.get_alias_visit_stats    GET      /api/v1/link/<ObjectId:link_id>/alias/<alias>/stats/visits
-link.get_alias_visits         GET      /api/v1/link/<ObjectId:link_id>/alias/<alias>/visits
-link.get_link                 GET      /api/v1/link/<ObjectId:link_id>
-link.get_link_browser_stats   GET      /api/v1/link/<ObjectId:link_id>/stats/browser
-link.get_link_geoip_stats     GET      /api/v1/link/<ObjectId:link_id>/stats/geoip
-link.get_link_overall_stats   GET      /api/v1/link/<ObjectId:link_id>/stats
-link.get_link_visit_stats     GET      /api/v1/link/<ObjectId:link_id>/stats/visits
-link.get_link_visits          GET      /api/v1/link/<ObjectId:link_id>/visits
-
-editors
-link.create_alias             POST     /api/v1/link/<ObjectId:link_id>/alias
-link.modify_acl               PATCH    /api/v1/link/<ObjectId:link_id>/acl
-link.modify_link              PATCH    /api/v1/link/<ObjectId:link_id>
-
-owner
-link.delete_alias             DELETE   /api/v1/link/<ObjectId:link_id>/alias/<alias>
-link.delete_link              DELETE   /api/v1/link/<ObjectId:link_id>
-link.post_clear_visits        POST     /api/v1/link/<ObjectId:link_id>/clear_visits

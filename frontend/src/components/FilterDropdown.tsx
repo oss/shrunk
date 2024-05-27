@@ -116,7 +116,6 @@ export const FilterDropdown: React.FC<Props> = (props) => {
   };
 
   useEffect(() => {
-
     if (filterByText !== null && dropdownVisible) {
       filterByText.current?.classList.toggle('gray-text');
       filterByText.current?.classList.toggle('red-text');
@@ -124,7 +123,6 @@ export const FilterDropdown: React.FC<Props> = (props) => {
       filterByText.current?.classList.toggle('red-text');
       filterByText.current?.classList.toggle('gray-text');
     }
-
   }, [dropdownVisible]);
 
   const dropdown = (
@@ -196,7 +194,11 @@ export const FilterDropdown: React.FC<Props> = (props) => {
         trigger={['click']}
       >
         <Button type="text" style={{ position: 'relative', top: '-1px' }}>
-          <span ref={filterByText}>Filter By</span> <CaretDownOutlined className="caret-style" style={{ fontSize: '18px', position: 'relative', top: '1.25px' }} />
+          <span ref={filterByText}>Filter By</span>{' '}
+          <CaretDownOutlined
+            className="caret-style"
+            style={{ fontSize: '18px', position: 'relative', top: '1.25px' }}
+          />
         </Button>
       </Dropdown>
     </Space>

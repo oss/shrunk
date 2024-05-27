@@ -8,7 +8,7 @@ import pymongo
 
 from .exceptions import InvalidEntity
 
-__all__ = ['RolesClient']
+__all__ = ["RolesClient"]
 
 
 class RolesClient:
@@ -30,27 +30,29 @@ class RolesClient:
         :param role: Role name
         """
         return {
-            'title': role,
-            'invalid': f'invalid entity for role {role}',
-            'grant_title': f'Grant {role}',
-            'grantee_text': 'Grantee',
-            'grant_button': 'GRANT',
-            'revoke_title': f'Revoke {role}',
-            'revoke_button': 'REVOKE',
-            'empty': f'there is currently nothing with the role {role}',
-            'granted_by': 'granted by',
-            'allow_comment': False,
-            'comment_prompt': 'Comment',
+            "title": role,
+            "invalid": f"invalid entity for role {role}",
+            "grant_title": f"Grant {role}",
+            "grantee_text": "Grantee",
+            "grant_button": "GRANT",
+            "revoke_title": f"Revoke {role}",
+            "revoke_button": "REVOKE",
+            "empty": f"there is currently nothing with the role {role}",
+            "granted_by": "granted by",
+            "allow_comment": False,
+            "comment_prompt": "Comment",
         }
 
-    def create(self,
-               role: str,
-               qualifier_func: Callable[[str], bool],
-               validator_func: Callable[[str], bool] = lambda e: e != '',
-               custom_text: Any = None,
-               oncreate: Callable[[str], None] = lambda _: None,
-               onrevoke: Callable[[str], None] = lambda _: None,
-               process_entity: Callable[[str], str] = lambda e: e) -> None:
+    def create(
+        self,
+        role: str,
+        qualifier_func: Callable[[str], bool],
+        validator_func: Callable[[str], bool] = lambda e: e != "",
+        custom_text: Any = None,
+        oncreate: Callable[[str], None] = lambda _: None,
+        onrevoke: Callable[[str], None] = lambda _: None,
+        process_entity: Callable[[str], str] = lambda e: e,
+    ) -> None:
         """
         :param role: Role name
 
@@ -85,7 +87,9 @@ class RolesClient:
         """
         return role in self.oncreate_for
 
-    def grant(self, role: str, grantor: str, grantee: str, comment: Optional[str] = None) -> None:
+    def grant(
+        self, role: str, grantor: str, grantee: str, comment: Optional[str] = None
+    ) -> None:
         """
         Gives a role to grantee and remembers who did it
 
@@ -103,13 +107,15 @@ class RolesClient:
 
             # guard against double insertions
             if not self.has(role, grantee):
-                self.db.grants.insert_one({
-                    'role': role,
-                    'entity': grantee,
-                    'granted_by': grantor,
-                    'comment': comment if comment is not None else '',
-                    'time_granted': datetime.now(timezone.utc),
-                })
+                self.db.grants.insert_one(
+                    {
+                        "role": role,
+                        "entity": grantee,
+                        "granted_by": grantor,
+                        "comment": comment if comment is not None else "",
+                        "time_granted": datetime.now(timezone.utc),
+                    }
+                )
                 if role in self.oncreate_for:
                     self.oncreate_for[role](grantee)
         else:
@@ -122,10 +128,10 @@ class RolesClient:
         :param entity: The entity
         """
         if has_app_context():
-            current_app.logger.info(f'revoking role {role} for {entity}')
+            current_app.logger.info(f"revoking role {role} for {entity}")
         if role in self.onrevoke_for:
             self.onrevoke_for[role](entity)
-        self.db.grants.delete_one({'role': role, 'entity': entity})
+        self.db.grants.delete_one({"role": role, "entity": entity})
 
     def has(self, role: str, entity: str) -> bool:
         """Check whether an entity has a role
@@ -133,7 +139,7 @@ class RolesClient:
         :param role: Role name
         :param entity: The entity
         """
-        return self.db.grants.find_one({'role': role, 'entity': entity}) is not None
+        return self.db.grants.find_one({"role": role, "entity": entity}) is not None
 
     def has_some(self, roles: List[str], entity: str) -> bool:
         """Check whether an entity has at least one of the roles in the list
@@ -152,15 +158,17 @@ class RolesClient:
 
            { "name": "string", "display_name": "string" }
         """
-        return [{'name': name, 'display_name': info['title']}
-                for (name, info) in self.form_text.items()]
+        return [
+            {"name": name, "display_name": info["title"]}
+            for (name, info) in self.form_text.items()
+        ]
 
     def get_role_entities(self, role: str) -> List[Any]:
         """Get all entities having the given role
 
         :param role: Role name
         """
-        return list(self.db.grants.find({'role': role}))
+        return list(self.db.grants.find({"role": role}))
 
     def get_role_text(self, role: str) -> Any:
         """Get the form text for a given role

@@ -13,7 +13,7 @@ import '../Base.less';
  * Props for the [[Admin]] component
  * @interface
  */
-export interface Props { }
+export interface Props {}
 
 /**
  * Summary information for one role
@@ -64,7 +64,6 @@ export class Admin extends React.Component<Props, State> {
       roles: null,
       linksToBeVerified: -1,
       powerUserRequestsCount: -1,
-
     };
   }
 
@@ -94,7 +93,7 @@ export class Admin extends React.Component<Props, State> {
           powerUserRequestsCount: json.count,
         }),
       );
-  }
+  };
 
   render(): React.ReactNode {
     return (
@@ -129,11 +128,14 @@ export class Admin extends React.Component<Props, State> {
         <Row className="primary-row">
           <Col span={24}>
             <Link to="/admin/role_requests/power_user" className="title">
-              Pending Power User Role Requests 
+              Pending Power User Role Requests
               {this.state.powerUserRequestsCount === -1 ? (
                 <Spin size="small" />
               ) : (
-                <Badge count={this.state.powerUserRequestsCount} offset={[8, -20]} />
+                <Badge
+                  count={this.state.powerUserRequestsCount}
+                  offset={[8, -20]}
+                />
               )}
             </Link>
           </Col>

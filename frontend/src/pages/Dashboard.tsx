@@ -475,19 +475,19 @@ export class Dashboard extends React.Component<Props, State> {
       count: result.count,
       results: result.results.map(
         (output: any) =>
-        ({
-          ...output,
-          created_time: new Date(output.created_time),
-          expiration_time: !output.expiration_time
-            ? null
-            : new Date(output.expiration_time),
-          deletion_info: !output.deletion_info
-            ? null
-            : {
-              deleted_by: output.deletion_info.deleted_by,
-              deleted_time: new Date(output.deletion_info.deleted_time),
-            },
-        } as LinkInfo),
+          ({
+            ...output,
+            created_time: new Date(output.created_time),
+            expiration_time: !output.expiration_time
+              ? null
+              : new Date(output.expiration_time),
+            deletion_info: !output.deletion_info
+              ? null
+              : {
+                  deleted_by: output.deletion_info.deleted_by,
+                  deleted_time: new Date(output.deletion_info.deleted_time),
+                },
+          }) as LinkInfo,
       ),
     };
   };
@@ -504,7 +504,7 @@ export class Dashboard extends React.Component<Props, State> {
     const is_enabled = result.enabled;
     this.setState({ trackingPixelEnabled: is_enabled });
     console.log(is_enabled);
-  }
+  };
 
   /**
    * Displays the edit link modal
@@ -975,7 +975,7 @@ export class Dashboard extends React.Component<Props, State> {
               placement="bottomRight"
               trigger={['click']}
             >
-              <Button type="primary" aria-label='create link'>
+              <Button type="primary" aria-label="create link">
                 <PlusCircleFilled /> Create Link
               </Button>
             </Dropdown>

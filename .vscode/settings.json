@@ -8,6 +8,9 @@
   "[python]": {
     "editor.defaultFormatter": "ms-python.black-formatter"
   },
-  "prettier.configPath": "frontend/.prettierrc.js",
+  "[toml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "prettier.configPath": ".prettierrc",
   "editor.formatOnSave": true
 }

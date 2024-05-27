@@ -2,7 +2,7 @@
 
 import pymongo
 
-__all__ = ['TrackingClient']
+__all__ = ["TrackingClient"]
 
 
 class TrackingClient:
