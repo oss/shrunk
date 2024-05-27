@@ -14,11 +14,8 @@ To get started with Shrunk development, have a look at the pages below.
 - :doc:`installation`
     How to install shrunk on a machine.
 
-- :doc:`backend_tutorial`
-    Basics of Shrunk backend development.
-
-- :doc:`frontend_tutorial`
-    Basics of Shrunk frontend development.
+- :doc:`build_instructions`
+    Learn how to run Shrunk on your machine
 
 - :doc:`packaging`
     Learn how to build and deploy Shrunk
@@ -41,7 +38,6 @@ Phacility <https://em-oss-phab.phacility.com/diffusion/SRU/>`_.
    :hidden:
 
    installation
-   backend_tutorial
-   frontend_tutorial
+   build_instructions
    packaging
    api/shrunk
