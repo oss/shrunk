@@ -29,20 +29,6 @@ CMDCLASS = {
 
 COMMAND_OPTIONS = {}
 
-
-try:
-    from sphinx.setup_command import BuildDoc
-
-    CMDCLASS["build_sphinx"] = BuildDoc  # type: ignore
-    COMMAND_OPTIONS["build_sphinx"] = {
-        "project": ("setup.py", "shrunk"),
-        "version": ("setup.py", VERSION),
-        "source_dir": ("setup.py", "doc"),
-    }
-except ImportError:
-    pass
-
-
 with open("requirements.txt", "r") as f:
     requires = [line.rstrip() for line in f]
 

@@ -62,7 +62,7 @@ flake8:
   script:
     - python -V
     - pip install flake8 flake8-quotes flake8-commas flake8-pytest-style flake8-formatter-junit-xml
-    - flake8 --exit-zero --format=junit-xml backend/shrunk backend/tests > flake8.xml
+    - flake8 --format=pylint --config=setup.cfg --exit-zero --format=junit-xml backend/shrunk backend/tests > flake8.xml
   artifacts:
     reports:
       junit: flake8.xml

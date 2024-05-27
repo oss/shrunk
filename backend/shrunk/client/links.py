@@ -1,16 +1,15 @@
 """Database-level interactions for shrunk."""
+
 from datetime import datetime, timezone
-from http.client import responses
 import random
 import string
 import re
 import secrets
-from typing import Optional, List, Set, Any, Dict, Tuple, cast
+from typing import Optional, List, Set, Any, Dict, cast
 
 from flask import current_app, url_for
 from flask_mailman import Mail
 import requests
-import json
 import pymongo
 from pymongo.collection import ReturnDocument
 from pymongo.results import UpdateResult
@@ -32,7 +31,6 @@ from .exceptions import (
     LinkIsPendingOrRejected,
 )
 
-import sys
 
 __all__ = ["LinksClient"]
 

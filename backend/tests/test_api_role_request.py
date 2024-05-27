@@ -231,9 +231,8 @@ def test_get_role_request_text(client: Client) -> None:
     with dev_login(client, "user"):
         # Get the request text for the power user role
         resp = client.get("/api/v1/role_request/power_user/request-text")
-        assert (
-            "text" in resp.json and resp.json["text"]
-        ), "Failed to get request text for role"
+        assert "text" in resp.json, "Failed to get request text for role"
+        assert resp.json["text"], "Failed to get request text for role"
 
 
 @pytest.mark.parametrize(

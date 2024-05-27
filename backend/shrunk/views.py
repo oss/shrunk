@@ -17,8 +17,8 @@ from flask import (
 from werkzeug.exceptions import abort
 
 from shrunk.client import ShrunkClient
-from shrunk.client.exceptions import NoSuchObjectException
 from shrunk.util.decorators import require_login
+from shrunk.client.exceptions import NoSuchObjectException
 
 __all__ = ["bp"]
 

@@ -26,7 +26,7 @@ def app() -> Flask:
     return shrunk_app
 
 
-@pytest.fixture()
+@pytest.fixture
 def db(
     app: Flask,
 ) -> Generator[ShrunkClient, None, None]:  # pylint: disable=redefined-outer-name
@@ -38,7 +38,7 @@ def db(
         shrunk_db.reset_database()
 
 
-@pytest.fixture()
+@pytest.fixture
 def client(
     app: Flask,
 ) -> Generator[Client, None, None]:  # pylint: disable=redefined-outer-name
