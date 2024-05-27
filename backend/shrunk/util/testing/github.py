@@ -1,6 +1,5 @@
 import requests
 import os
-import shutil
 import glob
 
 """
@@ -78,7 +77,7 @@ def pull_outlook_assets_from_github():
 
         isDev = "test" in url
         extraction_folder_dest = "dev" if isDev else "prod"
-        destination = os.path.join(var_folder, extraction_folder_dest)
+        os.path.join(var_folder, extraction_folder_dest)
         print(
             "Unzipping {asset} to {destination}".format(
                 asset=asset, destination=extraction_folder_dest

@@ -1,4 +1,4 @@
-""" Shrunk, the official URL shortener of Rutgers University. """
+"""Shrunk, the official URL shortener of Rutgers University."""
 
 import logging
 import base64
@@ -322,7 +322,7 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
             app.logger.info(
                 "Signature verified. Proceeding with updating Outlook add-in version."
             )
-        except Exception as e:
+        except Exception:
             app.logger.error("Signature was incorrect or unable to be verified.\n")
             return "Unauthorized", 401
 

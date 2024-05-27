@@ -1,4 +1,4 @@
-""" shrunk - Rutgers University URL Shortener
+"""shrunk - Rutgers University URL Shortener
 
 Configuration options for shrunk. This is an example file; modify this and save
 it as config.py.

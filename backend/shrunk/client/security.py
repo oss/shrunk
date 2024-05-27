@@ -1,6 +1,5 @@
 """Implements the :py:class:`SecurityClient` class."""
 
-
 from datetime import datetime, timezone
 from enum import Enum
 import json
@@ -40,7 +39,7 @@ class SecurityClient:
         db: pymongo.database.Database,
         other_clients: Any,
         SECURITY_MEASURES_ON: bool,
-        GOOGLE_SAFE_BROWSING_API: str
+        GOOGLE_SAFE_BROWSING_API: str,
     ):
         self.db = db
         self.other_clients = other_clients
@@ -116,7 +115,7 @@ class SecurityClient:
             *args,
             viewers=d["viewers"],
             editors=d["editors"],
-            bypass_security_measures=True
+            bypass_security_measures=True,
         )
         self.other_clients.links.create_random_alias(link_id, "")
 

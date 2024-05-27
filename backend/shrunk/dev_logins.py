@@ -1,5 +1,5 @@
-""" Development logins. We have one DEV_* user for each user class
-    (regular, facstaff, power user, admin). """
+"""Development logins. We have one DEV_* user for each user class
+(regular, facstaff, power user, admin)."""
 
 from typing import Optional, Any
 
