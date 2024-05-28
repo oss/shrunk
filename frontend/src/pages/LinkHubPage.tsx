@@ -7,34 +7,23 @@ interface Props {
 }
 
 export default function LinkHubPage(props: Props) {
-  const [title, setTitle] = useState('StarCraft II Tournament @ RU');
-  const [links, setLinks] = useState<DisplayLink[]>([
-    {
-      title: 'Graphic Design Application',
-      url: 'https://google.com/',
-    },
-    {
-      title: 'Caster Application',
-      url: 'https://google.com/',
-    },
-    {
-      title: 'Marketing Application',
-      url: 'https://google.com/',
-    },
-  ]);
-  const [owner, setOwner] = useState('');
+  const [title, setTitle] = useState('');
+  const [links, setLinks] = useState<DisplayLink[]>([]);
 
   let { alias } = useParams<{ alias: string }>();
 
   useEffect(() => {
-    fetch(`/api/v1/linkhub/${alias}`, {
+    const data = fetch(`/api/v1/linkhub/${alias}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
-    }).then((data) => {
-      console.log(data);
-    });
+    }).then((resp) =>
+      resp.json().then((data) => {
+        setTitle(data['title']);
+        setLinks(data['links']);
+      }),
+    );
   });
 
   return <LinkHubComponent title={title} links={links} />;
