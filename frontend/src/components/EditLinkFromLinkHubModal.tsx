@@ -1,12 +1,12 @@
-import { Form, Input, Modal, Typography } from 'antd/lib';
+import { Form, Input, Modal } from 'antd/lib';
 import { title } from 'process';
-import React from 'react';
+import React, { useState } from 'react';
 import { DisplayLink } from './LinkHubComponent';
 
 interface IEditLinkFromLinkHubModal {
   visible: boolean;
   editLinkData: EditLinkData;
-  onOkay(): void;
+  onOkay(value: DisplayLink): void;
   onCancel(): void;
 }
 
@@ -18,32 +18,38 @@ export interface EditLinkData {
 export default function EditLinkFromLinkHubModal(
   props: IEditLinkFromLinkHubModal,
 ) {
+  const [form] = Form.useForm();
+
+  function onSubmit(values: any) {
+    props.onOkay(values);
+  }
+
+  function onCancel() {
+    props.onCancel();
+    form.resetFields();
+  }
+
   return (
     <Modal
       title={'Edit Link'}
       visible={props.visible}
-      onOk={props.onOkay}
-      onCancel={props.onCancel}
+      onOk={form.submit}
+      onCancel={onCancel}
     >
-      <Form layout="vertical">
-        <Form.Item label="Title" name="link-title">
-          <Input
-            max={64}
-            defaultValue={props.editLinkData.displayLink.title}
-            placeholder="Read the Rutgers News!"
-            onChange={(e: any) => {
-              props.editLinkData.displayLink.title = e.target.value;
-            }}
-          />
+      <Form
+        layout="vertical"
+        form={form}
+        onFinish={onSubmit}
+        initialValues={{
+          title: props.editLinkData.displayLink.title,
+          url: props.editLinkData.displayLink.url,
+        }}
+      >
+        <Form.Item label="Title" name="title">
+          <Input max={64} />
         </Form.Item>
-        <Form.Item label="URL" name="link-url">
-          <Input
-            defaultValue={props.editLinkData.displayLink.url}
-            placeholder="https://www.rutgers.edu/news/"
-            onChange={(e: any) => {
-              props.editLinkData.displayLink.url = e.target.value;
-            }}
-          />
+        <Form.Item label="URL" name="url">
+          <Input />
         </Form.Item>
       </Form>
     </Modal>

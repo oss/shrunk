@@ -315,8 +315,8 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
       {editLinkData !== undefined ? (
         <EditLinkFromLinkHubModal
           editLinkData={editLinkData}
-          onOkay={() => {
-            onDisplayLinkChange(editLinkData.displayLink, editLinkData.index);
+          onOkay={(value: DisplayLink) => {
+            onDisplayLinkChange(value, editLinkData.index);
             setIsEditLinkModalVisible(false);
           }}
           onCancel={() => {
