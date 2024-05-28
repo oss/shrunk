@@ -64,7 +64,6 @@ ADD_LINK_TO_LINKHUB_SCHEMA = {
     "properties": {
         "title": {"type": "string", "minLength": 1},
         "url": {"type": "string", "minLength": 1},
-        "index": {"type": "integer", "minimum": 0},
     },
 }
 
@@ -74,8 +73,36 @@ ADD_LINK_TO_LINKHUB_SCHEMA = {
 @require_login
 def add_link_to_linkhub(_netid: str, client: ShrunkClient, req: Any, alias: str) -> Any:
     # TODO: Add security.
-
     client.linkhubs.add_link_to_linkhub(alias, req["title"], req["url"])
+
+    return jsonify({"success": True})
+
+
+SET_CHANGE_LINKHUB_TITLE_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["title", "url", "index"],
+    "properties": {
+        "title": {"type": "string", "minLength": 1},
+        "url": {"type": "string", "minLength": 1},
+        "index": {"type": "integer", "minimum": 0},
+    },
+}
+
+
+@bp.route("/<string:alias>/set-element", methods=["POST"])
+@request_schema(SET_CHANGE_LINKHUB_TITLE_SCHEMA)
+@require_login
+def set_link_from_linkhub(
+    _netid: str, client: ShrunkClient, req: Any, alias: str
+) -> Any:
+    # TODO: Add security.
+
+    client.linkhubs.set_data_at_link_to_linkhub(
+        alias, req["index"], req["title"], req["url"]
+    )
+
+    return jsonify({"success": True})
 
 
 CHANGE_LINKHUB_TITLE_SCHEMA = {
@@ -97,3 +124,5 @@ def change_linkhub_title(
     # TODO: Add security.
 
     client.linkhubs.change_title(alias, req["title"])
+
+    return jsonify({"success": True})

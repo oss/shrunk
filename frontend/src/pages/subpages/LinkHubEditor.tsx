@@ -78,6 +78,24 @@ async function addLinkToLinkHub(
   return result;
 }
 
+async function setLinkFromLinkHub(
+  linkHubAlias: string,
+  index: number,
+  title: string,
+  url: string,
+) {
+  const result = await fetch(`/api/v1/linkhub/${linkHubAlias}/set-element`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      title: title,
+      url: url,
+      index: index,
+    }),
+  }).then((resp) => resp.json());
+  return result;
+}
+
 async function changeLinkHubTitle(linkHubAlias: string, title: string) {
   const result = await fetch(`/api/v1/linkhub/${linkHubAlias}/title`, {
     method: 'POST',
@@ -318,6 +336,12 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
           onOkay={(value: DisplayLink) => {
             onDisplayLinkChange(value, editLinkData.index);
             setIsEditLinkModalVisible(false);
+            setLinkFromLinkHub(
+              alias,
+              editLinkData.index,
+              value.title,
+              value.url,
+            );
           }}
           onCancel={() => {
             setIsEditLinkModalVisible(false);
