@@ -31,6 +31,7 @@ class LinkHubClient:
     def _generate_unique_key(cls) -> str:
         """Generates a unique key."""
 
+        # TODO: Make a better unique key generator
         return str(random.randint(0, 3000))
 
     def get_by_alias(self, alias: str) -> None:
@@ -68,3 +69,8 @@ class LinkHubClient:
             {"alias": linkhub_alias}, {"$unset": {f"links.{index}": ""}}
         )
         collection.update_one({"alias": linkhub_alias}, {"$pull": {"links": None}})
+
+    def _is_url_valid(self, value: str) -> bool:
+        # TODO: Implement this.
+
+        return True
