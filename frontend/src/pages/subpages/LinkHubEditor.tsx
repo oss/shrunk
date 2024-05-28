@@ -280,7 +280,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
                 </Form.Item>
                 <Form.Item label="Alias" name="linkhub-alias">
                   <Input
-                    addonBefore="https://go.rutgers.edu/h/"
+                    addonBefore={`${window.location.origin}/h/`}
                     max={32}
                     defaultValue={alias}
                     onChange={onAliasChange}
@@ -336,8 +336,8 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
                 textAlign: 'center',
               }}
             >
-              <a href="https://go.rutgers.edu/h/{props.alias}">
-                go.rutgers.edu/h/{alias}
+              <a href={`${window.location.origin}/h/{props.alias}`}>
+                {window.location.origin}/h/{alias}
               </a>
             </p>
           </Card>
