@@ -126,3 +126,26 @@ def change_linkhub_title(
     client.linkhubs.change_title(alias, req["title"])
 
     return jsonify({"success": True})
+
+
+DELETE_LINK_FROMLINKHUB_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["index"],
+    "properties": {
+        "index": {"type": "integer", "minimum": 0},
+    },
+}
+
+
+@bp.route("/<string:alias>/element", methods=["DELETE"])
+@request_schema(DELETE_LINK_FROMLINKHUB_SCHEMA)
+@require_login
+def delete_link_from_linkhub(
+    _netid: str, client: ShrunkClient, req: Any, alias: str
+) -> Any:
+    # TODO: Add security.
+
+    client.linkhubs.delete_element_at_index(alias, req["index"])
+
+    return jsonify({"success": True})

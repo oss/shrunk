@@ -107,6 +107,17 @@ async function changeLinkHubTitle(linkHubAlias: string, title: string) {
   return result;
 }
 
+async function deleteLinkAtIndex(linkHubAlias: string, index: number) {
+  const result = await fetch(`/api/v1/linkhub/${linkHubAlias}/element`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      index: index,
+    }),
+  }).then((resp) => resp.json());
+  return result;
+}
+
 export default function LinkHubEditor(props: PLinkHubEditor) {
   const [title, setTitle] = useState<string>();
   const [oldTitle, setOldTitle] = useState<string>(); // Used for detecting changes
@@ -182,6 +193,8 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
     let newLinks: DisplayLink[] = JSON.parse(JSON.stringify(links));
     newLinks.splice(index, 1);
     setLinks(newLinks);
+
+    deleteLinkAtIndex(alias, index);
   }
 
   function onAddDisplayLink() {

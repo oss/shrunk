@@ -61,3 +61,10 @@ class LinkHubClient:
     def change_title(self, linkhub_alias: str, title: str) -> None:
         collection = self.db.linkhubs
         collection.update_one({"alias": linkhub_alias}, {"$set": {"title": title}})
+
+    def delete_element_at_index(self, linkhub_alias: str, index: int) -> None:
+        collection = self.db.linkhubs
+        collection.update_one(
+            {"alias": linkhub_alias}, {"$unset": {f"links.{index}": ""}}
+        )
+        collection.update_one({"alias": linkhub_alias}, {"$pull": {"links": None}})
