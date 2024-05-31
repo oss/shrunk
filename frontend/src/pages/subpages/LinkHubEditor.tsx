@@ -114,11 +114,24 @@ async function deleteLinkAtIndex(linkhubId: string, index: number) {
   return result;
 }
 
+async function changeLinkHubAlias(linkhubId: string, alias: string) {
+  const result = await fetch(`/api/v1/linkhub/${linkhubId}/alias`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      alias: alias,
+    }),
+  }).then((resp) => resp.json());
+  return result;
+}
+
 export default function LinkHubEditor(props: PLinkHubEditor) {
   const [title, setTitle] = useState<string>();
   const [oldTitle, setOldTitle] = useState<string>(); // Used for detecting changes
 
-  const [alias, setAlias] = useState<string>(props.alias);
+  const [alias, setAlias] = useState<string>();
+  const [oldAlias, setOldAlias] = useState<string>();
+
   const [links, setLinks] = useState<DisplayLink[]>([]);
   const [backgroundColor, setBackgroundColor] = useState<string>('#2A3235');
 
@@ -131,6 +144,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
       setTitle(value.title);
       setOldTitle(value.title);
       setAlias(value.alias);
+      setOldAlias(value.alias);
       const fetchingLinks: DisplayLink[] = [];
       value.links.map((value: any) => {
         fetchingLinks.push({
@@ -161,16 +175,18 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
   }
 
   function onProfileSave() {
-    if (title === undefined) {
+    if (title === undefined || alias === undefined) {
       return;
     }
 
     changeLinkHubTitle(props.linkhubId, title);
+    changeLinkHubAlias(props.linkhubId, alias);
     setOldTitle(title);
+    setOldTitle(alias);
   }
 
   function isProfileSaved() {
-    return title === oldTitle;
+    return title === oldTitle && alias === oldAlias;
   }
 
   function onDisplayLinkChange(value: DisplayLink, index: number) {

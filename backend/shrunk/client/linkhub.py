@@ -75,6 +75,10 @@ class LinkHubClient:
         collection = self.db.linkhubs
         collection.update_one({"_id": ObjectId(linkhub_id)}, {"$set": {"title": title}})
 
+    def change_alias(self, linkhub_id: str, alias: str) -> None:
+        collection = self.db.linkhubs
+        collection.update_one({"_id": ObjectId(linkhub_id)}, {"$set": {"alias": alias}})
+
     def delete_element_at_index(self, linkhub_id: str, index: int) -> None:
         collection = self.db.linkhubs
         collection.update_one(

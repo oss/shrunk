@@ -130,6 +130,29 @@ def change_linkhub_title(
     return jsonify({"success": True})
 
 
+CHANGE_LINKHUB_TITLE_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["alias"],
+    "properties": {
+        "alias": {"type": "string", "minLength": 1},
+    },
+}
+
+
+@bp.route("/<string:linkhub_id>/alias", methods=["POST"])
+@request_schema(CHANGE_LINKHUB_TITLE_SCHEMA)
+@require_login
+def change_linkhub_alias(
+    _netid: str, client: ShrunkClient, req: Any, linkhub_id: str
+) -> Any:
+    # TODO: Add security.
+
+    client.linkhubs.change_alias(linkhub_id, req["alias"])
+
+    return jsonify({"success": True})
+
+
 DELETE_LINK_FROMLINKHUB_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
