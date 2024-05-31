@@ -429,9 +429,9 @@ export class Shrunk extends React.Component<Props, State> {
 
                 <Route
                   exact
-                  path="/linkhubs/:alias/edit"
+                  path="/linkhubs/:linkHubId/edit"
                   render={(props) => (
-                    <LinkHubEditor alias={props.match.params.alias} />
+                    <LinkHubEditor linkhubId={props.match.params.linkHubId} />
                   )}
                 />
 

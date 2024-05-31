@@ -1,4 +1,5 @@
 from typing import Optional, Any, Tuple
+from bson.objectid import ObjectId
 import pymongo
 import random
 
@@ -34,43 +35,55 @@ class LinkHubClient:
         # TODO: Make a better unique key generator
         return str(random.randint(0, 3000))
 
-    def get_by_alias(self, alias: str) -> None:
+    def get_by_alias(self, alias: str) -> Optional[Any]:
         collection = self.db.linkhubs
         result = collection.find_one({"alias": alias})
         if result is None:
             return None
 
-        del result["_id"]
         return result
 
-    def add_link_to_linkhub(self, linkhub_alias: str, title: str, url: str) -> None:
+    def get_by_id(self, document_id: str) -> Optional[Any]:
+        collection = self.db.linkhubs
+        result = collection.find_one({"_id": ObjectId(document_id)})
+        if result is None:
+            return None
+
+        return result
+
+    def add_link_to_linkhub(self, linkhub_id: str, title: str, url: str) -> None:
         new_link = {"title": title, "url": url}
 
         collection = self.db.linkhubs
-        collection.update_one({"alias": linkhub_alias}, {"$push": {"links": new_link}})
+        collection.update_one(
+            {"_id": ObjectId(linkhub_id)}, {"$push": {"links": new_link}}
+        )
 
     def set_data_at_link_to_linkhub(
-        self, linkhub_alias: str, index: int, title: str = None, url: str = None
+        self, linkhub_id: str, index: int, title: str = None, url: str = None
     ) -> None:
-        data = self.get_by_alias(linkhub_alias)
+        data = self.get_by_id(linkhub_id)
         new_links = data["links"]
         new_links[index] = {"title": title, "url": url}
 
         collection = self.db.linkhubs
-        collection.update_one({"alias": linkhub_alias}, {"$set": {"links": new_links}})
+        collection.update_one(
+            {"_id": ObjectId(linkhub_id)}, {"$set": {"links": new_links}}
+        )
 
-    def change_title(self, linkhub_alias: str, title: str) -> None:
+    def change_title(self, linkhub_id: str, title: str) -> None:
         collection = self.db.linkhubs
-        collection.update_one({"alias": linkhub_alias}, {"$set": {"title": title}})
+        collection.update_one({"_id": ObjectId(linkhub_id)}, {"$set": {"title": title}})
 
-    def delete_element_at_index(self, linkhub_alias: str, index: int) -> None:
+    def delete_element_at_index(self, linkhub_id: str, index: int) -> None:
         collection = self.db.linkhubs
         collection.update_one(
-            {"alias": linkhub_alias}, {"$unset": {f"links.{index}": ""}}
+            {"_id": ObjectId(linkhub_id)}, {"$unset": {f"links.{index}": ""}}
         )
-        collection.update_one({"alias": linkhub_alias}, {"$pull": {"links": None}})
+        collection.update_one({"_id": ObjectId(linkhub_id)}, {"$pull": {"links": None}})
 
-    def _is_url_valid(self, value: str) -> bool:
-        # TODO: Implement this.
+    def _is_alias_valid(self, alias: str) -> bool:
+        collection = self.db.linkhubs
+        result = collection.find_one({"alias": alias})
 
-        return True
+        return result is not None

@@ -47,10 +47,10 @@ def create_linkhub(netid: str, client: ShrunkClient, req: Any) -> Any:
     return jsonify({"id": result_id, "alias": alias})
 
 
-@bp.route("/<string:alias>", methods=["GET"])
+@bp.route("/<string:linkhub_id>", methods=["GET"])
 @require_login
-def get_linkhub(_netid: str, client: ShrunkClient, alias: str) -> Any:
-    result = client.linkhubs.get_by_alias(alias)
+def get_linkhub_by_id(_netid: str, client: ShrunkClient, linkhub_id: str) -> Any:
+    result = client.linkhubs.get_by_id(linkhub_id)
     if result is None:
         return jsonify({"error": "does not exist"})  # TODO: make cleaner.
 
@@ -68,12 +68,14 @@ ADD_LINK_TO_LINKHUB_SCHEMA = {
 }
 
 
-@bp.route("/<string:alias>/add-element", methods=["POST"])
+@bp.route("/<string:linkhub_id>/add-element", methods=["POST"])
 @request_schema(ADD_LINK_TO_LINKHUB_SCHEMA)
 @require_login
-def add_link_to_linkhub(_netid: str, client: ShrunkClient, req: Any, alias: str) -> Any:
+def add_link_to_linkhub(
+    _netid: str, client: ShrunkClient, req: Any, linkhub_id: str
+) -> Any:
     # TODO: Add security.
-    client.linkhubs.add_link_to_linkhub(alias, req["title"], req["url"])
+    client.linkhubs.add_link_to_linkhub(linkhub_id, req["title"], req["url"])
 
     return jsonify({"success": True})
 
@@ -90,16 +92,16 @@ SET_CHANGE_LINKHUB_TITLE_SCHEMA = {
 }
 
 
-@bp.route("/<string:alias>/set-element", methods=["POST"])
+@bp.route("/<string:linkhub_id>/set-element", methods=["POST"])
 @request_schema(SET_CHANGE_LINKHUB_TITLE_SCHEMA)
 @require_login
 def set_link_from_linkhub(
-    _netid: str, client: ShrunkClient, req: Any, alias: str
+    _netid: str, client: ShrunkClient, req: Any, linkhub_id: str
 ) -> Any:
     # TODO: Add security.
 
     client.linkhubs.set_data_at_link_to_linkhub(
-        alias, req["index"], req["title"], req["url"]
+        linkhub_id, req["index"], req["title"], req["url"]
     )
 
     return jsonify({"success": True})
@@ -115,15 +117,15 @@ CHANGE_LINKHUB_TITLE_SCHEMA = {
 }
 
 
-@bp.route("/<string:alias>/title", methods=["POST"])
+@bp.route("/<string:linkhub_id>/title", methods=["POST"])
 @request_schema(CHANGE_LINKHUB_TITLE_SCHEMA)
 @require_login
 def change_linkhub_title(
-    _netid: str, client: ShrunkClient, req: Any, alias: str
+    _netid: str, client: ShrunkClient, req: Any, linkhub_id: str
 ) -> Any:
     # TODO: Add security.
 
-    client.linkhubs.change_title(alias, req["title"])
+    client.linkhubs.change_title(linkhub_id, req["title"])
 
     return jsonify({"success": True})
 
@@ -138,14 +140,14 @@ DELETE_LINK_FROMLINKHUB_SCHEMA = {
 }
 
 
-@bp.route("/<string:alias>/element", methods=["DELETE"])
+@bp.route("/<string:linkhub_id>/element", methods=["DELETE"])
 @request_schema(DELETE_LINK_FROMLINKHUB_SCHEMA)
 @require_login
 def delete_link_from_linkhub(
-    _netid: str, client: ShrunkClient, req: Any, alias: str
+    _netid: str, client: ShrunkClient, req: Any, linkhub_id: str
 ) -> Any:
     # TODO: Add security.
 
-    client.linkhubs.delete_element_at_index(alias, req["index"])
+    client.linkhubs.delete_element_at_index(linkhub_id, req["index"])
 
     return jsonify({"success": True})

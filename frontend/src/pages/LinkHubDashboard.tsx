@@ -16,7 +16,7 @@ export default function LinkHubDashboard() {
         title: 'New LinkHub',
       }),
     }).then((resp) => resp.json());
-    history.push(`/linkhubs/${result.alias}/edit`);
+    history.push(`/linkhubs/${result.id}/edit`);
   }
 
   return (

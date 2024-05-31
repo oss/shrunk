@@ -51,23 +51,19 @@ function LinkHubEditRow(props: PLinkHubEditRow) {
 }
 
 interface PLinkHubEditor {
-  alias: string;
+  linkhubId: string;
 }
 
-async function getLinkHub(alias: string) {
-  const result = await fetch(`/api/v1/linkhub/${alias}`, {
+async function getLinkHub(linkhubId: string) {
+  const result = await fetch(`/api/v1/linkhub/${linkhubId}`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   }).then((resp) => resp.json());
   return result;
 }
 
-async function addLinkToLinkHub(
-  linkHubAlias: string,
-  title: string,
-  url: string,
-) {
-  const result = await fetch(`/api/v1/linkhub/${linkHubAlias}/add-element`, {
+async function addLinkToLinkHub(linkhubId: string, title: string, url: string) {
+  const result = await fetch(`/api/v1/linkhub/${linkhubId}/add-element`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -79,12 +75,12 @@ async function addLinkToLinkHub(
 }
 
 async function setLinkFromLinkHub(
-  linkHubAlias: string,
+  linkhubId: string,
   index: number,
   title: string,
   url: string,
 ) {
-  const result = await fetch(`/api/v1/linkhub/${linkHubAlias}/set-element`, {
+  const result = await fetch(`/api/v1/linkhub/${linkhubId}/set-element`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -96,8 +92,8 @@ async function setLinkFromLinkHub(
   return result;
 }
 
-async function changeLinkHubTitle(linkHubAlias: string, title: string) {
-  const result = await fetch(`/api/v1/linkhub/${linkHubAlias}/title`, {
+async function changeLinkHubTitle(linkhubId: string, title: string) {
+  const result = await fetch(`/api/v1/linkhub/${linkhubId}/title`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -107,8 +103,8 @@ async function changeLinkHubTitle(linkHubAlias: string, title: string) {
   return result;
 }
 
-async function deleteLinkAtIndex(linkHubAlias: string, index: number) {
-  const result = await fetch(`/api/v1/linkhub/${linkHubAlias}/element`, {
+async function deleteLinkAtIndex(linkhubId: string, index: number) {
+  const result = await fetch(`/api/v1/linkhub/${linkhubId}/element`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -131,7 +127,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
     useState<boolean>(false);
 
   useEffect(() => {
-    getLinkHub(props.alias).then((value: any) => {
+    getLinkHub(props.linkhubId).then((value: any) => {
       setTitle(value.title);
       setOldTitle(value.title);
       setAlias(value.alias);
@@ -152,7 +148,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
     let newLinks: DisplayLink[] = JSON.parse(JSON.stringify(links));
     newLinks.push(value);
     setLinks(newLinks);
-    addLinkToLinkHub(alias, value.title, value.url);
+    addLinkToLinkHub(props.linkhubId, value.title, value.url);
   }
 
   function onTitleChange(e: any) {
@@ -169,7 +165,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
       return;
     }
 
-    changeLinkHubTitle(alias, title);
+    changeLinkHubTitle(props.linkhubId, title);
     setOldTitle(title);
   }
 
@@ -194,7 +190,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
     newLinks.splice(index, 1);
     setLinks(newLinks);
 
-    deleteLinkAtIndex(alias, index);
+    deleteLinkAtIndex(props.linkhubId, index);
   }
 
   function onAddDisplayLink() {
@@ -350,7 +346,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
             onDisplayLinkChange(value, editLinkData.index);
             setIsEditLinkModalVisible(false);
             setLinkFromLinkHub(
-              alias,
+              props.linkhubId,
               editLinkData.index,
               value.title,
               value.url,
