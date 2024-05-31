@@ -524,18 +524,19 @@ export class Shrunk extends React.Component<Props, State> {
           >
             <div style={{ width: '50%' }}>
               <p>
-                &copy; {new Date().getFullYear()} Rutgers, The State University
-                of New Jersey. All rights reserved. Rutgers is an equal
-                access/equal opportunity institution. Individuals with
-                disabilities are encouraged to direct suggestions, comments, or
-                complaints concerning any accessibility issues with Rutgers web
-                sites to{' '}
+                &copy; {new Date().getFullYear()}{' '}
+                <a href="https://rutgers.edu">
+                  Rutgers, The State University of New Jersey
+                </a>
+                . All rights reserved. Rutgers is an equal access/equal
+                opportunity institution. Individuals with disabilities are
+                encouraged to direct suggestions, comments, or complaints
+                concerning any accessibility issues with Rutgers web sites to{' '}
                 <a href="mailto:accessibility@rutgers.edu">
                   accessibility@rutgers.edu
                 </a>{' '}
-                or complete the
+                or complete the{' '}
                 <a href="https://rutgers.ca1.qualtrics.com/jfe/form/SV_57iH6Rfeocz51z0">
-                  {' '}
                   Report Accessibility Barrier or Provide Feedback Form
                 </a>
                 .
