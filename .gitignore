@@ -4,6 +4,7 @@
 
 frontend/typedoc.json
 frontend/.cache
+frontend/docs.json
 
 # Cache
 .cache
