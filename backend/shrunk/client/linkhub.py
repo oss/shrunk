@@ -23,6 +23,7 @@ class LinkHubClient:
             "links": [],
             "owner": owner,
             "collaborators": [],
+            "public": False,
         }
 
         result = self.db.linkhubs.insert_one(document)
@@ -34,6 +35,13 @@ class LinkHubClient:
 
         # TODO: Make a better unique key generator
         return str(random.randint(0, 3000))
+
+    def can_edit(self, linkhub_id: str, netid: str) -> bool:
+        data = self.get_by_id(linkhub_id)
+        if data["owner"] == netid:
+            return True
+
+        return netid in data["collaborators"]
 
     def get_by_alias(self, alias: str) -> Optional[Any]:
         collection = self.db.linkhubs

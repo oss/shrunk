@@ -54,23 +54,31 @@ interface PLinkHubEditor {
   linkhubId: string;
 }
 
-async function getLinkHub(linkhubId: string) {
-  const result = await fetch(`/api/v1/linkhub/${linkhubId}`, {
+async function getLinkHub(linkhubId: string): Promise<any> {
+  const resp = await fetch(`/api/v1/linkhub/${linkhubId}`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
-  }).then((resp) => resp.json());
+  });
+  if (resp.status === 404) {
+    throw new NotFoundException('LinkHub does not exist');
+  }
+
+  const result = await resp.json();
+
   return result;
 }
 
 async function addLinkToLinkHub(linkhubId: string, title: string, url: string) {
-  const result = await fetch(`/api/v1/linkhub/${linkhubId}/add-element`, {
+  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/add-element`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       title: title,
       url: url,
     }),
-  }).then((resp) => resp.json());
+  });
+  const result = await resp.json();
+
   return result;
 }
 
@@ -80,7 +88,7 @@ async function setLinkFromLinkHub(
   title: string,
   url: string,
 ) {
-  const result = await fetch(`/api/v1/linkhub/${linkhubId}/set-element`, {
+  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/set-element`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -88,44 +96,54 @@ async function setLinkFromLinkHub(
       url: url,
       index: index,
     }),
-  }).then((resp) => resp.json());
+  });
+  const result = await resp.json();
+
   return result;
 }
 
 async function changeLinkHubTitle(linkhubId: string, title: string) {
-  const result = await fetch(`/api/v1/linkhub/${linkhubId}/title`, {
+  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/title`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       title: title,
     }),
-  }).then((resp) => resp.json());
+  });
+  const result = await resp.json();
+
   return result;
 }
 
 async function deleteLinkAtIndex(linkhubId: string, index: number) {
-  const result = await fetch(`/api/v1/linkhub/${linkhubId}/element`, {
+  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/element`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       index: index,
     }),
-  }).then((resp) => resp.json());
+  });
+  const result = await resp.json();
+
   return result;
 }
 
 async function changeLinkHubAlias(linkhubId: string, alias: string) {
-  const result = await fetch(`/api/v1/linkhub/${linkhubId}/alias`, {
+  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/alias`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       alias: alias,
     }),
-  }).then((resp) => resp.json());
+  });
+  const result = await resp.json();
+
   return result;
 }
 
 export default function LinkHubEditor(props: PLinkHubEditor) {
+  const [foundLinkHub, setFoundLinkHub] = useState<boolean>(false);
+
   const [title, setTitle] = useState<string>();
   const [oldTitle, setOldTitle] = useState<string>(); // Used for detecting changes
 
@@ -140,20 +158,25 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
     useState<boolean>(false);
 
   useEffect(() => {
-    getLinkHub(props.linkhubId).then((value: any) => {
-      setTitle(value.title);
-      setOldTitle(value.title);
-      setAlias(value.alias);
-      setOldAlias(value.alias);
-      const fetchingLinks: DisplayLink[] = [];
-      value.links.map((value: any) => {
-        fetchingLinks.push({
-          url: value.url,
-          title: value.title,
+    getLinkHub(props.linkhubId)
+      .then((value: any) => {
+        setTitle(value.title);
+        setOldTitle(value.title);
+        setAlias(value.alias);
+        setOldAlias(value.alias);
+        const fetchingLinks: DisplayLink[] = [];
+        value.links.map((value: any) => {
+          fetchingLinks.push({
+            url: value.url,
+            title: value.title,
+          });
         });
+        setLinks(fetchingLinks);
+        setFoundLinkHub(true);
+      })
+      .catch((e: NotFoundException) => {
+        return;
       });
-      setLinks(fetchingLinks);
-    });
   }, []);
 
   const { Title } = Typography;
@@ -219,6 +242,10 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
   }
 
   function onPublish() {}
+
+  if (!foundLinkHub) {
+    return <div>Couldn't find a LinkHub</div>;
+  }
 
   if (title === undefined) {
     return <></>;
@@ -348,7 +375,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
                 textAlign: 'center',
               }}
             >
-              <a href={`${window.location.origin}/h/{props.alias}`}>
+              <a href={`${window.location.origin}/h/${alias}`}>
                 {window.location.origin}/h/{alias}
               </a>
             </p>
