@@ -20,6 +20,7 @@ import {
 import EditLinkFromLinkHubModal, {
   EditLinkData,
 } from '../../components/EditLinkFromLinkHubModal';
+import { NotFoundException } from '../../exceptions/NotFoundException';
 
 interface PLinkHubEditRow {
   link: DisplayLink;

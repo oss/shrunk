@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import LinkHubComponent, { DisplayLink } from '../components/LinkHubComponent';
+import { NotFoundException } from '../exceptions/NotFoundException';
 
 async function getLinkHub(alias: string): Promise<any> {
   const resp = await fetch(`/api/v1/linkhub/${alias}/public`, {
@@ -26,15 +27,15 @@ export default function LinkHubPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await getLinkHub(alias).catch(
-          (e: NotFoundException) => {
-            setIsFound(false);
-          },
-        );
+        const response = await getLinkHub(alias);
         const data = await response.json();
         setTitle(data.title);
         setLinks(data.links);
-      } catch (error) {}
+      } catch (error) {
+        if (!(error instanceof NotFoundException)) {
+          setIsFound(false);
+        }
+      }
     };
 
     fetchData();

@@ -57,7 +57,7 @@ def get_linkhub_by_id_with_login(
 
     result = client.linkhubs.get_by_id(linkhub_id)
     if result is None:
-        return jsonify({"success": False, "error": "Does not exist"}, 404)
+        return jsonify({"success": False, "error": "Does not exist"}), 404
 
     return jsonify(result)
 
@@ -69,7 +69,7 @@ def get_linkhub_by_alias(alias: str) -> Any:
     result = client.linkhubs.get_by_alias(alias)
 
     if result is None or not result["public"]:
-        return jsonify({"success": False, "error": "Does not exist"}, 404)
+        return jsonify({"success": False, "error": "Does not exist"}), 404
 
     del result["owner"]
     del result["collaborators"]
