@@ -23,7 +23,7 @@ class LinkHubClient:
             "links": [],
             "owner": owner,
             "collaborators": [],
-            "public": False,
+            "is_public": False,
         }
 
         result = self.db.linkhubs.insert_one(document)
@@ -86,6 +86,12 @@ class LinkHubClient:
     def change_alias(self, linkhub_id: str, alias: str) -> None:
         collection = self.db.linkhubs
         collection.update_one({"_id": ObjectId(linkhub_id)}, {"$set": {"alias": alias}})
+
+    def set_publish_status(self, linkhub_id: str, value: bool) -> None:
+        collection = self.db.linkhubs
+        collection.update_one(
+            {"_id": ObjectId(linkhub_id)}, {"$set": {"is_public": value}}
+        )
 
     def delete_element_at_index(self, linkhub_id: str, index: int) -> None:
         collection = self.db.linkhubs

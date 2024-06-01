@@ -2,7 +2,15 @@ import React, { useEffect, useState } from 'react';
 import LinkHubComponent, {
   DisplayLink,
 } from '../../components/LinkHubComponent';
-import { Typography, Button, Card, Form, Input, Tabs } from 'antd/lib';
+import {
+  Typography,
+  Button,
+  Card,
+  Form,
+  Input,
+  Tabs,
+  Checkbox,
+} from 'antd/lib';
 import {
   CloudUploadOutlined,
   DeleteOutlined,
@@ -141,6 +149,19 @@ async function changeLinkHubAlias(linkhubId: string, alias: string) {
   return result;
 }
 
+async function publishLinkHub(linkhubId: string, value: boolean) {
+  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/publish`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      value: value,
+    }),
+  });
+  const result = await resp.json();
+
+  return result;
+}
+
 export default function LinkHubEditor(props: PLinkHubEditor) {
   const [foundLinkHub, setFoundLinkHub] = useState<boolean>(false);
 
@@ -149,6 +170,8 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
 
   const [alias, setAlias] = useState<string>();
   const [oldAlias, setOldAlias] = useState<string>();
+
+  const [isPublished, setIsPublished] = useState<boolean>(false);
 
   const [links, setLinks] = useState<DisplayLink[]>([]);
   const [backgroundColor, setBackgroundColor] = useState<string>('#2A3235');
@@ -164,6 +187,8 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
         setOldTitle(value.title);
         setAlias(value.alias);
         setOldAlias(value.alias);
+        setIsPublished(value.is_public);
+
         const fetchingLinks: DisplayLink[] = [];
         value.links.map((value: any) => {
           fetchingLinks.push({
@@ -241,7 +266,10 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
     addDisplayLink(link);
   }
 
-  function onPublish() {}
+  function onPublish(e: any) {
+    setIsPublished(!isPublished);
+    publishLinkHub(props.linkhubId, isPublished);
+  }
 
   if (!foundLinkHub) {
     return <div>Couldn't find a LinkHub</div>;
@@ -336,7 +364,13 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
                     <p style={{ margin: 0, marginBottom: '4px' }}>
                       You can publish your LinkHub to be viewed by others.
                     </p>
-                    <Button>Publish</Button>
+                    <Checkbox
+                      defaultChecked={isPublished}
+                      checked={isPublished}
+                      onChange={onPublish}
+                    >
+                      Publish
+                    </Checkbox>
                   </div>
                   <div style={{ marginBottom: '12px' }}>
                     <p style={{ margin: 0, marginBottom: '4px' }}>

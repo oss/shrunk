@@ -64,10 +64,16 @@ def get_linkhub_by_id_with_login(
 
 @bp.route("/<string:alias>/public", methods=["GET"])
 def get_linkhub_by_alias(alias: str) -> Any:
+    """Gives the end-user less information on what the document contains."""
     client = current_app.client
     result = client.linkhubs.get_by_alias(alias)
-    if result is None:
+
+    if result is None or not result["public"]:
         return jsonify({"success": False, "error": "Does not exist"}, 404)
+
+    del result["owner"]
+    del result["collaborators"]
+    del result["public"]
 
     return jsonify(result)
 
@@ -193,5 +199,27 @@ def delete_link_from_linkhub(
         return jsonify({"success": False, "error": "No permission"}), 401
 
     client.linkhubs.delete_element_at_index(linkhub_id, req["index"])
+
+    return jsonify({"success": True})
+
+
+PUBLISH_LINKHUB_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["value"],
+    "properties": {
+        "value": {"type": "boolean"},
+    },
+}
+
+
+@bp.route("/<string:linkhub_id>/publish", methods=["POST"])
+@request_schema(PUBLISH_LINKHUB_SCHEMA)
+@require_login
+def publish_linkhub(netid: str, client: ShrunkClient, req: Any, linkhub_id: str) -> Any:
+    if not client.linkhubs.can_edit(linkhub_id, netid):
+        return jsonify({"success": False, "error": "No permission"}), 401
+
+    client.linkhubs.set_publish_status(linkhub_id, req["value"])
 
     return jsonify({"success": True})
