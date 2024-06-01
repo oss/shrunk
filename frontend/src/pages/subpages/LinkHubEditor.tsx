@@ -55,7 +55,7 @@ interface PLinkHubEditor {
 }
 
 async function getLinkHub(linkhubId: string): Promise<any> {
-  const resp = await fetch(`/api/v1/linkhub/${linkhubId}`, {
+  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/private`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });

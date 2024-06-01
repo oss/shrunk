@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, current_app
 
 from shrunk.client import ShrunkClient
 from shrunk.util.decorators import require_login, request_schema
@@ -47,14 +47,27 @@ def create_linkhub(netid: str, client: ShrunkClient, req: Any) -> Any:
     return jsonify({"id": result_id, "alias": alias})
 
 
-@bp.route("/<string:linkhub_id>", methods=["GET"])
+@bp.route("/<string:linkhub_id>/private", methods=["GET"])
 @require_login
-def get_linkhub_by_id(netid: str, client: ShrunkClient, linkhub_id: str) -> Any:
+def get_linkhub_by_id_with_login(
+    netid: str, client: ShrunkClient, linkhub_id: str
+) -> Any:
+    if not client.linkhubs.can_edit(linkhub_id, netid):
+        return jsonify({"success": False, "error": "No permission"}), 401
+
     result = client.linkhubs.get_by_id(linkhub_id)
     if result is None:
-        return jsonify(
-            {"success": False, "error": "Does not exist"}, 404
-        )  # TODO: make cleaner.
+        return jsonify({"success": False, "error": "Does not exist"}, 404)
+
+    return jsonify(result)
+
+
+@bp.route("/<string:alias>/public", methods=["GET"])
+def get_linkhub_by_alias(alias: str) -> Any:
+    client = current_app.client
+    result = client.linkhubs.get_by_alias(alias)
+    if result is None:
+        return jsonify({"success": False, "error": "Does not exist"}, 404)
 
     return jsonify(result)
 
