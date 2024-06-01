@@ -27,12 +27,11 @@ export default function LinkHubPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await getLinkHub(alias);
-        const data = await response.json();
+        const data = await getLinkHub(alias);
         setTitle(data.title);
         setLinks(data.links);
       } catch (error) {
-        if (!(error instanceof NotFoundException)) {
+        if (error instanceof NotFoundException) {
           setIsFound(false);
         }
       }
@@ -41,7 +40,7 @@ export default function LinkHubPage() {
     fetchData();
   }, [alias]);
 
-  if (isFound) {
+  if (!isFound) {
     return (
       <div
         style={{

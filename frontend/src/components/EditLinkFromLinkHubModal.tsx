@@ -47,7 +47,11 @@ export default function EditLinkFromLinkHubModal(
         <Form.Item label="Title" name="title">
           <Input max={64} />
         </Form.Item>
-        <Form.Item label="URL" name="url">
+        <Form.Item
+          label="URL"
+          name="url"
+          rules={[{ type: 'url', message: 'Please enter a valid URL.' }]}
+        >
           <Input />
         </Form.Item>
       </Form>

@@ -29,12 +29,11 @@ class LinkHubClient:
         result = self.db.linkhubs.insert_one(document)
         return result.inserted_id, alias
 
-    @classmethod
-    def _generate_unique_key(cls) -> str:
+    def _generate_unique_key(self) -> str:
         """Generates a unique key."""
+        collection = self.db.linkhubs
 
-        # TODO: Make a better unique key generator
-        return str(random.randint(0, 3000))
+        return str(collection.count())
 
     def can_edit(self, linkhub_id: str, netid: str) -> bool:
         data = self.get_by_id(linkhub_id)
@@ -100,8 +99,11 @@ class LinkHubClient:
         )
         collection.update_one({"_id": ObjectId(linkhub_id)}, {"$pull": {"links": None}})
 
-    def _is_alias_valid(self, alias: str) -> bool:
-        collection = self.db.linkhubs
-        result = collection.find_one({"alias": alias})
+    def is_alias_valid(self, alias: str, oldAlias: Optional[str] = None) -> bool:
+        if oldAlias is not None and oldAlias == alias:
+            return True
 
-        return result is not None
+        collection = self.db.linkhubs
+        result = collection.find_one({"alias": str(alias)})
+
+        return result is None

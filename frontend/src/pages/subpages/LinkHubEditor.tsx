@@ -21,6 +21,7 @@ import EditLinkFromLinkHubModal, {
   EditLinkData,
 } from '../../components/EditLinkFromLinkHubModal';
 import { NotFoundException } from '../../exceptions/NotFoundException';
+import { serverValidateLinkHubAlias } from '../../Validators';
 
 interface PLinkHubEditRow {
   link: DisplayLink;
@@ -346,7 +347,14 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
                     onChange={onTitleChange}
                   />
                 </Form.Item>
-                <Form.Item label="Alias" name="linkhub-alias">
+                <Form.Item
+                  label="Alias"
+                  name="linkhub-alias"
+                  rules={[
+                    { required: true, message: 'Alias cannot be empty.' },
+                    { validator: serverValidateLinkHubAlias },
+                  ]}
+                >
                   <Input
                     addonBefore={`${window.location.origin}/h/`}
                     max={32}

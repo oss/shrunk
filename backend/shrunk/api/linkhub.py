@@ -68,12 +68,12 @@ def get_linkhub_by_alias(alias: str) -> Any:
     client = current_app.client
     result = client.linkhubs.get_by_alias(alias)
 
-    if result is None or not result["public"]:
+    if result is None or not result["is_public"]:
         return jsonify({"success": False, "error": "Does not exist"}), 404
 
     del result["owner"]
     del result["collaborators"]
-    del result["public"]
+    del result["is_public"]
 
     return jsonify(result)
 
@@ -223,3 +223,9 @@ def publish_linkhub(netid: str, client: ShrunkClient, req: Any, linkhub_id: str)
     client.linkhubs.set_publish_status(linkhub_id, req["value"])
 
     return jsonify({"success": True})
+
+
+@bp.route("/validate-linkhub-alias/<b32:value>", methods=["GET"])
+@require_login
+def validate_alias_linkhub(netid: str, client: ShrunkClient, value: str) -> Any:
+    return jsonify({"valid": client.linkhubs.is_alias_valid(value)})
