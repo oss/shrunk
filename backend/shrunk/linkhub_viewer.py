@@ -19,6 +19,6 @@ def index() -> Any:
 
 
 @bp.route("/<string:alias>", methods=["GET"])
-def view_linkhub(alias: str) -> Any:
+def view_linkhub(_: str) -> Any:
     resp = make_response(send_from_directory("static/dist", "linkhub-loader.html"))
     return resp

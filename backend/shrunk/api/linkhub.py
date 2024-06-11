@@ -293,5 +293,6 @@ def validate_alias_linkhub(netid: str, client: ShrunkClient, value: str) -> Any:
 
 @bp.route("/is-linkhub-enabled", methods=["GET"])
 @require_login
-def is_linkhub_enabled(_netid: str, client: ShrunkClient) -> Any:
+def is_linkhub_enabled(_netid: str, _client: ShrunkClient) -> Any:
+    # pylint: disable=unused-argument
     return jsonify({"status": current_app.config["LINKHUB_INTEGRATION_ENABLED"]})

@@ -1,7 +1,6 @@
 from typing import Optional, Any, Tuple
 from bson.objectid import ObjectId
 import pymongo
-import random
 
 __all__ = ["LinkHubClient"]
 
