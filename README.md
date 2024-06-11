@@ -17,7 +17,13 @@
 
 ## Build Instructions
 
-Click [here](./docs/build_instructions.rst) for the build instructions. You can also view the HTML version of the documentation via [GitLab Artifiacts](https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/artifacts).
+If you want to start the developer build, install [Docker Desktop](https://docs.docker.com/desktop/), change the value `DB_HOST` the backend's config file, and run the following command:
+
+```
+docker-compose up
+```
+
+If you want a more detailed set of instructions on how to build without Docker, click [here](./docs/build_instructions.rst) for the build instructions. You can also view the HTML version of the documentation via [GitLab Artifiacts](https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/artifacts).
 
 ## Contributing
 
