@@ -4,7 +4,6 @@ from typing import Any
 
 from flask import Blueprint, jsonify, current_app
 
-from shrunk.config import LINKHUB_INTEGRATION_ENABLED
 from shrunk.client import ShrunkClient
 from shrunk.util.decorators import require_login, request_schema
 
@@ -40,7 +39,7 @@ CREATE_LINKHUB_SCHEMA = {
 @request_schema(CREATE_LINKHUB_SCHEMA)
 @require_login
 def create_linkhub(netid: str, client: ShrunkClient, req: Any) -> Any:
-    if not LINKHUB_INTEGRATION_ENABLED:
+    if not current_app.config["LINKHUB_INTEGRATION_ENABLED"]:
         return (
             jsonify({"success": False, "error": "LinkHub has been disabled"}),
             503,
@@ -59,7 +58,7 @@ def create_linkhub(netid: str, client: ShrunkClient, req: Any) -> Any:
 def get_linkhub_by_id_with_login(
     netid: str, client: ShrunkClient, linkhub_id: str
 ) -> Any:
-    if not LINKHUB_INTEGRATION_ENABLED:
+    if not current_app.config["LINKHUB_INTEGRATION_ENABLED"]:
         return (
             jsonify({"success": False, "error": "LinkHub has been disabled"}),
             503,
@@ -78,7 +77,7 @@ def get_linkhub_by_id_with_login(
 @bp.route("/<string:alias>/public", methods=["GET"])
 def get_linkhub_by_alias(alias: str) -> Any:
     """Gives the end-user less information on what the document contains."""
-    if not LINKHUB_INTEGRATION_ENABLED:
+    if not current_app.config["LINKHUB_INTEGRATION_ENABLED"]:
         return (
             jsonify({"success": False, "error": "LinkHub has been disabled"}),
             503,
@@ -114,7 +113,7 @@ ADD_LINK_TO_LINKHUB_SCHEMA = {
 def add_link_to_linkhub(
     netid: str, client: ShrunkClient, req: Any, linkhub_id: str
 ) -> Any:
-    if not LINKHUB_INTEGRATION_ENABLED:
+    if not current_app.config["LINKHUB_INTEGRATION_ENABLED"]:
         return (
             jsonify({"success": False, "error": "LinkHub has been disabled"}),
             503,
@@ -146,7 +145,7 @@ SET_CHANGE_LINKHUB_TITLE_SCHEMA = {
 def set_link_from_linkhub(
     netid: str, client: ShrunkClient, req: Any, linkhub_id: str
 ) -> Any:
-    if not LINKHUB_INTEGRATION_ENABLED:
+    if not current_app.config["LINKHUB_INTEGRATION_ENABLED"]:
         return (
             jsonify({"success": False, "error": "LinkHub has been disabled"}),
             503,
@@ -178,7 +177,7 @@ CHANGE_LINKHUB_TITLE_SCHEMA = {
 def change_linkhub_title(
     netid: str, client: ShrunkClient, req: Any, linkhub_id: str
 ) -> Any:
-    if not LINKHUB_INTEGRATION_ENABLED:
+    if not current_app.config["LINKHUB_INTEGRATION_ENABLED"]:
         return (
             jsonify({"success": False, "error": "LinkHub has been disabled"}),
             503,
@@ -208,7 +207,7 @@ CHANGE_LINKHUB_TITLE_SCHEMA = {
 def change_linkhub_alias(
     netid: str, client: ShrunkClient, req: Any, linkhub_id: str
 ) -> Any:
-    if not LINKHUB_INTEGRATION_ENABLED:
+    if not current_app.config["LINKHUB_INTEGRATION_ENABLED"]:
         return (
             jsonify({"success": False, "error": "LinkHub has been disabled"}),
             503,
@@ -238,7 +237,7 @@ DELETE_LINK_FROMLINKHUB_SCHEMA = {
 def delete_link_from_linkhub(
     netid: str, client: ShrunkClient, req: Any, linkhub_id: str
 ) -> Any:
-    if not LINKHUB_INTEGRATION_ENABLED:
+    if not current_app.config["LINKHUB_INTEGRATION_ENABLED"]:
         return (
             jsonify({"success": False, "error": "LinkHub has been disabled"}),
             503,
@@ -266,7 +265,7 @@ PUBLISH_LINKHUB_SCHEMA = {
 @request_schema(PUBLISH_LINKHUB_SCHEMA)
 @require_login
 def publish_linkhub(netid: str, client: ShrunkClient, req: Any, linkhub_id: str) -> Any:
-    if not LINKHUB_INTEGRATION_ENABLED:
+    if not current_app.config["LINKHUB_INTEGRATION_ENABLED"]:
         return (
             jsonify({"success": False, "error": "LinkHub has been disabled"}),
             503,
@@ -283,7 +282,7 @@ def publish_linkhub(netid: str, client: ShrunkClient, req: Any, linkhub_id: str)
 @bp.route("/validate-linkhub-alias/<b32:value>", methods=["GET"])
 @require_login
 def validate_alias_linkhub(netid: str, client: ShrunkClient, value: str) -> Any:
-    if not LINKHUB_INTEGRATION_ENABLED:
+    if not current_app.config["LINKHUB_INTEGRATION_ENABLED"]:
         return (
             jsonify({"success": False, "error": "LinkHub has been disabled"}),
             503,
@@ -294,5 +293,5 @@ def validate_alias_linkhub(netid: str, client: ShrunkClient, value: str) -> Any:
 
 @bp.route("/is-linkhub-enabled", methods=["GET"])
 @require_login
-def is_linkhub_enabled(_netid: str, _client: ShrunkClient) -> Any:
-    return jsonify({"status": LINKHUB_INTEGRATION_ENABLED})
+def is_linkhub_enabled(_netid: str, client: ShrunkClient) -> Any:
+    return jsonify({"status": current_app.config["LINKHUB_INTEGRATION_ENABLED"]})
