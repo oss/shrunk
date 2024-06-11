@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import LinkHubComponent, { DisplayLink } from '../components/LinkHubComponent';
 import { NotFoundException } from '../exceptions/NotFoundException';
+import { ServiceDisabledException } from '../exceptions/ServiceDisabledException';
 
 async function getLinkHub(alias: string): Promise<any> {
   const resp = await fetch(`/api/v1/linkhub/${alias}/public`, {
@@ -10,6 +11,8 @@ async function getLinkHub(alias: string): Promise<any> {
   });
   if (resp.status === 404) {
     throw new NotFoundException('LinkHub does not exist');
+  } else if (resp.status === 503) {
+    throw new ServiceDisabledException('Service is disabled');
   }
 
   const result = await resp.json();

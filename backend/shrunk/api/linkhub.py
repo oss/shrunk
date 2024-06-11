@@ -4,6 +4,7 @@ from typing import Any
 
 from flask import Blueprint, jsonify, current_app
 
+from shrunk.config import LINKHUB_INTEGRATION_ENABLED
 from shrunk.client import ShrunkClient
 from shrunk.util.decorators import require_login, request_schema
 
@@ -39,6 +40,12 @@ CREATE_LINKHUB_SCHEMA = {
 @request_schema(CREATE_LINKHUB_SCHEMA)
 @require_login
 def create_linkhub(netid: str, client: ShrunkClient, req: Any) -> Any:
+    if not LINKHUB_INTEGRATION_ENABLED:
+        return (
+            jsonify({"success": False, "error": "LinkHub has been disabled"}),
+            503,
+        )
+
     alias = None
     if "alias" in req:
         alias = req["alias"]
@@ -52,6 +59,12 @@ def create_linkhub(netid: str, client: ShrunkClient, req: Any) -> Any:
 def get_linkhub_by_id_with_login(
     netid: str, client: ShrunkClient, linkhub_id: str
 ) -> Any:
+    if not LINKHUB_INTEGRATION_ENABLED:
+        return (
+            jsonify({"success": False, "error": "LinkHub has been disabled"}),
+            503,
+        )
+
     if not client.linkhubs.can_edit(linkhub_id, netid):
         return jsonify({"success": False, "error": "No permission"}), 401
 
@@ -65,6 +78,12 @@ def get_linkhub_by_id_with_login(
 @bp.route("/<string:alias>/public", methods=["GET"])
 def get_linkhub_by_alias(alias: str) -> Any:
     """Gives the end-user less information on what the document contains."""
+    if not LINKHUB_INTEGRATION_ENABLED:
+        return (
+            jsonify({"success": False, "error": "LinkHub has been disabled"}),
+            503,
+        )
+
     client = current_app.client
     result = client.linkhubs.get_by_alias(alias)
 
@@ -95,6 +114,12 @@ ADD_LINK_TO_LINKHUB_SCHEMA = {
 def add_link_to_linkhub(
     netid: str, client: ShrunkClient, req: Any, linkhub_id: str
 ) -> Any:
+    if not LINKHUB_INTEGRATION_ENABLED:
+        return (
+            jsonify({"success": False, "error": "LinkHub has been disabled"}),
+            503,
+        )
+
     if not client.linkhubs.can_edit(linkhub_id, netid):
         return jsonify({"success": False, "error": "No permission"}), 401
 
@@ -121,6 +146,12 @@ SET_CHANGE_LINKHUB_TITLE_SCHEMA = {
 def set_link_from_linkhub(
     netid: str, client: ShrunkClient, req: Any, linkhub_id: str
 ) -> Any:
+    if not LINKHUB_INTEGRATION_ENABLED:
+        return (
+            jsonify({"success": False, "error": "LinkHub has been disabled"}),
+            503,
+        )
+
     if not client.linkhubs.can_edit(linkhub_id, netid):
         return jsonify({"success": False, "error": "No permission"}), 401
 
@@ -147,6 +178,12 @@ CHANGE_LINKHUB_TITLE_SCHEMA = {
 def change_linkhub_title(
     netid: str, client: ShrunkClient, req: Any, linkhub_id: str
 ) -> Any:
+    if not LINKHUB_INTEGRATION_ENABLED:
+        return (
+            jsonify({"success": False, "error": "LinkHub has been disabled"}),
+            503,
+        )
+
     if not client.linkhubs.can_edit(linkhub_id, netid):
         return jsonify({"success": False, "error": "No permission"}), 401
 
@@ -171,6 +208,12 @@ CHANGE_LINKHUB_TITLE_SCHEMA = {
 def change_linkhub_alias(
     netid: str, client: ShrunkClient, req: Any, linkhub_id: str
 ) -> Any:
+    if not LINKHUB_INTEGRATION_ENABLED:
+        return (
+            jsonify({"success": False, "error": "LinkHub has been disabled"}),
+            503,
+        )
+
     if not client.linkhubs.can_edit(linkhub_id, netid):
         return jsonify({"success": False, "error": "No permission"}), 401
 
@@ -195,6 +238,12 @@ DELETE_LINK_FROMLINKHUB_SCHEMA = {
 def delete_link_from_linkhub(
     netid: str, client: ShrunkClient, req: Any, linkhub_id: str
 ) -> Any:
+    if not LINKHUB_INTEGRATION_ENABLED:
+        return (
+            jsonify({"success": False, "error": "LinkHub has been disabled"}),
+            503,
+        )
+
     if not client.linkhubs.can_edit(linkhub_id, netid):
         return jsonify({"success": False, "error": "No permission"}), 401
 
@@ -217,6 +266,12 @@ PUBLISH_LINKHUB_SCHEMA = {
 @request_schema(PUBLISH_LINKHUB_SCHEMA)
 @require_login
 def publish_linkhub(netid: str, client: ShrunkClient, req: Any, linkhub_id: str) -> Any:
+    if not LINKHUB_INTEGRATION_ENABLED:
+        return (
+            jsonify({"success": False, "error": "LinkHub has been disabled"}),
+            503,
+        )
+
     if not client.linkhubs.can_edit(linkhub_id, netid):
         return jsonify({"success": False, "error": "No permission"}), 401
 
@@ -228,4 +283,16 @@ def publish_linkhub(netid: str, client: ShrunkClient, req: Any, linkhub_id: str)
 @bp.route("/validate-linkhub-alias/<b32:value>", methods=["GET"])
 @require_login
 def validate_alias_linkhub(netid: str, client: ShrunkClient, value: str) -> Any:
+    if not LINKHUB_INTEGRATION_ENABLED:
+        return (
+            jsonify({"success": False, "error": "LinkHub has been disabled"}),
+            503,
+        )
+
     return jsonify({"valid": client.linkhubs.is_alias_valid(value)})
+
+
+@bp.route("/is-linkhub-enabled", methods=["GET"])
+@require_login
+def is_linkhub_enabled(_netid: str, _client: ShrunkClient) -> Any:
+    return jsonify({"status": LINKHUB_INTEGRATION_ENABLED})

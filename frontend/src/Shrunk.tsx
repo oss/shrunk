@@ -120,6 +120,12 @@ interface State {
    * @property
    */
   role: string;
+
+  /**
+   * Is the LinkHub service available?
+   * @property
+   */
+  isLinkHubEnabled: boolean;
 }
 
 /**
@@ -145,7 +151,6 @@ export class Shrunk extends React.Component<Props, State> {
         : this.props.userPrivileges.has('facstaff')
         ? 'Faculty/Staff'
         : 'Administrator';
-
     this.state = {
       showAdminTab,
       showWhitelistTab,
@@ -153,7 +158,9 @@ export class Shrunk extends React.Component<Props, State> {
       selectedKeys: ['dashboard'],
       pendingAlerts: [],
       role,
+      isLinkHubEnabled: false,
     };
+    this.fetchIsLinkHubEnabled();
   }
 
   async componentDidMount(): Promise<void> {
@@ -165,6 +172,14 @@ export class Shrunk extends React.Component<Props, State> {
       this.setSelectedKeysFromLocation(location),
     );
   }
+
+  fetchIsLinkHubEnabled = async (): Promise<void> => {
+    await fetch('/api/v1/linkhub/is-linkhub-enabled')
+      .then((resp) => resp.json())
+      .then((json) =>
+        this.setState({ isLinkHubEnabled: json.status as boolean }),
+      );
+  };
 
   /**
    * Fetches list of pending alerts from backend and updates state.
@@ -371,11 +386,15 @@ export class Shrunk extends React.Component<Props, State> {
                   URL Shortener
                 </NavLink>
               </Menu.Item>
-              <Menu.Item key="linkhubs">
-                <NavLink to="/linkhubs" className="nav-text">
-                  LinkHub
-                </NavLink>
-              </Menu.Item>
+              {this.state.isLinkHubEnabled ? (
+                <Menu.Item key="linkhubs">
+                  <NavLink to="/linkhubs" className="nav-text">
+                    LinkHub
+                  </NavLink>
+                </Menu.Item>
+              ) : (
+                <></>
+              )}
               {!this.state.showWhitelistTab ? (
                 <></>
               ) : (
