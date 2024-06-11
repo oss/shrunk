@@ -13,6 +13,7 @@ from .tracking import TrackingClient
 from .roles import RolesClient
 from .links import LinksClient
 from .alerts import AlertsClient
+from .linkhub import LinkHubClient
 from .role_requests import RoleRequestClient
 from .positions import PositionClient
 
@@ -66,6 +67,7 @@ class ShrunkClient:
             REDIRECT_CHECK_TIMEOUT=REDIRECT_CHECK_TIMEOUT or 0.5,
             other_clients=self,
         )
+        self.linkhubs = LinkHubClient(db=self.db)
         self.roles = RolesClient(db=self.db)
         self.tracking = TrackingClient(db=self.db)
         self.orgs = OrgsClient(db=self.db)
@@ -97,6 +99,15 @@ class ShrunkClient:
                 ("aliases.alias", pymongo.TEXT),
             ]
         )
+
+        self.db.linkhubs.create_index(
+            [("title", pymongo.TEXT), ("alias", pymongo.TEXT), ("owner", pymongo.TEXT)]
+        )
+        self.db.linkhubs.create_index([("links", pymongo.ASCENDING)])
+        self.db.linkhubs.create_index([("collaborators", pymongo.ASCENDING)])
+
+        self.db.unsafe_links.create_index([("long_url", pymongo.TEXT)])
+        self.db.unsafe_links.create_index([("netid", pymongo.ASCENDING)])
 
         self.db.unsafe_links.create_index([("long_url", pymongo.TEXT)])
         self.db.unsafe_links.create_index([("netid", pymongo.ASCENDING)])
@@ -131,6 +142,7 @@ class ShrunkClient:
             "visitors",
             "visits",
             "unsafe_links",
+            "linkhubs",
         ]:
             self.db[col].delete_many({})
 

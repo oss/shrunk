@@ -20,7 +20,7 @@ import moment from 'moment';
 import { getOrgInfo, listOrgs, OrgInfo } from '../api/Org';
 import { SearchBox } from '../components/SearchBox';
 import { LinkRow } from '../components/LinkRow';
-import { LinkInfo } from '../components/LinkInfo';
+import { LinkInfo } from '../models/LinkInfo';
 import { QrCodeModal } from '../components/QrCode';
 import { EditLinkModal, EditLinkFormValues } from '../components/EditLinkModal';
 import { ShareLinkModal } from '../components/ShareLinkModal';
@@ -927,7 +927,7 @@ export class Dashboard extends React.Component<Props, State> {
             {this.state.userOrgs === null ? (
               <></>
             ) : (
-              <SearchBox updateQueryString={this.updateQueryString} />
+              <SearchBox placeholder='Search Links...' updateQueryString={this.updateQueryString} />
             )}
           </Col>
           <Col>

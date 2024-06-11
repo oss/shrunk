@@ -1,5 +1,4 @@
 {
-  "plugins": ["prettier-plugin-toml"],
   "singleQuote": true,
   "trailingComma": "all"
 }

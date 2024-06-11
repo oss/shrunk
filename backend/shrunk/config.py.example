@@ -5,7 +5,8 @@ it as config.py.
 """
 
 DB_HOST = "localhost"
-"""The host machine for the database."""
+"""The host machine for the database.
+If you're using Docker, set it to "mongodb"."""
 
 DB_PORT = 27017
 """The database's port on the host machine."""

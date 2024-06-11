@@ -100,7 +100,7 @@ SEARCH_SCHEMA = {
 @bp.route("", methods=["POST"])
 @request_schema(SEARCH_SCHEMA)
 @require_login
-def post_search(netid: str, client: ShrunkClient, req: Any) -> Any:
+def post_search_urls(netid: str, client: ShrunkClient, req: Any) -> Any:
     """``POST /api/search``
 
     Execute a search query. Request format:
@@ -180,5 +180,5 @@ def post_search(netid: str, client: ShrunkClient, req: Any) -> Any:
     if "end_time" in req:
         req["end_time"] = datetime.fromisoformat(req["end_time"])
 
-    result = client.search.execute(netid, req)
+    result = client.search.execute_url(netid, req)
     return jsonify(result)

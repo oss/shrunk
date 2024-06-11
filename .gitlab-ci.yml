@@ -120,9 +120,7 @@ backend_build:
   script:
     - python -V
     - mkdir backend/shrunk/static/dist
-    - cp frontend/dist/* backend/shrunk/static/dist
     - rm -f backend/shrunk/static/dist/index.html backend/shrunk/templates/index.html
-    - cp frontend/dist/index.html backend/shrunk/templates/index.html
     - cd backend
     - python setup.py bdist_wheel
   artifacts:

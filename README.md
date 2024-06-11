@@ -1,13 +1,15 @@
-# Shrunk
+# Shrunk ![license: MIT](https://img.shields.io/badge/license-MIT-blue) ![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg) ![code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)
 
-[Shrunk](https://go.rutgers.edu/) is an open-source full-stack application made to shorten URLs for faculty, staff, and professors of Rutgers University. It is written in [Python](https://www.python.org/) and [TypeScript](https://www.typescriptlang.org/) and uses [MongoDB](https://www.mongodb.com/), [React](https://react.dev/), and [Flask](https://flask.palletsprojects.com/).
+[Shrunk](https://go.rutgers.edu/) is an open-source full-stack application primarily made to shorten URLs for faculty, staff, and professors of Rutgers University. It is written in [Python](https://www.python.org/) and [TypeScript](https://www.typescriptlang.org/) and uses [MongoDB](https://www.mongodb.com/), [React](https://react.dev/), and [Flask](https://flask.palletsprojects.com/).
 
 <div align="center">
-    <img src="./images/home.png" height=400>
+    <img src="./docs/images/home.png" height=400 width='auto'>
 </div>
 
 ## Features
 
+- Shorten long URLs
+- Create a collection of URLs onto a customizable webpage
 - Supports Rutgers Central Authentication Service (CAS)
 - Statistics on number of visits on a shortened URL with dynamic charts and geographic maps
 - Share multiple shortened URLs via organizations
@@ -15,7 +17,13 @@
 
 ## Build Instructions
 
-Click [here](./docs/build_instructions.rst) for the build instructions. You can also view the HTML version of the documentation via [GitLab Artifiacts](https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/artifacts).
+If you want to start the developer build, install [Docker Desktop](https://docs.docker.com/desktop/), change the value `DB_HOST` the backend's config file, and run the following command:
+
+```
+docker-compose up
+```
+
+If you want a more detailed set of instructions on how to build without Docker, click [here](./docs/build_instructions.rst) for the build instructions. You can also view the HTML version of the documentation via [GitLab Artifiacts](https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/artifacts).
 
 ## Contributing
 

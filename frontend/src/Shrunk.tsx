@@ -14,7 +14,17 @@ import {
 } from 'react-router-dom';
 import { createBrowserHistory, Location } from 'history';
 import { Layout, Menu, Dropdown, Button, Modal, Typography } from 'antd/lib';
-import { UserOutlined, DownOutlined, MenuOutlined } from '@ant-design/icons';
+import {
+  UserOutlined,
+  DownOutlined,
+  MenuOutlined,
+  TeamOutlined,
+  BookOutlined,
+  BulbOutlined,
+  LogoutOutlined,
+  SafetyOutlined,
+  SlidersOutlined,
+} from '@ant-design/icons';
 
 import { Dashboard } from './pages/Dashboard';
 import { Admin } from './pages/Admin';
@@ -37,6 +47,8 @@ import base32 from 'hi-base32';
 
 import './antd_themed.less';
 import './Shrunk.less';
+import LinkHubDashboard from './pages/LinkHubDashboard';
+import LinkHubEditor from './pages/subpages/LinkHubEditor';
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -108,6 +120,12 @@ interface State {
    * @property
    */
   role: string;
+
+  /**
+   * Is the LinkHub service available?
+   * @property
+   */
+  isLinkHubEnabled: boolean;
 }
 
 /**
@@ -129,11 +147,10 @@ export class Shrunk extends React.Component<Props, State> {
       this.props.userPrivileges.size === 0
         ? 'Whitelisted User'
         : this.props.userPrivileges.has('power_user')
-          ? 'Power User'
-          : this.props.userPrivileges.has('facstaff')
-            ? 'Faculty/Staff'
-            : 'Administrator';
-
+        ? 'Power User'
+        : this.props.userPrivileges.has('facstaff')
+        ? 'Faculty/Staff'
+        : 'Administrator';
     this.state = {
       showAdminTab,
       showWhitelistTab,
@@ -141,7 +158,9 @@ export class Shrunk extends React.Component<Props, State> {
       selectedKeys: ['dashboard'],
       pendingAlerts: [],
       role,
+      isLinkHubEnabled: false,
     };
+    this.fetchIsLinkHubEnabled();
   }
 
   async componentDidMount(): Promise<void> {
@@ -153,6 +172,14 @@ export class Shrunk extends React.Component<Props, State> {
       this.setSelectedKeysFromLocation(location),
     );
   }
+
+  fetchIsLinkHubEnabled = async (): Promise<void> => {
+    await fetch('/api/v1/linkhub/is-linkhub-enabled')
+      .then((resp) => resp.json())
+      .then((json) =>
+        this.setState({ isLinkHubEnabled: json.status as boolean }),
+      );
+  };
 
   /**
    * Fetches list of pending alerts from backend and updates state.
@@ -198,6 +225,8 @@ export class Shrunk extends React.Component<Props, State> {
     let key: string | null = null;
     if (route.startsWith('#/dash') || route.startsWith('#/stats')) {
       key = 'dash';
+    } else if (route.startsWith('#/linkhubs')) {
+      key = 'linkhubs';
     } else if (route.startsWith('#/orgs')) {
       key = 'orgs';
     } else if (route.startsWith('#/admin')) {
@@ -230,31 +259,83 @@ export class Shrunk extends React.Component<Props, State> {
               <Link to="/dash">
                 <img
                   alt="Rutgers"
-                  src="/app/static/img/rutgers.png"
+                  src="/static/img/rutgers.png"
                   width="175px"
-                  srcSet="/app/static/img/rutgers.png"
+                  srcSet="/static/img/rutgers.png"
                 />
               </Link>
             </div>
             <div className="user-name">
               <Dropdown
-                className="logout-menu"
+                className="profile-menu"
                 overlay={
-                  <Menu className="customclass">
+                  <Menu>
                     <Menu.Item
-                      key="1"
+                      key="role-status"
                       disabled
-                      icon={<UserOutlined />}
                       style={{
                         textAlign: 'center',
                         cursor: 'default',
                         color: 'black',
+                        paddingTop: '8px',
+                        paddingBottom: '8px',
                       }}
                     >
-                      {this.state.role}
+                      <p style={{ margin: 0, marginBottom: '-4px' }}>
+                        {this.props.netid}
+                      </p>
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: '0.8em',
+                          color: '#383838',
+                        }}
+                      >
+                        {this.state.role}
+                      </p>
                     </Menu.Item>
+
                     <Menu.Divider />
-                    <Menu.Item key="2" style={{ textAlign: 'center' }}>
+
+                    <Menu.Item icon={<TeamOutlined />} key="orgs">
+                      <NavLink to="/orgs">My Organizations</NavLink>
+                    </Menu.Item>
+                    {!this.state.showRequestPowerUserRoleTab ? (
+                      <></>
+                    ) : (
+                      <Menu.Item
+                        icon={<SafetyOutlined />}
+                        key="request-power-user-role"
+                      >
+                        <NavLink to="/request-power-user-role">
+                          Request Power User Role
+                        </NavLink>
+                      </Menu.Item>
+                    )}
+
+                    {this.state.showAdminTab ? (
+                      <Menu.Item
+                        key="admin-dashboard"
+                        icon={<SlidersOutlined />}
+                      >
+                        <NavLink to="/admin">Admin Dashboard</NavLink>
+                      </Menu.Item>
+                    ) : (
+                      <></>
+                    )}
+
+                    <Menu.Divider />
+
+                    <Menu.Item key="feedback" icon={<BulbOutlined />}>
+                      <a href="https://forms.gle/Gv1L1bNZWtLS21wW8">Feedback</a>
+                    </Menu.Item>
+                    <Menu.Item key="faq" icon={<BookOutlined />}>
+                      <NavLink to="/faq">FAQ</NavLink>
+                    </Menu.Item>
+
+                    <Menu.Divider />
+
+                    <Menu.Item key="logout" icon={<LogoutOutlined />}>
                       <a href="/app/logout">Logout</a>
                     </Menu.Item>
                   </Menu>
@@ -264,6 +345,7 @@ export class Shrunk extends React.Component<Props, State> {
                   type="text"
                   aria-label={this.props.netid}
                   className="filter-btn"
+                  style={{ textAlign: 'right' }}
                 >
                   {this.props.netid} <DownOutlined />
                 </Button>
@@ -301,17 +383,17 @@ export class Shrunk extends React.Component<Props, State> {
             >
               <Menu.Item key="dash">
                 <NavLink to="/dash" className="nav-text">
-                  Dashboard
+                  URL Shortener
                 </NavLink>
               </Menu.Item>
-              {!this.state.showAdminTab ? (
-                <></>
-              ) : (
-                <Menu.Item key="admin">
-                  <NavLink to="/admin" className="nav-text">
-                    Admin
+              {this.state.isLinkHubEnabled ? (
+                <Menu.Item key="linkhubs">
+                  <NavLink to="/linkhubs" className="nav-text">
+                    LinkHub
                   </NavLink>
                 </Menu.Item>
+              ) : (
+                <></>
               )}
               {!this.state.showWhitelistTab ? (
                 <></>
@@ -322,35 +404,6 @@ export class Shrunk extends React.Component<Props, State> {
                   </NavLink>
                 </Menu.Item>
               )}
-              <Menu.Item key="orgs">
-                <NavLink to="/orgs" className="nav-text">
-                  Organizations
-                </NavLink>
-              </Menu.Item>
-              {!this.state.showRequestPowerUserRoleTab ? (
-                <></>
-              ) : (
-                <Menu.Item key="request-power-user-role">
-                  <NavLink to="/request-power-user-role" className="nav-text">
-                    Request Power User Role
-                  </NavLink>
-                </Menu.Item>
-              )}
-              <Menu.Item key="faq">
-                <NavLink to="/faq" className="nav-text">
-                  FAQ
-                </NavLink>
-              </Menu.Item>
-              <Menu.Item key="feedback">
-                <a
-                  href="https://forms.gle/Gv1L1bNZWtLS21wW8"
-                  className="nav-text"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Feedback
-                </a>
-              </Menu.Item>
             </Menu>
           </Header>
           <Layout>
@@ -388,6 +441,18 @@ export class Shrunk extends React.Component<Props, State> {
                     netid={this.props.netid}
                   />
                 </Route>
+
+                <Route exact path="/linkhubs">
+                  <LinkHubDashboard />
+                </Route>
+
+                <Route
+                  exact
+                  path="/linkhubs/:linkHubId/edit"
+                  render={(props) => (
+                    <LinkHubEditor linkhubId={props.match.params.linkHubId} />
+                  )}
+                />
 
                 <Route
                   exact
@@ -478,18 +543,19 @@ export class Shrunk extends React.Component<Props, State> {
           >
             <div style={{ width: '50%' }}>
               <p>
-                &copy; {new Date().getFullYear()} Rutgers, The State University
-                of New Jersey. All rights reserved. Rutgers is an equal
-                access/equal opportunity institution. Individuals with
-                disabilities are encouraged to direct suggestions, comments, or
-                complaints concerning any accessibility issues with Rutgers web
-                sites to{' '}
+                &copy; {new Date().getFullYear()}{' '}
+                <a href="https://rutgers.edu">
+                  Rutgers, The State University of New Jersey
+                </a>
+                . All rights reserved. Rutgers is an equal access/equal
+                opportunity institution. Individuals with disabilities are
+                encouraged to direct suggestions, comments, or complaints
+                concerning any accessibility issues with Rutgers web sites to{' '}
                 <a href="mailto:accessibility@rutgers.edu">
                   accessibility@rutgers.edu
                 </a>{' '}
-                or complete the
+                or complete the{' '}
                 <a href="https://rutgers.ca1.qualtrics.com/jfe/form/SV_57iH6Rfeocz51z0">
-                  {' '}
                   Report Accessibility Barrier or Provide Feedback Form
                 </a>
                 .

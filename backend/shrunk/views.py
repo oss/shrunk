@@ -12,6 +12,7 @@ from flask import (
     render_template,
     current_app,
     make_response,
+    send_from_directory,
     url_for,
 )
 from werkzeug.exceptions import abort
@@ -54,10 +55,11 @@ def index() -> Any:
         if os.environ.get("FLASK_ENV") == "dev":
             secure_cookie = False
 
-    resp = make_response(render_template("index.html"))
+    resp = make_response(send_from_directory("static/dist", "index.html"))
     resp.set_cookie(
         "shrunk_params", shrunk_params, secure=secure_cookie, samesite="Strict"
     )
+
     return resp
 
 

@@ -16,8 +16,10 @@ class SearchClient:
         self.db = db
         self.client = client
 
-    def execute(self, user_netid: str, query: Any) -> Any:  # pylint: disable=too-many-branches,too-many-statements
-        """Execute a search query
+    def execute_url(
+        self, user_netid: str, query: Any
+    ) -> Any:  # pylint: disable=too-many-branches,too-many-statements
+        """Execute a search query for shortened URLs.
 
         :param user_netid: The NetID of the user performing the search
         :param query: The search query. See :py:mod:`shrunk.api.search` for
@@ -260,5 +262,21 @@ class SearchClient:
 
         return {
             "count": count,
+            "results": unique_results,
+        }
+
+    def execute_linkhub(self, user_netid: str, query: Any) -> Any:
+        """Execute a search query for LinkHubs.
+
+        Currently returns all existing LinkHubs. lol
+
+        :param user_netid: The NetID of the user performing the search
+        :param query: The search query.
+        """
+
+        unique_results = list(self.db.linkhubs.find({}))
+
+        return {
+            "count": len(unique_results),
             "results": unique_results,
         }
