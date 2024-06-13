@@ -276,7 +276,7 @@ def publish_linkhub(netid: str, client: ShrunkClient, req: Any, linkhub_id: str)
 
     client.linkhubs.set_publish_status(linkhub_id, req["value"])
 
-    return jsonify({"success": True})
+    return jsonify({"success": True, "publish-status": req["value"]})
 
 
 @bp.route("/validate-linkhub-alias/<b32:value>", methods=["GET"])

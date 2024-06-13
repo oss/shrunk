@@ -161,7 +161,7 @@ async function publishLinkHub(linkhubId: string, value: boolean) {
   });
   const result = await resp.json();
 
-  return result;
+  return result['publish-status'];
 }
 
 export default function LinkHubEditor(props: PLinkHubEditor) {
@@ -261,16 +261,17 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
 
   function onAddDisplayLink() {
     const link: DisplayLink = {
-      title: 'click here to sell your soul',
-      url: 'https://overwatch.blizzard.com/en-us/',
+      title: 'New Link',
+      url: 'https://rutgers.edu',
       originId: Math.random(), // TODO: This is stupid; clean this up later.
     };
     addDisplayLink(link);
   }
 
   function onPublish(e: any) {
-    setIsPublished(!isPublished);
-    publishLinkHub(props.linkhubId, isPublished);
+    publishLinkHub(props.linkhubId, !isPublished).then((value) => {
+      setIsPublished(value);
+    });
   }
 
   if (!foundLinkHub) {
@@ -340,7 +341,13 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
             <Tabs.TabPane tab="Settings" key="settings">
               <Form layout="vertical">
                 <Title level={3}>Profile</Title>
-                <Form.Item label="Title" name="linkhub-title">
+                <Form.Item
+                  label="Title"
+                  name="linkhub-title"
+                  rules={[
+                    { required: true, message: 'Title cannot be empty.' },
+                  ]}
+                >
                   <Input
                     max={64}
                     defaultValue={title}
