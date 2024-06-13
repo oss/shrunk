@@ -18,7 +18,7 @@ def index() -> Any:
     return "LinkHub not found", 404
 
 
-@bp.route("/<string:alias>", methods=["GET"])  # TODO: Fix this.
+@bp.route("/<string:alias>", methods=["GET"])
 def view_linkhub(alias: str) -> Any:  # type: ignore
     resp = make_response(send_from_directory("static/dist", "linkhub-loader.html"))
     return resp
