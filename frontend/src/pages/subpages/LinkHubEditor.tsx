@@ -261,8 +261,8 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
 
   function onAddDisplayLink() {
     const link: DisplayLink = {
-      title: 'click here to sell your soul',
-      url: 'https://overwatch.blizzard.com/en-us/',
+      title: 'New Link',
+      url: 'https://rutgers.edu',
       originId: Math.random(), // TODO: This is stupid; clean this up later.
     };
     addDisplayLink(link);
