@@ -341,7 +341,13 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
             <Tabs.TabPane tab="Settings" key="settings">
               <Form layout="vertical">
                 <Title level={3}>Profile</Title>
-                <Form.Item label="Title" name="linkhub-title">
+                <Form.Item
+                  label="Title"
+                  name="linkhub-title"
+                  rules={[
+                    { required: true, message: 'Title cannot be empty.' },
+                  ]}
+                >
                   <Input
                     max={64}
                     defaultValue={title}
