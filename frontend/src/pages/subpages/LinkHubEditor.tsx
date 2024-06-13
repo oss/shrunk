@@ -161,7 +161,7 @@ async function publishLinkHub(linkhubId: string, value: boolean) {
   });
   const result = await resp.json();
 
-  return result;
+  return result['publish-status'];
 }
 
 export default function LinkHubEditor(props: PLinkHubEditor) {
@@ -269,8 +269,9 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
   }
 
   function onPublish(e: any) {
-    setIsPublished(!isPublished);
-    publishLinkHub(props.linkhubId, isPublished);
+    publishLinkHub(props.linkhubId, !isPublished).then((value) => {
+      setIsPublished(value);
+    });
   }
 
   if (!foundLinkHub) {
