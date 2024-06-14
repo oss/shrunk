@@ -550,7 +550,7 @@ export class Shrunk extends React.Component<Props, State> {
                 . All rights reserved. Rutgers is an equal access/equal
                 opportunity institution. Individuals with disabilities are
                 encouraged to direct suggestions, comments, or complaints
-                concerning any accessibility issues with Rutgers web sites to{' '}
+                concerning any accessibility issues with Rutgers websites to{' '}
                 <a href="mailto:accessibility@rutgers.edu">
                   accessibility@rutgers.edu
                 </a>{' '}
