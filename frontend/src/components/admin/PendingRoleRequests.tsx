@@ -7,8 +7,7 @@ import { Row, Col, Button, BackTop, Spin } from 'antd/lib';
 import moment from 'moment';
 import { IoReturnUpBack } from 'react-icons/io5';
 import base32 from 'hi-base32';
-import { ProcessRoleRequestModal } from '../modals/ProcessRoleRequestModal';
-import { ConsoleSqlOutlined } from '@ant-design/icons';
+import { ProcessRoleRequestModal } from '../../modals/ProcessRoleRequestModal';
 
 /**
  * Data describing the request text for a role

@@ -34,11 +34,11 @@ import { IoReturnUpBack } from 'react-icons/io5';
 import { Link, RouteComponentProps, withRouter } from 'react-router-dom';
 import moment from 'moment';
 
-import { MemberInfo, OrgInfo, getOrgInfo } from '../api/Org';
-import { OrgAdminTag } from '../pages/subpages/OrgCommon';
+import { MemberInfo, OrgInfo, getOrgInfo } from '../../api/Org';
+import { OrgAdminTag } from './OrgCommon';
 import '../../Base.less';
 import './ManageOrg.less';
-import { serverValidateNetId, serverValidateOrgName } from '../Validators';
+import { serverValidateNetId, serverValidateOrgName } from '../../Validators';
 
 /**
  * Props for the [[ManageOrg]] component

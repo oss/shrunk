@@ -21,7 +21,7 @@ import {
   LoadingOutlined,
 } from '@ant-design/icons';
 import { IoReturnUpBack } from 'react-icons/io5';
-import { downloadGrantedUsersCsv } from '../components/GrantedUserCsv';
+import { downloadGrantedUsersCsv } from '../GrantedUserCsv';
 import base32 from 'hi-base32';
 import moment from 'moment';
 

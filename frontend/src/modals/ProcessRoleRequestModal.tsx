@@ -6,7 +6,6 @@
 import React, { Component } from 'react';
 import { Modal, Button, Input, Form } from 'antd/lib';
 import { message } from 'antd';
-import base32 from 'hi-base32';
 import { FormInstance } from 'antd/lib/form';
 
 interface Props {

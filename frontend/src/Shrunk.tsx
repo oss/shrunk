@@ -33,12 +33,12 @@ import { Faq } from './pages/Faq';
 import { RoleRequestForm } from './pages/RoleRequestForm';
 
 import { Stats } from './pages/subpages/Stats';
-import { AdminStats } from './admin/AdminStats';
-import LinkSecurity from './admin/LinkSecurity';
-import { Role } from './admin/Role';
-import { ManageOrg } from './modals/ManageOrg';
+import { AdminStats } from './components/admin/AdminStats';
+import LinkSecurity from './components/admin/LinkSecurity';
+import { Role } from './components/admin/Role';
+import { ManageOrg } from './pages/subpages/ManageOrg';
 import { OrgStats } from './pages/subpages/OrgStats';
-import { PendingRoleRequests } from './admin/PendingRoleRequests';
+import { PendingRoleRequests } from './components/admin/PendingRoleRequests';
 
 import { PendingAlerts } from './modals/PendingAlerts';
 import { PendingRequests } from './modals/PendingRequests';

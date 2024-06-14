@@ -15,7 +15,6 @@ import {
   Tooltip,
   Spin,
   Modal,
-  Checkbox,
   Radio,
   RadioChangeEvent,
 } from 'antd/lib';
@@ -32,8 +31,7 @@ import {
   serverValidateLongUrl,
 } from '../Validators';
 import '../Base.less';
-import './FixAliasRemoveButton.less';
-import { CheckboxChangeEvent } from 'antd/lib/checkbox';
+import '../modals/FixAliasRemoveButton.less';
 
 /**
  * Displays a label with the text "Custom Alias" and a tooltip with extended help text

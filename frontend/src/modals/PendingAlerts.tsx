@@ -9,7 +9,7 @@ import { Modal, Button } from 'antd/lib';
 import {
   Orgsv2AlertNewUser,
   Orgsv2AlertCurrentUser,
-} from '../alerts/Orgsv2Alerts';
+} from '../components/Orgsv2Alerts';
 
 /**
  * Information required to display an alert box

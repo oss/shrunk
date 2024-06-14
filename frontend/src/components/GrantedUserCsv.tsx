@@ -4,7 +4,7 @@
  */
 
 import { createObjectCsvStringifier } from 'csv-writer';
-import { EntityInfo } from '../admin/Role';
+import { EntityInfo } from './admin/Role';
 import { doDownload } from '../lib/utils';
 
 /**

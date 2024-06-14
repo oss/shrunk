@@ -11,9 +11,9 @@ import { IoReturnUpBack } from 'react-icons/io5';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 
-import { MENU_ITEMS } from '../pages/subpages/StatsCommon';
+import { MENU_ITEMS } from '../../pages/subpages/StatsCommon';
 
-import '../Base.less';
+import '../../Base.less';
 
 const { RangePicker } = DatePicker;
 
