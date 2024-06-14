@@ -1,7 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import LinkHubComponent, {
-  DisplayLink,
-} from '../../components/LinkHubComponent';
 import {
   Typography,
   Button,
@@ -12,15 +9,18 @@ import {
   Checkbox,
 } from 'antd/lib';
 import {
-  CloudUploadOutlined,
   DeleteOutlined,
   EditOutlined,
   PlusCircleOutlined,
 } from '@ant-design/icons';
+import { useHistory } from 'react-router-dom';
+import LinkHubComponent, {
+  DisplayLink,
+} from '../../components/LinkHubComponent';
 import EditLinkFromLinkHubModal, {
   EditLinkData,
-} from '../../components/EditLinkFromLinkHubModal';
-import { NotFoundException } from '../../exceptions/NotFoundException';
+} from '../../modals/EditLinkFromLinkHubModal';
+import NotFoundException from '../../exceptions/NotFoundException';
 import { serverValidateLinkHubAlias } from '../../Validators';
 
 interface PLinkHubEditRow {
@@ -83,8 +83,8 @@ async function addLinkToLinkHub(linkhubId: string, title: string, url: string) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      title: title,
-      url: url,
+      title,
+      url,
     }),
   });
   const result = await resp.json();
@@ -102,9 +102,9 @@ async function setLinkFromLinkHub(
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      title: title,
-      url: url,
-      index: index,
+      title,
+      url,
+      index,
     }),
   });
   const result = await resp.json();
@@ -117,7 +117,7 @@ async function changeLinkHubTitle(linkhubId: string, title: string) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      title: title,
+      title,
     }),
   });
   const result = await resp.json();
@@ -130,7 +130,7 @@ async function deleteLinkAtIndex(linkhubId: string, index: number) {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      index: index,
+      index,
     }),
   });
   const result = await resp.json();
@@ -143,7 +143,7 @@ async function changeLinkHubAlias(linkhubId: string, alias: string) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      alias: alias,
+      alias,
     }),
   });
   const result = await resp.json();
@@ -156,7 +156,7 @@ async function publishLinkHub(linkhubId: string, value: boolean) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      value: value,
+      value,
     }),
   });
   const result = await resp.json();
@@ -164,7 +164,18 @@ async function publishLinkHub(linkhubId: string, value: boolean) {
   return result['publish-status'];
 }
 
+async function deleteLinkHub(linkhubId: string) {
+  const resp = await fetch(`/api/v1/linkhub/${linkhubId}`, {
+    method: 'DELETE',
+  });
+  const result = await resp.json();
+
+  return result;
+}
+
 export default function LinkHubEditor(props: PLinkHubEditor) {
+  const history = useHistory();
+
   const [foundLinkHub, setFoundLinkHub] = useState<boolean>(false);
 
   const [title, setTitle] = useState<string>();
@@ -201,15 +212,13 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
         setLinks(fetchingLinks);
         setFoundLinkHub(true);
       })
-      .catch((e: NotFoundException) => {
-        return;
-      });
+      .catch((e: NotFoundException) => {});
   }, []);
 
   const { Title } = Typography;
 
   function addDisplayLink(value: DisplayLink) {
-    let newLinks: DisplayLink[] = JSON.parse(JSON.stringify(links));
+    const newLinks: DisplayLink[] = JSON.parse(JSON.stringify(links));
     newLinks.push(value);
     setLinks(newLinks);
     addLinkToLinkHub(props.linkhubId, value.title, value.url);
@@ -240,19 +249,19 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
   }
 
   function onDisplayLinkChange(value: DisplayLink, index: number) {
-    let newLinks: DisplayLink[] = JSON.parse(JSON.stringify(links));
+    const newLinks: DisplayLink[] = JSON.parse(JSON.stringify(links));
     value.originId = newLinks[index].originId;
     newLinks[index] = value;
     setLinks(newLinks);
   }
 
   function onOpenEditDisplayLink(index: number, newLink: DisplayLink) {
-    setEditLinkData({ index: index, displayLink: newLink });
+    setEditLinkData({ index, displayLink: newLink });
     setIsEditLinkModalVisible(true);
   }
 
   function onDeleteDisplayLink(index: number) {
-    let newLinks: DisplayLink[] = JSON.parse(JSON.stringify(links));
+    const newLinks: DisplayLink[] = JSON.parse(JSON.stringify(links));
     newLinks.splice(index, 1);
     setLinks(newLinks);
 
@@ -271,6 +280,16 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
   function onPublish(e: any) {
     publishLinkHub(props.linkhubId, !isPublished).then((value) => {
       setIsPublished(value);
+    });
+  }
+
+  function onDelete(e: any) {
+    deleteLinkHub(props.linkhubId).then((value) => {
+      if (!value.success) {
+        return;
+      }
+
+      history.push('/linkhubs');
     });
   }
 
@@ -310,17 +329,15 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
                   marginBottom: '8px',
                 }}
               >
-                {links.map((value, index) => {
-                  return (
-                    <LinkHubEditRow
-                      link={value}
-                      index={index}
-                      key={value.originId}
-                      onOpenEditDisplayLink={onOpenEditDisplayLink}
-                      onDeleteDisplayLink={onDeleteDisplayLink}
-                    />
-                  );
-                })}
+                {links.map((value, index) => (
+                  <LinkHubEditRow
+                    link={value}
+                    index={index}
+                    key={value.originId}
+                    onOpenEditDisplayLink={onOpenEditDisplayLink}
+                    onDeleteDisplayLink={onDeleteDisplayLink}
+                  />
+                ))}
                 {links.length === 0 ? (
                   <p
                     style={{
@@ -392,7 +409,9 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
                     <p style={{ margin: 0, marginBottom: '4px' }}>
                       Deleting your LinkHub is irreversible.
                     </p>
-                    <Button danger>Delete</Button>
+                    <Button danger onClick={onDelete}>
+                      Delete
+                    </Button>
                   </div>
                 </Form.Item>
               </Form>

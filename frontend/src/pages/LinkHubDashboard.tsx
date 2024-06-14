@@ -2,8 +2,21 @@ import React from 'react';
 import { useHistory } from 'react-router-dom';
 import './Dashboard.less';
 import { Button, Col, Row } from 'antd/lib';
-import { SearchBox } from '../components/SearchBox';
 import { PlusCircleFilled } from '@ant-design/icons/lib/icons';
+import { SearchBox } from '../components/SearchBox';
+
+async function searchLinkHubs(netid: string) {
+  const resp = await fetch(`/api/v1/linkhub/search`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      netid,
+    }),
+  });
+  const result = await resp.json();
+
+  return result.results;
+}
 
 export default function LinkHubDashboard() {
   const history = useHistory();
@@ -29,8 +42,10 @@ export default function LinkHubDashboard() {
       <Row className="primary-row" gutter={[8, 24]}>
         <Col xs={{ span: 24 }} sm={{ span: 9 }}>
           <SearchBox
-            placeholder="Search LinkHubs..."
-            updateQueryString={() => {}}
+            placeholder="Search LinkHubs by NetID..."
+            updateQueryString={(newQuery: string) => {
+              searchLinkHubs(newQuery);
+            }}
           />
         </Col>
         <Col className="shrink-link">
@@ -43,7 +58,7 @@ export default function LinkHubDashboard() {
           </Button>
         </Col>
       </Row>
-      <div className="dashboard-links"></div>
+      <div className="dashboard-links" />
     </>
   );
 }

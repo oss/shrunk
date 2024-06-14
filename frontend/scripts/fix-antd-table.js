@@ -6,10 +6,7 @@ const path = require('path');
 const fs = require('fs');
 
 const fileList = ['BodyContext.js', 'ResizeContext.js', 'TableContext.js'];
-const folder = path.resolve(
-  __dirname,
-  '../../node_modules/rc-table/es/context',
-);
+const folder = path.resolve(__dirname, '../node_modules/rc-table/es/context');
 
 fileList.forEach((item) => {
   const file = path.resolve(folder, item);

@@ -7,8 +7,7 @@ import { Row, Col, Button, BackTop, Spin } from 'antd/lib';
 import moment from 'moment';
 import { IoReturnUpBack } from 'react-icons/io5';
 import base32 from 'hi-base32';
-import { ProcessRoleRequestModal } from '../components/ProcessRoleRequestModal';
-import { ConsoleSqlOutlined } from '@ant-design/icons';
+import { ProcessRoleRequestModal } from '../../modals/ProcessRoleRequestModal';
 
 /**
  * Data describing the request text for a role
@@ -94,75 +93,73 @@ const PendingRoleRequestRow: React.FC<{
   role_request: RoleRequestInfo;
   onOpenApproveModal: () => void;
   onOpenDenyModal: () => void;
-}> = (props) => {
-  return (
-    <Row className="primary-row">
-      <Col span={20}>
-        <Row>
-          <Col span={24}>
-            <span className="title">{props.role_request.entity}</span>
-          </Col>
-        </Row>
+}> = (props) => (
+  <Row className="primary-row">
+    <Col span={20}>
+      <Row>
+        <Col span={24}>
+          <span className="title">{props.role_request.entity}</span>
+        </Col>
+      </Row>
+      <Row>
+        <Col span={24}>
+          <span>
+            <em>Title:</em>&nbsp;{props.role_request.title}
+          </span>
+        </Col>
+      </Row>
+      <Row>
+        <Col span={24}>
+          <span>
+            <em>Department:</em>&nbsp;{props.role_request.department}
+          </span>
+        </Col>
+      </Row>
+      <Row>
+        <Col span={24}>
+          <span>
+            <em>Employee Types:</em>&nbsp;
+            {props.role_request.employeeTypes.join(', ')}
+          </span>
+        </Col>
+      </Row>
+      {props.role_request.comment === null ||
+      props.role_request.comment === '' ? (
+        <></>
+      ) : (
         <Row>
           <Col span={24}>
             <span>
-              <em>Title:</em>&nbsp;{props.role_request.title}
+              <em>Comment:</em>&nbsp;{props.role_request.comment}
             </span>
           </Col>
         </Row>
+      )}
+      {props.role_request.time_requested === null ? (
+        <></>
+      ) : (
         <Row>
           <Col span={24}>
             <span>
-              <em>Department:</em>&nbsp;{props.role_request.department}
+              <em>Date Requested:</em>&nbsp;
+              {moment(
+                new Date(Number(props.role_request.time_requested) * 1000),
+              ).format('MMM D, YYYY, h:mm a')}
             </span>
           </Col>
         </Row>
-        <Row>
-          <Col span={24}>
-            <span>
-              <em>Employee Types:</em>&nbsp;
-              {props.role_request.employeeTypes.join(', ')}
-            </span>
-          </Col>
-        </Row>
-        {props.role_request.comment === null ||
-        props.role_request.comment === '' ? (
-          <></>
-        ) : (
-          <Row>
-            <Col span={24}>
-              <span>
-                <em>Comment:</em>&nbsp;{props.role_request.comment}
-              </span>
-            </Col>
-          </Row>
-        )}
-        {props.role_request.time_requested === null ? (
-          <></>
-        ) : (
-          <Row>
-            <Col span={24}>
-              <span>
-                <em>Date Requested:</em>&nbsp;
-                {moment(
-                  new Date(Number(props.role_request.time_requested) * 1000),
-                ).format('MMM D, YYYY, h:mm a')}
-              </span>
-            </Col>
-          </Row>
-        )}
-      </Col>
-      <Col span={4} className="btn-col">
-        <Button type="primary" onClick={props.onOpenApproveModal}>
-          APPROVE
-        </Button>
-        <Button danger onClick={props.onOpenDenyModal}>
-          DENY
-        </Button>
-      </Col>
-    </Row>
-  );
-};
+      )}
+    </Col>
+    <Col span={4} className="btn-col">
+      <Button type="primary" onClick={props.onOpenApproveModal}>
+        APPROVE
+      </Button>
+      <Button danger onClick={props.onOpenDenyModal}>
+        DENY
+      </Button>
+    </Col>
+  </Row>
+);
 
 /**
  * Props for the [[PendingRoleRequests]] component
@@ -296,13 +293,12 @@ export class PendingRoleRequests extends Component<Props, State> {
         result[attribute] = ['Cannot find attribute'];
       });
       return result;
-    } else {
-      attributes.forEach((attribute) => {
-        result[attribute] = intermediate_result[attribute]
-          ? intermediate_result[attribute]
-          : ['N/A'];
-      });
     }
+    attributes.forEach((attribute) => {
+      result[attribute] = intermediate_result[attribute]
+        ? intermediate_result[attribute]
+        : ['N/A'];
+    });
 
     return result;
   };

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import LinkHubComponent, { DisplayLink } from '../components/LinkHubComponent';
-import { NotFoundException } from '../exceptions/NotFoundException';
-import { ServiceDisabledException } from '../exceptions/ServiceDisabledException';
+import NotFoundException from '../exceptions/NotFoundException';
+import ServiceDisabledException from '../exceptions/ServiceDisabledException';
 
 async function getLinkHub(alias: string): Promise<any> {
   const resp = await fetch(`/api/v1/linkhub/${alias}/public`, {
@@ -25,7 +25,7 @@ export default function LinkHubPage() {
   const [title, setTitle] = useState('');
   const [links, setLinks] = useState<DisplayLink[]>([]);
 
-  let { alias } = useParams<{ alias: string }>();
+  const { alias } = useParams<{ alias: string }>();
 
   useEffect(() => {
     const fetchData = async () => {

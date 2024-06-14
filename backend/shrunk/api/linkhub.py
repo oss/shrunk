@@ -24,6 +24,25 @@ ACL_ENTRY_SCHEMA = {
     },
 }
 
+SEARCH_LINKHUB_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["netid"],
+    "properties": {
+        "netid": {"type": "string", "minLength": 1},
+    },
+}
+
+
+@bp.route("/search", methods=["POST"])
+@request_schema(SEARCH_LINKHUB_SCHEMA)
+@require_login
+def search_linkhubs(netid: str, client: ShrunkClient, req: Any) -> Any:
+    results = client.linkhubs.search(req["netid"])
+
+    return jsonify({"success": True, "results": results})
+
+
 CREATE_LINKHUB_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
@@ -51,6 +70,19 @@ def create_linkhub(netid: str, client: ShrunkClient, req: Any) -> Any:
 
     result_id, alias = client.linkhubs.create(req["title"], netid, alias=alias)
     return jsonify({"id": result_id, "alias": alias})
+
+
+@bp.route("/<string:linkhub_id>", methods=["DELETE"])
+@require_login
+def delete_linkhub_by_id(netid: str, client: ShrunkClient, linkhub_id: str) -> Any:
+    if not client.linkhubs.can_edit(linkhub_id, netid):
+        return jsonify({"success": False, "error": "No permission"}), 401
+
+    result = client.linkhubs.delete(linkhub_id)
+    if not result:
+        return jsonify({"success": False, "error": "Does not exist"}), 404
+
+    return jsonify({"success": True}), 200
 
 
 @bp.route("/<string:linkhub_id>/private", methods=["GET"])
@@ -292,7 +324,5 @@ def validate_alias_linkhub(netid: str, client: ShrunkClient, value: str) -> Any:
 
 
 @bp.route("/is-linkhub-enabled", methods=["GET"])
-@require_login
-def is_linkhub_enabled(_netid: str, _client: ShrunkClient) -> Any:
-    # pylint: disable=unused-argument
+def is_linkhub_enabled() -> Any:
     return jsonify({"status": current_app.config["LINKHUB_INTEGRATION_ENABLED"]})

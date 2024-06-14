@@ -6,7 +6,6 @@
 import React, { Component } from 'react';
 import { Modal, Button, Input, Form } from 'antd/lib';
 import { message } from 'antd';
-import base32 from 'hi-base32';
 import { FormInstance } from 'antd/lib/form';
 
 interface Props {
@@ -113,7 +112,7 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
       },
       body: JSON.stringify({
         role: this.props.name,
-        entity: entity,
+        entity,
         comment: approve_comment,
       }),
     })
@@ -146,7 +145,7 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
       },
       body: JSON.stringify({
         role: this.props.name,
-        entity: entity,
+        entity,
         comment: deny_comment,
       }),
     })

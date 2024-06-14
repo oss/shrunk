@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Alert } from './PendingAlerts';
+import { Alert } from '../modals/PendingAlerts';
 
 /**
  * Alert regarding Orgsv2 shown to a user who is _not_ yet a member of any organizations.

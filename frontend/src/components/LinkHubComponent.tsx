@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router';
+import React from 'react';
 import './LinkHubComponent.less';
 
 export interface DisplayLink {
@@ -44,27 +43,25 @@ export default function LinkHubComponent(props: Props) {
           style={{ display: 'flex', justifyContent: 'center', width: '100%' }}
         >
           <div style={{ minWidth: '400px', width: '30%' }}>
-            {props.links.map((value, index) => {
-              return (
-                <a href={value.url} key={index}>
-                  <div
-                    style={{
-                      border: 'solid',
-                      backgroundColor: 'rgb(255,255,255)',
-                      borderColor: 'rgb(0,0,0)',
-                      borderRadius: '20px',
-                      borderWidth: '3px',
-                      padding: '10px',
-                      marginBottom: '10px',
-                    }}
-                  >
-                    <p style={{ margin: 0 }} className="rubik-normal">
-                      {value.title}
-                    </p>
-                  </div>
-                </a>
-              );
-            })}
+            {props.links.map((value, index) => (
+              <a href={value.url} key={index}>
+                <div
+                  style={{
+                    border: 'solid',
+                    backgroundColor: 'rgb(255,255,255)',
+                    borderColor: 'rgb(0,0,0)',
+                    borderRadius: '20px',
+                    borderWidth: '3px',
+                    padding: '10px',
+                    marginBottom: '10px',
+                  }}
+                >
+                  <p style={{ margin: 0 }} className="rubik-normal">
+                    {value.title}
+                  </p>
+                </div>
+              </a>
+            ))}
           </div>
         </div>
       </div>

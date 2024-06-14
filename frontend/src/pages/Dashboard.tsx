@@ -21,9 +21,9 @@ import { getOrgInfo, listOrgs, OrgInfo } from '../api/Org';
 import { SearchBox } from '../components/SearchBox';
 import { LinkRow } from '../components/LinkRow';
 import { LinkInfo } from '../models/LinkInfo';
-import { QrCodeModal } from '../components/QrCode';
-import { EditLinkModal, EditLinkFormValues } from '../components/EditLinkModal';
-import { ShareLinkModal } from '../components/ShareLinkModal';
+import { QrCodeModal } from '../modals/QrCode';
+import { EditLinkModal, EditLinkFormValues } from '../modals/EditLinkModal';
+import { ShareLinkModal } from '../modals/ShareLinkModal';
 import { CreateLinkForm } from '../components/CreateLinkForm';
 import { OrgsSelect } from '../components/OrgsSelect';
 import { FilterDropdown } from '../components/FilterDropdown';
@@ -487,7 +487,7 @@ export class Dashboard extends React.Component<Props, State> {
                   deleted_by: output.deletion_info.deleted_by,
                   deleted_time: new Date(output.deletion_info.deleted_time),
                 },
-          }) as LinkInfo,
+          } as LinkInfo),
       ),
     };
   };
@@ -927,7 +927,10 @@ export class Dashboard extends React.Component<Props, State> {
             {this.state.userOrgs === null ? (
               <></>
             ) : (
-              <SearchBox placeholder='Search Links...' updateQueryString={this.updateQueryString} />
+              <SearchBox
+                placeholder="Search Links..."
+                updateQueryString={this.updateQueryString}
+              />
             )}
           </Col>
           <Col>

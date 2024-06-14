@@ -21,9 +21,9 @@ import {
   LoadingOutlined,
 } from '@ant-design/icons';
 import { IoReturnUpBack } from 'react-icons/io5';
-import { downloadGrantedUsersCsv } from '../components/GrantedUserCsv';
 import base32 from 'hi-base32';
 import moment from 'moment';
+import { downloadGrantedUsersCsv } from '../GrantedUserCsv';
 
 /**
  * Props for the [[Role]] component

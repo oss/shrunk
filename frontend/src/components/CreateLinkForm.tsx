@@ -15,7 +15,6 @@ import {
   Tooltip,
   Spin,
   Modal,
-  Checkbox,
   Radio,
   RadioChangeEvent,
 } from 'antd/lib';
@@ -32,8 +31,7 @@ import {
   serverValidateLongUrl,
 } from '../Validators';
 import '../Base.less';
-import './FixAliasRemoveButton.less';
-import { CheckboxChangeEvent } from 'antd/lib/checkbox';
+import '../modals/FixAliasRemoveButton.less';
 
 /**
  * Displays a label with the text "Custom Alias" and a tooltip with extended help text
@@ -150,6 +148,7 @@ interface State {
  */
 export class CreateLinkForm extends React.Component<Props, State> {
   formRef = React.createRef<FormInstance>();
+
   textBoxWidth = 200;
 
   constructor(props: Props) {
@@ -286,7 +285,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
                   { label: 'URL', value: 'url' },
                   { label: 'Tracking Pixel', value: 'pixel' },
                 ]}
-                defaultValue={'url'}
+                defaultValue="url"
               />
             </Form.Item>
           )}
@@ -327,7 +326,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
                     { label: '.png', value: '.png' },
                     { label: '.gif', value: '.gif' },
                   ]}
-                  defaultValue={'.png'}
+                  defaultValue=".png"
                 />
               </Form.Item>
             </>

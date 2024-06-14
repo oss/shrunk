@@ -26,6 +26,7 @@ import {
   SlidersOutlined,
 } from '@ant-design/icons';
 
+import base32 from 'hi-base32';
 import { Dashboard } from './pages/Dashboard';
 import { Admin } from './pages/Admin';
 import { Orgs } from './pages/Orgs';
@@ -33,17 +34,15 @@ import { Faq } from './pages/Faq';
 import { RoleRequestForm } from './pages/RoleRequestForm';
 
 import { Stats } from './pages/subpages/Stats';
-import { AdminStats } from './admin/AdminStats';
-import LinkSecurity from './admin/LinkSecurity';
-import { Role } from './admin/Role';
+import { AdminStats } from './components/admin/AdminStats';
+import LinkSecurity from './components/admin/LinkSecurity';
+import { Role } from './components/admin/Role';
 import { ManageOrg } from './pages/subpages/ManageOrg';
 import { OrgStats } from './pages/subpages/OrgStats';
-import { PendingRoleRequests } from './admin/PendingRoleRequests';
+import { PendingRoleRequests } from './components/admin/PendingRoleRequests';
 
-import { PendingAlerts } from './alerts/PendingAlerts';
-import { PendingRequests } from './components/PendingRequests';
-
-import base32 from 'hi-base32';
+import { PendingAlerts } from './modals/PendingAlerts';
+import { PendingRequests } from './modals/PendingRequests';
 
 import './antd_themed.less';
 import './Shrunk.less';
@@ -550,7 +549,7 @@ export class Shrunk extends React.Component<Props, State> {
                 . All rights reserved. Rutgers is an equal access/equal
                 opportunity institution. Individuals with disabilities are
                 encouraged to direct suggestions, comments, or complaints
-                concerning any accessibility issues with Rutgers web sites to{' '}
+                concerning any accessibility issues with Rutgers websites to{' '}
                 <a href="mailto:accessibility@rutgers.edu">
                   accessibility@rutgers.edu
                 </a>{' '}

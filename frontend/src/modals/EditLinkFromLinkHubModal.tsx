@@ -1,6 +1,6 @@
 import { Form, Input, Modal } from 'antd/lib';
 import React from 'react';
-import { DisplayLink } from './LinkHubComponent';
+import { DisplayLink } from '../components/LinkHubComponent';
 
 interface IEditLinkFromLinkHubModal {
   visible: boolean;
@@ -30,7 +30,7 @@ export default function EditLinkFromLinkHubModal(
 
   return (
     <Modal
-      title={'Edit Link'}
+      title="Edit Link"
       visible={props.visible}
       onOk={form.submit}
       onCancel={onCancel}

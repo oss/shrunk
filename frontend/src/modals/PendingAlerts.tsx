@@ -6,7 +6,10 @@
 import React from 'react';
 import { Modal, Button } from 'antd/lib';
 
-import { Orgsv2AlertNewUser, Orgsv2AlertCurrentUser } from './Orgsv2Alerts';
+import {
+  Orgsv2AlertNewUser,
+  Orgsv2AlertCurrentUser,
+} from '../components/Orgsv2Alerts';
 
 /**
  * Information required to display an alert box
