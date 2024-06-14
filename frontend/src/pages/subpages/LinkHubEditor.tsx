@@ -22,6 +22,7 @@ import EditLinkFromLinkHubModal, {
 } from '../../components/EditLinkFromLinkHubModal';
 import { NotFoundException } from '../../exceptions/NotFoundException';
 import { serverValidateLinkHubAlias } from '../../Validators';
+import { useHistory } from 'react-router-dom';
 
 interface PLinkHubEditRow {
   link: DisplayLink;
@@ -164,7 +165,18 @@ async function publishLinkHub(linkhubId: string, value: boolean) {
   return result['publish-status'];
 }
 
+async function deleteLinkHub(linkhubId: string) {
+  const resp = await fetch(`/api/v1/linkhub/${linkhubId}`, {
+    method: 'DELETE',
+  });
+  const result = await resp.json();
+
+  return result;
+}
+
 export default function LinkHubEditor(props: PLinkHubEditor) {
+  const history = useHistory();
+
   const [foundLinkHub, setFoundLinkHub] = useState<boolean>(false);
 
   const [title, setTitle] = useState<string>();
@@ -271,6 +283,16 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
   function onPublish(e: any) {
     publishLinkHub(props.linkhubId, !isPublished).then((value) => {
       setIsPublished(value);
+    });
+  }
+
+  function onDelete(e: any) {
+    deleteLinkHub(props.linkhubId).then((value) => {
+      if (!value['success']) {
+        return;
+      }
+
+      history.push('/linkhubs');
     });
   }
 
@@ -392,7 +414,9 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
                     <p style={{ margin: 0, marginBottom: '4px' }}>
                       Deleting your LinkHub is irreversible.
                     </p>
-                    <Button danger>Delete</Button>
+                    <Button danger onClick={onDelete}>
+                      Delete
+                    </Button>
                   </div>
                 </Form.Item>
               </Form>

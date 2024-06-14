@@ -1,6 +1,7 @@
 from typing import Optional, Any, Tuple
 from bson.objectid import ObjectId
 import pymongo
+import pymongo.results
 
 __all__ = ["LinkHubClient"]
 
@@ -27,6 +28,14 @@ class LinkHubClient:
 
         result = self.db.linkhubs.insert_one(document)
         return result.inserted_id, alias
+
+    def delete(self, linkhub_id: str) -> bool:
+        collection = self.db.linkhubs
+        result: pymongo.results.DeleteResult = collection.delete_one(
+            {"_id": ObjectId(linkhub_id)}
+        )
+
+        return result.deleted_count >= 1
 
     def _generate_unique_key(self) -> str:
         """Generates a unique key."""
