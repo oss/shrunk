@@ -1,6 +1,7 @@
-from typing import Optional, Any, Tuple
+from typing import Optional, Any, Tuple, List
 from bson.objectid import ObjectId
 import pymongo
+import pymongo.cursor
 import pymongo.results
 
 __all__ = ["LinkHubClient"]
@@ -115,3 +116,19 @@ class LinkHubClient:
         result = collection.find_one({"alias": str(alias)})
 
         return result is None
+
+    def search(
+        self,
+        netid: Optional[str] = None,
+        limit: int = 25,
+        skip: int = 0,
+    ) -> List[Any]:
+        query = {}
+
+        if netid is not None:
+            query["owner"] = netid
+
+        collection = self.db.linkhubs
+        results: pymongo.cursor.Cursor = collection.find(query, limit=limit, skip=skip)
+
+        return list(results)

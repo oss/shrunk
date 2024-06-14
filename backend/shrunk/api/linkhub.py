@@ -24,6 +24,25 @@ ACL_ENTRY_SCHEMA = {
     },
 }
 
+SEARCH_LINKHUB_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["netid"],
+    "properties": {
+        "netid": {"type": "string", "minLength": 1},
+    },
+}
+
+
+@bp.route("/search", methods=["POST"])
+@request_schema(SEARCH_LINKHUB_SCHEMA)
+@require_login
+def search_linkhubs(netid: str, client: ShrunkClient, req: Any) -> Any:
+    results = client.linkhubs.search(req["netid"])
+
+    return jsonify({"success": True, "results": results})
+
+
 CREATE_LINKHUB_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
