@@ -26,6 +26,7 @@ import {
   SlidersOutlined,
 } from '@ant-design/icons';
 
+import base32 from 'hi-base32';
 import { Dashboard } from './pages/Dashboard';
 import { Admin } from './pages/Admin';
 import { Orgs } from './pages/Orgs';
@@ -42,8 +43,6 @@ import { PendingRoleRequests } from './components/admin/PendingRoleRequests';
 
 import { PendingAlerts } from './modals/PendingAlerts';
 import { PendingRequests } from './modals/PendingRequests';
-
-import base32 from 'hi-base32';
 
 import './antd_themed.less';
 import './Shrunk.less';

@@ -6,8 +6,8 @@
 import React from 'react';
 import { Row, Col, Button, Input, Form, Spin } from 'antd/lib';
 import { CheckOutlined } from '@ant-design/icons';
-import { RoleRequestModal } from '../modals/OnSubmitRoleRequestModal';
 import base32 from 'hi-base32';
+import { RoleRequestModal } from '../modals/OnSubmitRoleRequestModal';
 
 /**
  * Data describing the request text for a role

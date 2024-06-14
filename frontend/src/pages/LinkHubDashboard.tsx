@@ -2,20 +2,20 @@ import React from 'react';
 import { useHistory } from 'react-router-dom';
 import './Dashboard.less';
 import { Button, Col, Row } from 'antd/lib';
-import { SearchBox } from '../components/SearchBox';
 import { PlusCircleFilled } from '@ant-design/icons/lib/icons';
+import { SearchBox } from '../components/SearchBox';
 
 async function searchLinkHubs(netid: string) {
   const resp = await fetch(`/api/v1/linkhub/search`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      netid: netid,
+      netid,
     }),
   });
   const result = await resp.json();
 
-  return result['results'];
+  return result.results;
 }
 
 export default function LinkHubDashboard() {
@@ -58,7 +58,7 @@ export default function LinkHubDashboard() {
           </Button>
         </Col>
       </Row>
-      <div className="dashboard-links"></div>
+      <div className="dashboard-links" />
     </>
   );
 }

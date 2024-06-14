@@ -148,6 +148,7 @@ interface State {
  */
 export class CreateLinkForm extends React.Component<Props, State> {
   formRef = React.createRef<FormInstance>();
+
   textBoxWidth = 200;
 
   constructor(props: Props) {
@@ -284,7 +285,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
                   { label: 'URL', value: 'url' },
                   { label: 'Tracking Pixel', value: 'pixel' },
                 ]}
-                defaultValue={'url'}
+                defaultValue="url"
               />
             </Form.Item>
           )}
@@ -325,7 +326,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
                     { label: '.png', value: '.png' },
                     { label: '.gif', value: '.gif' },
                   ]}
-                  defaultValue={'.png'}
+                  defaultValue=".png"
                 />
               </Form.Item>
             </>

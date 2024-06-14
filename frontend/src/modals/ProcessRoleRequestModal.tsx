@@ -112,7 +112,7 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
       },
       body: JSON.stringify({
         role: this.props.name,
-        entity: entity,
+        entity,
         comment: approve_comment,
       }),
     })
@@ -145,7 +145,7 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
       },
       body: JSON.stringify({
         role: this.props.name,
-        entity: entity,
+        entity,
         comment: deny_comment,
       }),
     })

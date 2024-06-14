@@ -234,6 +234,7 @@ const MemberRow: React.FC<{
  */
 class ManageOrgInner extends React.Component<Props, State> {
   private formRef: React.RefObject<FormInstance<any>>;
+
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -370,7 +371,7 @@ class ManageOrgInner extends React.Component<Props, State> {
             .validateFields()
             .then(async (values) => {
               console.log(this);
-              this.onRenameOrg(values['newName']);
+              this.onRenameOrg(values.newName);
 
               if (this.formRef.current) this.formRef.current.resetFields();
 
