@@ -6,7 +6,7 @@
 import React from 'react';
 import { Row, Col, Button, Input, Form, Spin } from 'antd/lib';
 import { CheckOutlined } from '@ant-design/icons';
-import { RoleRequestModal } from '../components/OnSubmitRoleRequestModal';
+import { RoleRequestModal } from '../modals/OnSubmitRoleRequestModal';
 import base32 from 'hi-base32';
 
 /**

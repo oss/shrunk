@@ -1,6 +1,6 @@
 import { Form, Input, Modal } from 'antd/lib';
 import React from 'react';
-import { DisplayLink } from './LinkHubComponent';
+import { DisplayLink } from '../components/LinkHubComponent';
 
 interface IEditLinkFromLinkHubModal {
   visible: boolean;

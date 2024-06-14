@@ -22,7 +22,7 @@ import {
 } from '@ant-design/icons';
 import base32 from 'hi-base32';
 
-import { LinkInfo } from './LinkInfo';
+import { LinkInfo } from '../components/LinkInfo';
 import {
   serverValidateReservedAlias,
   serverValidateLongUrl,

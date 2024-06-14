@@ -19,7 +19,7 @@ import {
 } from '@ant-design/icons';
 import EditLinkFromLinkHubModal, {
   EditLinkData,
-} from '../../components/EditLinkFromLinkHubModal';
+} from '../../modals/EditLinkFromLinkHubModal';
 import { NotFoundException } from '../../exceptions/NotFoundException';
 import { serverValidateLinkHubAlias } from '../../Validators';
 import { useHistory } from 'react-router-dom';

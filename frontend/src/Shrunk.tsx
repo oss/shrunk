@@ -36,12 +36,12 @@ import { Stats } from './pages/subpages/Stats';
 import { AdminStats } from './admin/AdminStats';
 import LinkSecurity from './admin/LinkSecurity';
 import { Role } from './admin/Role';
-import { ManageOrg } from './pages/subpages/ManageOrg';
+import { ManageOrg } from './modals/ManageOrg';
 import { OrgStats } from './pages/subpages/OrgStats';
 import { PendingRoleRequests } from './admin/PendingRoleRequests';
 
-import { PendingAlerts } from './alerts/PendingAlerts';
-import { PendingRequests } from './components/PendingRequests';
+import { PendingAlerts } from './modals/PendingAlerts';
+import { PendingRequests } from './modals/PendingRequests';
 
 import base32 from 'hi-base32';
 
