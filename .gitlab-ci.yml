@@ -36,12 +36,13 @@ pylint:
     - python -V
     - apt-get update
     - apt-get install -y gcc libldap-common libldap2-dev libsasl2-dev
-    - pip install pylint pylint_flask pylint_junit pytest
-    - pip install -r backend/requirements.txt
-    - pylint --exit-zero --output-format=junit backend/shrunk backend/tests/*.py > pylint.xml
+    - cd backend
+    - pip3 install poetry
+    - poetry install
+    - python3 -m pylint --exit-zero --output-format=junit shrunk tests/*.py > pylint.xml
   artifacts:
     reports:
-      junit: pylint.xml
+      junit: backend/pylint.xml
 
 mypy:
   stage: lint
@@ -61,11 +62,13 @@ flake8:
   needs: []
   script:
     - python -V
-    - pip install flake8 flake8-quotes flake8-commas flake8-pytest-style flake8-formatter-junit-xml
-    - flake8 --format=pylint --config=setup.cfg --exit-zero --format=junit-xml backend/shrunk backend/tests > flake8.xml
+    - pip3 install poetry
+    - cd backend
+    - poetry install
+    - flake8 --format=pylint --config=pyproject.toml --exit-zero --format=junit-xml shrunk backend/tests > flake8.xml
   artifacts:
     reports:
-      junit: flake8.xml
+      junit: backend/flake8.xml
 
 sphinx:
   stage: docs
@@ -78,7 +81,8 @@ sphinx:
     - source venv/bin/activate
   script:
     - cd docs
-    - pip install -r requirements.txt
+    - pip3 install poetry
+    - poetry install
     - sphinx-build -b html . _build/html
   artifacts:
     paths:
@@ -119,10 +123,13 @@ backend_build:
     - frontend_build
   script:
     - python -V
+    - pip3 install poetry
+    - cd backend
+    - poetry install
     - mkdir backend/shrunk/static/dist
     - rm -f backend/shrunk/static/dist/index.html backend/shrunk/templates/index.html
     - cd backend
-    - python setup.py bdist_wheel
+    - poetry build
   artifacts:
     paths:
       - backend/dist/shrunk-*.whl
