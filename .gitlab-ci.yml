@@ -72,24 +72,6 @@ flake8:
     reports:
       junit: backend/flake8.xml
 
-sphinx:
-  stage: docs
-  image: python:3.6
-  needs: []
-  before_script:
-    - python --version
-    - pip install virtualenv
-    - virtualenv venv
-    - source venv/bin/activate
-  script:
-    - cd docs
-    - pip3 install poetry
-    - python3 -m poetry install
-    - sphinx-build -b html . _build/html
-  artifacts:
-    paths:
-      - docs/_build/html
-
 typedoc:
   stage: docs
   image: node:latest
