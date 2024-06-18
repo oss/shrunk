@@ -33,13 +33,13 @@ pylint:
   image: python:latest
   needs: []
   script:
-    - python -V
     - apt-get update
     - apt-get install -y gcc libldap-common libldap2-dev libsasl2-dev
     - cd backend
     - pip3 install poetry
-    - python3 -m poetry install
-    - python3 -m pylint --exit-zero --output-format=junit shrunk tests/*.py > pylint.xml
+    - poetry config virtualenvs.create false
+    - poetry install
+    - pylint --exit-zero --output-format=junit shrunk tests/*.py > pylint.xml
   artifacts:
     reports:
       junit: backend/pylint.xml
@@ -49,8 +49,10 @@ mypy:
   image: python:latest
   needs: []
   script:
-    - python -V
-    - pip install mypy
+    - cd backend
+    - pip3 install poetry
+    - poetry config virtualenvs.create false
+    - poetry install
     - mypy --junit-xml=./mypy.xml backend/shrunk backend/tests || exit 0
   artifacts:
     reports:
@@ -61,10 +63,10 @@ flake8:
   image: python:latest
   needs: []
   script:
-    - python -V
-    - pip3 install poetry
     - cd backend
-    - python3 -m poetry install
+    - pip3 install poetry
+    - poetry config virtualenvs.create false
+    - poetry install
     - flake8 --format=pylint --config=pyproject.toml --exit-zero --format=junit-xml shrunk backend/tests > flake8.xml
   artifacts:
     reports:
@@ -122,13 +124,12 @@ backend_build:
   needs:
     - frontend_build
   script:
-    - python -V
-    - pip3 install poetry
     - cd backend
-    - python3 -m poetry install
+    - pip3 install poetry
+    - poetry config virtualenvs.create false
+    - poetry install
     - mkdir backend/shrunk/static/dist
     - rm -f backend/shrunk/static/dist/index.html backend/shrunk/templates/index.html
-    - cd backend
     - python3 -m poetry build
   artifacts:
     paths:
@@ -149,8 +150,11 @@ pytest:
     - mongo
   script:
     - yum install -y gcc python3-pip python3-devel openldap-devel
-    - python -V
-    - pip3 install pytest pytest-cov
+    - cd backend
+    - pip3 install poetry
+    - poetry config virtualenvs.create false
+    - poetry install
+    - poetry build
     - pip3 install backend/dist/shrunk-*.whl
     - export SHRUNK_CONFIG_PATH=$(pwd)/backend/shrunk/ci-test-config.py
     - mkdir /usr/share/GeoIP
