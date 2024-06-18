@@ -12,6 +12,6 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "eslint.workingDirectories": ["./frontend"],
-  "prettier.configPath": ".prettierrc",
+  "prettier.requireConfig": true,
   "editor.formatOnSave": true
 }
