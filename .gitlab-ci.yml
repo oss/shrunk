@@ -38,7 +38,7 @@ pylint:
     - apt-get install -y gcc libldap-common libldap2-dev libsasl2-dev
     - cd backend
     - pip3 install poetry
-    - poetry install
+    - python3 -m poetry install
     - python3 -m pylint --exit-zero --output-format=junit shrunk tests/*.py > pylint.xml
   artifacts:
     reports:
@@ -64,7 +64,7 @@ flake8:
     - python -V
     - pip3 install poetry
     - cd backend
-    - poetry install
+    - python3 -m poetry install
     - flake8 --format=pylint --config=pyproject.toml --exit-zero --format=junit-xml shrunk backend/tests > flake8.xml
   artifacts:
     reports:
@@ -82,7 +82,7 @@ sphinx:
   script:
     - cd docs
     - pip3 install poetry
-    - poetry install
+    - python3 -m poetry install
     - sphinx-build -b html . _build/html
   artifacts:
     paths:
@@ -125,11 +125,11 @@ backend_build:
     - python -V
     - pip3 install poetry
     - cd backend
-    - poetry install
+    - python3 -m poetry install
     - mkdir backend/shrunk/static/dist
     - rm -f backend/shrunk/static/dist/index.html backend/shrunk/templates/index.html
     - cd backend
-    - poetry build
+    - python3 -m poetry build
   artifacts:
     paths:
       - backend/dist/shrunk-*.whl
