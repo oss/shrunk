@@ -5,6 +5,11 @@ stages:
   - backend_build
   - test
 
+before_script:
+  - pip install poetry
+  - poetry config virtualenvs.create false
+  - poetry install
+
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
@@ -33,13 +38,10 @@ pylint:
   image: python:latest
   needs: []
   script:
-    - python -V
     - apt-get update
     - apt-get install -y gcc libldap-common libldap2-dev libsasl2-dev
     - cd backend
-    - pip3 install poetry
-    - python3 -m poetry install
-    - python3 -m pylint --exit-zero --output-format=junit shrunk tests/*.py > pylint.xml
+    - pylint --exit-zero --output-format=junit shrunk tests/*.py > pylint.xml
   artifacts:
     reports:
       junit: backend/pylint.xml
@@ -49,7 +51,6 @@ mypy:
   image: python:latest
   needs: []
   script:
-    - python -V
     - pip install mypy
     - mypy --junit-xml=./mypy.xml backend/shrunk backend/tests || exit 0
   artifacts:
@@ -61,10 +62,6 @@ flake8:
   image: python:latest
   needs: []
   script:
-    - python -V
-    - pip3 install poetry
-    - cd backend
-    - python3 -m poetry install
     - flake8 --format=pylint --config=pyproject.toml --exit-zero --format=junit-xml shrunk backend/tests > flake8.xml
   artifacts:
     reports:
@@ -81,8 +78,6 @@ sphinx:
     - source venv/bin/activate
   script:
     - cd docs
-    - pip3 install poetry
-    - python3 -m poetry install
     - sphinx-build -b html . _build/html
   artifacts:
     paths:
@@ -122,13 +117,9 @@ backend_build:
   needs:
     - frontend_build
   script:
-    - python -V
-    - pip3 install poetry
     - cd backend
-    - python3 -m poetry install
     - mkdir backend/shrunk/static/dist
     - rm -f backend/shrunk/static/dist/index.html backend/shrunk/templates/index.html
-    - cd backend
     - python3 -m poetry build
   artifacts:
     paths:
@@ -149,7 +140,6 @@ pytest:
     - mongo
   script:
     - yum install -y gcc python3-pip python3-devel openldap-devel
-    - python -V
     - pip3 install pytest pytest-cov
     - pip3 install backend/dist/shrunk-*.whl
     - export SHRUNK_CONFIG_PATH=$(pwd)/backend/shrunk/ci-test-config.py
