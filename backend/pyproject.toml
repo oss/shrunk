@@ -6,13 +6,17 @@ description = "URL Shortener for Rutgers University"
 repository = "https://github.com/oss/shrunk"
 authors = ["Rutgers Open System Solutions <oss@oit.rutgers.edu>"]
 license = "MIT"
-maintainers = [
-    "Andrew Hong <ah1371@oit.rutgers.edu>",
-]
+maintainers = ["Andrew Hong <ah1371@oit.rutgers.edu>"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Topic :: Utilities",
 ]
 
@@ -34,6 +38,7 @@ jsonschema = "3.2.0"
 backports-datetime-fromisoformat = "1.0.0"
 requests = "2.24.0"
 slack-sdk = "3.27.1"
+flake8-pyproject = "^1.2.3"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
