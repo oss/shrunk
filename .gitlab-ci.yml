@@ -93,6 +93,7 @@ backend_build:
   script:
     - cd backend
     - pip3 install poetry
+    - sudo apt-get install libsasl2-dev python-dev libldap2-dev libssl-dev
     - poetry config virtualenvs.create false
     - poetry install
     - mkdir backend/shrunk/static/dist
