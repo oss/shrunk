@@ -9,7 +9,7 @@
     "editor.defaultFormatter": "ms-python.black-formatter"
   },
   "[toml]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "tamasfe.even-better-toml"
   },
   "eslint.workingDirectories": ["./frontend"],
   "prettier.requireConfig": true,
