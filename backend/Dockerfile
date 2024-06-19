@@ -1,4 +1,4 @@
-FROM python:3.9
+FROM python:3.6
 
 # Expose port 5000 as Flask apps listen to 5000 by default.
 EXPOSE 5000

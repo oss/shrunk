@@ -36,8 +36,9 @@ click = "7.0"
 python-ldap = "3.3.1"
 jsonschema = "3.2.0"
 backports-datetime-fromisoformat = "1.0.0"
-requests = "2.24.0"
 slack-sdk = "3.27.1"
+six = "^1.16.0"
+requests = "2.32.3"                        # Do not change this version, you will have build issues if you do.
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"

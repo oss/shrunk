@@ -93,12 +93,13 @@ backend_build:
   script:
     - cd backend
     - pip3 install poetry
-    - sudo apt-get install libsasl2-dev python-dev libldap2-dev libssl-dev
+    - apt-get update
+    - apt-get install libsasl2-dev libldap2-dev libssl-dev
     - poetry config virtualenvs.create false
     - poetry install
-    - mkdir backend/shrunk/static/dist
-    - rm -f backend/shrunk/static/dist/index.html backend/shrunk/templates/index.html
-    - python3 -m poetry build
+    - mkdir shrunk/static/dist
+    - rm -f shrunk/static/dist/index.html shrunk/templates/index.html
+    - poetry build
   artifacts:
     paths:
       - backend/dist/shrunk-*.whl
@@ -106,10 +107,11 @@ backend_build:
 pytest:
   stage: test
   image: centos:centos7
-  needs:
+  dependencies:
     - backend_build
   variables:
     PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip_centos"
+    CRYPTOGRAPHY_DONT_BUILD_RUST: 1
   cache:
     key: ${CI_COMMIT_REF_SLUG}
     paths:
@@ -117,12 +119,7 @@ pytest:
   services:
     - mongo
   script:
-    - yum install -y gcc python3-pip python3-devel openldap-devel
-    - cd backend
-    - pip3 install poetry
-    - poetry config virtualenvs.create false
-    - poetry install
-    - poetry build
+    - yum install -y gcc python3-pip python3.8 openldap-devel
     - pip3 install backend/dist/shrunk-*.whl
     - export SHRUNK_CONFIG_PATH=$(pwd)/backend/shrunk/ci-test-config.py
     - mkdir /usr/share/GeoIP
