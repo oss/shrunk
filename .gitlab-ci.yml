@@ -106,7 +106,7 @@ backend_build:
 
 pytest:
   stage: test
-  image: centos:centos7
+  image: redhat/ubi9
   dependencies:
     - backend_build
   variables:

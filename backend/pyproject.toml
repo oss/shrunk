@@ -20,7 +20,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.8.1"
 flask = "1.1.2"
 flask-sso = "0.4.0"
 flask-mailman = "0.1.7"
@@ -32,12 +32,13 @@ pymongo = "3.11.0"
 geoip2 = "3.0.0"
 httpagentparser = "1.9.0"
 click = "7.0"
-python-ldap = "3.3.1"
+python-ldap = "^3.4.4"
 jsonschema = "3.2.0"
 backports-datetime-fromisoformat = "1.0.0"
 slack-sdk = "3.27.1"
 six = "^1.16.0"
 requests = "2.32.3"                        # Do not change this version, you will have build issues if you do.
+backports_datetime_fromisoformat = "1.0.0" # Do not change this version, you will have build issues if you do.
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
