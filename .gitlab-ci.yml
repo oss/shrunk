@@ -119,7 +119,7 @@ pytest:
   services:
     - mongo
   script:
-    - yum install -y gcc python3-pip python3.8 openldap-devel
+    - yum install -y gcc python3-pip openldap-devel python-devel
     - pip3 install backend/dist/shrunk-*.whl
     - export SHRUNK_CONFIG_PATH=$(pwd)/backend/shrunk/ci-test-config.py
     - mkdir /usr/share/GeoIP
