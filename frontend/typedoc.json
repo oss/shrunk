@@ -1,6 +1,0 @@
-{
-  "entryPoints": ["./src"],
-  "out": "docs",
-  "excludeExternals": true,
-  "logLevel": "Verbose"
-}

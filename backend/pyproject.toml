@@ -1,0 +1,88 @@
+[tool.poetry]
+name = "shrunk"
+version = "2.4.7"
+# readme = "../README.md"  # THIS HAS BEEN REPORTED TO THE POETRY DEVELOPMENT TEAM: https://github.com/python-poetry/poetry/issues/9488
+description = "URL Shortener for Rutgers University"
+repository = "https://github.com/oss/shrunk"
+authors = ["Rutgers Open System Solutions <oss@oit.rutgers.edu>"]
+license = "MIT"
+maintainers = ["Andrew Hong <ah1371@oit.rutgers.edu>"]
+classifiers = [
+    "Private :: Do Not Upload",
+    "Development Status :: 5 - Production/Stable",
+    "Operating System :: CentOS :: CentOS 8",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+
+[tool.poetry.dependencies]
+python = "^3.8.1"
+flask = "1.1.2"
+flask-sso = "0.4.0"
+flask-mailman = "0.1.7"
+jinja2 = "2.11.3"
+markupsafe = "1.1.1"
+werkzeug = "1.0.1"
+itsdangerous = "1.1.0"
+pymongo = "3.11.0"
+geoip2 = "3.0.0"
+httpagentparser = "1.9.0"
+click = "7.0"
+python-ldap = "^3.4.4"
+jsonschema = "3.2.0"
+backports-datetime-fromisoformat = "1.0.0"
+slack-sdk = "3.27.1"
+six = "^1.16.0"
+requests = "2.32.3"                        # Do not change this version, you will have build issues if you do.
+backports_datetime_fromisoformat = "1.0.0" # Do not change this version, you will have build issues if you do.
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2.2"
+pytest-cov = "^5.0.0"
+coverage = "^7.5.3"
+flake8 = "^7.0.0"
+flake8-quotes = "^3.4.0"
+flake8-commas = "^4.0.0"
+flake8-pytest-style = "^2.0.0"
+flake8-formatter-junit-xml = "^0.0.6"
+flake8-pyproject = "^1.2.3"
+pylint = "^3.2.3"
+pylint-flask = "^0.6"
+pylint-junit = "^0.3.4"
+autopep8 = "^2.2.0"
+setuptools = "^70.0.0"
+wheel = "^0.43.0"
+mypy = "^1.10.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+ignore_missing_imports = true
+strict_equality = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+warn_unreachable = true
+allow_redefinition = false
+pretty = true
+show_column_numbers = true
+show_error_context = true
+
+[tool.pytest]
+addopts = "--cov=shrunk --verbose -m 'not slow'"
+console_output_style = "count"
+testpaths = ["tests"]
+
+[tool.flake8]
+ignore = ["C812", "C813", "C814", "C815", "C816"]
+max-line-length = 120
+select = ["Q0", "C", "PT"]
+inline-quotes = '"'
