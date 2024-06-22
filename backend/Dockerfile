@@ -1,8 +1,6 @@
 FROM redhat/ubi9
 
-# Expose port 5000 as Flask apps listen to 5000 by default.
 EXPOSE 5000
-
 WORKDIR /usr/shrunk/backend/
 
 COPY . .
@@ -15,6 +13,5 @@ RUN dnf update -y && \
     dnf clean all
 
 RUN pip install poetry
-RUN pip install python-ldap==3.4.4
 
 RUN poetry config virtualenvs.create false && poetry install --only main
