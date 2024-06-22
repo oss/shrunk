@@ -30,7 +30,7 @@ docker-compose up
 
 ### Build manually
 
-If you want a more detailed set of instructions on how to build without Docker, click [here](./docs/build_instructions.rst) for the build instructions. You can also view the HTML version of the documentation via [GitLab Artifiacts](https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/artifacts).
+If you want a more detailed set of instructions on how to build without Docker, click [here](./docs/build-instructions.md) for the build instructions.
 
 ## Contributing
 
