@@ -144,6 +144,12 @@ interface State {
    * @property
    */
   adminData: AdminStatsData | null;
+
+  /**
+   * Version of Shrunk
+   * @property
+   */
+  version: string | null;
 }
 
 /**
@@ -159,11 +165,16 @@ export class AdminStats extends React.Component<Props, State> {
       endpointData: null,
       adminDataRange: null,
       adminData: null,
+      version: null,
     };
   }
 
   async componentDidMount(): Promise<void> {
-    await Promise.all([this.updateAdminData(), this.updateEndpointData()]);
+    await Promise.all([
+      this.updateAdminData(),
+      this.updateEndpointData(),
+      this.updateShrunkVersion(),
+    ]);
   }
 
   /**
@@ -199,6 +210,16 @@ export class AdminStats extends React.Component<Props, State> {
       .then((json) =>
         this.setState({ endpointData: json.stats as EndpointDatum[] }),
       );
+  };
+
+  /**
+   * Fetch the endpoint stats data from the backend
+   * @method
+   */
+  updateShrunkVersion = async (): Promise<void> => {
+    await fetch('/api/v1/admin/app-version')
+      .then((resp) => resp.json())
+      .then((json) => this.setState({ version: json.version as string }));
   };
 
   /**
@@ -266,7 +287,7 @@ export class AdminStats extends React.Component<Props, State> {
                   <span className="info">
                     Users: {this.state.adminData.users}
                   </span>
-                  <span className="info">Version: 2.3.1</span>
+                  <span className="info">Version: {this.state.version}</span>
                 </>
               )}
             </Row>
