@@ -21,7 +21,7 @@
 
 1. Install [Docker Desktop](https://docs.docker.com/desktop/)
 2. Create a copy of `backend/shrunk/config.py.example` to `config.py`
-3. Change the value `DB_HOST` to `mongo` in the backend's config file
+3. Change the value `DB_HOST` to `mongodb` in the backend's config file
 4. Start the Docker containers:
 
 ```
