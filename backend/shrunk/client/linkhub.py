@@ -1,4 +1,4 @@
-from typing import Optional, Any, Tuple, List
+from typing import Literal, Optional, Any, Tuple, List
 from bson.objectid import ObjectId
 import pymongo
 import pymongo.cursor
@@ -116,6 +116,24 @@ class LinkHubClient:
         result = collection.find_one({"alias": str(alias)})
 
         return result is None
+
+    def add_collaborator_by_netid(
+        self, linkhub_id: str, netid: str, permission: Literal["edit", "view"]
+    ) -> None:
+        collection = self.db.linkhubs
+        collection.update_one(
+            {"_id": ObjectId(linkhub_id)},
+            {
+                "$push": {
+                    "collaborators": {
+                        "_id": netid,
+                        "name": netid,  # This is to accommodate the frontend.
+                        "type": "netid",
+                        "permission": permission,
+                    }
+                }
+            },
+        )
 
     def search(
         self,

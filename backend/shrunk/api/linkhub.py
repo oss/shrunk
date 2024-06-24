@@ -283,6 +283,39 @@ def delete_link_from_linkhub(
     return jsonify({"success": True})
 
 
+ADD_COLLABORATOR_BY_NETID_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["netid", "permission"],
+    "properties": {
+        "netid": {"type": "string", "minimum": 0},
+        "permission": {"type": "string", "minimum": 0},
+    },
+}
+
+
+@bp.route("/<string:linkhub_id>/share-by-netid", methods=["POST"])
+@request_schema(ADD_COLLABORATOR_BY_NETID_SCHEMA)
+@require_login
+def add_collaborator_by_netid(
+    netid: str, client: ShrunkClient, req: Any, linkhub_id: str
+) -> Any:
+    if not current_app.config["LINKHUB_INTEGRATION_ENABLED"]:
+        return (
+            jsonify({"success": False, "error": "LinkHub has been disabled"}),
+            503,
+        )
+
+    if not client.linkhubs.can_edit(linkhub_id, netid):
+        return jsonify({"success": False, "error": "No permission"}), 401
+
+    client.linkhubs.add_collaborator_by_netid(
+        linkhub_id, req["netid"], req["permission"]
+    )
+
+    return jsonify({"success": True})
+
+
 PUBLISH_LINKHUB_SCHEMA = {
     "type": "object",
     "additionalProperties": False,

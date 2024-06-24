@@ -22,6 +22,8 @@ import EditLinkFromLinkHubModal, {
 } from '../../modals/EditLinkFromLinkHubModal';
 import NotFoundException from '../../exceptions/NotFoundException';
 import { serverValidateLinkHubAlias } from '../../Validators';
+import ShareLinkHubModal from '../../modals/ShareLinkHubModal';
+import { Entity, ShareLinkModal } from '../../modals/ShareLinkModal';
 
 interface PLinkHubEditRow {
   link: DisplayLink;
@@ -30,6 +32,8 @@ interface PLinkHubEditRow {
   onDeleteDisplayLink(index: number): void;
   disabled?: boolean;
 }
+
+// TODO: When editing a row, sometimes it shows old information.
 
 function LinkHubEditRow(props: PLinkHubEditRow) {
   return (
@@ -173,6 +177,24 @@ async function deleteLinkHub(linkhubId: string) {
   return result;
 }
 
+async function addCollaboratorByNetId(
+  linkhubId: string,
+  netid: string,
+  permission: string,
+) {
+  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/share-by-netid`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      netid,
+      permission,
+    }),
+  });
+  const result = await resp.json();
+
+  return result;
+}
+
 export default function LinkHubEditor(props: PLinkHubEditor) {
   const history = useHistory();
 
@@ -184,6 +206,8 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
   const [alias, setAlias] = useState<string>();
   const [oldAlias, setOldAlias] = useState<string>();
 
+  const [collaborators, setCollaborators] = useState<Entity[]>();
+
   const [isPublished, setIsPublished] = useState<boolean>(false);
 
   const [links, setLinks] = useState<DisplayLink[]>([]);
@@ -191,6 +215,9 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
 
   const [editLinkData, setEditLinkData] = useState<EditLinkData>();
   const [isEditLinkModalVisible, setIsEditLinkModalVisible] =
+    useState<boolean>(false);
+
+  const [isShareModalVisible, setIsShareModalVisible] =
     useState<boolean>(false);
 
   useEffect(() => {
@@ -201,6 +228,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
         setAlias(value.alias);
         setOldAlias(value.alias);
         setIsPublished(value.is_public);
+        setCollaborators(value.collaborators);
 
         const fetchingLinks: DisplayLink[] = [];
         value.links.map((value: any) => {
@@ -212,10 +240,31 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
         setLinks(fetchingLinks);
         setFoundLinkHub(true);
       })
-      .catch((e: NotFoundException) => {});
+      .catch(() => {});
   }, []);
 
   const { Title } = Typography;
+
+  function addCollaborator(
+    type: 'netid' | 'org',
+    identifier: string,
+    permission: string,
+  ) {
+    if (type === 'netid') {
+      addCollaboratorByNetId(props.linkhubId, identifier, permission);
+      const newCollaborators: Entity[] = JSON.parse(
+        JSON.stringify(collaborators),
+      );
+      newCollaborators.push({
+        _id: identifier,
+        name: identifier,
+        type: type as string,
+        // eslint-disable-next-line object-shorthand
+        permission: permission,
+      });
+      setCollaborators(newCollaborators);
+    }
+  }
 
   function addDisplayLink(value: DisplayLink) {
     const newLinks: DisplayLink[] = JSON.parse(JSON.stringify(links));
@@ -407,6 +456,18 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
                   </div>
                   <div style={{ marginBottom: '12px' }}>
                     <p style={{ margin: 0, marginBottom: '4px' }}>
+                      Control access to your LinkHub
+                    </p>
+                    <Button
+                      onClick={() => {
+                        setIsShareModalVisible(true);
+                      }}
+                    >
+                      Manage Access
+                    </Button>
+                  </div>
+                  <div style={{ marginBottom: '12px' }}>
+                    <p style={{ margin: 0, marginBottom: '4px' }}>
                       Deleting your LinkHub is irreversible.
                     </p>
                     <Button danger onClick={onDelete}>
@@ -468,6 +529,37 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
             setIsEditLinkModalVisible(false);
           }}
           visible={isEditLinkModalVisible}
+        />
+      ) : (
+        <></>
+      )}
+      {collaborators !== undefined ? (
+        <ShareLinkModal
+          visible={isShareModalVisible}
+          userPrivileges={undefined}
+          people={collaborators}
+          isLoading={false}
+          linkInfo={null}
+          onAddEntity={(value: any) => {
+            addCollaborator(
+              value.typeOfAdd as 'netid' | 'org', // I don't know why it's "typeOfAdd"... - Andrew H
+              value.netid,
+              value.permission,
+            );
+          }}
+          onRemoveEntity={function (
+            _id: string,
+            type: string,
+            permission: string,
+          ): void {
+            throw new Error('Function not implemented.');
+          }}
+          onOk={() => {
+            setIsShareModalVisible(false);
+          }}
+          onCancel={() => {
+            setIsShareModalVisible(false);
+          }}
         />
       ) : (
         <></>
