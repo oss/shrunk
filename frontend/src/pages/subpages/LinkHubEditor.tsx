@@ -252,6 +252,8 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
               oldCollaborators[i].name = orgInfo.name;
             }),
           );
+        } else if (oldCollaborators[i].type === 'netid') {
+          oldCollaborators[i].name = oldCollaborators[i]._id;
         }
       }
 
