@@ -24,6 +24,7 @@ import NotFoundException from '../../exceptions/NotFoundException';
 import { serverValidateLinkHubAlias } from '../../Validators';
 import ShareLinkHubModal from '../../modals/ShareLinkHubModal';
 import { Entity, ShareLinkModal } from '../../modals/ShareLinkModal';
+import { getOrgInfo } from '../../api/Org';
 
 interface PLinkHubEditRow {
   link: DisplayLink;
@@ -177,17 +178,19 @@ async function deleteLinkHub(linkhubId: string) {
   return result;
 }
 
-async function addCollaboratorByNetId(
+async function addCollaboratorToBackend(
   linkhubId: string,
-  netid: string,
+  identifier: string,
   permission: string,
+  type: 'netid' | 'org',
 ) {
-  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/share-by-netid`, {
+  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/share`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      netid,
+      identifier,
       permission,
+      type,
     }),
   });
   const result = await resp.json();
@@ -195,12 +198,17 @@ async function addCollaboratorByNetId(
   return result;
 }
 
-async function removeCollaboratorByNetId(linkhubId: string, netid: string) {
-  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/share-by-netid`, {
+async function removeCollaboratorToBackend(
+  linkhubId: string,
+  identifier: string,
+  type: 'netid' | 'org',
+) {
+  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/share`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      netid,
+      identifier,
+      type,
     }),
   });
   const result = await resp.json();
@@ -258,56 +266,51 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
 
   const { Title } = Typography;
 
+  function refreshCollaborators() {
+    getLinkHub(props.linkhubId).then((data: any) => {
+      const promises = [];
+      const oldCollaborators = JSON.parse(JSON.stringify(data.collaborators));
+      for (let i = 0; i < data.collaborators.length; i++) {
+        if (oldCollaborators[i].type === 'org') {
+          promises.push(
+            getOrgInfo(oldCollaborators[i]._id).then((orgInfo) => {
+              oldCollaborators[i].name = orgInfo.name;
+            }),
+          );
+        }
+      }
+
+      Promise.all(promises).then(() => {
+        setCollaborators(oldCollaborators);
+      });
+    });
+  }
+
   function addCollaborator(
     type: 'netid' | 'org',
     identifier: string,
     permission: string,
   ) {
-    if (type === 'netid') {
-      addCollaboratorByNetId(props.linkhubId, identifier, permission).then(
-        (value) => {
-          if (value.success as boolean) {
-            const newCollaborators: Entity[] = JSON.parse(
-              JSON.stringify(collaborators),
-            );
-            newCollaborators.push({
-              _id: identifier,
-              name: identifier,
-              type: type as string,
-              // eslint-disable-next-line object-shorthand
-              permission: permission,
-            });
-            setCollaborators(newCollaborators);
-          }
-        },
-      );
-    }
+    addCollaboratorToBackend(
+      props.linkhubId,
+      identifier,
+      permission,
+      type,
+    ).then((value) => {
+      if (value.success as boolean) {
+        refreshCollaborators();
+      }
+    });
   }
 
   function removeCollaborator(type: 'netid' | 'org', identifier: string) {
-    if (type === 'netid') {
-      removeCollaboratorByNetId(props.linkhubId, identifier).then((value) => {
+    removeCollaboratorToBackend(props.linkhubId, identifier, type).then(
+      (value) => {
         if (value.success as boolean) {
-          const newCollaborators: Entity[] = JSON.parse(
-            JSON.stringify(collaborators),
-          );
-          let removeIndex = -1;
-          for (let i = 0; i < newCollaborators.length; i++) {
-            if (
-              newCollaborators[i].type === type &&
-              newCollaborators[i]._id === identifier
-            ) {
-              removeIndex = i;
-              break;
-            }
-          }
-          if (removeIndex !== -1) {
-            newCollaborators.splice(removeIndex, 1);
-            setCollaborators(newCollaborators);
-          }
+          refreshCollaborators();
         }
-      });
-    }
+      },
+    );
   }
 
   function addDisplayLink(value: DisplayLink) {
@@ -586,8 +589,8 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
           linkInfo={null}
           onAddEntity={(value: any) => {
             addCollaborator(
-              value.typeOfAdd as 'netid' | 'org', // I don't know why it's "typeOfAdd"... - Andrew H
-              value.netid,
+              value.typeOfAdd as 'netid' | 'org',
+              value.netid ? value.netid : value.organization,
               value.permission,
             );
           }}

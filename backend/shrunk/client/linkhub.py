@@ -117,33 +117,44 @@ class LinkHubClient:
 
         return result is None
 
-    def add_collaborator_by_netid(
-        self, linkhub_id: str, netid: str, permission: Literal["edit", "view"]
+    def add_collaborator(
+        self,
+        linkhub_id: str,
+        identifier: str,
+        type: Literal["netid", "org"],
+        permission: Literal["edit", "view"],
     ) -> None:
+        if type == "org":
+            identifier = ObjectId(identifier)
+
         collection = self.db.linkhubs
         collection.update_one(
             {"_id": ObjectId(linkhub_id)},
             {
                 "$push": {
                     "collaborators": {
-                        "_id": netid,
-                        "name": netid,  # This is to accommodate the frontend.
-                        "type": "netid",
+                        "_id": identifier,
+                        "type": type,
                         "permission": permission,
                     }
                 }
             },
         )
 
-    def remove_collaborator_by_netid(self, linkhub_id: str, netid: str) -> None:
+    def remove_collaborator(
+        self, linkhub_id: str, identifier: str, type: Literal["netid", "org"]
+    ) -> None:
+        if type == "org":
+            identifier = ObjectId(identifier)
+
         collection = self.db.linkhubs
         collection.update_one(
             {"_id": ObjectId(linkhub_id)},
             {
                 "$pull": {
                     "collaborators": {
-                        "_id": netid,
-                        "type": "netid",
+                        "_id": identifier,
+                        "type": type,
                     }
                 }
             },
