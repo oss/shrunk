@@ -135,6 +135,20 @@ class LinkHubClient:
             },
         )
 
+    def remove_collaborator_by_netid(self, linkhub_id: str, netid: str) -> None:
+        collection = self.db.linkhubs
+        collection.update_one(
+            {"_id": ObjectId(linkhub_id)},
+            {
+                "$pull": {
+                    "collaborators": {
+                        "_id": netid,
+                        "type": "netid",
+                    }
+                }
+            },
+        )
+
     def search(
         self,
         netid: Optional[str] = None,

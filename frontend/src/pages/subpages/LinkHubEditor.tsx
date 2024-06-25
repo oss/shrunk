@@ -195,6 +195,19 @@ async function addCollaboratorByNetId(
   return result;
 }
 
+async function removeCollaboratorByNetId(linkhubId: string, netid: string) {
+  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/share-by-netid`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      netid,
+    }),
+  });
+  const result = await resp.json();
+
+  return result;
+}
+
 export default function LinkHubEditor(props: PLinkHubEditor) {
   const history = useHistory();
 
@@ -251,18 +264,49 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
     permission: string,
   ) {
     if (type === 'netid') {
-      addCollaboratorByNetId(props.linkhubId, identifier, permission);
-      const newCollaborators: Entity[] = JSON.parse(
-        JSON.stringify(collaborators),
+      addCollaboratorByNetId(props.linkhubId, identifier, permission).then(
+        (value) => {
+          if (value.success as boolean) {
+            const newCollaborators: Entity[] = JSON.parse(
+              JSON.stringify(collaborators),
+            );
+            newCollaborators.push({
+              _id: identifier,
+              name: identifier,
+              type: type as string,
+              // eslint-disable-next-line object-shorthand
+              permission: permission,
+            });
+            setCollaborators(newCollaborators);
+          }
+        },
       );
-      newCollaborators.push({
-        _id: identifier,
-        name: identifier,
-        type: type as string,
-        // eslint-disable-next-line object-shorthand
-        permission: permission,
+    }
+  }
+
+  function removeCollaborator(type: 'netid' | 'org', identifier: string) {
+    if (type === 'netid') {
+      removeCollaboratorByNetId(props.linkhubId, identifier).then((value) => {
+        if (value.success as boolean) {
+          const newCollaborators: Entity[] = JSON.parse(
+            JSON.stringify(collaborators),
+          );
+          let removeIndex = -1;
+          for (let i = 0; i < newCollaborators.length; i++) {
+            if (
+              newCollaborators[i].type === type &&
+              newCollaborators[i]._id === identifier
+            ) {
+              removeIndex = i;
+              break;
+            }
+          }
+          if (removeIndex !== -1) {
+            newCollaborators.splice(removeIndex, 1);
+            setCollaborators(newCollaborators);
+          }
+        }
       });
-      setCollaborators(newCollaborators);
     }
   }
 
@@ -547,12 +591,8 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
               value.permission,
             );
           }}
-          onRemoveEntity={function (
-            _id: string,
-            type: string,
-            permission: string,
-          ): void {
-            throw new Error('Function not implemented.');
+          onRemoveEntity={(_id: string, type: string) => {
+            removeCollaborator(type as 'netid' | 'org', _id);
           }}
           onOk={() => {
             setIsShareModalVisible(false);
