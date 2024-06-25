@@ -74,7 +74,7 @@ async function getLinkHub(linkhubId: string): Promise<any> {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
-  if (resp.status === 404) {
+  if (resp.status === 404 || resp.status === 401) {
     throw new NotFoundException('LinkHub does not exist');
   }
 

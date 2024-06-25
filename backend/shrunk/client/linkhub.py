@@ -49,7 +49,27 @@ class LinkHubClient:
         if data["owner"] == netid:
             return True
 
-        return netid in data["collaborators"]
+        for collaborator in data["collaborators"]:
+            if (
+                collaborator["_id"] == netid
+                and collaborator["type"] == "netid"
+                and collaborator["permission"] == "editors"
+            ):
+                return True
+
+        return False
+
+    def can_view(self, linkhub_id: str, netid: str) -> bool:
+        data = self.get_by_id(linkhub_id)
+        if data["owner"] == netid:
+            return True
+
+        for collaborator in data["collaborators"]:
+            # No need to check if they have "viewer", if they're added they can probably view it.
+            if collaborator["_id"] == netid and collaborator["type"] == "netid":
+                return True
+
+        return False
 
     def get_by_alias(self, alias: str) -> Optional[Any]:
         collection = self.db.linkhubs
@@ -152,21 +172,25 @@ class LinkHubClient:
 
     def remove_collaborator(
         self, linkhub_id: str, identifier: str, type: Literal["netid", "org"]
-    ) -> None:
+    ) -> bool:
+        """Returns True if successful"""
         if type == "org":
             identifier = ObjectId(identifier)
 
         collection = self.db.linkhubs
 
-        if collection.find_one(
-            {
-                "_id": ObjectId(linkhub_id),
-                "collaborators._id": identifier,
-            }
+        if (
+            collection.find_one(
+                {
+                    "_id": ObjectId(linkhub_id),
+                    "collaborators._id": identifier,
+                }
+            )
+            is None
         ):
-            return
+            return False
 
-        collection.update_one(
+        result = collection.update_one(
             {"_id": ObjectId(linkhub_id)},
             {
                 "$pull": {
@@ -177,6 +201,7 @@ class LinkHubClient:
                 }
             },
         )
+        return result.modified_count != 0
 
     def search(
         self,

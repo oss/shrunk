@@ -359,9 +359,11 @@ def remove_collaborator(
                 406,
             )
 
-    client.linkhubs.remove_collaborator(linkhub_id, req["identifier"], req["type"])
+    result = client.linkhubs.remove_collaborator(
+        linkhub_id, req["identifier"], req["type"]
+    )
 
-    return jsonify({"success": True})
+    return jsonify({"success": result}), 200 if result else 500
 
 
 PUBLISH_LINKHUB_SCHEMA = {
