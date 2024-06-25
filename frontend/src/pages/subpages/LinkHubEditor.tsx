@@ -241,31 +241,6 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
   const [isShareModalVisible, setIsShareModalVisible] =
     useState<boolean>(false);
 
-  useEffect(() => {
-    getLinkHub(props.linkhubId)
-      .then((value: any) => {
-        setTitle(value.title);
-        setOldTitle(value.title);
-        setAlias(value.alias);
-        setOldAlias(value.alias);
-        setIsPublished(value.is_public);
-        setCollaborators(value.collaborators);
-
-        const fetchingLinks: DisplayLink[] = [];
-        value.links.map((value: any) => {
-          fetchingLinks.push({
-            url: value.url,
-            title: value.title,
-          });
-        });
-        setLinks(fetchingLinks);
-        setFoundLinkHub(true);
-      })
-      .catch(() => {});
-  }, []);
-
-  const { Title } = Typography;
-
   function refreshCollaborators() {
     getLinkHub(props.linkhubId).then((data: any) => {
       const promises = [];
@@ -285,6 +260,31 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
       });
     });
   }
+
+  useEffect(() => {
+    getLinkHub(props.linkhubId)
+      .then((value: any) => {
+        setTitle(value.title);
+        setOldTitle(value.title);
+        setAlias(value.alias);
+        setOldAlias(value.alias);
+        setIsPublished(value.is_public);
+        refreshCollaborators();
+
+        const fetchingLinks: DisplayLink[] = [];
+        value.links.map((data: any) => {
+          fetchingLinks.push({
+            url: data.url,
+            title: data.title,
+          });
+        });
+        setLinks(fetchingLinks);
+        setFoundLinkHub(true);
+      })
+      .catch(() => {});
+  }, []);
+
+  const { Title } = Typography;
 
   function addCollaborator(
     type: 'netid' | 'org',

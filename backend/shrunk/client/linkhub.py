@@ -128,6 +128,15 @@ class LinkHubClient:
             identifier = ObjectId(identifier)
 
         collection = self.db.linkhubs
+
+        if collection.find_one(
+            {
+                "_id": ObjectId(linkhub_id),
+                "collaborators._id": identifier,
+            }
+        ):
+            return
+
         collection.update_one(
             {"_id": ObjectId(linkhub_id)},
             {
@@ -148,6 +157,15 @@ class LinkHubClient:
             identifier = ObjectId(identifier)
 
         collection = self.db.linkhubs
+
+        if collection.find_one(
+            {
+                "_id": ObjectId(linkhub_id),
+                "collaborators._id": identifier,
+            }
+        ):
+            return
+
         collection.update_one(
             {"_id": ObjectId(linkhub_id)},
             {
