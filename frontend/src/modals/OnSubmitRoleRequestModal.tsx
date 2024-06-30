@@ -104,7 +104,7 @@ export class RoleRequestModal extends Component<Props, State> {
           this.state.send_mail_on ? (
             <p>
               Success! You should receive a confirmation email from{' '}
-              <strong>noreply@go.rutgers.edu</strong> for your{' '}
+              <strong>go-support@oit.rutgers.edu</strong> for your{' '}
               {this.props.roleName} role request. On closing this modal, you
               will be redirected to the dashboard.
             </p>

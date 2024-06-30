@@ -1,0 +1,3 @@
+The user {{ entity }} has requested the {{ uppercase_role_name }} role. Please process their request.
+        
+Please do not reply to this email. You may direct any questions to oss@oit.rutgers.edu.
