@@ -1,7 +1,9 @@
+import os
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import pymongo
+from flask import render_template_string
 from flask_mailman import Mail
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
@@ -110,16 +112,14 @@ class RoleRequestClient:
         self.db.role_requests.delete_one({"role": role, "entity": entity})
 
     def get_role_request_text(self, role: str) -> Any:
-        """Get the text for a role request form.
+        """Get the text-related attributes needed for messages, emails, and forms.
 
         :param role: The internal name for the role
         """
         if role == "power_user":
             return {
-                "capitalized_role": "Power User",
-                "uppercase_role": "POWER USER",
                 "role": "power user",
-                "prompt": "Power users have the ability to create custom aliases for their shortened links. To request the power user role, please fill in and submit the form below. The power user role will only be granted to faculty/staff members. Your request will be manually processed to ensure that you meet this requirement.",
+                "prompt": "Power users have the ability to create custom aliases for their shortened links. The power user role will only be granted to faculty/staff members. Your request will be manually processed to ensure that you meet this requirement. To submit a request, please follow these steps:",
                 "placeholder_text": "Please provide a brief explanation of why you need the power user role.",
                 "submit_button": "Request power user role",
             }
@@ -128,282 +128,57 @@ class RoleRequestClient:
 
         return None
 
-    def send_role_request_confirmation_mail(
-        self, role: str, entity: str, mail: Mail
+    def send_role_request_mail(
+        self,
+        mail: Mail,
+        type: str,
+        role: str,
+        entity: str,
+        comment: Optional[str] = None,
     ) -> None:
-        """Send an email to the requesting-user confirming that a role request has been sent to be manually processed.
+        """Send an email. If the type is 'confirmation', an email is sent to the user confirming that a role request has been sent to be manually processed. If the type is 'notification', an email is sent to the OSS team notifying them that a role request has been made. If the type is 'approval', an email is sent to the user confirming that their role request is approved along with a comment. If the type is 'denial', an email is sent to the user confirming that their role request is denied along with a comment.
 
-        :param role: Role to request
-        :param entity: The NetID of the user requesting the role
         :param mail: The mail object
-        """
-        display_attributes = self.get_role_request_text(role)
-        uppercase_role_name = display_attributes["uppercase_role"]
-
-        plaintext_message = f"""
-        
-        
-        Dear {entity},
-        
-        This email is to confirm that your request for the {uppercase_role_name} role has been sent. Please wait for your request to be processed, as an admin needs to manually check whether you meet the necessary requirements for this role. You will receive another email on your request's approval/denial.
-        
-        Thank you for your interest and usage of go.rutgers.edu, the official URL shortener of Rutgers, The State University of New Jersey.
-        
-        Sincerely,
-        The OSS Team
-        
-        Please do not reply to this email. You may direct any questions to oss@oit.rutgers.edu.
-        
-        """
-
-        html_message = f"""
-        
-        <!DOCTYPE html>
-        <html lang="en-US">
-            <head>
-                <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-                <style>
-                    * {{
-                        font-family: Arial, sans-serif;
-                    }}
-
-                    .requested-role {{
-                        font-weight: bold;
-                    }}
-                </style>
-            </head>
-            <body>
-                <p>Dear {entity},</p>
-
-                <p>This email is to confirm that your request for the <span class="requested-role">{uppercase_role_name}</span> role has been sent. Please wait for your request to be processed, as an admin needs to manually check whether you meet the necessary requirements for this role. You will receive another email on your request's approval/denial.</p>
-                
-                <p>Thank you for your interest and usage of go.rutgers.edu, the official URL shortener of Rutgers, The State University of New Jersey.</p>
-                
-                <p>Sincerely,</p>
-                <p>The OSS Team</p>
-
-                <p><i>Please do not reply to this email. You may direct any questions to
-                <a href="mailto:oss@oit.rutgers.edu">oss@oit.rutgers.edu</a>.</i></p>
-            </body>
-        </html>
-
-        """
-
-        mail.send_mail(
-            subject=f"Go: Rutgers University URL Shortener - Your {uppercase_role_name} Role Request Has Been Sent",
-            body=plaintext_message,
-            html_message=html_message,
-            from_email="noreply@go.rutgers.edu",
-            recipient_list=[f"{entity}@rutgers.edu"],
-        )
-
-    def send_role_request_approval_mail(
-        self, role: str, entity: str, comment: str, mail: Mail
-    ) -> None:
-        """Send an email to the requesting-user confirming that their role request is approved.
-
+        :param type: The type of email to send
         :param role: The role requested
         :param entity: The NetID of the user requesting the role
-        :param comment: Comment from the admin
-        :param mail: The mail object
+        :param comment: Comment from the admin (only required for 'approval' and 'denial' types)
         """
         display_attributes = self.get_role_request_text(role)
-        uppercase_role_name = display_attributes["uppercase_role"]
+        uppercase_role_name = display_attributes["role"].upper()
+        variables = {
+            "uppercase_role_name": uppercase_role_name,
+            "entity": entity,
+            "comment": comment,
+        }
 
-        plaintext_message = f"""
-        
-        
-        Dear {entity},
-        
-        Your request for the {uppercase_role_name} role has been approved. You now have the ability to create custom aliases for your shortened links.
-        
-        Comment: {comment}
-        
-        Thank you for your interest and usage of go.rutgers.edu, the official URL shortener of Rutgers, The State University of New Jersey.
-        
-        Sincerely,
-        The OSS Team
-        
-        Please do not reply to this email. You may direct any questions to oss@oit.rutgers.edu.
-        
-        """
+        from_email = "go-support@oit.rutgers.edu"
+        recipient_list = [f"{entity}@rutgers.edu"]
 
-        html_message = f"""
-        
-        <!DOCTYPE html>
-        <html lang="en-US">
-            <head>
-                <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-                <style>
-                    * {{
-                        font-family: Arial, sans-serif;
-                    }}
+        if type == "confirmation":
+            subject = f"Go: Rutgers University URL Shortener - Your {uppercase_role_name} Role Request Has Been Sent"
+        if type == "notification":
+            subject = f"Go: Rutgers University URL Shortener - New Pending Role Request for {uppercase_role_name} Role"
+            recipient_list = ["oss@oit.rutgers.edu"]  # only different recipient list
+        if type == "approval":
+            subject = f"Go: Rutgers University URL Shortener - Your {uppercase_role_name} Role Request Has Been Approved"
+        if type == "denial":
+            subject = f"Go: Rutgers University URL Shortener - Your {uppercase_role_name} Role Request Has Been Denied"
 
-                    .requested-role {{
-                        font-weight: bold;
-                    }}
-                </style>
-            </head>
-            <body>
-                <p>Dear {entity},</p>
+        with open(f"shrunk/templates/html/role_requests/{type}.html", "r") as file:
+            html_file_content = file.read()
+        html_message = render_template_string(html_file_content, **variables)
 
-                <p>Your request for the <span class="requested-role">{uppercase_role_name}</span> role has been approved. You now have the ability to create custom aliases for your shortened links.</p>
-                
-                <p>Comment: {comment}</p>
-                
-                <p>Thank you for your interest and usage of go.rutgers.edu, the official URL shortener of Rutgers, The State University of New Jersey.</p>
-                
-                <p>Sincerely,</p>
-                <p>The OSS Team</p>
-
-                <p><i>Please do not reply to this email. You may direct any questions to
-                <a href="mailto:oss@oit.rutgers.edu">oss@oit.rutgers.edu</a>.</i></p>
-            </body>
-        </html>
-        
-        """
+        with open(f"shrunk/templates/txt/role_requests/{type}.txt", "r") as file:
+            plaintext_file_content = file.read()
+        plaintext_message = render_template_string(plaintext_file_content, **variables)
 
         mail.send_mail(
-            subject=f"Go: Rutgers University URL Shortener - Your {uppercase_role_name} Role Request Has Been Approved",
+            subject=subject,
             body=plaintext_message,
             html_message=html_message,
-            from_email="noreply@go.rutgers.edu",
-            recipient_list=[f"{entity}@rutgers.edu"],
-        )
-
-    def send_role_request_denial_mail(
-        self, role: str, entity: str, comment: str, mail: Mail
-    ) -> None:
-        """Send an email to the requesting-user confirming that their role request is denied.
-
-        :param role: The role requested
-        :param entity: The NetID of the user requesting the role
-        :param comment: Comment from the admin
-        :param mail: The mail object
-        """
-        display_attributes = self.get_role_request_text(role)
-        uppercase_role_name = display_attributes["uppercase_role"]
-
-        plaintext_message = f"""
-        
-        
-        Dear {entity},
-        
-        Your request for the {uppercase_role_name} role has been denied.
-        
-        Comment: {comment}
-        
-        Thank you for your interest and usage of go.rutgers.edu, the official URL shortener of Rutgers, The State University of New Jersey.
-        
-        Sincerely,
-        The OSS Team
-        
-        Please do not reply to this email. You may direct any questions to oss@oit.rutgers.edu.
-        
-        """
-
-        html_message = f"""
-        
-        <!DOCTYPE html>
-        <html lang="en-US">
-            <head>
-                <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-                <style>
-                    * {{
-                        font-family: Arial, sans-serif;
-                    }}
-
-                    .requested-role {{
-                        font-weight: bold;
-                    }}
-                </style>
-            </head>
-            <body>
-                <p>Dear {entity},</p>
-
-                <p>This email is to confirm that your request for the <span class="requested-role">{uppercase_role_name}</span> role has been approved. You now have the ability to create custom aliases for your shortened links.</p>
-                
-                <p>Comment: {comment}</p>
-                
-                <p>Thank you for your interest and usage of go.rutgers.edu, the official URL shortener of Rutgers, The State University of New Jersey.</p>
-                
-                <p>Sincerely,</p>
-                <p>The OSS Team</p>
-
-                <p><i>Please do not reply to this email. You may direct any questions to
-                <a href="mailto:oss@oit.rutgers.edu">oss@oit.rutgers.edu</a>.</i></p>
-            </body>
-        </html>
-        
-        """
-
-        mail.send_mail(
-            subject=f"Go: Rutgers University URL Shortener - Your {uppercase_role_name} Role Request Has Been Approved",
-            body=plaintext_message,
-            html_message=html_message,
-            from_email="noreply@go.rutgers.edu",
-            recipient_list=[f"{entity}@rutgers.edu"],
-        )
-
-    def send_role_request_notification_mail(
-        self, role: str, entity: str, mail: Mail
-    ) -> None:
-        """Send an email to the OSS team notifying them that a role request has been made.
-
-        :param requesting_netid: NetID of the requesting user
-        :param mail: The mail object
-        :param role_name: The role name being requested
-        """
-        display_attributes = self.get_role_request_text(role)
-        uppercase_role_name = display_attributes["uppercase_role"]
-
-        plaintext_message = f"""
-        
-        
-
-        
-        The user {entity} has requested the {uppercase_role_name} role. Please process their request.
-        
-        Please do not reply to this email. You may direct any questions to oss@oit.rutgers.edu.
-        
-        """
-
-        html_message = f"""
-        
-        <!DOCTYPE html>
-        <html lang="en-US">
-            <head>
-                <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-                <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-                <style>
-                    * {{
-                        font-family: Arial, sans-serif;
-                    }}
-
-                    .requested-role {{
-                        font-weight: bold;
-                    }}
-                </style>
-            </head>
-            <body>
-                <p>The user {entity} has requested the <span class="requested-role">{uppercase_role_name}</span> role. Please process their request.</p>
-
-                <p><i>Please do not reply to this email. You may direct any questions to
-                <a href="mailto:oss@oit.rutgers.edu">oss@oit.rutgers.edu</a>.</i></p>
-            </body>
-        </html>
-
-        """
-
-        mail.send_mail(
-            subject=f"Go: Rutgers University URL Shortener - New Pending Role Request for {uppercase_role_name} Role",
-            body=plaintext_message,
-            html_message=html_message,
-            from_email="noreply@go.rutgers.edu",
-            recipient_list=["oss@oit.rutgers.edu"],
+            from_email=from_email,
+            recipient_list=recipient_list,
         )
 
     def get_send_mail_on(self) -> bool:
@@ -427,7 +202,7 @@ class RoleRequestClient:
         """
         # Get the display attributes for the role request
         display_attributes = self.get_role_request_text(role)
-        uppercase_role_name = display_attributes["uppercase_role"]
+        uppercase_role_name = display_attributes["role"].upper()
 
         # Get the position info of the requesting user using LDAP. If the user's position info cannot be found, display an error message. If a specific attribute cannot be found, display "N/A".
         intermediate_position_info = query_position_info(entity)
@@ -556,7 +331,7 @@ class RoleRequestClient:
 
         # Get the display attributes for the role request
         display_attributes = self.get_role_request_text(role)
-        uppercase_role_name = display_attributes["uppercase_role"]
+        uppercase_role_name = display_attributes["role"].upper()
 
         if approved:
             text = (

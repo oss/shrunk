@@ -54,10 +54,10 @@ export const OrgsSelect: React.FC<Props> = (props) => {
         e === 0
           ? { set: 'user' }
           : e === 1
-          ? { set: 'all' }
-          : e === 2
-          ? { set: 'shared' }
-          : { set: 'org', org: e as string };
+            ? { set: 'all' }
+            : e === 2
+              ? { set: 'shared' }
+              : { set: 'org', org: e as string };
       props.showByOrg(searchSet);
       toggle(false);
     }, 300);

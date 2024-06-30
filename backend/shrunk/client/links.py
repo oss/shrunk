@@ -886,7 +886,7 @@ Please do not reply to this email. You may direct any questions to oss@oit.rutge
             subject=f'{requesting_netid} is requesting edit access to "{link_info["title"]}"',
             body=plaintext_message,
             html_message=html_message,
-            from_email="noreply@go.rutgers.edu",
+            from_email="go-support@oit.rutgers.edu",
             recipient_list=[f"{owner_netid}@rutgers.edu"],
         )
 

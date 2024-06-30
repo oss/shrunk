@@ -135,11 +135,13 @@ def make_role_request(netid: str, client: ShrunkClient, mail: Mail) -> Any:
     # If emails are toggled on, a confirmation email will be sent to the user and a notification email will be sent
     # to the OSS team. The notification email will be overriden by a slack notification if slack integration is on.
     if client.role_requests.get_send_mail_on():
-        client.role_requests.send_role_request_confirmation_mail(role, netid, mail)
+        client.role_requests.send_role_request_mail(mail, "confirmation", role, netid)
         if client.role_requests.get_slack_integration_on():
             client.role_requests.send_role_request_notification_slack(role, netid)
         else:
-            client.role_requests.send_role_request_notification_mail(role, netid, mail)
+            client.role_requests.send_role_request_mail(
+                mail, "notification", role, netid
+            )
     else:
         if client.role_requests.get_slack_integration_on():
             client.role_requests.send_role_request_notification_slack(role, netid)
@@ -195,8 +197,8 @@ def approve_role_request(netid: str, client: ShrunkClient, mail: Mail) -> Any:
 
     # If emails are toggled on, a denial email will be sent to the user
     if client.role_requests.get_send_mail_on():
-        client.role_requests.send_role_request_approval_mail(
-            role, entity, comment, mail
+        client.role_requests.send_role_Request_mail(
+            mail, "approval", role, entity, comment
         )
 
     return Response(status=200)
@@ -248,7 +250,9 @@ def deny_role_request(netid: str, client: ShrunkClient, mail: Mail) -> Any:
 
     # If emails are toggled on, a denial email will be sent to the user
     if client.role_requests.get_send_mail_on():
-        client.role_requests.send_role_request_denial_mail(role, entity, comment, mail)
+        client.role_requests.send_role_request_mail(
+            mail, "denial", role, entity, comment
+        )
 
     return Response(status=204)
 
@@ -356,8 +360,8 @@ def approve_role_request_slack(mail: Mail) -> Any:
 
     # If emails are toggled on, a denial email will be sent to the user
     if client.role_requests.get_send_mail_on():
-        client.role_requests.send_role_request_approval_mail(
-            role, entity, comment, mail
+        client.role_requests.send_role_request_mail(
+            mail, "approval", role, entity, comment
         )
 
     return Response(status=200)
@@ -403,6 +407,8 @@ def deny_role_request_slack(mail: Mail) -> Any:
 
     # If emails are toggled on, a denial email will be sent to the user
     if client.role_requests.get_send_mail_on():
-        client.role_requests.send_role_request_denial_mail(role, entity, comment, mail)
+        client.role_requests.send_role_request_mail(
+            mail, "denial", role, entity, comment
+        )
 
     return Response(status=204)

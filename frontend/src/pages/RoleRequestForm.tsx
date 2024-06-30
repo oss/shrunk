@@ -15,12 +15,6 @@ import { RoleRequestModal } from '../modals/OnSubmitRoleRequestModal';
  */
 export interface RoleRequestText {
   /**
-   * The role being requested capitalized (displayed name)
-   * @property
-   */
-  capitalized_role: string;
-
-  /**
    * The role being requested (displayed name)
    * @property
    */
@@ -95,6 +89,12 @@ export interface State {
    * @property
    */
   visible: boolean;
+
+  /**
+   * Whether the ServiceNow ticket link has been clicked
+   * @property
+   */
+  ticketClicked: boolean;
 }
 
 /**
@@ -109,6 +109,7 @@ export class RoleRequestForm extends React.Component<Props, State> {
       comment: '',
       roleRequestSent: false,
       visible: false,
+      ticketClicked: false,
     };
   }
 
@@ -143,6 +144,10 @@ export class RoleRequestForm extends React.Component<Props, State> {
         }
       })
       .catch((error) => console.error('Error:', error));
+  };
+
+  updateTicketClicked = (): void => {
+    this.setState({ ticketClicked: true });
   };
 
   /**
@@ -214,47 +219,73 @@ export class RoleRequestForm extends React.Component<Props, State> {
     if (this.state.roleRequestText === null) {
       return <Spin size="large" />;
     }
+
     return (
       <div>
         <Row className="primary-row">
           <Col span={24}>
             <span className="page-title">
-              Request {this.state.roleRequestText?.capitalized_role} Role
+              Request{' '}
+              {this.state.roleRequestText?.role.replace(/\b\w/g, (c) =>
+                c.toUpperCase(),
+              )}{' '}
+              Role
             </span>
           </Col>
         </Row>
         <p>{this.state.roleRequestText?.prompt}</p>
-        <Form onFinish={this.onFinish}>
-          <Form.Item
-            name="comment"
-            rules={[
-              {
-                required: true,
-                message: 'Comment cannot be empty',
-              },
-              {
-                validator: this.validateCommentInput,
-              },
-            ]}
+        <p>
+          <span>First, follow this </span>
+          <a
+            href="https://ithelp.rutgers.edu/sp?id=sc_cat_item&sys_id=02b2c6afdbf87054fd638962399619d3"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={this.updateTicketClicked}
           >
-            <Input.TextArea
-              rows={4}
-              value={this.state.comment}
-              onChange={this.handleCommentChange}
-              placeholder={this.state.roleRequestText?.placeholder_text}
-              disabled={this.state.roleRequestSent}
-            />
-          </Form.Item>
-          <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              disabled={this.state.roleRequestSent}
-            >
-              <CheckOutlined /> {this.state.roleRequestText?.submit_button}
-            </Button>
-          </Form.Item>
-        </Form>
+            link
+          </a>
+          <span>
+            {' '}
+            to fill in a ServiceNow ticket. This is meant to track the status of
+            the request.
+          </span>
+        </p>
+        {this.state.ticketClicked && (
+          <>
+            <p>Then, submit the form below. This sends the actual request.</p>
+            <Form onFinish={this.onFinish}>
+              <Form.Item
+                name="comment"
+                rules={[
+                  {
+                    required: true,
+                    message: 'Comment cannot be empty',
+                  },
+                  {
+                    validator: this.validateCommentInput,
+                  },
+                ]}
+              >
+                <Input.TextArea
+                  rows={4}
+                  value={this.state.comment}
+                  onChange={this.handleCommentChange}
+                  placeholder={this.state.roleRequestText?.placeholder_text}
+                  disabled={this.state.roleRequestSent}
+                />
+              </Form.Item>
+              <Form.Item>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  disabled={this.state.roleRequestSent}
+                >
+                  <CheckOutlined /> {this.state.roleRequestText?.submit_button}
+                </Button>
+              </Form.Item>
+            </Form>
+          </>
+        )}
         <RoleRequestModal
           visible={this.state.visible}
           roleRequestSent={this.state.roleRequestSent}
