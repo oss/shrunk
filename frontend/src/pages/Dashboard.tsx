@@ -487,7 +487,7 @@ export class Dashboard extends React.Component<Props, State> {
                   deleted_by: output.deletion_info.deleted_by,
                   deleted_time: new Date(output.deletion_info.deleted_time),
                 },
-          } as LinkInfo),
+          }) as LinkInfo,
       ),
     };
   };

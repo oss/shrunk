@@ -15,12 +15,6 @@ import { ProcessRoleRequestModal } from '../../modals/ProcessRoleRequestModal';
  */
 export interface RequestText {
   /**
-   * The role being requested capitalized (displayed name)
-   * @property
-   */
-  capitalized_role: string;
-
-  /**
    * The role being requested (displayed name)
    * @property
    */
@@ -388,7 +382,11 @@ export class PendingRoleRequests extends Component<Props, State> {
               size="large"
             />
             <span className="page-title">
-              Pending {this.state.requestText?.capitalized_role} Role Requests
+              Pending{' '}
+              {this.state.requestText?.role.replace(/\b\w/g, (c) =>
+                c.toUpperCase(),
+              )}{' '}
+              Role Requests
             </span>
           </Col>
         </Row>

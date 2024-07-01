@@ -1,0 +1,10 @@
+Dear {{ entity }},
+        
+This email is to confirm that your request for the {{ uppercase_role_name }} role has been sent. Please wait for your request to be processed, as an admin needs to manually check whether you meet the necessary requirements for this role. You will receive another email on your request's approval/denial.
+
+Thank you for your interest and usage of go.rutgers.edu, the official URL shortener of Rutgers, The State University of New Jersey.
+
+Sincerely,
+The OSS Team
+
+Please do not reply to this email. You may direct any questions to oss@oit.rutgers.edu.

@@ -13,7 +13,7 @@ import {
   NavLink,
 } from 'react-router-dom';
 import { createBrowserHistory, Location } from 'history';
-import { Layout, Menu, Dropdown, Button, Modal, Typography } from 'antd/lib';
+import { Layout, Menu, Dropdown, Button } from 'antd/lib';
 import {
   UserOutlined,
   DownOutlined,
@@ -24,6 +24,7 @@ import {
   LogoutOutlined,
   SafetyOutlined,
   SlidersOutlined,
+  ClockCircleOutlined,
 } from '@ant-design/icons';
 
 import base32 from 'hi-base32';
@@ -95,11 +96,10 @@ interface State {
   showWhitelistTab: boolean;
 
   /**
-   * Whether the "Request Power User Role" tab should be shown in the top navbar. This is
-   * determined based on whether the user has the power user role and whether the user has
-   * already requested the power user role.
+   * Whether the user has a pending request for the power user role. This will determine
+   * whether a pending icon is shown in the navbar.
    */
-  showRequestPowerUserRoleTab: boolean;
+  powerUserRoleRequestMade: boolean;
 
   /**
    * This determines which tabs in the navbar are highlighted. This is determined
@@ -139,21 +139,19 @@ export class Shrunk extends React.Component<Props, State> {
     const showAdminTab = this.props.userPrivileges.has('admin');
     const showWhitelistTab =
       !showAdminTab && this.props.userPrivileges.has('facstaff');
-    const showRequestPowerUserRoleTab =
-      !this.props.userPrivileges.has('power_user') &&
-      !this.props.userPrivileges.has('admin');
+    const powerUserRoleRequestMade = false;
     const role =
       this.props.userPrivileges.size === 0
         ? 'Whitelisted User'
         : this.props.userPrivileges.has('power_user')
-        ? 'Power User'
-        : this.props.userPrivileges.has('facstaff')
-        ? 'Faculty/Staff'
-        : 'Administrator';
+          ? 'Power User'
+          : this.props.userPrivileges.has('facstaff')
+            ? 'Faculty/Staff'
+            : 'Administrator';
     this.state = {
       showAdminTab,
       showWhitelistTab,
-      showRequestPowerUserRoleTab,
+      powerUserRoleRequestMade,
       selectedKeys: ['dashboard'],
       pendingAlerts: [],
       role,
@@ -200,15 +198,10 @@ export class Shrunk extends React.Component<Props, State> {
     const encodedEntity = base32.encode(this.props.netid);
     fetch(`/api/v1/role_request/power_user/${encodedEntity}`)
       .then((response) => {
-        if (response.status === 204) {
-          if (
-            !this.props.userPrivileges.has('power_user') &&
-            !this.props.userPrivileges.has('admin')
-          ) {
-            this.setState({ showRequestPowerUserRoleTab: true });
-          }
-        } else if (response.status === 200) {
-          this.setState({ showRequestPowerUserRoleTab: false });
+        if (response.status === 200) {
+          this.setState({ powerUserRoleRequestMade: true });
+        } else if (response.status === 204) {
+          this.setState({ powerUserRoleRequestMade: false });
         }
       })
       .catch((error) => console.error('Error:', error));
@@ -299,17 +292,32 @@ export class Shrunk extends React.Component<Props, State> {
                     <Menu.Item icon={<TeamOutlined />} key="orgs">
                       <NavLink to="/orgs">My Organizations</NavLink>
                     </Menu.Item>
-                    {!this.state.showRequestPowerUserRoleTab ? (
+                    {this.state.role === 'Administrator' ||
+                    this.state.role === 'Power User' ? (
                       <></>
                     ) : (
-                      <Menu.Item
-                        icon={<SafetyOutlined />}
-                        key="request-power-user-role"
-                      >
-                        <NavLink to="/request-power-user-role">
-                          Request Power User Role
-                        </NavLink>
-                      </Menu.Item>
+                      <>
+                        <Menu.Divider />
+
+                        {this.state.powerUserRoleRequestMade ? (
+                          <Menu.Item
+                            icon={<ClockCircleOutlined />}
+                            key="request-power-user-role"
+                            disabled
+                          >
+                            Pending Request
+                          </Menu.Item>
+                        ) : (
+                          <Menu.Item
+                            icon={<SafetyOutlined />}
+                            key="request-power-user-role"
+                          >
+                            <NavLink to="/request-power-user-role">
+                              Request Power User Role
+                            </NavLink>
+                          </Menu.Item>
+                        )}
+                      </>
                     )}
 
                     {this.state.showAdminTab ? (
@@ -477,13 +485,15 @@ export class Shrunk extends React.Component<Props, State> {
                 />
 
                 <Route exact path="/request-power-user-role">
-                  {this.state.showRequestPowerUserRoleTab && (
-                    <RoleRequestForm
-                      userPrivileges={this.props.userPrivileges}
-                      netid={this.props.netid}
-                      name="power_user"
-                    />
-                  )}
+                  {!this.state.powerUserRoleRequestMade &&
+                    !this.props.userPrivileges.has('admin') &&
+                    !this.props.userPrivileges.has('power_user') && (
+                      <RoleRequestForm
+                        userPrivileges={this.props.userPrivileges}
+                        netid={this.props.netid}
+                        name="power_user"
+                      />
+                    )}
                 </Route>
 
                 <Route exact path="/faq">
