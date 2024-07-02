@@ -421,6 +421,6 @@ def get_linkhubs_from_netid(netid: str, client: ShrunkClient, netid_query: str) 
         )
 
     if netid_query != netid:
-        return jsonify({"error": "No permission"}, 401)
+        return jsonify({"error": "No permission"}), 401
 
-    return jsonify({"results": client.linkhubs.search(netid_query)})
+    return jsonify({"results": client.linkhubs.search(netid_query)}), 200
