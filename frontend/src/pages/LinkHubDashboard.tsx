@@ -36,7 +36,7 @@ export default function LinkHubDashboard(props: ILinkHubDashboard) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        title: 'New LinkHub',
+        title: 'Untitled LinkHub',
       }),
     }).then((resp) => resp.json());
     history.push(`/linkhubs/${result.id}/edit`);
