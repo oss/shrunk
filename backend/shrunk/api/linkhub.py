@@ -409,3 +409,18 @@ def validate_alias_linkhub(netid: str, client: ShrunkClient, value: str) -> Any:
 @bp.route("/is-linkhub-enabled", methods=["GET"])
 def is_linkhub_enabled() -> Any:
     return jsonify({"status": current_app.config["LINKHUB_INTEGRATION_ENABLED"]})
+
+
+@bp.route("/netid/<string:netid_query>", methods=["GET"])
+@require_login
+def get_linkhubs_from_netid(netid: str, client: ShrunkClient, netid_query: str) -> Any:
+    if not current_app.config["LINKHUB_INTEGRATION_ENABLED"]:
+        return (
+            jsonify({"success": False, "error": "LinkHub has been disabled"}),
+            503,
+        )
+
+    if netid_query != netid:
+        return jsonify({"error": "No permission"}, 401)
+
+    return jsonify({"results": client.linkhubs.search(netid_query)})

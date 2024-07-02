@@ -1,25 +1,35 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import './Dashboard.less';
 import { Button, Col, Row } from 'antd/lib';
 import { PlusCircleFilled } from '@ant-design/icons/lib/icons';
 import { SearchBox } from '../components/SearchBox';
+import LinkHubRow from '../components/LinkHubRow';
 
 async function searchLinkHubs(netid: string) {
-  const resp = await fetch(`/api/v1/linkhub/search`, {
-    method: 'POST',
+  const resp = await fetch(`/api/v1/linkhub/netid/${netid}`, {
+    method: 'GET',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      netid,
-    }),
   });
   const result = await resp.json();
 
   return result.results;
 }
 
-export default function LinkHubDashboard() {
+interface ILinkHubDashboard {
+  netid: string;
+}
+
+export default function LinkHubDashboard(props: ILinkHubDashboard) {
   const history = useHistory();
+
+  const [linkHubs, setLinkHubs] = useState<any[]>([]);
+
+  useEffect(() => {
+    searchLinkHubs(props.netid).then((value: any) => {
+      setLinkHubs(value);
+    });
+  }, []);
 
   async function createLinkHub(): Promise<any> {
     const result = await fetch('/api/v1/linkhub', {
@@ -58,7 +68,17 @@ export default function LinkHubDashboard() {
           </Button>
         </Col>
       </Row>
-      <div className="dashboard-links" />
+      <div>
+        <Row gutter={16}>
+          {linkHubs.map((value) => (
+            <LinkHubRow
+              linkHubTitle={value.title}
+              linkHubId={value._id}
+              linkHubAlias={value.alias}
+            />
+          ))}
+        </Row>
+      </div>
     </>
   );
 }

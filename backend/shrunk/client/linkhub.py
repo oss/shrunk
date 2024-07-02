@@ -209,12 +209,12 @@ class LinkHubClient:
         limit: int = 25,
         skip: int = 0,
     ) -> List[Any]:
-        query = {}
-
-        if netid is not None:
-            query["owner"] = netid
-
         collection = self.db.linkhubs
+
+        if netid is None:
+            return []
+
+        query = {"$or": [{"owner": netid}, {"collaborators._id": netid}]}
         results: pymongo.cursor.Cursor = collection.find(query, limit=limit, skip=skip)
 
         return list(results)
