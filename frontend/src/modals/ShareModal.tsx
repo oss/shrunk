@@ -33,11 +33,125 @@ interface IShareModal {
   onCancel: () => void;
 }
 
+function SearchUsers() {
+  return (
+    <Form.Item
+      name="netid"
+      style={{ marginBottom: '5px', width: '100%' }}
+      rules={[
+        {
+          required: true,
+          message: 'Please enter a valid NetID.',
+        },
+        { validator: serverValidateNetId },
+      ]}
+    >
+      <Input
+        placeholder="Search by NetID"
+        onPressEnter={(e: any) => {
+          onInput(e.target.value, 'netid');
+        }}
+      />
+    </Form.Item>
+  );
+}
+
+// FIX: When going to organizations tab then selecting an org, it brings you back to the people tab.
+
+interface ISearchOrganizations {
+  organizations: OrgInfo[];
+  onInput(newCollaboratorId: string, collaboratorType: 'netid' | 'org'): void;
+}
+
+function SearchOrganizations(props: ISearchOrganizations) {
+  return (
+    <Form.Item
+      name="organization"
+      style={{ marginBottom: '5px', width: '100%' }}
+      rules={[
+        {
+          required: true,
+          message: 'Please select an organization.',
+        },
+      ]}
+    >
+      <Select
+        placeholder="Your Organizations"
+        onChange={(value: any) => {
+          props.onInput(value as string, 'org');
+        }}
+      >
+        {props.organizations.map((org) => (
+          <Select.Option key={org.id} value={org.id}>
+            {org.name}
+          </Select.Option>
+        ))}
+      </Select>
+    </Form.Item>
+  );
+}
+
+interface ISearchBody {
+  organizations: OrgInfo[];
+  onInput(newCollaboratorId: string, collaboratorType: 'netid' | 'org'): void;
+  onAdd: void;
+}
+
+function SearchBody(props: ISearchBody) {
+  // State is inside an inner component to prevent redraw issues.
+  const [activeTab, setActiveTab] = useState<string>('people');
+
+  return (
+    <>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+        }}
+      >
+        {activeTab === 'people' ? (
+          <SearchUsers />
+        ) : (
+          <SearchOrganizations
+            organizations={props.organizations}
+            onInput={props.onInput}
+          />
+        )}
+        <Button onClick={props.onAdd} type="primary">
+          Add
+        </Button>
+      </div>
+      <Tabs
+        activeKey={activeTab}
+        onChange={(value) => {
+          setActiveTab(value);
+        }}
+      >
+        <Tabs.TabPane tab="People" key="people">
+          <div style={{ textAlign: 'center' }}>
+            <p>No person has access.</p>
+          </div>
+        </Tabs.TabPane>
+        <Tabs.TabPane tab="Organizations" key="organizations">
+          <div style={{ textAlign: 'center' }}>
+            <p>No organization has access.</p>
+          </div>
+        </Tabs.TabPane>
+      </Tabs>
+    </>
+  );
+}
+
+function OptionsBody() {
+  return <></>;
+}
+
 export default function ShareModal(props: IShareModal) {
   const [form] = Form.useForm();
 
   const [organizations, setOrganizations] = useState<OrgInfo[]>([]);
   const [collaboratorId, setCollaboratorId] = useState<string>();
+  const [stage, setStage] = useState<'search' | 'options'>('search');
 
   function refreshOrganizations() {
     listOrgs('user').then((orgs) => setOrganizations(orgs));
@@ -54,92 +168,8 @@ export default function ShareModal(props: IShareModal) {
     setCollaboratorId(newCollaboratorId);
   }
 
-  function SearchUsers() {
-    return (
-      <Form.Item
-        name="netid"
-        style={{ marginBottom: '5px', width: '100%' }}
-        rules={[
-          {
-            required: true,
-            message: 'Please enter a valid NetID.',
-          },
-          { validator: serverValidateNetId },
-        ]}
-      >
-        <Input
-          placeholder="Search by NetID"
-          onPressEnter={(e: any) => {
-            onInput(e.target.value, 'netid');
-          }}
-        />
-      </Form.Item>
-    );
-  }
-
-  // FIX: When going to organizations tab then selecting an org, it brings you back to the people tab.
-  function SearchOrganizations() {
-    return (
-      <Form.Item
-        name="organization"
-        style={{ marginBottom: '5px', width: '100%' }}
-        rules={[
-          {
-            required: true,
-            message: 'Please select an organization.',
-          },
-        ]}
-      >
-        <Select
-          placeholder="Your Organizations"
-          onChange={(value: any) => {
-            onInput(value as string, 'org');
-          }}
-        >
-          {organizations.map((org) => (
-            <Select.Option key={org.id} value={org.id}>
-              {org.name}
-            </Select.Option>
-          ))}
-        </Select>
-      </Form.Item>
-    );
-  }
-
-  function SearchBody() {
-    // State is inside an inner component to prevent redraw issues.
-    const [activeTab, setActiveTab] = useState<string>('people');
-
-    return (
-      <>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-          }}
-        >
-          {activeTab === 'people' ? <SearchUsers /> : <SearchOrganizations />}
-          <Button type="primary">Add</Button>
-        </div>
-        <Tabs
-          activeKey={activeTab}
-          onChange={(value) => {
-            setActiveTab(value);
-          }}
-        >
-          <Tabs.TabPane tab="People" key="people">
-            <div style={{ textAlign: 'center' }}>
-              <p>No person has access.</p>
-            </div>
-          </Tabs.TabPane>
-          <Tabs.TabPane tab="Organizations" key="organizations">
-            <div style={{ textAlign: 'center' }}>
-              <p>No organization has access.</p>
-            </div>
-          </Tabs.TabPane>
-        </Tabs>
-      </>
-    );
+  function onAdd() {
+    setStage('options');
   }
 
   return (
@@ -157,7 +187,16 @@ export default function ShareModal(props: IShareModal) {
       footer={null}
     >
       <Form form={form} preserve={false}>
-        <SearchBody />
+        {stage === 'search' ? (
+          <SearchBody
+            onAdd={onAdd}
+            onInput={onInput}
+            organizations={organizations}
+          />
+        ) : (
+          <></>
+        )}
+        {stage === 'options' ? <OptionsBody /> : <></>}
       </Form>
     </Modal>
   );
