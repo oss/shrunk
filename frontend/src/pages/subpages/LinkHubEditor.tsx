@@ -20,21 +20,32 @@ import LinkHubComponent, {
 import EditLinkFromLinkHubModal, {
   EditLinkData,
 } from '../../modals/EditLinkFromLinkHubModal';
-import NotFoundException from '../../exceptions/NotFoundException';
 import { serverValidateLinkHubAlias } from '../../Validators';
 import ShareLinkHubModal from '../../modals/ShareLinkHubModal';
 import { Entity, ShareLinkModal } from '../../modals/ShareLinkModal';
 import { getOrgInfo } from '../../api/Org';
+import {
+  getLinkHub,
+  addCollaboratorToBackend,
+  removeCollaboratorToBackend,
+  addLinkToLinkHub,
+  changeLinkHubTitle,
+  changeLinkHubAlias,
+  deleteLinkAtIndex,
+  publishLinkHub,
+  deleteLinkHub,
+  setLinkFromLinkHub,
+} from '../../api/LinkHub';
 
 interface PLinkHubEditRow {
   link: DisplayLink;
   index: number;
   onOpenEditDisplayLink(index: number, newLink: DisplayLink): void;
   onDeleteDisplayLink(index: number): void;
-  disabled?: boolean;
 }
 
 // TODO: When editing a row, sometimes it shows old information.
+// TOOD: Fetch elements when adding or removing a link to prevent mis-syncs.
 
 function LinkHubEditRow(props: PLinkHubEditRow) {
   return (
@@ -67,153 +78,6 @@ function LinkHubEditRow(props: PLinkHubEditRow) {
 
 interface PLinkHubEditor {
   linkhubId: string;
-}
-
-async function getLinkHub(linkhubId: string): Promise<any> {
-  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/private`, {
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
-  });
-  if (resp.status === 404 || resp.status === 401) {
-    throw new NotFoundException('LinkHub does not exist');
-  }
-
-  const result = await resp.json();
-
-  return result;
-}
-
-async function addLinkToLinkHub(linkhubId: string, title: string, url: string) {
-  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/add-element`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      title,
-      url,
-    }),
-  });
-  const result = await resp.json();
-
-  return result;
-}
-
-async function setLinkFromLinkHub(
-  linkhubId: string,
-  index: number,
-  title: string,
-  url: string,
-) {
-  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/set-element`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      title,
-      url,
-      index,
-    }),
-  });
-  const result = await resp.json();
-
-  return result;
-}
-
-async function changeLinkHubTitle(linkhubId: string, title: string) {
-  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/title`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      title,
-    }),
-  });
-  const result = await resp.json();
-
-  return result;
-}
-
-async function deleteLinkAtIndex(linkhubId: string, index: number) {
-  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/element`, {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      index,
-    }),
-  });
-  const result = await resp.json();
-
-  return result;
-}
-
-async function changeLinkHubAlias(linkhubId: string, alias: string) {
-  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/alias`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      alias,
-    }),
-  });
-  const result = await resp.json();
-
-  return result;
-}
-
-async function publishLinkHub(linkhubId: string, value: boolean) {
-  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/publish`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      value,
-    }),
-  });
-  const result = await resp.json();
-
-  return result['publish-status'];
-}
-
-async function deleteLinkHub(linkhubId: string) {
-  const resp = await fetch(`/api/v1/linkhub/${linkhubId}`, {
-    method: 'DELETE',
-  });
-  const result = await resp.json();
-
-  return result;
-}
-
-async function addCollaboratorToBackend(
-  linkhubId: string,
-  identifier: string,
-  permission: string,
-  type: 'netid' | 'org',
-) {
-  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/share`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      identifier,
-      permission,
-      type,
-    }),
-  });
-  const result = await resp.json();
-
-  return result;
-}
-
-async function removeCollaboratorToBackend(
-  linkhubId: string,
-  identifier: string,
-  type: 'netid' | 'org',
-) {
-  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/share`, {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      identifier,
-      type,
-    }),
-  });
-  const result = await resp.json();
-
-  return result;
 }
 
 export default function LinkHubEditor(props: PLinkHubEditor) {
@@ -457,6 +321,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
               <Form layout="vertical">
                 <Title level={3}>Profile</Title>
                 <Form.Item
+                  required={false}
                   label="Title"
                   name="linkhub-title"
                   rules={[
@@ -470,6 +335,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
                   />
                 </Form.Item>
                 <Form.Item
+                  required={false}
                   label="Alias"
                   name="linkhub-alias"
                   rules={[
