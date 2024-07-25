@@ -8,8 +8,9 @@ __all__ = ["LinkHubClient"]
 
 
 class LinkHubClient:
-    def __init__(self, *, db: pymongo.database.Database) -> None:
+    def __init__(self, *, other_clients: Any, db: pymongo.database.Database) -> None:
         self.db = db
+        self.other_clients = other_clients
 
     def create(
         self, title: str, owner: str, alias: Optional[str] = None
@@ -18,6 +19,7 @@ class LinkHubClient:
         if alias is None:
             alias = self._generate_unique_key()
 
+        # TODO: Make the user set the alias before publishing.
         document = {
             "title": title,
             "alias": alias,
@@ -44,32 +46,38 @@ class LinkHubClient:
 
         return str(collection.count())
 
+    def _check_permission(
+        self, linkhub_id: str, netid: str, permission: Literal["editors", "viewers"]
+    ) -> bool:
+        orgs = [
+            ObjectId(org["id"]) for org in self.other_clients.orgs.get_orgs(netid, True)
+        ]
+        result = self.db.linkhubs.find_one(
+            {
+                "_id": ObjectId(linkhub_id),
+                "$or": [
+                    {
+                        "collaborators": {
+                            "$elemMatch": {
+                                "_id": {"$in": orgs + [netid]},
+                                "permission": permission,
+                            }
+                        }
+                    },
+                    {"owner": netid},
+                ],
+            }
+        )
+
+        return result is not None
+
     def can_edit(self, linkhub_id: str, netid: str) -> bool:
-        data = self.get_by_id(linkhub_id)
-        if data["owner"] == netid:
-            return True
-
-        for collaborator in data["collaborators"]:
-            if (
-                collaborator["_id"] == netid
-                and collaborator["type"] == "netid"
-                and collaborator["permission"] == "editors"
-            ):
-                return True
-
-        return False
+        return self._check_permission(linkhub_id, netid, "editors")
 
     def can_view(self, linkhub_id: str, netid: str) -> bool:
-        data = self.get_by_id(linkhub_id)
-        if data["owner"] == netid:
-            return True
-
-        for collaborator in data["collaborators"]:
-            # No need to check if they have "viewer", if they're added they can probably view it.
-            if collaborator["_id"] == netid and collaborator["type"] == "netid":
-                return True
-
-        return False
+        return self._check_permission(
+            linkhub_id, netid, "viewers"
+        ) or self._check_permission(linkhub_id, netid, "editors")
 
     def get_by_alias(self, alias: str) -> Optional[Any]:
         collection = self.db.linkhubs

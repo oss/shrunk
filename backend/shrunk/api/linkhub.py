@@ -96,7 +96,7 @@ def get_linkhub_by_id_with_login(
             503,
         )
 
-    if not client.linkhubs.can_edit(linkhub_id, netid):
+    if not client.linkhubs.can_view(linkhub_id, netid):
         return jsonify({"success": False, "error": "No permission"}), 401
 
     result = client.linkhubs.get_by_id(linkhub_id)
