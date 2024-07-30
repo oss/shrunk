@@ -20,16 +20,32 @@ import LinkHubComponent, {
 import EditLinkFromLinkHubModal, {
   EditLinkData,
 } from '../../modals/EditLinkFromLinkHubModal';
-import NotFoundException from '../../exceptions/NotFoundException';
 import { serverValidateLinkHubAlias } from '../../Validators';
+import ShareLinkHubModal from '../../modals/ShareLinkHubModal';
+import { Entity, ShareLinkModal } from '../../modals/ShareLinkModal';
+import { getOrgInfo } from '../../api/Org';
+import {
+  getLinkHub,
+  addCollaboratorToBackend,
+  removeCollaboratorToBackend,
+  addLinkToLinkHub,
+  changeLinkHubTitle,
+  changeLinkHubAlias,
+  deleteLinkAtIndex,
+  publishLinkHub,
+  deleteLinkHub,
+  setLinkFromLinkHub,
+} from '../../api/LinkHub';
 
 interface PLinkHubEditRow {
   link: DisplayLink;
   index: number;
   onOpenEditDisplayLink(index: number, newLink: DisplayLink): void;
   onDeleteDisplayLink(index: number): void;
-  disabled?: boolean;
 }
+
+// TODO: When editing a row, sometimes it shows old information.
+// TOOD: Fetch elements when adding or removing a link to prevent mis-syncs.
 
 function LinkHubEditRow(props: PLinkHubEditRow) {
   return (
@@ -64,115 +80,6 @@ interface PLinkHubEditor {
   linkhubId: string;
 }
 
-async function getLinkHub(linkhubId: string): Promise<any> {
-  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/private`, {
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
-  });
-  if (resp.status === 404) {
-    throw new NotFoundException('LinkHub does not exist');
-  }
-
-  const result = await resp.json();
-
-  return result;
-}
-
-async function addLinkToLinkHub(linkhubId: string, title: string, url: string) {
-  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/add-element`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      title,
-      url,
-    }),
-  });
-  const result = await resp.json();
-
-  return result;
-}
-
-async function setLinkFromLinkHub(
-  linkhubId: string,
-  index: number,
-  title: string,
-  url: string,
-) {
-  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/set-element`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      title,
-      url,
-      index,
-    }),
-  });
-  const result = await resp.json();
-
-  return result;
-}
-
-async function changeLinkHubTitle(linkhubId: string, title: string) {
-  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/title`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      title,
-    }),
-  });
-  const result = await resp.json();
-
-  return result;
-}
-
-async function deleteLinkAtIndex(linkhubId: string, index: number) {
-  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/element`, {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      index,
-    }),
-  });
-  const result = await resp.json();
-
-  return result;
-}
-
-async function changeLinkHubAlias(linkhubId: string, alias: string) {
-  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/alias`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      alias,
-    }),
-  });
-  const result = await resp.json();
-
-  return result;
-}
-
-async function publishLinkHub(linkhubId: string, value: boolean) {
-  const resp = await fetch(`/api/v1/linkhub/${linkhubId}/publish`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      value,
-    }),
-  });
-  const result = await resp.json();
-
-  return result['publish-status'];
-}
-
-async function deleteLinkHub(linkhubId: string) {
-  const resp = await fetch(`/api/v1/linkhub/${linkhubId}`, {
-    method: 'DELETE',
-  });
-  const result = await resp.json();
-
-  return result;
-}
-
 export default function LinkHubEditor(props: PLinkHubEditor) {
   const history = useHistory();
 
@@ -184,6 +91,8 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
   const [alias, setAlias] = useState<string>();
   const [oldAlias, setOldAlias] = useState<string>();
 
+  const [collaborators, setCollaborators] = useState<Entity[]>();
+
   const [isPublished, setIsPublished] = useState<boolean>(false);
 
   const [links, setLinks] = useState<DisplayLink[]>([]);
@@ -193,6 +102,31 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
   const [isEditLinkModalVisible, setIsEditLinkModalVisible] =
     useState<boolean>(false);
 
+  const [isShareModalVisible, setIsShareModalVisible] =
+    useState<boolean>(false);
+
+  function refreshCollaborators() {
+    getLinkHub(props.linkhubId).then((data: any) => {
+      const promises = [];
+      const oldCollaborators = JSON.parse(JSON.stringify(data.collaborators));
+      for (let i = 0; i < data.collaborators.length; i++) {
+        if (oldCollaborators[i].type === 'org') {
+          promises.push(
+            getOrgInfo(oldCollaborators[i]._id).then((orgInfo) => {
+              oldCollaborators[i].name = orgInfo.name;
+            }),
+          );
+        } else if (oldCollaborators[i].type === 'netid') {
+          oldCollaborators[i].name = oldCollaborators[i]._id;
+        }
+      }
+
+      Promise.all(promises).then(() => {
+        setCollaborators(oldCollaborators);
+      });
+    });
+  }
+
   useEffect(() => {
     getLinkHub(props.linkhubId)
       .then((value: any) => {
@@ -201,21 +135,49 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
         setAlias(value.alias);
         setOldAlias(value.alias);
         setIsPublished(value.is_public);
+        refreshCollaborators();
 
         const fetchingLinks: DisplayLink[] = [];
-        value.links.map((value: any) => {
+        value.links.map((data: any) => {
           fetchingLinks.push({
-            url: value.url,
-            title: value.title,
+            url: data.url,
+            title: data.title,
           });
         });
         setLinks(fetchingLinks);
         setFoundLinkHub(true);
       })
-      .catch((e: NotFoundException) => {});
+      .catch(() => {});
   }, []);
 
   const { Title } = Typography;
+
+  function addCollaborator(
+    type: 'netid' | 'org',
+    identifier: string,
+    permission: string,
+  ) {
+    addCollaboratorToBackend(
+      props.linkhubId,
+      identifier,
+      permission,
+      type,
+    ).then((value) => {
+      if (value.success as boolean) {
+        refreshCollaborators();
+      }
+    });
+  }
+
+  function removeCollaborator(type: 'netid' | 'org', identifier: string) {
+    removeCollaboratorToBackend(props.linkhubId, identifier, type).then(
+      (value) => {
+        if (value.success as boolean) {
+          refreshCollaborators();
+        }
+      },
+    );
+  }
 
   function addDisplayLink(value: DisplayLink) {
     const newLinks: DisplayLink[] = JSON.parse(JSON.stringify(links));
@@ -359,6 +321,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
               <Form layout="vertical">
                 <Title level={3}>Profile</Title>
                 <Form.Item
+                  required={false}
                   label="Title"
                   name="linkhub-title"
                   rules={[
@@ -372,6 +335,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
                   />
                 </Form.Item>
                 <Form.Item
+                  required={false}
                   label="Alias"
                   name="linkhub-alias"
                   rules={[
@@ -404,6 +368,18 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
                     >
                       Publish
                     </Checkbox>
+                  </div>
+                  <div style={{ marginBottom: '12px' }}>
+                    <p style={{ margin: 0, marginBottom: '4px' }}>
+                      Control access to your LinkHub
+                    </p>
+                    <Button
+                      onClick={() => {
+                        setIsShareModalVisible(true);
+                      }}
+                    >
+                      Manage Access
+                    </Button>
                   </div>
                   <div style={{ marginBottom: '12px' }}>
                     <p style={{ margin: 0, marginBottom: '4px' }}>
@@ -468,6 +444,33 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
             setIsEditLinkModalVisible(false);
           }}
           visible={isEditLinkModalVisible}
+        />
+      ) : (
+        <></>
+      )}
+      {collaborators !== undefined ? (
+        <ShareLinkModal
+          visible={isShareModalVisible}
+          userPrivileges={undefined}
+          people={collaborators}
+          isLoading={false}
+          linkInfo={null}
+          onAddEntity={(value: any) => {
+            addCollaborator(
+              value.typeOfAdd as 'netid' | 'org',
+              value.netid ? value.netid : value.organization,
+              value.permission,
+            );
+          }}
+          onRemoveEntity={(_id: string, type: string) => {
+            removeCollaborator(type as 'netid' | 'org', _id);
+          }}
+          onOk={() => {
+            setIsShareModalVisible(false);
+          }}
+          onCancel={() => {
+            setIsShareModalVisible(false);
+          }}
         />
       ) : (
         <></>

@@ -96,7 +96,7 @@ def get_linkhub_by_id_with_login(
             503,
         )
 
-    if not client.linkhubs.can_edit(linkhub_id, netid):
+    if not client.linkhubs.can_view(linkhub_id, netid):
         return jsonify({"success": False, "error": "No permission"}), 401
 
     result = client.linkhubs.get_by_id(linkhub_id)
@@ -283,6 +283,89 @@ def delete_link_from_linkhub(
     return jsonify({"success": True})
 
 
+ADD_COLLABORATOR_BY_NETID_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["identifier", "permission"],
+    "properties": {
+        "identifier": {"type": "string", "minimum": 0},
+        "permission": {"type": "string", "minimum": 0},
+        "type": {"type": "string", "minimum": 0},
+    },
+}
+
+
+@bp.route("/<string:linkhub_id>/share", methods=["POST"])
+@request_schema(ADD_COLLABORATOR_BY_NETID_SCHEMA)
+@require_login
+def add_collaborator(
+    netid: str, client: ShrunkClient, req: Any, linkhub_id: str
+) -> Any:
+    if not current_app.config["LINKHUB_INTEGRATION_ENABLED"]:
+        return (
+            jsonify({"success": False, "error": "LinkHub has been disabled"}),
+            503,
+        )
+
+    if not client.linkhubs.can_edit(linkhub_id, netid):
+        return jsonify({"success": False, "error": "No permission"}), 401
+
+    if "netid" == req["type"]:
+        linkhub_data = client.linkhubs.get_by_id(linkhub_id)
+        if req["identifier"] in [netid, linkhub_data["owner"]]:
+            return (
+                jsonify({"success": False, "error": "This netid is not allowed."}),
+                406,
+            )
+
+    client.linkhubs.add_collaborator(
+        linkhub_id, req["identifier"], req["type"], req["permission"]
+    )
+
+    return jsonify({"success": True})
+
+
+REMOVE_COLLABORATOR_BY_NETID_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["identifier"],
+    "properties": {
+        "identifier": {"type": "string", "minimum": 0},
+        "type": {"type": "string", "minimum": 0},
+    },
+}
+
+
+@bp.route("/<string:linkhub_id>/share", methods=["DELETE"])
+@request_schema(REMOVE_COLLABORATOR_BY_NETID_SCHEMA)
+@require_login
+def remove_collaborator(
+    netid: str, client: ShrunkClient, req: Any, linkhub_id: str
+) -> Any:
+    if not current_app.config["LINKHUB_INTEGRATION_ENABLED"]:
+        return (
+            jsonify({"success": False, "error": "LinkHub has been disabled"}),
+            503,
+        )
+
+    if not client.linkhubs.can_edit(linkhub_id, netid):
+        return jsonify({"success": False, "error": "No permission"}), 401
+
+    if "netid" == req["type"]:
+        linkhub_data = client.linkhubs.get_by_id(linkhub_id)
+        if req["identifier"] in [netid, linkhub_data["owner"]]:
+            return (
+                jsonify({"success": False, "error": "This netid is not allowed."}),
+                406,
+            )
+
+    result = client.linkhubs.remove_collaborator(
+        linkhub_id, req["identifier"], req["type"]
+    )
+
+    return jsonify({"success": result}), 200 if result else 500
+
+
 PUBLISH_LINKHUB_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
@@ -326,3 +409,18 @@ def validate_alias_linkhub(netid: str, client: ShrunkClient, value: str) -> Any:
 @bp.route("/is-linkhub-enabled", methods=["GET"])
 def is_linkhub_enabled() -> Any:
     return jsonify({"status": current_app.config["LINKHUB_INTEGRATION_ENABLED"]})
+
+
+@bp.route("/netid/<string:netid_query>", methods=["GET"])
+@require_login
+def get_linkhubs_from_netid(netid: str, client: ShrunkClient, netid_query: str) -> Any:
+    if not current_app.config["LINKHUB_INTEGRATION_ENABLED"]:
+        return (
+            jsonify({"success": False, "error": "LinkHub has been disabled"}),
+            503,
+        )
+
+    if netid_query != netid:
+        return jsonify({"error": "No permission"}), 401
+
+    return jsonify({"results": client.linkhubs.search(netid_query)}), 200

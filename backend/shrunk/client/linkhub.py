@@ -1,4 +1,4 @@
-from typing import Optional, Any, Tuple, List
+from typing import Literal, Optional, Any, Tuple, List
 from bson.objectid import ObjectId
 import pymongo
 import pymongo.cursor
@@ -8,8 +8,9 @@ __all__ = ["LinkHubClient"]
 
 
 class LinkHubClient:
-    def __init__(self, *, db: pymongo.database.Database) -> None:
+    def __init__(self, *, other_clients: Any, db: pymongo.database.Database) -> None:
         self.db = db
+        self.other_clients = other_clients
 
     def create(
         self, title: str, owner: str, alias: Optional[str] = None
@@ -18,6 +19,7 @@ class LinkHubClient:
         if alias is None:
             alias = self._generate_unique_key()
 
+        # TODO: Make the user set the alias before publishing.
         document = {
             "title": title,
             "alias": alias,
@@ -44,12 +46,38 @@ class LinkHubClient:
 
         return str(collection.count())
 
-    def can_edit(self, linkhub_id: str, netid: str) -> bool:
-        data = self.get_by_id(linkhub_id)
-        if data["owner"] == netid:
-            return True
+    def _check_permission(
+        self, linkhub_id: str, netid: str, permission: Literal["editors", "viewers"]
+    ) -> bool:
+        orgs = [
+            ObjectId(org["id"]) for org in self.other_clients.orgs.get_orgs(netid, True)
+        ]
+        result = self.db.linkhubs.find_one(
+            {
+                "_id": ObjectId(linkhub_id),
+                "$or": [
+                    {
+                        "collaborators": {
+                            "$elemMatch": {
+                                "_id": {"$in": orgs + [netid]},
+                                "permission": permission,
+                            }
+                        }
+                    },
+                    {"owner": netid},
+                ],
+            }
+        )
 
-        return netid in data["collaborators"]
+        return result is not None
+
+    def can_edit(self, linkhub_id: str, netid: str) -> bool:
+        return self._check_permission(linkhub_id, netid, "editors")
+
+    def can_view(self, linkhub_id: str, netid: str) -> bool:
+        return self._check_permission(
+            linkhub_id, netid, "viewers"
+        ) or self._check_permission(linkhub_id, netid, "editors")
 
     def get_by_alias(self, alias: str) -> Optional[Any]:
         collection = self.db.linkhubs
@@ -117,18 +145,84 @@ class LinkHubClient:
 
         return result is None
 
+    def add_collaborator(
+        self,
+        linkhub_id: str,
+        identifier: str,
+        type: Literal["netid", "org"],
+        permission: Literal["edit", "view"],
+    ) -> None:
+        if type == "org":
+            identifier = ObjectId(identifier)
+
+        collection = self.db.linkhubs
+
+        if collection.find_one(
+            {
+                "_id": ObjectId(linkhub_id),
+                "collaborators._id": identifier,
+            }
+        ):
+            return
+
+        collection.update_one(
+            {"_id": ObjectId(linkhub_id)},
+            {
+                "$push": {
+                    "collaborators": {
+                        "_id": identifier,
+                        "type": type,
+                        "permission": permission,
+                    }
+                }
+            },
+        )
+
+    def remove_collaborator(
+        self, linkhub_id: str, identifier: str, type: Literal["netid", "org"]
+    ) -> bool:
+        """Returns True if successful"""
+        if type == "org":
+            identifier = ObjectId(identifier)
+
+        collection = self.db.linkhubs
+
+        if (
+            collection.find_one(
+                {
+                    "_id": ObjectId(linkhub_id),
+                    "collaborators._id": identifier,
+                }
+            )
+            is None
+        ):
+            return False
+
+        result = collection.update_one(
+            {"_id": ObjectId(linkhub_id)},
+            {
+                "$pull": {
+                    "collaborators": {
+                        "_id": identifier,
+                        "type": type,
+                    }
+                }
+            },
+        )
+        return result.modified_count != 0
+
     def search(
         self,
         netid: Optional[str] = None,
         limit: int = 25,
         skip: int = 0,
     ) -> List[Any]:
-        query = {}
-
-        if netid is not None:
-            query["owner"] = netid
-
         collection = self.db.linkhubs
+
+        if netid is None:
+            return []
+
+        query = {"$or": [{"owner": netid}, {"collaborators._id": netid}]}
         results: pymongo.cursor.Cursor = collection.find(query, limit=limit, skip=skip)
 
         return list(results)

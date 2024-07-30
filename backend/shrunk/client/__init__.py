@@ -67,7 +67,10 @@ class ShrunkClient:
             REDIRECT_CHECK_TIMEOUT=REDIRECT_CHECK_TIMEOUT or 0.5,
             other_clients=self,
         )
-        self.linkhubs = LinkHubClient(db=self.db)
+        self.linkhubs = LinkHubClient(
+            db=self.db,
+            other_clients=self,
+        )
         self.roles = RolesClient(db=self.db)
         self.tracking = TrackingClient(db=self.db)
         self.orgs = OrgsClient(db=self.db)
