@@ -9,7 +9,7 @@ from werkzeug.exceptions import abort
 from shrunk.client import ShrunkClient
 from shrunk.util.decorators import require_login, request_schema
 
-from importlib import metadata
+import pkg_resources
 
 __all__ = ["bp"]
 
@@ -19,8 +19,8 @@ bp = Blueprint("admin", __name__, url_prefix="/api/v1/admin")
 @bp.route("/app-version", methods=["GET"])
 def _shrunk_version() -> Any:
     try:
-        version = str(metadata.version("shrunk"))
-    except metadata.PackageNotFoundError:
+        version = pkg_resources.get_distribution("shrunk").version
+    except pkg_resources.DistributionNotFound:
         version = "DEV_BUILD"
 
     return jsonify({"version": version})

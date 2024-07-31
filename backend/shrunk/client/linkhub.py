@@ -1,4 +1,5 @@
-from typing import Literal, Optional, Any, Tuple, List
+from typing import Optional, Any, Tuple, List
+from typing_extensions import Literal
 from bson.objectid import ObjectId
 import pymongo
 import pymongo.cursor

@@ -35,9 +35,7 @@ pylint:
     - apt-get update
     - apt-get install -y gcc libldap-common libldap2-dev libsasl2-dev
     - cd backend
-    - pip3 install poetry
-    - poetry config virtualenvs.create false
-    - poetry install --only dev
+    - pip3 install -r requirements-dev.txt
     - pylint --exit-zero --output-format=junit shrunk tests/*.py > pylint.xml
   artifacts:
     reports:
@@ -49,9 +47,7 @@ mypy:
   needs: []
   script:
     - cd backend
-    - pip3 install poetry
-    - poetry config virtualenvs.create false
-    - poetry install --only dev
+    - pip3 install -r requirements-dev.txt
     - mypy --junit-xml=./mypy.xml backend/shrunk backend/tests || exit 0
   artifacts:
     reports:
@@ -63,9 +59,7 @@ flake8:
   needs: []
   script:
     - cd backend
-    - pip3 install poetry
-    - poetry config virtualenvs.create false
-    - poetry install --only dev
+    - pip3 install -r requirements-dev.txt
     - flake8 --format=pylint --toml-config=pyproject.toml --exit-zero --format=junit-xml shrunk backend/tests > flake8.xml
   artifacts:
     reports:
@@ -83,22 +77,29 @@ frontend_build:
     - npm run build
   artifacts:
     paths:
-      - frontend/dist/*
+      - backend/shrunk/static/dist/*
 
 backend_build:
   stage: backend_build
-  image: python:latest
+  image: python:3.6
   needs:
     - frontend_build
+  dependencies:
+    - frontend_build
   script:
+    - ls backend/shrunk/static/dist
+    - ls backend/shrunk/templates
+#    - rm -f backend/shrunk/templates/index.html
+#    - cp backend/shrunk/static/dist/index.html backend/shrunk/templates/index.html
+#    - cp backend/shrunk/static/dist/linkhub-loader.html backend/shrunk/templates/linkhub-loader.html
+    - ls backend/shrunk/static/dist
+    - ls backend/shrunk/templates
     - cd backend
-    - pip3 install poetry
+    - pip3 install -r requirements-build.txt
     - apt-get update
     - apt-get install -y libsasl2-dev libldap2-dev libssl-dev
     - poetry config virtualenvs.create false
     - poetry install
-    - mkdir shrunk/static/dist
-    - rm -f shrunk/static/dist/index.html shrunk/templates/index.html
     - poetry build
   artifacts:
     paths:
@@ -106,7 +107,7 @@ backend_build:
 
 pytest:
   stage: test
-  image: redhat/ubi9
+  image: python:3.6
   dependencies:
     - backend_build
   variables:
@@ -119,7 +120,8 @@ pytest:
   services:
     - mongo
   script:
-    - yum install -y gcc python3-pip openldap-devel python-devel
+    - apt-get update
+    - apt-get install -y libldap2-dev libsasl2-dev
     - pip3 install backend/dist/shrunk-*.whl
     - export SHRUNK_CONFIG_PATH=$(pwd)/backend/shrunk/ci-test-config.py
     - mkdir /usr/share/GeoIP
