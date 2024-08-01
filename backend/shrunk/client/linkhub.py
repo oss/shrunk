@@ -9,9 +9,16 @@ __all__ = ["LinkHubClient"]
 
 
 class LinkHubClient:
-    def __init__(self, *, other_clients: Any, db: pymongo.database.Database) -> None:
+    def __init__(
+        self,
+        *,
+        other_clients: Any,
+        db: pymongo.database.Database,
+        LINKHUB_ENABLED: bool,
+    ) -> None:
         self.db = db
         self.other_clients = other_clients
+        self.is_enabled = LINKHUB_ENABLED
 
     def create(
         self, title: str, owner: str, alias: Optional[str] = None

@@ -43,6 +43,7 @@ class ShrunkClient:
         SLACK_BOT_TOKEN: Optional[str] = None,
         SLACK_SHRUNK_CHANNEL_ID: Optional[str] = None,
         TRACKING_PIXEL_UI_ENABLED: Optional[bool] = False,
+        LINKHUB_INTEGRATION_ENABLED: Optional[bool] = False,
         **_kwargs: Any,
     ):
         self.conn = pymongo.MongoClient(
@@ -70,6 +71,7 @@ class ShrunkClient:
         self.linkhubs = LinkHubClient(
             db=self.db,
             other_clients=self,
+            LINKHUB_ENABLED=LINKHUB_INTEGRATION_ENABLED or False,
         )
         self.roles = RolesClient(db=self.db)
         self.tracking = TrackingClient(db=self.db)
