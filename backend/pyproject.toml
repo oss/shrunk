@@ -16,7 +16,6 @@ classifiers = [
     "Programming Language :: Python :: 3.6",
 ]
 
-
 include = [
     { path = "shrunk/**/*.py" },
     { path = "shrunk/static/img/*.ico" },
@@ -28,7 +27,6 @@ include = [
     { path = "shrunk/static/webpack-stats.json" },
 ]
 exclude = ["shrunk/config.py", "shrunk/test-config.py"]
-
 
 [tool.poetry.dependencies]
 python = "^3.6"
