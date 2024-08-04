@@ -1,0 +1,6 @@
+# These are dependencies used by CI/CD. and the developer's environment.
+# Poetry gets upset when are in the pyproject.toml file since these require
+# Python 3.8 (or newer).
+poetry==1.1.13  # Last version to support Python 3.6
+setuptools==59.6.0
+wheel==0.37.1

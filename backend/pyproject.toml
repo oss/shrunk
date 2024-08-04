@@ -13,14 +13,23 @@ classifiers = [
     "Operating System :: CentOS :: CentOS 8",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.6",
 ]
 
+include = [
+    { path = "shrunk/**/*.py" },
+    { path = "shrunk/static/img/*.ico" },
+    { path = "shrunk/static/img/*.png" },
+    { path = "shrunk/static/dist/*.js" },
+    { path = "shrunk/static/dist/*.css" },
+    { path = "shrunk/static/dist/*.html" },
+    { path = "shrunk/templates/*.html" },
+    { path = "shrunk/static/webpack-stats.json" },
+]
+exclude = ["shrunk/config.py", "shrunk/test-config.py"]
+
 [tool.poetry.dependencies]
-python = "^3.8.1"
+python = "^3.6"
 flask = "1.1.2"
 flask-sso = "0.4.0"
 flask-mailman = "0.1.7"
@@ -29,7 +38,7 @@ markupsafe = "1.1.1"
 werkzeug = "1.0.1"
 itsdangerous = "1.1.0"
 pymongo = "3.11.0"
-geoip2 = "3.0.0"
+geoip2 = "2.9.0"
 httpagentparser = "1.9.0"
 click = "7.0"
 python-ldap = "^3.4.4"
@@ -37,26 +46,8 @@ jsonschema = "3.2.0"
 backports-datetime-fromisoformat = "1.0.0"
 slack-sdk = "3.27.1"
 six = "^1.16.0"
-requests = "2.32.3"                        # Do not change this version, you will have build issues if you do.
+requests = "2.17.3"                        # Do not change this version, you will have build issues if you do.
 backports_datetime_fromisoformat = "1.0.0" # Do not change this version, you will have build issues if you do.
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.2.2"
-pytest-cov = "^5.0.0"
-coverage = "^7.5.3"
-flake8 = "^7.0.0"
-flake8-quotes = "^3.4.0"
-flake8-commas = "^4.0.0"
-flake8-pytest-style = "^2.0.0"
-flake8-formatter-junit-xml = "^0.0.6"
-flake8-pyproject = "^1.2.3"
-pylint = "^3.2.3"
-pylint-flask = "^0.6"
-pylint-junit = "^0.3.4"
-autopep8 = "^2.2.0"
-setuptools = "^70.0.0"
-wheel = "^0.43.0"
-mypy = "^1.10.0"
 
 [build-system]
 requires = ["poetry-core"]

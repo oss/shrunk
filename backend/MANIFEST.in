@@ -1,6 +1,0 @@
-recursive-include shrunk *.py
-recursive-include shrunk/static/img *.ico *.png
-recursive-include shrunk/static/dist *.js *.css
-recursive-include shrunk/templates *.html
-include shrunk/static/webpack-stats.json
-exclude shrunk/config.py shrunk/test-config.py
