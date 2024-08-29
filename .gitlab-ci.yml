@@ -67,7 +67,7 @@ flake8:
 
 frontend_build:
   stage: frontend_build
-  image: node:latest
+  image: node:20
   needs: []
   script:
     - node --version
@@ -87,13 +87,6 @@ backend_build:
   dependencies:
     - frontend_build
   script:
-    - ls backend/shrunk/static/dist
-    - ls backend/shrunk/templates
-#    - rm -f backend/shrunk/templates/index.html
-#    - cp backend/shrunk/static/dist/index.html backend/shrunk/templates/index.html
-#    - cp backend/shrunk/static/dist/linkhub-loader.html backend/shrunk/templates/linkhub-loader.html
-    - ls backend/shrunk/static/dist
-    - ls backend/shrunk/templates
     - cd backend
     - pip3 install -r requirements-build.txt
     - apt-get update
