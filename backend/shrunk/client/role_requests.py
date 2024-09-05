@@ -131,7 +131,7 @@ class RoleRequestClient:
     def send_role_request_mail(
         self,
         mail: Mail,
-        type: str,
+        email_type: str,
         role: str,
         entity: str,
         comment: Optional[str] = None,
@@ -155,21 +155,30 @@ class RoleRequestClient:
         from_email = "go-support@oit.rutgers.edu"
         recipient_list = [f"{entity}@rutgers.edu"]
 
-        if type == "confirmation":
+        if email_type == "confirmation":
             subject = f"Go: Rutgers University URL Shortener - Your {uppercase_role_name} Role Request Has Been Sent"
-        if type == "notification":
+        if email_type == "notification":
             subject = f"Go: Rutgers University URL Shortener - New Pending Role Request for {uppercase_role_name} Role"
             recipient_list = ["oss@oit.rutgers.edu"]  # only different recipient list
-        if type == "approval":
+        if email_type == "approval":
             subject = f"Go: Rutgers University URL Shortener - Your {uppercase_role_name} Role Request Has Been Approved"
-        if type == "denial":
+        if email_type == "denial":
             subject = f"Go: Rutgers University URL Shortener - Your {uppercase_role_name} Role Request Has Been Denied"
 
-        with open(f"shrunk/templates/html/role_requests/{type}.html", "r") as file:
+        # Get the relative paths of the templates
+        SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+        HTML_TEMPLATE_PATH = os.path.join(
+            SCRIPT_DIR, "../templates/html/role_requests", f"{email_type}.html"
+        )
+        PLAINTEXT_TEMPLATE_PATH = os.path.join(
+            SCRIPT_DIR, "../templates/txt/role_requests", f"{email_type}.txt"
+        )
+
+        with open(HTML_TEMPLATE_PATH, "r", encoding="utf-8") as file:
             html_file_content = file.read()
         html_message = render_template_string(html_file_content, **variables)
 
-        with open(f"shrunk/templates/txt/role_requests/{type}.txt", "r") as file:
+        with open(PLAINTEXT_TEMPLATE_PATH, "r", encoding="utf-8") as file:
             plaintext_file_content = file.read()
         plaintext_message = render_template_string(plaintext_file_content, **variables)
 
