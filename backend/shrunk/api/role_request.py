@@ -9,7 +9,7 @@ from werkzeug.exceptions import abort
 from shrunk.client import ShrunkClient
 from shrunk.util.decorators import require_api_key, require_login, require_mail
 
-__all__ = ["role_request"]
+__all__ = ["bp"]
 bp = Blueprint("role_request", __name__, url_prefix="/api/v1/role_request")
 
 
