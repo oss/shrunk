@@ -3,52 +3,54 @@
  * @packageDocumentation
  */
 
+import {
+  BookOutlined,
+  BulbOutlined,
+  ClockCircleOutlined,
+  DownOutlined,
+  LogoutOutlined,
+  MenuOutlined,
+  SafetyOutlined,
+  SlidersOutlined,
+  TeamOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
+import { Button, Dropdown, Layout, Menu } from 'antd/lib';
+import { createBrowserHistory, Location } from 'history';
 import React from 'react';
 import {
   HashRouter,
-  Switch,
-  Route,
-  Redirect,
   Link,
   NavLink,
+  Redirect,
+  Route,
+  Switch,
 } from 'react-router-dom';
-import { createBrowserHistory, Location } from 'history';
-import { Layout, Menu, Dropdown, Button } from 'antd/lib';
-import {
-  UserOutlined,
-  DownOutlined,
-  MenuOutlined,
-  TeamOutlined,
-  BookOutlined,
-  BulbOutlined,
-  LogoutOutlined,
-  SafetyOutlined,
-  SlidersOutlined,
-  ClockCircleOutlined,
-} from '@ant-design/icons';
 
 import base32 from 'hi-base32';
-import { Dashboard } from './pages/Dashboard';
 import { Admin } from './pages/Admin';
-import { Orgs } from './pages/Orgs';
+import { Dashboard } from './pages/Dashboard';
 import { Faq } from './pages/Faq';
+import { Orgs } from './pages/Orgs';
 import { RoleRequestForm } from './pages/RoleRequestForm';
 
-import { Stats } from './pages/subpages/Stats';
 import { AdminStats } from './components/admin/AdminStats';
 import LinkSecurity from './components/admin/LinkSecurity';
+import { PendingRoleRequests } from './components/admin/PendingRoleRequests';
 import { Role } from './components/admin/Role';
+import UserLookup from './components/admin/UserLookup';
 import { ManageOrg } from './pages/subpages/ManageOrg';
 import { OrgStats } from './pages/subpages/OrgStats';
-import { PendingRoleRequests } from './components/admin/PendingRoleRequests';
+import { Stats } from './pages/subpages/Stats';
 
 import { PendingAlerts } from './modals/PendingAlerts';
 import { PendingRequests } from './modals/PendingRequests';
 
 import './antd_themed.less';
-import './Shrunk.less';
 import LinkHubDashboard from './pages/LinkHubDashboard';
 import LinkHubEditor from './pages/subpages/LinkHubEditor';
+import './Shrunk.less';
+import UsersProvider from './contexts/Users';
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -520,6 +522,11 @@ export class Shrunk extends React.Component<Props, State> {
                     </Route>
                     <Route exact path="/admin/stats">
                       <AdminStats />
+                    </Route>
+                    <Route exact path="/admin/user_lookup">
+                      <UsersProvider>
+                        <UserLookup />
+                      </UsersProvider>
                     </Route>
                     <Route exact path="/admin/link_security">
                       <LinkSecurity />

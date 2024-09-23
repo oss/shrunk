@@ -114,6 +114,14 @@ export class Admin extends React.Component<Props, State> {
 
         <Row className="primary-row">
           <Col span={24}>
+            <Link to="/admin/user_lookup" className="title">
+              User Lookup
+            </Link>
+          </Col>
+        </Row>
+
+        <Row className="primary-row">
+          <Col span={24}>
             <Link to="/admin/link_security" className="title">
               Unsafe Links Pending Verification
               {this.state.linksToBeVerified === -1 ? (
