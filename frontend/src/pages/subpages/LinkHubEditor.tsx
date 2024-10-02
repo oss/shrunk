@@ -46,7 +46,6 @@ interface PLinkHubEditRow {
 
 // TODO: When editing a row, sometimes it shows old information.
 // TOOD: Fetch elements when adding or removing a link to prevent mis-syncs.
-// TODO: Force users to own one link page.
 
 function LinkHubEditRow(props: PLinkHubEditRow) {
   return (

@@ -27,7 +27,6 @@ class LinkHubClient:
         if alias is None:
             alias = self._generate_unique_key()
 
-        # TODO: Make the user set the alias before publishing.
         document = {
             "title": title,
             "alias": alias,
