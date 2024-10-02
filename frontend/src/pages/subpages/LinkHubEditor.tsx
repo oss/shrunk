@@ -203,7 +203,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
     changeLinkHubTitle(props.linkhubId, title);
     changeLinkHubAlias(props.linkhubId, alias);
     setOldTitle(title);
-    setOldTitle(alias);
+    setOldAlias(alias);
   }
 
   function isProfileSaved() {
