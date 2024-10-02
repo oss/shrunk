@@ -44,7 +44,6 @@ interface PLinkHubEditRow {
   onDeleteDisplayLink(index: number): void;
 }
 
-// TODO: When editing a row, sometimes it shows old information.
 // TOOD: Fetch elements when adding or removing a link to prevent mis-syncs.
 
 function LinkHubEditRow(props: PLinkHubEditRow) {
@@ -203,7 +202,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
     changeLinkHubTitle(props.linkhubId, title);
     changeLinkHubAlias(props.linkhubId, alias);
     setOldTitle(title);
-    setOldTitle(alias);
+    setOldAlias(alias);
   }
 
   function isProfileSaved() {
@@ -342,6 +341,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
                     { required: true, message: 'Alias cannot be empty.' },
                     { validator: serverValidateLinkHubAlias },
                   ]}
+                  style={{ display: 'none' }}
                 >
                   <Input
                     addonBefore={`${window.location.origin}/h/`}
@@ -381,7 +381,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
                       Manage Access
                     </Button>
                   </div>
-                  <div style={{ marginBottom: '12px' }}>
+                  <div style={{ marginBottom: '12px', display: 'none' }}>
                     <p style={{ margin: 0, marginBottom: '4px' }}>
                       Deleting your LinkHub is irreversible.
                     </p>
@@ -395,10 +395,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
           </Tabs>
         </div>
         <div>
-          <Card
-            title="Live Preview"
-            extra={<a href="https://playvalorant.com/">View Desktop Layout</a>}
-          >
+          <Card title="Live Preview">
             <div
               style={{
                 borderRadius: '18px',

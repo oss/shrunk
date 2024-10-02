@@ -6,9 +6,9 @@ volumes:
 services:
   backend:
     build: ./backend
-    command: python3 -m flask run --host=0.0.0.0
+    command: python3 -m flask run --host=0.0.0.0 -p 4343
     ports:
-      - '5000:5000'
+      - '4343:4343'
     volumes:
       - shrunk-volume:/usr/shrunk/
       - ./backend:/usr/shrunk/backend

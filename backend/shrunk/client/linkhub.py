@@ -27,7 +27,6 @@ class LinkHubClient:
         if alias is None:
             alias = self._generate_unique_key()
 
-        # TODO: Make the user set the alias before publishing.
         document = {
             "title": title,
             "alias": alias,
@@ -90,6 +89,14 @@ class LinkHubClient:
     def get_by_alias(self, alias: str) -> Optional[Any]:
         collection = self.db.linkhubs
         result = collection.find_one({"alias": alias})
+        if result is None:
+            return None
+
+        return result
+
+    def get_by_netid(self, netid: str) -> Optional[Any]:
+        collection = self.db.linkhubs
+        result = collection.find_one({"owner": netid})
         if result is None:
             return None
 

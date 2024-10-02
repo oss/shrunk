@@ -1,6 +1,6 @@
 FROM python:3.6
 
-EXPOSE 5000
+EXPOSE 4343
 WORKDIR /usr/shrunk/backend/
 
 COPY . .
