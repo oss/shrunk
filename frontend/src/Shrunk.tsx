@@ -15,7 +15,7 @@ import {
   TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { Button, Dropdown, Layout, Menu } from 'antd/lib';
+import { Button, Dropdown, Layout, Menu, Tag } from 'antd/lib';
 import { createBrowserHistory, Location } from 'history';
 import React from 'react';
 import {
@@ -398,7 +398,7 @@ export class Shrunk extends React.Component<Props, State> {
               {this.state.isLinkHubEnabled ? (
                 <Menu.Item key="linkhubs">
                   <NavLink to="/linkhubs" className="nav-text">
-                    LinkHub
+                    LinkHub <Tag color="warning">beta</Tag>
                   </NavLink>
                 </Menu.Item>
               ) : (
