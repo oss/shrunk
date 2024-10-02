@@ -20,6 +20,8 @@ interface ILinkHubDashboard {
   netid: string;
 }
 
+// Leadership has requested that only one user can own one LinkHub.
+
 export default function LinkHubDashboard(props: ILinkHubDashboard) {
   const history = useHistory();
 
@@ -42,43 +44,13 @@ export default function LinkHubDashboard(props: ILinkHubDashboard) {
     history.push(`/linkhubs/${result.id}/edit`);
   }
 
-  return (
-    <>
-      <Row className="dashboard-title">
-        <Col>
-          <span className="page-title">LinkHub Dashboard</span>
-        </Col>
-      </Row>
-      <Row className="primary-row" gutter={[8, 24]}>
-        <Col xs={{ span: 24 }} sm={{ span: 9 }}>
-          <SearchBox
-            placeholder="Search LinkHubs by NetID..."
-            updateQueryString={(newQuery: string) => {
-              searchLinkHubs(newQuery);
-            }}
-          />
-        </Col>
-        <Col className="shrink-link">
-          <Button
-            type="primary"
-            aria-label="create linkhub"
-            onClick={createLinkHub}
-          >
-            <PlusCircleFilled /> Create LinkHub
-          </Button>
-        </Col>
-      </Row>
-      <div>
-        <Row gutter={16}>
-          {linkHubs.map((value) => (
-            <LinkHubRow
-              linkHubTitle={value.title}
-              linkHubId={value._id}
-              linkHubAlias={value.alias}
-            />
-          ))}
-        </Row>
-      </div>
-    </>
-  );
+  searchLinkHubs(props.netid).then((value) => {
+    if (value.length === 0) {
+      createLinkHub();
+    } else {
+      history.push(`/linkhubs/${value[0]._id}/edit`);
+    }
+  });
+
+  return <></>;
 }

@@ -95,6 +95,14 @@ class LinkHubClient:
 
         return result
 
+    def get_by_netid(self, netid: str) -> Optional[Any]:
+        collection = self.db.linkhubs
+        result = collection.find_one({"owner": netid})
+        if result is None:
+            return None
+
+        return result
+
     def get_by_id(self, document_id: str) -> Optional[Any]:
         collection = self.db.linkhubs
         result = collection.find_one({"_id": ObjectId(document_id)})

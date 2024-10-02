@@ -64,11 +64,11 @@ def create_linkhub(netid: str, client: ShrunkClient, req: Any) -> Any:
             503,
         )
 
-    alias = None
-    if "alias" in req:
-        alias = req["alias"]
+    # Leadership has requested that only one user can own one LinkHub.
+    if client.linkhubs.get_by_netid(netid) is not None:
+        return jsonify({"success": False, "error": "No permission"}), 401
 
-    result_id, alias = client.linkhubs.create(req["title"], netid, alias=alias)
+    result_id, alias = client.linkhubs.create(req["title"], netid, alias=netid)
     return jsonify({"id": result_id, "alias": alias})
 
 
@@ -77,6 +77,9 @@ def create_linkhub(netid: str, client: ShrunkClient, req: Any) -> Any:
 def delete_linkhub_by_id(netid: str, client: ShrunkClient, linkhub_id: str) -> Any:
     if not client.linkhubs.can_edit(linkhub_id, netid):
         return jsonify({"success": False, "error": "No permission"}), 401
+
+    # Leadership has requested that only one user can own one LinkHub.
+    return jsonify({"success": False, "error": "No permission"}), 401
 
     result = client.linkhubs.delete(linkhub_id)
     if not result:
@@ -245,6 +248,9 @@ def change_linkhub_alias(
             jsonify({"success": False, "error": "LinkHub has been disabled"}),
             503,
         )
+
+    # Leadership has requested that only one user can own one LinkHub.
+    return jsonify({"success": False, "error": "No permission"}), 401
 
     if not client.linkhubs.can_edit(linkhub_id, netid):
         return jsonify({"success": False, "error": "No permission"}), 401

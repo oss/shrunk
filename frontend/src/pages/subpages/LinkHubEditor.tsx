@@ -343,6 +343,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
                     { required: true, message: 'Alias cannot be empty.' },
                     { validator: serverValidateLinkHubAlias },
                   ]}
+                  style={{ display: 'none' }}
                 >
                   <Input
                     addonBefore={`${window.location.origin}/h/`}
@@ -382,7 +383,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
                       Manage Access
                     </Button>
                   </div>
-                  <div style={{ marginBottom: '12px' }}>
+                  <div style={{ marginBottom: '12px', display: 'none' }}>
                     <p style={{ margin: 0, marginBottom: '4px' }}>
                       Deleting your LinkHub is irreversible.
                     </p>
