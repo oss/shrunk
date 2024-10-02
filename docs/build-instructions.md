@@ -49,4 +49,4 @@ npm install
 The documentation will be placed in `./frontend/docs/`. Open `index.html` in your local web browser.
 
 1.  Run `npm run watch` to watch your changes be updated in real time
-2.  You can now visit the development version of shrunk via `http://127.0.0.1:5000/`.
+2.  You can now visit the development version of shrunk via `http://127.0.0.1:4343/`.
