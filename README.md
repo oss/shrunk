@@ -28,6 +28,8 @@
 docker-compose up
 ```
 
+5. Start developing at `http://localhost:4343` [(click to learn more about this change)](https://stackoverflow.com/questions/72369320/why-always-something-is-running-at-port-5000-on-my-mac)
+
 ### Build manually
 
 If you want a more detailed set of instructions on how to build without Docker, click [here](./docs/build-instructions.md) for the build instructions.
