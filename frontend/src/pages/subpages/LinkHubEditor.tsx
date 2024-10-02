@@ -396,10 +396,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
           </Tabs>
         </div>
         <div>
-          <Card
-            title="Live Preview"
-            extra={<a href="https://rutgers.edu/">View Desktop Layout</a>}
-          >
+          <Card title="Live Preview">
             <div
               style={{
                 borderRadius: '18px',
