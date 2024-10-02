@@ -1,5 +1,5 @@
 import { Form, Input, Modal } from 'antd/lib';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { DisplayLink } from '../components/LinkHubComponent';
 
 interface IEditLinkFromLinkHubModal {
@@ -19,13 +19,23 @@ export default function EditLinkFromLinkHubModal(
 ) {
   const [form] = Form.useForm();
 
+  useEffect(() => {
+    if (props.visible) {
+      form.setFieldsValue({
+        title: props.editLinkData.displayLink.title,
+        url: props.editLinkData.displayLink.url,
+      });
+    }
+  }, [props.visible, props.editLinkData, form]);
+
   function onSubmit(values: any) {
+    form.resetFields();
     props.onOkay(values);
   }
 
   function onCancel() {
-    props.onCancel();
     form.resetFields();
+    props.onCancel();
   }
 
   return (
@@ -35,17 +45,9 @@ export default function EditLinkFromLinkHubModal(
       onOk={form.submit}
       onCancel={onCancel}
     >
-      <Form
-        layout="vertical"
-        form={form}
-        onFinish={onSubmit}
-        initialValues={{
-          title: props.editLinkData.displayLink.title,
-          url: props.editLinkData.displayLink.url,
-        }}
-      >
+      <Form layout="vertical" form={form} onFinish={onSubmit}>
         <Form.Item label="Title" name="title">
-          <Input max={64} />
+          <Input maxLength={64} />
         </Form.Item>
         <Form.Item
           label="URL"

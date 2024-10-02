@@ -44,7 +44,6 @@ interface PLinkHubEditRow {
   onDeleteDisplayLink(index: number): void;
 }
 
-// TODO: When editing a row, sometimes it shows old information.
 // TOOD: Fetch elements when adding or removing a link to prevent mis-syncs.
 
 function LinkHubEditRow(props: PLinkHubEditRow) {
