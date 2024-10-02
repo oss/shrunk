@@ -44,7 +44,12 @@ export default function LinkHubComponent(props: Props) {
         >
           <div style={{ minWidth: '400px', width: '30%' }}>
             {props.links.map((value, index) => (
-              <a href={value.url} key={index}>
+              <a
+                target="_blank"
+                rel="noopener noreferrer"
+                href={value.url}
+                key={index}
+              >
                 <div
                   style={{
                     border: 'solid',
