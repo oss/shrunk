@@ -46,6 +46,7 @@ interface PLinkHubEditRow {
 
 // TODO: When editing a row, sometimes it shows old information.
 // TOOD: Fetch elements when adding or removing a link to prevent mis-syncs.
+// TODO: Force users to own one link page.
 
 function LinkHubEditRow(props: PLinkHubEditRow) {
   return (
@@ -397,7 +398,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
         <div>
           <Card
             title="Live Preview"
-            extra={<a href="https://playvalorant.com/">View Desktop Layout</a>}
+            extra={<a href="https://rutgers.edu/">View Desktop Layout</a>}
           >
             <div
               style={{

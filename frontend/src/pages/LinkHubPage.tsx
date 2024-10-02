@@ -4,6 +4,8 @@ import LinkHubComponent, { DisplayLink } from '../components/LinkHubComponent';
 import NotFoundException from '../exceptions/NotFoundException';
 import ServiceDisabledException from '../exceptions/ServiceDisabledException';
 
+// TODO: Create a new tab when opening a new link.
+
 async function getLinkHub(alias: string): Promise<any> {
   const resp = await fetch(`/api/v1/linkhub/${alias}/public`, {
     method: 'GET',
