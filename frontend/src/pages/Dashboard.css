@@ -1,3 +1,8 @@
+.shrunk-pagination {
+  display: flex;
+  justify-content: center;
+}
+
 .dashboard-links .pagination {
   margin-top: 28px;
   text-align: center;

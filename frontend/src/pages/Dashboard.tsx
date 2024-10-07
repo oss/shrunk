@@ -1000,25 +1000,26 @@ export class Dashboard extends React.Component<Props, State> {
                 netid={this.props.netid}
               />
             ))}
+            <div className="shrunk-pagination">
+              <Pagination
+                className="pagination"
+                defaultCurrent={1}
+                current={this.state.currentPage}
+                showSizeChanger={false}
+                total={this.state.totalLinks}
+                onChange={this.setPage}
+              />
 
-            <Pagination
-              className="pagination"
-              defaultCurrent={1}
-              current={this.state.currentPage}
-              showSizeChanger={false}
-              total={this.state.totalLinks}
-              onChange={this.setPage}
-            />
-
-            <Pagination
-              className="pagination-simple"
-              defaultCurrent={1}
-              current={this.state.currentPage}
-              showSizeChanger={false}
-              total={this.state.totalLinks}
-              onChange={this.setPage}
-              simple
-            />
+              <Pagination
+                className="pagination-simple"
+                defaultCurrent={1}
+                current={this.state.currentPage}
+                showSizeChanger={false}
+                total={this.state.totalLinks}
+                onChange={this.setPage}
+                simple
+              />
+            </div>
           </div>
         )}
 
