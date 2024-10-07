@@ -10,6 +10,7 @@ import { ArrowRightOutlined } from '@ant-design/icons';
 import { IoReturnUpBack } from 'react-icons/io5';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
+import dayjs from 'dayjs';
 
 import { MENU_ITEMS } from '../../pages/subpages/StatsCommon';
 
@@ -137,7 +138,7 @@ interface State {
    * all existing data
    * @property
    */
-  adminDataRange: { begin: moment.Moment; end: moment.Moment } | null;
+  adminDataRange: { begin: dayjs.Dayjs; end: dayjs.Dayjs } | null;
 
   /**
    * The result of the admin stats query, fetched from the backend
@@ -228,7 +229,7 @@ export class AdminStats extends React.Component<Props, State> {
    * @param values The values from the time range form
    */
   submitRangeForm = async (values: {
-    range: moment.Moment[] | null | undefined;
+    range: dayjs.Dayjs[] | null | undefined;
   }): Promise<void> => {
     const { range } = values;
     const adminDataRange =

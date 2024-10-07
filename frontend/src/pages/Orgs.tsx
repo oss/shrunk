@@ -19,7 +19,7 @@ import {
 } from 'antd/lib';
 import { ExclamationCircleFilled, PlusCircleFilled } from '@ant-design/icons';
 import { RiLineChartFill, RiToolsFill, RiDeleteBin6Line } from 'react-icons/ri';
-import moment from 'moment';
+import dayjs from 'dayjs';
 
 import { OrgInfo, listOrgs, createOrg, deleteOrg } from '../api/Org';
 import { OrgAdminTag, OrgMemberTag } from './subpages/OrgCommon';
@@ -130,7 +130,7 @@ const OrgRow: React.FC<{
       )}
       {props.showAll && props.orgInfo.is_member ? <OrgMemberTag /> : <></>}
       <span>
-        Created: {moment(props.orgInfo.timeCreated).format('MMM D, YYYY')}
+        Created: {dayjs(props.orgInfo.timeCreated).format('MMM D, YYYY')}
       </span>
     </Col>
     <Col span={4} className="btn-col">
