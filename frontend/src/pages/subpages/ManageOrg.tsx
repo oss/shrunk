@@ -486,7 +486,7 @@ class ManageOrgInner extends React.Component<Props, State> {
     return (
       <>
         <Modal
-          visible={this.state.renameOrgModalVisible}
+          open={this.state.renameOrgModalVisible}
           onOk={renameModal.handleOk}
           onCancel={renameModal.handleCancel}
           title="Rename Organization"
@@ -543,7 +543,7 @@ class ManageOrgInner extends React.Component<Props, State> {
                     onCreate={this.onAddMember}
                   />
                 }
-                visible={this.state.addMemberFormVisible}
+                open={this.state.addMemberFormVisible}
                 onVisibleChange={(flag) =>
                   this.setState({ addMemberFormVisible: flag })
                 }

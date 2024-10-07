@@ -158,7 +158,7 @@ export const EditLinkModal: React.FC<Props> = (props) => {
 
   return (
     <Modal
-      visible={props.visible}
+      open={props.visible}
       title="Edit link"
       onOk={() => {
         if (ownerInputVal !== initialValues.owner) {

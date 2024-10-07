@@ -440,14 +440,14 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
           onCancel={() => {
             setIsEditLinkModalVisible(false);
           }}
-          visible={isEditLinkModalVisible}
+          open={isEditLinkModalVisible}
         />
       ) : (
         <></>
       )}
       {collaborators !== undefined ? (
         <ShareLinkModal
-          visible={isShareModalVisible}
+          open={isShareModalVisible}
           userPrivileges={undefined}
           people={collaborators}
           isLoading={false}

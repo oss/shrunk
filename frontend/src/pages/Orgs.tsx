@@ -244,7 +244,7 @@ export class Orgs extends React.Component<Props, State> {
             ) : (
               <Dropdown
                 overlay={<CreateOrgForm onCreate={this.onCreateOrg} />}
-                visible={this.state.createOrgFormVisible}
+                open={this.state.createOrgFormVisible}
                 onVisibleChange={(flag) =>
                   this.setState({ createOrgFormVisible: flag })
                 }

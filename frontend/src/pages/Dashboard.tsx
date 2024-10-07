@@ -487,7 +487,7 @@ export class Dashboard extends React.Component<Props, State> {
                   deleted_by: output.deletion_info.deleted_by,
                   deleted_time: new Date(output.deletion_info.deleted_time),
                 },
-          }) as LinkInfo,
+          } as LinkInfo),
       ),
     };
   };
@@ -971,7 +971,7 @@ export class Dashboard extends React.Component<Props, State> {
                   tracking_pixel_ui_enabled={this.state.trackingPixelEnabled}
                 />
               }
-              visible={this.state.createLinkDropdownVisible}
+              open={this.state.createLinkDropdownVisible}
               onVisibleChange={(flag) =>
                 this.setState({ createLinkDropdownVisible: flag })
               }
@@ -1026,7 +1026,7 @@ export class Dashboard extends React.Component<Props, State> {
           <></>
         ) : (
           <EditLinkModal
-            visible={this.state.editModalState.visible}
+            open={this.state.editModalState.visible}
             userPrivileges={this.props.userPrivileges}
             netid={this.props.netid}
             linkInfo={this.state.editModalState.linkInfo}
@@ -1042,7 +1042,7 @@ export class Dashboard extends React.Component<Props, State> {
           <></>
         ) : (
           <ShareLinkModal
-            visible={this.state.shareLinkModalState.visible}
+            open={this.state.shareLinkModalState.visible}
             userPrivileges={this.props.userPrivileges}
             people={this.state.shareLinkModalState.entities}
             isLoading={this.state.shareLinkModalState.isLoading}
@@ -1064,7 +1064,7 @@ export class Dashboard extends React.Component<Props, State> {
           <></>
         ) : (
           <QrCodeModal
-            visible={this.state.qrModalState.visible}
+            open={this.state.qrModalState.visible}
             width={256}
             linkInfo={this.state.qrModalState.linkInfo}
             onCancel={this.hideQrModal}

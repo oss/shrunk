@@ -188,7 +188,7 @@ export const FilterDropdown: React.FC<Props> = (props) => {
       <Dropdown
         className="filter-links-dropdown"
         overlay={dropdown}
-        visible={dropdownVisible}
+        open={dropdownVisible}
         onVisibleChange={setDropdownVisible}
         placement="bottomLeft"
         trigger={['click']}

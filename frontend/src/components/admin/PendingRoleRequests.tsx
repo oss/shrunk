@@ -401,7 +401,7 @@ export class PendingRoleRequests extends Component<Props, State> {
           />
         ))}
         <ProcessRoleRequestModal
-          visible={this.state.visible}
+          open={this.state.visible}
           entity={this.state.selectedEntity}
           toApprove={this.state.toApprove}
           name={this.props.name}

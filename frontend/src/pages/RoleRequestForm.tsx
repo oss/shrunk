@@ -287,7 +287,7 @@ export class RoleRequestForm extends React.Component<Props, State> {
           </>
         )}
         <RoleRequestModal
-          visible={this.state.visible}
+          open={this.state.visible}
           roleRequestSent={this.state.roleRequestSent}
           roleName={this.state.roleRequestText?.role}
           onClose={this.closeRoleRequestModal}

@@ -174,7 +174,7 @@ export default function ShareModal(props: IShareModal) {
 
   return (
     <Modal
-      visible={props.visible}
+      open={props.visible}
       title="Manage access"
       onOk={() => {
         form.resetFields();

@@ -186,7 +186,7 @@ export class PendingRequests extends React.Component<Props, State> {
 
     return (
       <Modal
-        visible={!this.state.hidden && this.state.pendingRequests.length > 0}
+        open={!this.state.hidden && this.state.pendingRequests.length > 0}
         title="You have pending access requests"
         footer={null}
         onCancel={() => this.setState({ hidden: true })}

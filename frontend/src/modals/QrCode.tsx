@@ -165,7 +165,7 @@ export class QrCodeModal extends React.Component<Props, State> {
 
     return (
       <Modal
-        visible={this.props.visible}
+        open={this.props.visible}
         title="QR code"
         onCancel={this.props.onCancel}
         width={this.props.width + 2 * 24}
