@@ -15,7 +15,7 @@ import {
   Input,
   Tooltip,
   Spin,
-  BackTop,
+  FloatButton,
 } from 'antd/lib';
 import { ExclamationCircleFilled, PlusCircleFilled } from '@ant-design/icons';
 import { RiLineChartFill, RiToolsFill, RiDeleteBin6Line } from 'react-icons/ri';
@@ -232,7 +232,7 @@ export class Orgs extends React.Component<Props, State> {
     const isAdmin = this.props.userPrivileges.has('admin');
     return (
       <>
-        <BackTop />
+        <FloatButton.BackTop />
         <Row className="primary-row">
           <Col span={16}>
             <span className="page-title">Orgs</span>

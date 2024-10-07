@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 import React, { Component } from 'react';
-import { Row, Col, Button, BackTop, Spin } from 'antd/lib';
+import { Row, Col, Button, FloatButton, Spin } from 'antd/lib';
 import moment from 'moment';
 import { IoReturnUpBack } from 'react-icons/io5';
 import base32 from 'hi-base32';
@@ -372,7 +372,7 @@ export class PendingRoleRequests extends Component<Props, State> {
     }
     return (
       <div>
-        <BackTop />
+        <FloatButton.BackTop />
         <Row className="primary-row">
           <Col span={24}>
             <Button

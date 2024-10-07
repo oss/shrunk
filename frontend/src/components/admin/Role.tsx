@@ -12,7 +12,7 @@ import {
   Popconfirm,
   Form,
   Input,
-  BackTop,
+  FloatButton,
   Tooltip,
 } from 'antd/lib';
 import {
@@ -393,7 +393,7 @@ export class Role extends React.Component<Props, State> {
 
     return (
       <>
-        <BackTop />
+        <FloatButton.BackTop />
         <Row className="primary-row">
           <Col span={20}>
             <Button

@@ -18,7 +18,7 @@ import {
   Menu,
   Modal,
   FormInstance,
-  BackTop,
+  FloatButton,
 } from 'antd/lib';
 import {
   ExclamationCircleFilled,
@@ -514,7 +514,7 @@ class ManageOrgInner extends React.Component<Props, State> {
             </Form.Item>
           </Form>
         </Modal>
-        <BackTop />
+        <FloatButton.BackTop />
         <Row className="primary-row">
           <Col span={12}>
             <Button
