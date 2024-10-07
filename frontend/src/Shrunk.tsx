@@ -277,16 +277,7 @@ export class Shrunk extends React.Component<Props, State> {
                         }}
                       >
                         <p style={{ margin: 0, marginBottom: '-4px' }}>
-                          {this.props.netid}
-                        </p>
-                        <p
-                          style={{
-                            margin: 0,
-                            fontSize: '0.8em',
-                            color: '#383838',
-                          }}
-                        >
-                          {this.state.role}
+                          {this.props.netid} ({this.state.role})
                         </p>
                       </Menu.Item>
 
