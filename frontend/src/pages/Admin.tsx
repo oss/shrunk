@@ -7,7 +7,7 @@ import React from 'react';
 import { Row, Col, Spin, Badge } from 'antd/lib';
 import { Link } from 'react-router-dom';
 
-import '../Base.less';
+import '../Base.css';
 
 /**
  * Props for the [[Admin]] component

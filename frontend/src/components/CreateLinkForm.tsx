@@ -30,8 +30,8 @@ import {
   serverValidateDuplicateAlias,
   serverValidateLongUrl,
 } from '../Validators';
-import '../Base.less';
-import '../modals/FixAliasRemoveButton.less';
+import '../Base.css';
+import '../modals/FixAliasRemoveButton.css';
 
 /**
  * Displays a label with the text "Custom Alias" and a tooltip with extended help text

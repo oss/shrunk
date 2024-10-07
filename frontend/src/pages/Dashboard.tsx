@@ -28,7 +28,7 @@ import { CreateLinkForm } from '../components/CreateLinkForm';
 import { OrgsSelect } from '../components/OrgsSelect';
 import { FilterDropdown } from '../components/FilterDropdown';
 
-import './Dashboard.less';
+import './Dashboard.css';
 
 /**
  * The final values of the share link form

@@ -31,8 +31,8 @@ import { LinkInfo, AliasInfo } from '../../components/LinkInfo';
 import { GeoipStats, MENU_ITEMS, GeoipChart } from './StatsCommon';
 import { downloadVisitsCsv } from '../../components/Csv';
 
-import '../../Base.less';
-import './Stats.less';
+import '../../Base.css';
+import './Stats.css';
 
 /**
  * Props for the [[Stats]] component

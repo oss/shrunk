@@ -1,5 +1,5 @@
 import React from 'react';
-import './LinkHubComponent.less';
+import './LinkHubComponent.css';
 
 export interface DisplayLink {
   originId?: number; // Used for keys when displaying a link.

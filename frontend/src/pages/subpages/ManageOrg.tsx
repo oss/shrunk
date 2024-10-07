@@ -36,8 +36,8 @@ import moment from 'moment';
 
 import { MemberInfo, OrgInfo, getOrgInfo } from '../../api/Org';
 import { OrgAdminTag } from './OrgCommon';
-import '../../Base.less';
-import './ManageOrg.less';
+import '../../Base.css';
+import './ManageOrg.css';
 import { serverValidateNetId, serverValidateOrgName } from '../../Validators';
 
 /**

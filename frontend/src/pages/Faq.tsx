@@ -7,7 +7,7 @@ import { Row, Col, Table, Collapse } from 'antd/lib';
 import { Link } from 'react-router-dom';
 import * as Data from './FaqData.js';
 
-import './Faq.less';
+import './Faq.css';
 
 /**
  * The [[Faq]] component is just a static FAQ page

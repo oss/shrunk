@@ -24,7 +24,7 @@ import dayjs from 'dayjs';
 import { OrgInfo, listOrgs, createOrg, deleteOrg } from '../api/Org';
 import { OrgAdminTag, OrgMemberTag } from './subpages/OrgCommon';
 
-import '../Base.less';
+import '../Base.css';
 
 import { serverValidateOrgName } from '../Validators';
 

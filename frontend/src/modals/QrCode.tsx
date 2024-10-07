@@ -8,7 +8,7 @@ import { Modal, Row, Col, Select, Space, Button } from 'antd/lib';
 import QRCodeReact from 'qrcode.react';
 
 import { LinkInfo } from '../components/LinkInfo';
-import './QrCode.less';
+import './QrCode.css';
 
 /**
  * Props for the [[QrCodeModal]] component

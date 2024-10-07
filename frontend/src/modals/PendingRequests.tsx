@@ -5,9 +5,9 @@
 
 import React from 'react';
 import { Row, Col, Modal, Button } from 'antd/lib';
-import moment from 'moment';
+import dayjs from 'dayjs';
 
-import '../Base.less';
+import '../Base.css';
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 
 /**
@@ -79,7 +79,7 @@ const PendingRequestRow: React.FC<{
               }}
             >
               Requested at{' '}
-              {moment(request.request_time).format('MMMM D, YYYY h:mm a')}
+              {dayjs(request.request_time).format('MMMM D, YYYY h:mm a')}
             </span>
           </Col>
         </Row>

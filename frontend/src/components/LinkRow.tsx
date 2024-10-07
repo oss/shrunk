@@ -21,7 +21,7 @@ import CopyToClipboard from 'react-copy-to-clipboard';
 import dayjs from 'dayjs';
 
 import { LinkInfo } from './LinkInfo';
-import './LinkRow.less';
+import './LinkRow.css';
 
 /**
  * Props for the [[LinkRow]] component

@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import './Dashboard.less';
-import { Button, Col, Row } from 'antd/lib';
-import { PlusCircleFilled } from '@ant-design/icons/lib/icons';
+import './Dashboard.css';
 import { SearchBox } from '../components/SearchBox';
 import LinkHubRow from '../components/LinkHubRow';
 

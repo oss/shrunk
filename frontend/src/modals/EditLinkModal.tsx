@@ -28,7 +28,7 @@ import {
   serverValidateLongUrl,
   serverValidateNetId,
 } from '../Validators';
-import './FixAliasRemoveButton.less';
+import './FixAliasRemoveButton.css';
 
 /**
  * The final values of the edit link form
