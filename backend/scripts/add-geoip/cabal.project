@@ -1,6 +1,0 @@
-packages: *.cabal
-
-package add-geoip
-  optimization:      2
-  profiling:         True
-  -- executable-static: True
