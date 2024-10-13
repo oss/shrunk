@@ -14,4 +14,6 @@ RUN pip install poetry
 RUN poetry config virtualenvs.create false
 RUN poetry lock
 
+RUN bash scripts/install-tailwindcss.sh
+
 RUN poetry install

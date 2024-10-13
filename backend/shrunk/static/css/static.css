@@ -1,5 +1,5 @@
 * {
-  font-family: "Roboto", sans-serif;
+  font-family: "Geist", sans-serif;
 }
 
 html {
@@ -7,12 +7,6 @@ html {
   background-color: #fefefe;
   min-height: 100%;
   position: relative;
-}
-
-.login-box {
-  margin: 80px auto 60px auto;
-  padding: 30p;
-  text-align: center;
 }
 
 #title {
@@ -57,12 +51,4 @@ html {
 .navbar {
   margin-bottom: 20px;
   background: #cc0e32;
-}
-
-.footer {
-  position: absolute;
-  padding: 20px;
-  bottom: 0;
-  width: 100%;
-  background-color: #363636;
 }

@@ -25,7 +25,8 @@ def login(user_info: Any) -> Any:
     netid: str = user_info.get("netid")
     twoFactorAuth = user_info.get("twoFactorAuth")
     if not twoFactorAuth and current_app.config["REQUIRE_2FA"]:
-        return render_template("help_no_2fa.html")
+        enable_dev = current_app.config.get("DEV_LOGINS", False)
+        return render_template("help_no_2fa.html", dev=enable_dev)
 
     def t(typ: str) -> bool:  # pylint: disable=invalid-name
         return typ in types

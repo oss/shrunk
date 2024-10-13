@@ -367,7 +367,8 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
         is_tracking_pixel_link = client.links.is_tracking_pixel_link(alias)
 
         if long_url is None and not is_tracking_pixel_link:
-            return render_template("404.html"), 404
+            enable_dev = current_app.config.get("DEV_LOGINS", False)
+            return render_template("404.html", dev=enable_dev), 404
 
         # Get or generate a tracking id
         tracking_id = request.cookies.get("shrunkid") or client.tracking.get_new_id()

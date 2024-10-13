@@ -8,11 +8,11 @@
 
   <title>Go &mdash; Rutgers University URL Shortener</title>
 
-  <!-- External CSS -->
-  <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" crossorigin="anonymous" />
-  <link rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.0.1/css/tempusdominus-bootstrap-4.min.css" />
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+  {% if dev %}
+  <script src="https://cdn.tailwindcss.com"></script>
+  {% endif %}
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/geist.css') }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/static.css') }}" />
 
   <!-- Favicon -->
@@ -21,28 +21,32 @@
 
 <body>
   <header>
-    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
-      <a id="rutgers-logo" class="navbar-brand" href="{{ url_for('shrunk.index') }}">
-        <img alt="Rutgers" src="{{ url_for('static', filename='img/rutgers.png') }}" width="175px"
-          srcset="{{ url_for('static', filename='img/rutgers.png') }}" />
-      </a>
+    <nav class="bg-red-600 fixed top-0 w-full z-10">
+      <div class="mx-auto flex items-center justify-between p-4">
+        <a id="rutgers-logo" class="navbar-brand" href="{{ url_for('shrunk.index') }}">
+          <img alt="Rutgers" src="{{ url_for('static', filename='img/rutgers.png') }}" width="175px"
+            srcset="{{ url_for('static', filename='img/rutgers.png') }}" />
+        </a>
+      </div>
     </nav>
   </header>
 
-  <main role="main" class="container main-container">
-    {% block content %} {% endblock %}
+  <main class="h-full">
+    <div class="my-40">
+      {% block content %} {% endblock %}
+    </div>
   </main>
 
-  <footer class="footer">
-    <div class="container text-center">
-      <span class="text-muted">
-        For any questions, contact
-        <a href="mailto:oss@oit.rutgers.edu">oss@oit.rutgers.edu</a> or
-        <a href="mailto:accessibility@rutgers.edu">accessibility@rutgers.edu</a><br />
-        &copy; 2023 &mdash;<a href="https://www.rutgers.edu">
-          Rutgers, The State University of New Jersey
-        </a>
-      </span>
+  <footer class="absolute p-5 bottom-0 w-full bg-gray-900 flex justify-center text-center">
+    <div class="w-2/3">
+      <p class="text-white text-sm text-balance">
+        © 2024 <a class="underline" href="https://www.rutgers.edu/">Rutgers, The State University of New Jersey</a>. All
+        rights reserved. Rutgers is an equal access/equal opportunity institution. Individuals with disabilities are
+        encouraged to direct suggestions, comments, or complaints concerning any accessibility issues with Rutgers
+        websites to <a class="underline" href="accessibility@rutgers.edu">accessibility@rutgers.edu</a> or
+        <a class="underline" href="https://rutgers.ca1.qualtrics.com/jfe/form/SV_57iH6Rfeocz51z0">complete the Report
+          Accessibility Barrier or Provide Feedback Form.</a>
+      </p>
     </div>
   </footer>
 </body>
