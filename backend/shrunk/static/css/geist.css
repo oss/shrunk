@@ -1,7 +1,7 @@
 @font-face {
     font-family: 'Geist';
     font-weight: 900; /* Black */
-    src: url('{{ url_for("static", filename="fonts/Geist-Black.ttf") }}') format('truetype');
+    src: url('../fonts/Geist-Black.ttf') format('truetype');
 }
 
 @font-face {
