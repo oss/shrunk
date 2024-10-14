@@ -552,7 +552,6 @@ export class Shrunk extends React.Component<Props, State> {
                 justifyContent: 'center',
                 textAlign: 'center',
                 color: 'rgb(162, 162, 162)',
-                backgroundColor: 'rgb(18, 18, 18)',
               }}
             >
               <div style={{ width: '50%' }}>

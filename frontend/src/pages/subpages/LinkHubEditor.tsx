@@ -447,7 +447,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
       )}
       {collaborators !== undefined ? (
         <ShareLinkModal
-          open={isShareModalVisible}
+          visible={isShareModalVisible}
           userPrivileges={undefined}
           people={collaborators}
           isLoading={false}

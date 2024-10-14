@@ -1027,7 +1027,7 @@ export class Dashboard extends React.Component<Props, State> {
           <></>
         ) : (
           <EditLinkModal
-            open={this.state.editModalState.visible}
+            visible={this.state.editModalState.visible}
             userPrivileges={this.props.userPrivileges}
             netid={this.props.netid}
             linkInfo={this.state.editModalState.linkInfo}
@@ -1043,7 +1043,7 @@ export class Dashboard extends React.Component<Props, State> {
           <></>
         ) : (
           <ShareLinkModal
-            open={this.state.shareLinkModalState.visible}
+            visible={this.state.shareLinkModalState.visible}
             userPrivileges={this.props.userPrivileges}
             people={this.state.shareLinkModalState.entities}
             isLoading={this.state.shareLinkModalState.isLoading}
@@ -1065,7 +1065,7 @@ export class Dashboard extends React.Component<Props, State> {
           <></>
         ) : (
           <QrCodeModal
-            open={this.state.qrModalState.visible}
+            visible={this.state.qrModalState.visible}
             width={256}
             linkInfo={this.state.qrModalState.linkInfo}
             onCancel={this.hideQrModal}
