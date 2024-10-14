@@ -109,7 +109,7 @@ export class PendingAlerts extends React.Component<Props, State> {
 
     return (
       <Modal
-        visible={this.state.numberViewed !== this.props.pendingAlerts.length}
+        open={this.state.numberViewed !== this.props.pendingAlerts.length}
         title={currentAlert.title}
         footer={[
           <Button key="ok" type="primary" onClick={nextAlert}>

@@ -12,7 +12,7 @@ import {
   Popconfirm,
   Form,
   Input,
-  BackTop,
+  FloatButton,
   Tooltip,
 } from 'antd/lib';
 import {
@@ -22,7 +22,7 @@ import {
 } from '@ant-design/icons';
 import { IoReturnUpBack } from 'react-icons/io5';
 import base32 from 'hi-base32';
-import moment from 'moment';
+import dayjs from 'dayjs';
 import { downloadGrantedUsersCsv } from '../GrantedUserCsv';
 
 /**
@@ -203,7 +203,7 @@ const EntityRow: React.FC<{
           <Col span={24}>
             <span>
               <em>Date granted:</em>&nbsp;
-              {moment(props.info.time_granted).format('MMM D, YYYY')}
+              {dayjs(props.info.time_granted).format('MMM D, YYYY')}
             </span>
           </Col>
         </Row>
@@ -393,7 +393,7 @@ export class Role extends React.Component<Props, State> {
 
     return (
       <>
-        <BackTop />
+        <FloatButton.BackTop />
         <Row className="primary-row">
           <Col span={20}>
             <Button

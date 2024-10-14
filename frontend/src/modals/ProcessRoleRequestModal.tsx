@@ -195,7 +195,7 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
   render() {
     return (
       <Modal
-        visible={this.props.visible}
+        open={this.props.visible}
         title={
           this.props.toApprove
             ? `Approve ${this.props.roleName} role request for ${this.props.entity}`

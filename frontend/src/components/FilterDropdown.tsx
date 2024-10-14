@@ -15,7 +15,7 @@ import {
   Button,
 } from 'antd/lib';
 import { CaretDownOutlined } from '@ant-design/icons';
-import moment from 'moment';
+import dayjs from 'dayjs';
 
 /**
  * Props for the [[FilterDropdown]] component
@@ -56,13 +56,13 @@ export interface Props {
    * Callback called when the user choosses a date of which links will be shown after
    * @property
    */
-  showLinksAfter: (begin_time: moment.Moment) => void;
+  showLinksAfter: (begin_time: dayjs.Dayjs) => void;
 
   /**
    * Callback called when the user chooses a date of which links will be shown before
    * @property
    */
-  showLinksBefore: (end_time: moment.Moment) => void;
+  showLinksBefore: (end_time: dayjs.Dayjs) => void;
 }
 
 /**
@@ -81,8 +81,8 @@ export const FilterDropdown: React.FC<Props> = (props) => {
   const [showDeleted, setShowDeleted] = useState(false);
   const [sortKey, setSortKey] = useState('relevance');
   const [sortOrder, setSortOrder] = useState('descending');
-  const [beginTime, setBeginTime] = useState<moment.Moment | null>(null);
-  const [endTime, setEndTime] = useState<moment.Moment | null>(null);
+  const [beginTime, setBeginTime] = useState<dayjs.Dayjs | null>(null);
+  const [endTime, setEndTime] = useState<dayjs.Dayjs | null>(null);
   const filterByText = useRef<HTMLElement | null>(null);
 
   const showExpiredLinks = async (e: any): Promise<void> => {
@@ -188,7 +188,7 @@ export const FilterDropdown: React.FC<Props> = (props) => {
       <Dropdown
         className="filter-links-dropdown"
         overlay={dropdown}
-        visible={dropdownVisible}
+        open={dropdownVisible}
         onVisibleChange={setDropdownVisible}
         placement="bottomLeft"
         trigger={['click']}

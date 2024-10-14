@@ -1,0 +1,23 @@
+.shrunk-pagination {
+  display: flex;
+  justify-content: center;
+}
+
+.dashboard-links .pagination {
+  margin-top: 28px;
+  text-align: center;
+}
+.dashboard-links .pagination-simple {
+  margin-top: 28px;
+  text-align: center;
+  display: none;
+}
+
+@media only screen and (max-width: 500px) {
+  .dashboard-links .pagination-simple {
+    display: block;
+  }
+  .dashboard-links .pagination {
+    display: none;
+  }
+}

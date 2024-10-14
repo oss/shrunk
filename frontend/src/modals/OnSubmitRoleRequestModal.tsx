@@ -79,7 +79,7 @@ export class RoleRequestModal extends Component<Props, State> {
   render() {
     return (
       <Modal
-        visible={this.props.visible}
+        open={this.props.visible}
         onCancel={() => {
           this.props.onClose();
         }}

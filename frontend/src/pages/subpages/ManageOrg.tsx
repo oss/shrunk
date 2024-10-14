@@ -18,7 +18,7 @@ import {
   Menu,
   Modal,
   FormInstance,
-  BackTop,
+  FloatButton,
 } from 'antd/lib';
 import {
   ExclamationCircleFilled,
@@ -36,8 +36,8 @@ import moment from 'moment';
 
 import { MemberInfo, OrgInfo, getOrgInfo } from '../../api/Org';
 import { OrgAdminTag } from './OrgCommon';
-import '../../Base.less';
-import './ManageOrg.less';
+import '../../Base.css';
+import './ManageOrg.css';
 import { serverValidateNetId, serverValidateOrgName } from '../../Validators';
 
 /**
@@ -486,7 +486,7 @@ class ManageOrgInner extends React.Component<Props, State> {
     return (
       <>
         <Modal
-          visible={this.state.renameOrgModalVisible}
+          open={this.state.renameOrgModalVisible}
           onOk={renameModal.handleOk}
           onCancel={renameModal.handleCancel}
           title="Rename Organization"
@@ -514,7 +514,7 @@ class ManageOrgInner extends React.Component<Props, State> {
             </Form.Item>
           </Form>
         </Modal>
-        <BackTop />
+        <FloatButton.BackTop />
         <Row className="primary-row">
           <Col span={12}>
             <Button
@@ -543,7 +543,7 @@ class ManageOrgInner extends React.Component<Props, State> {
                     onCreate={this.onAddMember}
                   />
                 }
-                visible={this.state.addMemberFormVisible}
+                open={this.state.addMemberFormVisible}
                 onVisibleChange={(flag) =>
                   this.setState({ addMemberFormVisible: flag })
                 }

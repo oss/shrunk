@@ -41,7 +41,7 @@ export default function EditLinkFromLinkHubModal(
   return (
     <Modal
       title="Edit Link"
-      visible={props.visible}
+      open={props.visible}
       onOk={form.submit}
       onCancel={onCancel}
     >

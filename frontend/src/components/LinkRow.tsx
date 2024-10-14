@@ -18,10 +18,10 @@ import {
 } from 'react-icons/ri';
 
 import CopyToClipboard from 'react-copy-to-clipboard';
-import moment from 'moment';
+import dayjs from 'dayjs';
 
 import { LinkInfo } from './LinkInfo';
-import './LinkRow.less';
+import './LinkRow.css';
 
 /**
  * Props for the [[LinkRow]] component
@@ -193,7 +193,7 @@ export class LinkRow extends React.Component<Props, State> {
                 ) : (
                   <span className="info">
                     Expires:{' '}
-                    {moment(this.props.linkInfo.expiration_time).format(
+                    {dayjs(this.props.linkInfo.expiration_time).format(
                       'MMM D, YYYY',
                     )}
                   </span>
@@ -201,7 +201,7 @@ export class LinkRow extends React.Component<Props, State> {
 
                 <span className="info">
                   Created:{' '}
-                  {moment(this.props.linkInfo.created_time).format(
+                  {dayjs(this.props.linkInfo.created_time).format(
                     'MMM D, YYYY',
                   )}
                 </span>

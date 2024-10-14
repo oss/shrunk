@@ -16,7 +16,7 @@ import {
 } from 'antd/lib';
 import { PlusCircleFilled } from '@ant-design/icons';
 
-import moment from 'moment';
+import dayjs from 'dayjs';
 import { getOrgInfo, listOrgs, OrgInfo } from '../api/Org';
 import { SearchBox } from '../components/SearchBox';
 import { LinkRow } from '../components/LinkRow';
@@ -28,7 +28,7 @@ import { CreateLinkForm } from '../components/CreateLinkForm';
 import { OrgsSelect } from '../components/OrgsSelect';
 import { FilterDropdown } from '../components/FilterDropdown';
 
-import './Dashboard.less';
+import './Dashboard.css';
 
 /**
  * The final values of the share link form
@@ -102,13 +102,13 @@ export interface SearchQuery {
    * The beginning of the time range to search
    * @property
    */
-  begin_time: moment.Moment | null;
+  begin_time: dayjs.Dayjs | null;
 
   /**
    * The end of the time range to search
    * @property
    */
-  end_time: moment.Moment | null;
+  end_time: dayjs.Dayjs | null;
 }
 
 /**
@@ -360,7 +360,7 @@ export class Dashboard extends React.Component<Props, State> {
    * @method
    * @param begin_time View links created after this date
    */
-  showLinksAfter = (begin_time: moment.Moment) => {
+  showLinksAfter = (begin_time: dayjs.Dayjs) => {
     this.setState({ query: { ...this.state.query, begin_time } }, () =>
       this.setQuery(this.state.query),
     );
@@ -371,7 +371,7 @@ export class Dashboard extends React.Component<Props, State> {
    * @method
    * @param end_time View links created before this date
    */
-  showLinksBefore = (end_time: moment.Moment) => {
+  showLinksBefore = (end_time: dayjs.Dayjs) => {
     this.setState({ query: { ...this.state.query, end_time } }, () =>
       this.setQuery(this.state.query),
     );
@@ -487,7 +487,7 @@ export class Dashboard extends React.Component<Props, State> {
                   deleted_by: output.deletion_info.deleted_by,
                   deleted_time: new Date(output.deletion_info.deleted_time),
                 },
-          }) as LinkInfo,
+          } as LinkInfo),
       ),
     };
   };
@@ -971,7 +971,7 @@ export class Dashboard extends React.Component<Props, State> {
                   tracking_pixel_ui_enabled={this.state.trackingPixelEnabled}
                 />
               }
-              visible={this.state.createLinkDropdownVisible}
+              open={this.state.createLinkDropdownVisible}
               onVisibleChange={(flag) =>
                 this.setState({ createLinkDropdownVisible: flag })
               }
@@ -1000,25 +1000,26 @@ export class Dashboard extends React.Component<Props, State> {
                 netid={this.props.netid}
               />
             ))}
+            <div className="shrunk-pagination">
+              <Pagination
+                className="pagination"
+                defaultCurrent={1}
+                current={this.state.currentPage}
+                showSizeChanger={false}
+                total={this.state.totalLinks}
+                onChange={this.setPage}
+              />
 
-            <Pagination
-              className="pagination"
-              defaultCurrent={1}
-              current={this.state.currentPage}
-              showSizeChanger={false}
-              total={this.state.totalLinks}
-              onChange={this.setPage}
-            />
-
-            <Pagination
-              className="pagination-simple"
-              defaultCurrent={1}
-              current={this.state.currentPage}
-              showSizeChanger={false}
-              total={this.state.totalLinks}
-              onChange={this.setPage}
-              simple
-            />
+              <Pagination
+                className="pagination-simple"
+                defaultCurrent={1}
+                current={this.state.currentPage}
+                showSizeChanger={false}
+                total={this.state.totalLinks}
+                onChange={this.setPage}
+                simple
+              />
+            </div>
           </div>
         )}
 

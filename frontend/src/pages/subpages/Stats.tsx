@@ -25,14 +25,14 @@ import {
 import { IoReturnUpBack } from 'react-icons/io5';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
-import moment from 'moment';
+import dayjs from 'dayjs';
 
 import { LinkInfo, AliasInfo } from '../../components/LinkInfo';
 import { GeoipStats, MENU_ITEMS, GeoipChart } from './StatsCommon';
 import { downloadVisitsCsv } from '../../components/Csv';
 
-import '../../Base.less';
-import './Stats.less';
+import '../../Base.css';
+import './Stats.css';
 
 /**
  * Props for the [[Stats]] component
@@ -550,7 +550,7 @@ export class Stats extends React.Component<Props, State> {
                     />
                     <InfoBox
                       infoLabel="Date Created"
-                      data={moment(this.state.linkInfo.created_time).format(
+                      data={dayjs(this.state.linkInfo.created_time).format(
                         'MMM D, YYYY',
                       )}
                     />

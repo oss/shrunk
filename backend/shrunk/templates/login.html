@@ -1,77 +1,37 @@
 {% extends "base.html"%} {% block content %}
-<div class="login-box container">
-  <div class="row">
-    <div class="col">
-      <span id="title">go.rutgers.edu</span>
+{% import 'macros.html' as macros %}
+<div class="flex items-center justify-center text-center">
+  <div class="w-2/3">
+    <div>
+      <h1 class="mb-2 text-8xl font-black text-balance">Shorten URLs for Rutgers University</h1>
+      <p class="mb-4 text-lg">You must be an approved user to use this program.</p>
     </div>
-  </div>
+    {% if dev %}
 
-  <div class="pb-5 row">
-    <div class="col">
-      <span id="subtitle">The official Rutgers URL shortener</span>
-    </div>
-  </div>
+    <form class="pb-4" action="{{ url_for('devlogins.user') }}" method="GET">
+      {{ macros.button("Login as DevUser") }}
+    </form>
+    <form class="pb-4" action="{{ url_for('devlogins.facstaff') }}" method="GET">
+      {{ macros.button("Login as DevFacstaff") }}
+    </form>
+    <form class="pb-4" action="{{ url_for('devlogins.power') }}" method="GET">
+      {{ macros.button("Login as DevPowerUser") }}
+    </form>
 
-  <div class="pb-4 row">
-    <div class="col">
-      <span id="facstaff"
-        >You'll need to be a Rutgers faculty or staff member to access this
-        site.</span
-      >
-    </div>
-  </div>
+    <form class="pb-4" action="{{ url_for('devlogins.admin') }}" method="GET">
+      {{ macros.button("Login as DevAdmin") }}
+    </form>
 
-  <div class="row">
-    <div class="col">
-      <form action="{{ shib_login }}" method="GET">
-        <button type="submit" class="btn btn-primary btn-block">
-          Login with CAS
-        </button>
-      </form>
-    </div>
-  </div>
+    {% else %}
 
-  {% if dev %}
-  <div class="row justify-content-center">
-    <div class="col">
-      <form action="{{ url_for('devlogins.user') }}" method="GET">
-        <button type="submit" class="btn btn-primary btn-block">
-          DevUser Login
-        </button>
-      </form>
-    </div>
-  </div>
+    <form class="pb-4" action="{{ shib_login }}" method="GET">
+      {{ macros.button("Login with CAS") }}
+    </form>
 
-  <div class="row">
-    <div class="col">
-      <form action="{{ url_for('devlogins.facstaff') }}" method="GET">
-        <button type="submit" class="btn btn-primary btn-block">
-          DevFacstaff Login
-        </button>
-      </form>
-    </div>
-  </div>
+    {% endif %}
 
-  <div class="row">
-    <div class="col">
-      <form action="{{ url_for('devlogins.power') }}" method="GET">
-        <button type="submit" class="btn btn-primary btn-block">
-          DevPowerUser Login
-        </button>
-      </form>
-    </div>
+    <img src="{{ url_for('static', filename='img/preview.png') }}" />
   </div>
-
-  <div class="row">
-    <div class="col">
-      <form action="{{ url_for('devlogins.admin') }}" method="GET">
-        <button type="submit" class="btn btn-primary btn-block">
-          DevAdmin Login
-        </button>
-      </form>
-    </div>
-  </div>
-  {% endif %}
 </div>
 
 {% endblock %}

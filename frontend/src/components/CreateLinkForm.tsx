@@ -5,7 +5,7 @@
 
 import React from 'react';
 import base32 from 'hi-base32';
-import moment from 'moment';
+import dayjs from 'dayjs';
 import {
   Form,
   Input,
@@ -30,8 +30,8 @@ import {
   serverValidateDuplicateAlias,
   serverValidateLongUrl,
 } from '../Validators';
-import '../Base.less';
-import '../modals/FixAliasRemoveButton.less';
+import '../Base.css';
+import '../modals/FixAliasRemoveButton.css';
 
 /**
  * Displays a label with the text "Custom Alias" and a tooltip with extended help text
@@ -87,7 +87,7 @@ interface CreateLinkFormValues {
    * The expiration time. Absent if the link has no expiration time
    * @property
    */
-  expiration_time?: moment.Moment;
+  expiration_time?: dayjs.Dayjs;
 
   /**
    * The link's aliases. The `alias` field of an array element is absent
@@ -296,9 +296,9 @@ export class CreateLinkForm extends React.Component<Props, State> {
               style={{ width: '100%' }}
               format="YYYY-MM-DD HH:mm:ss"
               disabledDate={(current) =>
-                current && current < moment().startOf('day')
+                current && current < dayjs().startOf('day')
               }
-              showTime={{ defaultValue: moment() }}
+              showTime={{ defaultValue: dayjs() }}
             />
           </Form.Item>
 

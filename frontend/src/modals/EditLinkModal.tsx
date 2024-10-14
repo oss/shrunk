@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import moment from 'moment';
+import dayjs from 'dayjs';
 import {
   Modal,
   Form,
@@ -28,7 +28,7 @@ import {
   serverValidateLongUrl,
   serverValidateNetId,
 } from '../Validators';
-import './FixAliasRemoveButton.less';
+import './FixAliasRemoveButton.css';
 
 /**
  * The final values of the edit link form
@@ -52,7 +52,7 @@ export interface EditLinkFormValues {
    * be cleared
    * @property
    */
-  expiration_time: moment.Moment | null;
+  expiration_time: dayjs.Dayjs | null;
 
   /**
    * The new owner of the link.
@@ -158,7 +158,7 @@ export const EditLinkModal: React.FC<Props> = (props) => {
 
   return (
     <Modal
-      visible={props.visible}
+      open={props.visible}
       title="Edit link"
       onOk={() => {
         if (ownerInputVal !== initialValues.owner) {
@@ -214,9 +214,9 @@ export const EditLinkModal: React.FC<Props> = (props) => {
           <DatePicker
             format="YYYY-MM-DD HH:mm:ss"
             disabledDate={(current) =>
-              current && current < moment().startOf('day')
+              current && current < dayjs().startOf('day')
             }
-            showTime={{ defaultValue: moment(props.linkInfo.expiration_time) }}
+            showTime={{ defaultValue: dayjs(props.linkInfo.expiration_time) }}
           />
         </Form.Item>
 

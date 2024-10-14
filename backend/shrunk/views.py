@@ -108,8 +108,11 @@ def accept_access_request(netid: str, client: ShrunkClient, token: bytes) -> Any
     except NoSuchObjectException:
         abort(404)
     client.links.accept_access_request(token)
+    enable_dev = current_app.config.get("DEV_LOGINS", False)
     return render_template(
-        "access_request_resolved.html", message="The access request has been granted."
+        "access_request_resolved.html",
+        message="The access request has been granted.",
+        dev=enable_dev,
     )
 
 
@@ -124,6 +127,9 @@ def deny_access_request(netid: str, client: ShrunkClient, token: bytes) -> Any:
     except NoSuchObjectException:
         abort(404)
     client.links.deny_access_request(token)
+    enable_dev = current_app.config.get("DEV_LOGINS", False)
     return render_template(
-        "access_request_resolved.html", message="The access request has been denied."
+        "access_request_resolved.html",
+        message="The access request has been denied.",
+        dev=enable_dev,
     )

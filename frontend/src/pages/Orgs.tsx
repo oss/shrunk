@@ -15,16 +15,16 @@ import {
   Input,
   Tooltip,
   Spin,
-  BackTop,
+  FloatButton,
 } from 'antd/lib';
 import { ExclamationCircleFilled, PlusCircleFilled } from '@ant-design/icons';
 import { RiLineChartFill, RiToolsFill, RiDeleteBin6Line } from 'react-icons/ri';
-import moment from 'moment';
+import dayjs from 'dayjs';
 
 import { OrgInfo, listOrgs, createOrg, deleteOrg } from '../api/Org';
 import { OrgAdminTag, OrgMemberTag } from './subpages/OrgCommon';
 
-import '../Base.less';
+import '../Base.css';
 
 import { serverValidateOrgName } from '../Validators';
 
@@ -130,7 +130,7 @@ const OrgRow: React.FC<{
       )}
       {props.showAll && props.orgInfo.is_member ? <OrgMemberTag /> : <></>}
       <span>
-        Created: {moment(props.orgInfo.timeCreated).format('MMM D, YYYY')}
+        Created: {dayjs(props.orgInfo.timeCreated).format('MMM D, YYYY')}
       </span>
     </Col>
     <Col span={4} className="btn-col">
@@ -232,7 +232,7 @@ export class Orgs extends React.Component<Props, State> {
     const isAdmin = this.props.userPrivileges.has('admin');
     return (
       <>
-        <BackTop />
+        <FloatButton.BackTop />
         <Row className="primary-row">
           <Col span={16}>
             <span className="page-title">Orgs</span>
@@ -244,7 +244,7 @@ export class Orgs extends React.Component<Props, State> {
             ) : (
               <Dropdown
                 overlay={<CreateOrgForm onCreate={this.onCreateOrg} />}
-                visible={this.state.createOrgFormVisible}
+                open={this.state.createOrgFormVisible}
                 onVisibleChange={(flag) =>
                   this.setState({ createOrgFormVisible: flag })
                 }

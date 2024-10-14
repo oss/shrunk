@@ -234,7 +234,7 @@ export class ShareLinkModal extends React.Component<Props, State> {
   render(): React.ReactNode {
     return (
       <Modal
-        visible={this.props.visible}
+        open={this.props.visible}
         title={
           this.props.linkInfo === null
             ? 'Share link'

@@ -440,7 +440,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
           onCancel={() => {
             setIsEditLinkModalVisible(false);
           }}
-          visible={isEditLinkModalVisible}
+          open={isEditLinkModalVisible}
         />
       ) : (
         <></>

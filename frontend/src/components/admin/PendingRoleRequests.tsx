@@ -3,8 +3,8 @@
  * @packageDocumentation
  */
 import React, { Component } from 'react';
-import { Row, Col, Button, BackTop, Spin } from 'antd/lib';
-import moment from 'moment';
+import { Row, Col, Button, FloatButton, Spin } from 'antd/lib';
+import dayjs from 'dayjs';
 import { IoReturnUpBack } from 'react-icons/io5';
 import base32 from 'hi-base32';
 import { ProcessRoleRequestModal } from '../../modals/ProcessRoleRequestModal';
@@ -136,7 +136,7 @@ const PendingRoleRequestRow: React.FC<{
           <Col span={24}>
             <span>
               <em>Date Requested:</em>&nbsp;
-              {moment(
+              {dayjs(
                 new Date(Number(props.role_request.time_requested) * 1000),
               ).format('MMM D, YYYY, h:mm a')}
             </span>
@@ -372,7 +372,7 @@ export class PendingRoleRequests extends Component<Props, State> {
     }
     return (
       <div>
-        <BackTop />
+        <FloatButton.BackTop />
         <Row className="primary-row">
           <Col span={24}>
             <Button
