@@ -3,10 +3,6 @@
   margin: 0;
 }
 
-.header {
-  max-width: 100%;
-}
-
 .navbar {
   display: flex;
   flex-direction: row;
@@ -16,7 +12,9 @@
 }
 
 .logo {
-  margin: 0 28px 0 0;
+  margin-top: auto;
+  margin-bottom: auto;
+  margin-right: 28px;
   float: left;
 }
 

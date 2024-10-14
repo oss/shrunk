@@ -15,7 +15,15 @@ import {
   TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { Button, ConfigProvider, Dropdown, Layout, Menu, Tag } from 'antd/lib';
+import {
+  Button,
+  ConfigProvider,
+  Dropdown,
+  Image,
+  Layout,
+  Menu,
+  Tag,
+} from 'antd/lib';
 import { createBrowserHistory, Location } from 'history';
 import React from 'react';
 import {
@@ -249,17 +257,18 @@ export class Shrunk extends React.Component<Props, State> {
       <ConfigProvider theme={shrunkTheme}>
         <HashRouter>
           <Layout>
-            <Header className="header">
-              <div className="logo">
-                <Link to="/dash">
-                  <img
+            <Header>
+              <Link to="/dash">
+                <div className="logo">
+                  <Image
+                    preview={false}
                     alt="Rutgers"
                     src="/static/img/rutgers.png"
                     width="175px"
                     srcSet="/static/img/rutgers.png"
                   />
-                </Link>
-              </div>
+                </div>
+              </Link>
               <div className="user-name">
                 <Dropdown
                   className="profile-menu"
