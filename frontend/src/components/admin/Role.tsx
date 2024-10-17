@@ -23,7 +23,7 @@ import {
 import { IoReturnUpBack } from 'react-icons/io5';
 import base32 from 'hi-base32';
 import dayjs from 'dayjs';
-import { downloadGrantedUsersCsv } from '../GrantedUserCsv';
+import { downloadGrantedUsersCsv, EntityInfo } from '../GrantedUserCsv';
 
 /**
  * Props for the [[Role]] component
@@ -60,31 +60,6 @@ interface RoleText {
   granted_by: string;
   allow_comment: boolean;
   comment_prompt: string;
-}
-
-/**
- * Entity information as fetched from the backend
- * @interface
- */
-export interface EntityInfo {
-  /**
-   * The name of the entity
-   * @property
-   */
-  entity: string;
-
-  /**
-   * The NetID of the user who granted the role to the entity
-   * @property
-   */
-  granted_by: string;
-
-  /**
-   * The comment, or `null` if not present
-   * @property
-   */
-  comment: string | null;
-  time_granted: Date | null;
 }
 
 /**

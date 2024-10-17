@@ -4,8 +4,32 @@
  */
 
 import { createObjectCsvStringifier } from 'csv-writer';
-import { EntityInfo } from './admin/Role';
 import { doDownload } from '../lib/utils';
+
+/**
+ * Entity information as fetched from the backend
+ * @interface
+ */
+export interface EntityInfo {
+  /**
+   * The name of the entity
+   * @property
+   */
+  entity: string;
+
+  /**
+   * The NetID of the user who granted the role to the entity
+   * @property
+   */
+  granted_by: string;
+
+  /**
+   * The comment, or `null` if not present
+   * @property
+   */
+  comment: string | null;
+  time_granted: Date | null;
+}
 
 /**
  * Create a CSV string from an array of user data
