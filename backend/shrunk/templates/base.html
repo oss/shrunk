@@ -8,12 +8,12 @@
 
   <title>Go &mdash; Rutgers University URL Shortener</title>
 
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/geist.css') }}" />
   {% if dev %}
   <script src="https://cdn.tailwindcss.com"></script>
-  {% endif %}
-
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/geist.css') }}" />
+  {% else %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/static.css') }}" />
+  {% endif %}
 
   <!-- Favicon -->
   <link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon" type="image/ico" />
