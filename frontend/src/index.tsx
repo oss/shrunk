@@ -40,7 +40,9 @@ interface ShrunkParams {
 const loadShrunkParams = () => {
   const cookie = Cookies.get('shrunk_params');
   if (cookie === undefined) {
-    throw new Error('shrunk_params cookie not found');
+    throw new Error(
+      'shrunk_params cookie not found; this error usually appears in Safari, please switch to Google Chrome or Firefox.',
+    );
   }
   const decoded = atob(cookie);
   return JSON.parse(decoded) as ShrunkParams;
