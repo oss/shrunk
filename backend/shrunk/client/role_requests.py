@@ -19,16 +19,22 @@ class RoleRequestClient:
     def __init__(
         self,
         db: pymongo.database.Database,
+        ROLE_REQUESTS_ENABLED: bool,
         SEND_MAIL_ON: bool,
         SLACK_INTEGRATION_ON: bool,
         SLACK_BOT_TOKEN: str,
         SLACK_SHRUNK_CHANNEL_ID: str,
     ):
         self.db = db
+        self.role_requests_enabled = ROLE_REQUESTS_ENABLED
         self.send_mail_on = SEND_MAIL_ON
         self.slack_integration_on = SLACK_INTEGRATION_ON
         self.slack_bot_token = SLACK_BOT_TOKEN
         self.slack_shrunk_channel_id = SLACK_SHRUNK_CHANNEL_ID
+
+    def get_role_requests_enabled(self) -> bool:
+        """Get the value of the role_requests_enabled attribute. This is to determine whether the role request system is enabled or not."""
+        return self.role_requests_enabled
 
     def get_pending_role_requests(self, role: str) -> List[Any]:
         """Get all pending role requests for a role

@@ -45,6 +45,7 @@ class ShrunkClient:
         SLACK_SHRUNK_CHANNEL_ID: Optional[str] = None,
         TRACKING_PIXEL_UI_ENABLED: Optional[bool] = False,
         LINKHUB_INTEGRATION_ENABLED: Optional[bool] = False,
+        ROLE_REQUESTS_ENABLED: Optional[bool] = False,
         **_kwargs: Any,
     ):
         self.conn = pymongo.MongoClient(
@@ -87,6 +88,7 @@ class ShrunkClient:
         )
         self.role_requests = RoleRequestClient(
             db=self.db,
+            ROLE_REQUESTS_ENABLED=ROLE_REQUESTS_ENABLED or False,
             SEND_MAIL_ON=SEND_MAIL_ON or False,
             SLACK_INTEGRATION_ON=SLACK_INTEGRATION_ON or False,
             SLACK_BOT_TOKEN=SLACK_BOT_TOKEN or None,

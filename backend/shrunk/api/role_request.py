@@ -13,6 +13,27 @@ __all__ = ["bp"]
 bp = Blueprint("role_request", __name__, url_prefix="/api/v1/role_request")
 
 
+@bp.route("/role_requests_enabled", methods=["GET"])
+@require_login
+def get_role_requests_enabled(netid: str, client: ShrunkClient) -> Any:
+    """``GET /api/role_request/role_requests_enabled``
+
+    Args:
+        netid (str): the netid of the user logged in
+        client (ShrunkClient): the client object
+
+    Get the status of the role_requests_enabled flag. Response format:
+
+    .. code-block:: json
+
+       { "role_requests_enabled": bool }
+
+    """
+    return jsonify(
+        {"role_requests_enabled": client.role_requests.get_role_requests_enabled()}
+    )
+
+
 @bp.route("/<role>", methods=["GET"])
 @require_login
 def get_pending_role_requests(netid: str, client: ShrunkClient, role: str) -> Any:
@@ -293,6 +314,10 @@ def get_send_mail_on(netid: str, client: ShrunkClient) -> Any:
 
        { "send_mail_on": bool }
     """
+    # Service is unavailable if configuration is toggled off
+    if not client.role_requests.get_role_requests_enabled():
+        abort(503)
+
     return jsonify({"send_mail_on": client.role_requests.get_send_mail_on()})
 
 

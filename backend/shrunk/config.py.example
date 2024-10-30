@@ -150,3 +150,8 @@ LINKHUB_INTEGRATION_ENABLED = True
 """
 Configuration value to enable or disable dynamically generated web pages that contains URLs.
 """
+
+ROLE_REQUESTS_ENABLED = False
+"""
+Configuration variable to enable or disable the ability for users to request any role. Does not disable routes.
+"""
