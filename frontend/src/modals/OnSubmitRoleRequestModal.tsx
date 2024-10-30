@@ -43,7 +43,7 @@ interface State {
    * Whether send_email_on is toggled on
    * @property
    */
-  send_mail_on: boolean;
+  emails_enabled: boolean;
   /**
    * If the modal is loading or not
    * @property
@@ -55,7 +55,7 @@ export class RoleRequestModal extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      send_mail_on: false,
+      emails_enabled: false,
       loading: false,
     };
   }
@@ -70,10 +70,10 @@ export class RoleRequestModal extends Component<Props, State> {
    * @method
    */
   updateSendMailOn = async (): Promise<void> => {
-    const result = await fetch(`/api/v1/role_request/send_mail_on`).then(
+    const result = await fetch(`/api/v1/role_request/emails_enabled`).then(
       (resp) => resp.json(),
     );
-    this.setState({ send_mail_on: result.send_mail_on });
+    this.setState({ emails_enabled: result.emails_enabled });
   };
 
   render() {
@@ -101,7 +101,7 @@ export class RoleRequestModal extends Component<Props, State> {
         {this.state.loading ? (
           <Spin />
         ) : this.props.roleRequestSent ? (
-          this.state.send_mail_on ? (
+          this.state.emails_enabled ? (
             <p>
               Success! You should receive a confirmation email from{' '}
               <strong>go-support@oit.rutgers.edu</strong> for your{' '}

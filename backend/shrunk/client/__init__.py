@@ -38,14 +38,14 @@ class ShrunkClient:
         BANNED_REGEXES: Optional[List[str]] = None,
         REDIRECT_CHECK_TIMEOUT: Optional[float] = 0.5,
         SECURITY_MEASURES_ON: Optional[bool] = False,
-        SEND_MAIL_ON: Optional[bool] = False,
         GOOGLE_SAFE_BROWSING_API: Optional[str] = None,
-        SLACK_INTEGRATION_ON: Optional[bool] = False,
+        SLACK_INTEGRATION_ENABLED: Optional[bool] = False,
         SLACK_BOT_TOKEN: Optional[str] = None,
         SLACK_SHRUNK_CHANNEL_ID: Optional[str] = None,
         TRACKING_PIXEL_UI_ENABLED: Optional[bool] = False,
         LINKHUB_INTEGRATION_ENABLED: Optional[bool] = False,
         ROLE_REQUESTS_ENABLED: Optional[bool] = False,
+        EMAILS_ENABLED: Optional[bool] = False,
         **_kwargs: Any,
     ):
         self.conn = pymongo.MongoClient(
@@ -89,8 +89,8 @@ class ShrunkClient:
         self.role_requests = RoleRequestClient(
             db=self.db,
             ROLE_REQUESTS_ENABLED=ROLE_REQUESTS_ENABLED or False,
-            SEND_MAIL_ON=SEND_MAIL_ON or False,
-            SLACK_INTEGRATION_ON=SLACK_INTEGRATION_ON or False,
+            EMAILS_ENABLED=EMAILS_ENABLED or False,
+            SLACK_INTEGRATION_ENABLED=SLACK_INTEGRATION_ENABLED or False,
             SLACK_BOT_TOKEN=SLACK_BOT_TOKEN or None,
             SLACK_SHRUNK_CHANNEL_ID=SLACK_SHRUNK_CHANNEL_ID or None,
         )

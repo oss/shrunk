@@ -20,15 +20,15 @@ class RoleRequestClient:
         self,
         db: pymongo.database.Database,
         ROLE_REQUESTS_ENABLED: bool,
-        SEND_MAIL_ON: bool,
-        SLACK_INTEGRATION_ON: bool,
+        EMAILS_ENABLED: bool,
+        SLACK_INTEGRATION_ENABLED: bool,
         SLACK_BOT_TOKEN: str,
         SLACK_SHRUNK_CHANNEL_ID: str,
     ):
         self.db = db
         self.role_requests_enabled = ROLE_REQUESTS_ENABLED
-        self.send_mail_on = SEND_MAIL_ON
-        self.slack_integration_on = SLACK_INTEGRATION_ON
+        self.emails_enabled = EMAILS_ENABLED
+        self.slack_integration_enabled = SLACK_INTEGRATION_ENABLED
         self.slack_bot_token = SLACK_BOT_TOKEN
         self.slack_shrunk_channel_id = SLACK_SHRUNK_CHANNEL_ID
 
@@ -196,13 +196,13 @@ class RoleRequestClient:
             recipient_list=recipient_list,
         )
 
-    def get_send_mail_on(self) -> bool:
-        """Get the value of the send_mail_on attribute. This is to adjust the modal message for the user after they submit a role request."""
-        return self.send_mail_on
+    def get_emails_enabled(self) -> bool:
+        """Get the value of the emails_enabled attribute. This is to adjust the modal message for the user after they submit a role request."""
+        return self.emails_enabled
 
-    def get_slack_integration_on(self) -> bool:
-        """Get the value of the slack_integration_on attribute. This is to adjust the modal message for the user after they submit a role request."""
-        return self.slack_integration_on
+    def get_slack_integration_enabled(self) -> bool:
+        """Get the value of the slack_integration_enabled attribute. This is to adjust the modal message for the user after they submit a role request."""
+        return self.slack_integration_enabled
 
     def generate_role_request_component(self, role: str, entity: str) -> Dict[str, Any]:
         """
