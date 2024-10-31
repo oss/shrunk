@@ -522,7 +522,6 @@ export class Shrunk extends React.Component<Props, State> {
                         !this.props.userPrivileges.has('admin') &&
                         !this.props.userPrivileges.has('power_user') && (
                           <RoleRequestForm
-                            userPrivileges={this.props.userPrivileges}
                             netid={this.props.netid}
                             name="power_user"
                           />

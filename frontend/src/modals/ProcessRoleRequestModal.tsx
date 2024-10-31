@@ -60,7 +60,7 @@ interface State {
   comment: string;
 }
 
-export class ProcessRoleRequestModal extends Component<Props, State> {
+export default class ProcessRoleRequestModal extends Component<Props, State> {
   // Create a ref for the form to ensure that the form is reset when the modal is closed
   formRef = React.createRef<FormInstance>();
 
@@ -185,11 +185,20 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
    * Validate the comment input by ensuring that it does not contain newline characters or tabs
    * @method
    */
-  validateSpacing = (_: any, value: string) => {
-    if (!value.includes('\n') && !value.includes('\t')) {
+  validateCommentInput = (_: any, value: string) => {
+    if (!value) {
       return Promise.resolve();
     }
-    return Promise.reject(new Error('Cannot use newline characters or tabs'));
+
+    if (value.includes('\n') || value.includes('\t')) {
+      return Promise.reject(new Error('Cannot use newline characters or tabs'));
+    }
+
+    if (value.length >= 280) {
+      return Promise.reject(new Error(`Comment cannot exceed 280 characters`));
+    }
+
+    return Promise.resolve();
   };
 
   render() {
@@ -233,7 +242,7 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
             name="comment"
             rules={[
               {
-                validator: this.validateSpacing,
+                validator: this.validateCommentInput,
               },
             ]}
           >
@@ -241,6 +250,7 @@ export class ProcessRoleRequestModal extends Component<Props, State> {
               value={this.state.comment}
               onChange={this.handleCommentChange}
               placeholder="Enter a comment (optional)"
+              maxLength={280}
             />
           </Form.Item>
         </Form>

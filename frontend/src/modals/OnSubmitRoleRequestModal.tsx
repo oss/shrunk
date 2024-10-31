@@ -40,10 +40,10 @@ interface Props {
  */
 interface State {
   /**
-   * Whether send_email_on is toggled on
+   * Whether emails_enabled is toggled on
    * @property
    */
-  emails_enabled: boolean;
+  emailsEnabled: boolean;
   /**
    * If the modal is loading or not
    * @property
@@ -51,29 +51,29 @@ interface State {
   loading: boolean;
 }
 
-export class RoleRequestModal extends Component<Props, State> {
+export default class OnSubmitRoleRequestModal extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      emails_enabled: false,
+      emailsEnabled: false,
       loading: false,
     };
   }
 
   async componentDidMount(): Promise<void> {
-    await this.updateSendMailOn();
+    await this.updateEmailsEnabled();
     this.setState({ loading: false });
   }
 
   /**
-   * Fetch the send_email_on value from the server
+   * Fetch the emails_enabled value from the server
    * @method
    */
-  updateSendMailOn = async (): Promise<void> => {
+  updateEmailsEnabled = async (): Promise<void> => {
     const result = await fetch(`/api/v1/role_request/emails_enabled`).then(
       (resp) => resp.json(),
     );
-    this.setState({ emails_enabled: result.emails_enabled });
+    this.setState({ emailsEnabled: result.emails_enabled });
   };
 
   render() {
@@ -101,7 +101,7 @@ export class RoleRequestModal extends Component<Props, State> {
         {this.state.loading ? (
           <Spin />
         ) : this.props.roleRequestSent ? (
-          this.state.emails_enabled ? (
+          this.state.emailsEnabled ? (
             <p>
               Success! You should receive a confirmation email from{' '}
               <strong>go-support@oit.rutgers.edu</strong> for your{' '}
