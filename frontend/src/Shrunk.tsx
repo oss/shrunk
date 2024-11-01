@@ -135,6 +135,12 @@ interface State {
    * @property
    */
   isLinkHubEnabled: boolean;
+
+  /**
+   * Whether role requests are enabled for users. Admins can still access role requests
+   * @property
+   */
+  isRoleRequestsEnabled: boolean;
 }
 
 /**
@@ -166,12 +172,14 @@ export class Shrunk extends React.Component<Props, State> {
       pendingAlerts: [],
       role,
       isLinkHubEnabled: false,
+      isRoleRequestsEnabled: false,
     };
     this.fetchIsLinkHubEnabled();
   }
 
   async componentDidMount(): Promise<void> {
     await this.updatePendingAlerts();
+    await this.fetchRoleRequestsEnabled();
     await this.updatePowerUserRoleRequestMade();
     const history = createBrowserHistory();
     this.setSelectedKeysFromLocation(history.location);
@@ -185,6 +193,20 @@ export class Shrunk extends React.Component<Props, State> {
       .then((resp) => resp.json())
       .then((json) =>
         this.setState({ isLinkHubEnabled: json.status as boolean }),
+      );
+  };
+
+  /**
+   * Fetched whether role requests are enabled and updates state.
+   * @method
+   */
+  fetchRoleRequestsEnabled = async (): Promise<void> => {
+    await fetch('/api/v1/role_request/role_requests_enabled')
+      .then((resp) => resp.json())
+      .then((json) =>
+        this.setState({
+          isRoleRequestsEnabled: json.role_requests_enabled as boolean,
+        }),
       );
   };
 
@@ -296,7 +318,8 @@ export class Shrunk extends React.Component<Props, State> {
                         <NavLink to="/orgs">My Organizations</NavLink>
                       </Menu.Item>
                       {this.state.role === 'Administrator' ||
-                      this.state.role === 'Power User' ? (
+                      this.state.role === 'Power User' ||
+                      !this.state.isRoleRequestsEnabled ? (
                         <></>
                       ) : (
                         <>
@@ -493,17 +516,18 @@ export class Shrunk extends React.Component<Props, State> {
                     render={(props) => <OrgStats id={props.match.params.id} />}
                   />
 
-                  <Route exact path="/request-power-user-role">
-                    {!this.state.powerUserRoleRequestMade &&
-                      !this.props.userPrivileges.has('admin') &&
-                      !this.props.userPrivileges.has('power_user') && (
-                        <RoleRequestForm
-                          userPrivileges={this.props.userPrivileges}
-                          netid={this.props.netid}
-                          name="power_user"
-                        />
-                      )}
-                  </Route>
+                  {this.state.isRoleRequestsEnabled && (
+                    <Route exact path="/request-power-user-role">
+                      {!this.state.powerUserRoleRequestMade &&
+                        !this.props.userPrivileges.has('admin') &&
+                        !this.props.userPrivileges.has('power_user') && (
+                          <RoleRequestForm
+                            netid={this.props.netid}
+                            name="power_user"
+                          />
+                        )}
+                    </Route>
+                  )}
 
                   <Route exact path="/faq">
                     <Faq />

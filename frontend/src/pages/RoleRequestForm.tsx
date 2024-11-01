@@ -5,9 +5,10 @@
 
 import React from 'react';
 import { Row, Col, Button, Input, Form, Spin } from 'antd/lib';
+import { IoReturnUpBack } from 'react-icons/io5';
 import { CheckOutlined } from '@ant-design/icons';
 import base32 from 'hi-base32';
-import { RoleRequestModal } from '../modals/OnSubmitRoleRequestModal';
+import OnSubmitRoleRequestModal from '../modals/OnSubmitRoleRequestModal';
 
 /**
  * Data describing the request text for a role
@@ -44,11 +45,6 @@ export interface RoleRequestText {
  * @interface
  */
 export interface Props {
-  /**
-   * The user's privileges
-   * @property
-   */
-  userPrivileges: Set<string>;
   /**
    * The NetID of the user
    * @property
@@ -205,14 +201,23 @@ export class RoleRequestForm extends React.Component<Props, State> {
   };
 
   /**
-   * Validate the comment input by ensuring that it does not contain newline characters or tabs
+   * Validate the comment input by ensuring that it does not contain certain characters and is not too long
    * @method
    */
   validateCommentInput = (_: any, value: string) => {
-    if (!value || (!value.includes('\n') && !value.includes('\t'))) {
+    if (!value) {
       return Promise.resolve();
     }
-    return Promise.reject(new Error('Cannot use newline characters or tabs'));
+
+    if (value.includes('\n') || value.includes('\t')) {
+      return Promise.reject(new Error('Cannot use newline characters or tabs'));
+    }
+
+    if (value.length >= 280) {
+      return Promise.reject(new Error(`Comment cannot exceed 280 characters`));
+    }
+
+    return Promise.resolve();
   };
 
   render(): React.ReactNode {
@@ -224,6 +229,12 @@ export class RoleRequestForm extends React.Component<Props, State> {
       <div>
         <Row className="primary-row">
           <Col span={24}>
+            <Button
+              type="text"
+              href="/app/#/dash"
+              icon={<IoReturnUpBack />}
+              size="large"
+            />
             <span className="page-title">
               Request{' '}
               {this.state.roleRequestText?.role.replace(/\b\w/g, (c) =>
@@ -271,6 +282,7 @@ export class RoleRequestForm extends React.Component<Props, State> {
                   value={this.state.comment}
                   onChange={this.handleCommentChange}
                   placeholder={this.state.roleRequestText?.placeholder_text}
+                  maxLength={280}
                   disabled={this.state.roleRequestSent}
                 />
               </Form.Item>
@@ -286,7 +298,7 @@ export class RoleRequestForm extends React.Component<Props, State> {
             </Form>
           </>
         )}
-        <RoleRequestModal
+        <OnSubmitRoleRequestModal
           visible={this.state.visible}
           roleRequestSent={this.state.roleRequestSent}
           roleName={this.state.roleRequestText?.role}

@@ -7,7 +7,7 @@ import { Row, Col, Button, FloatButton, Spin } from 'antd/lib';
 import dayjs from 'dayjs';
 import { IoReturnUpBack } from 'react-icons/io5';
 import base32 from 'hi-base32';
-import { ProcessRoleRequestModal } from '../../modals/ProcessRoleRequestModal';
+import ProcessRoleRequestModal from '../../modals/ProcessRoleRequestModal';
 
 /**
  * Data describing the request text for a role
@@ -269,32 +269,39 @@ export class PendingRoleRequests extends Component<Props, State> {
    * @method
    */
   updateEntityPositionInfo = async (entity: string): Promise<any> => {
-    const response = await fetch(`/api/v1/position/${base32.encode(entity)}`);
-    if (!response.ok) {
-      console.error(`Server responded with status ${response.status}`);
-      return;
-    }
-    const intermediate_result = await response.json();
-    const attributes = ['title', 'rutgersEduStaffDepartment', 'employeeType'];
-    const result: any = {};
+    // Default values
+    const result = {
+      title: ['Failed to query title'],
+      rutgersEduStaffDepartment: ['Failed to query department'],
+      employeeType: ['Failed to query employee type'],
+    };
 
-    if (
-      !intermediate_result ||
-      intermediate_result.error ||
-      !intermediate_result[attributes[0]]
-    ) {
-      attributes.forEach((attribute) => {
-        result[attribute] = ['Cannot find attribute'];
+    try {
+      const response = await fetch(`/api/v1/position/${base32.encode(entity)}`);
+      if (!response.ok) {
+        console.error(`Server responded with status ${response.status}`);
+        // Return the default values (failed to query)
+        return result;
+      }
+      const intermediateResult = await response.json();
+      if (!intermediateResult || Object.keys(intermediateResult).length === 0) {
+        // Return the default values (empty response)
+        return result;
+      }
+      (Object.keys(result) as (keyof typeof result)[]).forEach((key) => {
+        if (intermediateResult[key]) {
+          // Key exists in the response
+          result[key] = intermediateResult[key];
+        } else {
+          // Key does not exist in the response
+          result[key] = ['Field not found'];
+        }
       });
       return result;
+    } catch (error) {
+      console.error('Error:', error);
+      return result;
     }
-    attributes.forEach((attribute) => {
-      result[attribute] = intermediate_result[attribute]
-        ? intermediate_result[attribute]
-        : ['N/A'];
-    });
-
-    return result;
   };
 
   /**
