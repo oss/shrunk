@@ -10,6 +10,7 @@ from flask_mailman import Mail
 from bson import ObjectId
 import bson
 from werkzeug.exceptions import abort
+from PIL import Image
 
 from shrunk.client import ShrunkClient
 from shrunk.client.exceptions import (
@@ -978,6 +979,7 @@ def generate_qrcode(netid: str, client: ShrunkClient):
     """
     
     text = request.args.get('text', default='', type=str)
+    length = request.args.get('length', default=300, type=int)
     width = request.args.get('width', default=300, type=int)
 
     # Generate the QR code using segno
@@ -987,7 +989,15 @@ def generate_qrcode(netid: str, client: ShrunkClient):
     img_io = BytesIO()
     
     # Save the QR code to the BytesIO stream as PNG
-    qr.save(img_io, kind='png', scale=width/33)
+    qr.save(img_io, kind='png', scale=10)
     img_io.seek(0)
 
-    return send_file(img_io, mimetype='image/png')
+    img = Image.open(img_io)
+    resized_img = img.resize((length,width), Image.NEAREST)
+
+    resized_img_io = BytesIO()
+    resized_img.save(resized_img_io, format='PNG')
+    resized_img_io.seek(0)
+
+
+    return send_file(resized_img_io, mimetype='image/png')

@@ -49,6 +49,7 @@ six = "^1.16.0"
 requests = "2.17.3"                        # Do not change this version, you will have build issues if you do.
 backports_datetime_fromisoformat = "1.0.0" # Do not change this version, you will have build issues if you do.
 segno = "^1.6.1"
+pillow = "8.4.0"
 
 [build-system]
 requires = ["poetry-core"]
