@@ -36,6 +36,8 @@ If you want a more detailed set of instructions on how to build without Docker, 
 
 ## Contributing
 
+### Formatting
+
 We use [pytest](https://pytest.org) for our unit tests framework, you can run this command inside the backend directory to check if you've made regressive changes.
 
 ```
@@ -53,3 +55,11 @@ We also use [Prettier](https://prettier.io/) for our frontend's formatting, you 
 ```
 prettier --write .
 ```
+
+### Adding dependencies to backend
+
+Make sure you're
+ - using Python 3.6.x
+ - inside a virtual environment
+ - run `pip install poetry`
+ - run `poetry cache clear --all pypi` if you're having problems with poetry

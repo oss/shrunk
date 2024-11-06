@@ -3,7 +3,9 @@
 from datetime import datetime
 from typing import Any, Optional, Dict
 
-from flask import Blueprint, jsonify, request
+import segno
+from io import BytesIO
+from flask import Blueprint, jsonify, request, send_file
 from flask_mailman import Mail
 from bson import ObjectId
 import bson
@@ -965,3 +967,27 @@ def tracking_pixel_ui_enabled(netid: str, client: ShrunkClient) -> Any:
     is_enabled = client.links.get_tracking_pixel_ui_status()
 
     return jsonify({"enabled": is_enabled})
+
+@bp.route('/qrcode')
+@require_login
+def generate_qrcode(netid: str, client: ShrunkClient):
+    """
+    ``GET /api/v1/link/qrcode``
+
+    Check if the tracking pixel UI is enabled.
+    """
+    
+    text = request.args.get('text', default='', type=str)
+    width = request.args.get('width', default=300, type=int)
+
+    # Generate the QR code using segno
+    qr = segno.make(text)
+    
+    # Create a BytesIO stream for the image
+    img_io = BytesIO()
+    
+    # Save the QR code to the BytesIO stream as PNG
+    qr.save(img_io, kind='png', scale=width/33)
+    img_io.seek(0)
+
+    return send_file(img_io, mimetype='image/png')
