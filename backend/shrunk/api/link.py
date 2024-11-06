@@ -979,8 +979,8 @@ def generate_qrcode(netid: str, client: ShrunkClient):
     """
     
     text = request.args.get('text', default='', type=str)
-    length = request.args.get('length', default=300, type=int)
     width = request.args.get('width', default=300, type=int)
+    height = request.args.get('height', default=300, type=int)
 
     # Generate the QR code using segno
     qr = segno.make(text)
@@ -993,7 +993,7 @@ def generate_qrcode(netid: str, client: ShrunkClient):
     img_io.seek(0)
 
     img = Image.open(img_io)
-    resized_img = img.resize((length,width), Image.NEAREST)
+    resized_img = img.resize((width, height), Image.NEAREST)
 
     resized_img_io = BytesIO()
     resized_img.save(resized_img_io, format='PNG')
