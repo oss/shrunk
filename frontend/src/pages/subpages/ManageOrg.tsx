@@ -32,7 +32,7 @@ import {
 } from '@ant-design/icons';
 import { IoReturnUpBack } from 'react-icons/io5';
 import { Link, RouteComponentProps, withRouter } from 'react-router-dom';
-import moment from 'moment';
+import dayjs from 'dayjs';
 
 import { MemberInfo, OrgInfo, getOrgInfo } from '../../api/Org';
 import { OrgAdminTag } from './OrgCommon';
@@ -162,7 +162,7 @@ const MemberRow: React.FC<{
           <></>
         )}
         <span>
-          Added: {moment(props.memberInfo.timeCreated).format('MMM D, YYYY')}
+          Added: {dayjs(props.memberInfo.timeCreated).format('MMM D, YYYY')}
         </span>
       </Col>
 

@@ -55,14 +55,6 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
-name = "colorama"
-version = "0.4.5"
-description = "Cross-platform colored terminal text."
-category = "main"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
-
-[[package]]
 name = "flask"
 version = "1.1.2"
 description = "A simple framework for building complex web applications."
@@ -267,24 +259,6 @@ pyasn1 = ">=0.3.7"
 pyasn1_modules = ">=0.1.5"
 
 [[package]]
-name = "qrcode"
-version = "7.3.1"
-description = "QR Code image generator"
-category = "main"
-optional = false
-python-versions = ">=3.6"
-
-[package.dependencies]
-colorama = {version = "*", markers = "platform_system == \"Windows\""}
-
-[package.extras]
-all = ["pillow", "pytest", "pytest", "pytest-cov", "tox", "zest.releaser"]
-dev = ["pytest", "tox"]
-maintainer = ["zest.releaser"]
-pil = ["pillow"]
-test = ["pytest", "pytest-cov"]
-
-[[package]]
 name = "requests"
 version = "2.17.3"
 description = "Python HTTP for Humans."
@@ -301,6 +275,17 @@ urllib3 = ">=1.21.1,<1.22"
 [package.extras]
 security = ["cryptography (>=1.3.4)", "idna (>=2.0.0)", "pyOpenSSL (>=0.14)"]
 socks = ["PySocks (>=1.5.6,!=1.5.7)", "win-inet-pton"]
+
+[[package]]
+name = "segno"
+version = "1.6.1"
+description = "QR Code and Micro QR Code generator for Python"
+category = "main"
+optional = false
+python-versions = ">=3.5"
+
+[package.dependencies]
+importlib-metadata = {version = ">=3.6.0", markers = "python_version < \"3.10\""}
 
 [[package]]
 name = "six"
@@ -368,7 +353,7 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=4.6)", "pytest-black (
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "9fd667ba5366cf890a59ba090a1262bb8f168c80a7fbe2f4a9eeb34c84f89ee9"
+content-hash = "ada5547b27b0605a0ffe70de60ad88458bd1c2be2c86d22c18c91cfa1791015d"
 
 [metadata.files]
 attrs = [
@@ -393,10 +378,6 @@ chardet = [
 click = [
     {file = "Click-7.0-py2.py3-none-any.whl", hash = "sha256:2335065e6395b9e67ca716de5f7526736bfa6ceead690adf616d925bdc622b13"},
     {file = "Click-7.0.tar.gz", hash = "sha256:5b94b49521f6456670fdb30cd82a4eca9412788a93fa6dd6df72c94d5a8ff2d7"},
-]
-colorama = [
-    {file = "colorama-0.4.5-py2.py3-none-any.whl", hash = "sha256:854bf444933e37f5824ae7bfc1e98d5bce2ebe4160d46b5edf346a89358e99da"},
-    {file = "colorama-0.4.5.tar.gz", hash = "sha256:e6c6b4334fc50988a639d9b98aa429a0b57da6e17b9a44f0451f930b6967b7a4"},
 ]
 flask = [
     {file = "Flask-1.1.2-py2.py3-none-any.whl", hash = "sha256:8a4fdd8936eba2512e9c85df320a37e694c93945b33ef33c89946a340a238557"},
@@ -583,12 +564,13 @@ pyrsistent = [
 python-ldap = [
     {file = "python-ldap-3.4.4.tar.gz", hash = "sha256:7edb0accec4e037797705f3a05cbf36a9fde50d08c8f67f2aef99a2628fab828"},
 ]
-qrcode = [
-    {file = "qrcode-7.3.1.tar.gz", hash = "sha256:375a6ff240ca9bd41adc070428b5dfc1dcfbb0f2507f1ac848f6cded38956578"},
-]
 requests = [
     {file = "requests-2.17.3-py2.py3-none-any.whl", hash = "sha256:baf701b4a9d4cbe40169e8ab77816f7abadbad502ba459c30f7a2bc138e4d612"},
     {file = "requests-2.17.3.tar.gz", hash = "sha256:8d29f97ed1541709b57caddb77bb20592411d7ca10ec4f03275f49ee8456e225"},
+]
+segno = [
+    {file = "segno-1.6.1-py3-none-any.whl", hash = "sha256:e90c6ff82c633f757a96d4b1fb06cc932589b5237f33be653f52252544ac64df"},
+    {file = "segno-1.6.1.tar.gz", hash = "sha256:f23da78b059251c36e210d0cf5bfb1a9ec1604ae6e9f3d42f9a7c16d306d847e"},
 ]
 six = [
     {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},

@@ -129,7 +129,7 @@ export const EditLinkModal: React.FC<Props> = (props) => {
     expiration_time:
       props.linkInfo.expiration_time === null
         ? null
-        : moment(props.linkInfo.expiration_time),
+        : dayjs(props.linkInfo.expiration_time),
     aliases: props.linkInfo.aliases.filter((alias) => !alias.deleted),
   };
   const mayEditOwner =
