@@ -979,8 +979,8 @@ def generate_qrcode():
     """
     allowed_patterns = [r"^https?:\/\/([0-9a-z]+\.)?rutgers\.edu(?:\/.*)?$", r"^https?:\/\/([0-9a-z]+\.)?scarletknights\.com(?:\/.*)?$"]
     text = request.args.get('text', default='', type=str)
-    length = request.args.get('length', default=300, type=int)
     width = request.args.get('width', default=300, type=int)
+    height = request.args.get('height', default=300, type=int)
     
     if not any(re.match(pattern, text) for pattern in allowed_patterns):
         abort(403)
@@ -996,7 +996,7 @@ def generate_qrcode():
     img_io.seek(0)
 
     img = Image.open(img_io)
-    resized_img = img.resize((length,width), Image.NEAREST)
+    resized_img = img.resize((width, height), Image.NEAREST)
 
     resized_img_io = BytesIO()
     resized_img.save(resized_img_io, format='PNG')
