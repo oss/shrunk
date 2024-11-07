@@ -5,7 +5,7 @@ from typing import Any, Optional, Dict
 
 import segno
 from io import BytesIO
-from flask import Blueprint, jsonify, request, send_file
+from flask import Blueprint, jsonify, request, Response
 from flask_mailman import Mail
 from bson import ObjectId
 import bson
@@ -998,6 +998,5 @@ def generate_qrcode(netid: str, client: ShrunkClient):
     resized_img_io = BytesIO()
     resized_img.save(resized_img_io, format='PNG')
     resized_img_io.seek(0)
-
-
-    return send_file(resized_img_io, mimetype='image/png')
+    
+    return Response(resized_img_io.getvalue(), mimetype="image/png", direct_passthrough=True)
