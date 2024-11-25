@@ -3,6 +3,7 @@
 from datetime import datetime
 from typing import Any, Optional, Dict
 
+import re
 import segno
 from io import BytesIO
 from flask import Blueprint, jsonify, request, send_file
@@ -969,18 +970,20 @@ def tracking_pixel_ui_enabled(netid: str, client: ShrunkClient) -> Any:
 
     return jsonify({"enabled": is_enabled})
 
-@bp.route('/qrcode')
-@require_login
-def generate_qrcode(netid: str, client: ShrunkClient):
+@bp.route('/qrcode', methods=["GET"])
+def generate_qrcode():
     """
     ``GET /api/v1/link/qrcode``
 
     Check if the tracking pixel UI is enabled.
     """
-    
+    allowed_patterns = [r"^https?:\/\/([0-9a-z]+\.)?rutgers\.edu(?:\/.*)?$", r"^https?:\/\/([0-9a-z]+\.)?scarletknights\.com(?:\/.*)?$"]
     text = request.args.get('text', default='', type=str)
     length = request.args.get('length', default=300, type=int)
     width = request.args.get('width', default=300, type=int)
+    
+    if not any(re.match(pattern, text) for pattern in allowed_patterns):
+        abort(403)
 
     # Generate the QR code using segno
     qr = segno.make(text)
