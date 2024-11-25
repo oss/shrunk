@@ -981,7 +981,7 @@ def generate_qrcode():
     text = request.args.get('text', default='', type=str)
     width = request.args.get('width', default=300, type=int)
     height = request.args.get('height', default=300, type=int)
-    
+
     if not any(re.match(pattern, text) for pattern in allowed_patterns):
         abort(403)
 
