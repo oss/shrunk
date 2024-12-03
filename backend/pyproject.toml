@@ -8,9 +8,7 @@ authors = ["Rutgers Open System Solutions <oss@oit.rutgers.edu>"]
 license = "MIT"
 maintainers = ["Andrew Hong <ah1371@oit.rutgers.edu>"]
 classifiers = [
-    "Private :: Do Not Upload",
     "Development Status :: 5 - Production/Stable",
-    "Operating System :: CentOS :: CentOS 8",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.6",
