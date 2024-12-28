@@ -15,3 +15,17 @@ export function doDownload(filename: string, csvString: string): void {
   dlLink.click();
   document.body.removeChild(dlLink); // Clean up the DOM
 }
+
+export function daysBetween(date: Date): number {
+  const today: Date = new Date(); // Get today's date
+
+  // Calculate the difference in time (milliseconds)
+  const differenceInTime: number = date.getTime() - today.getTime();
+
+  // Convert time difference from milliseconds to days
+  const differenceInDays: number = Math.ceil(
+    differenceInTime / (1000 * 60 * 60 * 24),
+  );
+
+  return Math.abs(differenceInDays);
+}
