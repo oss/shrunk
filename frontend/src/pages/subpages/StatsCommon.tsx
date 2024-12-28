@@ -74,6 +74,7 @@ const VisitsMap: React.FC<{
 }> = (props) => {
   const options = {
     chart: { map: props.map },
+    credits: { enabled: false },
     title: { text: props.title },
     subtitle: { text: '(Logarithmic scale)' },
     mapNavidation: { enabled: true },

@@ -15,12 +15,16 @@ import {
   Tabs,
   Typography,
   Card,
+  Statistic,
+  Descriptions,
+  Table,
 } from 'antd/lib';
 import {
   ExclamationCircleFilled,
   ClearOutlined,
   CloudDownloadOutlined,
   LoadingOutlined,
+  GlobalOutlined,
 } from '@ant-design/icons';
 import { IoReturnUpBack } from 'react-icons/io5';
 import Highcharts from 'highcharts';
@@ -32,7 +36,8 @@ import { GeoipStats, MENU_ITEMS, GeoipChart } from './StatsCommon';
 import { downloadVisitsCsv } from '../../components/Csv';
 
 import '../../Base.css';
-import './Stats.css';
+import Meta from 'antd/lib/card/Meta';
+import { daysBetween } from '../../lib/utils';
 
 /**
  * Props for the [[Stats]] component
@@ -201,6 +206,11 @@ interface State {
    * @property
    */
   loading: boolean;
+
+  /**
+   * Used for the stats card
+   */
+  statsKey: string;
 }
 
 /**
@@ -234,12 +244,18 @@ const VisitsChart: React.FC<{ visitStats: VisitStats | null }> = (props) => {
 
   const options = {
     chart: { type: 'spline', zoomType: 'x' },
+    credits: { enabled: false },
     plotOptions: { spline: { marker: { enabled: true } } },
     exporting: { buttons: { contextButton: { menuItems: MENU_ITEMS } } },
-    title: { text: 'Visits' },
-    subtitle: { text: 'Click and drag to zoom in' },
-    xAxis: { title: { text: 'Date' }, type: 'datetime' },
-    yAxis: { title: { text: 'Visits' }, min: 0 },
+    title: { text: '' },
+    xAxis: {
+      title: { text: '' },
+      type: 'datetime',
+      dateTimeLabelFormats: {
+        day: '%b %e', // Format as "Dec 4"
+      },
+    },
+    yAxis: { title: { text: '' }, min: 0 },
     series: [
       {
         name: 'Unique visits',
@@ -308,6 +324,7 @@ const PieChart: React.FC<{ title: string; data: PieDatum[] }> = (props) => {
       plotShadow: false,
       type: 'pie',
     },
+    credits: { enabled: false },
     exporting: { buttons: { contextButton: { menuItems: MENU_ITEMS } } },
     title: { text: props.title },
     tooltip: { pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>' },
@@ -387,6 +404,7 @@ export class Stats extends React.Component<Props, State> {
       browserStats: null,
       mayEdit: null,
       loading: false,
+      statsKey: 'visits',
     };
   }
 
@@ -496,169 +514,206 @@ export class Stats extends React.Component<Props, State> {
     await this.updateStats();
   };
 
+  averageClicks = (): number => {
+    if (this.state.overallStats === null || this.state.linkInfo === null) {
+      return 0;
+    }
+
+    return (
+      this.state.overallStats.total_visits /
+      (daysBetween(new Date(this.state.linkInfo.created_time)) + 1)
+    );
+  };
+
   render(): React.ReactNode {
+    const statTabsKeys = [
+      { key: 'visits', tab: 'Visits' },
+      { key: 'geoip', tab: 'Location' },
+      { key: 'browser', tab: 'Browser' },
+      { key: 'alias', tab: 'Alias' },
+    ];
+
+    const statTabs: Record<string, React.ReactNode> = {
+      visits: <VisitsChart visitStats={this.state.visitStats} />,
+      geoip: <GeoipChart geoipStats={this.state.geoipStats} />,
+      browser: (
+        <Row>
+          <BrowserCharts browserStats={this.state.browserStats} />
+        </Row>
+      ),
+      alias: (
+        <Table
+          size="small"
+          dataSource={this.state.allAliases.map((alias) => ({
+            alias: alias.alias,
+            description: alias.description,
+          }))}
+          columns={[
+            {
+              title: 'Alias',
+              dataIndex: 'alias',
+              key: 'alias',
+            },
+            {
+              title: 'Description',
+              dataIndex: 'description',
+              key: 'description',
+            },
+          ]}
+          pagination={{ pageSize: 5 }}
+        />
+      ),
+    };
+
     return (
       <>
-        <Row className="primary-row" justify="space-between">
+        <Row justify="space-between">
           <Col span={16}>
-            <Button
-              type="text"
-              href="/app/#/dash"
-              icon={<IoReturnUpBack />}
-              size="large"
-            />
-            <span className="page-title">
-              Stats for <em>{this.state.linkInfo?.title}</em>
-            </span>
+            <Row>
+              <Typography.Title>{this.state.linkInfo?.title}</Typography.Title>
+            </Row>
           </Col>
 
-          {this.state.allAliases.length === 1 ? (
+          <Col>
+            <Space>
+              <Button
+                icon={
+                  this.state.loading ? (
+                    <LoadingOutlined spin />
+                  ) : (
+                    <CloudDownloadOutlined />
+                  )
+                }
+                onClick={this.downloadCsv}
+              >
+                Export
+              </Button>
+              {this.state.mayEdit ? (
+                <></>
+              ) : (
+                <>
+                  <Popconfirm
+                    placement="bottom"
+                    title="Are you sure you want to clear all visit data associated with this link? This operation cannot be undone."
+                    onConfirm={this.clearVisitData}
+                    icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
+                  >
+                    <Button danger icon={<ClearOutlined />}>
+                      Purge
+                    </Button>
+                  </Popconfirm>
+                </>
+              )}
+            </Space>
+          </Col>
+        </Row>
+
+        <Row justify="space-around" gutter={[16, 16]}>
+          {this.state.overallStats === null || this.state.linkInfo === null ? (
             <></>
           ) : (
-            <Col span={4} className="btn-col">
-              <Select onSelect={this.setAlias} defaultValue={0}>
-                <Select.Option value={0}>
-                  <b>All aliases</b>
-                </Select.Option>
-
-                {this.state.allAliases.map((alias) => (
-                  <Select.Option key={alias.alias} value={alias.alias}>
-                    {alias.alias}&nbsp;
-                    {alias.description ? <em>({alias.description})</em> : <></>}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Col>
-          )}
-        </Row>
-        <div className="card-container">
-          <Tabs type="card">
-            <Tabs.TabPane tab="Link Info" key="1">
-              <Row className="details-row">
-                {this.state.linkInfo === null ? (
-                  <></>
-                ) : (
-                  <Col>
-                    <Typography.Title level={3}>Details</Typography.Title>
-                    <InfoBox
-                      infoLabel="Link Title"
-                      data={this.state.linkInfo.title}
-                    />
-                    <InfoBox
-                      infoLabel="Owner"
-                      data={this.state.linkInfo.owner}
-                    />
-                    <InfoBox
-                      infoLabel="Date Created"
-                      data={dayjs(this.state.linkInfo.created_time).format(
-                        'MMM D, YYYY',
-                      )}
-                    />
-                    <InfoBox
-                      infoLabel="Long URL"
-                      data={this.state.linkInfo.long_url}
-                    />
-                    {this.state.selectedAlias === null ? (
-                      <Card className="info-box">
-                        <div className="detail">
-                          <Typography.Text style={{ color: '#686b69' }}>
-                            Aliases
-                          </Typography.Text>
-                          <Typography.Text className="data-text">
-                            {this.state.linkInfo.aliases.map((alias) => (
-                              <p>{alias.alias}</p>
-                            ))}
-                          </Typography.Text>
-                        </div>
-                      </Card>
-                    ) : (
-                      <InfoBox
-                        infoLabel="Alias"
-                        data={this.state.selectedAlias}
-                      />
+            <>
+              <Col span={6}>
+                <Card>
+                  <Statistic
+                    title="Total Clicks"
+                    value={this.state.overallStats.total_visits}
+                  />
+                </Card>
+              </Col>
+              <Col span={6}>
+                <Card>
+                  <Statistic
+                    title="Unique Clicks"
+                    value={this.state.overallStats.unique_visits}
+                  />
+                </Card>
+              </Col>
+              <Col span={6}>
+                <Card>
+                  <Statistic
+                    title="Avg. Clicks/Day"
+                    value={this.averageClicks()}
+                    precision={2}
+                  />
+                </Card>
+              </Col>
+              <Col span={6}>
+                <Card>
+                  <Statistic
+                    title="Date Created"
+                    value={dayjs(this.state.linkInfo.created_time).format(
+                      'MMM D, YYYY',
                     )}
-                  </Col>
-                )}
-                {this.state.overallStats === null ? (
-                  <></>
-                ) : (
-                  <Col>
-                    <Typography.Title level={3}>Visits</Typography.Title>
-                    <InfoBox
-                      infoLabel="Total visits"
-                      data={this.state.overallStats.total_visits.toString()}
-                    />
-                    <InfoBox
-                      infoLabel="Unique visits"
-                      data={this.state.overallStats.unique_visits.toString()}
-                    />
-                    <Space
-                      style={{ position: 'relative', marginTop: '20px' }}
-                      align="center"
-                      wrap
+                  />
+                </Card>
+              </Col>
+            </>
+          )}
+          <Col span={12}>
+            <Card>
+              <Descriptions
+                title="Details"
+                column={1}
+                colon={false}
+                extra={
+                  this.state.allAliases.length === 1 ? (
+                    <></>
+                  ) : (
+                    <Select
+                      onSelect={this.setAlias}
+                      defaultValue={0}
+                      popupMatchSelectWidth={false}
                     >
-                      <Button
-                        icon={
-                          this.state.loading ? (
-                            <LoadingOutlined spin />
+                      <Select.Option value={0}>
+                        <GlobalOutlined /> All Aliases
+                      </Select.Option>
+
+                      {this.state.allAliases.map((alias) => (
+                        <Select.Option key={alias.alias} value={alias.alias}>
+                          {alias.alias}&nbsp;
+                          {alias.description ? (
+                            <em>({alias.description})</em>
                           ) : (
-                            <CloudDownloadOutlined />
-                          )
-                        }
-                        onClick={this.downloadCsv}
-                      >
-                        Download visits as CSV
-                      </Button>
-                      {this.state.mayEdit ? (
-                        <></>
-                      ) : (
-                        <Col span={4} className="btn-col">
-                          <Popconfirm
-                            placement="bottom"
-                            title="Are you sure you want to clear all visit data associated with this link? This operation cannot be undone."
-                            onConfirm={this.clearVisitData}
-                            icon={
-                              <ExclamationCircleFilled
-                                style={{ color: 'red' }}
-                              />
-                            }
-                          >
-                            <Button danger>
-                              <ClearOutlined /> Clear all visit data
-                            </Button>
-                          </Popconfirm>
-                        </Col>
-                      )}
-                    </Space>
-                  </Col>
-                )}
-              </Row>
-            </Tabs.TabPane>
-            <Tabs.TabPane tab="Visit Statistics" key="2">
-              <Row className="primary-row">
-                <Col span={24}>
-                  <Card className="card">
-                    <VisitsChart visitStats={this.state.visitStats} />
-                  </Card>
-                </Col>
-              </Row>
-            </Tabs.TabPane>
-            <Tabs.TabPane tab="Location Statistics" key="3">
-              <Row className="primary-row">
-                <Col span={24}>
-                  <Card className="card">
-                    <GeoipChart geoipStats={this.state.geoipStats} />
-                  </Card>
-                </Col>
-              </Row>
-            </Tabs.TabPane>
-            <Tabs.TabPane tab="Browser Statistics" key="4">
-              <Row className="primary-row">
-                <BrowserCharts browserStats={this.state.browserStats} />
-              </Row>
-            </Tabs.TabPane>
-          </Tabs>
-        </div>
+                            <></>
+                          )}
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  )
+                }
+              >
+                <Descriptions.Item label="Owner">
+                  {this.state.linkInfo?.owner}
+                </Descriptions.Item>
+                <Descriptions.Item label="Long URL">
+                  {this.state.linkInfo?.long_url}
+                </Descriptions.Item>
+                <Descriptions.Item label="Date Created">
+                  {dayjs(this.state.linkInfo?.created_time).format(
+                    'MMM D, YYYY',
+                  )}
+                </Descriptions.Item>
+                <Descriptions.Item label="Date Expires">
+                  {this.state.linkInfo?.expiration_time
+                    ? dayjs(this.state.linkInfo?.expiration_time).format(
+                        'MMM D, YYYY',
+                      )
+                    : 'N/A'}
+                </Descriptions.Item>
+              </Descriptions>
+            </Card>
+          </Col>
+          <Col span={12}>
+            <Card
+              tabList={statTabsKeys}
+              activeTabKey={this.state.statsKey}
+              onTabChange={(newKey) => this.setState({ statsKey: newKey })}
+            >
+              {statTabs[this.state.statsKey]}
+            </Card>
+          </Col>
+        </Row>
       </>
     );
   }
