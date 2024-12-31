@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Row,
   Space,
@@ -147,72 +147,6 @@ interface BrowserStats {
    * @property
    */
   referers: PieDatum[];
-}
-
-/**
- * State for the [[Stats]] component
- * @interface
- */
-interface State {
-  /**
-   * List of all aliases for the current link
-   * @property
-   */
-  linkInfo: LinkInfo | null;
-
-  /**
-   * List of all aliases for the current link
-   * @property
-   */
-  allAliases: AliasInfo[];
-
-  /**
-   * The alias for which stats should be displayed, or `null` to display
-   * aggregate stats for all aliases
-   * @property
-   */
-  selectedAlias: string | null;
-
-  /**
-   * The [[OverallStats]] for the current link/alias
-   * @property
-   */
-  overallStats: OverallStats | null;
-
-  /**
-   * The [[VisitStats]] for the current link/alias
-   * @property
-   */
-  visitStats: VisitStats | null;
-
-  /**
-   * The [[GeoipStats]] for the current link/alias
-   * @property
-   */
-  geoipStats: GeoipStats | null;
-
-  /**
-   * The [[BrowserStats]] for the current link/property
-   * @property
-   */
-  browserStats: BrowserStats | null;
-
-  /**
-   * Whether the user may edit the link
-   * @property
-   */
-  mayEdit: boolean | null;
-
-  /**
-   * Loading state for download button
-   * @property
-   */
-  loading: boolean;
-
-  /**
-   * Used for the stats card
-   */
-  statsKey: string;
 }
 
 /**
@@ -378,345 +312,327 @@ const BrowserCharts: React.FC<{ browserStats: BrowserStats | null }> = (
  * and referer stats
  * @class
  */
-export class Stats extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      linkInfo: null,
-      allAliases: [],
-      selectedAlias: null,
-      overallStats: null,
-      visitStats: null,
-      geoipStats: null,
-      browserStats: null,
-      mayEdit: null,
-      loading: false,
-      statsKey: 'visits',
-    };
-  }
 
-  async componentDidMount(): Promise<void> {
-    await this.updateLinkInfo();
-    await this.updateStats();
-  }
+export function Stats(props: Props) {
+  const [linkInfo, setLinkInfo] = useState<LinkInfo | null>(null);
+  const [allAliases, setAllAliases] = useState<AliasInfo[]>([]);
+  const [selectedAlias, setSelectedAlias] = useState<string | null>(null);
+  const [overallStats, setOverallStats] = useState<OverallStats | null>(null);
+  const [visitStats, setVisitStats] = useState<VisitStats | null>(null);
+  const [geoipStats, setGeoipStats] = useState<GeoipStats | null>(null);
+  const [browserStats, setBrowserStats] = useState<BrowserStats | null>(null);
+  const [mayEdit, setMayEdit] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [statsKey, setStatsKey] = useState<string>('visits');
 
-  async componentDidUpdate(prevProps: Props, prevState: State): Promise<void> {
-    if (this.props !== prevProps) {
-      await this.updateLinkInfo();
-    }
+  async function updateLinkInfo() {
+    const _linkInfo = await fetch(`/api/v1/link/${props.id}`).then((resp) =>
+      resp.json(),
+    );
 
-    if (
-      this.props !== prevProps ||
-      this.state.selectedAlias !== prevState.selectedAlias
-    ) {
-      await this.updateStats();
-    }
-  }
+    const aliases = _linkInfo.aliases.filter((alias) => !alias.deleted);
 
-  /**
-   * Execute API requests to get link info for the current link ID, then update state
-   * @method
-   */
-  updateLinkInfo = async (): Promise<void> => {
-    const linkInfo = (await fetch(`/api/v1/link/${this.props.id}`).then(
-      (resp) => resp.json(),
-    )) as LinkInfo;
-    const aliases = linkInfo.aliases.filter((alias) => !alias.deleted);
     if (aliases.length === 0) {
-      throw new Error(`link ${this.props.id} has no aliases!`);
+      throw new Error(`link ${props.id} has no aliases!`);
     }
 
-    this.setState({
-      linkInfo,
-      allAliases: aliases,
-      selectedAlias: null,
-      mayEdit: linkInfo.may_edit,
-    });
-  };
+    setLinkInfo(_linkInfo);
+    setAllAliases(aliases);
+    setSelectedAlias(null);
+    setMayEdit(_linkInfo.may_edit);
+  }
 
-  /**
-   * Execute API requests to fetch all stats for the current link and alias, then update
-   * state
-   * @method
-   */
-  updateStats = async (): Promise<void> => {
+  async function updateStats() {
     const baseApiPath =
-      this.state.selectedAlias === null
-        ? `/api/v1/link/${this.props.id}/stats`
-        : `/api/v1/link/${this.props.id}/alias/${this.state.selectedAlias}/stats`;
+      selectedAlias === null
+        ? `/api/v1/link/${props.id}/stats`
+        : `/api/v1/link/${props.id}/alias/${selectedAlias}/stats`;
 
     const overallPromise = fetch(baseApiPath)
       .then((resp) => resp.json())
-      .then((json) => this.setState({ overallStats: json as OverallStats }));
+      .then((json) => {
+        setOverallStats(json as OverallStats);
+      });
+
     const visitsPromise = fetch(`${baseApiPath}/visits`)
       .then((resp) => resp.json())
-      .then((json) => this.setState({ visitStats: json as VisitStats }));
+      .then((json) => {
+        setVisitStats(json as VisitStats);
+      });
+
     const geoipPromise = fetch(`${baseApiPath}/geoip`)
       .then((resp) => resp.json())
-      .then((json) => this.setState({ geoipStats: json as GeoipStats }));
+      .then((json) => {
+        setGeoipStats(json as GeoipStats);
+      });
+
     const browsersPromise = fetch(`${baseApiPath}/browser`)
       .then((resp) => resp.json())
-      .then((json) => this.setState({ browserStats: json as BrowserStats }));
+      .then((json) => {
+        setBrowserStats(json as BrowserStats);
+      });
+
     await Promise.all([
       overallPromise,
       visitsPromise,
       geoipPromise,
       browsersPromise,
     ]);
-  };
+  }
+
+  useEffect(() => {
+    const fetchData = async () => {
+      await updateLinkInfo();
+      await updateStats();
+    };
+
+    fetchData();
+  }, [props.id]);
 
   /**
    * Set the alias and then update stats
    * @method
    * @param alias The name of an alias, or a number to select all aliases (stupid hack why did I even do that?)
    */
-  setAlias = async (alias: number | string): Promise<void> => {
+  const setAlias = async (alias: number | string): Promise<void> => {
     if (typeof alias === 'number') {
-      this.setState({ selectedAlias: null });
+      setSelectedAlias(null);
     } else {
-      this.setState({ selectedAlias: alias });
+      setSelectedAlias(alias);
     }
 
-    await this.updateStats();
+    await updateStats();
   };
 
   /**
    * Prompt the user to download a CSV file of visits to the selected alias
    * @method
    */
-  downloadCsv = async (): Promise<void> => {
-    this.setState({ loading: true });
-    await downloadVisitsCsv(this.props.id, this.state.selectedAlias);
-    this.setState({ loading: false });
+  const downloadCsv = async (): Promise<void> => {
+    setLoading(true);
+    await downloadVisitsCsv(props.id, selectedAlias);
+    setLoading(false);
   };
 
   /**
    * Execute API requests to clear visit data associated with a link
    * @method
    */
-  clearVisitData = async (): Promise<void> => {
-    await fetch(`/api/v1/link/${this.props.id}/clear_visits`, {
+  const clearVisitData = async (): Promise<void> => {
+    await fetch(`/api/v1/link/${props.id}/clear_visits`, {
       method: 'POST',
     });
-    await this.updateStats();
+    await updateStats();
   };
 
-  averageClicks = (): number => {
-    if (this.state.overallStats === null || this.state.linkInfo === null) {
+  const averageClicks = (): number => {
+    if (overallStats === null || linkInfo === null) {
       return 0;
     }
 
     return (
-      this.state.overallStats.total_visits /
-      (daysBetween(new Date(this.state.linkInfo.created_time)) + 1)
+      overallStats.total_visits /
+      (daysBetween(new Date(linkInfo.created_time)) + 1)
     );
   };
 
-  render(): React.ReactNode {
-    const statTabsKeys = [
-      { key: 'visits', tab: 'Visits' },
-      { key: 'geoip', tab: 'Location' },
-      { key: 'browser', tab: 'Metadata' },
-      { key: 'alias', tab: 'Alias' },
-    ];
+  const statTabsKeys = [
+    { key: 'visits', tab: 'Visits' },
+    { key: 'geoip', tab: 'Location' },
+    { key: 'browser', tab: 'Metadata' },
+    { key: 'alias', tab: 'Alias' },
+  ];
 
-    const statTabs: Record<string, React.ReactNode> = {
-      visits: <VisitsChart visitStats={this.state.visitStats} />,
-      geoip: <GeoipChart geoipStats={this.state.geoipStats} />,
-      browser: (
-        <Row>
-          <BrowserCharts browserStats={this.state.browserStats} />
-        </Row>
-      ),
-      alias: (
-        <Table
-          size="small"
-          dataSource={this.state.allAliases.map((alias) => ({
-            alias: alias.alias,
-            description: alias.description,
-          }))}
-          columns={[
-            {
-              title: 'Alias',
-              dataIndex: 'alias',
-              key: 'alias',
-            },
-            {
-              title: 'Description',
-              dataIndex: 'description',
-              key: 'description',
-            },
-          ]}
-          pagination={{ pageSize: 5 }}
-        />
-      ),
-    };
+  const statTabs: Record<string, React.ReactNode> = {
+    visits: <VisitsChart visitStats={visitStats} />,
+    geoip: <GeoipChart geoipStats={geoipStats} />,
+    browser: (
+      <Row>
+        <BrowserCharts browserStats={browserStats} />
+      </Row>
+    ),
+    alias: (
+      <Table
+        size="small"
+        dataSource={allAliases.map((alias) => ({
+          alias: alias.alias,
+          description: alias.description,
+        }))}
+        columns={[
+          {
+            title: 'Alias',
+            dataIndex: 'alias',
+            key: 'alias',
+          },
+          {
+            title: 'Description',
+            dataIndex: 'description',
+            key: 'description',
+          },
+        ]}
+        pagination={{ pageSize: 5 }}
+      />
+    ),
+  };
 
-    return (
-      <>
-        <Row justify="space-between">
-          <Col span={16}>
-            <Row>
-              <Space style={{ marginBottom: 19 }}>
-                <Typography.Title style={{ marginBottom: 0 }}>
-                  {this.state.linkInfo?.title}
-                </Typography.Title>
+  return (
+    <>
+      <Row justify="space-between">
+        <Col span={16}>
+          <Row>
+            <Space style={{ marginBottom: 19 }}>
+              <Typography.Title style={{ marginBottom: 0 }}>
+                {linkInfo?.title}
+              </Typography.Title>
 
-                <Tag color="red">
-                  {this.state.linkInfo?.is_tracking_pixel_link
-                    ? 'Tracking Pixel'
-                    : 'Link'}
-                </Tag>
-              </Space>
-            </Row>
-          </Col>
-
-          <Col>
-            <Space>
-              <Button icon={<EditOutlined />}>Edit</Button>
-              <Button icon={<TeamOutlined />}>Collaborate</Button>
-              <Button type="primary" icon={<ShareAltOutlined />}>
-                Share
-              </Button>
+              <Tag color="red">
+                {linkInfo?.is_tracking_pixel_link ? 'Tracking Pixel' : 'Link'}
+              </Tag>
             </Space>
-          </Col>
-        </Row>
+          </Row>
+        </Col>
 
-        <Row justify="space-around" gutter={[16, 16]}>
-          {this.state.overallStats === null || this.state.linkInfo === null ? (
-            <></>
-          ) : (
-            <>
-              <Col span={6}>
-                <Card>
-                  <Statistic
-                    title="Total Clicks"
-                    value={this.state.overallStats.total_visits}
-                  />
-                </Card>
-              </Col>
-              <Col span={6}>
-                <Card>
-                  <Statistic
-                    title="Unique Clicks"
-                    value={this.state.overallStats.unique_visits}
-                  />
-                </Card>
-              </Col>
-              <Col span={6}>
-                <Card>
-                  <Statistic
-                    title="Avg. Clicks/Day"
-                    value={this.averageClicks()}
-                    precision={2}
-                  />
-                </Card>
-              </Col>
-              <Col span={6}>
-                <Card>
-                  <Statistic title="Most Popular Referrer" value="Twitter" />
-                </Card>
-              </Col>
-            </>
-          )}
-          <Col span={12}>
-            <Card
-              title="Details"
-              style={{ height: '100%' }}
-              extra={
-                this.state.allAliases.length === 1 ? (
+        <Col>
+          <Space>
+            <Button icon={<EditOutlined />}>Edit</Button>
+            <Button icon={<TeamOutlined />}>Collaborate</Button>
+            <Button type="primary" icon={<ShareAltOutlined />}>
+              Share
+            </Button>
+          </Space>
+        </Col>
+      </Row>
+
+      <Row justify="space-around" gutter={[16, 16]}>
+        {overallStats === null || linkInfo === null ? (
+          <></>
+        ) : (
+          <>
+            <Col span={6}>
+              <Card>
+                <Statistic
+                  title="Total Clicks"
+                  value={overallStats.total_visits}
+                />
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card>
+                <Statistic
+                  title="Unique Clicks"
+                  value={overallStats.unique_visits}
+                />
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card>
+                <Statistic
+                  title="Avg. Clicks/Day"
+                  value={averageClicks()}
+                  precision={2}
+                />
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card>
+                <Statistic title="Most Popular Referrer" value="Twitter" />
+              </Card>
+            </Col>
+          </>
+        )}
+        <Col span={12}>
+          <Card
+            title="Details"
+            style={{ height: '100%' }}
+            extra={
+              allAliases.length === 1 ? (
+                <></>
+              ) : (
+                <Select
+                  onSelect={setAlias}
+                  defaultValue={0}
+                  popupMatchSelectWidth={false}
+                >
+                  <Select.Option value={0}>
+                    <GlobalOutlined />
+                  </Select.Option>
+
+                  {allAliases.map((alias) => (
+                    <Select.Option key={alias.alias} value={alias.alias}>
+                      {alias.alias}&nbsp;
+                      {alias.description ? (
+                        <em>({alias.description})</em>
+                      ) : (
+                        <></>
+                      )}
+                    </Select.Option>
+                  ))}
+                </Select>
+              )
+            }
+          >
+            <Descriptions column={1} colon={false}>
+              <Descriptions.Item label="Owner">
+                {linkInfo?.owner}
+              </Descriptions.Item>
+              <Descriptions.Item label="Long URL">
+                {linkInfo?.long_url}
+              </Descriptions.Item>
+              <Descriptions.Item label="Date Created">
+                {dayjs(linkInfo?.created_time).format('MMM D, YYYY')}
+              </Descriptions.Item>
+              <Descriptions.Item label="Date Expires">
+                {linkInfo?.expiration_time
+                  ? dayjs(linkInfo?.expiration_time).format('MMM D, YYYY')
+                  : 'N/A'}
+              </Descriptions.Item>
+            </Descriptions>
+          </Card>
+        </Col>
+        <Col span={12}>
+          <Card
+            tabList={statTabsKeys}
+            activeTabKey={statsKey}
+            onTabChange={(newKey) => setStatsKey(newKey)}
+            tabBarExtraContent={
+              <Space>
+                <Button
+                  icon={
+                    loading ? (
+                      <LoadingOutlined spin />
+                    ) : (
+                      <CloudDownloadOutlined />
+                    )
+                  }
+                  onClick={downloadCsv}
+                >
+                  Export
+                </Button>
+                {mayEdit ? (
                   <></>
                 ) : (
-                  <Select
-                    onSelect={this.setAlias}
-                    defaultValue={0}
-                    popupMatchSelectWidth={false}
-                  >
-                    <Select.Option value={0}>
-                      <GlobalOutlined />
-                    </Select.Option>
-
-                    {this.state.allAliases.map((alias) => (
-                      <Select.Option key={alias.alias} value={alias.alias}>
-                        {alias.alias}&nbsp;
-                        {alias.description ? (
-                          <em>({alias.description})</em>
-                        ) : (
-                          <></>
-                        )}
-                      </Select.Option>
-                    ))}
-                  </Select>
-                )
-              }
-            >
-              <Descriptions column={1} colon={false}>
-                <Descriptions.Item label="Owner">
-                  {this.state.linkInfo?.owner}
-                </Descriptions.Item>
-                <Descriptions.Item label="Long URL">
-                  {this.state.linkInfo?.long_url}
-                </Descriptions.Item>
-                <Descriptions.Item label="Date Created">
-                  {dayjs(this.state.linkInfo?.created_time).format(
-                    'MMM D, YYYY',
-                  )}
-                </Descriptions.Item>
-                <Descriptions.Item label="Date Expires">
-                  {this.state.linkInfo?.expiration_time
-                    ? dayjs(this.state.linkInfo?.expiration_time).format(
-                        'MMM D, YYYY',
-                      )
-                    : 'N/A'}
-                </Descriptions.Item>
-              </Descriptions>
-            </Card>
-          </Col>
-          <Col span={12}>
-            <Card
-              tabList={statTabsKeys}
-              activeTabKey={this.state.statsKey}
-              onTabChange={(newKey) => this.setState({ statsKey: newKey })}
-              tabBarExtraContent={
-                <Space>
-                  <Button
-                    icon={
-                      this.state.loading ? (
-                        <LoadingOutlined spin />
-                      ) : (
-                        <CloudDownloadOutlined />
-                      )
-                    }
-                    onClick={this.downloadCsv}
-                  >
-                    Export
-                  </Button>
-                  {this.state.mayEdit ? (
-                    <></>
-                  ) : (
-                    <>
-                      <Popconfirm
-                        placement="bottom"
-                        title="Are you sure you want to clear all visit data associated with this link? This operation cannot be undone."
-                        onConfirm={this.clearVisitData}
-                        icon={
-                          <ExclamationCircleFilled style={{ color: 'red' }} />
-                        }
-                      >
-                        <Button danger icon={<ClearOutlined />}>
-                          Purge
-                        </Button>
-                      </Popconfirm>
-                    </>
-                  )}
-                </Space>
-              }
-            >
-              {statTabs[this.state.statsKey]}
-            </Card>
-          </Col>
-        </Row>
-      </>
-    );
-  }
+                  <>
+                    <Popconfirm
+                      placement="bottom"
+                      title="Are you sure you want to clear all visit data associated with this link? This operation cannot be undone."
+                      onConfirm={clearVisitData}
+                      icon={
+                        <ExclamationCircleFilled style={{ color: 'red' }} />
+                      }
+                    >
+                      <Button danger icon={<ClearOutlined />}>
+                        Purge
+                      </Button>
+                    </Popconfirm>
+                  </>
+                )}
+              </Space>
+            }
+          >
+            {statTabs[statsKey]}
+          </Card>
+        </Col>
+      </Row>
+    </>
+  );
 }
