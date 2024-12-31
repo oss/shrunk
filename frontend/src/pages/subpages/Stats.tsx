@@ -40,6 +40,7 @@ import { downloadVisitsCsv } from '../../components/Csv';
 import '../../Base.css';
 import { daysBetween } from '../../lib/utils';
 import { Tag } from 'antd';
+import ShareModal from '../../modals/ShareModal';
 
 /**
  * Props for the [[Stats]] component
@@ -325,6 +326,8 @@ export function Stats(props: Props) {
   const [loading, setLoading] = useState<boolean>(false);
   const [statsKey, setStatsKey] = useState<string>('visits');
 
+  const [shareModalVisible, setShareModalVisible] = useState<boolean>(false);
+
   async function updateLinkInfo() {
     const _linkInfo = await fetch(`/api/v1/link/${props.id}`).then((resp) =>
       resp.json(),
@@ -496,7 +499,11 @@ export function Stats(props: Props) {
           <Space>
             <Button icon={<EditOutlined />}>Edit</Button>
             <Button icon={<TeamOutlined />}>Collaborate</Button>
-            <Button type="primary" icon={<ShareAltOutlined />}>
+            <Button
+              type="primary"
+              icon={<ShareAltOutlined />}
+              onClick={() => setShareModalVisible(true)}
+            >
               Share
             </Button>
           </Space>
@@ -633,6 +640,13 @@ export function Stats(props: Props) {
           </Card>
         </Col>
       </Row>
+      <ShareModal
+        linkInfo={linkInfo}
+        visible={shareModalVisible}
+        onCancel={() => {
+          setShareModalVisible(false);
+        }}
+      />
     </>
   );
 }

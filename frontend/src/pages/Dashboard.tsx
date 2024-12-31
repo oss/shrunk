@@ -21,9 +21,8 @@ import { getOrgInfo, listOrgs, OrgInfo } from '../api/Org';
 import { SearchBox } from '../components/SearchBox';
 import { LinkRow } from '../components/LinkRow';
 import { LinkInfo } from '../models/LinkInfo';
-import { QrCodeModal } from '../modals/QrCode';
 import { EditLinkModal, EditLinkFormValues } from '../modals/EditLinkModal';
-import { ShareLinkModal } from '../modals/ShareLinkModal';
+import { CollaboratorLinkModal } from '../modals/CollaboratorLinkModal';
 import { CreateLinkForm } from '../components/CreateLinkForm';
 import { OrgsSelect } from '../components/OrgsSelect';
 import { FilterDropdown } from '../components/FilterDropdown';
@@ -185,7 +184,7 @@ export interface State {
    * The current state of the share link modal. Contains the netids and orgs.
    * @property
    */
-  shareLinkModalState: {
+  CollaboratorLinkModalState: {
     visible: boolean;
     entities: Array<Entity>;
     linkInfo: LinkInfo | null;
@@ -244,7 +243,7 @@ export class Dashboard extends React.Component<Props, State> {
         visible: false,
         linkInfo: null,
       },
-      shareLinkModalState: {
+      CollaboratorLinkModalState: {
         visible: false,
         entities: [],
         linkInfo: null,
@@ -549,10 +548,10 @@ export class Dashboard extends React.Component<Props, State> {
    */
   getLinkACL = async (linkInfo: LinkInfo): Promise<Entity[]> => {
     this.setState({
-      shareLinkModalState: {
-        visible: this.state.shareLinkModalState.visible,
-        entities: this.state.shareLinkModalState.entities,
-        linkInfo: this.state.shareLinkModalState.linkInfo,
+      CollaboratorLinkModalState: {
+        visible: this.state.CollaboratorLinkModalState.visible,
+        entities: this.state.CollaboratorLinkModalState.entities,
+        linkInfo: this.state.CollaboratorLinkModalState.linkInfo,
         isLoading: true, // set isLoading to true
       },
     });
@@ -617,10 +616,10 @@ export class Dashboard extends React.Component<Props, State> {
     );
 
     this.setState({
-      shareLinkModalState: {
-        visible: this.state.shareLinkModalState.visible,
-        entities: this.state.shareLinkModalState.entities,
-        linkInfo: this.state.shareLinkModalState.linkInfo,
+      CollaboratorLinkModalState: {
+        visible: this.state.CollaboratorLinkModalState.visible,
+        entities: this.state.CollaboratorLinkModalState.entities,
+        linkInfo: this.state.CollaboratorLinkModalState.linkInfo,
         isLoading: false, // set isLoading to false
       },
     });
@@ -632,9 +631,9 @@ export class Dashboard extends React.Component<Props, State> {
    * @method
    * @param linkInfo The [[LinkInfo]] of the link to manage sharing
    */
-  showShareLinkModal = async (linkInfo: LinkInfo): Promise<void> => {
+  showCollaboratorLinkModal = async (linkInfo: LinkInfo): Promise<void> => {
     this.setState({
-      shareLinkModalState: {
+      CollaboratorLinkModalState: {
         visible: true,
         entities: await this.getLinkACL(linkInfo),
         linkInfo,
@@ -646,10 +645,10 @@ export class Dashboard extends React.Component<Props, State> {
   /** Hides the share link modal
    * @method
    */
-  hideShareLinkModal = (): void => {
+  hideCollaboratorLinkModal = (): void => {
     this.setState({
-      shareLinkModalState: {
-        ...this.state.shareLinkModalState,
+      CollaboratorLinkModalState: {
+        ...this.state.CollaboratorLinkModalState,
         visible: false,
       },
     });
@@ -658,8 +657,8 @@ export class Dashboard extends React.Component<Props, State> {
     // from changing while the modal-close animation is still in progress.
     setTimeout(() => {
       this.setState({
-        shareLinkModalState: {
-          ...this.state.shareLinkModalState,
+        CollaboratorLinkModalState: {
+          ...this.state.CollaboratorLinkModalState,
           entities: [],
           linkInfo: null,
         },
@@ -798,19 +797,19 @@ export class Dashboard extends React.Component<Props, State> {
   /**
    * Executes API request to add people the link is shared with
    * @param values The form values from the edit link form
-   * @throws Error if the value of `this.state.shareLinkModalState.linkInfo` is `null`
+   * @throws Error if the value of `this.state.CollaboratorLinkModalState.linkInfo` is `null`
    */
   doShareLinkWithEntity = async (values: any): Promise<void> => {
     this.setState({
-      shareLinkModalState: {
-        visible: this.state.shareLinkModalState.visible,
-        entities: this.state.shareLinkModalState.entities,
-        linkInfo: this.state.shareLinkModalState.linkInfo,
+      CollaboratorLinkModalState: {
+        visible: this.state.CollaboratorLinkModalState.visible,
+        entities: this.state.CollaboratorLinkModalState.entities,
+        linkInfo: this.state.CollaboratorLinkModalState.linkInfo,
         isLoading: true,
       },
     });
 
-    const oldLinkInfo = this.state.shareLinkModalState.linkInfo;
+    const oldLinkInfo = this.state.CollaboratorLinkModalState.linkInfo;
     if (oldLinkInfo === null) {
       throw new Error('oldLinkInfo should not be null');
     }
@@ -845,8 +844,8 @@ export class Dashboard extends React.Component<Props, State> {
 
     // update the state with the new ACL list, which rerenders the link sharing modal with the updated list
     this.setState({
-      shareLinkModalState: {
-        visible: this.state.shareLinkModalState.visible,
+      CollaboratorLinkModalState: {
+        visible: this.state.CollaboratorLinkModalState.visible,
         entities: await this.getLinkACL(oldLinkInfo),
         linkInfo: oldLinkInfo,
         isLoading: false,
@@ -858,14 +857,14 @@ export class Dashboard extends React.Component<Props, State> {
    * Executes API request to add people the link is shared with
    * @param _id The _id of the entity being removed
    * @param type Whether the entity is a netid or an org
-   * @throws Error if the value of `this.state.shareLinkModalState.linkInfo` is `null`
+   * @throws Error if the value of `this.state.CollaboratorLinkModalState.linkInfo` is `null`
    */
   doUnshareLinkWithEntity = async (
     _id: string,
     type: string,
     permission: string,
   ): Promise<void> => {
-    const oldLinkInfo = this.state.shareLinkModalState.linkInfo;
+    const oldLinkInfo = this.state.CollaboratorLinkModalState.linkInfo;
     if (oldLinkInfo === null) {
       throw new Error('oldLinkInfo should not be null');
     }
@@ -905,11 +904,11 @@ export class Dashboard extends React.Component<Props, State> {
 
     // update the state with the new ACL list, which rerenders the link sharing modal with the updated list
     this.setState({
-      shareLinkModalState: {
-        visible: this.state.shareLinkModalState.visible,
+      CollaboratorLinkModalState: {
+        visible: this.state.CollaboratorLinkModalState.visible,
         entities: await this.getLinkACL(oldLinkInfo),
         linkInfo: oldLinkInfo,
-        isLoading: this.state.shareLinkModalState.isLoading,
+        isLoading: this.state.CollaboratorLinkModalState.isLoading,
       },
     });
   };
@@ -994,7 +993,7 @@ export class Dashboard extends React.Component<Props, State> {
                 key={linkInfo.id}
                 linkInfo={linkInfo}
                 showEditModal={this.showEditModal}
-                showShareLinkModal={this.showShareLinkModal}
+                showCollaboratorLinkModal={this.showCollaboratorLinkModal}
                 showQrModal={this.showQrModal}
                 refreshResults={this.refreshResults}
                 netid={this.props.netid}
@@ -1039,15 +1038,15 @@ export class Dashboard extends React.Component<Props, State> {
           />
         )}
 
-        {!this.state.shareLinkModalState.linkInfo === null ? (
+        {!this.state.CollaboratorLinkModalState.linkInfo === null ? (
           <></>
         ) : (
-          <ShareLinkModal
-            visible={this.state.shareLinkModalState.visible}
+          <CollaboratorLinkModal
+            visible={this.state.CollaboratorLinkModalState.visible}
             userPrivileges={this.props.userPrivileges}
-            people={this.state.shareLinkModalState.entities}
-            isLoading={this.state.shareLinkModalState.isLoading}
-            linkInfo={this.state.shareLinkModalState.linkInfo}
+            people={this.state.CollaboratorLinkModalState.entities}
+            isLoading={this.state.CollaboratorLinkModalState.isLoading}
+            linkInfo={this.state.CollaboratorLinkModalState.linkInfo}
             onAddEntity={async (values: any) =>
               this.doShareLinkWithEntity(values)
             }
@@ -1056,19 +1055,8 @@ export class Dashboard extends React.Component<Props, State> {
               type: string,
               permission: string,
             ) => this.doUnshareLinkWithEntity(_id, type, permission)}
-            onOk={this.hideShareLinkModal}
-            onCancel={this.hideShareLinkModal}
-          />
-        )}
-
-        {this.state.qrModalState.linkInfo === null ? (
-          <></>
-        ) : (
-          <QrCodeModal
-            visible={this.state.qrModalState.visible}
-            width={256}
-            linkInfo={this.state.qrModalState.linkInfo}
-            onCancel={this.hideQrModal}
+            onOk={this.hideCollaboratorLinkModal}
+            onCancel={this.hideCollaboratorLinkModal}
           />
         )}
       </>

@@ -51,7 +51,7 @@ export interface Props {
    * Callback called when the share link modal should be displayed
    * @property
    */
-  showShareLinkModal: (linkInfo: LinkInfo) => void;
+  showCollaboratorLinkModal: (linkInfo: LinkInfo) => void;
 
   /**
    * Callback called when the QR modal should be displayed
@@ -263,7 +263,7 @@ export class LinkRow extends React.Component<Props, State> {
                 type="text"
                 icon={<RiTeamLine size="1.1em" />}
                 onClick={(_ev) =>
-                  this.props.showShareLinkModal(this.props.linkInfo)
+                  this.props.showCollaboratorLinkModal(this.props.linkInfo)
                 }
               />
             </Tooltip>
@@ -274,14 +274,6 @@ export class LinkRow extends React.Component<Props, State> {
               type="text"
               icon={<RiFileChartLine size="1.1em" />}
               href={`/app/#/stats/${this.props.linkInfo.id}`}
-            />
-          </Tooltip>
-          <Tooltip title="QR code">
-            <Button
-              aria-label="qr-code"
-              type="text"
-              icon={<RiQrCodeLine size="1.1em" />}
-              onClick={(_ev) => this.props.showQrModal(this.props.linkInfo)}
             />
           </Tooltip>
           {isLinkDeleted || !this.props.linkInfo.may_edit ? (
