@@ -283,6 +283,7 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         "deleted": info.get("deleted", False),
         "editors": info["editors"] if "editors" in info else [],
         "viewers": info["viewers"] if "viewers" in info else [],
+        "is_tracking_pixel_link": info.get("is_tracking_pixel_link", False),
     }
 
     return jsonify(json_info)

@@ -38,6 +38,7 @@ import { downloadVisitsCsv } from '../../components/Csv';
 
 import '../../Base.css';
 import { daysBetween } from '../../lib/utils';
+import { Tag } from 'antd';
 
 /**
  * Props for the [[Stats]] component
@@ -555,7 +556,17 @@ export class Stats extends React.Component<Props, State> {
         <Row justify="space-between">
           <Col span={16}>
             <Row>
-              <Typography.Title>{this.state.linkInfo?.title}</Typography.Title>
+              <Space style={{ marginBottom: 19 }}>
+                <Typography.Title style={{ marginBottom: 0 }}>
+                  {this.state.linkInfo?.title}
+                </Typography.Title>
+
+                <Tag color="red">
+                  {this.state.linkInfo?.is_tracking_pixel_link
+                    ? 'Tracking Pixel'
+                    : 'Link'}
+                </Tag>
+              </Space>
             </Row>
           </Col>
 
