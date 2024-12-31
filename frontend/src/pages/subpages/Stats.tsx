@@ -582,9 +582,13 @@ export function Stats(props: Props) {
               <Descriptions.Item label="Owner">
                 {linkInfo?.owner}
               </Descriptions.Item>
-              <Descriptions.Item label="Long URL">
-                {linkInfo?.long_url}
-              </Descriptions.Item>
+              {linkInfo?.is_tracking_pixel_link ? (
+                <></>
+              ) : (
+                <Descriptions.Item label="Long URL">
+                  {linkInfo?.long_url}
+                </Descriptions.Item>
+              )}
               <Descriptions.Item label="Date Created">
                 {dayjs(linkInfo?.created_time).format('MMM D, YYYY')}
               </Descriptions.Item>
