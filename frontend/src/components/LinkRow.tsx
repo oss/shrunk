@@ -222,15 +222,6 @@ export class LinkRow extends React.Component<Props, State> {
               <Row key={alias.alias}>
                 <Col>
                   <div className={className}>
-                    <CopyToClipboard text={shortUrl}>
-                      <Tooltip title="Copy shortened URL">
-                        <Button
-                          aria-label="copy-to-clipboard"
-                          type="text"
-                          icon={<RiFileCopy2Fill />}
-                        />
-                      </Tooltip>
-                    </CopyToClipboard>
                     {alias.description ? <em>({alias.description})</em> : ''}
                     &nbsp;
                     <a href={shortUrl}>{shortUrl}</a>
