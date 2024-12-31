@@ -27,6 +27,7 @@ import {
   GlobalOutlined,
   EditOutlined,
   TeamOutlined,
+  ShareAltOutlined,
 } from '@ant-design/icons';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
@@ -573,7 +574,8 @@ export class Stats extends React.Component<Props, State> {
           <Col>
             <Space>
               <Button icon={<EditOutlined />}>Edit</Button>
-              <Button type="primary" icon={<TeamOutlined />}>
+              <Button icon={<TeamOutlined />}>Collaborate</Button>
+              <Button type="primary" icon={<ShareAltOutlined />}>
                 Share
               </Button>
             </Space>
