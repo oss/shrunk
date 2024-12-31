@@ -633,10 +633,7 @@ export class Stats extends React.Component<Props, State> {
                     popupMatchSelectWidth={false}
                   >
                     <Select.Option value={0}>
-                      <Space>
-                        <GlobalOutlined />
-                        All Aliases
-                      </Space>
+                      <GlobalOutlined />
                     </Select.Option>
 
                     {this.state.allAliases.map((alias) => (
