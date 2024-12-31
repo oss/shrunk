@@ -13,6 +13,9 @@ import {
   Dropdown,
   Button,
   message,
+  Typography,
+  Statistic,
+  Card,
 } from 'antd/lib';
 import { PlusCircleFilled } from '@ant-design/icons';
 
@@ -26,8 +29,6 @@ import { CollaboratorLinkModal } from '../modals/CollaboratorLinkModal';
 import { CreateLinkForm } from '../components/CreateLinkForm';
 import { OrgsSelect } from '../components/OrgsSelect';
 import { FilterDropdown } from '../components/FilterDropdown';
-
-import './Dashboard.css';
 
 /**
  * The final values of the share link form
@@ -916,149 +917,161 @@ export class Dashboard extends React.Component<Props, State> {
   render(): React.ReactNode {
     return (
       <>
-        <Row className="dashboard-title">
-          <Col>
-            <span className="page-title">URL Dashboard</span>
-          </Col>
+        <Row>
+          <Typography.Title>URL Shortener</Typography.Title>
         </Row>
-        <Row className="primary-row" gutter={[8, 24]}>
-          <Col xs={{ span: 24 }} sm={{ span: 9 }}>
-            {this.state.userOrgs === null ? (
-              <></>
-            ) : (
-              <SearchBox
-                placeholder="Search Links..."
-                updateQueryString={this.updateQueryString}
-              />
-            )}
+        <Row justify="space-around" gutter={[16, 16]}>
+          <Col span={8}>
+            <Card>
+              <Statistic title="Total Links" value={0} />
+            </Card>
           </Col>
-          <Col>
-            {this.state.userOrgs === null ? (
-              <></>
-            ) : (
-              <OrgsSelect
-                userPrivileges={this.props.userPrivileges}
-                userOrgs={this.state.userOrgs}
-                showByOrg={this.showByOrg}
-              />
-            )}
+          <Col span={8}>
+            <Card>
+              <Statistic title="Total Clicks" value={0} />
+            </Card>
           </Col>
-          <Col>
-            {this.state.userOrgs === null ? (
-              <></>
-            ) : (
-              <FilterDropdown
-                userPrivileges={this.props.userPrivileges}
-                showDeletedLinks={this.showDeletedLinks}
-                showExpiredLinks={this.showExpiredLinks}
-                sortLinksByKey={this.sortLinksByKey}
-                sortLinksByOrder={this.sortLinksByOrder}
-                showLinksAfter={this.showLinksAfter}
-                showLinksBefore={this.showLinksBefore}
-              />
-            )}
+          <Col span={8}>
+            <Card>
+              <Statistic title="Total Unique Clicks" value={0} />
+            </Card>
           </Col>
-          <Col className="shrink-link">
-            <Dropdown
-              overlay={
-                <CreateLinkForm
+          <Col span={24}>
+            <Card>
+              <Row gutter={[8, 24]}>
+                <Col xs={{ span: 24 }} sm={{ span: 9 }}>
+                  {this.state.userOrgs === null ? (
+                    <></>
+                  ) : (
+                    <SearchBox
+                      placeholder="Search Links..."
+                      updateQueryString={this.updateQueryString}
+                    />
+                  )}
+                </Col>
+                <Col>
+                  {this.state.userOrgs === null ? (
+                    <></>
+                  ) : (
+                    <FilterDropdown
+                      userPrivileges={this.props.userPrivileges}
+                      userOrgs={this.state.userOrgs}
+                      showByOrg={this.showByOrg}
+                      showDeletedLinks={this.showDeletedLinks}
+                      showExpiredLinks={this.showExpiredLinks}
+                      sortLinksByKey={this.sortLinksByKey}
+                      sortLinksByOrder={this.sortLinksByOrder}
+                      showLinksAfter={this.showLinksAfter}
+                      showLinksBefore={this.showLinksBefore}
+                    />
+                  )}
+                </Col>
+                <Col className="shrink-link">
+                  <Dropdown
+                    overlay={
+                      <CreateLinkForm
+                        userPrivileges={this.props.userPrivileges}
+                        onFinish={async () => {
+                          this.setState({ createLinkDropdownVisible: false });
+                          await this.refreshResults();
+                        }}
+                        tracking_pixel_ui_enabled={
+                          this.state.trackingPixelEnabled
+                        }
+                      />
+                    }
+                    open={this.state.createLinkDropdownVisible}
+                    onVisibleChange={(flag) =>
+                      this.setState({ createLinkDropdownVisible: flag })
+                    }
+                    placement="bottomRight"
+                    trigger={['click']}
+                  >
+                    <Button type="primary" aria-label="create link">
+                      <PlusCircleFilled /> Create Link
+                    </Button>
+                  </Dropdown>
+                </Col>
+              </Row>
+
+              {this.state.linkInfo === null ? (
+                <Spin size="large" />
+              ) : (
+                <div className="dashboard-links">
+                  {this.state.linkInfo.map((linkInfo) => (
+                    <LinkRow
+                      key={linkInfo.id}
+                      linkInfo={linkInfo}
+                      showEditModal={this.showEditModal}
+                      showCollaboratorLinkModal={this.showCollaboratorLinkModal}
+                      showQrModal={this.showQrModal}
+                      refreshResults={this.refreshResults}
+                      netid={this.props.netid}
+                    />
+                  ))}
+                  <div className="shrunk-pagination">
+                    <Pagination
+                      className="pagination"
+                      defaultCurrent={1}
+                      current={this.state.currentPage}
+                      showSizeChanger={false}
+                      total={this.state.totalLinks}
+                      onChange={this.setPage}
+                    />
+
+                    <Pagination
+                      className="pagination-simple"
+                      defaultCurrent={1}
+                      current={this.state.currentPage}
+                      showSizeChanger={false}
+                      total={this.state.totalLinks}
+                      onChange={this.setPage}
+                      simple
+                    />
+                  </div>
+                </div>
+              )}
+
+              {this.state.editModalState.linkInfo === null ? (
+                <></>
+              ) : (
+                <EditLinkModal
+                  visible={this.state.editModalState.visible}
                   userPrivileges={this.props.userPrivileges}
-                  onFinish={async () => {
-                    this.setState({ createLinkDropdownVisible: false });
-                    await this.refreshResults();
+                  netid={this.props.netid}
+                  linkInfo={this.state.editModalState.linkInfo}
+                  onOk={async (values) => {
+                    await this.doEditLink(values);
+                    this.hideEditModal();
                   }}
-                  tracking_pixel_ui_enabled={this.state.trackingPixelEnabled}
+                  onCancel={this.hideEditModal}
                 />
-              }
-              open={this.state.createLinkDropdownVisible}
-              onVisibleChange={(flag) =>
-                this.setState({ createLinkDropdownVisible: flag })
-              }
-              placement="bottomRight"
-              trigger={['click']}
-            >
-              <Button type="primary" aria-label="create link">
-                <PlusCircleFilled /> Create Link
-              </Button>
-            </Dropdown>
+              )}
+
+              {!this.state.CollaboratorLinkModalState.linkInfo === null ? (
+                <></>
+              ) : (
+                <CollaboratorLinkModal
+                  visible={this.state.CollaboratorLinkModalState.visible}
+                  userPrivileges={this.props.userPrivileges}
+                  people={this.state.CollaboratorLinkModalState.entities}
+                  isLoading={this.state.CollaboratorLinkModalState.isLoading}
+                  linkInfo={this.state.CollaboratorLinkModalState.linkInfo}
+                  onAddEntity={async (values: any) =>
+                    this.doShareLinkWithEntity(values)
+                  }
+                  onRemoveEntity={async (
+                    _id: string,
+                    type: string,
+                    permission: string,
+                  ) => this.doUnshareLinkWithEntity(_id, type, permission)}
+                  onOk={this.hideCollaboratorLinkModal}
+                  onCancel={this.hideCollaboratorLinkModal}
+                />
+              )}
+            </Card>
           </Col>
         </Row>
-
-        {this.state.linkInfo === null ? (
-          <Spin size="large" />
-        ) : (
-          <div className="dashboard-links">
-            {this.state.linkInfo.map((linkInfo) => (
-              <LinkRow
-                key={linkInfo.id}
-                linkInfo={linkInfo}
-                showEditModal={this.showEditModal}
-                showCollaboratorLinkModal={this.showCollaboratorLinkModal}
-                showQrModal={this.showQrModal}
-                refreshResults={this.refreshResults}
-                netid={this.props.netid}
-              />
-            ))}
-            <div className="shrunk-pagination">
-              <Pagination
-                className="pagination"
-                defaultCurrent={1}
-                current={this.state.currentPage}
-                showSizeChanger={false}
-                total={this.state.totalLinks}
-                onChange={this.setPage}
-              />
-
-              <Pagination
-                className="pagination-simple"
-                defaultCurrent={1}
-                current={this.state.currentPage}
-                showSizeChanger={false}
-                total={this.state.totalLinks}
-                onChange={this.setPage}
-                simple
-              />
-            </div>
-          </div>
-        )}
-
-        {this.state.editModalState.linkInfo === null ? (
-          <></>
-        ) : (
-          <EditLinkModal
-            visible={this.state.editModalState.visible}
-            userPrivileges={this.props.userPrivileges}
-            netid={this.props.netid}
-            linkInfo={this.state.editModalState.linkInfo}
-            onOk={async (values) => {
-              await this.doEditLink(values);
-              this.hideEditModal();
-            }}
-            onCancel={this.hideEditModal}
-          />
-        )}
-
-        {!this.state.CollaboratorLinkModalState.linkInfo === null ? (
-          <></>
-        ) : (
-          <CollaboratorLinkModal
-            visible={this.state.CollaboratorLinkModalState.visible}
-            userPrivileges={this.props.userPrivileges}
-            people={this.state.CollaboratorLinkModalState.entities}
-            isLoading={this.state.CollaboratorLinkModalState.isLoading}
-            linkInfo={this.state.CollaboratorLinkModalState.linkInfo}
-            onAddEntity={async (values: any) =>
-              this.doShareLinkWithEntity(values)
-            }
-            onRemoveEntity={async (
-              _id: string,
-              type: string,
-              permission: string,
-            ) => this.doUnshareLinkWithEntity(_id, type, permission)}
-            onOk={this.hideCollaboratorLinkModal}
-            onCancel={this.hideCollaboratorLinkModal}
-          />
-        )}
       </>
     );
   }

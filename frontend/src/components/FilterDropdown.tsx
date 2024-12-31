@@ -13,9 +13,13 @@ import {
   DatePicker,
   Space,
   Button,
+  Typography,
 } from 'antd/lib';
-import { CaretDownOutlined } from '@ant-design/icons';
+import { DownOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { OrgInfo } from '../api/Org';
+import { SearchSet } from '../pages/Dashboard';
+import { OrgsSelect } from './OrgsSelect';
 
 /**
  * Props for the [[FilterDropdown]] component
@@ -27,6 +31,17 @@ export interface Props {
    * @property
    */
   userPrivileges: Set<string>;
+
+  /**
+   * The user's organizations, used to determine which organizations the user may filter by
+   * @property
+   */
+  userOrgs: OrgInfo[];
+
+  /**
+   *
+   */
+  showByOrg: (orgs: SearchSet) => void;
 
   /**
    * Callback called when the user checks checkbox for showing expired links
@@ -135,6 +150,13 @@ export const FilterDropdown: React.FC<Props> = (props) => {
           sortOrder: 'descending',
         }}
       >
+        <Form.Item name="orgSelect" label="Filter by organization">
+          <OrgsSelect
+            userPrivileges={props.userPrivileges}
+            userOrgs={props.userOrgs}
+            showByOrg={props.showByOrg}
+          />
+        </Form.Item>
         <Form.Item name="sortKey" label="Sort by">
           <Select value={sortKey} onChange={sortByKey}>
             <Select.Option value="relevance">Relevance</Select.Option>
@@ -186,19 +208,17 @@ export const FilterDropdown: React.FC<Props> = (props) => {
   return (
     <Space>
       <Dropdown
-        className="filter-links-dropdown"
         overlay={dropdown}
         open={dropdownVisible}
-        onVisibleChange={setDropdownVisible}
+        onOpenChange={setDropdownVisible}
         placement="bottomLeft"
         trigger={['click']}
       >
-        <Button type="text" style={{ position: 'relative', top: '-1px' }}>
-          <span ref={filterByText}>Filter By</span>{' '}
-          <CaretDownOutlined
-            className="caret-style"
-            style={{ fontSize: '18px', position: 'relative', top: '1.25px' }}
-          />
+        <Button>
+          <Space>
+            <Typography>Filter By</Typography>
+            <DownOutlined />
+          </Space>
         </Button>
       </Dropdown>
     </Space>
