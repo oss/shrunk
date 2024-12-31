@@ -5,7 +5,8 @@
 
 import React from 'react';
 import { Modal, Row, Col, Select, Space, Button } from 'antd/lib';
-import QRCodeReact from 'qrcode.react';
+// import QRCodeReact from 'qrcode.react';
+// TODO: Use Ant Design's QR code component
 
 import { LinkInfo } from '../components/LinkInfo';
 import './QrCode.css';
@@ -155,6 +156,8 @@ export class QrCodeModal extends React.Component<Props, State> {
   };
 
   render(): React.ReactNode {
+    return <></>
+
     if (this.props.linkInfo === null) {
       return <></>;
     }

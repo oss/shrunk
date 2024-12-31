@@ -17,7 +17,8 @@ import {
   RiTeamLine,
 } from 'react-icons/ri';
 
-import CopyToClipboard from 'react-copy-to-clipboard';
+// import CopyToClipboard from 'react-copy-to-clipboard';
+// TODO: Just use JavaScript's native feature..
 import dayjs from 'dayjs';
 
 import { LinkInfo } from './LinkInfo';
