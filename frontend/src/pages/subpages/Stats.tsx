@@ -12,12 +12,12 @@ import {
   Select,
   Button,
   Popconfirm,
-  Tabs,
   Typography,
   Card,
   Statistic,
   Descriptions,
   Table,
+  message,
 } from 'antd/lib';
 import {
   ExclamationCircleFilled,
@@ -25,8 +25,9 @@ import {
   CloudDownloadOutlined,
   LoadingOutlined,
   GlobalOutlined,
+  EditOutlined,
+  TeamOutlined,
 } from '@ant-design/icons';
-import { IoReturnUpBack } from 'react-icons/io5';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import dayjs from 'dayjs';
@@ -36,7 +37,6 @@ import { GeoipStats, MENU_ITEMS, GeoipChart } from './StatsCommon';
 import { downloadVisitsCsv } from '../../components/Csv';
 
 import '../../Base.css';
-import Meta from 'antd/lib/card/Meta';
 import { daysBetween } from '../../lib/utils';
 
 /**
@@ -212,21 +212,6 @@ interface State {
    */
   statsKey: string;
 }
-
-/**
- * The [[InfoBox]] component displays the info for link
- * @param props The props
- */
-const InfoBox: React.FC<{ infoLabel: string; data: string }> = (props) => (
-  <Card className="info-box">
-    <div className="detail">
-      <Typography.Text style={{ color: '#686b69' }}>
-        {props.infoLabel}
-      </Typography.Text>
-      <Typography.Text className="data-text">{props.data}</Typography.Text>
-    </div>
-  </Card>
-);
 
 /**
  * The [[VisitsChart]] component displays a line graph of total visits and unique
@@ -529,7 +514,7 @@ export class Stats extends React.Component<Props, State> {
     const statTabsKeys = [
       { key: 'visits', tab: 'Visits' },
       { key: 'geoip', tab: 'Location' },
-      { key: 'browser', tab: 'Browser' },
+      { key: 'browser', tab: 'Metadata' },
       { key: 'alias', tab: 'Alias' },
     ];
 
@@ -576,34 +561,10 @@ export class Stats extends React.Component<Props, State> {
 
           <Col>
             <Space>
-              <Button
-                icon={
-                  this.state.loading ? (
-                    <LoadingOutlined spin />
-                  ) : (
-                    <CloudDownloadOutlined />
-                  )
-                }
-                onClick={this.downloadCsv}
-              >
-                Export
+              <Button icon={<EditOutlined />}>Edit</Button>
+              <Button type="primary" icon={<TeamOutlined />}>
+                Share
               </Button>
-              {this.state.mayEdit ? (
-                <></>
-              ) : (
-                <>
-                  <Popconfirm
-                    placement="bottom"
-                    title="Are you sure you want to clear all visit data associated with this link? This operation cannot be undone."
-                    onConfirm={this.clearVisitData}
-                    icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
-                  >
-                    <Button danger icon={<ClearOutlined />}>
-                      Purge
-                    </Button>
-                  </Popconfirm>
-                </>
-              )}
             </Space>
           </Col>
         </Row>
@@ -640,49 +601,46 @@ export class Stats extends React.Component<Props, State> {
               </Col>
               <Col span={6}>
                 <Card>
-                  <Statistic
-                    title="Date Created"
-                    value={dayjs(this.state.linkInfo.created_time).format(
-                      'MMM D, YYYY',
-                    )}
-                  />
+                  <Statistic title="Most Popular Referrer" value="Twitter" />
                 </Card>
               </Col>
             </>
           )}
           <Col span={12}>
-            <Card>
-              <Descriptions
-                title="Details"
-                column={1}
-                colon={false}
-                extra={
-                  this.state.allAliases.length === 1 ? (
-                    <></>
-                  ) : (
-                    <Select
-                      onSelect={this.setAlias}
-                      defaultValue={0}
-                      popupMatchSelectWidth={false}
-                    >
-                      <Select.Option value={0}>
-                        <GlobalOutlined /> All Aliases
-                      </Select.Option>
+            <Card
+              title="Details"
+              style={{ height: '100%' }}
+              extra={
+                this.state.allAliases.length === 1 ? (
+                  <></>
+                ) : (
+                  <Select
+                    onSelect={this.setAlias}
+                    defaultValue={0}
+                    popupMatchSelectWidth={false}
+                  >
+                    <Select.Option value={0}>
+                      <Space>
+                        <GlobalOutlined />
+                        All Aliases
+                      </Space>
+                    </Select.Option>
 
-                      {this.state.allAliases.map((alias) => (
-                        <Select.Option key={alias.alias} value={alias.alias}>
-                          {alias.alias}&nbsp;
-                          {alias.description ? (
-                            <em>({alias.description})</em>
-                          ) : (
-                            <></>
-                          )}
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  )
-                }
-              >
+                    {this.state.allAliases.map((alias) => (
+                      <Select.Option key={alias.alias} value={alias.alias}>
+                        {alias.alias}&nbsp;
+                        {alias.description ? (
+                          <em>({alias.description})</em>
+                        ) : (
+                          <></>
+                        )}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                )
+              }
+            >
+              <Descriptions column={1} colon={false}>
                 <Descriptions.Item label="Owner">
                   {this.state.linkInfo?.owner}
                 </Descriptions.Item>
@@ -709,6 +667,40 @@ export class Stats extends React.Component<Props, State> {
               tabList={statTabsKeys}
               activeTabKey={this.state.statsKey}
               onTabChange={(newKey) => this.setState({ statsKey: newKey })}
+              tabBarExtraContent={
+                <Space>
+                  <Button
+                    icon={
+                      this.state.loading ? (
+                        <LoadingOutlined spin />
+                      ) : (
+                        <CloudDownloadOutlined />
+                      )
+                    }
+                    onClick={this.downloadCsv}
+                  >
+                    Export
+                  </Button>
+                  {this.state.mayEdit ? (
+                    <></>
+                  ) : (
+                    <>
+                      <Popconfirm
+                        placement="bottom"
+                        title="Are you sure you want to clear all visit data associated with this link? This operation cannot be undone."
+                        onConfirm={this.clearVisitData}
+                        icon={
+                          <ExclamationCircleFilled style={{ color: 'red' }} />
+                        }
+                      >
+                        <Button danger icon={<ClearOutlined />}>
+                          Purge
+                        </Button>
+                      </Popconfirm>
+                    </>
+                  )}
+                </Space>
+              }
             >
               {statTabs[this.state.statsKey]}
             </Card>
