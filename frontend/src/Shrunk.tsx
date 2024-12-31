@@ -38,7 +38,7 @@ import {
 import base32 from 'hi-base32';
 import { Admin } from './pages/Admin';
 import { Dashboard } from './pages/Dashboard';
-import { Faq } from './pages/Faq';
+import Faq from './pages/Faq';
 import { Orgs } from './pages/Orgs';
 import { RoleRequestForm } from './pages/RoleRequestForm';
 
