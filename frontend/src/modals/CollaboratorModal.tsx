@@ -9,8 +9,10 @@ import {
   Space,
   Row,
   Col,
+  Popconfirm,
+  Tooltip,
 } from 'antd/lib';
-import { CloseCircleOutlined, PlusCircleFilled } from '@ant-design/icons';
+import { CloseOutlined, PlusCircleFilled } from '@ant-design/icons';
 import { LinkInfo } from '../components/LinkInfo';
 import { serverValidateNetId } from '../Validators';
 import { listOrgs, OrgInfo } from '../api/Org';
@@ -44,6 +46,8 @@ interface ICollaboratorModal {
 }
 
 export default function CollaboratorModal(props: ICollaboratorModal) {
+  const closeButton = false;
+
   const [form] = Form.useForm();
 
   const [organizations, setOrganizations] = useState<OrgInfo[]>([]);
@@ -173,7 +177,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
               <Tabs.TabPane tab="People" key="netid" />
               <Tabs.TabPane tab="Organizations" key="org" />
             </Tabs>
-            <Row gutter={[2, 16]} justify="space-between">
+            <Row gutter={[2, 16]} justify="space-between" align="middle">
               {props.people.map((entity) => {
                 if (entity.type !== activeTab) {
                   return <></>;
@@ -188,63 +192,101 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                   <>
                     <Col span={12}>{displayName}</Col>
                     <Col>
-                      <Select
-                        style={{ width: 120 }}
-                        defaultValue={entity.permission}
-                        onChange={(value: 'editor' | 'viewer' | 'remove') => {
-                          if (value === 'remove') {
-                            props.onRemoveEntity(
-                              entity._id,
-                              entity.type,
-                              entity.permission,
-                            );
-                            return;
-                          }
+                      <Space>
+                        <Select
+                          style={{ width: 120 }}
+                          defaultValue={entity.permission}
+                          onChange={(value: 'editor' | 'viewer' | 'remove') => {
+                            // Remove viweer if they're an editor
+                            // Search "# SHARING_ACL_REFACTOR" for the following comment
+                            if (
+                              value === 'viewer' &&
+                              entity.permission === 'editor'
+                            ) {
+                              props.onRemoveEntity(
+                                entity._id,
+                                entity.type,
+                                entity.permission,
+                              );
 
-                          props.onRemoveEntity(
-                            entity._id,
-                            entity.type,
-                            entity.permission,
-                          );
-                          props.onAddEntity({
-                            _id: entity._id,
-                            type: entity.type,
-                            permission: value,
-                          });
-                        }}
-                        options={[
-                          {
-                            label: 'Roles',
-                            options: [
-                              {
-                                label: 'Owner',
-                                value: 'owner',
-                                disabled: true,
-                              },
-                              {
-                                label: 'Editor',
-                                value: 'editor',
-                                disabled: entity.permission === 'owner',
-                              },
-                              {
-                                label: 'Viewer',
-                                value: 'viewer',
-                                disabled: entity.permission === 'owner',
-                              },
-                            ],
-                          },
-                          {
-                            label: 'Actions',
-                            options: [
-                              {
-                                label: 'Remove',
-                                value: 'remove',
-                                disabled: entity.permission === 'owner',
-                              },
-                            ],
-                          },
-                        ]}
-                      />
+                              return;
+                            }
+
+                            // Remove if requested via dropdown
+                            if (value === 'remove') {
+                              props.onRemoveEntity(
+                                entity._id,
+                                entity.type,
+                                entity.permission,
+                              );
+
+                              if (entity.permission === 'editor') {
+                                props.onRemoveEntity(
+                                  entity._id,
+                                  entity.type,
+                                  'viewer',
+                                );
+                              }
+
+                              return;
+                            }
+
+                            props.onAddEntity({
+                              _id: entity._id,
+                              type: entity.type,
+                              permission: value,
+                            });
+                          }}
+                          options={[
+                            {
+                              label: 'Roles',
+                              options: [
+                                {
+                                  label: 'Owner',
+                                  value: 'owner',
+                                  disabled: true,
+                                },
+                                {
+                                  label: 'Editor',
+                                  value: 'editor',
+                                  disabled: entity.permission === 'owner',
+                                },
+                                {
+                                  label: 'Viewer',
+                                  value: 'viewer',
+                                  disabled: entity.permission === 'owner',
+                                },
+                              ],
+                            },
+                            {
+                              label: 'Actions',
+                              options: [
+                                {
+                                  label: 'Remove',
+                                  value: 'remove',
+                                  disabled: entity.permission === 'owner',
+                                },
+                              ],
+                            },
+                          ]}
+                        />
+                        {closeButton && (
+                          <Popconfirm
+                            title="Are you sure you want to remove this collaborator?"
+                            onConfirm={() =>
+                              props.onRemoveEntity(
+                                entity._id,
+                                entity.type,
+                                entity.permission,
+                              )
+                            }
+                          >
+                            <Tooltip title="Remove collaborator">
+                              <Button type="text" icon={<CloseOutlined />} />
+                            </Tooltip>
+                          </Popconfirm>
+                        )}
+                      </Space>
                     </Col>
                   </>
                 );
