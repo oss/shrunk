@@ -8,27 +8,26 @@ import React from 'react';
 import {
   Row,
   Col,
-  Pagination,
   Spin,
-  Dropdown,
   Button,
-  message,
+  Typography,
+  Card,
+  Table,
+  Input,
+  Space,
+  Modal,
 } from 'antd/lib';
-import { PlusCircleFilled } from '@ant-design/icons';
+import {
+  CopyOutlined,
+  PlusCircleFilled,
+  SearchOutlined,
+} from '@ant-design/icons';
 
 import dayjs from 'dayjs';
 import { getOrgInfo, listOrgs, OrgInfo } from '../api/Org';
-import { SearchBox } from '../components/SearchBox';
-import { LinkRow } from '../components/LinkRow';
-import { LinkInfo } from '../models/LinkInfo';
-import { QrCodeModal } from '../modals/QrCode';
-import { EditLinkModal, EditLinkFormValues } from '../modals/EditLinkModal';
-import { ShareLinkModal } from '../modals/ShareLinkModal';
+import { LinkInfo } from '../components/LinkInfo';
 import { CreateLinkForm } from '../components/CreateLinkForm';
-import { OrgsSelect } from '../components/OrgsSelect';
 import { FilterDropdown } from '../components/FilterDropdown';
-
-import './Dashboard.css';
 
 /**
  * The final values of the share link form
@@ -185,7 +184,7 @@ export interface State {
    * The current state of the share link modal. Contains the netids and orgs.
    * @property
    */
-  shareLinkModalState: {
+  CollaboratorLinkModalState: {
     visible: boolean;
     entities: Array<Entity>;
     linkInfo: LinkInfo | null;
@@ -199,16 +198,12 @@ export interface State {
   qrModalState: { visible: boolean; linkInfo: LinkInfo | null };
 
   /**
-   * Whether the create link dropdown is visible.
-   * @property
-   */
-  createLinkDropdownVisible: boolean;
-
-  /**
    * Whether the tracking pixel feature is enabled
    * @property
    */
   trackingPixelEnabled: boolean;
+
+  isCreateModalOpen: boolean;
 }
 
 /**
@@ -244,7 +239,7 @@ export class Dashboard extends React.Component<Props, State> {
         visible: false,
         linkInfo: null,
       },
-      shareLinkModalState: {
+      CollaboratorLinkModalState: {
         visible: false,
         entities: [],
         linkInfo: null,
@@ -254,8 +249,8 @@ export class Dashboard extends React.Component<Props, State> {
         visible: false,
         linkInfo: null,
       },
-      createLinkDropdownVisible: false,
       trackingPixelEnabled: false,
+      isCreateModalOpen: false,
     };
   }
 
@@ -263,6 +258,10 @@ export class Dashboard extends React.Component<Props, State> {
     await Promise.all([this.fetchUserOrgs(), this.refreshResults()]);
     await this.trackingPixelEnabledOnUI();
   }
+
+  onSearch = async () => {
+    this.setQuery(this.state.query);
+  };
 
   /**
    * Fetch the organizations of which the user is a member.
@@ -278,11 +277,13 @@ export class Dashboard extends React.Component<Props, State> {
    * @method
    * @param newQueryString The new query string
    */
-  updateQueryString = (newQueryString: string) => {
-    this.setState(
-      { query: { ...this.state.query, queryString: newQueryString } },
-      () => this.setQuery(this.state.query),
-    );
+  updateQueryString = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    const newQueryString = e.target.value;
+    this.setState({
+      query: { ...this.state.query, queryString: newQueryString },
+    });
   };
 
   /**
@@ -503,7 +504,6 @@ export class Dashboard extends React.Component<Props, State> {
 
     const is_enabled = result.enabled;
     this.setState({ trackingPixelEnabled: is_enabled });
-    console.log(is_enabled);
   };
 
   /**
@@ -549,10 +549,10 @@ export class Dashboard extends React.Component<Props, State> {
    */
   getLinkACL = async (linkInfo: LinkInfo): Promise<Entity[]> => {
     this.setState({
-      shareLinkModalState: {
-        visible: this.state.shareLinkModalState.visible,
-        entities: this.state.shareLinkModalState.entities,
-        linkInfo: this.state.shareLinkModalState.linkInfo,
+      CollaboratorLinkModalState: {
+        visible: this.state.CollaboratorLinkModalState.visible,
+        entities: this.state.CollaboratorLinkModalState.entities,
+        linkInfo: this.state.CollaboratorLinkModalState.linkInfo,
         isLoading: true, // set isLoading to true
       },
     });
@@ -617,10 +617,10 @@ export class Dashboard extends React.Component<Props, State> {
     );
 
     this.setState({
-      shareLinkModalState: {
-        visible: this.state.shareLinkModalState.visible,
-        entities: this.state.shareLinkModalState.entities,
-        linkInfo: this.state.shareLinkModalState.linkInfo,
+      CollaboratorLinkModalState: {
+        visible: this.state.CollaboratorLinkModalState.visible,
+        entities: this.state.CollaboratorLinkModalState.entities,
+        linkInfo: this.state.CollaboratorLinkModalState.linkInfo,
         isLoading: false, // set isLoading to false
       },
     });
@@ -632,9 +632,9 @@ export class Dashboard extends React.Component<Props, State> {
    * @method
    * @param linkInfo The [[LinkInfo]] of the link to manage sharing
    */
-  showShareLinkModal = async (linkInfo: LinkInfo): Promise<void> => {
+  showCollaboratorLinkModal = async (linkInfo: LinkInfo): Promise<void> => {
     this.setState({
-      shareLinkModalState: {
+      CollaboratorLinkModalState: {
         visible: true,
         entities: await this.getLinkACL(linkInfo),
         linkInfo,
@@ -646,10 +646,10 @@ export class Dashboard extends React.Component<Props, State> {
   /** Hides the share link modal
    * @method
    */
-  hideShareLinkModal = (): void => {
+  hideCollaboratorLinkModal = (): void => {
     this.setState({
-      shareLinkModalState: {
-        ...this.state.shareLinkModalState,
+      CollaboratorLinkModalState: {
+        ...this.state.CollaboratorLinkModalState,
         visible: false,
       },
     });
@@ -658,8 +658,8 @@ export class Dashboard extends React.Component<Props, State> {
     // from changing while the modal-close animation is still in progress.
     setTimeout(() => {
       this.setState({
-        shareLinkModalState: {
-          ...this.state.shareLinkModalState,
+        CollaboratorLinkModalState: {
+          ...this.state.CollaboratorLinkModalState,
           entities: [],
           linkInfo: null,
         },
@@ -706,111 +706,21 @@ export class Dashboard extends React.Component<Props, State> {
   };
 
   /**
-   * Executes API requests to update a link
-   * @param values The form values from the edit link form
-   * @throws Error if the value of `this.state.editModalState.linkInfo` is `null`
-   */
-  doEditLink = async (values: EditLinkFormValues): Promise<void> => {
-    const oldLinkInfo = this.state.editModalState.linkInfo;
-    if (oldLinkInfo === null) {
-      throw new Error('oldLinkInfo should not be null');
-    }
-
-    // Create the request to edit title, long_url, and expiration_time
-    const patchReq: Record<string, any> = {};
-    if (values.title !== oldLinkInfo.title) {
-      patchReq.title = values.title;
-    }
-    if (values.long_url !== oldLinkInfo.long_url) {
-      patchReq.long_url = values.long_url;
-    }
-    if (values.owner !== oldLinkInfo.owner) {
-      patchReq.owner = values.owner;
-    }
-    if (values.expiration_time !== oldLinkInfo.expiration_time) {
-      patchReq.expiration_time =
-        values.expiration_time === null
-          ? null
-          : values.expiration_time.format();
-    }
-
-    const promises = [];
-    const patchRequest = await fetch(`/api/v1/link/${oldLinkInfo.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(patchReq),
-    });
-
-    // //get the status and the json message
-    const patchRequestStatus = patchRequest.status;
-
-    if (patchRequestStatus !== 204) {
-      message.error(
-        'There was an error editing the link. If modifying long URL, you might need to create a new link.',
-        4,
-      );
-      return;
-    }
-
-    const oldAliases = new Map(
-      oldLinkInfo.aliases.map((alias) => [alias.alias, alias]),
-    );
-    const newAliases = new Map(
-      values.aliases.map((alias) => [alias.alias, alias]),
-    );
-
-    // Delete aliases that no longer exist
-    for (const alias of oldAliases.keys()) {
-      if (!newAliases.has(alias)) {
-        promises.push(
-          fetch(`/api/v1/link/${oldLinkInfo.id}/alias/${alias}`, {
-            method: 'DELETE',
-          }),
-        );
-      }
-    }
-
-    // Create/update aliases
-    for (const [alias, info] of newAliases.entries()) {
-      const isNew = !oldAliases.has(alias);
-      const isDescriptionChanged =
-        oldAliases.has(alias) &&
-        info.description !== oldAliases.get(alias)?.description;
-      if (isNew || isDescriptionChanged) {
-        promises.push(
-          fetch(`/api/v1/link/${oldLinkInfo.id}/alias`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              alias,
-              description: info.description,
-            }),
-          }),
-        );
-      }
-    }
-
-    // Await all the requests and refresh search results
-    await Promise.all(promises);
-    await this.refreshResults();
-  };
-
-  /**
    * Executes API request to add people the link is shared with
    * @param values The form values from the edit link form
-   * @throws Error if the value of `this.state.shareLinkModalState.linkInfo` is `null`
+   * @throws Error if the value of `this.state.CollaboratorLinkModalState.linkInfo` is `null`
    */
   doShareLinkWithEntity = async (values: any): Promise<void> => {
     this.setState({
-      shareLinkModalState: {
-        visible: this.state.shareLinkModalState.visible,
-        entities: this.state.shareLinkModalState.entities,
-        linkInfo: this.state.shareLinkModalState.linkInfo,
+      CollaboratorLinkModalState: {
+        visible: this.state.CollaboratorLinkModalState.visible,
+        entities: this.state.CollaboratorLinkModalState.entities,
+        linkInfo: this.state.CollaboratorLinkModalState.linkInfo,
         isLoading: true,
       },
     });
 
-    const oldLinkInfo = this.state.shareLinkModalState.linkInfo;
+    const oldLinkInfo = this.state.CollaboratorLinkModalState.linkInfo;
     if (oldLinkInfo === null) {
       throw new Error('oldLinkInfo should not be null');
     }
@@ -845,8 +755,8 @@ export class Dashboard extends React.Component<Props, State> {
 
     // update the state with the new ACL list, which rerenders the link sharing modal with the updated list
     this.setState({
-      shareLinkModalState: {
-        visible: this.state.shareLinkModalState.visible,
+      CollaboratorLinkModalState: {
+        visible: this.state.CollaboratorLinkModalState.visible,
         entities: await this.getLinkACL(oldLinkInfo),
         linkInfo: oldLinkInfo,
         isLoading: false,
@@ -858,14 +768,14 @@ export class Dashboard extends React.Component<Props, State> {
    * Executes API request to add people the link is shared with
    * @param _id The _id of the entity being removed
    * @param type Whether the entity is a netid or an org
-   * @throws Error if the value of `this.state.shareLinkModalState.linkInfo` is `null`
+   * @throws Error if the value of `this.state.CollaboratorLinkModalState.linkInfo` is `null`
    */
   doUnshareLinkWithEntity = async (
     _id: string,
     type: string,
     permission: string,
   ): Promise<void> => {
-    const oldLinkInfo = this.state.shareLinkModalState.linkInfo;
+    const oldLinkInfo = this.state.CollaboratorLinkModalState.linkInfo;
     if (oldLinkInfo === null) {
       throw new Error('oldLinkInfo should not be null');
     }
@@ -905,11 +815,11 @@ export class Dashboard extends React.Component<Props, State> {
 
     // update the state with the new ACL list, which rerenders the link sharing modal with the updated list
     this.setState({
-      shareLinkModalState: {
-        visible: this.state.shareLinkModalState.visible,
+      CollaboratorLinkModalState: {
+        visible: this.state.CollaboratorLinkModalState.visible,
         entities: await this.getLinkACL(oldLinkInfo),
         linkInfo: oldLinkInfo,
-        isLoading: this.state.shareLinkModalState.isLoading,
+        isLoading: this.state.CollaboratorLinkModalState.isLoading,
       },
     });
   };
@@ -917,160 +827,184 @@ export class Dashboard extends React.Component<Props, State> {
   render(): React.ReactNode {
     return (
       <>
-        <Row className="dashboard-title">
-          <Col>
-            <span className="page-title">URL Dashboard</span>
-          </Col>
+        <Row>
+          <Typography.Title>URL Shortener</Typography.Title>
         </Row>
-        <Row className="primary-row" gutter={[8, 24]}>
-          <Col xs={{ span: 24 }} sm={{ span: 9 }}>
-            {this.state.userOrgs === null ? (
-              <></>
-            ) : (
-              <SearchBox
-                placeholder="Search Links..."
-                updateQueryString={this.updateQueryString}
-              />
-            )}
-          </Col>
-          <Col>
-            {this.state.userOrgs === null ? (
-              <></>
-            ) : (
-              <OrgsSelect
-                userPrivileges={this.props.userPrivileges}
-                userOrgs={this.state.userOrgs}
-                showByOrg={this.showByOrg}
-              />
-            )}
-          </Col>
-          <Col>
-            {this.state.userOrgs === null ? (
-              <></>
-            ) : (
-              <FilterDropdown
-                userPrivileges={this.props.userPrivileges}
-                showDeletedLinks={this.showDeletedLinks}
-                showExpiredLinks={this.showExpiredLinks}
-                sortLinksByKey={this.sortLinksByKey}
-                sortLinksByOrder={this.sortLinksByOrder}
-                showLinksAfter={this.showLinksAfter}
-                showLinksBefore={this.showLinksBefore}
-              />
-            )}
-          </Col>
-          <Col className="shrink-link">
-            <Dropdown
-              overlay={
-                <CreateLinkForm
-                  userPrivileges={this.props.userPrivileges}
-                  onFinish={async () => {
-                    this.setState({ createLinkDropdownVisible: false });
-                    await this.refreshResults();
-                  }}
-                  tracking_pixel_ui_enabled={this.state.trackingPixelEnabled}
-                />
-              }
-              open={this.state.createLinkDropdownVisible}
-              onVisibleChange={(flag) =>
-                this.setState({ createLinkDropdownVisible: flag })
-              }
-              placement="bottomRight"
-              trigger={['click']}
-            >
-              <Button type="primary" aria-label="create link">
-                <PlusCircleFilled /> Create Link
+        <Card>
+          <Row gutter={[16, 16]} justify="space-between">
+            <Col span={12}>
+              {this.state.userOrgs === null ? (
+                <></>
+              ) : (
+                <>
+                  <Space.Compact block>
+                    <Input
+                      placeholder="Find a shortened link"
+                      onChange={this.updateQueryString}
+                    />
+                    <FilterDropdown
+                      userPrivileges={this.props.userPrivileges}
+                      userOrgs={this.state.userOrgs}
+                      showByOrg={this.showByOrg}
+                      showDeletedLinks={this.showDeletedLinks}
+                      showExpiredLinks={this.showExpiredLinks}
+                      sortLinksByKey={this.sortLinksByKey}
+                      sortLinksByOrder={this.sortLinksByOrder}
+                      showLinksAfter={this.showLinksAfter}
+                      showLinksBefore={this.showLinksBefore}
+                    />
+                    <Button
+                      onClick={this.onSearch}
+                      type="primary"
+                      icon={<SearchOutlined />}
+                    >
+                      Search
+                    </Button>
+                  </Space.Compact>
+                </>
+              )}
+            </Col>
+            <Col span={12} style={{ textAlign: 'right' }}>
+              <Button
+                type="primary"
+                icon={<PlusCircleFilled />}
+                onClick={() => this.setState({ isCreateModalOpen: true })}
+              >
+                Create Link
               </Button>
-            </Dropdown>
-          </Col>
-        </Row>
-
-        {this.state.linkInfo === null ? (
-          <Spin size="large" />
-        ) : (
-          <div className="dashboard-links">
-            {this.state.linkInfo.map((linkInfo) => (
-              <LinkRow
-                key={linkInfo.id}
-                linkInfo={linkInfo}
-                showEditModal={this.showEditModal}
-                showShareLinkModal={this.showShareLinkModal}
-                showQrModal={this.showQrModal}
-                refreshResults={this.refreshResults}
-                netid={this.props.netid}
-              />
-            ))}
-            <div className="shrunk-pagination">
-              <Pagination
-                className="pagination"
-                defaultCurrent={1}
-                current={this.state.currentPage}
-                showSizeChanger={false}
-                total={this.state.totalLinks}
-                onChange={this.setPage}
-              />
-
-              <Pagination
-                className="pagination-simple"
-                defaultCurrent={1}
-                current={this.state.currentPage}
-                showSizeChanger={false}
-                total={this.state.totalLinks}
-                onChange={this.setPage}
-                simple
-              />
-            </div>
-          </div>
-        )}
-
-        {this.state.editModalState.linkInfo === null ? (
-          <></>
-        ) : (
-          <EditLinkModal
-            visible={this.state.editModalState.visible}
-            userPrivileges={this.props.userPrivileges}
-            netid={this.props.netid}
-            linkInfo={this.state.editModalState.linkInfo}
-            onOk={async (values) => {
-              await this.doEditLink(values);
-              this.hideEditModal();
+            </Col>
+            <Col span={24}>
+              {this.state.linkInfo === null ? (
+                <Spin size="large" />
+              ) : (
+                <Table
+                  scroll={{ x: 'calc(700px + 50%)' }}
+                  columns={[
+                    {
+                      title: 'Aliases',
+                      dataIndex: 'aliases',
+                      key: 'aliases',
+                      width: '30%',
+                      fixed: 'left',
+                      render: (_, record) => (
+                        <Row gutter={[0, 8]}>
+                          {record.aliases.map((aliasObj) => {
+                            const isDev =
+                              process.env.NODE_ENV === 'development';
+                            const protocol = isDev ? 'http' : 'https';
+                            const shortUrl = `${protocol}://${
+                              document.location.host
+                            }/${aliasObj.alias.toString()}`;
+                            return (
+                              <Col span={24}>
+                                <Button
+                                  type="text"
+                                  onClick={() =>
+                                    navigator.clipboard.writeText(shortUrl)
+                                  }
+                                >
+                                  <Space>
+                                    <CopyOutlined />
+                                    <Typography key={aliasObj.alias}>
+                                      {aliasObj.alias.toString()}
+                                    </Typography>
+                                  </Space>
+                                </Button>
+                              </Col>
+                            );
+                          })}
+                        </Row>
+                      ),
+                    },
+                    {
+                      title: 'Long URL',
+                      dataIndex: 'longUrl',
+                      key: 'longUrl',
+                      width: '40%',
+                      fixed: 'left',
+                      render: (_, record) => (
+                        <Typography.Link href={record.longUrl} ellipsis>
+                          {record.longUrl}
+                        </Typography.Link>
+                      ),
+                    },
+                    {
+                      title: 'Owner',
+                      dataIndex: 'owner',
+                      key: 'owner',
+                      width: '15%',
+                      sorter: (a, b) => a.owner.localeCompare(b.owner),
+                    },
+                    {
+                      title: 'Date Created',
+                      dataIndex: 'dateCreated',
+                      key: 'dateCreated',
+                      width: '15%',
+                      sorter: (a, b) =>
+                        dayjs(a.dateCreated).unix() -
+                        dayjs(b.dateCreated).unix(),
+                    },
+                    {
+                      title: 'Unique Visits',
+                      dataIndex: 'uniqueVisits',
+                      key: 'uniqueVisits',
+                      width: '15%',
+                      sorter: (a, b) => a.uniqueVisits - b.uniqueVisits,
+                    },
+                    {
+                      title: 'Total Visits',
+                      dataIndex: 'totalVisits',
+                      key: 'totalVisits',
+                      width: '15%',
+                      sorter: (a, b) => a.totalVisits - b.totalVisits,
+                    },
+                    {
+                      title: 'Actions',
+                      key: 'actions',
+                      fixed: 'right',
+                      width: '15%',
+                      render: (_, record) => (
+                        <Space size="middle">
+                          <Typography.Link href={`/app/#/stats/${record.key}`}>
+                            View
+                          </Typography.Link>
+                        </Space>
+                      ),
+                    },
+                  ]}
+                  dataSource={this.state.linkInfo.map((link) => ({
+                    key: link.id,
+                    aliases: link.aliases,
+                    longUrl: link.long_url,
+                    owner: link.owner,
+                    dateCreated: dayjs(link.created_time).format(
+                      'MMM DD, YYYY',
+                    ),
+                    uniqueVisits: link.unique_visits,
+                    totalVisits: link.visits,
+                  }))}
+                />
+              )}
+            </Col>
+          </Row>
+        </Card>
+        <Modal
+          open={this.state.isCreateModalOpen}
+          onCancel={() => this.setState({ isCreateModalOpen: false })}
+          width="50%"
+          title="Create Link"
+          footer={null}
+        >
+          <CreateLinkForm
+            onFinish={async () => {
+              await this.refreshResults();
+              this.setState({ isCreateModalOpen: false });
             }}
-            onCancel={this.hideEditModal}
-          />
-        )}
-
-        {!this.state.shareLinkModalState.linkInfo === null ? (
-          <></>
-        ) : (
-          <ShareLinkModal
-            visible={this.state.shareLinkModalState.visible}
             userPrivileges={this.props.userPrivileges}
-            people={this.state.shareLinkModalState.entities}
-            isLoading={this.state.shareLinkModalState.isLoading}
-            linkInfo={this.state.shareLinkModalState.linkInfo}
-            onAddEntity={async (values: any) =>
-              this.doShareLinkWithEntity(values)
-            }
-            onRemoveEntity={async (
-              _id: string,
-              type: string,
-              permission: string,
-            ) => this.doUnshareLinkWithEntity(_id, type, permission)}
-            onOk={this.hideShareLinkModal}
-            onCancel={this.hideShareLinkModal}
+            userOrgs={this.state.userOrgs}
+            refreshResults={this.refreshResults}
           />
-        )}
-
-        {this.state.qrModalState.linkInfo === null ? (
-          <></>
-        ) : (
-          <QrCodeModal
-            visible={this.state.qrModalState.visible}
-            width={256}
-            linkInfo={this.state.qrModalState.linkInfo}
-            onCancel={this.hideQrModal}
-          />
-        )}
+        </Modal>
       </>
     );
   }

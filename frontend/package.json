@@ -5,7 +5,6 @@
   "scripts": {
     "build": "parcel build --no-source-maps --no-content-hash --public-url=../static/dist/ --dist-dir=../backend/shrunk/static/dist src/index.html src/linkhub-loader.html",
     "watch": "parcel watch --public-url=../static/dist/ --dist-dir=../backend/shrunk/static/dist src/index.html src/linkhub-loader.html",
-    "doc": "node ./typedocRunner.ts",
     "lint": "eslint ./src --ext .ts,tsx --ignore-path ../.gitignore",
     "lint-fix": "eslint ./src --ext .ts,tsx --fix --ignore-path ../.gitignore",
     "format": "prettier --write . --config ./.prettierrc.js --ignore-path ../.gitignore"
@@ -13,34 +12,26 @@
   "dependencies": {
     "@ant-design/icons": "^4.6.2",
     "@highcharts/map-collection": "^1.1.3",
-    "animate.css": "^4.1.1",
-    "animate.css-react": "^1.1.0",
     "antd": "^5.21.2",
     "csv-writer": "^1.6.0",
     "dayjs": "^1.11.13",
-    "fbjs": "^3.0.0",
     "hi-base32": "^0.5.0",
     "highcharts": "^9.0.0",
     "highcharts-react-official": "^3.0.0",
     "history": "^5.0.0",
     "js-cookie": "^2.2.1",
-    "parcel": "^2.7.0",
-    "qrcode.react": "^1.0.0",
+    "parcel": "^2.13.3",
     "react": "^16.13.1",
-    "react-copy-to-clipboard": "^5.0.2",
     "react-dom": "^16.13.1",
     "react-icons": "^4.2.0",
     "react-router": "^5.2.0",
-    "react-router-dom": "^5.2.0",
-    "socket.io-client": "^3.1.3"
+    "react-router-dom": "^5.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.11.6",
     "@types/js-cookie": "^2.2.6",
     "@types/node": "^14.11.5",
-    "@types/qrcode.react": "^1.0.1",
     "@types/react": "^16.9.51",
-    "@types/react-copy-to-clipboard": "^4.3.0",
     "@types/react-dom": "^16.9.8",
     "@types/react-router-dom": "^5.1.7",
     "@typescript-eslint/eslint-plugin": "^4.24.0",
@@ -60,6 +51,6 @@
   "resolutions": {
     "@babel/preset-env": "7.13.8"
   },
-  "author": "Rutgers University Open System Solutions",
-  "license": "GPL-3.0-or-later"
+  "author": "Rutgers Open System Solutions",
+  "license": "MIT"
 }

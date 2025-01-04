@@ -22,7 +22,10 @@ import EditLinkFromLinkHubModal, {
 } from '../../modals/EditLinkFromLinkHubModal';
 import { serverValidateLinkHubAlias } from '../../Validators';
 import ShareLinkHubModal from '../../modals/ShareLinkHubModal';
-import { Entity, ShareLinkModal } from '../../modals/ShareLinkModal';
+import {
+  Entity,
+  CollaboratorLinkModal,
+} from '../../modals/CollaboratorLinkModal';
 import { getOrgInfo } from '../../api/Org';
 import {
   getLinkHub,
@@ -101,7 +104,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
   const [isEditLinkModalVisible, setIsEditLinkModalVisible] =
     useState<boolean>(false);
 
-  const [isShareModalVisible, setIsShareModalVisible] =
+  const [isCollaboratorModalVisible, setIsCollaboratorModalVisible] =
     useState<boolean>(false);
 
   function refreshCollaborators() {
@@ -375,7 +378,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
                     </p>
                     <Button
                       onClick={() => {
-                        setIsShareModalVisible(true);
+                        setIsCollaboratorModalVisible(true);
                       }}
                     >
                       Manage Access
@@ -446,8 +449,8 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
         <></>
       )}
       {collaborators !== undefined ? (
-        <ShareLinkModal
-          visible={isShareModalVisible}
+        <CollaboratorLinkModal
+          visible={isCollaboratorModalVisible}
           userPrivileges={undefined}
           people={collaborators}
           isLoading={false}
@@ -463,10 +466,10 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
             removeCollaborator(type as 'netid' | 'org', _id);
           }}
           onOk={() => {
-            setIsShareModalVisible(false);
+            setIsCollaboratorModalVisible(false);
           }}
           onCancel={() => {
-            setIsShareModalVisible(false);
+            setIsCollaboratorModalVisible(false);
           }}
         />
       ) : (

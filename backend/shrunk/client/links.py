@@ -264,6 +264,34 @@ class LinksClient:
         change = {acl: entry}
 
         # editors always have view permission
+
+        """
+        A study needs to be done why this is even a thing. We will
+        have duplicate information in the database since this is here.
+
+        We can save a LOT of data if we refactor this to just have a
+        collaborators keyvalue pair in the url document and just set
+        their permission there:
+
+        ```
+        {
+            "_id": "DEV_USER",
+            "type": "netid",
+            "permission": "editor"
+        }
+        ```
+
+        We could even do this:
+
+        ```
+        {
+            "_id": "DEV_USER",
+            "type": "netid",
+            "permissions": ["edit", "view"]
+        }
+        ```
+        """
+
         if acl == "editors" and add:
             change["viewers"] = entry
 

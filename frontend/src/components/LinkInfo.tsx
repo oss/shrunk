@@ -45,7 +45,7 @@ export interface DeletionInfo {
 }
 
 export interface SharingInfo {
-  id: string;
+  _id: string;
   type: 'netid' | 'org';
 }
 
@@ -67,4 +67,7 @@ export interface LinkInfo {
   aliases: AliasInfo[];
   may_edit: boolean;
   is_tracking_pixel_link: boolean;
+
+  editors: SharingInfo[];
+  viewers: SharingInfo[];
 }

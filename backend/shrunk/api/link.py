@@ -279,10 +279,13 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         "long_url": info["long_url"],
         "owner": client.links.get_owner(link_id),
         "created_time": info["timeCreated"],
+        "expiration_time": info.get("expiration_time", None),
         "aliases": aliases,
         "deleted": info.get("deleted", False),
         "editors": info["editors"] if "editors" in info else [],
         "viewers": info["viewers"] if "viewers" in info else [],
+        "is_tracking_pixel_link": info.get("is_tracking_pixel_link", False),
+        "may_edit": client.links.may_edit(link_id, netid),
     }
 
     return jsonify(json_info)

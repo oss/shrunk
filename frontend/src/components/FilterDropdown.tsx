@@ -13,9 +13,13 @@ import {
   DatePicker,
   Space,
   Button,
+  Typography,
 } from 'antd/lib';
-import { CaretDownOutlined } from '@ant-design/icons';
+import { DownOutlined, FilterOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { OrgInfo } from '../api/Org';
+import { SearchSet } from '../pages/Dashboard';
+import { OrgsSelect } from './OrgsSelect';
 
 /**
  * Props for the [[FilterDropdown]] component
@@ -27,6 +31,17 @@ export interface Props {
    * @property
    */
   userPrivileges: Set<string>;
+
+  /**
+   * The user's organizations, used to determine which organizations the user may filter by
+   * @property
+   */
+  userOrgs: OrgInfo[];
+
+  /**
+   *
+   */
+  showByOrg: (orgs: SearchSet) => void;
 
   /**
    * Callback called when the user checks checkbox for showing expired links
@@ -70,6 +85,8 @@ export interface Props {
  * @param props The props
  */
 export const FilterDropdown: React.FC<Props> = (props) => {
+  const sortEnabled = false; // Ant Design 5 allows for client-sided sorting.
+
   const isAdmin = props.userPrivileges.has('admin');
   const sortOptions = [
     { label: 'Ascending', value: 'ascending' },
@@ -135,6 +152,13 @@ export const FilterDropdown: React.FC<Props> = (props) => {
           sortOrder: 'descending',
         }}
       >
+        <Form.Item name="orgSelect" label="Filter by organization">
+          <OrgsSelect
+            userPrivileges={props.userPrivileges}
+            userOrgs={props.userOrgs}
+            showByOrg={props.showByOrg}
+          />
+        </Form.Item>
         <Form.Item name="sortKey" label="Sort by">
           <Select value={sortKey} onChange={sortByKey}>
             <Select.Option value="relevance">Relevance</Select.Option>
@@ -143,14 +167,18 @@ export const FilterDropdown: React.FC<Props> = (props) => {
             <Select.Option value="visits">Number of visits</Select.Option>
           </Select>
         </Form.Item>
-        <Form.Item name="sortOrder" label="Sort order">
-          <Radio.Group
-            value={sortOrder}
-            onChange={sortByOrder}
-            options={sortOptions}
-            optionType="button"
-          />
-        </Form.Item>
+        {sortEnabled ? (
+          <Form.Item name="sortOrder" label="Sort order">
+            <Radio.Group
+              value={sortOrder}
+              onChange={sortByOrder}
+              options={sortOptions}
+              optionType="button"
+            />
+          </Form.Item>
+        ) : (
+          <></>
+        )}
         <Form.Item name="show_expired">
           <Checkbox checked={showExpired} onChange={showExpiredLinks}>
             Show expired links?
@@ -186,20 +214,13 @@ export const FilterDropdown: React.FC<Props> = (props) => {
   return (
     <Space>
       <Dropdown
-        className="filter-links-dropdown"
         overlay={dropdown}
         open={dropdownVisible}
-        onVisibleChange={setDropdownVisible}
+        onOpenChange={setDropdownVisible}
         placement="bottomLeft"
         trigger={['click']}
       >
-        <Button type="text" style={{ position: 'relative', top: '-1px' }}>
-          <span ref={filterByText}>Filter By</span>{' '}
-          <CaretDownOutlined
-            className="caret-style"
-            style={{ fontSize: '18px', position: 'relative', top: '1.25px' }}
-          />
-        </Button>
+        <Button icon={<FilterOutlined />}>Filter</Button>
       </Dropdown>
     </Space>
   );

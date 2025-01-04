@@ -44,7 +44,6 @@ export const OrgsSelect: React.FC<Props> = (props) => {
   const [loading, toggle] = useState(false);
   const { Option, OptGroup } = Select;
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const linkDropDown = useRef<HTMLDivElement>(null);
 
   const updateOrg = async (e: any): Promise<void> => {
     toggle(true);
@@ -54,10 +53,10 @@ export const OrgsSelect: React.FC<Props> = (props) => {
         e === 0
           ? { set: 'user' }
           : e === 1
-            ? { set: 'all' }
-            : e === 2
-              ? { set: 'shared' }
-              : { set: 'org', org: e as string };
+          ? { set: 'all' }
+          : e === 2
+          ? { set: 'shared' }
+          : { set: 'org', org: e as string };
       props.showByOrg(searchSet);
       toggle(false);
     }, 300);
@@ -65,58 +64,34 @@ export const OrgsSelect: React.FC<Props> = (props) => {
 
   return (
     <Select
-      ref={linkDropDown}
       value={org}
       onChange={updateOrg}
-      className="filter-links-dropdown"
       style={{ width: 'auto' }}
-      dropdownMatchSelectWidth={false}
       dropdownStyle={{ width: 175 }}
-      bordered={false}
       open={dropdownOpen}
       onClick={() => {
         setDropdownOpen(!dropdownOpen);
       }}
-      showArrow
       onBlur={() => {
-        if (dropdownOpen == true) {
+        if (dropdownOpen === true) {
           setDropdownOpen(!dropdownOpen);
         }
       }}
-      suffixIcon={
-        loading ? (
-          <LoadingOutlined spin />
-        ) : (
-          <div
-            onClick={() => {
-              if (linkDropDown.current !== null) {
-                linkDropDown.current.focus();
-              }
-            }}
-          >
-            <CaretDownOutlined
-              style={{
-                position: 'relative',
-                color: '#cc0e32',
-                fontSize: '19px',
-                top: '0px',
-                left: '10px',
-              }}
-            />
-          </div>
-        )
-      }
     >
       <Option value={0}>My Links</Option>
       <Option value={2}>Shared with Me</Option>
       {!isAdmin ? <></> : <Option value={1}>All Links</Option>}
-      <OptGroup label="My Organizations">
-        {props.userOrgs.map((info) => (
-          <Option key={info.id} value={info.id}>
-            <em>{info.name}</em>
-          </Option>
-        ))}
-      </OptGroup>
+      {props.userOrgs.length !== 0 ? (
+        <OptGroup label="My Organizations">
+          {props.userOrgs.map((info) => (
+            <Option key={info.id} value={info.id}>
+              <em>{info.name}</em>
+            </Option>
+          ))}
+        </OptGroup>
+      ) : (
+        <></>
+      )}
     </Select>
   );
 };

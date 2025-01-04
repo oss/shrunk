@@ -38,7 +38,7 @@ import {
 import base32 from 'hi-base32';
 import { Admin } from './pages/Admin';
 import { Dashboard } from './pages/Dashboard';
-import { Faq } from './pages/Faq';
+import Faq from './pages/Faq';
 import { Orgs } from './pages/Orgs';
 import { RoleRequestForm } from './pages/RoleRequestForm';
 
@@ -496,7 +496,13 @@ export class Shrunk extends React.Component<Props, State> {
                   <Route
                     exact
                     path="/stats/:id"
-                    render={(props) => <Stats id={props.match.params.id} />}
+                    render={(props) => (
+                      <Stats
+                        id={props.match.params.id}
+                        netid={this.props.netid}
+                        userPrivileges={this.props.userPrivileges}
+                      />
+                    )}
                   />
 
                   <Route exact path="/orgs">

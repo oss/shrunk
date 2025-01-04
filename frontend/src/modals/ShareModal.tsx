@@ -1,203 +1,93 @@
-import React, { useEffect, useState } from 'react';
-import { Modal, Form, Input, Tabs, Select, Button, Typography } from 'antd/lib';
+import React from 'react';
+import {
+  Col,
+  Modal,
+  QRCode,
+  Row,
+  Button,
+  Typography,
+  Input,
+  Space,
+} from 'antd/lib';
 import { LinkInfo } from '../components/LinkInfo';
-import { PaperClipOutlined } from '@ant-design/icons';
-import { serverValidateNetId } from '../Validators';
-import { listOrgs, OrgInfo } from '../api/Org';
-
-export type Entity = {
-  /**
-   * The id of the entity the link is shared with.
-   */
-  _id: string;
-  /**
-   * The type of entity the link is shared with.
-   */
-  type: 'netid' | 'org';
-  /**
-   * The permission the link is shared with
-   */
-  permission: 'viewer' | 'editor';
-};
 
 interface IShareModal {
   visible: boolean;
-  userPrivilege: Set<string>;
-  people: Array<Entity>;
-  isLoading: boolean;
   linkInfo: LinkInfo | null;
 
-  onAddEntity: (values: Entity) => void;
-  onRemoveEntity: (_id: string, type: string, permission: string) => void;
-  onOk: () => void;
   onCancel: () => void;
 }
 
-function SearchUsers() {
-  return (
-    <Form.Item
-      name="netid"
-      style={{ marginBottom: '5px', width: '100%' }}
-      rules={[
-        {
-          required: true,
-          message: 'Please enter a valid NetID.',
-        },
-        { validator: serverValidateNetId },
-      ]}
-    >
-      <Input
-        placeholder="Search by NetID"
-        onPressEnter={(e: any) => {
-          onInput(e.target.value, 'netid');
-        }}
-      />
-    </Form.Item>
-  );
+function doDownload(url: string, fileName: string) {
+  const a = document.createElement('a');
+  a.download = fileName;
+  a.href = url;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
-// FIX: When going to organizations tab then selecting an org, it brings you back to the people tab.
-
-interface ISearchOrganizations {
-  organizations: OrgInfo[];
-  onInput(newCollaboratorId: string, collaboratorType: 'netid' | 'org'): void;
-}
-
-function SearchOrganizations(props: ISearchOrganizations) {
-  return (
-    <Form.Item
-      name="organization"
-      style={{ marginBottom: '5px', width: '100%' }}
-      rules={[
-        {
-          required: true,
-          message: 'Please select an organization.',
-        },
-      ]}
-    >
-      <Select
-        placeholder="Your Organizations"
-        onChange={(value: any) => {
-          props.onInput(value as string, 'org');
-        }}
-      >
-        {props.organizations.map((org) => (
-          <Select.Option key={org.id} value={org.id}>
-            {org.name}
-          </Select.Option>
-        ))}
-      </Select>
-    </Form.Item>
-  );
-}
-
-interface ISearchBody {
-  organizations: OrgInfo[];
-  onInput(newCollaboratorId: string, collaboratorType: 'netid' | 'org'): void;
-  onAdd: void;
-}
-
-function SearchBody(props: ISearchBody) {
-  // State is inside an inner component to prevent redraw issues.
-  const [activeTab, setActiveTab] = useState<string>('people');
-
-  return (
-    <>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-        }}
-      >
-        {activeTab === 'people' ? (
-          <SearchUsers />
-        ) : (
-          <SearchOrganizations
-            organizations={props.organizations}
-            onInput={props.onInput}
-          />
-        )}
-        <Button onClick={props.onAdd} type="primary">
-          Add
-        </Button>
-      </div>
-      <Tabs
-        activeKey={activeTab}
-        onChange={(value) => {
-          setActiveTab(value);
-        }}
-      >
-        <Tabs.TabPane tab="People" key="people">
-          <div style={{ textAlign: 'center' }}>
-            <p>No person has access.</p>
-          </div>
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="Organizations" key="organizations">
-          <div style={{ textAlign: 'center' }}>
-            <p>No organization has access.</p>
-          </div>
-        </Tabs.TabPane>
-      </Tabs>
-    </>
-  );
-}
-
-function OptionsBody() {
-  return <></>;
-}
+const downloadCanvasQRCode = () => {
+  const canvas = document
+    .getElementById('qrcode')
+    ?.querySelector<HTMLCanvasElement>('canvas');
+  if (canvas) {
+    const url = canvas.toDataURL();
+    doDownload(url, 'QRCode.png');
+  }
+};
 
 export default function ShareModal(props: IShareModal) {
-  const [form] = Form.useForm();
-
-  const [organizations, setOrganizations] = useState<OrgInfo[]>([]);
-  const [collaboratorId, setCollaboratorId] = useState<string>();
-  const [stage, setStage] = useState<'search' | 'options'>('search');
-
-  function refreshOrganizations() {
-    listOrgs('user').then((orgs) => setOrganizations(orgs));
-  }
-
-  useEffect(() => {
-    refreshOrganizations();
-  }, []);
-
-  function onInput(
-    newCollaboratorId: string,
-    collaboratorType: 'netid' | 'org',
-  ) {
-    setCollaboratorId(newCollaboratorId);
-  }
-
-  function onAdd() {
-    setStage('options');
-  }
+  const size = 250;
+  const isDev = process.env.NODE_ENV === 'development';
+  const protocol = isDev ? 'http' : 'https';
+  const alias = props.linkInfo?.aliases[0].alias;
+  const shortUrl = `${protocol}://${document.location.host}/${alias}`;
+  // TODO: Support multiple aliases
 
   return (
     <Modal
       open={props.visible}
-      title="Manage access"
-      onOk={() => {
-        form.resetFields();
-        props.onOk();
-      }}
-      onCancel={() => {
-        form.resetFields();
-        props.onCancel();
-      }}
+      title="Share"
+      onCancel={props.onCancel}
       footer={null}
+      width="40%"
     >
-      <Form form={form} preserve={false}>
-        {stage === 'search' ? (
-          <SearchBody
-            onAdd={onAdd}
-            onInput={onInput}
-            organizations={organizations}
-          />
-        ) : (
-          <></>
-        )}
-        {stage === 'options' ? <OptionsBody /> : <></>}
-      </Form>
+      <Col>
+        <Row justify="center" align="middle">
+          <Col>
+            <QRCode
+              style={{ margin: '12px' }}
+              id="qrcode"
+              errorLevel="H"
+              size={size}
+              iconSize={size / 4}
+              value={shortUrl}
+            />
+          </Col>
+          <Col>
+            <Space direction="vertical" size="small">
+              <Space>
+                <Input
+                  htmlSize={shortUrl.length}
+                  placeholder={shortUrl}
+                  disabled
+                />
+              </Space>
+              <Space>
+                <Button
+                  onClick={() => {
+                    navigator.clipboard.writeText(shortUrl);
+                  }}
+                >
+                  Copy URL
+                </Button>
+                <Button onClick={downloadCanvasQRCode}>Download QR Code</Button>
+              </Space>
+            </Space>
+          </Col>
+        </Row>
+      </Col>
     </Modal>
   );
 }

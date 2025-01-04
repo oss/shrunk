@@ -123,6 +123,7 @@
 }
 
 .dropdown-form {
+  width: 400px;
   background: white;
   padding: 10px;
   border-radius: 3px;

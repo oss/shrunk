@@ -1,5 +1,5 @@
 /**
- * Implements the [[ShareLinkModal]] component
+ * Implements the [[CollaboratorLinkModal]] component
  * @packageDocumentation
  */
 
@@ -54,7 +54,7 @@ export type Entity = {
 };
 
 /**
- * Props of the [[ShareLinkModal]] component
+ * Props of the [[CollaboratorLinkModal]] component
  * @interface
  */
 export interface Props {
@@ -114,7 +114,7 @@ export interface Props {
 }
 
 /**
- * State of the [[ShareLinkModal]] component
+ * State of the [[CollaboratorLinkModal]] component
  * @interface
  */
 export interface State {
@@ -139,12 +139,12 @@ export interface State {
 }
 
 /**
- * The [[ShareLinkModal]] component allows the user to edit the netIDs and organizations a link is shared with. The user may
+ * The [[CollaboratorLinkModal]] component allows the user to edit the netIDs and organizations a link is shared with. The user may
  *   * Add or remove NetIDs to be editors/viewers
  *   * Add or remove Organizations to be editors/viewers
  * @param props The props
  */
-export class ShareLinkModal extends React.Component<Props, State> {
+export class CollaboratorLinkModal extends React.Component<Props, State> {
   formRef = React.createRef<FormInstance>();
 
   tableColumns: ColumnsType<Entity> = [
@@ -235,11 +235,7 @@ export class ShareLinkModal extends React.Component<Props, State> {
     return (
       <Modal
         open={this.props.visible}
-        title={
-          this.props.linkInfo === null
-            ? 'Share link'
-            : `Share link: ${this.props.linkInfo.title}`
-        }
+        title="Collaborate"
         okText="Done"
         okType="ghost"
         cancelButtonProps={{ style: { display: 'none' } }}
