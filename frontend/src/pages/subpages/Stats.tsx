@@ -319,6 +319,8 @@ const BrowserCharts: React.FC<{ browserStats: BrowserStats | null }> = (
  */
 
 export function Stats(props: Props) {
+  const showPurge = false;
+
   const [linkInfo, setLinkInfo] = useState<LinkInfo | null>(null);
   const [allAliases, setAllAliases] = useState<AliasInfo[]>([]);
   const [selectedAlias, setSelectedAlias] = useState<string | null>(null);
@@ -334,9 +336,9 @@ export function Stats(props: Props) {
   const [shareModalVisible, setShareModalVisible] = useState<boolean>(false);
 
   async function updateLinkInfo() {
-    const _linkInfo = await fetch(`/api/v1/link/${props.id}`).then((resp) =>
+    const _linkInfo = (await fetch(`/api/v1/link/${props.id}`).then((resp) =>
       resp.json(),
-    );
+    )) as LinkInfo;
 
     const aliases = _linkInfo.aliases.filter((alias) => !alias.deleted);
 
@@ -715,23 +717,17 @@ export function Stats(props: Props) {
                 >
                   Export
                 </Button>
-                {mayEdit ? (
-                  <></>
-                ) : (
-                  <>
-                    <Popconfirm
-                      placement="bottom"
-                      title="Are you sure you want to clear all visit data associated with this link? This operation cannot be undone."
-                      onConfirm={clearVisitData}
-                      icon={
-                        <ExclamationCircleFilled style={{ color: 'red' }} />
-                      }
-                    >
-                      <Button danger icon={<ClearOutlined />}>
-                        Purge
-                      </Button>
-                    </Popconfirm>
-                  </>
+                {mayEdit && showPurge && (
+                  <Popconfirm
+                    placement="bottom"
+                    title="Are you sure? This action cannot be undone."
+                    onConfirm={clearVisitData}
+                    icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
+                  >
+                    <Button danger icon={<ClearOutlined />}>
+                      Purge
+                    </Button>
+                  </Popconfirm>
                 )}
               </Space>
             }
