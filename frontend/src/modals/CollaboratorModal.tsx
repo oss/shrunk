@@ -46,8 +46,6 @@ interface ICollaboratorModal {
 }
 
 export default function CollaboratorModal(props: ICollaboratorModal) {
-  const closeButton = false;
-
   const [form] = Form.useForm();
 
   const [organizations, setOrganizations] = useState<OrgInfo[]>([]);
@@ -72,6 +70,14 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
 
     refreshOrganizations();
   }, []);
+
+  function onRemoveCollaborator(entity: Entity) {
+    props.onRemoveEntity(entity._id, entity.type, entity.permission);
+
+    if (entity.permission === 'editor') {
+      props.onRemoveEntity(entity._id, entity.type, 'viewer');
+    }
+  }
 
   return (
     <Modal
@@ -214,20 +220,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
 
                             // Remove if requested via dropdown
                             if (value === 'remove') {
-                              props.onRemoveEntity(
-                                entity._id,
-                                entity.type,
-                                entity.permission,
-                              );
-
-                              if (entity.permission === 'editor') {
-                                props.onRemoveEntity(
-                                  entity._id,
-                                  entity.type,
-                                  'viewer',
-                                );
-                              }
-
+                              onRemoveCollaborator(entity);
                               return;
                             }
 
@@ -239,53 +232,33 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                           }}
                           options={[
                             {
-                              label: 'Roles',
-                              options: [
-                                {
-                                  label: 'Owner',
-                                  value: 'owner',
-                                  disabled: true,
-                                },
-                                {
-                                  label: 'Editor',
-                                  value: 'editor',
-                                  disabled: entity.permission === 'owner',
-                                },
-                                {
-                                  label: 'Viewer',
-                                  value: 'viewer',
-                                  disabled: entity.permission === 'owner',
-                                },
-                              ],
+                              label: 'Owner',
+                              value: 'owner',
+                              disabled: true,
                             },
                             {
-                              label: 'Actions',
-                              options: [
-                                {
-                                  label: 'Remove',
-                                  value: 'remove',
-                                  disabled: entity.permission === 'owner',
-                                },
-                              ],
+                              label: 'Editor',
+                              value: 'editor',
+                              disabled: entity.permission === 'owner',
+                            },
+                            {
+                              label: 'Viewer',
+                              value: 'viewer',
+                              disabled: entity.permission === 'owner',
                             },
                           ]}
                         />
-                        {closeButton && (
-                          <Popconfirm
-                            title="Are you sure you want to remove this collaborator?"
-                            onConfirm={() =>
-                              props.onRemoveEntity(
-                                entity._id,
-                                entity.type,
-                                entity.permission,
-                              )
-                            }
-                          >
-                            <Tooltip title="Remove collaborator">
-                              <Button type="text" icon={<CloseOutlined />} />
-                            </Tooltip>
-                          </Popconfirm>
-                        )}
+
+                        <Popconfirm
+                          title="Are you sure you want to remove this collaborator?"
+                          onConfirm={() => {
+                            onRemoveCollaborator(entity);
+                          }}
+                        >
+                          <Tooltip title="Remove collaborator">
+                            <Button type="text" icon={<CloseOutlined />} />
+                          </Tooltip>
+                        </Popconfirm>
                       </Space>
                     </Col>
                   </>
