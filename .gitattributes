@@ -1,0 +1,4 @@
+*.css export-ignore
+*.sh export-ignore
+*.html export-ignore
+*.js export-ignore
