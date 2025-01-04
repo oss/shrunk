@@ -190,25 +190,25 @@ export const EditLinkModal: React.FC<Props> = (props) => {
           <Input placeholder="Title" />
         </Form.Item>
 
-        <Form.Item
-          label={
-            isTrackingPixelLink
-              ? 'Long URL (tracking pixel link)'
-              : 'Long URL (redirect link)'
-          }
-          name="long_url"
-          rules={[
-            { required: true, message: 'Please input a URL.' },
-            { type: 'url', message: 'Please enter a valid URL.' },
-            { validator: serverValidateLongUrl },
-          ]}
-        >
-          <Input
-            placeholder="Long URL"
-            prefix={<LinkOutlined className="site-from-item-icon" />}
-            disabled={isTrackingPixelLink}
-          />
-        </Form.Item>
+        {isTrackingPixelLink ? (
+          <></>
+        ) : (
+          <Form.Item
+            label="Long URL"
+            name="long_url"
+            rules={[
+              { required: true, message: 'Please input a URL.' },
+              { type: 'url', message: 'Please enter a valid URL.' },
+              { validator: serverValidateLongUrl },
+            ]}
+          >
+            <Input
+              placeholder="Long URL"
+              prefix={<LinkOutlined className="site-from-item-icon" />}
+              disabled={isTrackingPixelLink}
+            />
+          </Form.Item>
+        )}
 
         <Form.Item label="Expiration time" name="expiration_time">
           <DatePicker
@@ -216,7 +216,11 @@ export const EditLinkModal: React.FC<Props> = (props) => {
             disabledDate={(current) =>
               current && current < dayjs().startOf('day')
             }
-            showTime={{ defaultValue: dayjs(props.linkInfo.expiration_time) }}
+            showTime={{
+              defaultValue: props.linkInfo.expiration_time
+                ? dayjs(props.linkInfo.expiration_time)
+                : undefined,
+            }}
           />
         </Form.Item>
 

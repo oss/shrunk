@@ -41,6 +41,7 @@ import '../../Base.css';
 import { daysBetween } from '../../lib/utils';
 import { Tag } from 'antd';
 import ShareModal from '../../modals/ShareModal';
+import { EditLinkFormValues, EditLinkModal } from '../../modals/EditLinkModal';
 
 /**
  * Props for the [[Stats]] component
@@ -52,6 +53,9 @@ export interface Props {
    * @property
    */
   id: string;
+
+  netid: string;
+  userPrivileges: Set<string>;
 }
 
 /**
@@ -326,6 +330,7 @@ export function Stats(props: Props) {
   const [loading, setLoading] = useState<boolean>(false);
   const [statsKey, setStatsKey] = useState<string>('visits');
 
+  const [editModalVisible, setEditModalVisible] = useState<boolean>(false);
   const [shareModalVisible, setShareModalVisible] = useState<boolean>(false);
 
   async function updateLinkInfo() {
@@ -391,6 +396,90 @@ export function Stats(props: Props) {
 
     fetchData();
   }, [props.id]);
+
+  /**
+   * Executes API requests to update a link
+   * @param values The form values from the edit link form
+   */
+  async function doEditLink(values: EditLinkFormValues): Promise<void> {
+    const oldLinkInfo = linkInfo;
+    if (oldLinkInfo === null) {
+      throw new Error('oldLinkInfo should not be null');
+    }
+
+    // Create the request to edit title, long_url, and expiration_time
+    const patchReq: Record<string, any> = {};
+    if (values.title !== oldLinkInfo.title) {
+      patchReq.title = values.title;
+    }
+    if (values.long_url !== oldLinkInfo.long_url) {
+      patchReq.long_url = values.long_url;
+    }
+    if (values.owner !== oldLinkInfo.owner) {
+      patchReq.owner = values.owner;
+    }
+    if (values.expiration_time !== oldLinkInfo.expiration_time) {
+      patchReq.expiration_time =
+        values.expiration_time === null
+          ? null
+          : values.expiration_time.format();
+    }
+
+    const promises = [];
+    const patchRequest = await fetch(`/api/v1/link/${props.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patchReq),
+    });
+
+    // //get the status and the json message
+    const patchRequestStatus = patchRequest.status;
+
+    if (patchRequestStatus !== 204) {
+      message.error('There was an error editing the link.', 4);
+      return;
+    }
+
+    const oldAliases = new Map(
+      oldLinkInfo.aliases.map((alias) => [alias.alias, alias]),
+    );
+    const newAliases = new Map(
+      values.aliases.map((alias) => [alias.alias, alias]),
+    );
+
+    // Delete aliases that no longer exist
+    Array.from(oldAliases.keys())
+      .filter((alias) => !newAliases.has(alias))
+      .forEach((alias) => {
+        promises.push(
+          fetch(`/api/v1/link/${props.id}/alias/${alias}`, {
+            method: 'DELETE',
+          }),
+        );
+      });
+
+    // Create/update aliases
+    Array.from(newAliases.entries())
+      .filter(([alias, info]) => {
+        const isNew = !oldAliases.has(alias);
+        const isDescriptionChanged =
+          oldAliases.has(alias) &&
+          info.description !== oldAliases.get(alias)?.description;
+        return isNew || isDescriptionChanged;
+      })
+      .forEach(([alias, info]) => {
+        promises.push(
+          fetch(`/api/v1/link/${props.id}/alias`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              alias,
+              description: info.description,
+            }),
+          }),
+        );
+      });
+  }
 
   /**
    * Set the alias and then update stats
@@ -484,7 +573,7 @@ export function Stats(props: Props) {
         <Col span={16}>
           <Row>
             <Space style={{ marginBottom: 19 }}>
-              <Typography.Title style={{ marginBottom: 0 }}>
+              <Typography.Title style={{ marginBottom: 0 }} ellipsis>
                 {linkInfo?.title}
               </Typography.Title>
 
@@ -497,7 +586,14 @@ export function Stats(props: Props) {
 
         <Col>
           <Space>
-            <Button icon={<EditOutlined />}>Edit</Button>
+            <Button
+              icon={<EditOutlined />}
+              onClick={() => {
+                setEditModalVisible(true);
+              }}
+            >
+              Edit
+            </Button>
             <Button icon={<TeamOutlined />}>Collaborate</Button>
             <Button
               type="primary"
@@ -644,6 +740,21 @@ export function Stats(props: Props) {
           </Card>
         </Col>
       </Row>
+      {linkInfo && (
+        <EditLinkModal
+          visible={editModalVisible}
+          userPrivileges={props.userPrivileges}
+          netid={props.netid}
+          linkInfo={linkInfo}
+          onOk={async (values: EditLinkFormValues) => {
+            await doEditLink(values);
+            setEditModalVisible(false);
+          }}
+          onCancel={() => {
+            setEditModalVisible(false);
+          }}
+        />
+      )}
       <ShareModal
         linkInfo={linkInfo}
         visible={shareModalVisible}

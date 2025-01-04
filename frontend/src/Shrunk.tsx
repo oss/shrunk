@@ -496,7 +496,13 @@ export class Shrunk extends React.Component<Props, State> {
                   <Route
                     exact
                     path="/stats/:id"
-                    render={(props) => <Stats id={props.match.params.id} />}
+                    render={(props) => (
+                      <Stats
+                        id={props.match.params.id}
+                        netid={this.props.netid}
+                        userPrivileges={this.props.userPrivileges}
+                      />
+                    )}
                   />
 
                   <Route exact path="/orgs">

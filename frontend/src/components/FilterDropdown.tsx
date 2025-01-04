@@ -15,7 +15,7 @@ import {
   Button,
   Typography,
 } from 'antd/lib';
-import { DownOutlined } from '@ant-design/icons';
+import { DownOutlined, FilterOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { OrgInfo } from '../api/Org';
 import { SearchSet } from '../pages/Dashboard';
@@ -85,6 +85,8 @@ export interface Props {
  * @param props The props
  */
 export const FilterDropdown: React.FC<Props> = (props) => {
+  const sortEnabled = false; // Ant Design 5 allows for client-sided sorting.
+
   const isAdmin = props.userPrivileges.has('admin');
   const sortOptions = [
     { label: 'Ascending', value: 'ascending' },
@@ -165,14 +167,18 @@ export const FilterDropdown: React.FC<Props> = (props) => {
             <Select.Option value="visits">Number of visits</Select.Option>
           </Select>
         </Form.Item>
-        <Form.Item name="sortOrder" label="Sort order">
-          <Radio.Group
-            value={sortOrder}
-            onChange={sortByOrder}
-            options={sortOptions}
-            optionType="button"
-          />
-        </Form.Item>
+        {sortEnabled ? (
+          <Form.Item name="sortOrder" label="Sort order">
+            <Radio.Group
+              value={sortOrder}
+              onChange={sortByOrder}
+              options={sortOptions}
+              optionType="button"
+            />
+          </Form.Item>
+        ) : (
+          <></>
+        )}
         <Form.Item name="show_expired">
           <Checkbox checked={showExpired} onChange={showExpiredLinks}>
             Show expired links?
@@ -214,12 +220,7 @@ export const FilterDropdown: React.FC<Props> = (props) => {
         placement="bottomLeft"
         trigger={['click']}
       >
-        <Button>
-          <Space>
-            <Typography>Filter By</Typography>
-            <DownOutlined />
-          </Space>
-        </Button>
+        <Button icon={<FilterOutlined />}>Filter</Button>
       </Dropdown>
     </Space>
   );
