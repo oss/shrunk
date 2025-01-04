@@ -235,11 +235,7 @@ export class CollaboratorLinkModal extends React.Component<Props, State> {
     return (
       <Modal
         open={this.props.visible}
-        title={
-          this.props.linkInfo === null
-            ? 'Share link'
-            : `Share link: ${this.props.linkInfo.title}`
-        }
+        title="Collaborate"
         okText="Done"
         okType="ghost"
         cancelButtonProps={{ style: { display: 'none' } }}

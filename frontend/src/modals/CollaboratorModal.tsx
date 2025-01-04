@@ -1,7 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Form, Input, Tabs, Select, Button, Typography } from 'antd/lib';
+import {
+  Modal,
+  Form,
+  Input,
+  Tabs,
+  Select,
+  Button,
+  Space,
+  Row,
+  Col,
+} from 'antd/lib';
+import { CloseCircleOutlined, PlusCircleFilled } from '@ant-design/icons';
 import { LinkInfo } from '../components/LinkInfo';
-import { PaperClipOutlined } from '@ant-design/icons';
 import { serverValidateNetId } from '../Validators';
 import { listOrgs, OrgInfo } from '../api/Org';
 
@@ -17,7 +27,7 @@ export type Entity = {
   /**
    * The permission the link is shared with
    */
-  permission: 'viewer' | 'editor';
+  permission: 'viewer' | 'editor' | 'owner';
 };
 
 interface ICollaboratorModal {
@@ -27,155 +37,42 @@ interface ICollaboratorModal {
   isLoading: boolean;
   linkInfo: LinkInfo | null;
 
-  onAddEntity: (values: Entity) => void;
+  onAddEntity: (value: Entity) => void;
   onRemoveEntity: (_id: string, type: string, permission: string) => void;
   onOk: () => void;
   onCancel: () => void;
-}
-
-function SearchUsers() {
-  return (
-    <Form.Item
-      name="netid"
-      style={{ marginBottom: '5px', width: '100%' }}
-      rules={[
-        {
-          required: true,
-          message: 'Please enter a valid NetID.',
-        },
-        { validator: serverValidateNetId },
-      ]}
-    >
-      <Input
-        placeholder="Search by NetID"
-        onPressEnter={(e: any) => {
-          onInput(e.target.value, 'netid');
-        }}
-      />
-    </Form.Item>
-  );
-}
-
-// FIX: When going to organizations tab then selecting an org, it brings you back to the people tab.
-
-interface ISearchOrganizations {
-  organizations: OrgInfo[];
-  onInput(newCollaboratorId: string, collaboratorType: 'netid' | 'org'): void;
-}
-
-function SearchOrganizations(props: ISearchOrganizations) {
-  return (
-    <Form.Item
-      name="organization"
-      style={{ marginBottom: '5px', width: '100%' }}
-      rules={[
-        {
-          required: true,
-          message: 'Please select an organization.',
-        },
-      ]}
-    >
-      <Select
-        placeholder="Your Organizations"
-        onChange={(value: any) => {
-          props.onInput(value as string, 'org');
-        }}
-      >
-        {props.organizations.map((org) => (
-          <Select.Option key={org.id} value={org.id}>
-            {org.name}
-          </Select.Option>
-        ))}
-      </Select>
-    </Form.Item>
-  );
-}
-
-interface ISearchBody {
-  organizations: OrgInfo[];
-  onInput(newCollaboratorId: string, collaboratorType: 'netid' | 'org'): void;
-  onAdd: void;
-}
-
-function SearchBody(props: ISearchBody) {
-  // State is inside an inner component to prevent redraw issues.
-  const [activeTab, setActiveTab] = useState<string>('people');
-
-  return (
-    <>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-        }}
-      >
-        {activeTab === 'people' ? (
-          <SearchUsers />
-        ) : (
-          <SearchOrganizations
-            organizations={props.organizations}
-            onInput={props.onInput}
-          />
-        )}
-        <Button onClick={props.onAdd} type="primary">
-          Add
-        </Button>
-      </div>
-      <Tabs
-        activeKey={activeTab}
-        onChange={(value) => {
-          setActiveTab(value);
-        }}
-      >
-        <Tabs.TabPane tab="People" key="people">
-          <div style={{ textAlign: 'center' }}>
-            <p>No person has access.</p>
-          </div>
-        </Tabs.TabPane>
-        <Tabs.TabPane tab="Organizations" key="organizations">
-          <div style={{ textAlign: 'center' }}>
-            <p>No organization has access.</p>
-          </div>
-        </Tabs.TabPane>
-      </Tabs>
-    </>
-  );
-}
-
-function OptionsBody() {
-  return <></>;
 }
 
 export default function CollaboratorModal(props: ICollaboratorModal) {
   const [form] = Form.useForm();
 
   const [organizations, setOrganizations] = useState<OrgInfo[]>([]);
-  const [collaboratorId, setCollaboratorId] = useState<string>();
-  const [stage, setStage] = useState<'search' | 'options'>('search');
+  const [collaboratorRole, setCollaboratorRole] = useState<'editor' | 'viewer'>(
+    'editor',
+  );
+  const [collaboratorType, setCollaboratorType] = useState<'netid' | 'org'>(
+    'netid',
+  );
+
+  const [activeTab, setActiveTab] = useState<'netid' | 'org'>(collaboratorType);
 
   function refreshOrganizations() {
     listOrgs('user').then((orgs) => setOrganizations(orgs));
   }
 
   useEffect(() => {
+    props.people.sort((a, b) => {
+      const permissionOrder = { owner: 0, editor: 1, viewer: 2 };
+      return permissionOrder[a.permission] - permissionOrder[b.permission];
+    });
+
     refreshOrganizations();
   }, []);
-
-  function onInput(
-    newCollaboratorId: string,
-    collaboratorType: 'netid' | 'org',
-  ) {
-    setCollaboratorId(newCollaboratorId);
-  }
-
-  function onAdd() {
-    setStage('options');
-  }
 
   return (
     <Modal
       open={props.visible}
-      title="Manage access"
+      title="Collaborate"
       onOk={() => {
         form.resetFields();
         props.onOk();
@@ -187,16 +84,174 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
       footer={null}
     >
       <Form form={form} preserve={false}>
-        {stage === 'search' ? (
-          <SearchBody
-            onAdd={onAdd}
-            onInput={onInput}
-            organizations={organizations}
-          />
-        ) : (
-          <></>
-        )}
-        {stage === 'options' ? <OptionsBody /> : <></>}
+        <Row gutter={[16, 2]}>
+          <Col span={24}>
+            <Space.Compact style={{ width: '100%' }}>
+              {activeTab === 'netid' ? (
+                <Form.Item
+                  name="netid"
+                  style={{ marginBottom: '5px', width: '100%' }}
+                  rules={[
+                    {
+                      required: true,
+                      message: 'Please enter a valid NetID.',
+                    },
+                    { validator: serverValidateNetId },
+                  ]}
+                >
+                  <Input
+                    placeholder="Search by NetID"
+                    onPressEnter={(e: any) => {
+                      setCollaboratorType('netid');
+                    }}
+                  />
+                </Form.Item>
+              ) : (
+                <Form.Item
+                  name="organization"
+                  style={{ marginBottom: '5px', width: '100%' }}
+                  rules={[
+                    {
+                      required: true,
+                      message: 'Please select an organization.',
+                    },
+                  ]}
+                >
+                  <Select
+                    placeholder="Your Organizations"
+                    onChange={(value: any) => {
+                      setCollaboratorType('org');
+                    }}
+                  >
+                    {organizations.map((org) => (
+                      <Select.Option key={org.id} value={org.id}>
+                        {org.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              )}
+              <Select
+                defaultValue={collaboratorRole}
+                onChange={(value: 'editor' | 'viewer') => {
+                  setCollaboratorRole(value);
+                }}
+              >
+                <Select.Option value="editor">Editor</Select.Option>
+                <Select.Option value="viewer">Viewer</Select.Option>
+              </Select>
+              <Button
+                icon={<PlusCircleFilled />}
+                onClick={() => {
+                  if (activeTab === 'netid') {
+                    props.onAddEntity({
+                      _id: form.getFieldValue(activeTab),
+                      type: activeTab,
+                      permission: collaboratorRole,
+                    });
+                  } else {
+                    props.onAddEntity({
+                      _id: form.getFieldValue('organization'),
+                      type: activeTab,
+                      permission: collaboratorRole,
+                    });
+                  }
+                }}
+                type="primary"
+              >
+                Add
+              </Button>
+            </Space.Compact>
+          </Col>
+          <Col span={24}>
+            <Tabs
+              activeKey={activeTab}
+              onChange={(value: 'netid' | 'org') => {
+                setActiveTab(value);
+              }}
+            >
+              <Tabs.TabPane tab="People" key="netid" />
+              <Tabs.TabPane tab="Organizations" key="org" />
+            </Tabs>
+            <Row gutter={[2, 16]} justify="space-between">
+              {props.people.map((entity) => {
+                if (entity.type !== activeTab) {
+                  return <></>;
+                }
+
+                const displayName =
+                  entity.type === 'netid'
+                    ? entity._id
+                    : organizations.find((org) => org.id === entity._id)?.name;
+
+                return (
+                  <>
+                    <Col span={12}>{displayName}</Col>
+                    <Col>
+                      <Select
+                        style={{ width: 120 }}
+                        defaultValue={entity.permission}
+                        onChange={(value: 'editor' | 'viewer' | 'remove') => {
+                          if (value === 'remove') {
+                            props.onRemoveEntity(
+                              entity._id,
+                              entity.type,
+                              entity.permission,
+                            );
+                            return;
+                          }
+
+                          props.onRemoveEntity(
+                            entity._id,
+                            entity.type,
+                            entity.permission,
+                          );
+                          props.onAddEntity({
+                            _id: entity._id,
+                            type: entity.type,
+                            permission: value,
+                          });
+                        }}
+                        options={[
+                          {
+                            label: 'Roles',
+                            options: [
+                              {
+                                label: 'Owner',
+                                value: 'owner',
+                                disabled: true,
+                              },
+                              {
+                                label: 'Editor',
+                                value: 'editor',
+                                disabled: entity.permission === 'owner',
+                              },
+                              {
+                                label: 'Viewer',
+                                value: 'viewer',
+                                disabled: entity.permission === 'owner',
+                              },
+                            ],
+                          },
+                          {
+                            label: 'Actions',
+                            options: [
+                              {
+                                label: 'Remove',
+                                value: 'remove',
+                                disabled: entity.permission === 'owner',
+                              },
+                            ],
+                          },
+                        ]}
+                      />
+                    </Col>
+                  </>
+                );
+              })}
+            </Row>
+          </Col>
+        </Row>
       </Form>
     </Modal>
   );

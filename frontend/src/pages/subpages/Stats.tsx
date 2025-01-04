@@ -13,6 +13,7 @@ import {
   Button,
   Popconfirm,
   Typography,
+  Tag,
   Card,
   Statistic,
   Descriptions,
@@ -39,9 +40,9 @@ import { downloadVisitsCsv } from '../../components/Csv';
 
 import '../../Base.css';
 import { daysBetween } from '../../lib/utils';
-import { Tag } from 'antd';
 import ShareModal from '../../modals/ShareModal';
 import { EditLinkFormValues, EditLinkModal } from '../../modals/EditLinkModal';
+import CollaboratorModal, { Entity } from '../../modals/CollaboratorModal';
 
 /**
  * Props for the [[Stats]] component
@@ -333,7 +334,10 @@ export function Stats(props: Props) {
   const [statsKey, setStatsKey] = useState<string>('visits');
 
   const [editModalVisible, setEditModalVisible] = useState<boolean>(false);
+  const [collabModalVisible, setCollabModalVisible] = useState<boolean>(false);
   const [shareModalVisible, setShareModalVisible] = useState<boolean>(false);
+
+  const [entities, setEntities] = useState<Entity[]>([]);
 
   async function updateLinkInfo() {
     const _linkInfo = (await fetch(`/api/v1/link/${props.id}`).then((resp) =>
@@ -350,6 +354,36 @@ export function Stats(props: Props) {
     setAllAliases(aliases);
     setSelectedAlias(null);
     setMayEdit(_linkInfo.may_edit);
+
+    const _entities: Entity[] = [];
+    const mentionedIds = new Set<string>();
+
+    _entities.push({
+      _id: _linkInfo.owner,
+      type: 'netid',
+      permission: 'owner',
+    });
+
+    _linkInfo.editors.forEach((editor) => {
+      _entities.push({
+        _id: editor._id,
+        type: editor.type,
+        permission: 'editor',
+      });
+      mentionedIds.add(editor._id);
+    });
+    _linkInfo.viewers.forEach((viewer) => {
+      if (mentionedIds.has(viewer._id)) {
+        return;
+      }
+
+      _entities.push({
+        _id: viewer._id,
+        type: viewer.type,
+        permission: 'viewer',
+      });
+    });
+    setEntities(_entities);
   }
 
   async function updateStats() {
@@ -596,7 +630,14 @@ export function Stats(props: Props) {
             >
               Edit
             </Button>
-            <Button icon={<TeamOutlined />}>Collaborate</Button>
+            <Button
+              icon={<TeamOutlined />}
+              onClick={() => {
+                setCollabModalVisible(true);
+              }}
+            >
+              Collaborate
+            </Button>
             <Button
               type="primary"
               icon={<ShareAltOutlined />}
@@ -751,6 +792,58 @@ export function Stats(props: Props) {
           }}
         />
       )}
+      <CollaboratorModal
+        visible={collabModalVisible}
+        userPrivileges={props.userPrivileges}
+        people={entities}
+        isLoading={false}
+        linkInfo={linkInfo}
+        onAddEntity={async (value) => {
+          const patchReq = {
+            acl: `${value.permission}s`,
+            action: 'add',
+            entry: {
+              _id: value._id,
+              type: value.type,
+            },
+          };
+
+          await fetch(`/api/v1/link/${props.id}/acl`, {
+            method: 'PATCH',
+            headers: {
+              'content-type': 'application/json',
+            },
+            body: JSON.stringify(patchReq),
+          });
+          updateLinkInfo();
+        }}
+        onRemoveEntity={async (
+          _id: string,
+          type: string,
+          permission: string,
+        ) => {
+          const patchReq = {
+            acl: `${permission}s`,
+            action: 'remove',
+            entry: { _id, type },
+          };
+
+          await fetch(`/api/v1/link/${props.id}/acl`, {
+            method: 'PATCH',
+            headers: {
+              'content-type': 'application/json',
+            },
+            body: JSON.stringify(patchReq),
+          });
+          updateLinkInfo();
+        }}
+        onOk={() => {
+          setCollabModalVisible(false);
+        }}
+        onCancel={() => {
+          setCollabModalVisible(false);
+        }}
+      />
       <ShareModal
         linkInfo={linkInfo}
         visible={shareModalVisible}
