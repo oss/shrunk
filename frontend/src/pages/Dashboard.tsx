@@ -259,6 +259,10 @@ export class Dashboard extends React.Component<Props, State> {
     await this.trackingPixelEnabledOnUI();
   }
 
+  onSearch = async () => {
+    this.setQuery(this.state.query);
+  };
+
   /**
    * Fetch the organizations of which the user is a member.
    * @method
@@ -277,10 +281,9 @@ export class Dashboard extends React.Component<Props, State> {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const newQueryString = e.target.value;
-    this.setState(
-      { query: { ...this.state.query, queryString: newQueryString } },
-      () => this.setQuery(this.state.query),
-    );
+    this.setState({
+      query: { ...this.state.query, queryString: newQueryString },
+    });
   };
 
   /**
@@ -850,7 +853,11 @@ export class Dashboard extends React.Component<Props, State> {
                       showLinksAfter={this.showLinksAfter}
                       showLinksBefore={this.showLinksBefore}
                     />
-                    <Button type="primary" icon={<SearchOutlined />}>
+                    <Button
+                      onClick={this.onSearch}
+                      type="primary"
+                      icon={<SearchOutlined />}
+                    >
                       Search
                     </Button>
                   </Space.Compact>
