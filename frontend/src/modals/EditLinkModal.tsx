@@ -241,7 +241,7 @@ export const EditLinkModal: React.FC<Props> = (props) => {
 
         <Form.List name="aliases">
           {(fields, { add, remove }) => (
-            <div className="fix-alias-remove-button">
+            <div>
               {fields.map((field, index) => (
                 <Space
                   key={field.key}

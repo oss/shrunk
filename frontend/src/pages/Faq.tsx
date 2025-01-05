@@ -6,8 +6,6 @@ import React from 'react';
 import { Row, Col, Table, Collapse } from 'antd/lib';
 import { Link } from 'react-router-dom';
 
-import './Faq.css';
-
 const Data = {
   data: [
     {
@@ -156,7 +154,7 @@ const Data = {
 export default function Faq(): JSX.Element {
   const { Panel } = Collapse;
   return (
-    <div className="faq">
+    <div>
       <Row className="primary-row">
         <Col span={24}>
           <span className="page-title">Frequently Asked Questions</span>

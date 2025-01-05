@@ -206,6 +206,10 @@ export interface State {
   isCreateModalOpen: boolean;
 }
 
+// TODO: Add title column
+// TODO: Next page does not work
+// TODO: Add option to full-screen for more information
+
 /**
  * The [[Dashboard]] component implements most of Shrunk's core functionality.
  * It allows the user to
