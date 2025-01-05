@@ -834,164 +834,159 @@ export class Dashboard extends React.Component<Props, State> {
         <Row>
           <Typography.Title>URL Shortener</Typography.Title>
         </Row>
-        <Card>
-          <Row gutter={[16, 16]} justify="space-between">
-            <Col span={12}>
-              {this.state.userOrgs === null ? (
-                <></>
-              ) : (
-                <>
-                  <Space.Compact block>
-                    <Input
-                      placeholder="Find a shortened link"
-                      onChange={this.updateQueryString}
-                    />
-                    <FilterDropdown
-                      userPrivileges={this.props.userPrivileges}
-                      userOrgs={this.state.userOrgs}
-                      showByOrg={this.showByOrg}
-                      showDeletedLinks={this.showDeletedLinks}
-                      showExpiredLinks={this.showExpiredLinks}
-                      sortLinksByKey={this.sortLinksByKey}
-                      sortLinksByOrder={this.sortLinksByOrder}
-                      showLinksAfter={this.showLinksAfter}
-                      showLinksBefore={this.showLinksBefore}
-                    />
-                    <Button
-                      onClick={this.onSearch}
-                      type="primary"
-                      icon={<SearchOutlined />}
-                    >
-                      Search
-                    </Button>
-                  </Space.Compact>
-                </>
-              )}
-            </Col>
-            <Col span={12} style={{ textAlign: 'right' }}>
-              <Button
-                type="primary"
-                icon={<PlusCircleFilled />}
-                onClick={() => this.setState({ isCreateModalOpen: true })}
-              >
-                Create Link
-              </Button>
-            </Col>
-            <Col span={24}>
-              {this.state.linkInfo === null ? (
-                <Spin size="large" />
-              ) : (
-                <Table
-                  scroll={{ x: 'calc(700px + 50%)' }}
-                  columns={[
-                    {
-                      title: 'Aliases',
-                      dataIndex: 'aliases',
-                      key: 'aliases',
-                      width: '30%',
-                      fixed: 'left',
-                      render: (_, record) => (
-                        <Row gutter={[0, 8]}>
-                          {record.aliases.map((aliasObj) => {
-                            const isDev =
-                              process.env.NODE_ENV === 'development';
-                            const protocol = isDev ? 'http' : 'https';
-                            const shortUrl = `${protocol}://${
-                              document.location.host
-                            }/${aliasObj.alias.toString()}`;
-                            return (
-                              <Col span={24}>
-                                <Button
-                                  type="text"
-                                  onClick={() =>
-                                    navigator.clipboard.writeText(shortUrl)
-                                  }
-                                >
-                                  <Space>
-                                    <CopyOutlined />
-                                    <Typography key={aliasObj.alias}>
-                                      {aliasObj.alias.toString()}
-                                    </Typography>
-                                  </Space>
-                                </Button>
-                              </Col>
-                            );
-                          })}
-                        </Row>
-                      ),
-                    },
-                    {
-                      title: 'Long URL',
-                      dataIndex: 'longUrl',
-                      key: 'longUrl',
-                      width: '40%',
-                      fixed: 'left',
-                      render: (_, record) => (
-                        <Typography.Link href={record.longUrl} ellipsis>
-                          {record.longUrl}
-                        </Typography.Link>
-                      ),
-                    },
-                    {
-                      title: 'Owner',
-                      dataIndex: 'owner',
-                      key: 'owner',
-                      width: '15%',
-                      sorter: (a, b) => a.owner.localeCompare(b.owner),
-                    },
-                    {
-                      title: 'Date Created',
-                      dataIndex: 'dateCreated',
-                      key: 'dateCreated',
-                      width: '15%',
-                      sorter: (a, b) =>
-                        dayjs(a.dateCreated).unix() -
-                        dayjs(b.dateCreated).unix(),
-                    },
-                    {
-                      title: 'Unique Visits',
-                      dataIndex: 'uniqueVisits',
-                      key: 'uniqueVisits',
-                      width: '15%',
-                      sorter: (a, b) => a.uniqueVisits - b.uniqueVisits,
-                    },
-                    {
-                      title: 'Total Visits',
-                      dataIndex: 'totalVisits',
-                      key: 'totalVisits',
-                      width: '15%',
-                      sorter: (a, b) => a.totalVisits - b.totalVisits,
-                    },
-                    {
-                      title: 'Actions',
-                      key: 'actions',
-                      fixed: 'right',
-                      width: '15%',
-                      render: (_, record) => (
-                        <Space size="middle">
-                          <Typography.Link href={`/app/#/stats/${record.key}`}>
-                            View
-                          </Typography.Link>
-                        </Space>
-                      ),
-                    },
-                  ]}
-                  dataSource={this.state.linkInfo.map((link) => ({
-                    key: link.id,
-                    aliases: link.aliases,
-                    longUrl: link.long_url,
-                    owner: link.owner,
-                    dateCreated: dayjs(link.created_time).format(
-                      'MMM DD, YYYY',
+        <Row gutter={[16, 16]} justify="space-between">
+          <Col span={12}>
+            {this.state.userOrgs === null ? (
+              <></>
+            ) : (
+              <>
+                <Space.Compact block>
+                  <Input
+                    placeholder="Find a shortened link"
+                    onChange={this.updateQueryString}
+                  />
+                  <FilterDropdown
+                    userPrivileges={this.props.userPrivileges}
+                    userOrgs={this.state.userOrgs}
+                    showByOrg={this.showByOrg}
+                    showDeletedLinks={this.showDeletedLinks}
+                    showExpiredLinks={this.showExpiredLinks}
+                    sortLinksByKey={this.sortLinksByKey}
+                    sortLinksByOrder={this.sortLinksByOrder}
+                    showLinksAfter={this.showLinksAfter}
+                    showLinksBefore={this.showLinksBefore}
+                  />
+                  <Button
+                    onClick={this.onSearch}
+                    type="primary"
+                    icon={<SearchOutlined />}
+                  >
+                    Search
+                  </Button>
+                </Space.Compact>
+              </>
+            )}
+          </Col>
+          <Col span={12} style={{ textAlign: 'right' }}>
+            <Button
+              type="primary"
+              icon={<PlusCircleFilled />}
+              onClick={() => this.setState({ isCreateModalOpen: true })}
+            >
+              Create Link
+            </Button>
+          </Col>
+          <Col span={24}>
+            {this.state.linkInfo === null ? (
+              <Spin size="large" />
+            ) : (
+              <Table
+                scroll={{ x: 'calc(700px + 50%)' }}
+                columns={[
+                  {
+                    title: 'Aliases',
+                    dataIndex: 'aliases',
+                    key: 'aliases',
+                    width: '30%',
+                    fixed: 'left',
+                    render: (_, record) => (
+                      <Row gutter={[0, 8]}>
+                        {record.aliases.map((aliasObj) => {
+                          const isDev = process.env.NODE_ENV === 'development';
+                          const protocol = isDev ? 'http' : 'https';
+                          const shortUrl = `${protocol}://${
+                            document.location.host
+                          }/${aliasObj.alias.toString()}`;
+                          return (
+                            <Col span={24}>
+                              <Button
+                                type="text"
+                                onClick={() =>
+                                  navigator.clipboard.writeText(shortUrl)
+                                }
+                              >
+                                <Space>
+                                  <CopyOutlined />
+                                  <Typography key={aliasObj.alias}>
+                                    {aliasObj.alias.toString()}
+                                  </Typography>
+                                </Space>
+                              </Button>
+                            </Col>
+                          );
+                        })}
+                      </Row>
                     ),
-                    uniqueVisits: link.unique_visits,
-                    totalVisits: link.visits,
-                  }))}
-                />
-              )}
-            </Col>
-          </Row>
-        </Card>
+                  },
+                  {
+                    title: 'Long URL',
+                    dataIndex: 'longUrl',
+                    key: 'longUrl',
+                    width: '40%',
+                    fixed: 'left',
+                    render: (_, record) => (
+                      <Typography.Link href={record.longUrl} ellipsis>
+                        {record.longUrl}
+                      </Typography.Link>
+                    ),
+                  },
+                  {
+                    title: 'Owner',
+                    dataIndex: 'owner',
+                    key: 'owner',
+                    width: '15%',
+                    sorter: (a, b) => a.owner.localeCompare(b.owner),
+                  },
+                  {
+                    title: 'Date Created',
+                    dataIndex: 'dateCreated',
+                    key: 'dateCreated',
+                    width: '15%',
+                    sorter: (a, b) =>
+                      dayjs(a.dateCreated).unix() - dayjs(b.dateCreated).unix(),
+                  },
+                  {
+                    title: 'Unique Visits',
+                    dataIndex: 'uniqueVisits',
+                    key: 'uniqueVisits',
+                    width: '15%',
+                    sorter: (a, b) => a.uniqueVisits - b.uniqueVisits,
+                  },
+                  {
+                    title: 'Total Visits',
+                    dataIndex: 'totalVisits',
+                    key: 'totalVisits',
+                    width: '15%',
+                    sorter: (a, b) => a.totalVisits - b.totalVisits,
+                  },
+                  {
+                    title: 'Actions',
+                    key: 'actions',
+                    fixed: 'right',
+                    width: '15%',
+                    render: (_, record) => (
+                      <Space size="middle">
+                        <Typography.Link href={`/app/#/stats/${record.key}`}>
+                          View
+                        </Typography.Link>
+                      </Space>
+                    ),
+                  },
+                ]}
+                dataSource={this.state.linkInfo.map((link) => ({
+                  key: link.id,
+                  aliases: link.aliases,
+                  longUrl: link.long_url,
+                  owner: link.owner,
+                  dateCreated: dayjs(link.created_time).format('MMM DD, YYYY'),
+                  uniqueVisits: link.unique_visits,
+                  totalVisits: link.visits,
+                }))}
+              />
+            )}
+          </Col>
+        </Row>
+
         <Modal
           open={this.state.isCreateModalOpen}
           onCancel={() => this.setState({ isCreateModalOpen: false })}
