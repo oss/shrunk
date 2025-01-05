@@ -266,6 +266,8 @@ class LinksClient:
         # editors always have view permission
 
         """
+        # SHARING_ACL_REFACTOR
+
         A study needs to be done why this is even a thing. We will
         have duplicate information in the database since this is here.
 
