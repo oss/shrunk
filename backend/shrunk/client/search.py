@@ -230,6 +230,7 @@ class SearchClient:
                 "created_time": res["timeCreated"],
                 "expiration_time": expiration_time,
                 "visits": res["visits"],
+                "domain": res["domain"],
                 "unique_visits": res.get("unique_visits", 0),
                 "owner": res["netid"],
                 "aliases": [

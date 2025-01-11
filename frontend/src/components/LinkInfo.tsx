@@ -57,6 +57,7 @@ export interface LinkInfo {
   id: string;
   title: string;
   long_url: string;
+  domain: string;
   created_time: Date;
   is_expired: boolean;
   expiration_time: Date | null;

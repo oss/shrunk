@@ -8,11 +8,10 @@ import base32 from 'hi-base32';
 import dayjs from 'dayjs';
 import {
   Form,
+  Select,
   Input,
   Button,
   DatePicker,
-  Space,
-  Tooltip,
   Spin,
   Modal,
   Radio,
@@ -22,11 +21,7 @@ import {
   Card,
 } from 'antd/lib';
 import {
-  CloseCircleOutlined,
-  LinkOutlined,
   MinusCircleOutlined,
-  PlusOutlined,
-  QuestionCircleOutlined,
 } from '@ant-design/icons';
 import { FormInstance } from 'antd/lib/form';
 import {
@@ -35,7 +30,6 @@ import {
   serverValidateLongUrl,
 } from '../Validators';
 import '../Base.css';
-
 /**
  * The final values of the create link form
  * @interface
@@ -65,6 +59,13 @@ interface CreateLinkFormValues {
    * @property
    */
   aliases: { alias?: string; description: string }[];
+
+  /**
+   * The link's domain. The `domain` field of an array element is absent
+   * if the domain is the dafault domain
+   * @property
+   */
+  domain?: string
 
   /**
    * Whether the link is a tracking pixel link
@@ -100,6 +101,9 @@ export interface Props {
    * tracking_pixel_ui_enabled is a boolean value that is set by the backend.
    */
   tracking_pixel_ui_enabled: boolean;
+
+  //the any should be fixed but its fine for now
+  userOrgs: any;
 }
 
 /**
@@ -137,6 +141,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
    * the Shrink! button.
    */
   onSubmitClick = async (): Promise<void> => {
+
     this.formRef.current!.resetFields();
     await this.props.onFinish();
     this.setState({ loading: false, tracking_pixel_enabled: false });
@@ -156,10 +161,10 @@ export class CreateLinkForm extends React.Component<Props, State> {
    */
   createLink = async (values: CreateLinkFormValues): Promise<void> => {
     this.toggleLoading();
-
     const createLinkReq: {
       title: string;
       long_url: string;
+      domain?: string;
       expiration_time?: string;
       is_tracking_pixel_link?: boolean;
     } = {
@@ -172,17 +177,20 @@ export class CreateLinkForm extends React.Component<Props, State> {
     if (values.title === undefined) {
       createLinkReq.title = values.aliases[0].alias ?? values.long_url;
     }
-
     if (values.expiration_time !== undefined) {
       createLinkReq.expiration_time = values.expiration_time.format();
     }
 
+    if (values.domain !== undefined) {
+      createLinkReq.domain = values.domain
+    }
     let statusOfReq = 200;
     const createLinkResp = await fetch('/api/v1/link', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(createLinkReq),
     }).then((resp) => {
+
       statusOfReq = resp.status;
       return resp.json();
     });
@@ -232,6 +240,8 @@ export class CreateLinkForm extends React.Component<Props, State> {
     const mayUseCustomAliases =
       this.props.userPrivileges.has('power_user') ||
       this.props.userPrivileges.has('admin');
+    const uniqueDomains = [...new Set(this.props.userOrgs.flatMap((org: { domains: any }) => org.domains.map((item: any) => item.domain)))];
+
     return (
       <Form
         ref={this.formRef}
@@ -307,8 +317,21 @@ export class CreateLinkForm extends React.Component<Props, State> {
                 </Button>
               </Spin>
             </Form.Item>
+
           </Col>
           <Col span={12}>
+            <Form.Item label="Domain" name="domain">
+              {mayUseCustomAliases ? (
+                <Select
+                  showSearch
+                  options={uniqueDomains.map(domain => ({ value: domain, label: domain }))}
+                  defaultValue=""
+                  placeholder="Select a domain"
+                />
+              ) : (
+                <p>domain</p>
+              )}
+            </Form.Item>
             <Form.List name="aliases">
               {(fields, { add, remove }) => (
                 <div
@@ -337,6 +360,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
                         )
                       }
                     >
+
                       <Row gutter={16}>
                         <Col span={12}>
                           {!mayUseCustomAliases ? (
@@ -384,7 +408,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
                     <></>
                   ) : (
                     <Button type="dashed" onClick={() => add()} block>
-                      + Add Item
+                      + Add Alias
                     </Button>
                   )}
                 </div>

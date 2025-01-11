@@ -59,6 +59,7 @@ import LinkHubDashboard from './pages/LinkHubDashboard';
 import LinkHubEditor from './pages/subpages/LinkHubEditor';
 import './Shrunk.css';
 import UsersProvider from './contexts/Users';
+import Domains from './components/admin/Domains';
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -160,10 +161,10 @@ export class Shrunk extends React.Component<Props, State> {
       this.props.userPrivileges.size === 0
         ? 'Whitelisted User'
         : this.props.userPrivileges.has('power_user')
-        ? 'Power User'
-        : this.props.userPrivileges.has('facstaff')
-        ? 'Faculty/Staff'
-        : 'Administrator';
+          ? 'Power User'
+          : this.props.userPrivileges.has('facstaff')
+            ? 'Faculty/Staff'
+            : 'Administrator';
     this.state = {
       showAdminTab,
       showWhitelistTab,
@@ -318,8 +319,8 @@ export class Shrunk extends React.Component<Props, State> {
                         <NavLink to="/orgs">My Organizations</NavLink>
                       </Menu.Item>
                       {this.state.role === 'Administrator' ||
-                      this.state.role === 'Power User' ||
-                      !this.state.isRoleRequestsEnabled ? (
+                        this.state.role === 'Power User' ||
+                        !this.state.isRoleRequestsEnabled ? (
                         <></>
                       ) : (
                         <>
@@ -567,6 +568,9 @@ export class Shrunk extends React.Component<Props, State> {
                       </Route>
                       <Route exact path="/admin/link_security">
                         <LinkSecurity />
+                      </Route>
+                      <Route exact path="/admin/domains">
+                        <Domains />
                       </Route>
                       <Route exact path="/admin/role_requests/power_user">
                         <PendingRoleRequests

@@ -480,19 +480,19 @@ export class Dashboard extends React.Component<Props, State> {
       count: result.count,
       results: result.results.map(
         (output: any) =>
-          ({
-            ...output,
-            created_time: new Date(output.created_time),
-            expiration_time: !output.expiration_time
-              ? null
-              : new Date(output.expiration_time),
-            deletion_info: !output.deletion_info
-              ? null
-              : {
-                  deleted_by: output.deletion_info.deleted_by,
-                  deleted_time: new Date(output.deletion_info.deleted_time),
-                },
-          } as LinkInfo),
+        ({
+          ...output,
+          created_time: new Date(output.created_time),
+          expiration_time: !output.expiration_time
+            ? null
+            : new Date(output.expiration_time),
+          deletion_info: !output.deletion_info
+            ? null
+            : {
+              deleted_by: output.deletion_info.deleted_by,
+              deleted_time: new Date(output.deletion_info.deleted_time),
+            },
+        } as LinkInfo),
       ),
     };
   };
@@ -827,7 +827,6 @@ export class Dashboard extends React.Component<Props, State> {
       },
     });
   };
-
   render(): React.ReactNode {
     return (
       <>
@@ -894,9 +893,8 @@ export class Dashboard extends React.Component<Props, State> {
                         {record.aliases.map((aliasObj) => {
                           const isDev = process.env.NODE_ENV === 'development';
                           const protocol = isDev ? 'http' : 'https';
-                          const shortUrl = `${protocol}://${
-                            document.location.host
-                          }/${aliasObj.alias.toString()}`;
+                          console.log(record)
+                          const shortUrl = `${protocol}://${record.domain || ''}${record.domain ? '.' : ''}${document.location.host}/${aliasObj.alias.toString()}`;
                           return (
                             <Col span={24}>
                               <Button
@@ -976,6 +974,7 @@ export class Dashboard extends React.Component<Props, State> {
                 dataSource={this.state.linkInfo.map((link) => ({
                   key: link.id,
                   aliases: link.aliases,
+                  domain: link.domain,
                   longUrl: link.long_url,
                   owner: link.owner,
                   dateCreated: dayjs(link.created_time).format('MMM DD, YYYY'),

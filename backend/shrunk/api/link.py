@@ -59,6 +59,7 @@ CREATE_LINK_SCHEMA = {
         "viewers": {"type": "array", "items": ACL_ENTRY_SCHEMA},
         "bypass_security_measures": {"type": "boolean"},
         "is_tracking_pixel_link": {"type": "boolean"},
+        "domain": {"type": "string", "minLength": 0},
     },
 }
 
@@ -103,6 +104,8 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
         req["editors"] = []
     if "viewers" not in req:
         req["viewers"] = []
+    if "domain" not in req:
+        req["domain"] = ""
 
     if "bypass_security_measures" not in req:
         req["bypass_security_measures"] = False
@@ -171,6 +174,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
             expiration_time,
             netid,
             request.remote_addr,
+            domain=req["domain"],
             viewers=req["viewers"],
             editors=req["editors"],
             bypass_security_measures=req["bypass_security_measures"],
@@ -280,6 +284,7 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         "owner": client.links.get_owner(link_id),
         "created_time": info["timeCreated"],
         "expiration_time": info.get("expiration_time", None),
+        "domain": info["domain"],
         "aliases": aliases,
         "deleted": info.get("deleted", False),
         "editors": info["editors"] if "editors" in info else [],
@@ -287,7 +292,6 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         "is_tracking_pixel_link": info.get("is_tracking_pixel_link", False),
         "may_edit": client.links.may_edit(link_id, netid),
     }
-
     return jsonify(json_info)
 
 
