@@ -13,7 +13,7 @@ import '../Base.css';
  * Props for the [[Admin]] component
  * @interface
  */
-export interface Props {}
+export interface Props { }
 
 /**
  * Summary information for one role
@@ -111,7 +111,13 @@ export class Admin extends React.Component<Props, State> {
             </Link>
           </Col>
         </Row>
-
+        <Row className="primary-row">
+          <Col span={24}>
+            <Link to="/admin/domains" className="title">
+              Domains
+            </Link>
+          </Col>
+        </Row>
         <Row className="primary-row">
           <Col span={24}>
             <Link to="/admin/user_lookup" className="title">

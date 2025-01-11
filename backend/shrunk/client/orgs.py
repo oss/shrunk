@@ -77,6 +77,7 @@ class OrgsClient:
                     "name": org_name,
                     "timeCreated": datetime.now(timezone.utc),
                     "members": [],
+                    "domains": [],
                 }
             )
         except pymongo.errors.DuplicateKeyError:
@@ -144,7 +145,7 @@ class OrgsClient:
 
         result = self.db.organizations.update_one(match, update)
         return cast(int, result.modified_count) == 1
-
+    
     def delete_member(self, org_id: ObjectId, netid: str) -> bool:
         result = self.db.organizations.update_one(
             {"_id": org_id}, {"$pull": {"members": {"netid": netid}}}
@@ -173,6 +174,45 @@ class OrgsClient:
             if member["netid"] == netid and member["is_admin"]:
                 return True
         return False
+    
+    def create_domain(self, org_name: str, domain: str) -> bool:
+        try:
+            existing_domain = self.db.organizations.find_one({"domains.domain": domain})
+            if existing_domain:
+                return False
+            org = self.db.organizations.find_one({"name": org_name})
+            if org is None:
+                return False
+            update = {
+                "$addToSet": {
+                    "domains": {
+                        "domain": domain,
+                        "timeCreated": datetime.now(timezone.utc),
+                    },
+                },
+            }
+
+            result = self.db.organizations.update_one(org, update)
+            return cast(int, result.modified_count) == 1
+        except:
+            return None
+        
+    def delete_domain(self, org_name: str, domain: str) -> bool:
+        try:
+            org = self.db.organizations.find_one({"name": org_name})
+            if org is None:
+                return False
+
+            update = {
+                "$pull": {
+                    "domains": {"domain": domain},
+                },
+            }
+
+            result = self.db.organizations.update_one({"name": org_name}, update)
+            return cast(int, result.modified_count) == 1
+        except:
+            return None
 
     def get_visit_stats(self, org_id: ObjectId) -> List[Any]:
         pipeline = [

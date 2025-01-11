@@ -137,7 +137,6 @@ class LinksClient:
         """
         result = self.get_link_info_by_alias(alias)
         return result["_id"] if result is not None else None
-
     def create(
         self,
         title: str,
@@ -145,6 +144,7 @@ class LinksClient:
         expiration_time: Optional[datetime],
         netid: str,
         creator_ip: str,
+        domain: Optional[str] = None,
         viewers: List[Dict[str, Any]] = None,
         editors: List[Dict[str, Any]] = None,
         bypass_security_measures: bool = False,
@@ -154,6 +154,8 @@ class LinksClient:
             viewers = []
         if editors is None:
             editors = []
+        if domain is None:
+            domain = ""
         if self.long_url_is_blocked(long_url):
             raise BadLongURLException
 
@@ -165,6 +167,10 @@ class LinksClient:
             for member in members:
                 self.assert_valid_acl_entry(acl, member)
 
+        # Check if custom domain is valid (if provided)
+        #if domain:
+            # Raise an exception if validation fails
+
         document = {
             "title": title,
             "long_url": long_url,
@@ -175,6 +181,7 @@ class LinksClient:
             "creator_ip": creator_ip,
             "expiration_time": expiration_time,
             "netid": netid,
+            "domain": domain,
             "aliases": [],
             "viewers": viewers,
             "editors": editors,
