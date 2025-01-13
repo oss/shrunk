@@ -338,6 +338,11 @@ export function Stats(props: Props) {
 
   const [entities, setEntities] = useState<Entity[]>([]);
 
+  const [topReferrer, setTopReferrer] = useState<{
+    domain: string;
+    count: number;
+  } | null>(null);
+
   async function updateLinkInfo() {
     const _linkInfo = (await fetch(`/api/v1/link/${props.id}`).then((resp) =>
       resp.json(),
@@ -431,6 +436,21 @@ export function Stats(props: Props) {
 
     fetchData();
   }, [props.id]);
+
+  useEffect(() => {
+    const fetchTopReferrer = async () => {
+      try {
+        const response = await fetch('/api/v1/stats/top_referrer');
+        const data = await response.json();
+        setTopReferrer(data);
+      } catch (error) {
+        console.error('Failed to fetch top referrer:', error);
+        setTopReferrer(null);
+      }
+    };
+
+    fetchTopReferrer();
+  }, []);
 
   /**
    * Executes API requests to update a link
@@ -604,11 +624,11 @@ export function Stats(props: Props) {
 
   return (
     <>
-      <Row justify="space-between">
+      <Row justify="space-between" align="middle">
         <Col span={16}>
           <Row>
-            <Space style={{ marginBottom: 19 }}>
-              <Typography.Title style={{ marginBottom: 0 }} ellipsis>
+            <Space style={{ marginBottom: 19, marginTop: 19 }}>
+              <Typography.Title style={{ margin: 0 }} ellipsis>
                 {linkInfo?.title}
               </Typography.Title>
 
@@ -680,7 +700,10 @@ export function Stats(props: Props) {
             </Col>
             <Col span={6}>
               <Card>
-                <Statistic title="Most Popular Referrer" value="Twitter" />
+                <Statistic
+                  title="Most Popular Referrer"
+                  value={topReferrer?.domain ?? 'None'}
+                />
               </Card>
             </Col>
           </>
