@@ -331,7 +331,7 @@ export function Stats(props: Props) {
   const [browserStats, setBrowserStats] = useState<BrowserStats | null>(null);
   const [mayEdit, setMayEdit] = useState<boolean | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [statsKey, setStatsKey] = useState<string>('visits');
+  const [statsKey, setStatsKey] = useState<string>('alias');
 
   const [editModalVisible, setEditModalVisible] = useState<boolean>(false);
   const [collabModalVisible, setCollabModalVisible] = useState<boolean>(false);
@@ -585,10 +585,10 @@ export function Stats(props: Props) {
   };
 
   const statTabsKeys = [
+    { key: 'alias', tab: 'Alias' },
     { key: 'visits', tab: 'Visits' },
     { key: 'geoip', tab: 'Location' },
     { key: 'browser', tab: 'Metadata' },
-    { key: 'alias', tab: 'Alias' },
   ];
 
   const statTabs: Record<string, React.ReactNode> = {
