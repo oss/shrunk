@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Form, Input, Button, Typography, message } from 'antd';
+import { Form, Input, Button, Typography, message, Col } from 'antd';
 
 const { Title } = Typography;
 
@@ -60,7 +60,7 @@ const Domains: React.FC = () => {
     };
 
     return (
-        <div style={{ maxWidth: 500, margin: '0 auto', padding: 24 }}>
+        <Col>
             <Title level={3}>Custom Domain Grant Request</Title>
             <Form
                 form={grantForm}
@@ -120,7 +120,7 @@ const Domains: React.FC = () => {
                     </Button>
                 </Form.Item>
             </Form>
-        </div>
+        </Col>
     );
 };
 

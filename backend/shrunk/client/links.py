@@ -167,10 +167,6 @@ class LinksClient:
             for member in members:
                 self.assert_valid_acl_entry(acl, member)
 
-        # Check if custom domain is valid (if provided)
-        #if domain:
-            # Raise an exception if validation fails
-
         document = {
             "title": title,
             "long_url": long_url,

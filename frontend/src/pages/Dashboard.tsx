@@ -893,7 +893,6 @@ export class Dashboard extends React.Component<Props, State> {
                         {record.aliases.map((aliasObj) => {
                           const isDev = process.env.NODE_ENV === 'development';
                           const protocol = isDev ? 'http' : 'https';
-                          console.log(record)
                           const shortUrl = `${protocol}://${record.domain || ''}${record.domain ? '.' : ''}${document.location.host}/${aliasObj.alias.toString()}`;
                           return (
                             <Col span={24}>

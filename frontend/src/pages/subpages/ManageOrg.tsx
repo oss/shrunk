@@ -370,7 +370,6 @@ class ManageOrgInner extends React.Component<Props, State> {
           this.formRef.current
             .validateFields()
             .then(async (values) => {
-              console.log(this);
               this.onRenameOrg(values.newName);
 
               if (this.formRef.current) this.formRef.current.resetFields();
