@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import base32 from 'hi-base32';
 import dayjs from 'dayjs';
 import {
@@ -102,59 +102,32 @@ export interface Props {
 }
 
 /**
- * State for the [[CreateLinkForm]] component
- * @interface
- */
-interface State {
-  loading: boolean;
-  tracking_pixel_enabled: boolean;
-  tracking_pixel_extension: string;
-}
-
-/**
  * The [[CreateLinkForm]] component allows the user to create a new link
  * @class
  */
-export class CreateLinkForm extends React.Component<Props, State> {
-  formRef = React.createRef<FormInstance>();
+export function CreateLinkForm({ userPrivileges, onFinish, tracking_pixel_ui_enabled }: Props): React.ReactElement {
+  const [loading, setLoading] = useState(false);
+  const [trackingPixelEnabled, setTrackingPixelEnabled] = useState(false);
+  const [trackingPixelExtension, setTrackingPixelExtension] = useState('.png');
+  const formRef = useRef<FormInstance>(null);
 
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      loading: false,
-      tracking_pixel_enabled: false,
-      tracking_pixel_extension: '.png',
-    };
-  }
-
-  toggleLoading = () => {
-    this.setState({ loading: true });
+  const onSubmitClick = async () => {
+    formRef.current?.resetFields();
+    await onFinish();
+    setLoading(false);
+    setTrackingPixelEnabled(false);
   };
 
-  /**
-   * Basic finishing actions when a user clicks on
-   * the Shrink! button.
-   */
-  onSubmitClick = async (): Promise<void> => {
-    this.formRef.current!.resetFields();
-    await this.props.onFinish();
-    this.setState({ loading: false, tracking_pixel_enabled: false });
+  const onTrackingPixelChange = (e: RadioChangeEvent) => {
+    setTrackingPixelEnabled(e.target.value === 'pixel');
   };
 
-  onTrackingPixelChange = (e: RadioChangeEvent) => {
-    this.setState({ tracking_pixel_enabled: e.target.value === 'pixel' });
+  const onTrackingPixelExtensionChange = (e: RadioChangeEvent) => {
+    setTrackingPixelExtension(e.target.value);
   };
 
-  onTrackingPixelExtensionChange = (e: RadioChangeEvent) => {
-    this.setState({ tracking_pixel_extension: e.target.value });
-  };
-
-  /**
-   * Executes API requests to create a new link and then calls the `onFinish` callback
-   * @param values The values from the form
-   */
-  createLink = async (values: CreateLinkFormValues): Promise<void> => {
-    this.toggleLoading();
+  const createLink = async (values: CreateLinkFormValues) => {
+    setLoading(true);
 
     const createLinkReq: {
       title: string;
@@ -191,7 +164,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
         title: 'An error has ocurred',
         content: createLinkResp.errors,
       });
-      this.onSubmitClick();
+      onSubmitClick();
       return;
     }
 
@@ -201,19 +174,16 @@ export class CreateLinkForm extends React.Component<Props, State> {
       values.aliases.map(async (alias) => {
         const createAliasReq: any = { description: alias.description };
         let result = null;
-        // Check if there are duplicate aliases
         if (alias.alias !== undefined) {
           result = await fetch(
-            `/api/v1/link/validate_duplicate_alias/${base32.encode(
-              alias.alias!,
-            )}`,
+            `/api/v1/link/validate_duplicate_alias/${base32.encode(alias.alias!)}`,
           ).then((resp) => resp.json());
         }
         if (alias.alias !== undefined && result.valid) {
           createAliasReq.alias = alias.alias;
         }
-        if (this.state.tracking_pixel_enabled) {
-          createAliasReq.extension = this.state.tracking_pixel_extension;
+        if (trackingPixelEnabled) {
+          createAliasReq.extension = trackingPixelExtension;
         }
         await fetch(`/api/v1/link/${linkId}/alias`, {
           method: 'POST',
@@ -223,175 +193,172 @@ export class CreateLinkForm extends React.Component<Props, State> {
       }),
     );
 
-    this.onSubmitClick();
+    onSubmitClick();
   };
 
-  render(): React.ReactNode {
-    const initialValues = { aliases: [{ description: '' }] };
-    const mayUseCustomAliases =
-      this.props.userPrivileges.has('power_user') ||
-      this.props.userPrivileges.has('admin');
-    return (
-      <Form
-        ref={this.formRef}
-        layout="vertical"
-        initialValues={initialValues}
-        onFinish={this.createLink}
-      >
-        <Row gutter={[16, 16]} justify="end">
-          <Col span={12}>
-            {!this.state.tracking_pixel_enabled && (
-              <>
-                <Form.Item
-                  label="URL"
-                  name="long_url"
-                  rules={[
-                    { required: true },
-                    { type: 'url', message: 'Invalid URL' },
-                    { validator: serverValidateLongUrl },
-                  ]}
-                >
-                  <Input />
-                </Form.Item>
-              </>
-            )}
-            <Form.Item label="Title" name="title">
-              <Input />
-            </Form.Item>
-            {this.props.tracking_pixel_ui_enabled && (
-              <Form.Item name="is_tracking_pixel_link" valuePropName="checked">
-                <Radio.Group
-                  onChange={this.onTrackingPixelChange}
-                  options={[
-                    { label: 'URL', value: 'url' },
-                    { label: 'Tracking Pixel', value: 'pixel' },
-                  ]}
-                  defaultValue="url"
-                />
+  const initialValues = { aliases: [{ description: '' }] };
+  const mayUseCustomAliases = userPrivileges.has('power_user') || userPrivileges.has('admin');
 
-                {this.state.tracking_pixel_enabled && (
-                  <>
-                    <Form.Item
-                      name="tracking_pixel_extension"
-                      label="Extension"
-                    >
-                      <Radio.Group
-                        onChange={this.onTrackingPixelExtensionChange}
-                        options={[
-                          { label: '.png', value: '.png' },
-                          { label: '.gif', value: '.gif' },
-                        ]}
-                        defaultValue=".png"
-                      />
-                    </Form.Item>
-                  </>
-                )}
+  return (
+    <Form
+      ref={formRef}
+      layout="vertical"
+      initialValues={initialValues}
+      onFinish={createLink}
+    >
+      <Row gutter={[16, 16]} justify="end">
+        <Col span={12}>
+          {!trackingPixelEnabled && (
+            <>
+              <Form.Item
+                label="URL"
+                name="long_url"
+                rules={[
+                  { required: true },
+                  { type: 'url', message: 'Invalid URL' },
+                  { validator: serverValidateLongUrl },
+                ]}
+              >
+                <Input />
               </Form.Item>
-            )}
-
-            <Form.Item label="Expiration time" name="expiration_time">
-              <DatePicker
-                format="YYYY-MM-DD HH:mm:ss"
-                disabledDate={(current) =>
-                  current && current < dayjs().startOf('day')
-                }
-                showTime={{ defaultValue: dayjs() }}
+            </>
+          )}
+          <Form.Item label="Title" name="title">
+            <Input />
+          </Form.Item>
+          {tracking_pixel_ui_enabled && (
+            <Form.Item name="is_tracking_pixel_link" valuePropName="checked">
+              <Radio.Group
+                onChange={onTrackingPixelChange}
+                options={[
+                  { label: 'URL', value: 'url' },
+                  { label: 'Tracking Pixel', value: 'pixel' },
+                ]}
+                defaultValue="url"
               />
-            </Form.Item>
 
-            <Form.Item>
-              <Spin spinning={this.state.loading}>
-                <Button type="primary" htmlType="submit">
-                  {this.state.tracking_pixel_enabled ? 'Create!' : 'Shrink!'}
-                </Button>
-              </Spin>
+              {trackingPixelEnabled && (
+                <>
+                  <Form.Item
+                    name="tracking_pixel_extension"
+                    label="Extension"
+                  >
+                    <Radio.Group
+                      onChange={onTrackingPixelExtensionChange}
+                      options={[
+                        { label: '.png', value: '.png' },
+                        { label: '.gif', value: '.gif' },
+                      ]}
+                      defaultValue=".png"
+                    />
+                  </Form.Item>
+                </>
+              )}
             </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.List name="aliases">
-              {(fields, { add, remove }) => (
-                <div
-                  style={{
-                    display: 'flex',
-                    rowGap: 16,
-                    flexDirection: 'column',
-                  }}
-                >
-                  {fields.map((field, index) => (
-                    <Card
-                      title={`Alias ${index + 1}`}
-                      size="small"
-                      key={field.key}
-                      extra={
-                        fields.length > 1 ? (
-                          <MinusCircleOutlined
-                            onClick={() => {
-                              if (fields.length > 1) {
-                                remove(field.name);
-                              }
-                            }}
-                          />
-                        ) : (
+          )}
+
+          <Form.Item label="Expiration time" name="expiration_time">
+            <DatePicker
+              format="YYYY-MM-DD HH:mm:ss"
+              disabledDate={(current) =>
+                current && current < dayjs().startOf('day')
+              }
+              showTime={{ defaultValue: dayjs() }}
+            />
+          </Form.Item>
+
+          <Form.Item>
+            <Spin spinning={loading}>
+              <Button type="primary" htmlType="submit">
+                {trackingPixelEnabled ? 'Create!' : 'Shrink!'}
+              </Button>
+            </Spin>
+          </Form.Item>
+        </Col>
+        <Col span={12}>
+          <Form.List name="aliases">
+            {(fields, { add, remove }) => (
+              <div
+                style={{
+                  display: 'flex',
+                  rowGap: 16,
+                  flexDirection: 'column',
+                }}
+              >
+                {fields.map((field, index) => (
+                  <Card
+                    title={`Alias ${index + 1}`}
+                    size="small"
+                    key={field.key}
+                    extra={
+                      fields.length > 1 ? (
+                        <MinusCircleOutlined
+                          onClick={() => {
+                            if (fields.length > 1) {
+                              remove(field.name);
+                            }
+                          }}
+                        />
+                      ) : (
+                        <></>
+                      )
+                    }
+                  >
+                    <Row gutter={16}>
+                      <Col span={12}>
+                        {!mayUseCustomAliases ? (
                           <></>
-                        )
-                      }
-                    >
-                      <Row gutter={16}>
-                        <Col span={12}>
-                          {!mayUseCustomAliases ? (
-                            <></>
-                          ) : (
-                            <Form.Item
-                              label="Alias"
-                              name={[field.name, 'alias']}
-                              rules={[
-                                {
-                                  min: 5,
-                                  message:
-                                    'Aliases may be no shorter than 5 characters.',
-                                },
-                                {
-                                  max: 60,
-                                  message:
-                                    'Aliases may be no longer than 60 characters.',
-                                },
-                                {
-                                  pattern: /^[a-zA-Z0-9_.,-]*$/,
-                                  message:
-                                    'Aliases may consist only of numbers, letters, and the punctuation marks “.,-_”.',
-                                },
-                                { validator: serverValidateReservedAlias },
-                                { validator: serverValidateDuplicateAlias },
-                              ]}
-                            >
-                              <Input />
-                            </Form.Item>
-                          )}
-                        </Col>
-                        <Col span={12}>
+                        ) : (
                           <Form.Item
-                            label="Description"
-                            name={[field.name, 'description']}
+                            label="Alias"
+                            name={[field.name, 'alias']}
+                            rules={[
+                              {
+                                min: 5,
+                                message:
+                                  'Aliases may be no shorter than 5 characters.',
+                              },
+                              {
+                                max: 60,
+                                message:
+                                  'Aliases may be no longer than 60 characters.',
+                              },
+                              {
+                                pattern: /^[a-zA-Z0-9_.,-]*$/,
+                                message:
+                                  'Aliases may consist only of numbers, letters, and the punctuation marks “.,-_”.',
+                              },
+                              { validator: serverValidateReservedAlias },
+                              { validator: serverValidateDuplicateAlias },
+                            ]}
                           >
                             <Input />
                           </Form.Item>
-                        </Col>
-                      </Row>
-                    </Card>
-                  ))}
-                  {fields.length >= 6 ? (
-                    <></>
-                  ) : (
-                    <Button type="dashed" onClick={() => add()} block>
-                      + Add Item
-                    </Button>
-                  )}
-                </div>
-              )}
-            </Form.List>
-          </Col>
-        </Row>
-      </Form>
-    );
-  }
+                        )}
+                      </Col>
+                      <Col span={12}>
+                        <Form.Item
+                          label="Description"
+                          name={[field.name, 'description']}
+                        >
+                          <Input />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </Card>
+                ))}
+                {fields.length >= 6 ? (
+                  <></>
+                ) : (
+                  <Button type="dashed" onClick={() => add()} block>
+                    + Add Item
+                  </Button>
+                )}
+              </div>
+            )}
+          </Form.List>
+        </Col>
+      </Row>
+    </Form>
+  );
 }
