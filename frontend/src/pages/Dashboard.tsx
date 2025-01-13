@@ -982,6 +982,11 @@ export class Dashboard extends React.Component<Props, State> {
                   uniqueVisits: link.unique_visits,
                   totalVisits: link.visits,
                 }))}
+                pagination={{
+                  total: this.state.totalLinks,
+                  current: this.state.currentPage,
+                  onChange: (page) => this.setPage(page),
+                }}
               />
             )}
           </Col>
