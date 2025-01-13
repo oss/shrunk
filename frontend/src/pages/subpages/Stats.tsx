@@ -601,6 +601,7 @@ export function Stats(props: Props) {
     ),
     alias: (
       <Table
+        showHeader={false}
         size="small"
         dataSource={allAliases.map((alias) => ({
           alias: alias.alias,
