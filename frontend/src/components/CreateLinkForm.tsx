@@ -102,6 +102,14 @@ export interface Props {
    */
   tracking_pixel_ui_enabled: boolean;
 
+
+  /**
+   * Per request of Jack: We want a way to enable/disable the domain UI
+   * by using the config in the backend. There exists an API call
+   * called /api/v1/get_domain_ui_enabled that returns a boolean value. This is temporary
+   *
+   */
+  domain_ui_enabled: boolean;
   //the any should be fixed but its fine for now
   userOrgs: any;
 }
@@ -240,8 +248,11 @@ export class CreateLinkForm extends React.Component<Props, State> {
     const mayUseCustomAliases =
       this.props.userPrivileges.has('power_user') ||
       this.props.userPrivileges.has('admin');
-    const uniqueDomains = [...new Set(this.props.userOrgs.flatMap((org: { domains: any }) => org.domains.map((item: any) => item.domain)))];
 
+    const uniqueDomains = this.props.userOrgs
+      ? [...new Set(this.props.userOrgs.flatMap((org: { domains: any }) => org.domains.map((item: any) => item.domain)))]
+      : [];
+    console.log(this.props.domain_ui_enabled)
     return (
       <Form
         ref={this.formRef}
@@ -320,18 +331,20 @@ export class CreateLinkForm extends React.Component<Props, State> {
 
           </Col>
           <Col span={12}>
-            <Form.Item label="Domain" name="domain">
-              {mayUseCustomAliases ? (
+            {this.props.domain_ui_enabled && mayUseCustomAliases ? (
+              <Form.Item label="Domain" name="domain">
+
                 <Select
                   showSearch
                   options={uniqueDomains.map(domain => ({ value: domain, label: domain }))}
                   defaultValue=""
                   placeholder="Select a domain"
                 />
-              ) : (
-                <p>domain</p>
-              )}
-            </Form.Item>
+
+              </Form.Item>
+            )
+              : <></>
+            }
             <Form.List name="aliases">
               {(fields, { add, remove }) => (
                 <div

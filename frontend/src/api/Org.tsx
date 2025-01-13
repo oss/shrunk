@@ -67,6 +67,7 @@ export interface OrgInfo {
    * @property
    */
   is_admin: boolean;
+
 }
 
 /**

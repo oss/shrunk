@@ -142,6 +142,12 @@ interface State {
    * @property
    */
   isRoleRequestsEnabled: boolean;
+
+  /**
+   * Is the Domain UI enabled?
+   * @property
+   */
+  isDomainUIEnabled: boolean;
 }
 
 /**
@@ -173,15 +179,18 @@ export class Shrunk extends React.Component<Props, State> {
       pendingAlerts: [],
       role,
       isLinkHubEnabled: false,
+      isDomainUIEnabled: false,
       isRoleRequestsEnabled: false,
     };
     this.fetchIsLinkHubEnabled();
+    this.fetchIsDomainUIEnabled();
   }
 
   async componentDidMount(): Promise<void> {
     await this.updatePendingAlerts();
     await this.fetchRoleRequestsEnabled();
     await this.updatePowerUserRoleRequestMade();
+    await this.fetchIsDomainUIEnabled();
     const history = createBrowserHistory();
     this.setSelectedKeysFromLocation(history.location);
     history.listen(({ location }) =>
@@ -194,6 +203,14 @@ export class Shrunk extends React.Component<Props, State> {
       .then((resp) => resp.json())
       .then((json) =>
         this.setState({ isLinkHubEnabled: json.status as boolean }),
+      );
+  };
+
+  fetchIsDomainUIEnabled = async (): Promise<void> => {
+    await fetch('/api/v1/org/domain_ui_enabled')
+      .then((resp) => resp.json())
+      .then((json) =>
+        this.setState({ isDomainUIEnabled: json.enabled }),
       );
   };
 
@@ -569,9 +586,12 @@ export class Shrunk extends React.Component<Props, State> {
                       <Route exact path="/admin/link_security">
                         <LinkSecurity />
                       </Route>
-                      <Route exact path="/admin/domains">
-                        <Domains />
-                      </Route>
+                      {this.state.isDomainUIEnabled ? (
+                        <Route exact path="/admin/domains">
+                          <Domains />
+                        </Route>
+                      ) : <></>
+                      }
                       <Route exact path="/admin/role_requests/power_user">
                         <PendingRoleRequests
                           name="power_user"

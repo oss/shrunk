@@ -13,8 +13,9 @@ __all__ = ["OrgsClient"]
 class OrgsClient:
     """This class implements all orgs-related functionality."""
 
-    def __init__(self, *, db: pymongo.database.Database):
+    def __init__(self, *, db: pymongo.database.Database, DOMAIN_UI_ENABLED:bool):
         self.db = db
+        self.domain_ui_enabled = DOMAIN_UI_ENABLED
 
     def get_org(self, org_id: ObjectId) -> Optional[Any]:
         """Get information about a given org
@@ -214,6 +215,9 @@ class OrgsClient:
         except:
             return None
 
+    def get_domain_ui_status(self) -> bool:
+        return self.domain_ui_enabled
+    
     def get_visit_stats(self, org_id: ObjectId) -> List[Any]:
         pipeline = [
             {"$match": {"_id": org_id}},

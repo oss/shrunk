@@ -157,3 +157,8 @@ EMAILS_ENABLED = False
 Configuration variable to enable or disable the ability to send emails. 
 For now, this is only used for role requests, but should be expanded to all email usage.
 """
+
+DOMAIN_UI_ENABLED = False
+"""
+Configuration variable to enable or disable custome domains.
+"""
