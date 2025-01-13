@@ -23,6 +23,7 @@ import {
   Layout,
   Menu,
   Row,
+  Space,
   Tag,
   Typography,
   theme,
@@ -64,10 +65,6 @@ import UsersProvider from './contexts/Users';
 
 const { Header, Content, Footer, Sider } = Layout;
 
-/**
- * Properties of the [[Shrunk]] component.
- * @interface
- */
 export interface Props {
   /**
    * NetID of the user.
@@ -103,7 +100,7 @@ export default function Shrunk(props: Props) {
       ? 'Faculty/Staff'
       : 'Administrator';
 
-  const [selectedKeys, setSelectedKeys] = useState<string[]>(['dashboard']);
+  const [selectedKeys, setSelectedKeys] = useState<string[]>(['dash']);
   const [pendingAlerts, setPendingAlerts] = useState<string[]>([]);
   const [powerUserRoleRequestMade, setPowerUserRoleRequestMade] =
     useState(false);
@@ -292,7 +289,6 @@ export default function Shrunk(props: Props) {
                   overflowedIndicator={<MenuOutlined />}
                   mode="horizontal"
                   selectedKeys={selectedKeys}
-                  style={{ borderBottom: 0 }}
                 >
                   <Menu.Item key="dash">
                     <NavLink to="/dash">URL Shortener</NavLink>
@@ -317,12 +313,9 @@ export default function Shrunk(props: Props) {
               </Col>
               <Col>
                 <Dropdown menu={{ items: menuItems }}>
-                  <Button
-                    style={{ backgroundColor: token.Menu?.groupTitleColor }}
-                    type="text"
-                    aria-label={netid}
-                    icon={<UserOutlined />}
-                  />
+                  <Button type="text" style={{ color: 'white' }}>
+                    {props.netid}
+                  </Button>
                 </Dropdown>
               </Col>
             </Row>
