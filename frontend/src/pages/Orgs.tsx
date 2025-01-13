@@ -16,6 +16,7 @@ import {
   Tooltip,
   Spin,
   FloatButton,
+  Typography,
 } from 'antd/lib';
 import { ExclamationCircleFilled, PlusCircleFilled } from '@ant-design/icons';
 import { RiLineChartFill, RiToolsFill, RiDeleteBin6Line } from 'react-icons/ri';
@@ -23,8 +24,6 @@ import dayjs from 'dayjs';
 
 import { OrgInfo, listOrgs, createOrg, deleteOrg } from '../api/Org';
 import { OrgAdminTag, OrgMemberTag } from './subpages/OrgCommon';
-
-import '../Base.css';
 
 import { serverValidateOrgName } from '../Validators';
 
@@ -75,7 +74,7 @@ const CreateOrgForm: React.FC<{ onCreate: (name: string) => Promise<void> }> = (
   const onFinish = async (values: { name: string }) =>
     props.onCreate(values.name);
   return (
-    <div className="dropdown-form">
+    <div>
       <Form initialValues={{ name: '' }} onFinish={onFinish}>
         <Input.Group compact>
           <Form.Item
@@ -118,9 +117,9 @@ const OrgRow: React.FC<{
   orgInfo: OrgInfo;
   onDelete: (id: string) => Promise<void>;
 }> = (props) => (
-  <Row className="primary-row">
+  <Row>
     <Col span={20}>
-      <a className="title" href={`/app/#/orgs/${props.orgInfo.id}/manage`}>
+      <a href={`/app/#/orgs/${props.orgInfo.id}/manage`}>
         {props.orgInfo.name}
       </a>
       {props.orgInfo.is_admin ? (
@@ -133,7 +132,7 @@ const OrgRow: React.FC<{
         Created: {dayjs(props.orgInfo.timeCreated).format('MMM D, YYYY')}
       </span>
     </Col>
-    <Col span={4} className="btn-col">
+    <Col span={4}>
       <Tooltip title="Manage org">
         <Button
           type="text"
@@ -232,13 +231,11 @@ export class Orgs extends React.Component<Props, State> {
     const isAdmin = this.props.userPrivileges.has('admin');
     return (
       <>
-        <FloatButton.BackTop />
-        <Row className="primary-row">
-          <Col span={16}>
-            <span className="page-title">Orgs</span>
-          </Col>
-
-          <Col span={8} className="btn-col">
+        <Row>
+          <Typography.Title>Frequently Asked Questions</Typography.Title>
+        </Row>
+        <Row>
+          <Col span={8}>
             {!mayCreateOrg ? (
               <></>
             ) : (

@@ -34,7 +34,6 @@ import {
   serverValidateDuplicateAlias,
   serverValidateLongUrl,
 } from '../Validators';
-import '../Base.css';
 
 /**
  * The final values of the create link form

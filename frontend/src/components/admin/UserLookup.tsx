@@ -7,7 +7,6 @@ import { Button, Col, Row, Table, Tag, Spin } from 'antd/lib';
 import React from 'react';
 import { IoReturnUpBack } from 'react-icons/io5';
 import SearchUser from '../SearchUser';
-import './UserLookup.css';
 import {
   Operation,
   generateOperationKey,

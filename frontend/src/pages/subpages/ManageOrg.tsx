@@ -36,8 +36,6 @@ import dayjs from 'dayjs';
 
 import { MemberInfo, OrgInfo, getOrgInfo } from '../../api/Org';
 import { OrgAdminTag } from './OrgCommon';
-import '../../Base.css';
-import './ManageOrg.css';
 import { serverValidateNetId, serverValidateOrgName } from '../../Validators';
 
 /**

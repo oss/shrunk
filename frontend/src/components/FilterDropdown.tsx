@@ -13,9 +13,9 @@ import {
   DatePicker,
   Space,
   Button,
-  Typography,
+  Card,
 } from 'antd/lib';
-import { DownOutlined, FilterOutlined } from '@ant-design/icons';
+import { FilterOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { OrgInfo } from '../api/Org';
 import { SearchSet } from '../pages/Dashboard';
@@ -143,7 +143,7 @@ export const FilterDropdown: React.FC<Props> = (props) => {
   }, [dropdownVisible]);
 
   const dropdown = (
-    <div className="dropdown-form">
+    <Card>
       <Form
         layout="vertical"
         initialValues={{
@@ -160,7 +160,11 @@ export const FilterDropdown: React.FC<Props> = (props) => {
           />
         </Form.Item>
         <Form.Item name="sortKey" label="Sort by">
-          <Select value={sortKey} onChange={sortByKey}>
+          <Select
+            value={sortKey}
+            onChange={sortByKey}
+            style={{ width: '100%' }}
+          >
             <Select.Option value="relevance">Relevance</Select.Option>
             <Select.Option value="created_time">Time created</Select.Option>
             <Select.Option value="title">Title</Select.Option>
@@ -198,6 +202,7 @@ export const FilterDropdown: React.FC<Props> = (props) => {
             format="YYYY-MM-DD"
             value={beginTime}
             onChange={showAfter}
+            style={{ width: '100%' }}
           />
         </Form.Item>
         <Form.Item name="endTime" label="Created before">
@@ -205,10 +210,11 @@ export const FilterDropdown: React.FC<Props> = (props) => {
             format="YYYY-MM-DD"
             value={endTime}
             onChange={showBefore}
+            style={{ width: '100%' }}
           />
         </Form.Item>
       </Form>
-    </div>
+    </Card>
   );
 
   return (

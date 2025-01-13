@@ -66,7 +66,7 @@ export const OrgsSelect: React.FC<Props> = (props) => {
     <Select
       value={org}
       onChange={updateOrg}
-      style={{ width: 'auto' }}
+      style={{ width: '100%' }}
       dropdownStyle={{ width: 175 }}
       open={dropdownOpen}
       onClick={() => {

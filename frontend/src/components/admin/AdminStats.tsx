@@ -14,8 +14,6 @@ import dayjs from 'dayjs';
 
 import { MENU_ITEMS } from '../../pages/subpages/StatsCommon';
 
-import '../../Base.css';
-
 const { RangePicker } = DatePicker;
 
 /**

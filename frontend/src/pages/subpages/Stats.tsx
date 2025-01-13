@@ -38,7 +38,6 @@ import { LinkInfo, AliasInfo } from '../../components/LinkInfo';
 import { GeoipStats, MENU_ITEMS, GeoipChart } from './StatsCommon';
 import { downloadVisitsCsv } from '../../components/Csv';
 
-import '../../Base.css';
 import { daysBetween } from '../../lib/utils';
 import ShareModal from '../../modals/ShareModal';
 import { EditLinkFormValues, EditLinkModal } from '../../modals/EditLinkModal';

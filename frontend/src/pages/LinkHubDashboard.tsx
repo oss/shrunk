@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import './Dashboard.css';
 import { SearchBox } from '../components/SearchBox';
 import LinkHubRow from '../components/LinkHubRow';
 
