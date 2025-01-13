@@ -252,7 +252,6 @@ export class CreateLinkForm extends React.Component<Props, State> {
     const uniqueDomains = this.props.userOrgs
       ? [...new Set(this.props.userOrgs.flatMap((org: { domains: any }) => org.domains.map((item: any) => item.domain)))]
       : [];
-    console.log(this.props.domain_ui_enabled)
     return (
       <Form
         ref={this.formRef}
