@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Row,
   Col,
@@ -31,37 +31,12 @@ import { serverValidateOrgName } from '../Validators';
  * Props for the [[Orgs]] component
  * @interface
  */
-export interface Props {
+interface Props {
   /**
    * The user's privileges
    * @property
    */
   userPrivileges: Set<string>;
-}
-
-/**
- * State for the [[Orgs]] component
- * @interface
- */
-interface State {
-  /**
-   * Whether to show all orgs or just orgs of which the user is a member. Option only
-   * available to admins
-   * @property
-   */
-  showAll: boolean;
-
-  /**
-   * Contains an [[OrgInfo]] for each org to be displayed
-   * @property
-   */
-  orgs: OrgInfo[] | null;
-
-  /**
-   * Whether the create org dropdown is visible
-   * @property
-   */
-  createOrgFormVisible: boolean;
 }
 
 /**
@@ -108,6 +83,7 @@ const CreateOrgForm: React.FC<{ onCreate: (name: string) => Promise<void> }> = (
     </div>
   );
 };
+
 /**
  * The [[OrgRow]] component displays information pertaining to one org
  * @param props The props
@@ -170,125 +146,94 @@ const OrgRow: React.FC<{
 );
 
 /**
- * The [[Orgs]] component implements the orgs list view
- * @class
+ * The Orgs component implements the orgs list view
  */
-export class Orgs extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      showAll: false,
-      orgs: null,
-      createOrgFormVisible: false,
-    };
-  }
+export default function Orgs({ userPrivileges }: Props): React.ReactElement {
+  const [showAll, setShowAll] = useState(false);
+  const [orgs, setOrgs] = useState<OrgInfo[] | null>(null);
+  const [createOrgFormVisible, setCreateOrgFormVisible] = useState(false);
 
-  async componentDidMount(): Promise<void> {
-    await this.refreshOrgs();
-  }
-
-  async componentDidUpdate(_prevProps: Props, prevState: State): Promise<void> {
-    if (prevState.showAll !== this.state.showAll) {
-      await this.refreshOrgs();
-    }
-  }
-
-  /**
-   * Execute API requests to get list of org info, then update state
-   * @method
-   */
-  refreshOrgs = async (): Promise<void> => {
-    await listOrgs(this.state.showAll ? 'all' : 'user').then((orgs) =>
-      this.setState({ orgs }),
-    );
+  const refreshOrgs = async () => {
+    const newOrgs = await listOrgs(showAll ? 'all' : 'user');
+    setOrgs(newOrgs);
   };
 
-  /**
-   * Execute API requests to create a new org, then refresh org info
-   * @method
-   * @param name The name of the org to be created
-   */
-  onCreateOrg = async (name: string): Promise<void> => {
+  useEffect(() => {
+    refreshOrgs();
+  }, [showAll]);
+
+  const onCreateOrg = async (name: string) => {
     await createOrg(name);
-    this.setState({ createOrgFormVisible: false });
-    await this.refreshOrgs();
+    setCreateOrgFormVisible(false);
+    await refreshOrgs();
   };
 
-  /**
-   * Execute API requests to delete an org, then refresh org info
-   * @method
-   * @param id The ID of the org to delete
-   */
-  onDeleteOrg = async (id: string): Promise<void> => {
+  const onDeleteOrg = async (id: string) => {
     await deleteOrg(id);
-    await this.refreshOrgs();
+    await refreshOrgs();
   };
 
-  render(): React.ReactNode {
-    const mayCreateOrg =
-      this.props.userPrivileges.has('admin') ||
-      this.props.userPrivileges.has('facstaff');
-    const isAdmin = this.props.userPrivileges.has('admin');
-    return (
-      <>
-        <Row>
-          <Typography.Title>Frequently Asked Questions</Typography.Title>
-        </Row>
-        <Row>
-          <Col span={8}>
-            {!mayCreateOrg ? (
-              <></>
-            ) : (
-              <Dropdown
-                overlay={<CreateOrgForm onCreate={this.onCreateOrg} />}
-                open={this.state.createOrgFormVisible}
-                onVisibleChange={(flag) =>
-                  this.setState({ createOrgFormVisible: flag })
-                }
-                placement="bottomRight"
-                trigger={['click']}
-              >
-                <Button type="primary">
-                  <PlusCircleFilled /> Create an Org
-                </Button>
-              </Dropdown>
-            )}
+  const mayCreateOrg =
+    userPrivileges.has('admin') || userPrivileges.has('facstaff');
+  const isAdmin = userPrivileges.has('admin');
 
-            {!isAdmin ? (
-              <></>
-            ) : (
-              <Checkbox
-                style={{ paddingTop: '6px' }}
-                defaultChecked={false}
-                onChange={(ev) => this.setState({ showAll: ev.target.checked })}
-              >
-                Show all orgs?
-              </Checkbox>
-            )}
-          </Col>
-        </Row>
+  return (
+    <>
+      <Row>
+        <Typography.Title>Organizations</Typography.Title>
+      </Row>
+      <Row>
+        <Col span={8}>
+          {!mayCreateOrg ? (
+            <></>
+          ) : (
+            <Dropdown
+              overlay={<CreateOrgForm onCreate={onCreateOrg} />}
+              open={createOrgFormVisible}
+              onVisibleChange={setCreateOrgFormVisible}
+              placement="bottomRight"
+              trigger={['click']}
+            >
+              <Button type="primary">
+                <PlusCircleFilled /> Create an Org
+              </Button>
+            </Dropdown>
+          )}
 
-        {this.state.orgs === null ? (
-          <Spin size="large" />
-        ) : (
-          <div>
-            {this.state.orgs.length === 0 ? (
-              <p>You are currently not in any organizations.</p>
-            ) : (
-              <div>
-                {this.state.orgs.map((org) => (
-                  <OrgRow
-                    key={org.id}
-                    showAll={this.state.showAll}
-                    orgInfo={org}
-                    onDelete={this.onDeleteOrg}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </>
-    );
-  }
+          {!isAdmin ? (
+            <></>
+          ) : (
+            <Checkbox
+              style={{ paddingTop: '6px' }}
+              defaultChecked={false}
+              onChange={(ev) => setShowAll(ev.target.checked)}
+            >
+              Show all orgs?
+            </Checkbox>
+          )}
+        </Col>
+      </Row>
+
+      {orgs === null ? (
+        <Spin size="large" />
+      ) : (
+        <div>
+          {orgs.length === 0 ? (
+            <p>You are currently not in any organizations.</p>
+          ) : (
+            <div>
+              {orgs.map((org) => (
+                <OrgRow
+                  key={org.id}
+                  showAll={showAll}
+                  orgInfo={org}
+                  onDelete={onDeleteOrg}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  );
 }
