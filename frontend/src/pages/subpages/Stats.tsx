@@ -29,6 +29,7 @@ import {
   EditOutlined,
   TeamOutlined,
   ShareAltOutlined,
+  CopyOutlined,
 } from '@ant-design/icons';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
@@ -610,6 +611,23 @@ export function Stats(props: Props) {
             title: 'Alias',
             dataIndex: 'alias',
             key: 'alias',
+            width: '25%',
+            render: (alias) => {
+              const isDev = process.env.NODE_ENV === 'development';
+              const protocol = isDev ? 'http' : 'https';
+              const shortUrl = `${protocol}://${document.location.host}/${alias}`;
+              return (
+                <Button
+                  type="text"
+                  onClick={() => navigator.clipboard.writeText(shortUrl)}
+                >
+                  <Space>
+                    <CopyOutlined />
+                    <Typography.Text>{alias}</Typography.Text>
+                  </Space>
+                </Button>
+              );
+            }
           },
           {
             title: 'Description',
