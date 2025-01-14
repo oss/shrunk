@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 
 import {
   Row,
@@ -20,19 +20,17 @@ import {
   Checkbox,
   DatePicker,
   Tooltip,
-  Flex,
+  Dropdown,
 } from 'antd/lib';
 import {
   CopyOutlined,
   PlusCircleFilled,
-  SearchOutlined,
   FilterOutlined,
   EyeOutlined,
   DeleteOutlined,
   TeamOutlined,
   ShareAltOutlined,
   EditOutlined,
-  TableOutlined,
   SlidersOutlined,
 } from '@ant-design/icons';
 
@@ -236,6 +234,10 @@ export interface State {
   orgDropdownOpen: boolean;
 
   orgLoading: boolean;
+
+  visibleColumns: Set<string>;
+
+  customizeDropdownOpen: boolean;
 }
 
 // TODO: Add title column
@@ -297,6 +299,14 @@ export class Dashboard extends React.Component<Props, State> {
       selectedOrg: this.props.userPrivileges.has('admin') ? 1 : 0,
       orgDropdownOpen: false,
       orgLoading: false,
+      visibleColumns: new Set([
+        'longUrl',
+        'owner',
+        'dateCreated',
+        'uniqueVisits',
+        'totalVisits',
+      ]),
+      customizeDropdownOpen: false,
     };
   }
 
@@ -885,6 +895,16 @@ export class Dashboard extends React.Component<Props, State> {
     }, 300);
   };
 
+  handleColumnVisibilityChange = (selectedColumns: string[]) => {
+    this.setState({ visibleColumns: new Set(selectedColumns) });
+  };
+
+  handleCustomizeClick = () => {
+    this.setState((prevState) => ({
+      customizeDropdownOpen: !prevState.customizeDropdownOpen,
+    }));
+  };
+
   render(): React.ReactNode {
     return (
       <>
@@ -892,9 +912,47 @@ export class Dashboard extends React.Component<Props, State> {
           <Typography.Title>URL Shortener</Typography.Title>
         </Row>
         <Row gutter={[16, 16]} justify="space-between">
-          <Col>
+          <Col span={12}>
             <Space>
-              <Button icon={<SlidersOutlined />}>Customize</Button>
+              <Dropdown
+                trigger={['click']}
+                open={this.state.customizeDropdownOpen}
+                menu={{
+                  items: [
+                    { label: 'Long URL', key: 'longUrl' },
+                    { label: 'Owner', key: 'owner' },
+                    { label: 'Date Created', key: 'dateCreated' },
+                    { label: 'Date Expires', key: 'dateExpires' },
+                    { label: 'Unique Visits', key: 'uniqueVisits' },
+                    { label: 'Total Visits', key: 'totalVisits' },
+                  ].map((item) => ({
+                    key: item.key,
+                    label: (
+                      <Checkbox
+                        checked={this.state.visibleColumns.has(item.key)}
+                        onChange={(e) => {
+                          const newColumns = new Set(this.state.visibleColumns);
+                          if (e.target.checked) {
+                            newColumns.add(item.key);
+                          } else {
+                            newColumns.delete(item.key);
+                          }
+                          this.setState({ visibleColumns: newColumns });
+                        }}
+                      >
+                        {item.label}
+                      </Checkbox>
+                    ),
+                  })),
+                }}
+              >
+                <Button
+                  icon={<SlidersOutlined />}
+                  onClick={this.handleCustomizeClick}
+                >
+                  Customize
+                </Button>
+              </Dropdown>
               <Button
                 icon={<FilterOutlined />}
                 onClick={() => this.setState({ filterModalVisible: true })}
@@ -902,6 +960,7 @@ export class Dashboard extends React.Component<Props, State> {
                 Filter
               </Button>
               <Input.Search
+                style={{ width: 500 }}
                 placeholder="Find a shortened link"
                 onChange={this.updateQueryString}
                 onSearch={this.onSearch}
@@ -966,47 +1025,90 @@ export class Dashboard extends React.Component<Props, State> {
                       </Row>
                     ),
                   },
-                  {
-                    title: 'Long URL',
-                    dataIndex: 'longUrl',
-                    key: 'longUrl',
-                    width: '40%',
-                    fixed: 'left',
-                    render: (_, record) => (
-                      <Typography.Link href={record.longUrl} ellipsis>
-                        {record.longUrl}
-                      </Typography.Link>
-                    ),
-                  },
-                  {
-                    title: 'Owner',
-                    dataIndex: 'owner',
-                    key: 'owner',
-                    width: '15%',
-                    sorter: (a, b) => a.owner.localeCompare(b.owner),
-                  },
-                  {
-                    title: 'Date Created',
-                    dataIndex: 'dateCreated',
-                    key: 'dateCreated',
-                    width: '15%',
-                    sorter: (a, b) =>
-                      dayjs(a.dateCreated).unix() - dayjs(b.dateCreated).unix(),
-                  },
-                  {
-                    title: 'Unique Visits',
-                    dataIndex: 'uniqueVisits',
-                    key: 'uniqueVisits',
-                    width: '15%',
-                    sorter: (a, b) => a.uniqueVisits - b.uniqueVisits,
-                  },
-                  {
-                    title: 'Total Visits',
-                    dataIndex: 'totalVisits',
-                    key: 'totalVisits',
-                    width: '15%',
-                    sorter: (a, b) => a.totalVisits - b.totalVisits,
-                  },
+                  ...(this.state.visibleColumns.has('longUrl')
+                    ? [
+                        {
+                          title: 'Long URL',
+                          dataIndex: 'longUrl',
+                          key: 'longUrl',
+                          width: '40%',
+                          fixed: 'left',
+                          render: (_, record) => (
+                            <Typography.Link href={record.longUrl} ellipsis>
+                              {record.longUrl}
+                            </Typography.Link>
+                          ),
+                        },
+                      ]
+                    : []),
+                  ...(this.state.visibleColumns.has('owner')
+                    ? [
+                        {
+                          title: 'Owner',
+                          dataIndex: 'owner',
+                          key: 'owner',
+                          width: '15%',
+                          sorter: (a, b) => a.owner.localeCompare(b.owner),
+                        },
+                      ]
+                    : []),
+                  ...(this.state.visibleColumns.has('dateCreated')
+                    ? [
+                        {
+                          title: 'Date Created',
+                          dataIndex: 'dateCreated',
+                          key: 'dateCreated',
+                          width: '15%',
+                          sorter: (a, b) =>
+                            dayjs(a.dateCreated).unix() -
+                            dayjs(b.dateCreated).unix(),
+                        },
+                      ]
+                    : []),
+                  ...(this.state.visibleColumns.has('dateExpires')
+                    ? [
+                        {
+                          title: 'Date Expires',
+                          dataIndex: 'dateExpires',
+                          key: 'dateExpires',
+                          width: '15%',
+                          render: (_, record) =>
+                            record.dateExpires
+                              ? dayjs(record.dateExpires).format('MMM DD, YYYY')
+                              : 'Never',
+                          sorter: (a, b) => {
+                            if (!a.dateExpires) return 1;
+                            if (!b.dateExpires) return -1;
+                            return (
+                              dayjs(a.dateExpires).unix() -
+                              dayjs(b.dateExpires).unix()
+                            );
+                          },
+                        },
+                      ]
+                    : []),
+                  ...(this.state.visibleColumns.has('uniqueVisits')
+                    ? [
+                        {
+                          title: 'Unique Visits',
+                          dataIndex: 'uniqueVisits',
+                          key: 'uniqueVisits',
+                          width: '15%',
+                          sorter: (a, b) => a.uniqueVisits - b.uniqueVisits,
+                        },
+                      ]
+                    : []),
+                  ...(this.state.visibleColumns.has('totalVisits')
+                    ? [
+                        {
+                          title: 'Total Visits',
+                          dataIndex: 'totalVisits',
+                          key: 'totalVisits',
+                          width: '15%',
+                          sorter: (a, b) => a.totalVisits - b.totalVisits,
+                        },
+                      ]
+                    : []),
                   {
                     title: 'Actions',
                     key: 'actions',
@@ -1040,7 +1142,7 @@ export class Dashboard extends React.Component<Props, State> {
                       </Space>
                     ),
                   },
-                ]}
+                ].filter((col) => !col.hidden)}
                 dataSource={this.state.linkInfo.map((link) => ({
                   key: link.id,
                   title: link.title,
@@ -1050,6 +1152,7 @@ export class Dashboard extends React.Component<Props, State> {
                   dateCreated: dayjs(link.created_time).format('MMM DD, YYYY'),
                   uniqueVisits: link.unique_visits,
                   totalVisits: link.visits,
+                  dateExpires: link.expiration_time,
                 }))}
                 pagination={{
                   total: this.state.totalLinks,
