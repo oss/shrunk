@@ -20,9 +20,7 @@ import {
   Row,
   Card,
 } from 'antd/lib';
-import {
-  MinusCircleOutlined,
-} from '@ant-design/icons';
+import { MinusCircleOutlined } from '@ant-design/icons';
 import { FormInstance } from 'antd/lib/form';
 import {
   serverValidateReservedAlias,
@@ -65,7 +63,7 @@ interface CreateLinkFormValues {
    * if the domain is the dafault domain
    * @property
    */
-  domain?: string
+  domain?: string;
 
   /**
    * Whether the link is a tracking pixel link
@@ -101,7 +99,6 @@ export interface Props {
    * tracking_pixel_ui_enabled is a boolean value that is set by the backend.
    */
   tracking_pixel_ui_enabled: boolean;
-
 
   /**
    * Per request of Jack: We want a way to enable/disable the domain UI
@@ -149,7 +146,6 @@ export class CreateLinkForm extends React.Component<Props, State> {
    * the Shrink! button.
    */
   onSubmitClick = async (): Promise<void> => {
-
     this.formRef.current!.resetFields();
     await this.props.onFinish();
     this.setState({ loading: false, tracking_pixel_enabled: false });
@@ -190,7 +186,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
     }
 
     if (values.domain !== undefined) {
-      createLinkReq.domain = values.domain
+      createLinkReq.domain = values.domain;
     }
     let statusOfReq = 200;
     const createLinkResp = await fetch('/api/v1/link', {
@@ -198,7 +194,6 @@ export class CreateLinkForm extends React.Component<Props, State> {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(createLinkReq),
     }).then((resp) => {
-
       statusOfReq = resp.status;
       return resp.json();
     });
@@ -250,7 +245,13 @@ export class CreateLinkForm extends React.Component<Props, State> {
       this.props.userPrivileges.has('admin');
 
     const uniqueDomains = this.props.userOrgs
-      ? [...new Set(this.props.userOrgs.flatMap((org: { domains: any }) => org.domains.map((item: any) => item.domain)))]
+      ? [
+          ...new Set(
+            this.props.userOrgs.flatMap((org: { domains: any }) =>
+              org.domains.map((item: any) => item.domain),
+            ),
+          ),
+        ]
       : [];
     return (
       <Form
@@ -327,23 +328,23 @@ export class CreateLinkForm extends React.Component<Props, State> {
                 </Button>
               </Spin>
             </Form.Item>
-
           </Col>
           <Col span={12}>
             {this.props.domain_ui_enabled && mayUseCustomAliases ? (
               <Form.Item label="Domain" name="domain">
-
                 <Select
                   showSearch
-                  options={uniqueDomains.map(domain => ({ value: domain, label: domain }))}
+                  options={uniqueDomains.map((domain) => ({
+                    value: domain,
+                    label: domain,
+                  }))}
                   defaultValue=""
                   placeholder="Select a domain"
                 />
-
               </Form.Item>
-            )
-              : <></>
-            }
+            ) : (
+              <></>
+            )}
             <Form.List name="aliases">
               {(fields, { add, remove }) => (
                 <div
@@ -372,7 +373,6 @@ export class CreateLinkForm extends React.Component<Props, State> {
                         )
                       }
                     >
-
                       <Row gutter={16}>
                         <Col span={12}>
                           {!mayUseCustomAliases ? (

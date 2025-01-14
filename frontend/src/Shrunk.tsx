@@ -209,9 +209,7 @@ export class Shrunk extends React.Component<Props, State> {
   fetchIsDomainUIEnabled = async (): Promise<void> => {
     await fetch('/api/v1/org/domain_ui_enabled')
       .then((resp) => resp.json())
-      .then((json) =>
-        this.setState({ isDomainUIEnabled: json.enabled }),
-      );
+      .then((json) => this.setState({ isDomainUIEnabled: json.enabled }));
   };
 
   /**
@@ -336,8 +334,8 @@ export class Shrunk extends React.Component<Props, State> {
                         <NavLink to="/orgs">My Organizations</NavLink>
                       </Menu.Item>
                       {this.state.role === 'Administrator' ||
-                        this.state.role === 'Power User' ||
-                        !this.state.isRoleRequestsEnabled ? (
+                      this.state.role === 'Power User' ||
+                      !this.state.isRoleRequestsEnabled ? (
                         <></>
                       ) : (
                         <>
@@ -590,8 +588,9 @@ export class Shrunk extends React.Component<Props, State> {
                         <Route exact path="/admin/domains">
                           <Domains />
                         </Route>
-                      ) : <></>
-                      }
+                      ) : (
+                        <></>
+                      )}
                       <Route exact path="/admin/role_requests/power_user">
                         <PendingRoleRequests
                           name="power_user"

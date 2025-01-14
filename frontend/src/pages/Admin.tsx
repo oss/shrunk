@@ -13,7 +13,7 @@ import '../Base.css';
  * Props for the [[Admin]] component
  * @interface
  */
-export interface Props { }
+export interface Props {}
 
 /**
  * Summary information for one role
@@ -50,7 +50,6 @@ interface State {
    * @property
    */
   powerUserRequestsCount: number;
-
 
   /**
    * Is the Domain UI enabled?
@@ -107,13 +106,10 @@ export class Admin extends React.Component<Props, State> {
   fetchIsDomainUIEnabled = async (): Promise<void> => {
     await fetch('/api/v1/org/domain_ui_enabled')
       .then((resp) => resp.json())
-      .then((json) =>
-        this.setState({ isDomainUIEnabled: json.enabled }),
-      );
+      .then((json) => this.setState({ isDomainUIEnabled: json.enabled }));
   };
 
   render(): React.ReactNode {
-
     return (
       <>
         <Row className="primary-row">
@@ -137,7 +133,9 @@ export class Admin extends React.Component<Props, State> {
               </Link>
             </Col>
           </Row>
-        ) : <></>}
+        ) : (
+          <></>
+        )}
         <Row className="primary-row">
           <Col span={24}>
             <Link to="/admin/user_lookup" className="title">
