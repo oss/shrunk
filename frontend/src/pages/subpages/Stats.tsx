@@ -34,6 +34,7 @@ import {
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import dayjs from 'dayjs';
+import { useLocation } from 'react-router-dom';
 
 import { LinkInfo, AliasInfo } from '../../components/LinkInfo';
 import { GeoipStats, MENU_ITEMS, GeoipChart } from './StatsCommon';
@@ -319,7 +320,7 @@ const BrowserCharts: React.FC<{ browserStats: BrowserStats | null }> = (
  * @class
  */
 
-export function Stats(props: Props) {
+export function Stats(props: Props): React.ReactElement {
   const showPurge = false;
 
   const [linkInfo, setLinkInfo] = useState<LinkInfo | null>(null);
@@ -343,6 +344,24 @@ export function Stats(props: Props) {
     domain: string;
     count: number;
   } | null>(null);
+
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const mode = queryParams.get('mode');
+
+  useEffect(() => {
+    switch (mode) {
+      case 'edit':
+        setEditModalVisible(true);
+        break;
+      case 'collaborate':
+        setCollabModalVisible(true);
+        break;
+      case 'share':
+        setShareModalVisible(true);
+        break;
+    }
+  }, [mode]);
 
   async function updateLinkInfo() {
     const _linkInfo = (await fetch(`/api/v1/link/${props.id}`).then((resp) =>
@@ -819,79 +838,83 @@ export function Stats(props: Props) {
         </Col>
       </Row>
       {linkInfo && (
-        <EditLinkModal
-          visible={editModalVisible}
-          userPrivileges={props.userPrivileges}
-          netid={props.netid}
-          linkInfo={linkInfo}
-          onOk={async (values: EditLinkFormValues) => {
-            await doEditLink(values);
-            setEditModalVisible(false);
-          }}
-          onCancel={() => {
-            setEditModalVisible(false);
-          }}
-        />
+        <>
+          <EditLinkModal
+            visible={editModalVisible}
+            userPrivileges={props.userPrivileges}
+            netid={props.netid}
+            linkInfo={linkInfo}
+            onOk={async (values) => {
+              await doEditLink(values);
+              setEditModalVisible(false);
+            }}
+            onCancel={() => {
+              setEditModalVisible(false);
+            }}
+          />
+
+          <CollaboratorModal
+            visible={collabModalVisible}
+            userPrivileges={props.userPrivileges}
+            people={entities}
+            isLoading={false}
+            linkInfo={linkInfo}
+            onAddEntity={async (value) => {
+              const patchReq = {
+                acl: `${value.permission}s`,
+                action: 'add',
+                entry: {
+                  _id: value._id,
+                  type: value.type,
+                },
+              };
+
+              await fetch(`/api/v1/link/${props.id}/acl`, {
+                method: 'PATCH',
+                headers: {
+                  'content-type': 'application/json',
+                },
+                body: JSON.stringify(patchReq),
+              });
+              updateLinkInfo();
+            }}
+            onRemoveEntity={async (
+              _id: string,
+              type: string,
+              permission: string,
+            ) => {
+              const patchReq = {
+                acl: `${permission}s`,
+                action: 'remove',
+                entry: { _id, type },
+              };
+
+              await fetch(`/api/v1/link/${props.id}/acl`, {
+                method: 'PATCH',
+                headers: {
+                  'content-type': 'application/json',
+                },
+                body: JSON.stringify(patchReq),
+              });
+              updateLinkInfo();
+            }}
+            onOk={() => {
+              setCollabModalVisible(false);
+            }}
+            onCancel={() => {
+              setCollabModalVisible(false);
+            }}
+          />
+
+          <ShareModal
+            linkInfo={linkInfo}
+            visible={shareModalVisible}
+            onCancel={() => {
+              setShareModalVisible(false);
+            }}
+          />
+        </>
       )}
-      <CollaboratorModal
-        visible={collabModalVisible}
-        userPrivileges={props.userPrivileges}
-        people={entities}
-        isLoading={false}
-        linkInfo={linkInfo}
-        onAddEntity={async (value) => {
-          const patchReq = {
-            acl: `${value.permission}s`,
-            action: 'add',
-            entry: {
-              _id: value._id,
-              type: value.type,
-            },
-          };
-
-          await fetch(`/api/v1/link/${props.id}/acl`, {
-            method: 'PATCH',
-            headers: {
-              'content-type': 'application/json',
-            },
-            body: JSON.stringify(patchReq),
-          });
-          updateLinkInfo();
-        }}
-        onRemoveEntity={async (
-          _id: string,
-          type: string,
-          permission: string,
-        ) => {
-          const patchReq = {
-            acl: `${permission}s`,
-            action: 'remove',
-            entry: { _id, type },
-          };
-
-          await fetch(`/api/v1/link/${props.id}/acl`, {
-            method: 'PATCH',
-            headers: {
-              'content-type': 'application/json',
-            },
-            body: JSON.stringify(patchReq),
-          });
-          updateLinkInfo();
-        }}
-        onOk={() => {
-          setCollabModalVisible(false);
-        }}
-        onCancel={() => {
-          setCollabModalVisible(false);
-        }}
-      />
-      <ShareModal
-        linkInfo={linkInfo}
-        visible={shareModalVisible}
-        onCancel={() => {
-          setShareModalVisible(false);
-        }}
-      />
     </>
   );
 }

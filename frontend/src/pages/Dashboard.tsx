@@ -1120,17 +1120,32 @@ export class Dashboard extends React.Component<Props, State> {
                           <Button
                             type="text"
                             icon={<EyeOutlined />}
-                            href={`/app/#/stats/${record.key}`}
+                            href={`/app/#/links/${record.key}/view`}
                           />
                         </Tooltip>
                         <Tooltip title="Edit">
-                          <Button type="text" icon={<EditOutlined />} />
+                          <Button
+                            type="text"
+                            icon={<EditOutlined />}
+                            target="_blank"
+                            href={`/app/#/links/${record.key}/view?mode=edit`}
+                          />
                         </Tooltip>
                         <Tooltip title="Collaborate">
-                          <Button type="text" icon={<TeamOutlined />} />
+                          <Button
+                            type="text"
+                            icon={<TeamOutlined />}
+                            target="_blank"
+                            href={`/app/#/links/${record.key}/view?mode=collaborate`}
+                          />
                         </Tooltip>
                         <Tooltip title="Share">
-                          <Button type="text" icon={<ShareAltOutlined />} />
+                          <Button
+                            type="text"
+                            icon={<ShareAltOutlined />}
+                            target="_blank"
+                            href={`/app/#/links/${record.key}/view?mode=share`}
+                          />
                         </Tooltip>
                         <Tooltip title="Delete">
                           <Button

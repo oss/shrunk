@@ -143,7 +143,7 @@ export default function Shrunk(props: Props) {
   const setSelectedKeysFromLocation = (location: Location) => {
     const route = location.hash;
     let key: string | null = null;
-    if (route.startsWith('#/dash') || route.startsWith('#/stats')) {
+    if (route.startsWith('#/dash') || route.startsWith('#/links')) {
       key = 'dash';
     } else if (route.startsWith('#/linkhubs')) {
       key = 'linkhubs';
@@ -357,7 +357,7 @@ export default function Shrunk(props: Props) {
 
                 <Route
                   exact
-                  path="/stats/:id"
+                  path="/links/:id/view"
                   render={(props) => (
                     <Stats
                       id={props.match.params.id}
