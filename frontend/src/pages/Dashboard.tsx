@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 
 import {
   Row,
@@ -16,18 +16,25 @@ import {
   Input,
   Space,
   Modal,
+  Form,
+  Select,
+  Radio,
+  Checkbox,
+  DatePicker,
 } from 'antd/lib';
 import {
   CopyOutlined,
   PlusCircleFilled,
   SearchOutlined,
+  FilterOutlined,
+  CaretDownOutlined,
+  LoadingOutlined,
 } from '@ant-design/icons';
 
 import dayjs from 'dayjs';
 import { getOrgInfo, listOrgs, OrgInfo } from '../api/Org';
 import { LinkInfo } from '../components/LinkInfo';
 import { CreateLinkForm } from '../components/CreateLinkForm';
-import { FilterDropdown } from '../components/FilterDropdown';
 
 /**
  * The final values of the share link form
@@ -204,6 +211,26 @@ export interface State {
   trackingPixelEnabled: boolean;
 
   isCreateModalOpen: boolean;
+
+  filterModalVisible: boolean;
+
+  showExpired: boolean;
+
+  showDeleted: boolean;
+
+  sortKey: string;
+
+  sortOrder: string;
+
+  beginTime: dayjs.Dayjs | null;
+
+  endTime: dayjs.Dayjs | null;
+
+  selectedOrg: number | string;
+
+  orgDropdownOpen: boolean;
+
+  orgLoading: boolean;
 }
 
 // TODO: Add title column
@@ -255,6 +282,16 @@ export class Dashboard extends React.Component<Props, State> {
       },
       trackingPixelEnabled: false,
       isCreateModalOpen: false,
+      filterModalVisible: false,
+      showExpired: false,
+      showDeleted: false,
+      sortKey: 'relevance',
+      sortOrder: 'descending',
+      beginTime: null,
+      endTime: null,
+      selectedOrg: this.props.userPrivileges.has('admin') ? 1 : 0,
+      orgDropdownOpen: false,
+      orgLoading: false,
     };
   }
 
@@ -303,12 +340,11 @@ export class Dashboard extends React.Component<Props, State> {
 
   /**
    * Updates expired links being shown/not shown in the state and executes a search query
-   * @method
-   * @param show_expired_links Whether expired links are shown or not
    */
   showExpiredLinks = (show_expired_links: boolean) => {
     this.setState(
       {
+        showExpired: show_expired_links,
         query: { ...this.state.query, show_expired_links },
       },
       () => this.setQuery(this.state.query),
@@ -317,12 +353,11 @@ export class Dashboard extends React.Component<Props, State> {
 
   /**
    * Updates deleted links being shown/not shown in the state and executes a search query
-   * @method
-   * @param show_deleted_links Whether deleted links are shown or not
    */
   showDeletedLinks = (show_deleted_links: boolean) => {
     this.setState(
       {
+        showDeleted: show_deleted_links,
         query: { ...this.state.query, show_deleted_links },
       },
       () => this.setQuery(this.state.query),
@@ -828,6 +863,23 @@ export class Dashboard extends React.Component<Props, State> {
     });
   };
 
+  updateOrg = async (value: any): Promise<void> => {
+    this.setState({ orgLoading: true });
+    setTimeout(() => {
+      this.setState({ selectedOrg: value });
+      const searchSet: SearchSet =
+        value === 0
+          ? { set: 'user' }
+          : value === 1
+          ? { set: 'all' }
+          : value === 2
+          ? { set: 'shared' }
+          : { set: 'org', org: value as string };
+      this.showByOrg(searchSet);
+      this.setState({ orgLoading: false });
+    }, 300);
+  };
+
   render(): React.ReactNode {
     return (
       <>
@@ -845,17 +897,12 @@ export class Dashboard extends React.Component<Props, State> {
                     placeholder="Find a shortened link"
                     onChange={this.updateQueryString}
                   />
-                  <FilterDropdown
-                    userPrivileges={this.props.userPrivileges}
-                    userOrgs={this.state.userOrgs}
-                    showByOrg={this.showByOrg}
-                    showDeletedLinks={this.showDeletedLinks}
-                    showExpiredLinks={this.showExpiredLinks}
-                    sortLinksByKey={this.sortLinksByKey}
-                    sortLinksByOrder={this.sortLinksByOrder}
-                    showLinksAfter={this.showLinksAfter}
-                    showLinksBefore={this.showLinksBefore}
-                  />
+                  <Button
+                    icon={<FilterOutlined />}
+                    onClick={() => this.setState({ filterModalVisible: true })}
+                  >
+                    Filter
+                  </Button>
                   <Button
                     onClick={this.onSearch}
                     type="primary"
@@ -1008,6 +1055,87 @@ export class Dashboard extends React.Component<Props, State> {
             userOrgs={this.state.userOrgs}
             refreshResults={this.refreshResults}
           />
+        </Modal>
+
+        <Modal
+          title="Filter Links"
+          open={this.state.filterModalVisible}
+          onCancel={() => this.setState({ filterModalVisible: false })}
+          footer={null}
+        >
+          <Form
+            layout="vertical"
+            initialValues={{
+              orgSelect: this.props.userPrivileges.has('admin') ? 1 : 0,
+              sortKey: 'relevance',
+              sortOrder: 'descending',
+            }}
+          >
+            <Form.Item name="orgSelect" label="Filter by organization">
+              <Select value={this.state.selectedOrg} onChange={this.updateOrg}>
+                <Select.Option value={0}>My Links</Select.Option>
+                <Select.Option value={2}>Shared with Me</Select.Option>
+                {!this.props.userPrivileges.has('admin') ? null : (
+                  <Select.Option value={1}>All Links</Select.Option>
+                )}
+                {this.state.userOrgs?.length ? (
+                  <Select.OptGroup label="My Organizations">
+                    {this.state.userOrgs.map((info) => (
+                      <Select.Option key={info.id} value={info.id}>
+                        <em>{info.name}</em>
+                      </Select.Option>
+                    ))}
+                  </Select.OptGroup>
+                ) : null}
+              </Select>
+            </Form.Item>
+            <Form.Item name="sortKey" label="Sort by">
+              <Select
+                value={this.state.sortKey}
+                onChange={this.sortLinksByKey}
+                style={{ width: '100%' }}
+              >
+                <Select.Option value="relevance">Relevance</Select.Option>
+                <Select.Option value="created_time">Time created</Select.Option>
+                <Select.Option value="title">Title</Select.Option>
+                <Select.Option value="visits">Number of visits</Select.Option>
+              </Select>
+            </Form.Item>
+            <Form.Item name="show_expired">
+              <Checkbox
+                checked={this.state.showExpired}
+                onChange={(e) => this.showExpiredLinks(e.target.checked)}
+              >
+                Show expired links?
+              </Checkbox>
+            </Form.Item>
+            {this.props.userPrivileges.has('admin') && (
+              <Form.Item name="show_deleted">
+                <Checkbox
+                  checked={this.state.showDeleted}
+                  onChange={(e) => this.showDeletedLinks(e.target.checked)}
+                >
+                  Show deleted links?
+                </Checkbox>
+              </Form.Item>
+            )}
+            <Form.Item name="beginTime" label="Created after">
+              <DatePicker
+                format="YYYY-MM-DD"
+                value={this.state.beginTime}
+                onChange={this.showLinksAfter}
+                style={{ width: '100%' }}
+              />
+            </Form.Item>
+            <Form.Item name="endTime" label="Created before">
+              <DatePicker
+                format="YYYY-MM-DD"
+                value={this.state.endTime}
+                onChange={this.showLinksBefore}
+                style={{ width: '100%' }}
+              />
+            </Form.Item>
+          </Form>
         </Modal>
       </>
     );
