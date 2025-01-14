@@ -46,7 +46,7 @@ import Faq from './pages/Faq';
 import Orgs from './pages/Orgs';
 import { RoleRequestForm } from './pages/RoleRequestForm';
 
-import { AdminStats } from './components/admin/AdminStats';
+import AdminStats from './components/admin/AdminStats';
 import LinkSecurity from './components/admin/LinkSecurity';
 import { PendingRoleRequests } from './components/admin/PendingRoleRequests';
 import { Role } from './components/admin/Role';
