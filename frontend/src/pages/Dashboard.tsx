@@ -21,6 +21,8 @@ import {
   DatePicker,
   Tooltip,
   Dropdown,
+  Popconfirm,
+  message,
 } from 'antd/lib';
 import {
   CopyOutlined,
@@ -1148,11 +1150,29 @@ export class Dashboard extends React.Component<Props, State> {
                           />
                         </Tooltip>
                         <Tooltip title="Delete">
-                          <Button
-                            type="text"
-                            danger
-                            icon={<DeleteOutlined />}
-                          />
+                          <Popconfirm
+                            title="Are you sure you want to delete this link?"
+                            onConfirm={async () => {
+                              try {
+                                await fetch(`/api/v1/link/${record.key}`, {
+                                  method: 'DELETE',
+                                });
+                                message.success('Link deleted successfully');
+                                await this.refreshResults();
+                              } catch (error) {
+                                message.error('Failed to delete link');
+                              }
+                            }}
+                            okText="Yes"
+                            cancelText="No"
+                            okButtonProps={{ danger: true }}
+                          >
+                            <Button
+                              type="text"
+                              danger
+                              icon={<DeleteOutlined />}
+                            />
+                          </Popconfirm>
                         </Tooltip>
                       </Space>
                     ),
