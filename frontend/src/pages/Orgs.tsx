@@ -89,33 +89,10 @@ export default function Orgs({ userPrivileges }: Props): React.ReactElement {
       key: 'actions',
       width: 150,
       render: (record: OrgInfo) => (
-        <Space>
-          <Tooltip title="Manage">
-            <Button
-              type="text"
-              href={`/app/#/orgs/${record.id}/manage`}
-              icon={<ToolOutlined />}
-            />
-          </Tooltip>
-          <Tooltip title="Stats">
-            <Button
-              type="text"
-              icon={<LineChartOutlined />}
-              href={`/app/#/orgs/${record.id}/stats`}
-            />
-          </Tooltip>
-          {record.is_admin && (
-            <Tooltip title="Delete">
-              <Popconfirm
-                placement="top"
-                title="Are you sure you want to delete this organization?"
-                onConfirm={async () => onDeleteOrg(record.id)}
-                icon={<ExclamationCircleOutlined style={{ color: 'red' }} />}
-              >
-                <Button danger type="text" icon={<DeleteOutlined />} />
-              </Popconfirm>
-            </Tooltip>
-          )}
+        <Space size="middle">
+          <Typography.Link href={`/app/#/orgs/${record.id}/manage`}>
+            View
+          </Typography.Link>
         </Space>
       ),
     },
