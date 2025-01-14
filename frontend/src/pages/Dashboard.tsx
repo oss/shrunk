@@ -11,24 +11,29 @@ import {
   Spin,
   Button,
   Typography,
-  Card,
   Table,
   Input,
   Space,
   Modal,
   Form,
   Select,
-  Radio,
   Checkbox,
   DatePicker,
+  Tooltip,
+  Flex,
 } from 'antd/lib';
 import {
   CopyOutlined,
   PlusCircleFilled,
   SearchOutlined,
   FilterOutlined,
-  CaretDownOutlined,
-  LoadingOutlined,
+  EyeOutlined,
+  DeleteOutlined,
+  TeamOutlined,
+  ShareAltOutlined,
+  EditOutlined,
+  TableOutlined,
+  SlidersOutlined,
 } from '@ant-design/icons';
 
 import dayjs from 'dayjs';
@@ -887,41 +892,32 @@ export class Dashboard extends React.Component<Props, State> {
           <Typography.Title>URL Shortener</Typography.Title>
         </Row>
         <Row gutter={[16, 16]} justify="space-between">
-          <Col span={12}>
-            {this.state.userOrgs === null ? (
-              <></>
-            ) : (
-              <>
-                <Space.Compact block>
-                  <Input
-                    placeholder="Find a shortened link"
-                    onChange={this.updateQueryString}
-                  />
-                  <Button
-                    icon={<FilterOutlined />}
-                    onClick={() => this.setState({ filterModalVisible: true })}
-                  >
-                    Filter
-                  </Button>
-                  <Button
-                    onClick={this.onSearch}
-                    type="primary"
-                    icon={<SearchOutlined />}
-                  >
-                    Search
-                  </Button>
-                </Space.Compact>
-              </>
-            )}
+          <Col>
+            <Space>
+              <Button icon={<SlidersOutlined />}>Customize</Button>
+              <Button
+                icon={<FilterOutlined />}
+                onClick={() => this.setState({ filterModalVisible: true })}
+              >
+                Filter
+              </Button>
+              <Input.Search
+                placeholder="Find a shortened link"
+                onChange={this.updateQueryString}
+                onSearch={this.onSearch}
+              />
+            </Space>
           </Col>
-          <Col span={12} style={{ textAlign: 'right' }}>
-            <Button
-              type="primary"
-              icon={<PlusCircleFilled />}
-              onClick={() => this.setState({ isCreateModalOpen: true })}
-            >
-              Create Link
-            </Button>
+          <Col style={{ textAlign: 'right' }}>
+            <Space>
+              <Button
+                type="primary"
+                icon={<PlusCircleFilled />}
+                onClick={() => this.setState({ isCreateModalOpen: true })}
+              >
+                Create Link
+              </Button>
+            </Space>
           </Col>
           <Col span={24}>
             {this.state.linkInfo === null ? (
@@ -938,6 +934,11 @@ export class Dashboard extends React.Component<Props, State> {
                     fixed: 'left',
                     render: (_, record) => (
                       <Row gutter={[0, 8]}>
+                        <Col span={24}>
+                          <Typography.Title level={5} style={{ margin: 0 }}>
+                            {record.title}
+                          </Typography.Title>
+                        </Col>
                         {record.aliases.map((aliasObj) => {
                           const isDev = process.env.NODE_ENV === 'development';
                           const protocol = isDev ? 'http' : 'https';
@@ -955,7 +956,7 @@ export class Dashboard extends React.Component<Props, State> {
                                 <Space>
                                   <CopyOutlined />
                                   <Typography key={aliasObj.alias}>
-                                    {aliasObj.alias.toString()}
+                                    {shortUrl}
                                   </Typography>
                                 </Space>
                               </Button>
@@ -1010,18 +1011,39 @@ export class Dashboard extends React.Component<Props, State> {
                     title: 'Actions',
                     key: 'actions',
                     fixed: 'right',
-                    width: '15%',
+                    width: '25%',
                     render: (_, record) => (
-                      <Space size="middle">
-                        <Typography.Link href={`/app/#/stats/${record.key}`}>
-                          View
-                        </Typography.Link>
+                      <Space>
+                        <Tooltip title="View">
+                          <Button
+                            type="text"
+                            icon={<EyeOutlined />}
+                            href={`/app/#/stats/${record.key}`}
+                          />
+                        </Tooltip>
+                        <Tooltip title="Edit">
+                          <Button type="text" icon={<EditOutlined />} />
+                        </Tooltip>
+                        <Tooltip title="Collaborate">
+                          <Button type="text" icon={<TeamOutlined />} />
+                        </Tooltip>
+                        <Tooltip title="Share">
+                          <Button type="text" icon={<ShareAltOutlined />} />
+                        </Tooltip>
+                        <Tooltip title="Delete">
+                          <Button
+                            type="text"
+                            danger
+                            icon={<DeleteOutlined />}
+                          />
+                        </Tooltip>
                       </Space>
                     ),
                   },
                 ]}
                 dataSource={this.state.linkInfo.map((link) => ({
                   key: link.id,
+                  title: link.title,
                   aliases: link.aliases,
                   longUrl: link.long_url,
                   owner: link.owner,
