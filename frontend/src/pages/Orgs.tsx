@@ -95,13 +95,6 @@ export default function Orgs({ userPrivileges }: Props): React.ReactElement {
       ),
     },
     {
-      title: 'Date Created',
-      key: 'created',
-      width: '15%',
-      render: (record: OrgInfo) =>
-        dayjs(record.timeCreated).format('MMM D, YYYY'),
-    },
-    {
       title: 'Actions',
       key: 'actions',
       width: 150,
@@ -147,7 +140,13 @@ export default function Orgs({ userPrivileges }: Props): React.ReactElement {
         <Col>
           <Space.Compact>
             {isAdmin && (
-              <Tooltip title={showAll ? "Showing all organizations" : "Show all organizations"}>
+              <Tooltip
+                title={
+                  showAll
+                    ? 'Showing all organizations'
+                    : 'Show all organizations'
+                }
+              >
                 <Button
                   icon={showAll ? <EyeOutlined /> : <EyeInvisibleOutlined />}
                   onClick={() => {
