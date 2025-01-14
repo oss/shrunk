@@ -96,7 +96,7 @@ export default function Shrunk(props: Props) {
       : userPrivileges.has('power_user')
       ? 'Power User'
       : userPrivileges.has('facstaff')
-      ? 'Faculty/Staff'
+      ? 'Faculty'
       : 'Administrator';
 
   const [selectedKeys, setSelectedKeys] = useState<string[]>(['dash']);
