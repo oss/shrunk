@@ -5,7 +5,6 @@
 
 import React from 'react';
 import { Row, Col, Button, Input, Form, Spin } from 'antd/lib';
-import { IoReturnUpBack } from 'react-icons/io5';
 import { CheckOutlined } from '@ant-design/icons';
 import base32 from 'hi-base32';
 import OnSubmitRoleRequestModal from '../modals/OnSubmitRoleRequestModal';
@@ -229,12 +228,7 @@ export class RoleRequestForm extends React.Component<Props, State> {
       <div>
         <Row className="primary-row">
           <Col span={24}>
-            <Button
-              type="text"
-              href="/app/#/dash"
-              icon={<IoReturnUpBack />}
-              size="large"
-            />
+            <Button type="text" href="/app/#/dash" size="large" />
             <span className="page-title">
               Request{' '}
               {this.state.roleRequestText?.role.replace(/\b\w/g, (c) =>

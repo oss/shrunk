@@ -22,7 +22,6 @@ import { FormInstance } from 'antd/lib/form';
 import { PlusCircleFilled, ExclamationCircleFilled } from '@ant-design/icons';
 
 import { ColumnsType } from 'antd/es/table';
-import { RiDeleteBin6Line } from 'react-icons/ri';
 import { OrgInfo, listOrgs } from '../api/Org';
 import { serverValidateNetId } from '../Validators';
 import { LinkInfo } from '../components/LinkInfo';
