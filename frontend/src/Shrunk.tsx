@@ -51,8 +51,7 @@ import LinkSecurity from './components/admin/LinkSecurity';
 import { PendingRoleRequests } from './components/admin/PendingRoleRequests';
 import { Role } from './components/admin/Role';
 import UserLookup from './components/admin/UserLookup';
-import { ManageOrg } from './pages/subpages/ManageOrg';
-import { OrgStats } from './pages/subpages/OrgStats';
+import ManageOrg from './pages/subpages/ManageOrg';
 import { Stats } from './pages/subpages/Stats';
 
 import { PendingAlerts } from './modals/PendingAlerts';

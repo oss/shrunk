@@ -7,22 +7,18 @@ import React, { useEffect, useState } from 'react';
 import {
   Row,
   Col,
-  Checkbox,
   Popconfirm,
   Button,
-  Dropdown,
-  Form,
   Input,
   Tooltip,
   Spin,
   Typography,
   Table,
   Space,
+  Tag,
 } from 'antd/lib';
 import {
-  ExclamationCircleFilled,
   PlusCircleFilled,
-  ToolFilled,
   LineChartOutlined,
   DeleteOutlined,
   ToolOutlined,
@@ -30,12 +26,8 @@ import {
   EyeOutlined,
   EyeInvisibleOutlined,
 } from '@ant-design/icons';
-import dayjs from 'dayjs';
 
 import { OrgInfo, listOrgs, createOrg, deleteOrg } from '../api/Org';
-import { OrgAdminTag, OrgMemberTag } from './subpages/OrgCommon';
-
-import { serverValidateOrgName } from '../Validators';
 
 /**
  * Props for the [[Orgs]] component
@@ -87,10 +79,8 @@ export default function Orgs({ userPrivileges }: Props): React.ReactElement {
       render: (record: OrgInfo) => (
         <Space>
           <a href={`/app/#/orgs/${record.id}/manage`}>{record.name}</a>
-          {record.is_admin ? (
-            <OrgAdminTag title="You are an administrator of this organization." />
-          ) : null}
-          {showAll && record.is_member ? <OrgMemberTag /> : null}
+          {record.is_admin ? <Tag color="red">Admin</Tag> : null}
+          {showAll && record.is_member ? <Tag color="blue">Member</Tag> : null}
         </Space>
       ),
     },
