@@ -628,7 +628,7 @@ export function Stats(props: Props) {
                   </Space>
                 </Button>
               );
-            }
+            },
           },
           {
             title: 'Description',
