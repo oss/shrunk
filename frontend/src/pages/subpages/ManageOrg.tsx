@@ -26,22 +26,14 @@ import {
   ExclamationCircleFilled,
   PlusCircleFilled,
   CloseOutlined,
-  UpOutlined,
-  DownOutlined,
   ExclamationCircleOutlined,
   WarningFilled,
-  TeamOutlined,
   EditOutlined,
-  BarChartOutlined,
   UserAddOutlined,
-  CheckOutlined,
 } from '@ant-design/icons';
-import { Link, RouteComponentProps, withRouter } from 'react-router-dom';
+import { RouteComponentProps, withRouter } from 'react-router-dom';
 import dayjs from 'dayjs';
 import type { FormInstance } from 'antd/lib/form';
-import Highcharts from 'highcharts';
-import HighchartsReact from 'highcharts-react-official';
-import { GeoipStats, MENU_ITEMS, GeoipChart } from './StatsCommon';
 
 import { MemberInfo, OrgInfo, getOrgInfo } from '../../api/Org';
 import { serverValidateNetId, serverValidateOrgName } from '../../Validators';
@@ -119,22 +111,18 @@ function ManageOrgBase({
   const [editModalVisible, setEditModalVisible] = useState(false);
   const formRef = useRef<FormInstance>(null);
   const [visitStats, setVisitStats] = useState<VisitDatum[] | null>(null);
-  const [geoipStats, setGeoipStats] = useState<GeoipStats | null>(null);
-
   const refreshOrgInfo = async () => {
-    const [info, visitData, geoipData] = await Promise.all([
+    const [info, visitData] = await Promise.all([
       getOrgInfo(match.params.id),
       fetch(`/api/v1/org/${match.params.id}/stats/visits`).then((r) =>
         r.json(),
       ),
-      fetch(`/api/v1/org/${match.params.id}/stats/geoip`).then((r) => r.json()),
     ]);
 
     const adminCount = info.members.filter((member) => member.is_admin).length;
     setOrgInfo(info);
     setAdminsCount(adminCount);
     setVisitStats(visitData.visits);
-    setGeoipStats(geoipData.geoip);
   };
 
   useEffect(() => {
