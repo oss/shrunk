@@ -239,7 +239,7 @@ export default function AdminStats(): React.ReactElement {
         </Col>
         <Col span={24}>
           <Card>
-            <HighchartsReact highcharts={Highcharts} options={options} />;
+            <HighchartsReact highcharts={Highcharts} options={options} />
           </Card>
         </Col>
       </Row>
