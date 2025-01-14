@@ -16,6 +16,7 @@ import {
   Table,
   Space,
   Tag,
+  message,
 } from 'antd/lib';
 import {
   PlusCircleFilled,
@@ -89,10 +90,32 @@ export default function Orgs({ userPrivileges }: Props): React.ReactElement {
       key: 'actions',
       width: 150,
       render: (record: OrgInfo) => (
-        <Space size="middle">
-          <Typography.Link href={`/app/#/orgs/${record.id}/manage`}>
-            View
-          </Typography.Link>
+        <Space>
+          <Tooltip title="View">
+            <Button
+              type="text"
+              icon={<EyeOutlined />}
+              href={`/app/#/orgs/${record.id}/view`}
+            />
+          </Tooltip>
+          <Tooltip title="Delete">
+            <Popconfirm
+              title="Are you sure you want to delete this organization?"
+              onConfirm={async () => {
+                try {
+                  await onDeleteOrg(record.id);
+                  message.success('Organization deleted successfully');
+                } catch (error) {
+                  message.error('Failed to delete organization');
+                }
+              }}
+              okText="Yes"
+              cancelText="No"
+              okButtonProps={{ danger: true }}
+            >
+              <Button type="text" danger icon={<DeleteOutlined />} />
+            </Popconfirm>
+          </Tooltip>
         </Space>
       ),
     },
@@ -151,18 +174,12 @@ export default function Orgs({ userPrivileges }: Props): React.ReactElement {
       {orgs === null ? (
         <Spin size="large" />
       ) : (
-        <div>
-          {orgs.length === 0 ? (
-            <p>You are currently not in any organizations.</p>
-          ) : (
-            <Table
-              dataSource={orgs}
-              columns={columns}
-              rowKey="id"
-              pagination={false}
-            />
-          )}
-        </div>
+        <Table
+          dataSource={orgs}
+          columns={columns}
+          rowKey="id"
+          pagination={false}
+        />
       )}
     </>
   );
