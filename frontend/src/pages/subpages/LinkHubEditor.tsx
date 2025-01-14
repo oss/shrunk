@@ -21,11 +21,7 @@ import EditLinkFromLinkHubModal, {
   EditLinkData,
 } from '../../modals/EditLinkFromLinkHubModal';
 import { serverValidateLinkHubAlias } from '../../Validators';
-import ShareLinkHubModal from '../../modals/ShareLinkHubModal';
-import {
-  Entity,
-  CollaboratorLinkModal,
-} from '../../modals/CollaboratorLinkModal';
+import CollaboratorModal, { Entity } from '../../modals/CollaboratorModal';
 import { getOrgInfo } from '../../api/Org';
 import {
   getLinkHub,
@@ -449,7 +445,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
         <></>
       )}
       {collaborators !== undefined ? (
-        <CollaboratorLinkModal
+        <CollaboratorModal
           visible={isCollaboratorModalVisible}
           userPrivileges={undefined}
           people={collaborators}
