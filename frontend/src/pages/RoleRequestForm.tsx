@@ -130,15 +130,15 @@ export class RoleRequestForm extends React.Component<Props, State> {
    */
   updateRequestMade = async (): Promise<void> => {
     const encodedEntity = base32.encode(this.props.netid);
-    fetch(`/api/v1/role_request/${this.props.name}/${encodedEntity}`)
-      .then((response) => {
+    fetch(`/api/v1/role_request/${this.props.name}/${encodedEntity}`).then(
+      (response) => {
         if (response.status === 204) {
           this.setState({ roleRequestSent: false });
         } else if (response.status === 200) {
           this.setState({ roleRequestSent: true });
         }
-      })
-      .catch((error) => console.error('Error:', error));
+      },
+    );
   };
 
   updateTicketClicked = (): void => {
@@ -159,15 +159,11 @@ export class RoleRequestForm extends React.Component<Props, State> {
         role: this.props.name,
         comment: this.state.comment,
       }),
-    })
-      .then((response) => {
-        if (response.status === 201) {
-          this.setState({ roleRequestSent: true });
-        } else if (response.status === 400) {
-          console.error('Error: Bad request');
-        }
-      })
-      .catch((error) => console.error('Error:', error));
+    }).then((response) => {
+      if (response.status === 201) {
+        this.setState({ roleRequestSent: true });
+      }
+    });
   };
 
   /**

@@ -304,6 +304,7 @@ export const EditLinkModal: React.FC<Props> = (props) => {
                           if (!result.valid && value.length >= 5) {
                             return Promise.reject(new Error(result.reason));
                           }
+                          return Promise.resolve();
                         },
                       }),
                     ]}

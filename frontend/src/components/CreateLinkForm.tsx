@@ -11,8 +11,6 @@ import {
   Input,
   Button,
   DatePicker,
-  Space,
-  Tooltip,
   Spin,
   Modal,
   Radio,
@@ -21,13 +19,7 @@ import {
   Row,
   Card,
 } from 'antd/lib';
-import {
-  CloseCircleOutlined,
-  LinkOutlined,
-  MinusCircleOutlined,
-  PlusOutlined,
-  QuestionCircleOutlined,
-} from '@ant-design/icons';
+import { MinusCircleOutlined } from '@ant-design/icons';
 import { FormInstance } from 'antd/lib/form';
 import {
   serverValidateReservedAlias,
@@ -105,7 +97,11 @@ export interface Props {
  * The [[CreateLinkForm]] component allows the user to create a new link
  * @class
  */
-export function CreateLinkForm({ userPrivileges, onFinish, tracking_pixel_ui_enabled }: Props): React.ReactElement {
+export function CreateLinkForm({
+  userPrivileges,
+  onFinish,
+  tracking_pixel_ui_enabled,
+}: Props): React.ReactElement {
   const [loading, setLoading] = useState(false);
   const [trackingPixelEnabled, setTrackingPixelEnabled] = useState(false);
   const [trackingPixelExtension, setTrackingPixelExtension] = useState('.png');
@@ -176,7 +172,9 @@ export function CreateLinkForm({ userPrivileges, onFinish, tracking_pixel_ui_ena
         let result = null;
         if (alias.alias !== undefined) {
           result = await fetch(
-            `/api/v1/link/validate_duplicate_alias/${base32.encode(alias.alias!)}`,
+            `/api/v1/link/validate_duplicate_alias/${base32.encode(
+              alias.alias!,
+            )}`,
           ).then((resp) => resp.json());
         }
         if (alias.alias !== undefined && result.valid) {
@@ -197,7 +195,8 @@ export function CreateLinkForm({ userPrivileges, onFinish, tracking_pixel_ui_ena
   };
 
   const initialValues = { aliases: [{ description: '' }] };
-  const mayUseCustomAliases = userPrivileges.has('power_user') || userPrivileges.has('admin');
+  const mayUseCustomAliases =
+    userPrivileges.has('power_user') || userPrivileges.has('admin');
 
   return (
     <Form
@@ -239,10 +238,7 @@ export function CreateLinkForm({ userPrivileges, onFinish, tracking_pixel_ui_ena
 
               {trackingPixelEnabled && (
                 <>
-                  <Form.Item
-                    name="tracking_pixel_extension"
-                    label="Extension"
-                  >
+                  <Form.Item name="tracking_pixel_extension" label="Extension">
                     <Radio.Group
                       onChange={onTrackingPixelExtensionChange}
                       options={[

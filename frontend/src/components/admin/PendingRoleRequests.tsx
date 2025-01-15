@@ -278,7 +278,6 @@ export class PendingRoleRequests extends Component<Props, State> {
     try {
       const response = await fetch(`/api/v1/position/${base32.encode(entity)}`);
       if (!response.ok) {
-        console.error(`Server responded with status ${response.status}`);
         // Return the default values (failed to query)
         return result;
       }
@@ -298,7 +297,6 @@ export class PendingRoleRequests extends Component<Props, State> {
       });
       return result;
     } catch (error) {
-      console.error('Error:', error);
       return result;
     }
   };

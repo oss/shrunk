@@ -63,34 +63,40 @@ export default function Admin(): React.ReactElement {
       title: 'Unsafe Links Pending Verification',
       icon: <SafetyOutlined />,
       link: '/admin/link_security',
-      badge: linksToBeVerified === -1 ? (
-        <Spin size="small" />
-      ) : (
-        <Badge count={linksToBeVerified} />
-      ),
+      badge:
+        linksToBeVerified === -1 ? (
+          <Spin size="small" />
+        ) : (
+          <Badge count={linksToBeVerified} />
+        ),
     },
     {
       title: 'Pending Power User Role Requests',
       icon: <TeamOutlined />,
       link: '/admin/role_requests/power_user',
-      badge: powerUserRequestsCount === -1 ? (
-        <Spin size="small" />
-      ) : (
-        <Badge count={powerUserRequestsCount} />
-      ),
+      badge:
+        powerUserRequestsCount === -1 ? (
+          <Spin size="small" />
+        ) : (
+          <Badge count={powerUserRequestsCount} />
+        ),
     },
   ];
 
   return (
     <>
       <Typography.Title>Administrator Controls</Typography.Title>
-      
+
       <Row gutter={[16, 16]}>
         {adminCards.map((card) => (
           <Col xs={24} sm={12} md={8} lg={6} key={card.link}>
             <Card hoverable>
               <Link to={card.link}>
-                <Space direction="vertical" style={{ width: '100%' }} align="center">
+                <Space
+                  direction="vertical"
+                  style={{ width: '100%' }}
+                  align="center"
+                >
                   {card.icon}
                   <Typography.Text strong>{card.title}</Typography.Text>
                   {card.badge}
@@ -99,7 +105,7 @@ export default function Admin(): React.ReactElement {
             </Card>
           </Col>
         ))}
-        
+
         {roles === null ? (
           <Col span={24}>
             <Spin size="large" />
@@ -109,9 +115,15 @@ export default function Admin(): React.ReactElement {
             <Col xs={24} sm={12} md={8} lg={6} key={role.name}>
               <Card hoverable>
                 <Link to={`/roles/${role.name}`}>
-                  <Space direction="vertical" style={{ width: '100%' }} align="center">
+                  <Space
+                    direction="vertical"
+                    style={{ width: '100%' }}
+                    align="center"
+                  >
                     <TeamOutlined />
-                    <Typography.Text strong>{role.display_name}</Typography.Text>
+                    <Typography.Text strong>
+                      {role.display_name}
+                    </Typography.Text>
                   </Space>
                 </Link>
               </Card>

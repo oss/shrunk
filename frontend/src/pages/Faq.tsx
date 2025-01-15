@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 import React from 'react';
-import { Row, Col, Table, Collapse, Typography } from 'antd/lib';
+import { Row, Table, Collapse, Typography } from 'antd/lib';
 import { Link } from 'react-router-dom';
 
 const Data = {

@@ -12,7 +12,6 @@ import {
   SafetyOutlined,
   SlidersOutlined,
   TeamOutlined,
-  UserOutlined,
 } from '@ant-design/icons';
 import {
   Button,
@@ -23,10 +22,8 @@ import {
   Layout,
   Menu,
   Row,
-  Space,
   Tag,
   Typography,
-  theme,
 } from 'antd/lib';
 import { createBrowserHistory, Location } from 'history';
 import React, { useEffect, useState } from 'react';
@@ -86,7 +83,6 @@ export interface Props {
 
 export default function Shrunk(props: Props) {
   const { netid, siderWidth, userPrivileges } = props;
-  const { token } = theme.useToken();
 
   const showAdminTab = userPrivileges.has('admin');
   const showWhitelistTab = !showAdminTab && userPrivileges.has('facstaff');
@@ -136,7 +132,7 @@ export default function Shrunk(props: Props) {
         setPowerUserRoleRequestMade(false);
       }
     } catch (error) {
-      console.error('Error:', error);
+      setPowerUserRoleRequestMade(false);
     }
   };
 
@@ -350,17 +346,17 @@ export default function Shrunk(props: Props) {
                 <Route
                   exact
                   path="/linkhubs/:linkHubId/edit"
-                  render={(props) => (
-                    <LinkHubEditor linkhubId={props.match.params.linkHubId} />
+                  render={(route) => (
+                    <LinkHubEditor linkhubId={route.match.params.linkHubId} />
                   )}
                 />
 
                 <Route
                   exact
                   path="/links/:id/view"
-                  render={(props) => (
+                  render={(route) => (
                     <Stats
-                      id={props.match.params.id}
+                      id={route.match.params.id}
                       netid={netid}
                       userPrivileges={userPrivileges}
                     />
@@ -377,12 +373,6 @@ export default function Shrunk(props: Props) {
                     userPrivileges={userPrivileges}
                   />
                 </Route>
-
-                <Route
-                  exact
-                  path="/orgs/:id/stats"
-                  render={(props) => <OrgStats id={props.match.params.id} />}
-                />
 
                 {isRoleRequestsEnabled && (
                   <Route exact path="/request-power-user-role">
@@ -401,10 +391,10 @@ export default function Shrunk(props: Props) {
                 <Route
                   exact
                   path="/roles/:name"
-                  render={(props) => (
+                  render={(route) => (
                     <Role
                       userPrivileges={userPrivileges}
-                      name={props.match.params.name}
+                      name={route.match.params.name}
                     />
                   )}
                 />

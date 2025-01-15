@@ -363,54 +363,56 @@ export function Stats(props: Props): React.ReactElement {
       case 'share':
         setShareModalVisible(true);
         break;
+      default:
+        break;
     }
   }, [mode]);
 
   async function updateLinkInfo() {
-    const _linkInfo = (await fetch(`/api/v1/link/${props.id}`).then((resp) =>
+    const templinkInfo = (await fetch(`/api/v1/link/${props.id}`).then((resp) =>
       resp.json(),
     )) as LinkInfo;
 
-    const aliases = _linkInfo.aliases.filter((alias) => !alias.deleted);
+    const aliases = templinkInfo.aliases.filter((alias) => !alias.deleted);
 
     if (aliases.length === 0) {
       throw new Error(`link ${props.id} has no aliases!`);
     }
 
-    setLinkInfo(_linkInfo);
+    setLinkInfo(templinkInfo);
     setAllAliases(aliases);
     setSelectedAlias(null);
-    setMayEdit(_linkInfo.may_edit);
+    setMayEdit(templinkInfo.may_edit);
 
-    const _entities: Entity[] = [];
+    const tempEntities: Entity[] = [];
     const mentionedIds = new Set<string>();
 
-    _entities.push({
-      _id: _linkInfo.owner,
+    tempEntities.push({
+      _id: templinkInfo.owner,
       type: 'netid',
       permission: 'owner',
     });
 
-    _linkInfo.editors.forEach((editor) => {
-      _entities.push({
+    templinkInfo.editors.forEach((editor) => {
+      tempEntities.push({
         _id: editor._id,
         type: editor.type,
         permission: 'editor',
       });
       mentionedIds.add(editor._id);
     });
-    _linkInfo.viewers.forEach((viewer) => {
+    templinkInfo.viewers.forEach((viewer) => {
       if (mentionedIds.has(viewer._id)) {
         return;
       }
 
-      _entities.push({
+      tempEntities.push({
         _id: viewer._id,
         type: viewer.type,
         permission: 'viewer',
       });
     });
-    setEntities(_entities);
+    setEntities(tempEntities);
   }
 
   async function updateStats() {
@@ -467,7 +469,6 @@ export function Stats(props: Props): React.ReactElement {
         const data = await response.json();
         setTopReferrer(data);
       } catch (error) {
-        console.error('Failed to fetch top referrer:', error);
         setTopReferrer(null);
       }
     };
@@ -897,10 +898,7 @@ export function Stats(props: Props): React.ReactElement {
 
           <CollaboratorModal
             visible={collabModalVisible}
-            userPrivileges={props.userPrivileges}
             people={entities}
-            isLoading={false}
-            linkInfo={linkInfo}
             onAddEntity={async (value) => {
               const patchReq = {
                 acl: `${value.permission}s`,

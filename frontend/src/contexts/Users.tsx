@@ -121,7 +121,7 @@ const UsersProvider: React.FC = ({ children }) => {
         const data = await response.json();
         setUsers(data.users);
       } catch (error) {
-        console.error('Failed to fetch users:', error);
+        throw new Error(`Failed to fetch users: {error}`);
       } finally {
         setLoading(false);
       }
@@ -143,7 +143,7 @@ const UsersProvider: React.FC = ({ children }) => {
         const data = await response.json();
         setOptions(data.options);
       } catch (error) {
-        console.error('Failed to fetch options:', error);
+        setOptions(null);
       } finally {
         setLoading(false);
       }

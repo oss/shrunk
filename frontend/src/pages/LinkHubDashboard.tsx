@@ -1,7 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { SearchBox } from '../components/SearchBox';
-import LinkHubRow from '../components/LinkHubRow';
 
 async function searchLinkHubs(netid: string) {
   const resp = await fetch(`/api/v1/linkhub/netid/${netid}`, {

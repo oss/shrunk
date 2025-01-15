@@ -10,7 +10,6 @@ import {
   Button,
   Popconfirm,
   Spin,
-  Dropdown,
   Form,
   Input,
   Checkbox,
@@ -19,7 +18,6 @@ import {
   Typography,
   Space,
   Table,
-  Tabs,
   Select,
 } from 'antd/lib';
 import {
@@ -105,7 +103,6 @@ function ManageOrgBase({
 }: Props): React.ReactElement {
   const [orgInfo, setOrgInfo] = useState<OrgInfo | null>(null);
   const [adminsCount, setAdminsCount] = useState(0);
-  const [addMemberFormVisible, setAddMemberFormVisible] = useState(false);
   const [renameOrgModalVisible, setRenameOrgModalVisible] = useState(false);
   const [shareModalVisible, setShareModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -140,7 +137,6 @@ function ManageOrgBase({
         body: JSON.stringify({ is_admin: true }),
       });
     }
-    setAddMemberFormVisible(false);
     await refreshOrgInfo();
   };
 

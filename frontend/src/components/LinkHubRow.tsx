@@ -18,14 +18,14 @@ export default function LinkHubRow(props: ILinkHubRow) {
   const { Meta } = Card;
   const history = useHistory();
 
-  function onEdit() {
+  const onEdit = () => {
     history.push(`/linkhubs/${props.linkHubId}/edit`);
-  }
+  };
 
-  function onDelete() {
+  const onDelete = () => {
     deleteLinkHub(props.linkHubId);
     history.go(0); // TODO: Replace with just a call to rerender the state instead of reloading the entire page.
-  }
+  };
 
   return (
     <Col span={8}>
