@@ -13,7 +13,7 @@ __all__ = ["OrgsClient"]
 class OrgsClient:
     """This class implements all orgs-related functionality."""
 
-    def __init__(self, *, db: pymongo.database.Database, DOMAIN_ENABLED:bool):
+    def __init__(self, *, db: pymongo.database.Database, DOMAIN_ENABLED: bool):
         self.db = db
         self.domain_enabled = DOMAIN_ENABLED
 
@@ -146,7 +146,7 @@ class OrgsClient:
 
         result = self.db.organizations.update_one(match, update)
         return cast(int, result.modified_count) == 1
-    
+
     def delete_member(self, org_id: ObjectId, netid: str) -> bool:
         result = self.db.organizations.update_one(
             {"_id": org_id}, {"$pull": {"members": {"netid": netid}}}
@@ -175,7 +175,7 @@ class OrgsClient:
             if member["netid"] == netid and member["is_admin"]:
                 return True
         return False
-    
+
     def create_domain(self, org_name: str, domain: str) -> bool:
         existing_domain = self.db.organizations.find_one({"domains.domain": domain})
         if domain in {"go", "shrunk"} or domain.startswith("localhost"):
@@ -199,11 +199,11 @@ class OrgsClient:
 
         result = self.db.organizations.update_one(org, update)
         return cast(int, result.modified_count) == 1
-        
+
     def delete_domain(self, org_name: str, domain: str) -> bool:
         org = self.db.organizations.find_one({"name": org_name})
         if org is None:
-                return False
+            return False
         try:
             update = {
                 "$pull": {
@@ -217,7 +217,7 @@ class OrgsClient:
 
     def get_domain_status(self) -> bool:
         return self.domain_enabled
-    
+
     def get_visit_stats(self, org_id: ObjectId) -> List[Any]:
         pipeline = [
             {"$match": {"_id": org_id}},

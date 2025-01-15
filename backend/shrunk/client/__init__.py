@@ -78,11 +78,8 @@ class ShrunkClient:
         )
         self.roles = RolesClient(db=self.db)
         self.tracking = TrackingClient(db=self.db)
-        
-        self.orgs = OrgsClient(
-            db=self.db,
-            DOMAIN_ENABLED=DOMAIN_ENABLED or False
-        )
+
+        self.orgs = OrgsClient(db=self.db, DOMAIN_ENABLED=DOMAIN_ENABLED or False)
         self.search = SearchClient(db=self.db, client=self)
         self.alerts = AlertsClient(db=self.db)
         self.security = SecurityClient(

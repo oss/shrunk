@@ -326,6 +326,7 @@ def put_org_member(
     client.orgs.create_member(org_id, member_netid)
     return "", 204
 
+
 @bp.route("/domain", methods=["PUT"])
 @require_login
 def put_domain(netid: str, client: ShrunkClient) -> Any:
@@ -345,19 +346,23 @@ def put_domain(netid: str, client: ShrunkClient) -> Any:
     domain_name = data.get("domain_name")
 
     if not org_name or not domain_name:
-        return jsonify({"error": "Missing org_name or domain_name in request body"}), 400
-    
+        return (
+            jsonify({"error": "Missing org_name or domain_name in request body"}),
+            400,
+        )
+
     if not client.roles.has("admin", netid):
         abort(403)
-    
+
     try:
         res = client.orgs.create_domain(org_name, domain_name)
         if res == False:
             return "There was an unexpected error creating a domain", 500
         return str(res), 204
-    except Exception as e: 
+    except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
+
+
 @bp.route("/domain", methods=["DELETE"])
 @require_login
 def delete_domain(netid: str, client: ShrunkClient) -> Any:
@@ -371,14 +376,17 @@ def delete_domain(netid: str, client: ShrunkClient) -> Any:
     """
     if not request.is_json:
         return jsonify({"error": "Missing JSON data"}), 400
-    
+
     data = request.get_json()
     domain_name = data.get("domain_name")
     org_name = data.get("org_name")
 
     if not org_name or not domain_name:
-        return jsonify({"error": "Missing org_name or domain_name in request body"}), 400
-    
+        return (
+            jsonify({"error": "Missing org_name or domain_name in request body"}),
+            400,
+        )
+
     if not client.roles.has("admin", netid):
         abort(403)
 
@@ -389,6 +397,8 @@ def delete_domain(netid: str, client: ShrunkClient) -> Any:
         return "", 204
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
 @bp.route("/domain_enabled", methods=["GET"])
 @require_login
 def domain_enabled(netid: str, client: ShrunkClient) -> Any:
@@ -400,6 +410,7 @@ def domain_enabled(netid: str, client: ShrunkClient) -> Any:
     is_enabled = client.orgs.get_domain_status()
 
     return jsonify({"enabled": is_enabled})
+
 
 @bp.route("/<ObjectId:org_id>/member/<member_netid>", methods=["DELETE"])
 @require_login

@@ -133,9 +133,11 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
 
         def str2ObjectId(acl):
             return [
-                {"_id": ObjectId(entry["_id"]), "type": entry["type"]}
-                if entry["type"] == "org"
-                else entry
+                (
+                    {"_id": ObjectId(entry["_id"]), "type": entry["type"]}
+                    if entry["type"] == "org"
+                    else entry
+                )
                 for entry in acl
             ]
 
@@ -562,9 +564,11 @@ def anonymize_visit(client: ShrunkClient, visit: Any) -> Any:
         "visitor_id": client.links.get_visitor_id(visit["source_ip"]),
         "user_agent": visit.get("user_agent", "Unknown"),
         "referer": get_human_readable_referer_domain(visit),
-        "state_code": visit.get("state_code", "Unknown")
-        if visit.get("country_code") == "US"
-        else "Unknown",
+        "state_code": (
+            visit.get("state_code", "Unknown")
+            if visit.get("country_code") == "US"
+            else "Unknown"
+        ),
         "country_code": visit.get("country_code", "Unknown"),
         "time": visit["time"],
     }
@@ -977,36 +981,42 @@ def tracking_pixel_ui_enabled(netid: str, client: ShrunkClient) -> Any:
 
     return jsonify({"enabled": is_enabled})
 
-@bp.route('/qrcode', methods=["GET"])
+
+@bp.route("/qrcode", methods=["GET"])
 def generate_qrcode():
     """
     ``GET /api/v1/link/qrcode``
 
     Check if the tracking pixel UI is enabled.
     """
-    allowed_patterns = [r"^https?:\/\/([0-9a-z]+\.)?rutgers\.edu(?:\/.*)?$", r"^https?:\/\/([0-9a-z]+\.)?scarletknights\.com(?:\/.*)?$"]
-    text = request.args.get('text', default='', type=str)
-    width = request.args.get('width', default=300, type=int)
-    height = request.args.get('height', default=300, type=int)
+    allowed_patterns = [
+        r"^https?:\/\/([0-9a-z]+\.)?rutgers\.edu(?:\/.*)?$",
+        r"^https?:\/\/([0-9a-z]+\.)?scarletknights\.com(?:\/.*)?$",
+    ]
+    text = request.args.get("text", default="", type=str)
+    width = request.args.get("width", default=300, type=int)
+    height = request.args.get("height", default=300, type=int)
 
     if not any(re.match(pattern, text) for pattern in allowed_patterns):
         abort(403)
 
     # Generate the QR code using segno
     qr = segno.make(text)
-    
+
     # Create a BytesIO stream for the image
     img_io = BytesIO()
-    
+
     # Save the QR code to the BytesIO stream as PNG
-    qr.save(img_io, kind='png', scale=10)
+    qr.save(img_io, kind="png", scale=10)
     img_io.seek(0)
 
     img = Image.open(img_io)
     resized_img = img.resize((width, height), Image.NEAREST)
 
     resized_img_io = BytesIO()
-    resized_img.save(resized_img_io, format='PNG')
+    resized_img.save(resized_img_io, format="PNG")
     resized_img_io.seek(0)
-    
-    return Response(resized_img_io.getvalue(), mimetype="image/png", direct_passthrough=True)
+
+    return Response(
+        resized_img_io.getvalue(), mimetype="image/png", direct_passthrough=True
+    )
