@@ -711,7 +711,7 @@ class LinksClient:
           The domain, or None if the short URL does not exist.
         """
         result = self._verify_link_alias_is_valid(alias)
-
+        
         if result is None:
             return ""
 
