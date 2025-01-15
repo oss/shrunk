@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, Typography, message, Col } from 'antd';
 
-const { Title } = Typography;
 
 interface DomainFormValues {
   domain: string;
@@ -67,7 +66,7 @@ const Domains: React.FC = () => {
 
   return (
     <Col>
-      <Title level={3}>Custom Domain Grant Request</Title>
+      <Typography.Title level={3}>Custom Domain Grant Request</Typography.Title>
       <Form
         form={grantForm}
         layout="vertical"
@@ -104,9 +103,9 @@ const Domains: React.FC = () => {
         </Form.Item>
       </Form>
 
-      <Title level={3} style={{ marginTop: '2rem' }}>
+      <Typography.Title level={3} style={{ marginTop: '2rem' }}>
         Custom Domain Deletion
-      </Title>
+      </Typography.Title>
       <Form
         form={deleteForm}
         layout="vertical"

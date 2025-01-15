@@ -195,7 +195,7 @@ class OrgsClient:
                 },
             }
         except pymongo.errors.DuplicateKeyError:
-            return None
+            return False
 
         result = self.db.organizations.update_one(org, update)
         return cast(int, result.modified_count) == 1

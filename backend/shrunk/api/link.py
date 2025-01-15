@@ -284,7 +284,7 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         "owner": client.links.get_owner(link_id),
         "created_time": info["timeCreated"],
         "expiration_time": info.get("expiration_time", None),
-        "domain": info["domain"],
+        "domain": info.get("domain", None),
         "aliases": aliases,
         "deleted": info.get("deleted", False),
         "editors": info["editors"] if "editors" in info else [],
