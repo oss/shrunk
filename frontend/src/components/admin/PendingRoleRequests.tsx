@@ -5,7 +5,6 @@
 import React, { Component } from 'react';
 import { Row, Col, Button, FloatButton, Spin } from 'antd/lib';
 import dayjs from 'dayjs';
-import { IoReturnUpBack } from 'react-icons/io5';
 import base32 from 'hi-base32';
 import ProcessRoleRequestModal from '../../modals/ProcessRoleRequestModal';
 
@@ -382,12 +381,7 @@ export class PendingRoleRequests extends Component<Props, State> {
         <FloatButton.BackTop />
         <Row className="primary-row">
           <Col span={24}>
-            <Button
-              type="text"
-              href="/app/#/admin"
-              icon={<IoReturnUpBack />}
-              size="large"
-            />
+            <Button type="text" href="/app/#/admin" size="large" />
             <span className="page-title">
               Pending{' '}
               {this.state.requestText?.role.replace(/\b\w/g, (c) =>

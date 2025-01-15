@@ -8,7 +8,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import Cookies from 'js-cookie';
 
-import { Shrunk } from './Shrunk';
+import Shrunk from './Shrunk';
 
 /**
  * The parameters contained in the `shrunk_params` cookie.

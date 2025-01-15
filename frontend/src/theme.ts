@@ -1,25 +1,27 @@
 import { ThemeConfig } from 'antd/lib';
+import { red } from '@ant-design/colors';
 
-const primaryColor = '#cc0033';
-const secondaryColor = '#407aaa';
-const color3 = '#121212';
-const color4 = '#a2a2a2';
-
-const shrunkTheme: ThemeConfig = {
+export const lightTheme: ThemeConfig = {
   token: {
-    colorPrimary: primaryColor,
-    colorLink: secondaryColor,
-    colorBgLayout: secondaryColor,
+    colorPrimary: red[6],
+    colorLink: red[5],
   },
   components: {
     Layout: {
-      headerBg: primaryColor,
-      footerBg: color3,
+      headerBg: red[6],
+      headerColor: 'fff',
+      footerBg: 'fff',
+      siderBg: 'fff',
+      bodyBg: 'fff',
     },
     Menu: {
-      darkItemBg: primaryColor,
+      itemBg: 'fff',
+      colorPrimaryHover: '#FFFFFF',
+      colorPrimaryTextActive: '#FFFFFF',
+      colorText: '#FFFFFF',
+      colorPrimary: '#FFFFFF',
     },
   },
 };
 
-export default shrunkTheme;
+export const darkTheme: ThemeConfig = {};

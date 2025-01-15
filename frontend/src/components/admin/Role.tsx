@@ -20,7 +20,6 @@ import {
   CloudDownloadOutlined,
   LoadingOutlined,
 } from '@ant-design/icons';
-import { IoReturnUpBack } from 'react-icons/io5';
 import base32 from 'hi-base32';
 import dayjs from 'dayjs';
 import { downloadGrantedUsersCsv, EntityInfo } from '../GrantedUserCsv';
@@ -371,12 +370,7 @@ export class Role extends React.Component<Props, State> {
         <FloatButton.BackTop />
         <Row className="primary-row">
           <Col span={20}>
-            <Button
-              type="text"
-              href="/app/#/admin"
-              icon={<IoReturnUpBack />}
-              size="large"
-            />
+            <Button type="text" href="/app/#/admin" size="large" />
             <span className="page-title">
               {this.state.roleText.grant_title}
             </span>

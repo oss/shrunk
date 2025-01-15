@@ -3,36 +3,38 @@
  * @packageDocumentation
  */
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Row,
   Col,
-  Checkbox,
   Popconfirm,
   Button,
-  Dropdown,
-  Form,
   Input,
   Tooltip,
   Spin,
-  FloatButton,
+  Typography,
+  Table,
+  Space,
+  Tag,
+  message,
 } from 'antd/lib';
-import { ExclamationCircleFilled, PlusCircleFilled } from '@ant-design/icons';
-import { RiLineChartFill, RiToolsFill, RiDeleteBin6Line } from 'react-icons/ri';
-import dayjs from 'dayjs';
+import {
+  PlusCircleFilled,
+  LineChartOutlined,
+  DeleteOutlined,
+  ToolOutlined,
+  ExclamationCircleOutlined,
+  EyeOutlined,
+  EyeInvisibleOutlined,
+} from '@ant-design/icons';
 
 import { OrgInfo, listOrgs, createOrg, deleteOrg } from '../api/Org';
-import { OrgAdminTag, OrgMemberTag } from './subpages/OrgCommon';
-
-import '../Base.css';
-
-import { serverValidateOrgName } from '../Validators';
 
 /**
  * Props for the [[Orgs]] component
  * @interface
  */
-export interface Props {
+interface Props {
   /**
    * The user's privileges
    * @property
@@ -41,257 +43,144 @@ export interface Props {
 }
 
 /**
- * State for the [[Orgs]] component
- * @interface
+ * The Orgs component implements the orgs list view
  */
-interface State {
-  /**
-   * Whether to show all orgs or just orgs of which the user is a member. Option only
-   * available to admins
-   * @property
-   */
-  showAll: boolean;
+export default function Orgs({ userPrivileges }: Props): React.ReactElement {
+  const [showAll, setShowAll] = useState(false);
+  const [orgs, setOrgs] = useState<OrgInfo[] | null>(null);
+  const [newOrgName, setNewOrgName] = useState('');
 
-  /**
-   * Contains an [[OrgInfo]] for each org to be displayed
-   * @property
-   */
-  orgs: OrgInfo[] | null;
-
-  /**
-   * Whether the create org dropdown is visible
-   * @property
-   */
-  createOrgFormVisible: boolean;
-}
-
-/**
- * The [[CreateOrgForm]] component provides a dropdown form to create a new org
- * @param props The props
- */
-const CreateOrgForm: React.FC<{ onCreate: (name: string) => Promise<void> }> = (
-  props,
-) => {
-  const onFinish = async (values: { name: string }) =>
-    props.onCreate(values.name);
-  return (
-    <div className="dropdown-form">
-      <Form initialValues={{ name: '' }} onFinish={onFinish}>
-        <Input.Group compact>
-          <Form.Item
-            name="name"
-            rules={[
-              { required: true, message: 'Please input a name.' },
-              {
-                pattern: /^[a-zA-Z0-9_.,-]*$/,
-                message:
-                  'Name must consist of letters, numbers, and the characters "_.,-".',
-              },
-              {
-                max: 60,
-                message: 'Org names can be at most 60 characters long',
-              },
-              { validator: serverValidateOrgName },
-            ]}
-          >
-            <Input placeholder="Name" />
-          </Form.Item>
-
-          <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              icon={<PlusCircleFilled />}
-            />
-          </Form.Item>
-        </Input.Group>
-      </Form>
-    </div>
-  );
-};
-/**
- * The [[OrgRow]] component displays information pertaining to one org
- * @param props The props
- */
-const OrgRow: React.FC<{
-  showAll: boolean;
-  orgInfo: OrgInfo;
-  onDelete: (id: string) => Promise<void>;
-}> = (props) => (
-  <Row className="primary-row">
-    <Col span={20}>
-      <a className="title" href={`/app/#/orgs/${props.orgInfo.id}/manage`}>
-        {props.orgInfo.name}
-      </a>
-      {props.orgInfo.is_admin ? (
-        <OrgAdminTag title="You are an administrator of this organization." />
-      ) : (
-        <></>
-      )}
-      {props.showAll && props.orgInfo.is_member ? <OrgMemberTag /> : <></>}
-      <span>
-        Created: {dayjs(props.orgInfo.timeCreated).format('MMM D, YYYY')}
-      </span>
-    </Col>
-    <Col span={4} className="btn-col">
-      <Tooltip title="Manage org">
-        <Button
-          type="text"
-          href={`/app/#/orgs/${props.orgInfo.id}/manage`}
-          icon={<RiToolsFill size="1.1em" />}
-        />
-      </Tooltip>
-      <Tooltip title="Org stats">
-        <Button
-          type="text"
-          icon={<RiLineChartFill size="1.1em" />}
-          href={`/app/#/orgs/${props.orgInfo.id}/stats`}
-        />
-      </Tooltip>
-      {!props.orgInfo.is_admin ? (
-        <></>
-      ) : (
-        <Tooltip title="Delete org">
-          <Popconfirm
-            placement="top"
-            title="Are you sure you want to delete this organization?"
-            onConfirm={async () => props.onDelete(props.orgInfo.id)}
-            icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
-          >
-            <Button
-              danger
-              type="text"
-              icon={<RiDeleteBin6Line size="1.1em" />}
-            />
-          </Popconfirm>
-        </Tooltip>
-      )}
-    </Col>
-  </Row>
-);
-
-/**
- * The [[Orgs]] component implements the orgs list view
- * @class
- */
-export class Orgs extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      showAll: false,
-      orgs: null,
-      createOrgFormVisible: false,
-    };
-  }
-
-  async componentDidMount(): Promise<void> {
-    await this.refreshOrgs();
-  }
-
-  async componentDidUpdate(_prevProps: Props, prevState: State): Promise<void> {
-    if (prevState.showAll !== this.state.showAll) {
-      await this.refreshOrgs();
-    }
-  }
-
-  /**
-   * Execute API requests to get list of org info, then update state
-   * @method
-   */
-  refreshOrgs = async (): Promise<void> => {
-    await listOrgs(this.state.showAll ? 'all' : 'user').then((orgs) =>
-      this.setState({ orgs }),
-    );
+  const refreshOrgs = async () => {
+    const newOrgs = await listOrgs(showAll ? 'all' : 'user');
+    setOrgs(newOrgs);
   };
 
-  /**
-   * Execute API requests to create a new org, then refresh org info
-   * @method
-   * @param name The name of the org to be created
-   */
-  onCreateOrg = async (name: string): Promise<void> => {
+  useEffect(() => {
+    refreshOrgs();
+  }, [showAll]);
+
+  const onCreateOrg = async (name: string) => {
     await createOrg(name);
-    this.setState({ createOrgFormVisible: false });
-    await this.refreshOrgs();
+    await refreshOrgs();
   };
 
-  /**
-   * Execute API requests to delete an org, then refresh org info
-   * @method
-   * @param id The ID of the org to delete
-   */
-  onDeleteOrg = async (id: string): Promise<void> => {
+  const onDeleteOrg = async (id: string) => {
     await deleteOrg(id);
-    await this.refreshOrgs();
+    await refreshOrgs();
   };
 
-  render(): React.ReactNode {
-    const mayCreateOrg =
-      this.props.userPrivileges.has('admin') ||
-      this.props.userPrivileges.has('facstaff');
-    const isAdmin = this.props.userPrivileges.has('admin');
-    return (
-      <>
-        <FloatButton.BackTop />
-        <Row className="primary-row">
-          <Col span={16}>
-            <span className="page-title">Orgs</span>
-          </Col>
+  const mayCreateOrg =
+    userPrivileges.has('admin') || userPrivileges.has('facstaff');
+  const isAdmin = userPrivileges.has('admin');
 
-          <Col span={8} className="btn-col">
-            {!mayCreateOrg ? (
-              <></>
-            ) : (
-              <Dropdown
-                overlay={<CreateOrgForm onCreate={this.onCreateOrg} />}
-                open={this.state.createOrgFormVisible}
-                onVisibleChange={(flag) =>
-                  this.setState({ createOrgFormVisible: flag })
+  const columns = [
+    {
+      title: 'Name',
+      key: 'name',
+      render: (record: OrgInfo) => (
+        <Space>
+          <a href={`/app/#/orgs/${record.id}/manage`}>{record.name}</a>
+          {record.is_admin ? <Tag color="red">Admin</Tag> : null}
+          {showAll && record.is_member ? <Tag color="blue">Member</Tag> : null}
+        </Space>
+      ),
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      width: 150,
+      render: (record: OrgInfo) => (
+        <Space>
+          <Tooltip title="View">
+            <Button
+              type="text"
+              icon={<EyeOutlined />}
+              href={`/app/#/orgs/${record.id}/view`}
+            />
+          </Tooltip>
+          <Tooltip title="Delete">
+            <Popconfirm
+              title="Are you sure you want to delete this organization?"
+              onConfirm={async () => {
+                try {
+                  await onDeleteOrg(record.id);
+                  message.success('Organization deleted successfully');
+                } catch (error) {
+                  message.error('Failed to delete organization');
                 }
-                placement="bottomRight"
-                trigger={['click']}
+              }}
+              okText="Yes"
+              cancelText="No"
+              okButtonProps={{ danger: true }}
+            >
+              <Button type="text" danger icon={<DeleteOutlined />} />
+            </Popconfirm>
+          </Tooltip>
+        </Space>
+      ),
+    },
+  ];
+
+  return (
+    <>
+      <Row gutter={24} justify="space-between" align="middle">
+        <Col>
+          <Typography.Title>My Organizations</Typography.Title>
+        </Col>
+        <Col>
+          <Space.Compact>
+            {isAdmin && (
+              <Tooltip
+                title={
+                  showAll
+                    ? 'Showing all organizations'
+                    : 'Show all organizations'
+                }
               >
-                <Button type="primary">
-                  <PlusCircleFilled /> Create an Org
+                <Button
+                  icon={showAll ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+                  onClick={() => {
+                    setShowAll(!showAll);
+                  }}
+                />
+              </Tooltip>
+            )}
+            {mayCreateOrg && (
+              <>
+                <Input
+                  placeholder="Organization name"
+                  value={newOrgName}
+                  onChange={(e) => setNewOrgName(e.target.value)}
+                  style={{ width: '200px' }}
+                />
+                <Button
+                  type="primary"
+                  icon={<PlusCircleFilled />}
+                  onClick={async () => {
+                    if (newOrgName.trim()) {
+                      await onCreateOrg(newOrgName.trim());
+                      setNewOrgName('');
+                    }
+                  }}
+                >
+                  Create
                 </Button>
-              </Dropdown>
+              </>
             )}
+          </Space.Compact>
+        </Col>
+      </Row>
 
-            {!isAdmin ? (
-              <></>
-            ) : (
-              <Checkbox
-                style={{ paddingTop: '6px' }}
-                defaultChecked={false}
-                onChange={(ev) => this.setState({ showAll: ev.target.checked })}
-              >
-                Show all orgs?
-              </Checkbox>
-            )}
-          </Col>
-        </Row>
-
-        {this.state.orgs === null ? (
-          <Spin size="large" />
-        ) : (
-          <div>
-            {this.state.orgs.length === 0 ? (
-              <p>You are currently not in any organizations.</p>
-            ) : (
-              <div>
-                {this.state.orgs.map((org) => (
-                  <OrgRow
-                    key={org.id}
-                    showAll={this.state.showAll}
-                    orgInfo={org}
-                    onDelete={this.onDeleteOrg}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </>
-    );
-  }
+      {orgs === null ? (
+        <Spin size="large" />
+      ) : (
+        <Table
+          dataSource={orgs}
+          columns={columns}
+          rowKey="id"
+          pagination={false}
+        />
+      )}
+    </>
+  );
 }

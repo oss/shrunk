@@ -6,8 +6,6 @@
 import React from 'react';
 import { Row, Col, Modal, Button } from 'antd/lib';
 import dayjs from 'dayjs';
-
-import '../Base.css';
 import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 
 /**
