@@ -43,7 +43,7 @@ class ShrunkClient:
         SLACK_BOT_TOKEN: Optional[str] = None,
         SLACK_SHRUNK_CHANNEL_ID: Optional[str] = None,
         TRACKING_PIXEL_UI_ENABLED: Optional[bool] = False,
-        DOMAIN_UI_ENABLED: Optional[bool] = False,
+        DOMAIN_ENABLED: Optional[bool] = False,
         LINKHUB_INTEGRATION_ENABLED: Optional[bool] = False,
         ROLE_REQUESTS_ENABLED: Optional[bool] = False,
         EMAILS_ENABLED: Optional[bool] = False,
@@ -81,7 +81,7 @@ class ShrunkClient:
         
         self.orgs = OrgsClient(
             db=self.db,
-            DOMAIN_UI_ENABLED=DOMAIN_UI_ENABLED or False
+            DOMAIN_ENABLED=DOMAIN_ENABLED or False
         )
         self.search = SearchClient(db=self.db, client=self)
         self.alerts = AlertsClient(db=self.db)

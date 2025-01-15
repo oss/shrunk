@@ -203,11 +203,6 @@ export interface State {
    */
   trackingPixelEnabled: boolean;
 
-  /**
-   * Whether the domain feature is enabled
-   * @property
-   */
-  domainEnabled: boolean;
 
   isCreateModalOpen: boolean;
 }
@@ -260,7 +255,6 @@ export class Dashboard extends React.Component<Props, State> {
         linkInfo: null,
       },
       trackingPixelEnabled: false,
-      domainEnabled: false,
       isCreateModalOpen: false,
     };
   }
@@ -268,7 +262,6 @@ export class Dashboard extends React.Component<Props, State> {
   async componentDidMount(): Promise<void> {
     await Promise.all([this.fetchUserOrgs(), this.refreshResults()]);
     await this.trackingPixelEnabledOnUI();
-    await this.fetchIsDomainUIEnabled();
   }
 
   onSearch = async () => {
@@ -516,16 +509,6 @@ export class Dashboard extends React.Component<Props, State> {
 
     const is_enabled = result.enabled;
     this.setState({ trackingPixelEnabled: is_enabled });
-  };
-
-  /**
-   * Check if domain ui is enabled
-   * @method
-   */
-  fetchIsDomainUIEnabled = async (): Promise<void> => {
-    await fetch('/api/v1/org/domain_ui_enabled')
-      .then((resp) => resp.json())
-      .then((json) => this.setState({ domainEnabled: json.enabled }));
   };
 
   /**
@@ -1018,7 +1001,6 @@ export class Dashboard extends React.Component<Props, State> {
             userPrivileges={this.props.userPrivileges}
             userOrgs={this.state.userOrgs}
             refreshResults={this.refreshResults}
-            domain_ui_enabled={this.state.domainEnabled}
           />
         </Modal>
       </>

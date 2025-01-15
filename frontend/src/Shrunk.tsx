@@ -144,10 +144,10 @@ interface State {
   isRoleRequestsEnabled: boolean;
 
   /**
-   * Is the Domain UI enabled?
+   * Is the Domain feature enabled?
    * @property
    */
-  isDomainUIEnabled: boolean;
+  isDomainEnabled: boolean;
 }
 
 /**
@@ -179,18 +179,18 @@ export class Shrunk extends React.Component<Props, State> {
       pendingAlerts: [],
       role,
       isLinkHubEnabled: false,
-      isDomainUIEnabled: false,
+      isDomainEnabled: false,
       isRoleRequestsEnabled: false,
     };
     this.fetchIsLinkHubEnabled();
-    this.fetchIsDomainUIEnabled();
+    this.fetchIsDomainEnabled();
   }
 
   async componentDidMount(): Promise<void> {
     await this.updatePendingAlerts();
     await this.fetchRoleRequestsEnabled();
     await this.updatePowerUserRoleRequestMade();
-    await this.fetchIsDomainUIEnabled();
+    await this.fetchIsDomainEnabled();
     const history = createBrowserHistory();
     this.setSelectedKeysFromLocation(history.location);
     history.listen(({ location }) =>
@@ -206,10 +206,10 @@ export class Shrunk extends React.Component<Props, State> {
       );
   };
 
-  fetchIsDomainUIEnabled = async (): Promise<void> => {
-    await fetch('/api/v1/org/domain_ui_enabled')
+  fetchIsDomainEnabled = async (): Promise<void> => {
+    await fetch('/api/v1/org/domain_enabled')
       .then((resp) => resp.json())
-      .then((json) => this.setState({ isDomainUIEnabled: json.enabled }));
+      .then((json) => this.setState({ isDomainEnabled: json.enabled }));
   };
 
   /**
@@ -584,7 +584,7 @@ export class Shrunk extends React.Component<Props, State> {
                       <Route exact path="/admin/link_security">
                         <LinkSecurity />
                       </Route>
-                      {this.state.isDomainUIEnabled ? (
+                      {this.state.isDomainEnabled ? (
                         <Route exact path="/admin/domains">
                           <Domains />
                         </Route>

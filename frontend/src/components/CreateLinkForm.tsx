@@ -100,13 +100,6 @@ export interface Props {
    */
   tracking_pixel_ui_enabled: boolean;
 
-  /**
-   * Per request of Jack: We want a way to enable/disable the domain UI
-   * by using the config in the backend. There exists an API call
-   * called /api/v1/get_domain_ui_enabled that returns a boolean value. This is temporary
-   *
-   */
-  domain_ui_enabled: boolean;
   //the any should be fixed but its fine for now
   userOrgs: any;
 }
@@ -119,23 +112,38 @@ interface State {
   loading: boolean;
   tracking_pixel_enabled: boolean;
   tracking_pixel_extension: string;
+  domain_enabled: boolean;
 }
 
 /**
  * The [[CreateLinkForm]] component allows the user to create a new link
  * @class
  */
+
+
 export class CreateLinkForm extends React.Component<Props, State> {
   formRef = React.createRef<FormInstance>();
-
+  
+  
   constructor(props: Props) {
     super(props);
     this.state = {
       loading: false,
       tracking_pixel_enabled: false,
+      domain_enabled: false,
       tracking_pixel_extension: '.png',
     };
   }
+
+  async componentDidMount(): Promise<void> {
+    await this.fetchIsDomainEnabled();
+  }
+
+  fetchIsDomainEnabled = async (): Promise<void> => {
+    await fetch('/api/v1/org/domain_enabled')
+      .then((resp) => resp.json())
+      .then((json) => this.setState({ domain_enabled: json.enabled }));
+  };
 
   toggleLoading = () => {
     this.setState({ loading: true });
@@ -330,7 +338,7 @@ export class CreateLinkForm extends React.Component<Props, State> {
             </Form.Item>
           </Col>
           <Col span={12}>
-            {this.props.domain_ui_enabled && mayUseCustomAliases ? (
+            {this.state.domain_enabled && mayUseCustomAliases ? (
               <Form.Item label="Domain" name="domain">
                 <Select
                   showSearch

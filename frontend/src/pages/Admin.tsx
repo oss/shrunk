@@ -52,10 +52,10 @@ interface State {
   powerUserRequestsCount: number;
 
   /**
-   * Is the Domain UI enabled?
+   * Is the Domain feature enabled?
    * @property
    */
-  isDomainUIEnabled: boolean;
+  isDomainEnabled: boolean;
 }
 
 /**
@@ -70,7 +70,7 @@ export class Admin extends React.Component<Props, State> {
       roles: null,
       linksToBeVerified: -1,
       powerUserRequestsCount: -1,
-      isDomainUIEnabled: false,
+      isDomainEnabled: false,
     };
   }
 
@@ -86,7 +86,7 @@ export class Admin extends React.Component<Props, State> {
       .then((resp) => resp.json())
       .then((json) => this.setState({ roles: json.roles as RoleInfo[] }));
     await this.updatePendingPowerUserRequestsCount();
-    await this.fetchIsDomainUIEnabled();
+    await this.fetchIsDomainEnabled();
   }
 
   /**
@@ -103,10 +103,10 @@ export class Admin extends React.Component<Props, State> {
       );
   };
 
-  fetchIsDomainUIEnabled = async (): Promise<void> => {
-    await fetch('/api/v1/org/domain_ui_enabled')
+  fetchIsDomainEnabled = async (): Promise<void> => {
+    await fetch('/api/v1/org/domain_enabled')
       .then((resp) => resp.json())
-      .then((json) => this.setState({ isDomainUIEnabled: json.enabled }));
+      .then((json) => this.setState({ isDomainEnabled: json.enabled }));
   };
 
   render(): React.ReactNode {
@@ -125,7 +125,7 @@ export class Admin extends React.Component<Props, State> {
             </Link>
           </Col>
         </Row>
-        {this.state.isDomainUIEnabled ? (
+        {this.state.isDomainEnabled ? (
           <Row className="primary-row">
             <Col span={24}>
               <Link to="/admin/domains" className="title">

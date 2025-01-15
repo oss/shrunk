@@ -389,15 +389,15 @@ def delete_domain(netid: str, client: ShrunkClient) -> Any:
         return "", 204
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-@bp.route("/domain_ui_enabled", methods=["GET"])
+@bp.route("/domain_enabled", methods=["GET"])
 @require_login
-def domain_ui_enabled(netid: str, client: ShrunkClient) -> Any:
+def domain_enabled(netid: str, client: ShrunkClient) -> Any:
     """
-    ``GET /api/v1/org/domain_ui_enabled``
+    ``GET /api/v1/org/domain_enabled``
 
-    Check if the domain UI is enabled.
+    Check if the Domain feature is enabled.
     """
-    is_enabled = client.orgs.get_domain_ui_status()
+    is_enabled = client.orgs.get_domain_status()
 
     return jsonify({"enabled": is_enabled})
 

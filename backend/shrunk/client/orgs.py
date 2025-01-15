@@ -13,9 +13,9 @@ __all__ = ["OrgsClient"]
 class OrgsClient:
     """This class implements all orgs-related functionality."""
 
-    def __init__(self, *, db: pymongo.database.Database, DOMAIN_UI_ENABLED:bool):
+    def __init__(self, *, db: pymongo.database.Database, DOMAIN_ENABLED:bool):
         self.db = db
-        self.domain_ui_enabled = DOMAIN_UI_ENABLED
+        self.domain_enabled = DOMAIN_ENABLED
 
     def get_org(self, org_id: ObjectId) -> Optional[Any]:
         """Get information about a given org
@@ -177,13 +177,13 @@ class OrgsClient:
         return False
     
     def create_domain(self, org_name: str, domain: str) -> bool:
+        existing_domain = self.db.organizations.find_one({"domains.domain": domain})
+        if existing_domain:
+            return False
+        org = self.db.organizations.find_one({"name": org_name})
+        if org is None:
+            return False
         try:
-            existing_domain = self.db.organizations.find_one({"domains.domain": domain})
-            if existing_domain:
-                return False
-            org = self.db.organizations.find_one({"name": org_name})
-            if org is None:
-                return False
             update = {
                 "$addToSet": {
                     "domains": {
@@ -192,31 +192,29 @@ class OrgsClient:
                     },
                 },
             }
-
-            result = self.db.organizations.update_one(org, update)
-            return cast(int, result.modified_count) == 1
-        except:
+        except pymongo.errors.DuplicateKeyError:
             return None
+
+        result = self.db.organizations.update_one(org, update)
+        return cast(int, result.modified_count) == 1
         
     def delete_domain(self, org_name: str, domain: str) -> bool:
-        try:
-            org = self.db.organizations.find_one({"name": org_name})
-            if org is None:
+        org = self.db.organizations.find_one({"name": org_name})
+        if org is None:
                 return False
-
+        try:
             update = {
                 "$pull": {
                     "domains": {"domain": domain},
                 },
             }
+        except pymongo.errors.DuplicateKeyError:
+            return False
+        result = self.db.organizations.update_one({"name": org_name}, update)
+        return cast(int, result.modified_count) == 1
 
-            result = self.db.organizations.update_one({"name": org_name}, update)
-            return cast(int, result.modified_count) == 1
-        except:
-            return None
-
-    def get_domain_ui_status(self) -> bool:
-        return self.domain_ui_enabled
+    def get_domain_status(self) -> bool:
+        return self.domain_enabled
     
     def get_visit_stats(self, org_id: ObjectId) -> List[Any]:
         pipeline = [

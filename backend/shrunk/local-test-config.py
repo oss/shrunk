@@ -90,7 +90,7 @@ LINKHUB_INTEGRATION_ENABLED = True
 Configuration value to enable or disable dynamically generated web pages that contains URLs.
 """
 
-DOMAIN_UI_ENABLED = False
+DOMAIN_ENABLED = False
 """
 Temporary flag to enable or disable the custom domains feature on user's dashboard.
 """
