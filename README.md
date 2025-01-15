@@ -47,7 +47,7 @@ black .
 We also use [Prettier](https://prettier.io/) for our frontend's formatting, you can run this command to make sure your code is up to standards. If you're using Visual Studio Code, it does this automatically.
 
 ```
-prettier --write .
+npx prettier --write .
 ```
 
 ### Adding dependencies to backend
