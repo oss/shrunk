@@ -203,7 +203,6 @@ export interface State {
    */
   trackingPixelEnabled: boolean;
 
-
   isCreateModalOpen: boolean;
 }
 

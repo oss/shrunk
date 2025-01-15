@@ -120,11 +120,9 @@ interface State {
  * @class
  */
 
-
 export class CreateLinkForm extends React.Component<Props, State> {
   formRef = React.createRef<FormInstance>();
-  
-  
+
   constructor(props: Props) {
     super(props);
     this.state = {
