@@ -95,7 +95,7 @@ export default function Orgs({ userPrivileges }: Props): React.ReactElement {
             <Button
               type="text"
               icon={<EyeOutlined />}
-              href={`/app/#/orgs/${record.id}/view`}
+              href={`/app/#/orgs/${record.id}/manage`}
             />
           </Tooltip>
           <Tooltip title="Delete">
