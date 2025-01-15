@@ -991,7 +991,7 @@ export class Dashboard extends React.Component<Props, State> {
                     title: 'Aliases',
                     dataIndex: 'aliases',
                     key: 'aliases',
-                    width: '30%',
+                    width: '40%',
                     fixed: 'left',
                     render: (_, record) => (
                       <Row gutter={[0, 8]}>
@@ -1003,6 +1003,9 @@ export class Dashboard extends React.Component<Props, State> {
                         {record.aliases.map((aliasObj) => {
                           const isDev = process.env.NODE_ENV === 'development';
                           const protocol = isDev ? 'http' : 'https';
+                          const shortUrlWithoutProtocol = `${
+                            document.location.host
+                          }/${aliasObj.alias.toString()}`;
                           const shortUrl = `${protocol}://${
                             document.location.host
                           }/${aliasObj.alias.toString()}`;
@@ -1017,7 +1020,7 @@ export class Dashboard extends React.Component<Props, State> {
                                 <Space>
                                   <CopyOutlined />
                                   <Typography key={aliasObj.alias}>
-                                    {shortUrl}
+                                    {shortUrlWithoutProtocol}
                                   </Typography>
                                 </Space>
                               </Button>
