@@ -178,6 +178,8 @@ class OrgsClient:
     
     def create_domain(self, org_name: str, domain: str) -> bool:
         existing_domain = self.db.organizations.find_one({"domains.domain": domain})
+        if domain in {"localhost:4343", "go", "shrunk"}:
+            return False
         if existing_domain:
             return False
         org = self.db.organizations.find_one({"name": org_name})

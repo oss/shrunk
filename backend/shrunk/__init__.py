@@ -365,7 +365,15 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
         client: ShrunkClient = current_app.client
         long_url = client.links.get_long_url(alias)
         is_tracking_pixel_link = client.links.is_tracking_pixel_link(alias)
-
+        #logic to enforce domains
+        full_domain = request.headers.get("Host", "")
+        request_domain = full_domain.split('.')[0] if full_domain else ""
+        custom_domain_alias = client.links.get_custom_domain(alias)
+        if request_domain in {"localhost:4343", "go", "shrunk"}:
+            request_domain = ""
+        if request_domain != custom_domain_alias:
+            return render_template("Domain Not Found"), 404
+        
         if long_url is None and not is_tracking_pixel_link:
             enable_dev = current_app.config.get("DEV_LOGINS", False)
             return render_template("404.html", dev=enable_dev), 404

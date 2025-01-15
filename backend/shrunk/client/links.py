@@ -700,6 +700,23 @@ class LinksClient:
         # Link exists and is valid; return its long URL
         return cast(str, result["long_url"])
 
+    def get_custom_domain(self, alias: str) -> Optional[str]:
+        """Given a short URL, returns the domain.
+        (for now aliases are still 100% unique ideally different domains can use the same url)
+        Performs a case-insensitive search for the corresponding long URL.
+
+        :param short_url: A shortened URL
+
+        :returns:
+          The domain, or None if the short URL does not exist.
+        """
+        result = self._verify_link_alias_is_valid(alias)
+
+        if result is None:
+            return ""
+
+        return cast(str, result.get("domain", ""))
+
     def visit(
         self,
         alias: str,
