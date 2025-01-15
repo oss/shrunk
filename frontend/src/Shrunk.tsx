@@ -167,10 +167,10 @@ export class Shrunk extends React.Component<Props, State> {
       this.props.userPrivileges.size === 0
         ? 'Whitelisted User'
         : this.props.userPrivileges.has('power_user')
-          ? 'Power User'
-          : this.props.userPrivileges.has('facstaff')
-            ? 'Faculty/Staff'
-            : 'Administrator';
+        ? 'Power User'
+        : this.props.userPrivileges.has('facstaff')
+        ? 'Faculty/Staff'
+        : 'Administrator';
     this.state = {
       showAdminTab,
       showWhitelistTab,

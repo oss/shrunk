@@ -371,36 +371,34 @@ const SearchUser: React.FC = () => {
                   ),
                 )
               : currentOperation.type === 'filter'
-                ? options?.FIELD_STRING_OPTIONS.includes(currentOperation.field)
-                  ? options?.SPECIFICATION_FILTER_STRING_OPTIONS.map(
-                      (specification: string) => (
-                        <Option key={specification} value={specification}>
-                          {options?.INTERNAL_TO_EXTERNAL[specification]}
-                        </Option>
-                      ),
-                    )
-                  : options?.FIELD_NUMBER_OPTIONS.includes(
-                        currentOperation.field,
-                      )
-                    ? options?.SPECIFICATION_FILTER_NUMBER_OPTIONS.map(
-                        (specification: string) => (
-                          <Option key={specification} value={specification}>
-                            {options?.INTERNAL_TO_EXTERNAL[specification]}
-                          </Option>
-                        ),
-                      )
-                    : options?.FIELD_ARRAY_STRING_OPTIONS.includes(
-                          currentOperation.field,
-                        )
-                      ? options?.SPECIFICATION_FILTER_ARRAY_STRING_OPTIONS.map(
-                          (specification: string) => (
-                            <Option key={specification} value={specification}>
-                              {options?.INTERNAL_TO_EXTERNAL[specification]}
-                            </Option>
-                          ),
-                        )
-                      : null
-                : null}
+              ? options?.FIELD_STRING_OPTIONS.includes(currentOperation.field)
+                ? options?.SPECIFICATION_FILTER_STRING_OPTIONS.map(
+                    (specification: string) => (
+                      <Option key={specification} value={specification}>
+                        {options?.INTERNAL_TO_EXTERNAL[specification]}
+                      </Option>
+                    ),
+                  )
+                : options?.FIELD_NUMBER_OPTIONS.includes(currentOperation.field)
+                ? options?.SPECIFICATION_FILTER_NUMBER_OPTIONS.map(
+                    (specification: string) => (
+                      <Option key={specification} value={specification}>
+                        {options?.INTERNAL_TO_EXTERNAL[specification]}
+                      </Option>
+                    ),
+                  )
+                : options?.FIELD_ARRAY_STRING_OPTIONS.includes(
+                    currentOperation.field,
+                  )
+                ? options?.SPECIFICATION_FILTER_ARRAY_STRING_OPTIONS.map(
+                    (specification: string) => (
+                      <Option key={specification} value={specification}>
+                        {options?.INTERNAL_TO_EXTERNAL[specification]}
+                      </Option>
+                    ),
+                  )
+                : null
+              : null}
           </Select>
         </Col>
         <Col className="lookup-col" xs={24} sm={24} md={14}>

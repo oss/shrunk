@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, Typography, message, Col } from 'antd';
 
-
 interface DomainFormValues {
   domain: string;
   org: string;

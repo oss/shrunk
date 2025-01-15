@@ -492,7 +492,7 @@ export class Dashboard extends React.Component<Props, State> {
                   deleted_by: output.deletion_info.deleted_by,
                   deleted_time: new Date(output.deletion_info.deleted_time),
                 },
-          }) as LinkInfo,
+          } as LinkInfo),
       ),
     };
   };
@@ -893,7 +893,11 @@ export class Dashboard extends React.Component<Props, State> {
                         {record.aliases.map((aliasObj) => {
                           const isDev = process.env.NODE_ENV === 'development';
                           const protocol = isDev ? 'http' : 'https';
-                          const shortUrl = `${protocol}://${record.domain || ''}${record.domain ? '.' : ''}${document.location.host}/${aliasObj.alias.toString()}`;
+                          const shortUrl = `${protocol}://${
+                            record.domain || ''
+                          }${record.domain ? '.' : ''}${
+                            document.location.host
+                          }/${aliasObj.alias.toString()}`;
                           return (
                             <Col span={24}>
                               <Button
