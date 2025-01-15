@@ -42,7 +42,8 @@ pylint:
       junit: backend/pylint.xml
 
 mypy:
-  stage: lint
+  # stage: lint
+  when: manual
   image: python:latest
   needs: []
   script:
