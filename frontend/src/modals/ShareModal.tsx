@@ -1,14 +1,5 @@
 import React from 'react';
-import {
-  Col,
-  Modal,
-  QRCode,
-  Row,
-  Button,
-  Typography,
-  Input,
-  Space,
-} from 'antd/lib';
+import { Col, Modal, QRCode, Row, Button, Input, Space } from 'antd/lib';
 import { LinkInfo } from '../components/LinkInfo';
 
 interface IShareModal {

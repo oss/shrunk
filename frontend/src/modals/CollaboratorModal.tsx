@@ -13,7 +13,6 @@ import {
   Tooltip,
 } from 'antd/lib';
 import { CloseOutlined, PlusCircleFilled } from '@ant-design/icons';
-import { LinkInfo } from '../components/LinkInfo';
 import { serverValidateNetId } from '../Validators';
 import { listOrgs, OrgInfo } from '../api/Org';
 
@@ -34,10 +33,7 @@ export type Entity = {
 
 interface ICollaboratorModal {
   visible: boolean;
-  userPrivilege: Set<string>;
   people: Array<Entity>;
-  isLoading: boolean;
-  linkInfo: LinkInfo | null;
 
   onAddEntity: (value: Entity) => void;
   onRemoveEntity: (_id: string, type: string, permission: string) => void;
@@ -111,7 +107,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                 >
                   <Input
                     placeholder="Search by NetID"
-                    onPressEnter={(e: any) => {
+                    onPressEnter={(_: any) => {
                       setCollaboratorType('netid');
                     }}
                   />
@@ -129,7 +125,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                 >
                   <Select
                     placeholder="Your Organizations"
-                    onChange={(value: any) => {
+                    onChange={(_: any) => {
                       setCollaboratorType('org');
                     }}
                   >

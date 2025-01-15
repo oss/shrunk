@@ -104,7 +104,7 @@ export const getOrgInfo = async (id: string): Promise<OrgInfo> => {
         ({
           ...member,
           timeCreated: new Date(member.timeCreated),
-        }) as MemberInfo,
+        } as MemberInfo),
     ),
   };
 };

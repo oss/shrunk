@@ -15,7 +15,6 @@ import {
   Card,
   Typography,
   Statistic,
-  Skeleton,
 } from 'antd/lib';
 import { ArrowRightOutlined } from '@ant-design/icons';
 import Highcharts from 'highcharts';
@@ -90,14 +89,6 @@ export default function AdminStats(): React.ReactElement {
   const [adminData, setAdminData] = useState<AdminStatsData | null>(null);
   const [version, setVersion] = useState<string | null>(null);
 
-  useEffect(() => {
-    Promise.all([
-      updateAdminData(),
-      updateEndpointData(),
-      updateShrunkVersion(),
-    ]);
-  }, []);
-
   const updateAdminData = async () => {
     const req: Record<string, any> = {};
     if (adminDataRange !== null) {
@@ -129,6 +120,14 @@ export default function AdminStats(): React.ReactElement {
     );
     setVersion(json.version as string);
   };
+
+  useEffect(() => {
+    Promise.all([
+      updateAdminData(),
+      updateEndpointData(),
+      updateShrunkVersion(),
+    ]);
+  }, []);
 
   const submitRangeForm = async (values: {
     range: dayjs.Dayjs[] | null | undefined;

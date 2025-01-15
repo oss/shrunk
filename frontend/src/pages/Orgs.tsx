@@ -20,10 +20,7 @@ import {
 } from 'antd/lib';
 import {
   PlusCircleFilled,
-  LineChartOutlined,
   DeleteOutlined,
-  ToolOutlined,
-  ExclamationCircleOutlined,
   EyeOutlined,
   EyeInvisibleOutlined,
 } from '@ant-design/icons';
