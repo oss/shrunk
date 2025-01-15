@@ -48,7 +48,7 @@ mypy:
   script:
     - cd backend
     - pip3 install -r requirements-dev.txt
-    - mypy --junit-xml=./mypy.xml backend/shrunk backend/tests || exit 0
+    - mypy --junit-xml=./mypy.xml .
   artifacts:
     reports:
       junit: mypy.xml
@@ -60,7 +60,7 @@ flake8:
   script:
     - cd backend
     - pip3 install -r requirements-dev.txt
-    - flake8 --format=pylint --toml-config=pyproject.toml --exit-zero --format=junit-xml shrunk backend/tests > flake8.xml
+    - flake8 --format=pylint --exit-zero --format=junit-xml shrunk backend/tests > flake8.xml
   artifacts:
     reports:
       junit: backend/flake8.xml
