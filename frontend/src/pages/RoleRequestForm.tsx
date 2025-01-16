@@ -5,7 +5,6 @@
 
 import React from 'react';
 import { Row, Col, Button, Input, Form, Spin } from 'antd/lib';
-import { IoReturnUpBack } from 'react-icons/io5';
 import { CheckOutlined } from '@ant-design/icons';
 import base32 from 'hi-base32';
 import OnSubmitRoleRequestModal from '../modals/OnSubmitRoleRequestModal';
@@ -131,15 +130,15 @@ export class RoleRequestForm extends React.Component<Props, State> {
    */
   updateRequestMade = async (): Promise<void> => {
     const encodedEntity = base32.encode(this.props.netid);
-    fetch(`/api/v1/role_request/${this.props.name}/${encodedEntity}`)
-      .then((response) => {
+    fetch(`/api/v1/role_request/${this.props.name}/${encodedEntity}`).then(
+      (response) => {
         if (response.status === 204) {
           this.setState({ roleRequestSent: false });
         } else if (response.status === 200) {
           this.setState({ roleRequestSent: true });
         }
-      })
-      .catch((error) => console.error('Error:', error));
+      },
+    );
   };
 
   updateTicketClicked = (): void => {
@@ -160,15 +159,11 @@ export class RoleRequestForm extends React.Component<Props, State> {
         role: this.props.name,
         comment: this.state.comment,
       }),
-    })
-      .then((response) => {
-        if (response.status === 201) {
-          this.setState({ roleRequestSent: true });
-        } else if (response.status === 400) {
-          console.error('Error: Bad request');
-        }
-      })
-      .catch((error) => console.error('Error:', error));
+    }).then((response) => {
+      if (response.status === 201) {
+        this.setState({ roleRequestSent: true });
+      }
+    });
   };
 
   /**
@@ -229,12 +224,7 @@ export class RoleRequestForm extends React.Component<Props, State> {
       <div>
         <Row className="primary-row">
           <Col span={24}>
-            <Button
-              type="text"
-              href="/app/#/dash"
-              icon={<IoReturnUpBack />}
-              size="large"
-            />
+            <Button type="text" href="/app/#/dash" size="large" />
             <span className="page-title">
               Request{' '}
               {this.state.roleRequestText?.role.replace(/\b\w/g, (c) =>

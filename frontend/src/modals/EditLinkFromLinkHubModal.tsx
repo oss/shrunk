@@ -28,15 +28,15 @@ export default function EditLinkFromLinkHubModal(
     }
   }, [props.visible, props.editLinkData, form]);
 
-  function onSubmit(values: any) {
+  const onSubmit = (values: any) => {
     form.resetFields();
     props.onOkay(values);
-  }
+  };
 
-  function onCancel() {
+  const onCancel = () => {
     form.resetFields();
     props.onCancel();
-  }
+  };
 
   return (
     <Modal

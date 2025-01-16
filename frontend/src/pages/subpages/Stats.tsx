@@ -19,6 +19,7 @@ import {
   Descriptions,
   Table,
   message,
+  Dropdown,
 } from 'antd/lib';
 import {
   ExclamationCircleFilled,
@@ -29,16 +30,19 @@ import {
   EditOutlined,
   TeamOutlined,
   ShareAltOutlined,
+  CopyOutlined,
+  DeleteOutlined,
+  MoreOutlined,
 } from '@ant-design/icons';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import dayjs from 'dayjs';
+import { useLocation } from 'react-router-dom';
 
 import { LinkInfo, AliasInfo } from '../../components/LinkInfo';
 import { GeoipStats, MENU_ITEMS, GeoipChart } from './StatsCommon';
 import { downloadVisitsCsv } from '../../components/Csv';
 
-import '../../Base.css';
 import { daysBetween } from '../../lib/utils';
 import ShareModal from '../../modals/ShareModal';
 import { EditLinkFormValues, EditLinkModal } from '../../modals/EditLinkModal';
@@ -319,7 +323,7 @@ const BrowserCharts: React.FC<{ browserStats: BrowserStats | null }> = (
  * @class
  */
 
-export function Stats(props: Props) {
+export function Stats(props: Props): React.ReactElement {
   const showPurge = false;
 
   const [linkInfo, setLinkInfo] = useState<LinkInfo | null>(null);
@@ -331,7 +335,7 @@ export function Stats(props: Props) {
   const [browserStats, setBrowserStats] = useState<BrowserStats | null>(null);
   const [mayEdit, setMayEdit] = useState<boolean | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [statsKey, setStatsKey] = useState<string>('visits');
+  const [statsKey, setStatsKey] = useState<string>('alias');
 
   const [editModalVisible, setEditModalVisible] = useState<boolean>(false);
   const [collabModalVisible, setCollabModalVisible] = useState<boolean>(false);
@@ -339,51 +343,76 @@ export function Stats(props: Props) {
 
   const [entities, setEntities] = useState<Entity[]>([]);
 
+  const [topReferrer, setTopReferrer] = useState<{
+    domain: string;
+    count: number;
+  } | null>(null);
+
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const mode = queryParams.get('mode');
+
+  useEffect(() => {
+    switch (mode) {
+      case 'edit':
+        setEditModalVisible(true);
+        break;
+      case 'collaborate':
+        setCollabModalVisible(true);
+        break;
+      case 'share':
+        setShareModalVisible(true);
+        break;
+      default:
+        break;
+    }
+  }, [mode]);
+
   async function updateLinkInfo() {
-    const _linkInfo = (await fetch(`/api/v1/link/${props.id}`).then((resp) =>
+    const templinkInfo = (await fetch(`/api/v1/link/${props.id}`).then((resp) =>
       resp.json(),
     )) as LinkInfo;
 
-    const aliases = _linkInfo.aliases.filter((alias) => !alias.deleted);
+    const aliases = templinkInfo.aliases.filter((alias) => !alias.deleted);
 
     if (aliases.length === 0) {
       throw new Error(`link ${props.id} has no aliases!`);
     }
 
-    setLinkInfo(_linkInfo);
+    setLinkInfo(templinkInfo);
     setAllAliases(aliases);
     setSelectedAlias(null);
-    setMayEdit(_linkInfo.may_edit);
+    setMayEdit(templinkInfo.may_edit);
 
-    const _entities: Entity[] = [];
+    const tempEntities: Entity[] = [];
     const mentionedIds = new Set<string>();
 
-    _entities.push({
-      _id: _linkInfo.owner,
+    tempEntities.push({
+      _id: templinkInfo.owner,
       type: 'netid',
       permission: 'owner',
     });
 
-    _linkInfo.editors.forEach((editor) => {
-      _entities.push({
+    templinkInfo.editors.forEach((editor) => {
+      tempEntities.push({
         _id: editor._id,
         type: editor.type,
         permission: 'editor',
       });
       mentionedIds.add(editor._id);
     });
-    _linkInfo.viewers.forEach((viewer) => {
+    templinkInfo.viewers.forEach((viewer) => {
       if (mentionedIds.has(viewer._id)) {
         return;
       }
 
-      _entities.push({
+      tempEntities.push({
         _id: viewer._id,
         type: viewer.type,
         permission: 'viewer',
       });
     });
-    setEntities(_entities);
+    setEntities(tempEntities);
   }
 
   async function updateStats() {
@@ -432,6 +461,20 @@ export function Stats(props: Props) {
 
     fetchData();
   }, [props.id]);
+
+  useEffect(() => {
+    const fetchTopReferrer = async () => {
+      try {
+        const response = await fetch('/api/v1/stats/top_referrer');
+        const data = await response.json();
+        setTopReferrer(data);
+      } catch (error) {
+        setTopReferrer(null);
+      }
+    };
+
+    fetchTopReferrer();
+  }, []);
 
   /**
    * Executes API requests to update a link
@@ -565,10 +608,10 @@ export function Stats(props: Props) {
   };
 
   const statTabsKeys = [
+    { key: 'alias', tab: 'Alias' },
     { key: 'visits', tab: 'Visits' },
     { key: 'geoip', tab: 'Location' },
     { key: 'browser', tab: 'Metadata' },
-    { key: 'alias', tab: 'Alias' },
   ];
 
   const statTabs: Record<string, React.ReactNode> = {
@@ -581,6 +624,7 @@ export function Stats(props: Props) {
     ),
     alias: (
       <Table
+        showHeader={false}
         size="small"
         dataSource={allAliases.map((alias) => ({
           alias: alias.alias,
@@ -591,6 +635,23 @@ export function Stats(props: Props) {
             title: 'Alias',
             dataIndex: 'alias',
             key: 'alias',
+            width: '25%',
+            render: (alias) => {
+              const isDev = process.env.NODE_ENV === 'development';
+              const protocol = isDev ? 'http' : 'https';
+              const shortUrl = `${protocol}://${document.location.host}/${alias}`;
+              return (
+                <Button
+                  type="text"
+                  onClick={() => navigator.clipboard.writeText(shortUrl)}
+                >
+                  <Space>
+                    <CopyOutlined />
+                    <Typography.Text>{alias}</Typography.Text>
+                  </Space>
+                </Button>
+              );
+            },
           },
           {
             title: 'Description',
@@ -603,13 +664,25 @@ export function Stats(props: Props) {
     ),
   };
 
+  const handleDelete = async () => {
+    try {
+      await fetch(`/api/v1/link/${props.id}`, {
+        method: 'DELETE',
+      });
+      message.success('Link deleted successfully');
+      window.location.href = '/app/#/dash';
+    } catch (error) {
+      message.error('Failed to delete link');
+    }
+  };
+
   return (
     <>
-      <Row justify="space-between">
+      <Row justify="space-between" align="middle">
         <Col span={16}>
           <Row>
-            <Space style={{ marginBottom: 19 }}>
-              <Typography.Title style={{ marginBottom: 0 }} ellipsis>
+            <Space style={{ marginBottom: 19, marginTop: 19 }}>
+              <Typography.Title style={{ margin: 0 }} ellipsis>
                 {linkInfo?.title}
               </Typography.Title>
 
@@ -622,14 +695,41 @@ export function Stats(props: Props) {
 
         <Col>
           <Space>
-            <Button
-              icon={<EditOutlined />}
-              onClick={() => {
-                setEditModalVisible(true);
-              }}
-            >
-              Edit
-            </Button>
+            <Space.Compact>
+              <Button
+                icon={<EditOutlined />}
+                onClick={() => {
+                  setEditModalVisible(true);
+                }}
+              >
+                Edit
+              </Button>
+              <Dropdown
+                menu={{
+                  items: [
+                    {
+                      key: 'delete',
+                      label: (
+                        <Popconfirm
+                          title="Are you sure you want to delete this link?"
+                          onConfirm={handleDelete}
+                          okText="Yes"
+                          cancelText="No"
+                          okButtonProps={{ danger: true }}
+                        >
+                          <Typography.Text type="danger">
+                            <DeleteOutlined /> Delete
+                          </Typography.Text>
+                        </Popconfirm>
+                      ),
+                      danger: true,
+                    },
+                  ],
+                }}
+              >
+                <Button icon={<MoreOutlined />} />
+              </Dropdown>
+            </Space.Compact>
             <Button
               icon={<TeamOutlined />}
               onClick={() => {
@@ -681,7 +781,10 @@ export function Stats(props: Props) {
             </Col>
             <Col span={6}>
               <Card>
-                <Statistic title="Most Popular Referrer" value="Twitter" />
+                <Statistic
+                  title="Most Popular Referrer"
+                  value={topReferrer?.domain ?? 'None'}
+                />
               </Card>
             </Col>
           </>
@@ -778,79 +881,80 @@ export function Stats(props: Props) {
         </Col>
       </Row>
       {linkInfo && (
-        <EditLinkModal
-          visible={editModalVisible}
-          userPrivileges={props.userPrivileges}
-          netid={props.netid}
-          linkInfo={linkInfo}
-          onOk={async (values: EditLinkFormValues) => {
-            await doEditLink(values);
-            setEditModalVisible(false);
-          }}
-          onCancel={() => {
-            setEditModalVisible(false);
-          }}
-        />
+        <>
+          <EditLinkModal
+            visible={editModalVisible}
+            userPrivileges={props.userPrivileges}
+            netid={props.netid}
+            linkInfo={linkInfo}
+            onOk={async (values) => {
+              await doEditLink(values);
+              setEditModalVisible(false);
+            }}
+            onCancel={() => {
+              setEditModalVisible(false);
+            }}
+          />
+
+          <CollaboratorModal
+            visible={collabModalVisible}
+            people={entities}
+            onAddEntity={async (value) => {
+              const patchReq = {
+                acl: `${value.permission}s`,
+                action: 'add',
+                entry: {
+                  _id: value._id,
+                  type: value.type,
+                },
+              };
+
+              await fetch(`/api/v1/link/${props.id}/acl`, {
+                method: 'PATCH',
+                headers: {
+                  'content-type': 'application/json',
+                },
+                body: JSON.stringify(patchReq),
+              });
+              updateLinkInfo();
+            }}
+            onRemoveEntity={async (
+              _id: string,
+              type: string,
+              permission: string,
+            ) => {
+              const patchReq = {
+                acl: `${permission}s`,
+                action: 'remove',
+                entry: { _id, type },
+              };
+
+              await fetch(`/api/v1/link/${props.id}/acl`, {
+                method: 'PATCH',
+                headers: {
+                  'content-type': 'application/json',
+                },
+                body: JSON.stringify(patchReq),
+              });
+              updateLinkInfo();
+            }}
+            onOk={() => {
+              setCollabModalVisible(false);
+            }}
+            onCancel={() => {
+              setCollabModalVisible(false);
+            }}
+          />
+
+          <ShareModal
+            linkInfo={linkInfo}
+            visible={shareModalVisible}
+            onCancel={() => {
+              setShareModalVisible(false);
+            }}
+          />
+        </>
       )}
-      <CollaboratorModal
-        visible={collabModalVisible}
-        userPrivileges={props.userPrivileges}
-        people={entities}
-        isLoading={false}
-        linkInfo={linkInfo}
-        onAddEntity={async (value) => {
-          const patchReq = {
-            acl: `${value.permission}s`,
-            action: 'add',
-            entry: {
-              _id: value._id,
-              type: value.type,
-            },
-          };
-
-          await fetch(`/api/v1/link/${props.id}/acl`, {
-            method: 'PATCH',
-            headers: {
-              'content-type': 'application/json',
-            },
-            body: JSON.stringify(patchReq),
-          });
-          updateLinkInfo();
-        }}
-        onRemoveEntity={async (
-          _id: string,
-          type: string,
-          permission: string,
-        ) => {
-          const patchReq = {
-            acl: `${permission}s`,
-            action: 'remove',
-            entry: { _id, type },
-          };
-
-          await fetch(`/api/v1/link/${props.id}/acl`, {
-            method: 'PATCH',
-            headers: {
-              'content-type': 'application/json',
-            },
-            body: JSON.stringify(patchReq),
-          });
-          updateLinkInfo();
-        }}
-        onOk={() => {
-          setCollabModalVisible(false);
-        }}
-        onCancel={() => {
-          setCollabModalVisible(false);
-        }}
-      />
-      <ShareModal
-        linkInfo={linkInfo}
-        visible={shareModalVisible}
-        onCancel={() => {
-          setShareModalVisible(false);
-        }}
-      />
     </>
   );
 }

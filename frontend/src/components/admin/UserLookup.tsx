@@ -5,9 +5,7 @@
 
 import { Button, Col, Row, Table, Tag, Spin } from 'antd/lib';
 import React from 'react';
-import { IoReturnUpBack } from 'react-icons/io5';
 import SearchUser from '../SearchUser';
-import './UserLookup.css';
 import {
   Operation,
   generateOperationKey,
@@ -118,12 +116,7 @@ const UserLookup: React.FC = () => {
     <>
       <Row className="primary-row">
         <Col span={24}>
-          <Button
-            type="text"
-            href="/app/#/admin"
-            icon={<IoReturnUpBack />}
-            size="large"
-          />
+          <Button type="text" href="/app/#/admin" size="large" />
           <span className="page-title">User Lookup</span>
         </Col>
       </Row>

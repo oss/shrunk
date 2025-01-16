@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from 'react';
 import {
   Typography,
@@ -21,11 +23,7 @@ import EditLinkFromLinkHubModal, {
   EditLinkData,
 } from '../../modals/EditLinkFromLinkHubModal';
 import { serverValidateLinkHubAlias } from '../../Validators';
-import ShareLinkHubModal from '../../modals/ShareLinkHubModal';
-import {
-  Entity,
-  CollaboratorLinkModal,
-} from '../../modals/CollaboratorLinkModal';
+import CollaboratorModal, { Entity } from '../../modals/CollaboratorModal';
 import { getOrgInfo } from '../../api/Org';
 import {
   getLinkHub,
@@ -140,12 +138,12 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
         refreshCollaborators();
 
         const fetchingLinks: DisplayLink[] = [];
-        value.links.map((data: any) => {
+        value.links.map((data: any) =>
           fetchingLinks.push({
             url: data.url,
             title: data.title,
-          });
-        });
+          }),
+        );
         setLinks(fetchingLinks);
         setFoundLinkHub(true);
       })
@@ -188,16 +186,16 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
     addLinkToLinkHub(props.linkhubId, value.title, value.url);
   }
 
-  function onTitleChange(e: any) {
+  const onTitleChange = (e: any) => {
     setTitle(e.target.value);
-  }
+  };
 
-  function onAliasChange(e: any) {
+  const onAliasChange = (e: any) => {
     // TODO: Check if alias is valid or not.
     setAlias(e.target.value);
-  }
+  };
 
-  function onProfileSave() {
+  const onProfileSave = () => {
     if (title === undefined || alias === undefined) {
       return;
     }
@@ -206,48 +204,46 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
     changeLinkHubAlias(props.linkhubId, alias);
     setOldTitle(title);
     setOldAlias(alias);
-  }
+  };
 
-  function isProfileSaved() {
-    return title === oldTitle && alias === oldAlias;
-  }
+  const isProfileSaved = () => title === oldTitle && alias === oldAlias;
 
-  function onDisplayLinkChange(value: DisplayLink, index: number) {
+  const onDisplayLinkChange = (value: DisplayLink, index: number) => {
     const newLinks: DisplayLink[] = JSON.parse(JSON.stringify(links));
-    value.originId = newLinks[index].originId;
-    newLinks[index] = value;
+    const updatedValue = { ...value, originId: newLinks[index].originId };
+    newLinks[index] = updatedValue;
     setLinks(newLinks);
-  }
+  };
 
-  function onOpenEditDisplayLink(index: number, newLink: DisplayLink) {
+  const onOpenEditDisplayLink = (index: number, newLink: DisplayLink) => {
     setEditLinkData({ index, displayLink: newLink });
     setIsEditLinkModalVisible(true);
-  }
+  };
 
-  function onDeleteDisplayLink(index: number) {
+  const onDeleteDisplayLink = (index: number) => {
     const newLinks: DisplayLink[] = JSON.parse(JSON.stringify(links));
     newLinks.splice(index, 1);
     setLinks(newLinks);
 
     deleteLinkAtIndex(props.linkhubId, index);
-  }
+  };
 
-  function onAddDisplayLink() {
+  const onAddDisplayLink = () => {
     const link: DisplayLink = {
       title: 'New Link',
       url: 'https://rutgers.edu',
       originId: Math.random(), // TODO: This is stupid; clean this up later.
     };
     addDisplayLink(link);
-  }
+  };
 
-  function onPublish(e: any) {
+  const onPublish = (_: any) => {
     publishLinkHub(props.linkhubId, !isPublished).then((value) => {
       setIsPublished(value);
     });
-  }
+  };
 
-  function onDelete(e: any) {
+  const onDelete = (_: any) => {
     deleteLinkHub(props.linkhubId).then((value) => {
       if (!value.success) {
         return;
@@ -255,10 +251,10 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
 
       history.push('/linkhubs');
     });
-  }
+  };
 
   if (!foundLinkHub) {
-    return <div>Couldn't find a LinkHub</div>;
+    return <div>Couldn&apos;t find a LinkHub</div>;
   }
 
   if (title === undefined) {
@@ -449,12 +445,9 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
         <></>
       )}
       {collaborators !== undefined ? (
-        <CollaboratorLinkModal
+        <CollaboratorModal
           visible={isCollaboratorModalVisible}
-          userPrivileges={undefined}
           people={collaborators}
-          isLoading={false}
-          linkInfo={null}
           onAddEntity={(value: any) => {
             addCollaborator(
               value.typeOfAdd as 'netid' | 'org',

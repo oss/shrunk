@@ -115,21 +115,19 @@ export default class ProcessRoleRequestModal extends Component<Props, State> {
         entity,
         comment: approve_comment,
       }),
-    })
-      .then((response) => {
-        if (response.status === 200) {
-          message.success(
-            `Succesfully granted ${this.props.roleName} role to ${entity}`,
-            2,
-          );
-        } else {
-          message.error(
-            `Failed to grant ${this.props.roleName} role to ${entity}`,
-            2,
-          );
-        }
-      })
-      .catch((error) => console.error('Error:', error));
+    }).then((response) => {
+      if (response.status === 200) {
+        message.success(
+          `Succesfully granted ${this.props.roleName} role to ${entity}`,
+          2,
+        );
+      } else {
+        message.error(
+          `Failed to grant ${this.props.roleName} role to ${entity}`,
+          2,
+        );
+      }
+    });
   };
 
   /**
@@ -148,21 +146,19 @@ export default class ProcessRoleRequestModal extends Component<Props, State> {
         entity,
         comment: deny_comment,
       }),
-    })
-      .then((response) => {
-        if (response.status === 204) {
-          message.success(
-            `Succesfully denied ${this.props.roleName} role to ${entity}`,
-            2,
-          );
-        } else {
-          message.error(
-            `Failed to deny ${this.props.roleName} role to ${entity}`,
-            2,
-          );
-        }
-      })
-      .catch((error) => console.error('Error:', error));
+    }).then((response) => {
+      if (response.status === 204) {
+        message.success(
+          `Succesfully denied ${this.props.roleName} role to ${entity}`,
+          2,
+        );
+      } else {
+        message.error(
+          `Failed to deny ${this.props.roleName} role to ${entity}`,
+          2,
+        );
+      }
+    });
   };
 
   /**

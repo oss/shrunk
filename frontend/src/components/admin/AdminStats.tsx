@@ -3,18 +3,25 @@
  * @packageDocumentation
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
-import { Row, Col, Spin, DatePicker, Form, Button } from 'antd/lib';
+import {
+  Row,
+  Col,
+  Spin,
+  DatePicker,
+  Form,
+  Button,
+  Card,
+  Typography,
+  Statistic,
+} from 'antd/lib';
 import { ArrowRightOutlined } from '@ant-design/icons';
-import { IoReturnUpBack } from 'react-icons/io5';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import dayjs from 'dayjs';
 
 import { MENU_ITEMS } from '../../pages/subpages/StatsCommon';
-
-import '../../Base.css';
 
 const { RangePicker } = DatePicker;
 
@@ -66,16 +73,81 @@ interface EndpointDatum {
 }
 
 /**
- * The [[EndpointChart]] component displays a bar graph of visits to Flask
- * endpoints
+ * The [[AdminStats]] component allows the user to view summary statistics
+ * about the total number of links, users, and visits on Shrunk, as well
+ * as to view statistics about the number of visits to each Flask endpoint
  * @function
- * @param props Props
  */
-const EndpointChart: React.FC<{ endpointData: EndpointDatum[] | null }> = (
-  props,
-) => {
-  if (props.endpointData === null) {
-    return <Spin size="large" />;
+export default function AdminStats(): React.ReactElement {
+  const [endpointData, setEndpointData] = useState<EndpointDatum[] | null>(
+    null,
+  );
+  const [adminDataRange, setAdminDataRange] = useState<{
+    begin: dayjs.Dayjs;
+    end: dayjs.Dayjs;
+  } | null>(null);
+  const [adminData, setAdminData] = useState<AdminStatsData | null>(null);
+  const [version, setVersion] = useState<string | null>(null);
+
+  const updateAdminData = async () => {
+    const req: Record<string, any> = {};
+    if (adminDataRange !== null) {
+      req.range = {
+        begin: adminDataRange.begin.format(),
+        end: adminDataRange.end.format(),
+      };
+    }
+
+    const json = await fetch('/api/v1/admin/stats/overview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req),
+    }).then((resp) => resp.json());
+
+    setAdminData(json as AdminStatsData);
+  };
+
+  const updateEndpointData = async () => {
+    const json = await fetch('/api/v1/admin/stats/endpoint').then((resp) =>
+      resp.json(),
+    );
+    setEndpointData(json.stats as EndpointDatum[]);
+  };
+
+  const updateShrunkVersion = async () => {
+    const json = await fetch('/api/v1/admin/app-version').then((resp) =>
+      resp.json(),
+    );
+    setVersion(json.version as string);
+  };
+
+  useEffect(() => {
+    Promise.all([
+      updateAdminData(),
+      updateEndpointData(),
+      updateShrunkVersion(),
+    ]);
+  }, []);
+
+  const submitRangeForm = async (values: {
+    range: dayjs.Dayjs[] | null | undefined;
+  }) => {
+    const { range } = values;
+    const newRange =
+      range === undefined || range === null
+        ? null
+        : {
+            begin: range[0],
+            end: range[1],
+          };
+
+    setAdminDataRange(newRange);
+    setAdminData(null);
+    await updateAdminData();
+  };
+
+  if (endpointData === null) {
+    return <></>;
   }
 
   const options = {
@@ -83,7 +155,7 @@ const EndpointChart: React.FC<{ endpointData: EndpointDatum[] | null }> = (
     title: { text: 'Endpoint visits' },
     exporting: { buttons: { contextButton: { menuItems: MENU_ITEMS } } },
     xAxis: {
-      categories: props.endpointData.map((datum) => datum.endpoint),
+      categories: endpointData.map((datum) => datum.endpoint),
       title: { text: 'Endpoint' },
     },
     yAxis: {
@@ -103,204 +175,73 @@ const EndpointChart: React.FC<{ endpointData: EndpointDatum[] | null }> = (
       {
         name: 'Total visits',
         color: '#fc580c',
-        data: props.endpointData.map((datum) => datum.total_visits),
+        data: endpointData.map((datum) => datum.total_visits),
       },
       {
         name: 'Unique visits',
         color: '#fce2cc',
-        data: props.endpointData.map((datum) => datum.unique_visits),
+        data: endpointData.map((datum) => datum.unique_visits),
       },
     ],
   };
 
-  return <HighchartsReact highcharts={Highcharts} options={options} />;
-};
+  return (
+    <>
+      <Row gutter={[16, 16]}>
+        <Col span={24}>
+          <Row justify="space-between" align="middle">
+            <Col>
+              <Typography.Title>Admin Statistics</Typography.Title>
+            </Col>
+            <Col>
+              <Form layout="inline" onFinish={submitRangeForm}>
+                <Form.Item name="range">
+                  <RangePicker />
+                </Form.Item>
+                <Form.Item>
+                  <Button htmlType="submit" icon={<ArrowRightOutlined />} />
+                </Form.Item>
+              </Form>
+            </Col>
+          </Row>
+        </Col>
+      </Row>
 
-/**
- * Props for the [[AdminStats]] component
- * @interface
- */
-export interface Props {}
-
-/**
- * State for the [[AdminStats]] component
- * @interface
- */
-interface State {
-  /**
-   * The endpoint statistics data, fetched from the backend
-   * @property
-   */
-  endpointData: EndpointDatum[] | null;
-
-  /**
-   * The date range for the admin stats query, or `null` to query
-   * all existing data
-   * @property
-   */
-  adminDataRange: { begin: dayjs.Dayjs; end: dayjs.Dayjs } | null;
-
-  /**
-   * The result of the admin stats query, fetched from the backend
-   * @property
-   */
-  adminData: AdminStatsData | null;
-
-  /**
-   * Version of Shrunk
-   * @property
-   */
-  version: string | null;
-}
-
-/**
- * The [[AdminStats]] component allows the user to view summary statistics
- * about the total number of links, users, and visits on Shrunk, as well
- * as to view statistics about the number of visits to each Flask endpoint
- * @class
- */
-export class AdminStats extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      endpointData: null,
-      adminDataRange: null,
-      adminData: null,
-      version: null,
-    };
-  }
-
-  async componentDidMount(): Promise<void> {
-    await Promise.all([
-      this.updateAdminData(),
-      this.updateEndpointData(),
-      this.updateShrunkVersion(),
-    ]);
-  }
-
-  /**
-   * Execute a query to the admin stats API endpoint, with time-range parameters
-   * taken from `state.adminDataRange`, if that value is not `null`
-   * @method
-   */
-  updateAdminData = async (): Promise<void> => {
-    const req: Record<string, any> = {};
-    if (this.state.adminDataRange !== null) {
-      req.range = {
-        begin: this.state.adminDataRange.begin.format(),
-        end: this.state.adminDataRange.end.format(),
-      };
-    }
-
-    await fetch('/api/v1/admin/stats/overview', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(req),
-    })
-      .then((resp) => resp.json())
-      .then((json) => this.setState({ adminData: json as AdminStatsData }));
-  };
-
-  /**
-   * Fetch the endpoint stats data from the backend
-   * @method
-   */
-  updateEndpointData = async (): Promise<void> => {
-    await fetch('/api/v1/admin/stats/endpoint')
-      .then((resp) => resp.json())
-      .then((json) =>
-        this.setState({ endpointData: json.stats as EndpointDatum[] }),
-      );
-  };
-
-  /**
-   * Fetch the endpoint stats data from the backend
-   * @method
-   */
-  updateShrunkVersion = async (): Promise<void> => {
-    await fetch('/api/v1/admin/app-version')
-      .then((resp) => resp.json())
-      .then((json) => this.setState({ version: json.version as string }));
-  };
-
-  /**
-   * Update the date range for the admin stats query when the admin stats form is submitted
-   * @method
-   * @param values The values from the time range form
-   */
-  submitRangeForm = async (values: {
-    range: dayjs.Dayjs[] | null | undefined;
-  }): Promise<void> => {
-    const { range } = values;
-    const adminDataRange =
-      range === undefined || range === null
-        ? null
-        : {
-            begin: range[0],
-            end: range[1],
-          };
-
-    this.setState({ adminDataRange, adminData: null });
-    await this.updateAdminData();
-  };
-
-  render(): React.ReactNode {
-    return (
-      <>
-        <Row className="primary-row">
-          <Col span={24}>
-            <Button
-              type="text"
-              href="/app/#/admin"
-              icon={<IoReturnUpBack />}
-              size="large"
-            />
-            <span className="page-title">Admin Statistics</span>
-          </Col>
-        </Row>
-
-        <Row className="primary-row">
-          <Col span={24}>
-            <Row style={{ marginBottom: '12px' }}>
-              <Col span={24}>
-                <Form layout="inline" onFinish={this.submitRangeForm}>
-                  <Form.Item name="range">
-                    <RangePicker />
-                  </Form.Item>
-
-                  <Form.Item>
-                    <Button htmlType="submit" icon={<ArrowRightOutlined />} />
-                  </Form.Item>
-                </Form>
+      <Row gutter={[16, 16]}>
+        <Col span={24}>
+          {adminData === null ? (
+            <Spin size="small" />
+          ) : (
+            <Row gutter={[16, 16]}>
+              <Col span={6}>
+                <Card>
+                  <Statistic title="Links" value={adminData.links} />
+                </Card>
+              </Col>
+              <Col span={6}>
+                <Card>
+                  <Statistic title="Visits" value={adminData.visits} />
+                </Card>
+              </Col>
+              <Col span={6}>
+                <Card>
+                  <Statistic title="Users" value={adminData.users} />
+                </Card>
+              </Col>
+              <Col span={6}>
+                <Card>
+                  <Statistic title="Version" value={version || ''} />
+                </Card>
               </Col>
             </Row>
-            <Row>
-              {this.state.adminData === null ? (
-                <Spin size="small" />
-              ) : (
-                <>
-                  <span className="info">
-                    Links: {this.state.adminData.links}
-                  </span>
-                  <span className="info">
-                    Visits: {this.state.adminData.visits}
-                  </span>
-                  <span className="info">
-                    Users: {this.state.adminData.users}
-                  </span>
-                  <span className="info">Version: {this.state.version}</span>
-                </>
-              )}
-            </Row>
-          </Col>
-        </Row>
-
-        <Row className="primary-row">
-          <Col span={24}>
-            <EndpointChart endpointData={this.state.endpointData} />
-          </Col>
-        </Row>
-      </>
-    );
-  }
+          )}
+        </Col>
+        <Col span={24}>
+          <Card>
+            <HighchartsReact highcharts={Highcharts} options={options} />
+          </Card>
+        </Col>
+      </Row>
+    </>
+  );
 }

@@ -2,7 +2,6 @@ import ExclamationCircleFilled from '@ant-design/icons/lib/icons/ExclamationCirc
 import { FloatButton, Button, Col, Popconfirm, Row } from 'antd/lib';
 import Spin from 'antd/es/spin';
 import React, { useEffect, useState } from 'react';
-import { IoReturnUpBack } from 'react-icons/io5';
 
 /**
  * PendingLinkRow information fetched form backend
@@ -135,12 +134,7 @@ function LinkSecurity() {
       <FloatButton.BackTop />
       <Row className="primary-row">
         <Col span={24}>
-          <Button
-            type="text"
-            href="/app/#/admin"
-            icon={<IoReturnUpBack />}
-            size="large"
-          />
+          <Button type="text" href="/app/#/admin" size="large" />
         </Col>
         <span>
           <strong>Current Security Status</strong>: {securityStatus}

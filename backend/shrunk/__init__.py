@@ -416,6 +416,14 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
         else:
             if "://" not in long_url:
                 long_url = f"http://{long_url}"
+
+            # Preserve URL parameters from the original request
+            if request.query_string:
+                separator = "&" if "?" in long_url else "?"
+                long_url = (
+                    f"{long_url}{separator}{request.query_string.decode('utf-8')}"
+                )
+
             response = redirect(long_url)
 
         response.set_cookie("shrunkid", tracking_id)

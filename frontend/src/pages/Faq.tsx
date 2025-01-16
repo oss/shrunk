@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 import React from 'react';
-import { Row, Col, Table, Collapse } from 'antd/lib';
+import { Row, Table, Collapse, Typography } from 'antd/lib';
 import { Link } from 'react-router-dom';
 
 const Data = {
@@ -155,10 +155,8 @@ export default function Faq(): JSX.Element {
   const { Panel } = Collapse;
   return (
     <div>
-      <Row className="primary-row">
-        <Col span={24}>
-          <span className="page-title">Frequently Asked Questions</span>
-        </Col>
+      <Row>
+        <Typography.Title>Frequently Asked Questions</Typography.Title>
       </Row>
       <Collapse bordered={false}>
         <Panel header="What is Go?" key="1" className="question-title">

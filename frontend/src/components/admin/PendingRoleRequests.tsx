@@ -5,7 +5,6 @@
 import React, { Component } from 'react';
 import { Row, Col, Button, FloatButton, Spin } from 'antd/lib';
 import dayjs from 'dayjs';
-import { IoReturnUpBack } from 'react-icons/io5';
 import base32 from 'hi-base32';
 import ProcessRoleRequestModal from '../../modals/ProcessRoleRequestModal';
 
@@ -279,7 +278,6 @@ export class PendingRoleRequests extends Component<Props, State> {
     try {
       const response = await fetch(`/api/v1/position/${base32.encode(entity)}`);
       if (!response.ok) {
-        console.error(`Server responded with status ${response.status}`);
         // Return the default values (failed to query)
         return result;
       }
@@ -299,7 +297,6 @@ export class PendingRoleRequests extends Component<Props, State> {
       });
       return result;
     } catch (error) {
-      console.error('Error:', error);
       return result;
     }
   };
@@ -382,12 +379,7 @@ export class PendingRoleRequests extends Component<Props, State> {
         <FloatButton.BackTop />
         <Row className="primary-row">
           <Col span={24}>
-            <Button
-              type="text"
-              href="/app/#/admin"
-              icon={<IoReturnUpBack />}
-              size="large"
-            />
+            <Button type="text" href="/app/#/admin" size="large" />
             <span className="page-title">
               Pending{' '}
               {this.state.requestText?.role.replace(/\b\w/g, (c) =>

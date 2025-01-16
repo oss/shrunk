@@ -1,3 +1,4 @@
+/* eslint-disable react/require-default-props */
 import React from 'react';
 import './LinkHubComponent.css';
 
@@ -48,7 +49,7 @@ export default function LinkHubComponent(props: Props) {
                 target="_blank"
                 rel="noopener noreferrer"
                 href={value.url}
-                key={index}
+                key={value.originId ?? index}
               >
                 <div
                   style={{
