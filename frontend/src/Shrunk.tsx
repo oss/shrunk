@@ -111,9 +111,10 @@ export default function Shrunk(props: Props) {
   };
 
   const fetchIsDomainEnabled = async () => {
-    const resp = await fetch('/api/v1/linkhub/is-linkhub-enabled');
+    const resp = await fetch('/api/v1/org/domain_enabled');
     const json = await resp.json();
-    setIsDomainEnabled(json.status as boolean);
+
+    setIsDomainEnabled(json.enabled as boolean);
   };
 
   const fetchRoleRequestsEnabled = async () => {
@@ -181,7 +182,6 @@ export default function Shrunk(props: Props) {
       await updatePendingAlerts();
       await fetchRoleRequestsEnabled();
       await updatePowerUserRoleRequestMade();
-
       const history = createBrowserHistory();
       setSelectedKeysFromLocation(history.location);
       history.listen(({ location }) => setSelectedKeysFromLocation(location));
@@ -347,13 +347,6 @@ export default function Shrunk(props: Props) {
                 <Route exact path="/dash">
                   <Dashboard userPrivileges={userPrivileges} netid={netid} />
                 </Route>
-                {isLinkHubEnabled ? (
-                  <Route exact path="/admin/domains">
-                    <Domains />
-                  </Route>
-                ) : (
-                  <></>
-                )}
                 <Route exact path="/linkhubs">
                   <LinkHubDashboard netid={netid} />
                 </Route>
@@ -424,6 +417,13 @@ export default function Shrunk(props: Props) {
                     <Route exact path="/admin/stats">
                       <AdminStats />
                     </Route>
+                    {isDomainEnabled ? (
+                      <Route exact path="/admin/domain">
+                        <Domains />
+                      </Route>
+                    ) : (
+                      <></>
+                    )}
                     <Route exact path="/admin/user_lookup">
                       <UsersProvider>
                         <UserLookup />

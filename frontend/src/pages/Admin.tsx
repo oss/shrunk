@@ -101,7 +101,7 @@ export default function Admin(): React.ReactElement {
   ];
   if (isDomainEnabled) {
     adminCards.push({
-      title: 'Domain Enabled',
+      title: 'Custom Domains',
       icon: <Icon type="link" />,
       link: '/admin/domain',
     });
