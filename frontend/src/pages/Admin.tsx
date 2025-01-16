@@ -13,13 +13,11 @@ import Icon, {
   TeamOutlined,
 } from '@ant-design/icons';
 
-
-
 /**
  * Props for the [[Admin]] component
  * @interface
  */
-export interface Props { }
+export interface Props {}
 
 /**
  * Summary information for one role
@@ -40,13 +38,12 @@ export default function Admin(): React.ReactElement {
     const json = await response.json();
     setPowerUserRequestsCount(json.count);
   };
-  
+
   const updateIsDomainEnabled = async () => {
     const response = await fetch('/api/v1/org/domain_enabled');
     const json = await response.json();
-    setIsDomainEnabled(json.enabled); 
-};
-  
+    setIsDomainEnabled(json.enabled);
+  };
 
   useEffect(() => {
     const fetchData = async () => {

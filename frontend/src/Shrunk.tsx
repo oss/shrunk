@@ -348,10 +348,12 @@ export default function Shrunk(props: Props) {
                   <Dashboard userPrivileges={userPrivileges} netid={netid} />
                 </Route>
                 {isLinkHubEnabled ? (
-                <Route exact path="/admin/domains">
-                  <Domains />
-                </Route>
-                ):<></>}
+                  <Route exact path="/admin/domains">
+                    <Domains />
+                  </Route>
+                ) : (
+                  <></>
+                )}
                 <Route exact path="/linkhubs">
                   <LinkHubDashboard netid={netid} />
                 </Route>
