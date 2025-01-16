@@ -30,7 +30,6 @@ const Domains: React.FC = () => {
       message.success('Custom Domain Request Succeeded');
       grantForm.resetFields();
     } catch (error) {
-      console.error('Error:', error);
       message.error('Custom Domain Request Failed');
     } finally {
       setLoading(false);
