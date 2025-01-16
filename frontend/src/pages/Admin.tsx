@@ -6,13 +6,23 @@
 import React, { useEffect, useState } from 'react';
 import { Row, Col, Spin, Badge, Card, Typography, Space } from 'antd/lib';
 import { Link } from 'react-router-dom';
-import {
+import Icon, {
   LineChartOutlined,
   UserOutlined,
   SafetyOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
 
+/**
+ * Props for the [[Admin]] component
+ * @interface
+ */
+export interface Props {}
+
+/**
+ * Summary information for one role
+ * @interface
+ */
 interface RoleInfo {
   name: string;
   display_name: string;
@@ -22,11 +32,17 @@ export default function Admin(): React.ReactElement {
   const [roles, setRoles] = useState<RoleInfo[] | null>(null);
   const [linksToBeVerified, setLinksToBeVerified] = useState(-1);
   const [powerUserRequestsCount, setPowerUserRequestsCount] = useState(-1);
-
+  const [isDomainEnabled, setIsDomainEnabled] = useState(false);
   const updatePendingPowerUserRequestsCount = async () => {
     const response = await fetch('/api/v1/role_request/power_user/count');
     const json = await response.json();
     setPowerUserRequestsCount(json.count);
+  };
+
+  const updateIsDomainEnabled = async () => {
+    const response = await fetch('/api/v1/org/domain_enabled');
+    const json = await response.json();
+    setIsDomainEnabled(json.enabled);
   };
 
   useEffect(() => {
@@ -43,6 +59,7 @@ export default function Admin(): React.ReactElement {
 
       // Fetch power user requests
       await updatePendingPowerUserRequestsCount();
+      await updateIsDomainEnabled();
     };
 
     fetchData();
@@ -82,7 +99,13 @@ export default function Admin(): React.ReactElement {
         ),
     },
   ];
-
+  if (isDomainEnabled) {
+    adminCards.push({
+      title: 'Custom Domains',
+      icon: <Icon type="link" />,
+      link: '/admin/domain',
+    });
+  }
   return (
     <>
       <Typography.Title>Administrator Controls</Typography.Title>

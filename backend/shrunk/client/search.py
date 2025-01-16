@@ -230,6 +230,7 @@ class SearchClient:
                 "created_time": res["timeCreated"],
                 "expiration_time": expiration_time,
                 "visits": res["visits"],
+                "domain": res.get("domain", None),
                 "unique_visits": res.get("unique_visits", 0),
                 "owner": res["netid"],
                 "aliases": [
@@ -237,9 +238,11 @@ class SearchClient:
                 ],
                 "is_expired": res["is_expired"],
                 "may_edit": self.client.links.may_edit(res["_id"], user_netid),
-                "is_tracking_pixel_link": res["is_tracking_pixel_link"]
-                if "is_tracking_pixel_link" in res
-                else False,
+                "is_tracking_pixel_link": (
+                    res["is_tracking_pixel_link"]
+                    if "is_tracking_pixel_link" in res
+                    else False
+                ),
             }
 
             if res.get("deleted"):

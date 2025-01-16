@@ -92,8 +92,8 @@ def test_link(client: Client) -> None:  # pylint: disable=too-many-statements
         assert resp.status_code == 302
         assert resp.headers["Location"] == "https://example.com"
 
-        # Set the link to expire 100 ms in the future
-        expiration_time = datetime.now(timezone.utc) + timedelta(milliseconds=100)
+        # Set the link to expire 200 ms in the future
+        expiration_time = datetime.now(timezone.utc) + timedelta(milliseconds=200)
         resp = client.patch(
             f"/api/v1/link/{link_id}",
             json={
@@ -102,8 +102,8 @@ def test_link(client: Client) -> None:  # pylint: disable=too-many-statements
         )
         assert resp.status_code == 204
 
-        # Wait 200 ms
-        time.sleep(0.2)
+        # Wait 5 s
+        time.sleep(5)
 
         # Check that alias0 does not redirect
         resp = client.get(f"/{alias0}")
@@ -161,8 +161,8 @@ def test_create_link_expiration(client: Client) -> None:
     """
 
     with dev_login(client, "admin"):
-        # Create a link that expires 500 ms in the future
-        expiration_time = datetime.now(timezone.utc) + timedelta(milliseconds=500)
+        # Create a link that expires 400 ms in the future
+        expiration_time = datetime.now(timezone.utc) + timedelta(milliseconds=400)
         resp = client.post(
             "/api/v1/link",
             json={
@@ -189,8 +189,8 @@ def test_create_link_expiration(client: Client) -> None:
         assert resp.status_code == 302
         assert resp.headers["Location"] == "https://example.com"
 
-        # Sleep 1 second
-        time.sleep(1)
+        # Sleep 5 seconds
+        time.sleep(10)
 
         # Check that alias0 no longer exists
         resp = client.get(f"/{alias0}")

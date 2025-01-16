@@ -58,6 +58,7 @@ import { lightTheme } from './theme';
 import LinkHubDashboard from './pages/LinkHubDashboard';
 import LinkHubEditor from './pages/subpages/LinkHubEditor';
 import UsersProvider from './contexts/Users';
+import Domains from './components/admin/Domains';
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -100,12 +101,20 @@ export default function Shrunk(props: Props) {
   const [powerUserRoleRequestMade, setPowerUserRoleRequestMade] =
     useState(false);
   const [isLinkHubEnabled, setIsLinkHubEnabled] = useState(false);
+  const [isDomainEnabled, setIsDomainEnabled] = useState(false);
   const [isRoleRequestsEnabled, setIsRoleRequestsEnabled] = useState(false);
 
   const fetchIsLinkHubEnabled = async () => {
     const resp = await fetch('/api/v1/linkhub/is-linkhub-enabled');
     const json = await resp.json();
     setIsLinkHubEnabled(json.status as boolean);
+  };
+
+  const fetchIsDomainEnabled = async () => {
+    const resp = await fetch('/api/v1/org/domain_enabled');
+    const json = await resp.json();
+
+    setIsDomainEnabled(json.enabled as boolean);
   };
 
   const fetchRoleRequestsEnabled = async () => {
@@ -169,10 +178,10 @@ export default function Shrunk(props: Props) {
   useEffect(() => {
     const init = async () => {
       await fetchIsLinkHubEnabled();
+      await fetchIsDomainEnabled();
       await updatePendingAlerts();
       await fetchRoleRequestsEnabled();
       await updatePowerUserRoleRequestMade();
-
       const history = createBrowserHistory();
       setSelectedKeysFromLocation(history.location);
       history.listen(({ location }) => setSelectedKeysFromLocation(location));
@@ -338,7 +347,6 @@ export default function Shrunk(props: Props) {
                 <Route exact path="/dash">
                   <Dashboard userPrivileges={userPrivileges} netid={netid} />
                 </Route>
-
                 <Route exact path="/linkhubs">
                   <LinkHubDashboard netid={netid} />
                 </Route>
@@ -409,6 +417,13 @@ export default function Shrunk(props: Props) {
                     <Route exact path="/admin/stats">
                       <AdminStats />
                     </Route>
+                    {isDomainEnabled ? (
+                      <Route exact path="/admin/domain">
+                        <Domains />
+                      </Route>
+                    ) : (
+                      <></>
+                    )}
                     <Route exact path="/admin/user_lookup">
                       <UsersProvider>
                         <UserLookup />

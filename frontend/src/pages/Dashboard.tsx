@@ -590,7 +590,6 @@ export class Dashboard extends React.Component<Props, State> {
       customizeDropdownOpen: !prevState.customizeDropdownOpen,
     }));
   };
-
   render(): React.ReactNode {
     return (
       <>
@@ -691,6 +690,8 @@ export class Dashboard extends React.Component<Props, State> {
                             document.location.host
                           }/${aliasObj.alias.toString()}`;
                           const shortUrl = `${protocol}://${
+                            record.domain || ''
+                          }${record.domain ? '.' : ''}${
                             document.location.host
                           }/${aliasObj.alias.toString()}`;
                           return (
@@ -869,6 +870,7 @@ export class Dashboard extends React.Component<Props, State> {
                   key: link.id,
                   title: link.title,
                   aliases: link.aliases,
+                  domain: link.domain,
                   longUrl: link.long_url,
                   owner: link.owner,
                   dateCreated: dayjs(link.created_time).format('MMM DD, YYYY'),
