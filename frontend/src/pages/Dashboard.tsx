@@ -912,7 +912,8 @@ export class Dashboard extends React.Component<Props, State> {
             }}
             userPrivileges={this.props.userPrivileges}
             userOrgs={this.state.userOrgs}
-            refreshResults={this.refreshResults}
+            netid={this.props.netid}
+            tracking_pixel_ui_enabled={this.state.trackingPixelEnabled}
           />
         </Modal>
 

@@ -181,11 +181,12 @@ export class CreateLinkForm extends React.Component<Props, State> {
       long_url: values.long_url,
     };
 
+    if (this.state.tracking_pixel_enabled) {
+      createLinkReq.long_url = 'https://example.com';
+    }
+
     createLinkReq.is_tracking_pixel_link = !!values.is_tracking_pixel_link;
 
-    if (values.title === undefined) {
-      createLinkReq.title = values.aliases[0].alias ?? values.long_url;
-    }
     if (values.expiration_time !== undefined) {
       createLinkReq.expiration_time = values.expiration_time.format();
     }
@@ -267,20 +268,42 @@ export class CreateLinkForm extends React.Component<Props, State> {
       >
         <Row gutter={[16, 16]} justify="end">
           <Col span={12}>
-            {!this.state.tracking_pixel_enabled && (
-              <>
-                <Form.Item
-                  label="URL"
-                  name="long_url"
-                  rules={[
-                    { required: true },
-                    { type: 'url', message: 'Invalid URL' },
-                    { validator: serverValidateLongUrl },
-                  ]}
-                >
-                  <Input />
-                </Form.Item>
-              </>
+            {this.props.tracking_pixel_ui_enabled && (
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Form.Item
+                    required
+                    label="Link Type"
+                    name="is_tracking_pixel_link"
+                    valuePropName="checked"
+                  >
+                    <Radio.Group
+                      onChange={this.onTrackingPixelChange}
+                      defaultValue="url"
+                    >
+                      <Radio.Button value="url">URL</Radio.Button>
+                      <Radio.Button value="pixel">Tracking Pixel</Radio.Button>
+                    </Radio.Group>
+                  </Form.Item>
+                </Col>
+                {this.state.tracking_pixel_enabled && (
+                  <Col span={12}>
+                    <Form.Item
+                      required
+                      label="Image Type"
+                      name="tracking_pixel_extension"
+                    >
+                      <Radio.Group
+                        onChange={this.onTrackingPixelExtensionChange}
+                        defaultValue=".png"
+                      >
+                        <Radio.Button value=".png">PNG</Radio.Button>
+                        <Radio.Button value=".gif">GIF</Radio.Button>
+                      </Radio.Group>
+                    </Form.Item>
+                  </Col>
+                )}
+              </Row>
             )}
             <Form.Item
               label="Title"
@@ -289,34 +312,18 @@ export class CreateLinkForm extends React.Component<Props, State> {
             >
               <Input />
             </Form.Item>
-            {this.props.tracking_pixel_ui_enabled && (
-              <Form.Item name="is_tracking_pixel_link" valuePropName="checked">
-                <Radio.Group
-                  onChange={this.onTrackingPixelChange}
-                  options={[
-                    { label: 'URL', value: 'url' },
-                    { label: 'Tracking Pixel', value: 'pixel' },
-                  ]}
-                  defaultValue="url"
-                />
 
-                {this.state.tracking_pixel_enabled && (
-                  <>
-                    <Form.Item
-                      name="tracking_pixel_extension"
-                      label="Extension"
-                    >
-                      <Radio.Group
-                        onChange={this.onTrackingPixelExtensionChange}
-                        options={[
-                          { label: '.png', value: '.png' },
-                          { label: '.gif', value: '.gif' },
-                        ]}
-                        defaultValue=".png"
-                      />
-                    </Form.Item>
-                  </>
-                )}
+            {!this.state.tracking_pixel_enabled && (
+              <Form.Item
+                label="URL"
+                name="long_url"
+                rules={[
+                  { required: true },
+                  { type: 'url', message: 'Invalid URL' },
+                  { validator: serverValidateLongUrl },
+                ]}
+              >
+                <Input />
               </Form.Item>
             )}
 
