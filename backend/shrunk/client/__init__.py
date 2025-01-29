@@ -218,7 +218,7 @@ class ShrunkClient:
     def endpoint_stats(self) -> List[Any]:
         """Get statistics about visits to the different Flask endpoints."""
 
-        return list(
+        mongo_response = list(
             self.db.endpoint_statistics.aggregate(
                 [
                     {
@@ -251,6 +251,11 @@ class ShrunkClient:
                 ]
             )
         )
+
+        # Mongo return order is not guaranteed, so sort by endpoint to maintain consistent ordering
+        mongo_response.sort(key=lambda x: x["endpoint"])
+
+        return mongo_response
 
     def record_visit(self, netid: Optional[str], endpoint: str) -> None:
         """Record a visit to an endpoint.
