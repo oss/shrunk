@@ -14,6 +14,7 @@ import {
   TeamOutlined,
 } from '@ant-design/icons';
 import {
+  Breadcrumb,
   Button,
   Col,
   ConfigProvider,
@@ -271,6 +272,25 @@ export default function Shrunk(props: Props) {
     },
   ];
 
+  const route = location.hash;
+
+  // setSelectedKeysFromLocation() is scheduled to be deleted soon.
+  const partToName: {
+    [key: string]: { name: string; clickable: boolean };
+  } = {
+    dash: { name: 'URL Shortener', clickable: true },
+    linkhubs: { name: 'LinkHub', clickable: false },
+    orgs: { name: 'My Organizations', clickable: true },
+    admin: { name: 'Admin Dashboard', clickable: true },
+    roles: { name: 'Role', clickable: false },
+    'request-power-user-role': {
+      name: 'Request Power User Role',
+      clickable: false,
+    },
+    faq: { name: 'FAQ', clickable: true },
+    links: { name: 'Links', clickable: false },
+  };
+
   return (
     <ConfigProvider theme={lightTheme}>
       <HashRouter>
@@ -339,6 +359,30 @@ export default function Shrunk(props: Props) {
                 <PendingAlerts netid={netid} pendingAlerts={pendingAlerts} />
               )}
               <PendingRequests />
+              <Breadcrumb
+                items={route.split('/').map((part, index, arr) => {
+                  if (part === '#') {
+                    return {
+                      title: 'Home',
+                      href: '/#',
+                    };
+                  }
+
+                  if (!Object.prototype.hasOwnProperty.call(partToName, part)) {
+                    return { title: part.split('?')[0] };
+                  }
+
+                  const path = arr
+                    .slice(0, index + 1)
+                    .join('/')
+                    .replace('#', '');
+
+                  return {
+                    title: partToName[part].name,
+                    href: partToName[part].clickable ? `#${path}` : undefined,
+                  };
+                })}
+              />
               <Switch>
                 <Route exact path="/">
                   <Redirect to="/dash" />
@@ -361,7 +405,7 @@ export default function Shrunk(props: Props) {
 
                 <Route
                   exact
-                  path="/links/:id/view"
+                  path="/links/:id"
                   render={(route) => (
                     <Stats
                       id={route.match.params.id}
