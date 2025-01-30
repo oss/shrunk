@@ -590,6 +590,7 @@ export class Dashboard extends React.Component<Props, State> {
       customizeDropdownOpen: !prevState.customizeDropdownOpen,
     }));
   };
+
   render(): React.ReactNode {
     return (
       <>
@@ -810,7 +811,7 @@ export class Dashboard extends React.Component<Props, State> {
                           <Button
                             type="text"
                             icon={<EyeOutlined />}
-                            href={`/app/#/links/${record.key}/view`}
+                            href={`/app/#/links/${record.key}`}
                           />
                         </Tooltip>
                         <Tooltip title="Edit">
@@ -818,7 +819,7 @@ export class Dashboard extends React.Component<Props, State> {
                             type="text"
                             icon={<EditOutlined />}
                             target="_blank"
-                            href={`/app/#/links/${record.key}/view?mode=edit`}
+                            href={`/app/#/links/${record.key}?mode=edit`}
                           />
                         </Tooltip>
                         <Tooltip title="Collaborate">
@@ -826,7 +827,7 @@ export class Dashboard extends React.Component<Props, State> {
                             type="text"
                             icon={<TeamOutlined />}
                             target="_blank"
-                            href={`/app/#/links/${record.key}/view?mode=collaborate`}
+                            href={`/app/#/links/${record.key}?mode=collaborate`}
                           />
                         </Tooltip>
                         <Tooltip title="Share">
@@ -834,7 +835,7 @@ export class Dashboard extends React.Component<Props, State> {
                             type="text"
                             icon={<ShareAltOutlined />}
                             target="_blank"
-                            href={`/app/#/links/${record.key}/view?mode=share`}
+                            href={`/app/#/links/${record.key}?mode=share`}
                           />
                         </Tooltip>
                         <Tooltip title="Delete">
