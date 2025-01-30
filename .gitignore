@@ -51,6 +51,9 @@ shrunk/shrunk/static/shrunk_*.js
 shrunk/shrunk/static/out
 *.egg-info
 
+# pyenv
+.python-version
+
 node_modules/
 backend/shrunk/static/outlook
 webpack-stats.json

@@ -79,14 +79,14 @@ def query_position_info(netid: str) -> Dict[str, List[str]]:
     if not is_valid_netid(netid) or not current_app.config.get(
         "LDAP_VALIDATE_NETIDS", False
     ):
-        return {}
+        return None
 
     intermediate = _query_netid(netid)
     if intermediate is None:
         return {}
 
     # The attributes that relate to the user's position in the university
-    attributes = ["uid", "title", "rutgersEduStaffDepartment", "employeeType"]
+    attributes = ["title", "rutgersEduStaffDepartment", "employeeType"]
 
     result = {}
 

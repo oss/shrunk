@@ -5,11 +5,12 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     </head>
     <body>
-        <p>Dear {{ entity }},</p>
+        <p>Dear {{ reporter }},</p>
 
-        <p>Your request for the {{ uppercase_role_name }}</span> role has been approved. You now have the ability to create custom aliases for your shortened links.</p>
-        
-        <p>Comment: {{ comment }}</p>
+        <p>Your ticket ({{ ticket_id }}) has been resolved.</p>
+
+        {% if resolution %}<p>Status: {{ resolution }}</p>{% endif %}
+        {% if comment %}<p>Comment: {{ comment }}</p>{% endif %}
         
         <p>Thank you for your interest and usage of go.rutgers.edu, the official URL shortener of Rutgers, The State University of New Jersey.</p>
         

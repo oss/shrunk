@@ -5,10 +5,10 @@
 
 import {
   BookOutlined,
-  ClockCircleOutlined,
+  BugOutlined,
+  BulbOutlined,
   LogoutOutlined,
   MenuOutlined,
-  SafetyOutlined,
   SlidersOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
@@ -37,12 +37,10 @@ import {
   Switch,
 } from 'react-router-dom';
 
-import base32 from 'hi-base32';
 import Admin from './pages/Admin';
 import { Dashboard } from './pages/Dashboard';
 import Faq from './pages/Faq';
 import Orgs from './pages/Orgs';
-import { RoleRequestForm } from './pages/RoleRequestForm';
 
 import { Role } from './components/admin/Role';
 import ManageOrg from './pages/subpages/ManageOrg';
@@ -51,7 +49,10 @@ import { Stats } from './pages/subpages/Stats';
 import { PendingAlerts } from './modals/PendingAlerts';
 import { PendingRequests } from './modals/PendingRequests';
 
-import { lightTheme } from './theme';
+import AdminHelpDesk from './components/admin/AdminHelpDesk';
+import Domains from './components/admin/Domains';
+import UsersProvider from './contexts/Users';
+import HelpDesk from './pages/HelpDesk';
 import LinkHubDashboard from './pages/LinkHubDashboard';
 import LinkHubEditor from './pages/subpages/LinkHubEditor';
 
@@ -93,9 +94,9 @@ export default function Shrunk(props: Props) {
 
   const [selectedKeys, setSelectedKeys] = useState<string[]>(['dash']);
   const [pendingAlerts, setPendingAlerts] = useState<string[]>([]);
-  const [powerUserRoleRequestMade, setPowerUserRoleRequestMade] =
-    useState(false);
   const [isLinkHubEnabled, setIsLinkHubEnabled] = useState(false);
+  const [isDomainEnabled, setIsDomainEnabled] = useState(false);
+  const [isHelpDeskEnabled, setIsHelpDeskEnabled] = useState(false);
   const [isRoleRequestsEnabled, setIsRoleRequestsEnabled] = useState(false);
 
   const fetchIsLinkHubEnabled = async () => {
@@ -104,32 +105,16 @@ export default function Shrunk(props: Props) {
     setIsLinkHubEnabled(json.status as boolean);
   };
 
-  const fetchRoleRequestsEnabled = async () => {
-    const resp = await fetch('/api/v1/role_request/role_requests_enabled');
-    const json = await resp.json();
-    setIsRoleRequestsEnabled(json.role_requests_enabled as boolean);
+  const fetchIsHelpDeskEnabled = async () => {
+    const response = await fetch('/api/v1/ticket/enabled');
+    const body = await response.json();
+    setIsHelpDeskEnabled(body.enabled as boolean);
   };
 
   const updatePendingAlerts = async () => {
     const resp = await fetch(`/api/v1/alert/${netid}`);
     const json = await resp.json();
     setPendingAlerts(json.pending_alerts as string[]);
-  };
-
-  const updatePowerUserRoleRequestMade = async () => {
-    const encodedEntity = base32.encode(netid);
-    try {
-      const response = await fetch(
-        `/api/v1/role_request/power_user/${encodedEntity}`,
-      );
-      if (response.status === 200) {
-        setPowerUserRoleRequestMade(true);
-      } else if (response.status === 204) {
-        setPowerUserRoleRequestMade(false);
-      }
-    } catch (error) {
-      setPowerUserRoleRequestMade(false);
-    }
   };
 
   const setSelectedKeysFromLocation = (location: Location) => {
@@ -149,8 +134,8 @@ export default function Shrunk(props: Props) {
       } else {
         key = 'admin';
       }
-    } else if (route.startsWith('#/request-power-user-role')) {
-      key = 'request-power-user-role';
+    } else if (route.startsWith('#/help')) {
+      key = 'help';
     } else if (route.startsWith('#/faq')) {
       key = 'faq';
     }
@@ -166,8 +151,7 @@ export default function Shrunk(props: Props) {
     const init = async () => {
       await fetchIsLinkHubEnabled();
       await updatePendingAlerts();
-      await fetchRoleRequestsEnabled();
-      await updatePowerUserRoleRequestMade();
+      await fetchIsHelpDeskEnabled();
       const history = createBrowserHistory();
       setSelectedKeysFromLocation(history.location);
       history.listen(({ location }) => setSelectedKeysFromLocation(location));
@@ -198,29 +182,15 @@ export default function Shrunk(props: Props) {
       icon: <TeamOutlined />,
       label: <NavLink to="/orgs">My Organizations</NavLink>,
     },
-    ...(role === 'Administrator' ||
-    role === 'Power User' ||
-    !isRoleRequestsEnabled
-      ? []
-      : [
-          { type: 'divider' },
-          powerUserRoleRequestMade
-            ? {
-                key: 'request-power-user-role',
-                icon: <ClockCircleOutlined />,
-                label: 'Pending Request',
-                disabled: true,
-              }
-            : {
-                key: 'request-power-user-role',
-                icon: <SafetyOutlined />,
-                label: (
-                  <NavLink to="/request-power-user-role">
-                    Request Power User Role
-                  </NavLink>
-                ),
-              },
-        ]),
+    ...(!showAdminTab && isHelpDeskEnabled
+      ? [
+          {
+            key: 'help',
+            icon: <BugOutlined />,
+            label: <NavLink to="/help">Help Desk</NavLink>,
+          },
+        ]
+      : []),
     ...(showAdminTab
       ? [
           {
@@ -257,13 +227,10 @@ export default function Shrunk(props: Props) {
     linkhubs: { name: 'LinkHub', clickable: false },
     orgs: { name: 'My Organizations', clickable: true },
     admin: { name: 'Admin Dashboard', clickable: true },
+    help: { name: 'Help Desk', clickable: true },
     roles: { name: 'Role', clickable: false },
-    'request-power-user-role': {
-      name: 'Request Power User Role',
-      clickable: false,
-    },
-    faq: { name: 'Frequently Asked Questions', clickable: true },
-    links: { name: 'URL Shortener', clickable: true, href: '/dash' },
+    faq: { name: 'FAQ', clickable: true },
+    links: { name: 'Links', clickable: false },
   };
 
   return (
@@ -412,13 +379,9 @@ export default function Shrunk(props: Props) {
                   />
                 </Route>
 
-                {isRoleRequestsEnabled && (
-                  <Route exact path="/request-power-user-role">
-                    {!powerUserRoleRequestMade &&
-                      !userPrivileges.has('admin') &&
-                      !userPrivileges.has('power_user') && (
-                        <RoleRequestForm netid={netid} name="power_user" />
-                      )}
+                {!showAdminTab && isHelpDeskEnabled && (
+                  <Route exact path="/help">
+                    <HelpDesk netid={netid} />
                   </Route>
                 )}
 

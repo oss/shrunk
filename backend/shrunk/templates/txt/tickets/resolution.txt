@@ -1,0 +1,13 @@
+Dear {{ reporter }},
+
+Your ticket ({{ ticket_id }}) has been resolved.
+
+{% if resolution %}Status: {{ resolution }}{% endif %}
+{% if comment %}Comment: {{ comment }}{% endif %}
+
+Thank you for your interest and usage of go.rutgers.edu, the official URL shortener of Rutgers, The State University of New Jersey.
+
+Sincerely,
+The OSS Team
+
+Please do not reply to this email. You may direct any questions to oss@oit.rutgers.edu.
