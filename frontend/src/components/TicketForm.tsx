@@ -188,11 +188,8 @@ const TicketForm: React.FC<Props> = ({ netid }) => {
             formText[String(ticketStatus)] || 'Failed to load subtitle text.'
           }
           extra={[
-            <Button key="refresh" type="primary" onClick={handleAnotherTicket}>
-              Submit Another Ticket
-            </Button>,
-            <Button key="dashboard" href="/app/#/dash">
-              Return to Dashboard
+            <Button key="back" type="primary" onClick={handleAnotherTicket}>
+              Back
             </Button>,
           ]}
         />
@@ -203,7 +200,7 @@ const TicketForm: React.FC<Props> = ({ netid }) => {
           layout="vertical"
           requiredMark={false}
         >
-          <Title level={2}>Submit a Ticket</Title>
+          <Title level={2}>New Ticket</Title>
           <Form.Item
             label="Reason"
             name="reason"
@@ -269,7 +266,7 @@ const TicketForm: React.FC<Props> = ({ netid }) => {
               </Form.Item>
               <Form.Item>
                 <Button type="primary" htmlType="submit" loading={submitting}>
-                  Submit Ticket
+                  Submit
                 </Button>
               </Form.Item>
             </>

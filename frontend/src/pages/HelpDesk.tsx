@@ -25,6 +25,19 @@ interface Props {
 const HelpDesk: React.FC<Props> = ({ netid }) => {
   const [selectedKey, setSelectedKey] = useState('table');
 
+  const menuItems = [
+    {
+      key: 'table',
+      icon: <TableOutlined />,
+      label: 'My Tickets',
+    },
+    {
+      key: 'form',
+      icon: <FormOutlined />,
+      label: 'New Ticket',
+    },
+  ];
+
   return (
     <>
       <Title>Help Desk</Title>
@@ -34,16 +47,10 @@ const HelpDesk: React.FC<Props> = ({ netid }) => {
             mode="vertical"
             selectedKeys={[selectedKey]}
             onClick={(e) => setSelectedKey(e.key)}
-          >
-            <Menu.Item key="table" icon={<TableOutlined />}>
-              My Tickets
-            </Menu.Item>
-            <Menu.Item key="form" icon={<FormOutlined />}>
-              Submit a Ticket
-            </Menu.Item>
-          </Menu>
+            items={menuItems}
+          />
         </Sider>
-        <Content style={{ padding: '24px' }}>
+        <Content style={{ paddingLeft: '1rem' }}>
           {selectedKey === 'table' ? (
             <TicketTable netid={netid} />
           ) : (

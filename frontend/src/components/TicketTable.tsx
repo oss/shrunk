@@ -152,8 +152,8 @@ const TicketTable: React.FC<Props> = ({ netid }) => {
               >
                 <Button type="primary" disabled={!selectedIds.length}>
                   {selectedIds.length > 0
-                    ? `Delete ${selectedIds.length} ticket(s)`
-                    : 'Delete tickets'}
+                    ? `Delete (${selectedIds.length})`
+                    : 'Delete'}
                 </Button>
               </Popconfirm>
             </Col>

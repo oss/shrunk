@@ -338,7 +338,7 @@ const AdminHelpDesk: React.FC = () => {
         Help Desk {isHelpDeskEnabled ? '' : <Text italic>(disabled)</Text>}
       </Title>
       <Layout>
-        <Sider>
+        <Sider width="25%">
           <Row justify="space-between" align="middle">
             <Col>
               <Text>{tickets.length} ticket(s)</Text>
@@ -389,9 +389,14 @@ const AdminHelpDesk: React.FC = () => {
                 />
               </List.Item>
             )}
+            locale={{ emptyText: 'No tickets' }}
+            style={{
+              height: '100vh',
+              overflowY: 'auto',
+            }}
           />
         </Sider>
-        <Content style={{ padding: '24px' }}>
+        <Content style={{ paddingLeft: '1rem' }}>
           {selectedId ? (
             <TicketReview
               ticket={tickets.find((ticket) => ticket._id === selectedId)!}
