@@ -1,20 +1,20 @@
 """Implements the :py:class:`ShrunkClient` class."""
 
-from typing import Optional, List, Set, Any
 from datetime import datetime
+from typing import Any, List, Optional, Set
 
 import pymongo
 
-from .security import SecurityClient
-from .search import SearchClient
-from .geoip import GeoipClient
-from .orgs import OrgsClient
-from .tracking import TrackingClient
-from .roles import RolesClient
-from .links import LinksClient
 from .alerts import AlertsClient
+from .geoip import GeoipClient
 from .linkhub import LinkHubClient
+from .links import LinksClient
+from .orgs import OrgsClient
+from .roles import RolesClient
+from .search import SearchClient
+from .security import SecurityClient
 from .tickets import TicketsClient
+from .tracking import TrackingClient
 from .users import UserClient
 
 __all__ = ["ShrunkClient"]

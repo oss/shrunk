@@ -1,10 +1,9 @@
 """Module for the user system client"""
 
-from typing import List, Dict, Any
-
-from shrunk.util.ldap import query_position_info, is_valid_netid
+from typing import Any, Dict, List
 
 import pymongo
+from shrunk.util.ldap import is_valid_netid, query_position_info
 
 __all__ = ["UserClient"]
 

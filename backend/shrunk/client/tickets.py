@@ -3,9 +3,9 @@ import time
 from typing import Any, Dict, List, Optional
 
 import pymongo
+from bson import ObjectId
 from flask import render_template_string
 from flask_mailman import Mail
-from bson import ObjectId
 
 __all__ = ["TicketsClient"]
 
@@ -96,23 +96,34 @@ class TicketsClient:
                 }
             )
         return data
-    
-    def send_help_desk_email(self, mail: Mail, ticket_id: str, category: str, resolution: Optional[str] = None, comment: Optional[str] = None):
+
+    def send_help_desk_email(
+        self,
+        mail: Mail,
+        ticket_id: str,
+        category: str,
+        resolution: Optional[str] = None,
+        comment: Optional[str] = None,
+    ):
         """
         Send an email to the help desk with the ticket ID and action.
-        
+
         :param ticket_id: the ID of the ticket
         :param category: the category of the ticket
         :param resolution: the resolution of the ticket (optional)
         :param comment: the admin comment for the ticket resolution (optional)
         """
         ticket = self.get_ticket(ticket_id=ticket_id)
-        
+
         # Construct the email
         SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-        HTML_TEMPLATE_PATH = os.path.join(SCRIPT_DIR, "../templates/html/tickets", f"{category}.html")
-        PLAINTEXT_TEMPLATE_PATH = os.path.join(SCRIPT_DIR, "../templates/txt/tickets", f"{category}.txt")
-        
+        HTML_TEMPLATE_PATH = os.path.join(
+            SCRIPT_DIR, "../templates/html/tickets", f"{category}.html"
+        )
+        PLAINTEXT_TEMPLATE_PATH = os.path.join(
+            SCRIPT_DIR, "../templates/txt/tickets", f"{category}.txt"
+        )
+
         from_email = "go-support@oit.rutgers.edu"
         recipient_list = [f"{ticket['reporter']}@rutgers.edu"]
         subject = "Go: Rutgers University URL Shortener - "
@@ -120,34 +131,33 @@ class TicketsClient:
             "ticket_id": ticket_id,
             "reporter": ticket["reporter"],
             "resolution": resolution.upper() if resolution else None,
-            "comment": comment,       
+            "comment": comment,
         }
-        
+
         if category == "confirmation":
             subject += "Ticket Submitted"
         elif category == "notification":
             subject += "New Pending Ticket"
             recipient_list = ["oss@oit.rutgers.edu"]
-        else: # category == "resolution"
+        else:  # category == "resolution"
             subject += "Ticket Resolved"
-        
+
         with open(HTML_TEMPLATE_PATH, "r", encoding="utf-8") as file:
             html_content = file.read()
         html_message = render_template_string(html_content, **variables)
-        
+
         with open(PLAINTEXT_TEMPLATE_PATH, "r", encoding="utf-8") as file:
             plaintext_content = file.read()
         body = render_template_string(plaintext_content, **variables)
-        
+
         # Send the email
         mail.send_mail(
             subject=subject,
             body=body,
             html_message=html_message,
             from_email=from_email,
-            recipient_list=recipient_list
+            recipient_list=recipient_list,
         )
-        
 
     def create_ticket(self, ticket_data: dict) -> str:
         """
@@ -180,7 +190,7 @@ class TicketsClient:
         ticket_id: Optional[str] = None,
         reporter: Optional[str] = None,
         reason: Optional[str] = None,
-        entity: Optional[str] = None
+        entity: Optional[str] = None,
     ) -> Optional[Dict[str, Any]]:
         """
         Get a single ticket that matches the given criteria. Note that this will return either 0 or 1 tickets.

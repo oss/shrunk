@@ -3,10 +3,9 @@
 from typing import Any, Dict
 
 from flask import Blueprint, jsonify, request
-from werkzeug.exceptions import abort
-
 from shrunk.client import ShrunkClient
 from shrunk.util.decorators import require_login
+from werkzeug.exceptions import abort
 
 __all__ = ["bp"]
 bp = Blueprint("user", __name__, url_prefix="/api/v1/user")

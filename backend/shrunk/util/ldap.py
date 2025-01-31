@@ -1,7 +1,7 @@
-from typing import Optional, List, Tuple, Dict, cast
+from typing import Dict, List, Optional, Tuple, cast
 
-from flask import current_app
 import ldap
+from flask import current_app
 
 __all__ = ["is_valid_netid", "query_given_name"]
 

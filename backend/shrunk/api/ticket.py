@@ -1,9 +1,9 @@
 """Implement API endpoints under ``/api/v1/ticket``"""
 
-from flask import Blueprint, Response, current_app, jsonify, request
+from flask import Blueprint, Response, jsonify, request
 from flask_mailman import Mail
 from shrunk.client import ShrunkClient
-from shrunk.util.decorators import require_api_key, require_login, require_mail
+from shrunk.util.decorators import require_login, require_mail
 from werkzeug.exceptions import abort
 
 __all__ = ["bp"]
@@ -46,6 +46,7 @@ def get_help_desk_text(netid: str, client: ShrunkClient, reason: str):
 
     return jsonify(client.tickets.get_help_desk_text(reason))
 
+
 @bp.route("/email", methods=["POST"])
 @require_mail
 @require_login
@@ -61,7 +62,7 @@ def send_help_desk_email(netid: str, client: ShrunkClient, mail: Mail):
     The request should include a JSON body as follows:
 
     .. code-block:: json
-    
+
         {
             "ticketID": str,
             "category": str,
@@ -70,19 +71,21 @@ def send_help_desk_email(netid: str, client: ShrunkClient, mail: Mail):
         }
     """
     # Disable route according to help desk configuration
-    if not client.roles.has("admin", netid) and not client.tickets.get_help_desk_enabled():
+    if (
+        not client.roles.has("admin", netid)
+        and not client.tickets.get_help_desk_enabled()
+    ):
         return abort(403)
     data = request.get_json()
     variables = {
-        "ticket_id":data.get("ticketID"),
-        "category":data.get("category"),
-        "resolution":data.get("resolution", None),
-        "comment":data.get("comment", None),
+        "ticket_id": data.get("ticketID"),
+        "category": data.get("category"),
+        "resolution": data.get("resolution", None),
+        "comment": data.get("comment", None),
     }
-    
+
     client.tickets.send_help_desk_email(mail, **variables)
     return Response(status=200)
-        
 
 
 @bp.route("", methods=["GET"])
@@ -115,9 +118,12 @@ def get_tickets(netid: str, client: ShrunkClient):
 
     """
     # Disable route according to help desk configuration
-    if not client.roles.has("admin", netid) and not client.tickets.get_help_desk_enabled():
+    if (
+        not client.roles.has("admin", netid)
+        and not client.tickets.get_help_desk_enabled()
+    ):
         return abort(403)
-    
+
     # If the user is not an admin, they can only see their own tickets. If they are, they can see all tickets.
     reporter = netid if not client.roles.has("admin", netid) else None
     timestamp_sort = request.args.get("timestamp_sort", None)
@@ -146,10 +152,10 @@ def create_ticket(netid: str, client: ShrunkClient) -> Response:
         }
 
     :return: the ticket
-    
+
     .. code-block:: json
-    
-        { 
+
+        {
             "_id": str,
             "reporter": str,
             "reason": str,
@@ -160,7 +166,7 @@ def create_ticket(netid: str, client: ShrunkClient) -> Response:
     # Disable route according to help desk configuration
     if not client.tickets.get_help_desk_enabled():
         return Response(status=403)
-    
+
     data = request.get_json()
     reporter = data.get("reporter")
     reason = data.get("reason")
@@ -203,9 +209,12 @@ def delete_ticket(netid: str, client: ShrunkClient, ticket_id: str) -> Response:
 
     """
     # Disable route according to help desk configuration
-    if not client.roles.has("admin", netid) and not client.tickets.get_help_desk_enabled():
+    if (
+        not client.roles.has("admin", netid)
+        and not client.tickets.get_help_desk_enabled()
+    ):
         return abort(403)
-    
+
     # Ticket does not exist (nothing happens, but we return 204)
     ticket = client.tickets.get_ticket(ticket_id=ticket_id)
     if not ticket:
