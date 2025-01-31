@@ -81,3 +81,8 @@ GITHUB_OUTLOOK_WEBHOOK_UPDATE_SECRET = "BLAH"
 """The secret for authenticating the webhook API for updating
 the Outlook Add-In version so that only GitHub Webhooks
 can make the scripts run to download new version of Outlook Add-In"""
+
+HELP_DESK_ENABLED = True
+"""
+Configuration variable to enable or disable the ability for users to submit support tickets to the help desk.
+"""
