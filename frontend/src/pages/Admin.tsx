@@ -4,14 +4,19 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Row, Col, Spin, Badge, Card, Typography, Space } from 'antd/lib';
-import { Link } from 'react-router-dom';
+import { Layout, Spin, Badge, Typography, Menu } from 'antd/lib';
 import Icon, {
   LineChartOutlined,
   UserOutlined,
   SafetyOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
+import { Content } from 'antd/lib/layout/layout';
+import Sider from 'antd/lib/layout/Sider';
+import { MenuProps } from 'antd';
+import AdminStats from '../components/admin/AdminStats';
+import UserLookup from '../components/admin/UserLookup';
+import UsersProvider from '../contexts/Users';
 
 /**
  * Props for the [[Admin]] component
@@ -28,11 +33,43 @@ interface RoleInfo {
   display_name: string;
 }
 
+const SidebarTabs: MenuProps['items'] = [
+  {
+    key: 'analytics',
+    icon: React.createElement(LineChartOutlined),
+    label: 'Analytics',
+    onClick: () => {
+
+    }
+  },
+  {
+    key: 'users',
+    icon: React.createElement(UserOutlined),
+    label: 'Users',
+    children: [
+      {
+        key: 'user-lookup',
+        label: 'User Lookup',
+      },
+      {
+        key: 'manage-access',
+        label: 'Manage Access',
+      },
+    ],
+  },
+  {
+    key: 'links',
+    icon: React.createElement(SafetyOutlined),
+    label: 'Links',
+  },
+];
+
 export default function Admin(): React.ReactElement {
   const [roles, setRoles] = useState<RoleInfo[] | null>(null);
   const [linksToBeVerified, setLinksToBeVerified] = useState(-1);
   const [powerUserRequestsCount, setPowerUserRequestsCount] = useState(-1);
   const [isDomainEnabled, setIsDomainEnabled] = useState(false);
+  const [selectedView, setSelectedView] = useState("analytics");
   const updatePendingPowerUserRequestsCount = async () => {
     const response = await fetch('/api/v1/role_request/power_user/count');
     const json = await response.json();
@@ -99,6 +136,7 @@ export default function Admin(): React.ReactElement {
         ),
     },
   ];
+
   if (isDomainEnabled) {
     adminCards.push({
       title: 'Custom Domains',
@@ -109,51 +147,63 @@ export default function Admin(): React.ReactElement {
   return (
     <>
       <Typography.Title>Administrator Controls</Typography.Title>
+      <Layout>
+        <Sider 
+          width={200} 
+        >
+          <div style={{ display: 'flex', height: '100%' }}>
+            <Menu
+              mode="inline"
+              defaultSelectedKeys={['analytics']}
+              style={{ 
+                height: '100%',
+                paddingRight: '12px', 
+                borderRight: '2px solid #d9d9d9',
+              }}
+              items={SidebarTabs}
+              onClick={(e) => {
+                switch(e.key) {
+                  case 'analytics':
+                    setSelectedView('analytics');
+                    break;
+                  case 'user-lookup':
+                    setSelectedView('user-lookup');
+                    break;
+                  case 'manage-access':
+                    setSelectedView('manage-access');
+                    break;
+                  case 'links':
+                    setSelectedView('links');
+                    break;
+                  default:
+                    break;
+                }
+              }}
+            />
+          </div>
+        </Sider>
+        <Content style={{ padding: '0 24px', minHeight: 280 }}>
+            {
+              selectedView === 'analytics' && ( <AdminStats /> )
+            }
 
-      <Row gutter={[16, 16]}>
-        {adminCards.map((card) => (
-          <Col xs={24} sm={12} md={8} lg={6} key={card.link}>
-            <Card hoverable>
-              <Link to={card.link}>
-                <Space
-                  direction="vertical"
-                  style={{ width: '100%' }}
-                  align="center"
-                >
-                  {card.icon}
-                  <Typography.Text strong>{card.title}</Typography.Text>
-                  {card.badge}
-                </Space>
-              </Link>
-            </Card>
-          </Col>
-        ))}
+            {
+              selectedView === 'user-lookup' && ( 
+              <UsersProvider>
+                <UserLookup />
+              </UsersProvider>
+            )
+            }
 
-        {roles === null ? (
-          <Col span={24}>
-            <Spin size="large" />
-          </Col>
-        ) : (
-          roles.map((role) => (
-            <Col xs={24} sm={12} md={8} lg={6} key={role.name}>
-              <Card hoverable>
-                <Link to={`/roles/${role.name}`}>
-                  <Space
-                    direction="vertical"
-                    style={{ width: '100%' }}
-                    align="center"
-                  >
-                    <TeamOutlined />
-                    <Typography.Text strong>
-                      {role.display_name}
-                    </Typography.Text>
-                  </Space>
-                </Link>
-              </Card>
-            </Col>
-          ))
-        )}
-      </Row>
+            {
+              selectedView === 'manage-access' && ( <TeamOutlined /> )
+            }
+
+            {
+              selectedView === 'links' && ( <SafetyOutlined /> )
+            }
+        </Content>
+      </Layout>
     </>
   );
 }

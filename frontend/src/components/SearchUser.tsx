@@ -3,8 +3,8 @@
  * @packageDocumentation
  */
 
-import { PlusOutlined } from '@ant-design/icons';
-import { AutoComplete, Button, Col, InputNumber, Row, Select } from 'antd/lib';
+import { CloudDownloadOutlined, PlusCircleFilled, SearchOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import { AutoComplete, Button, Col, Row, Select } from 'antd/lib';
 import React, { useEffect, useState } from 'react';
 import {
   useUsers,
@@ -323,136 +323,56 @@ const SearchUser: React.FC = () => {
 
   return (
     <>
-      <Row className="lookup-row" gutter={0}>
-        <Col className="lookup-col" xs={24} sm={24} md={3}>
-          <Select
-            className="lookup-select"
-            onChange={handleOperationTypeChange}
-            placeholder="Type"
-            value={currentOperation.type}
-            onKeyDown={handleKeyDown}
+    <Row className="lookup-row" gutter={0}>
+      <Col flex="0 0 50%" style={{ marginRight: '1rem' }}>
+          <AutoComplete
+          style={{ width: '100%' }}
+          options={filterStringOptions}
+          onSelect={handleOperationFilterStringChange}
+          onSearch={updateFilterStringOptions}
+          placeholder="Search for User"
+          suffixIcon={<SearchOutlined />}
           >
-            {options?.TYPE_OPTIONS.map((type: string) => (
-              <Option key={type} value={type}>
-                {options?.INTERNAL_TO_EXTERNAL[type]}
-              </Option>
-            ))}
-          </Select>
-        </Col>
-        <Col className="lookup-col" xs={24} sm={24} md={3}>
-          <Select
-            className="lookup-select"
-            onChange={handleOperationFieldChange}
-            placeholder="Field"
-            disabled={!currentOperation.type} // should never happen
-            value={currentOperation.field}
-          >
-            {options?.FIELD_OPTIONS.map((field: string) => (
-              <Option key={field} value={field}>
-                {options?.INTERNAL_TO_EXTERNAL[field]}
-              </Option>
-            ))}
-          </Select>
-        </Col>
-        <Col className="lookup-col" xs={24} sm={24} md={3}>
-          <Select
-            className="lookup-select"
-            onChange={handleOperationSpecificationChange}
-            placeholder="Specification"
-            disabled={!currentOperation.type && !currentOperation.field} // should never happen
-            value={currentOperation.specification}
-          >
-            {currentOperation.type === 'sort'
-              ? options?.SPECIFICATION_SORT_OPTIONS.map(
-                  (specification: string) => (
-                    <Option key={specification} value={specification}>
-                      {options?.INTERNAL_TO_EXTERNAL[specification]}
-                    </Option>
-                  ),
-                )
-              : currentOperation.type === 'filter'
-              ? options?.FIELD_STRING_OPTIONS.includes(currentOperation.field)
-                ? options?.SPECIFICATION_FILTER_STRING_OPTIONS.map(
-                    (specification: string) => (
-                      <Option key={specification} value={specification}>
-                        {options?.INTERNAL_TO_EXTERNAL[specification]}
-                      </Option>
-                    ),
-                  )
-                : options?.FIELD_NUMBER_OPTIONS.includes(currentOperation.field)
-                ? options?.SPECIFICATION_FILTER_NUMBER_OPTIONS.map(
-                    (specification: string) => (
-                      <Option key={specification} value={specification}>
-                        {options?.INTERNAL_TO_EXTERNAL[specification]}
-                      </Option>
-                    ),
-                  )
-                : options?.FIELD_ARRAY_STRING_OPTIONS.includes(
-                    currentOperation.field,
-                  )
-                ? options?.SPECIFICATION_FILTER_ARRAY_STRING_OPTIONS.map(
-                    (specification: string) => (
-                      <Option key={specification} value={specification}>
-                        {options?.INTERNAL_TO_EXTERNAL[specification]}
-                      </Option>
-                    ),
-                  )
-                : null
-              : null}
-          </Select>
-        </Col>
-        <Col className="lookup-col" xs={24} sm={24} md={14}>
-          {options?.FIELD_NUMBER_OPTIONS.includes(currentOperation.field) ? (
-            <InputNumber
-              className="lookup-search"
-              style={{ width: '100%' }} // HACK: className is not working for some reason
-              placeholder={options?.FILTER_NUMBER_PLACEHOLDER}
-              value={currentOperation.filterString}
-              onChange={(value) => {
-                const stringValue: string = value?.toString() || '';
-                if (
-                  (!stringValue.startsWith('0') || stringValue === '0') &&
-                  stringValue.length <= 10 // limit to 10 digits
-                ) {
-                  handleOperationFilterStringChange(stringValue);
-                }
-              }}
-              disabled={currentOperation.type === 'sort'}
-            />
-          ) : (
-            <AutoComplete
-              autoFocus
-              className="lookup-search"
-              placeholder={options?.FILTER_STRING_PLACEHOLDER}
-              onChange={(value) => {
-                if (value.length <= 150) {
-                  // limit to 150 characters
-                  handleOperationFilterStringChange(value);
-                }
-              }}
-              disabled={currentOperation.type === 'sort'}
-              value={currentOperation.filterString}
-              onKeyDown={handleKeyDown}
-              options={filterStringOptions}
-              onSearch={updateFilterStringOptions}
-            />
-          )}
-        </Col>
-        <Col className="lookup-col" xs={24} sm={24} md={1}>
-          <Button
-            className="lookup-button"
-            style={{ width: '100%' }} // HACK: className is not working for some reason
-            type="primary"
-            onClick={handleApplyOperation}
-            icon={<PlusOutlined />}
-            disabled={errorMessage !== ''}
-          />
-        </Col>
-      </Row>
-      <div className="error">
-        {errorMessage !== '' ? errorMessage : '\u00A0'}{' '}
+          </AutoComplete>
+      </Col>
+      <Col>
+          <Button type="text" style={{ border: '1px solid #CFCFCF' }}>
+            AI Filter <ThunderboltOutlined />
+          </Button>
+      </Col>
+
+      <Col flex="0 0 auto" style={{ marginLeft: 'auto', marginRight: 'auto' }}>
+        <div style={{ borderLeft: '1px solid #CFCFCF', height: '100%' }} />
+      </Col>
+      <Col>
+        <Row gutter={[4, 0]}>
+          <Col>
+        <Button
+          type="primary"
+          icon={<CloudDownloadOutlined />}
+          onClick={() => {}}
+        >
+          Export as CSV
+        </Button>
+          </Col>
+          <Col>
+        <Button
+          type="primary"
+          icon={<PlusCircleFilled />}
+          onClick={() => {}}
+        >
+          Add User
+        </Button>
+          </Col>
+        </Row>
+      </Col>
+    </Row>
+
+    {/* TODO --> Bring back this error message */}
+      {/* <div className="error"> */}
+        {/* {errorMessage !== '' ? errorMessage : '\u00A0'}{' '} */}
         {/* HACK: Space character to maintain height */}
-      </div>
+      {/* </div> */}
     </>
   );
 };

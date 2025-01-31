@@ -59,6 +59,7 @@ import LinkHubDashboard from './pages/LinkHubDashboard';
 import LinkHubEditor from './pages/subpages/LinkHubEditor';
 import UsersProvider from './contexts/Users';
 import Domains from './components/admin/Domains';
+import { red } from '@ant-design/colors';
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -412,7 +413,29 @@ export default function Shrunk(props: Props) {
                 ) : (
                   <>
                     <Route exact path="/admin">
-                      <Admin />
+                      {/* Override global menu styling here for side menu */}
+                      <ConfigProvider
+                        theme={{
+                          inherit: true,
+                          components: {
+                            Menu: {
+                              itemBg: '#FFFFFF',
+                              itemColor: 'rgba(0, 0, 0, 0.88)',
+                              itemSelectedBg: '#FFFFFF', 
+                              itemSelectedColor: red[6], 
+                              subMenuItemBg: '#FFFFFF',
+                              itemHoverBg: 'rgba(0, 0, 0, 0.06)',
+                              itemHoverColor: 'rgba(0, 0, 0, 0.88)',
+                              groupTitleColor: 'rgba(0, 0, 0, 0.88)',
+                              itemBorderRadius: 8,
+                              itemHeight: 40,
+                              padding: 16,
+                            },
+                          },
+                        }}
+                      >
+                        <Admin />
+                      </ConfigProvider>
                     </Route>
                     <Route exact path="/admin/stats">
                       <AdminStats />

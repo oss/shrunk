@@ -11,6 +11,7 @@ import {
   generateOperationKey,
   useUsers,
 } from '../../contexts/Users';
+import { Typography } from 'antd';
 
 /**
  * Renders the netids in bold
@@ -57,6 +58,28 @@ const renderRoles = (roles: string[]): JSX.Element[] => {
 };
 
 /**
+ * Renders the ban button for a user
+ * @param netid - the netid of the user to ban
+ * @returns the rendered ban button
+ */
+const renderBanButton = (netid: string): JSX.Element => {
+  const handleBan = () => {
+    // TODO: Implement the ban functionality
+    console.log(`Banning user: ${netid}`);
+  };
+
+  return (
+    <Button 
+      danger
+      onClick={handleBan}
+      size="small"
+    >
+      Ban User
+    </Button>
+  );
+};
+
+/**
  * Renders the organizations as regular tags
  * @param organizations - the organizations to render
  * @returns the rendered organizations
@@ -88,6 +111,12 @@ const columns = [
     dataIndex: 'linksCreated',
     key: 'linksCreated',
   },
+  {
+    title: 'Actions',
+    dataIndex: 'netid',
+    key: 'ban',
+    render: (netid: string) => renderBanButton(netid),
+  },
 ];
 
 /**
@@ -112,16 +141,91 @@ const UserLookup: React.FC = () => {
       operation.type === 'filter' ? operation.filterString : ''
     }`.toUpperCase();
 
+
+  const [organizationsFilters, rolesFilters] = React.useMemo(() => {
+    let distinctOrganizations: Set<{text: String, value: String}> = new Set()
+    let distinctRoles: Set<{text: String, value: String}> = new Set()
+    
+    // Fetches distinct orgs/roles from all users; no flatten method in current JS version
+    users.forEach(user => {
+      user.organizations.forEach(org => distinctOrganizations.add(
+        {
+          text: org,
+          value: org,
+        }))
+      user.roles.forEach(role => distinctRoles.add(
+        {
+          text: role.toString().toUpperCase(),
+          value: role,
+        }
+      ))
+    })
+
+    return [Array.from(distinctOrganizations), Array.from(distinctRoles)]; 
+  }, [users]);
+
+  const columns = [
+    {
+      title: 'NetID',
+      dataIndex: 'netid',
+      key: 'netid',
+      render: (netid: string) => renderNetIDs([netid]),
+      sorter: (a: any, b: any) => a.netid.localeCompare(b.netid),
+      sortDirections: ['ascend', 'descend'] as const,
+      defaultSortOrder: 'ascend' as const,
+    },
+    {
+      title: 'Organizations',
+      dataIndex: 'organizations',
+      key: 'organizations',
+      render: (organizations: string[]) => renderOrganizations(organizations),
+      filters: organizationsFilters,
+      onFilter: (value: string | number | boolean, record: any) => record.organizations.includes(value.toString()),
+      filterMultiple: true,
+      filterOnClose: true,
+    },
+    {
+      title: 'Roles',
+      dataIndex: 'roles',
+      key: 'roles',
+      render: (roles: string[]) => renderRoles(roles),
+      filters: rolesFilters,
+      onFilter: (value: string | number | boolean, record: any) => record.roles.includes(value.toString()),
+      filterMultiple: true,
+      filterOnClose: true,
+    },
+    {
+      title: 'Links Created',
+      dataIndex: 'linksCreated',
+      key: 'linksCreated',
+      sorter: (a: any, b: any) => a.linksCreated - b.linksCreated,
+      sortDirections: ['ascend', 'descend'] as const,
+      defaultSortOrder: 'descend' as const,
+    },
+    {
+      title: 'Actions',
+      dataIndex: 'netid',
+      key: 'ban',
+      render: (netid: string) => renderBanButton(netid),
+    },
+  ];
+
   return (
     <>
-      <Row className="primary-row">
-        <Col span={24}>
-          <Button type="text" href="/app/#/admin" size="large" />
-          <span className="page-title">User Lookup</span>
+      <Row className="secondary-row" style={{ marginBottom: 0 }}>
+        <Col>
+            <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <Typography.Title level={3} style={{ marginTop: 0, marginBottom: 16 }}>User Lookup</Typography.Title>
+              <Typography.Title level={5} style={{ marginTop: 0, marginBottom: 16, color: '#4F4F4F' }}>{users.length} Result{users.length > 1 && "s"} Found</Typography.Title>
+            </div>
         </Col>
       </Row>
       <SearchUser />
-      <div className="operation-tags">
+
+      <Row style={{ marginBottom: 24 }} />
+
+      {/* TODO --> Move this to be more implicit within the filters */}
+      {/* <div className="operation-tags">
         {appliedOperations.map((operation) => (
           <Tag
             key={generateOperationKey(operation)}
@@ -131,13 +235,12 @@ const UserLookup: React.FC = () => {
             {renderOperation(operation)}
           </Tag>
         ))}
-      </div>
+      </div> */}
 
       {loading ? (
         <Spin size="large" />
       ) : (
         <>
-          <p className="num-users">Number of users: {users.length}</p>
           <Table
             columns={columns}
             dataSource={users}
