@@ -3,7 +3,7 @@
 [Shrunk](https://go.rutgers.edu/) is an open-source full-stack application primarily made to shorten URLs for faculty, staff, and professors of Rutgers University. It is written in [Python 3.6](https://www.python.org/) and [TypeScript](https://www.typescriptlang.org/) and uses [MongoDB](https://www.mongodb.com/), [React](https://react.dev/), and [Flask](https://flask.palletsprojects.com/).
 
 <div align="center">
-    <img src="./docs/images/home.png" height=400 width='auto'>
+    <img src="./docs/images/home.png">
 </div>
 
 ## Features
