@@ -164,7 +164,7 @@ export const EditLinkModal: React.FC<Props> = (props) => {
       });
       message.success('Link deleted successfully');
       setTimeout(() => {
-        window.location.href = '/app/dash';
+        window.location.href = '/app/#/dash';
       }, 1000); // 1-second delay
     } catch (error) {
       message.error('Failed to delete link');
