@@ -282,7 +282,11 @@ export class CreateLinkForm extends React.Component<Props, State> {
                 </Form.Item>
               </>
             )}
-            <Form.Item label="Title" name="title">
+            <Form.Item
+              label="Title"
+              name="title"
+              rules={[{ required: true, message: 'Please input a title.' }]}
+            >
               <Input />
             </Form.Item>
             {this.props.tracking_pixel_ui_enabled && (
