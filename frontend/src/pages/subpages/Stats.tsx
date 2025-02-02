@@ -343,11 +343,7 @@ export function Stats(props: Props): React.ReactElement {
 
   const [entities, setEntities] = useState<Entity[]>([]);
 
-  const [topReferrer, setTopReferrer] = useState<{
-    domain: string;
-    count: number;
-  } | null>(null);
-
+  const [topReferrer, setTopReferrer] = useState<string | null>(null);
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const mode = queryParams.get('mode');
@@ -463,18 +459,10 @@ export function Stats(props: Props): React.ReactElement {
   }, [props.id]);
 
   useEffect(() => {
-    const fetchTopReferrer = async () => {
-      try {
-        const response = await fetch('/api/v1/stats/top_referrer');
-        const data = await response.json();
-        setTopReferrer(data);
-      } catch (error) {
-        setTopReferrer(null);
-      }
-    };
-
-    fetchTopReferrer();
-  }, []);
+    if (browserStats !== null && browserStats.referers.length > 0) {
+      setTopReferrer(browserStats.referers[0].name);
+    }
+  }, [browserStats]);
 
   /**
    * Executes API requests to update a link
@@ -783,7 +771,7 @@ export function Stats(props: Props): React.ReactElement {
               <Card>
                 <Statistic
                   title="Most Popular Referrer"
-                  value={topReferrer?.domain ?? 'None'}
+                  value={topReferrer !== null ? topReferrer : 'None'}
                 />
               </Card>
             </Col>
