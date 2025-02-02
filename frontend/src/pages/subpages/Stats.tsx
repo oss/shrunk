@@ -652,18 +652,6 @@ export function Stats(props: Props): React.ReactElement {
     ),
   };
 
-  const handleDelete = async () => {
-    try {
-      await fetch(`/api/v1/link/${props.id}`, {
-        method: 'DELETE',
-      });
-      message.success('Link deleted successfully');
-      window.location.href = '/app/#/dash';
-    } catch (error) {
-      message.error('Failed to delete link');
-    }
-  };
-
   return (
     <>
       <Row justify="space-between" align="middle">
@@ -683,41 +671,14 @@ export function Stats(props: Props): React.ReactElement {
 
         <Col>
           <Space>
-            <Space.Compact>
-              <Button
-                icon={<EditOutlined />}
-                onClick={() => {
-                  setEditModalVisible(true);
-                }}
-              >
-                Edit
-              </Button>
-              <Dropdown
-                menu={{
-                  items: [
-                    {
-                      key: 'delete',
-                      label: (
-                        <Popconfirm
-                          title="Are you sure you want to delete this link?"
-                          onConfirm={handleDelete}
-                          okText="Yes"
-                          cancelText="No"
-                          okButtonProps={{ danger: true }}
-                        >
-                          <Typography.Text type="danger">
-                            <DeleteOutlined /> Delete
-                          </Typography.Text>
-                        </Popconfirm>
-                      ),
-                      danger: true,
-                    },
-                  ],
-                }}
-              >
-                <Button icon={<MoreOutlined />} />
-              </Dropdown>
-            </Space.Compact>
+            <Button
+              icon={<EditOutlined />}
+              onClick={() => {
+                setEditModalVisible(true);
+              }}
+            >
+              Edit
+            </Button>
             <Button
               icon={<TeamOutlined />}
               onClick={() => {

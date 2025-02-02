@@ -13,12 +13,14 @@ import {
   DatePicker,
   Space,
   Popconfirm,
+  message,
 } from 'antd/lib';
 import {
   LinkOutlined,
   PlusOutlined,
   MinusCircleOutlined,
   ExclamationCircleFilled,
+  DeleteOutlined,
 } from '@ant-design/icons';
 import base32 from 'hi-base32';
 
@@ -153,6 +155,20 @@ export const EditLinkModal: React.FC<Props> = (props) => {
     form.validateFields().then((values) => {
       props.onOk(values as EditLinkFormValues);
     });
+  };
+
+  const handleDelete = async () => {
+    try {
+      await fetch(`/api/v1/link/${props.linkInfo._id}`, {
+        method: 'DELETE',
+      });
+      message.success('Link deleted successfully');
+      setTimeout(() => {
+        window.location.href = '/app/dash';
+      }, 1000); // 1-second delay
+    } catch (error) {
+      message.error('Failed to delete link');
+    }
   };
 
   return (
@@ -347,6 +363,18 @@ export const EditLinkModal: React.FC<Props> = (props) => {
           )}
         </Form.List>
       </Form>
+
+      <Popconfirm
+        title="Are you sure you want to delete this link?"
+        onConfirm={handleDelete}
+        okText="Yes"
+        cancelText="No"
+        okButtonProps={{ danger: true }}
+      >
+        <Button danger icon={<DeleteOutlined />}>
+          Delete
+        </Button>
+      </Popconfirm>
     </Modal>
   );
 };
