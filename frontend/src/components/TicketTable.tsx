@@ -4,7 +4,6 @@ import {
   message,
   Popconfirm,
   Row,
-  Spin,
   Table,
   Typography,
 } from 'antd/lib';
@@ -160,69 +159,64 @@ const TicketTable: React.FC<Props> = ({ netid }) => {
           </Row>
         </Col>
       </Row>
-      {loading ? (
-        <Spin size="large" />
-      ) : (
-        <Table
-          dataSource={tickets}
-          columns={[
-            {
-              title: 'ID',
-              dataIndex: '_id',
-              key: '_id',
-              width: '10%',
+      <Table
+        dataSource={tickets}
+        columns={[
+          {
+            title: 'ID',
+            dataIndex: '_id',
+            key: '_id',
+            width: '10%',
+          },
+          {
+            title: 'Reason',
+            dataIndex: 'reason',
+            key: 'reason',
+            render: (reason: string) => {
+              switch (reason) {
+                case 'power_user':
+                  return 'Grant me the power user role';
+                case 'whitelisted':
+                  return 'Whitelist another person to Go services';
+                case 'other':
+                  return 'Other';
+                default:
+                  return 'Failed to load reason';
+              }
             },
-            {
-              title: 'Reason',
-              dataIndex: 'reason',
-              key: 'reason',
-              render: (reason: string) => {
-                switch (reason) {
-                  case 'power_user':
-                    return 'Grant me the power user role';
-                  case 'whitelisted':
-                    return 'Whitelist another person to Go services';
-                  case 'other':
-                    return 'Other';
-                  default:
-                    return 'Failed to load reason';
-                }
-              },
-              width: '20%',
-            },
-            {
-              title: 'Associated NetID',
-              dataIndex: 'entity',
-              key: 'entity',
-              render: (entity: string, record: Ticket) =>
-                entity === record.reporter
-                  ? `Self (${entity})`
-                  : entity || 'N/A',
-              width: '15%',
-            },
-            {
-              title: 'Comment',
-              dataIndex: 'comment',
-              key: 'comment',
-              width: '40%',
-            },
-            {
-              title: 'Submission Date',
-              dataIndex: 'timestamp',
-              key: 'timestamp',
-              render: (timestamp: Date) =>
-                dayjs(new Date(Number(timestamp) * 1000)).format(
-                  'MMM D, YYYY, h:mm a',
-                ),
-              width: '15%',
-            },
-          ]}
-          rowKey="_id"
-          rowSelection={ticketSelection}
-          pagination={false}
-          locale={{ emptyText: 'You have no pending tickets' }}
-        />
-      )}
+            width: '20%',
+          },
+          {
+            title: 'Associated NetID',
+            dataIndex: 'entity',
+            key: 'entity',
+            render: (entity: string, record: Ticket) =>
+              entity === record.reporter ? `Self (${entity})` : entity || 'N/A',
+            width: '15%',
+          },
+          {
+            title: 'Comment',
+            dataIndex: 'comment',
+            key: 'comment',
+            width: '40%',
+          },
+          {
+            title: 'Submission Date',
+            dataIndex: 'timestamp',
+            key: 'timestamp',
+            render: (timestamp: Date) =>
+              dayjs(new Date(Number(timestamp) * 1000)).format(
+                'MMM D, YYYY, h:mm a',
+              ),
+            width: '15%',
+          },
+        ]}
+        rowKey="_id"
+        rowSelection={ticketSelection}
+        pagination={false}
+        locale={{ emptyText: 'You have no pending tickets' }}
+        loading={loading}
+      />
     </>
   );
 };

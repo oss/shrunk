@@ -147,6 +147,9 @@ class TicketsClient:
         """
         ticket = self.get_ticket(ticket_id=ticket_id)
 
+        if not ticket:
+            return
+
         # Construct the email
         SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
         HTML_TEMPLATE_PATH = os.path.join(
@@ -206,6 +209,9 @@ class TicketsClient:
                 **ticket_data,
             }
         )
+        if not result.acknowledged:
+            return None
+
         return str(result.inserted_id)
 
     def delete_ticket(self, ticket_id: str):

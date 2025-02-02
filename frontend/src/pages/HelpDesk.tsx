@@ -1,10 +1,9 @@
 import { FormOutlined, TableOutlined } from '@ant-design/icons';
-import { Layout, Menu, Typography } from 'antd/lib';
-import React, { useState } from 'react';
+import { Tabs, Typography } from 'antd/lib';
+import React from 'react';
 import TicketForm from '../components/TicketForm';
 import TicketTable from '../components/TicketTable';
 
-const { Sider, Content } = Layout;
 const { Title } = Typography;
 
 /**
@@ -23,41 +22,25 @@ interface Props {
  * Component for the help desk page
  */
 const HelpDesk: React.FC<Props> = ({ netid }) => {
-  const [selectedKey, setSelectedKey] = useState('table');
-
-  const menuItems = [
+  const tabItems = [
     {
       key: 'table',
       icon: <TableOutlined />,
       label: 'My Tickets',
+      children: <TicketTable netid={netid} />,
     },
     {
       key: 'form',
       icon: <FormOutlined />,
       label: 'New Ticket',
+      children: <TicketForm netid={netid} />,
     },
   ];
 
   return (
     <>
       <Title>Help Desk</Title>
-      <Layout>
-        <Sider>
-          <Menu
-            mode="vertical"
-            selectedKeys={[selectedKey]}
-            onClick={(e) => setSelectedKey(e.key)}
-            items={menuItems}
-          />
-        </Sider>
-        <Content style={{ paddingLeft: '1rem' }}>
-          {selectedKey === 'table' ? (
-            <TicketTable netid={netid} />
-          ) : (
-            <TicketForm netid={netid} />
-          )}
-        </Content>
-      </Layout>
+      <Tabs tabPosition="left" items={tabItems} />
     </>
   );
 };

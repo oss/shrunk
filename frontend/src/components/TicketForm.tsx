@@ -67,10 +67,15 @@ const TicketForm: React.FC<Props> = ({ netid }) => {
       },
       body: JSON.stringify(body),
     });
-    const data = await response.json();
+
     setTicketStatus(response.status);
     setSubmitting(false);
 
+    if (!response.ok) {
+      return {} as Ticket;
+    }
+
+    const data = await response.json();
     return data;
   };
 
@@ -102,8 +107,10 @@ const TicketForm: React.FC<Props> = ({ netid }) => {
    */
   const handleFormSubmit = async (values: any) => {
     const ticket = await submitTicket(values);
-    await sendEmail(ticket, 'confirmation');
-    await sendEmail(ticket, 'notification');
+    if (!ticket == null) {
+      await sendEmail(ticket, 'confirmation');
+      await sendEmail(ticket, 'notification');
+    }
   };
 
   /**

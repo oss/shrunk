@@ -78,6 +78,11 @@ def send_help_desk_email(netid: str, client: ShrunkClient, mail: Mail):
     ):
         return abort(403)
     data = request.get_json()
+
+    # Ticket does not exist
+    if not client.tickets.get_ticket(ticket_id=data.get("ticketID")):
+        return Response(status=404)
+
     variables = {
         "ticket_id": data.get("ticketID"),
         "category": data.get("category"),
