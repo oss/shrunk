@@ -126,6 +126,9 @@ clean_results = {
     }
 }
 
+limit_stage = {"$limit": 365}
+
+
 daily_visits_aggregation = [
     # mark the first_time_visits
     group_tracking_ids,
@@ -138,4 +141,5 @@ daily_visits_aggregation = [
     make_sortable,
     chronological_sort,
     clean_results,
+    limit_stage,
 ]
