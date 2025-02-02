@@ -68,31 +68,63 @@ class TicketsClient:
         :return: a dictionary with the text-related attributes
         """
         data = {
-            "201": "We have received your ticket, which will be manually reviewed and resolved.",
+            "201": (
+                "We have received your ticket, which will be manually reviewed"
+                " and resolved."
+            ),
             "403": "You are not authorized to submit a ticket.",
-            "409": "Either a ticket already exists on this person's behalf or this person already has the requested role.",
-            "429": "You have too many pending tickets. Please wait for your existing tickets to be resolved before submitting a new one.",
+            "409": (
+                "Either a ticket already exists on this person's behalf or "
+                "this person already has the requested role."
+            ),
+            "429": (
+                "You have too many pending tickets. Please wait for your "
+                "existing tickets to be resolved before submitting a new one."
+            ),
         }
 
         if reason == "power_user":
             data.update(
                 {
-                    "prompt": "Power users have the ability to create custom aliases for their shortened links. The power user role will only be granted to faculty/staff members. Your request will be manually processed to ensure that you meet this requirement.",
-                    "placeholder": "Please provide a brief explanation of why you need the power user role.",
+                    "prompt": (
+                        "Power users have the ability to create custom aliases"
+                        " for their shortened links. The power user role will "
+                        "only be granted to faculty/staff members. Your "
+                        "request will be manually processed to ensure that "
+                        "you meet the criteria."
+                    ),
+                    "placeholder": (
+                        "Please provide a brief explanation of why you need "
+                        "the power user role."
+                    ),
                 }
             )
         elif reason == "whitelisted":
             data.update(
                 {
-                    "prompt": "Only whitelisted users have access to Go services. To whitelist another person, please provide their NetID. Your request will be manually processed based on the comment provided.",
-                    "placeholder": "Please provide a brief explanation of why you need to whitelist this person.",
+                    "prompt": (
+                        "Only whitelisted users have access to Go services. "
+                        "To whitelist another person, please provide their "
+                        "NetID. Your request will be manually processed based "
+                        "on the comment provided."
+                    ),
+                    "placeholder": (
+                        "Please provide a brief explanation of why you need to"
+                        " whitelist this person."
+                    ),
                 }
             )
         else:  # reason == "other"
             data.update(
                 {
-                    "prompt": "Please provide a brief description of your issue or request. Your ticket will be manually processed.",
-                    "placeholder": "Please provide a brief description of your issue or request.",
+                    "prompt": (
+                        "Please provide a brief description of your issue or "
+                        "request. Your ticket will be manually processed."
+                    ),
+                    "placeholder": (
+                        "Please provide a brief description of your issue or "
+                        "request."
+                    ),
                 }
             )
         return data
@@ -193,7 +225,8 @@ class TicketsClient:
         entity: Optional[str] = None,
     ) -> Optional[Dict[str, Any]]:
         """
-        Get a single ticket that matches the given criteria. Note that this will return either 0 or 1 tickets.
+        Get a single ticket that matches the given criteria. Note that this
+        will return either 0 or 1 tickets.
 
         :param ticket_id: the ID of the ticket (optional)
         :param reporter: the reporter of the ticket (optional)
@@ -216,27 +249,29 @@ class TicketsClient:
         return self.db.tickets.find_one(query)
 
     def get_tickets(
-        self, reporter: Optional[str] = None, timestamp_sort: Optional[str] = None
+        self, reporter: Optional[str] = None, order: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """
-        Get all tickets by the given reporter or all tickets if no reporter is specified.
+        Get all tickets by the given reporter or all tickets if no reporter is
+        specified.
 
         :param reporter: the reporter of the tickets (optional)
-        :param timestamp_sort: the sort order for the tickets (optional)
+        :param order: the order to sort the tickets by timestamp (optional)
 
         :return: a list of tickets
         """
         query = {"reporter": reporter} if reporter else {}
         sort = []
-        if timestamp_sort == "asc":
+        if order == "asc":
             sort = [("timestamp", pymongo.ASCENDING)]
-        elif timestamp_sort == "desc":
+        elif order == "desc":
             sort = [("timestamp", pymongo.DESCENDING)]
         return list(self.db.tickets.find(query, sort=sort))
 
     def count_tickets(self, reporter: Optional[str]) -> int:
         """
-        Count the number of tickets by reporter or all tickets if no reporter is specified.
+        Count the number of tickets by reporter or all tickets if no reporter
+        is specified.
 
         :param reporter: the reporter of the tickets (optional)
 

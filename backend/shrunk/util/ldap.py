@@ -66,15 +66,14 @@ def query_given_name(netid: str) -> str:
 
 
 def query_position_info(netid: str) -> Dict[str, List[str]]:
-    """Query LDAP for position info of a given netid. Return a dictionary of attributes.
+    """Query LDAP for position info of a given netid. Return a dictionary of
+    attributes.
 
     Args:
         netid (str): The netid of the user to query position info for.
 
     Returns:
-        Dict[str, List[str]]: A dictionary containing the position information of the user.
-            The keys of the dictionary represent the attribute names, and the values are lists
-            of attribute values.
+        Dict[str, List[str]]: A dictionary of attributes.
     """
     if not is_valid_netid(netid) or not current_app.config.get(
         "LDAP_VALIDATE_NETIDS", False

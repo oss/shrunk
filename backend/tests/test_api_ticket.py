@@ -9,7 +9,12 @@ from werkzeug.test import Client
     ("reporter", "reason", "entity", "comment"),
     [
         ("DEV_USER", "power_user", "DEV_USER", "I need power user access"),
-        ("DEV_USER", "whitelisted", "ejw135", "I need to whitelist this person"),
+        (
+            "DEV_USER",
+            "whitelisted",
+            "ejw135",
+            "I need to whitelist this person",
+        ),
         ("DEV_USER", "other", None, "I have an issue"),
     ],
 )
@@ -41,7 +46,8 @@ def test_create_delete_ticket(
         # Delete the ticket
         ticket_id = resp.json["_id"]
         resp = client.delete(
-            f"/api/v1/ticket/{str(base64.b32encode(bytes(ticket_id, 'utf8')), 'utf8')}"
+            f"/api/v1/ticket/"
+            f"{str(base64.b32encode(bytes(ticket_id, 'utf8')), 'utf8')}"
         )
         assert resp.status_code == 204, "Failed to delete ticket"
 
@@ -116,6 +122,7 @@ def test_get_tickets(client: Client, tickets: list):
         # Delete the tickets
         for ticket_id in ticket_ids:
             resp = client.delete(
-                f"/api/v1/ticket/{str(base64.b32encode(bytes(ticket_id, 'utf8')), 'utf8')}"
+                f"/api/v1/ticket/"
+                f"{str(base64.b32encode(bytes(ticket_id, 'utf8')), 'utf8')}"
             )
             assert resp.status_code == 204, "Failed to delete ticket"

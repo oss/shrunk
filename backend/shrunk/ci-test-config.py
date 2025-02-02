@@ -84,5 +84,6 @@ can make the scripts run to download new version of Outlook Add-In"""
 
 HELP_DESK_ENABLED = True
 """
-Configuration variable to enable or disable the ability for users to submit support tickets to the help desk.
+Configuration variable to enable or disable the ability for users to submit
+support tickets to the help desk.
 """

@@ -122,19 +122,22 @@ You would this to be set to True when performing unit tests
 or you'll fail the security tests. However, in prod it can be whatever."""
 
 SLACK_INTEGRATION_ENABLED = False
-"""Whether the slack integration is turned on or off. This includes when the OSS team is notified of new tickets.
-This does NOT include when the slack bot is fetching information from shrunk such as the number of pending 
-tickets."""
+"""Whether the slack integration is turned on or off. This includes when the
+OSS team is notified of new tickets. This does NOT include when the slack bot
+is fetching information from shrunk such as the number of pending tickets."""
 
-SLACK_INTEGRATION_API_KEY = "test123"
-"""The API key for the slack integration. This is used to authenticate requests made by the slack bot.
-This key should be a lot more complex in prod."""
+SLACK_INTEGRATION_API_KEY = ""
+"""The API key for the slack integration. This is used to authenticate
+requests made by the slack bot. This key should be a lot more complex
+in prod."""
 
 SLACK_BOT_TOKEN = ""
-"""The Bot User OAuth Token - used to authenticate the bot with the Slack API. Typically starts with `xoxb-`."""
+"""The Bot User OAuth Token - used to authenticate the bot with the Slack API.
+Typically starts with `xoxb-`."""
 
-SLACK_SHRUNK_CHANNEL_ID=""
-"""The channel ID where all shrunk-related information will be posted in. This will be limit where slash commands can be executed."""
+SLACK_SHRUNK_CHANNEL_ID = ""
+"""The channel ID where all shrunk-related information will be posted in. This
+will be limit where slash commands can be executed."""
 
 TRACKING_PIXEL_UI_ENABLED = False
 """
@@ -146,9 +149,10 @@ LINKHUB_INTEGRATION_ENABLED = False
 Configuration value to enable or disable dynamically generated web pages that contains URLs.
 """
 
-HELP_DESK_ENABLED = False
+HELP_DESK_ENABLED = True
 """
-Configuration variable to enable or disable the ability for users to submit support tickets to the help desk.
+Configuration variable to enable or disable the ability for users to submit
+support tickets to the help desk.
 """
 
 DOMAIN_ENABLED = False
