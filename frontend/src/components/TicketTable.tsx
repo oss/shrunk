@@ -14,7 +14,7 @@ import React, { useEffect, useState } from 'react';
 const { Title } = Typography;
 
 /**
- * Props for the [[Ticket]] component
+ * Props for the [[TicketTable]] component
  * @interface
  */
 interface Props {
@@ -128,6 +128,30 @@ const TicketTable: React.FC<Props> = ({ netid }) => {
       setSelectedIds(selectedRowKeys as string[]),
   };
 
+  /**
+   * Render the reason column in the table
+   * @method
+   */
+  const renderReason = (reason: string) => {
+    switch (reason) {
+      case 'power_user':
+        return 'Grant me the power user role';
+      case 'whitelisted':
+        return 'Whitelist another person to Go services';
+      case 'other':
+        return 'Other';
+      default:
+        return 'Failed to load reason';
+    }
+  };
+
+  /**
+   * Render the timestamp column in the table
+   * @method
+   */
+  const renderTimestamp = (timestamp: Date) =>
+    dayjs(new Date(Number(timestamp) * 1000)).format('MMM D, YYYY, h:mm a');
+
   // Fetch the tickets for the currently logged in user
   useEffect(() => {
     fetchTickets();
@@ -172,26 +196,14 @@ const TicketTable: React.FC<Props> = ({ netid }) => {
             title: 'Reason',
             dataIndex: 'reason',
             key: 'reason',
-            render: (reason: string) => {
-              switch (reason) {
-                case 'power_user':
-                  return 'Grant me the power user role';
-                case 'whitelisted':
-                  return 'Whitelist another person to Go services';
-                case 'other':
-                  return 'Other';
-                default:
-                  return 'Failed to load reason';
-              }
-            },
+            render: (reason: string) => renderReason(reason),
             width: '20%',
           },
           {
             title: 'Associated NetID',
             dataIndex: 'entity',
             key: 'entity',
-            render: (entity: string, record: Ticket) =>
-              entity === record.reporter ? `Self (${entity})` : entity || 'N/A',
+            render: (entity: string) => entity || 'N/A',
             width: '15%',
           },
           {
@@ -204,17 +216,14 @@ const TicketTable: React.FC<Props> = ({ netid }) => {
             title: 'Submission Date',
             dataIndex: 'timestamp',
             key: 'timestamp',
-            render: (timestamp: Date) =>
-              dayjs(new Date(Number(timestamp) * 1000)).format(
-                'MMM D, YYYY, h:mm a',
-              ),
+            render: (timestamp: Date) => renderTimestamp(timestamp),
             width: '15%',
           },
         ]}
         rowKey="_id"
         rowSelection={ticketSelection}
         pagination={false}
-        locale={{ emptyText: 'You have no pending tickets' }}
+        locale={{ emptyText: 'No pending tickets' }}
         loading={loading}
       />
     </>

@@ -40,7 +40,7 @@ const HelpDesk: React.FC<Props> = ({ netid }) => {
   return (
     <>
       <Title>Help Desk</Title>
-      <Tabs tabPosition="left" items={tabItems} />
+      <Tabs tabPosition="left" items={tabItems} destroyInactiveTabPane />
     </>
   );
 };
