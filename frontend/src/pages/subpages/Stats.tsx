@@ -671,22 +671,26 @@ export function Stats(props: Props): React.ReactElement {
 
         <Col>
           <Space>
-            <Button
-              icon={<EditOutlined />}
-              onClick={() => {
-                setEditModalVisible(true);
-              }}
-            >
-              Edit
-            </Button>
-            <Button
-              icon={<TeamOutlined />}
-              onClick={() => {
-                setCollabModalVisible(true);
-              }}
-            >
-              Collaborate
-            </Button>
+            {mayEdit && (
+              <>
+                <Button
+                  icon={<EditOutlined />}
+                  onClick={() => {
+                    setEditModalVisible(true);
+                  }}
+                >
+                  Edit
+                </Button>
+                <Button
+                  icon={<TeamOutlined />}
+                  onClick={() => {
+                    setCollabModalVisible(true);
+                  }}
+                >
+                  Collaborate
+                </Button>
+              </>
+            )}
             <Button
               type="primary"
               icon={<ShareAltOutlined />}

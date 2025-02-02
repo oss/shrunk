@@ -814,22 +814,27 @@ export class Dashboard extends React.Component<Props, State> {
                             href={`/app/#/links/${record.key}`}
                           />
                         </Tooltip>
-                        <Tooltip title="Edit">
-                          <Button
-                            type="text"
-                            icon={<EditOutlined />}
-                            target="_blank"
-                            href={`/app/#/links/${record.key}?mode=edit`}
-                          />
-                        </Tooltip>
-                        <Tooltip title="Collaborate">
-                          <Button
-                            type="text"
-                            icon={<TeamOutlined />}
-                            target="_blank"
-                            href={`/app/#/links/${record.key}?mode=collaborate`}
-                          />
-                        </Tooltip>
+                        {record.canEdit && (
+                          <>
+                            <Tooltip title="Edit">
+                              <Button
+                                type="text"
+                                icon={<EditOutlined />}
+                                target="_blank"
+                                href={`/app/#/links/${record.key}?mode=edit`}
+                              />
+                            </Tooltip>
+                            <Tooltip title="Collaborate">
+                              <Button
+                                type="text"
+                                icon={<TeamOutlined />}
+                                target="_blank"
+                                href={`/app/#/links/${record.key}?mode=collaborate`}
+                              />
+                            </Tooltip>
+                          </>
+                        )}
+
                         <Tooltip title="Share">
                           <Button
                             type="text"
@@ -878,6 +883,7 @@ export class Dashboard extends React.Component<Props, State> {
                   uniqueVisits: link.unique_visits,
                   totalVisits: link.visits,
                   dateExpires: link.expiration_time,
+                  canEdit: link.may_edit,
                 }))}
                 pagination={{
                   total: this.state.totalLinks,
