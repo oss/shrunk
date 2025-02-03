@@ -434,7 +434,7 @@ export default function Shrunk(props: Props) {
                           },
                         }}
                       >
-                        <Admin />
+                        <Admin userNetid={netid} userPrivileges={userPrivileges}/>
                       </ConfigProvider>
                     </Route>
                     <Route exact path="/admin/stats">

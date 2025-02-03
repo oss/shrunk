@@ -17,6 +17,7 @@ import { MenuProps } from 'antd';
 import AdminStats from '../components/admin/AdminStats';
 import UserLookup from '../components/admin/UserLookup';
 import UsersProvider from '../contexts/Users';
+import ManageUserAccess from '../components/admin/ManageUserAccess';
 
 /**
  * Props for the [[Admin]] component
@@ -64,7 +65,12 @@ const SidebarTabs: MenuProps['items'] = [
   },
 ];
 
-export default function Admin(): React.ReactElement {
+interface AdminProps {
+  userNetid: string
+  userPrivileges: Set<string>;
+}
+
+export default function Admin(props: AdminProps): React.ReactElement {
   const [roles, setRoles] = useState<RoleInfo[] | null>(null);
   const [linksToBeVerified, setLinksToBeVerified] = useState(-1);
   const [powerUserRequestsCount, setPowerUserRequestsCount] = useState(-1);
@@ -196,7 +202,9 @@ export default function Admin(): React.ReactElement {
             }
 
             {
-              selectedView === 'manage-access' && ( <TeamOutlined /> )
+              selectedView === 'manage-access' && ( 
+                <ManageUserAccess userNetid={props.userNetid} userPrivileges={props.userPrivileges} />
+              )
             }
 
             {
