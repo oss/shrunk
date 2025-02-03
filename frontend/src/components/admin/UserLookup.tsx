@@ -5,13 +5,14 @@
 
 import { Button, Col, Row, Table, Tag, Spin } from 'antd/lib';
 import React from 'react';
-import SearchUser from '../SearchUser';
 import {
   Operation,
   generateOperationKey,
   useUsers,
 } from '../../contexts/Users';
-import { Typography } from 'antd';
+import { ConfigProvider, Typography } from 'antd';
+import LookupTableHeader from './LookupTableHeader';
+import { lightTheme } from '../../theme';
 
 /**
  * Renders the netids in bold
@@ -143,25 +144,18 @@ const UserLookup: React.FC = () => {
 
 
   const [organizationsFilters, rolesFilters] = React.useMemo(() => {
-    let distinctOrganizations: Set<{text: String, value: String}> = new Set()
-    let distinctRoles: Set<{text: String, value: String}> = new Set()
+    let distinctOrganizations: Set<string> = new Set()
+    let distinctRoles: Set<string> = new Set()
     
     // Fetches distinct orgs/roles from all users; no flatten method in current JS version
     users.forEach(user => {
-      user.organizations.forEach(org => distinctOrganizations.add(
-        {
-          text: org,
-          value: org,
-        }))
-      user.roles.forEach(role => distinctRoles.add(
-        {
-          text: role.toString().toUpperCase(),
-          value: role,
-        }
-      ))
+      // This is a bit of a hack; Sets natively use === for comparison which doesn't work for objects
+      user.organizations.forEach(org => distinctOrganizations.add(JSON.stringify({text: org, value: org})))
+      user.roles.forEach(org => distinctRoles.add(JSON.stringify({text: org.toString().toUpperCase(), value: org})))
     })
 
-    return [Array.from(distinctOrganizations), Array.from(distinctRoles)]; 
+    // Parse back into JSON objects
+    return [Array.from(distinctOrganizations).map(el => JSON.parse(el)), Array.from(distinctRoles).map(el => JSON.parse(el))]; 
   }, [users]);
 
   const columns = [
@@ -220,22 +214,13 @@ const UserLookup: React.FC = () => {
             </div>
         </Col>
       </Row>
-      <SearchUser />
+
+      {/* Re-provide theme context to component */}
+      <ConfigProvider theme={lightTheme}>
+        <LookupTableHeader />
+      </ConfigProvider>
 
       <Row style={{ marginBottom: 24 }} />
-
-      {/* TODO --> Move this to be more implicit within the filters */}
-      {/* <div className="operation-tags">
-        {appliedOperations.map((operation) => (
-          <Tag
-            key={generateOperationKey(operation)}
-            closable
-            onClose={() => deleteOperation(generateOperationKey(operation))}
-          >
-            {renderOperation(operation)}
-          </Tag>
-        ))}
-      </div> */}
 
       {loading ? (
         <Spin size="large" />
