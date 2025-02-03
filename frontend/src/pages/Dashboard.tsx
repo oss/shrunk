@@ -24,6 +24,7 @@ import {
   Dropdown,
   Popconfirm,
   message,
+  Flex,
 } from 'antd/lib';
 import {
   CopyOutlined,
@@ -675,7 +676,7 @@ export class Dashboard extends React.Component<Props, State> {
                     title: 'Aliases',
                     dataIndex: 'aliases',
                     key: 'aliases',
-                    width: '40%',
+                    width: '350px',
                     fixed: 'left',
                     render: (_, record) => (
                       <Row gutter={[0, 8]}>
@@ -722,7 +723,7 @@ export class Dashboard extends React.Component<Props, State> {
                           title: 'Long URL',
                           dataIndex: 'longUrl',
                           key: 'longUrl',
-                          width: '40%',
+                          width: '300px',
                           fixed: 'left',
                           render: (_, record) => (
                             <Typography.Link href={record.longUrl} ellipsis>
@@ -738,7 +739,7 @@ export class Dashboard extends React.Component<Props, State> {
                           title: 'Owner',
                           dataIndex: 'owner',
                           key: 'owner',
-                          width: '15%',
+                          width: '150px',
                           sorter: (a, b) => a.owner.localeCompare(b.owner),
                         },
                       ]
@@ -749,7 +750,7 @@ export class Dashboard extends React.Component<Props, State> {
                           title: 'Date Created',
                           dataIndex: 'dateCreated',
                           key: 'dateCreated',
-                          width: '15%',
+                          width: '150px',
                           sorter: (a, b) =>
                             dayjs(a.dateCreated).unix() -
                             dayjs(b.dateCreated).unix(),
@@ -762,7 +763,7 @@ export class Dashboard extends React.Component<Props, State> {
                           title: 'Date Expires',
                           dataIndex: 'dateExpires',
                           key: 'dateExpires',
-                          width: '15%',
+                          width: '150px',
                           render: (_, record) =>
                             record.dateExpires
                               ? dayjs(record.dateExpires).format('MMM DD, YYYY')
@@ -784,7 +785,7 @@ export class Dashboard extends React.Component<Props, State> {
                           title: 'Unique Visits',
                           dataIndex: 'uniqueVisits',
                           key: 'uniqueVisits',
-                          width: '15%',
+                          width: '100px',
                           sorter: (a, b) => a.uniqueVisits - b.uniqueVisits,
                         },
                       ]
@@ -795,80 +796,82 @@ export class Dashboard extends React.Component<Props, State> {
                           title: 'Total Visits',
                           dataIndex: 'totalVisits',
                           key: 'totalVisits',
-                          width: '15%',
+                          width: '100px',
                           sorter: (a, b) => a.totalVisits - b.totalVisits,
                         },
                       ]
                     : []),
                   {
-                    title: 'Actions',
+                    title: <Flex justify="flex-end">Actions</Flex>,
                     key: 'actions',
                     fixed: 'right',
-                    width: '25%',
+                    width: '220px',
                     render: (_, record) => (
-                      <Space>
-                        <Tooltip title="View">
-                          <Button
-                            type="text"
-                            icon={<EyeOutlined />}
-                            href={`/app/#/links/${record.key}`}
-                          />
-                        </Tooltip>
-                        {record.canEdit && (
-                          <>
-                            <Tooltip title="Edit">
-                              <Button
-                                type="text"
-                                icon={<EditOutlined />}
-                                target="_blank"
-                                href={`/app/#/links/${record.key}?mode=edit`}
-                              />
-                            </Tooltip>
-                            <Tooltip title="Collaborate">
-                              <Button
-                                type="text"
-                                icon={<TeamOutlined />}
-                                target="_blank"
-                                href={`/app/#/links/${record.key}?mode=collaborate`}
-                              />
-                            </Tooltip>
-                          </>
-                        )}
-
-                        <Tooltip title="Share">
-                          <Button
-                            type="text"
-                            icon={<ShareAltOutlined />}
-                            target="_blank"
-                            href={`/app/#/links/${record.key}?mode=share`}
-                          />
-                        </Tooltip>
-                        <Tooltip title="Delete">
-                          <Popconfirm
-                            title="Are you sure you want to delete this link?"
-                            onConfirm={async () => {
-                              try {
-                                await fetch(`/api/v1/link/${record.key}`, {
-                                  method: 'DELETE',
-                                });
-                                message.success('Link deleted successfully');
-                                await this.refreshResults();
-                              } catch (error) {
-                                message.error('Failed to delete link');
-                              }
-                            }}
-                            okText="Yes"
-                            cancelText="No"
-                            okButtonProps={{ danger: true }}
-                          >
+                      <Flex justify="flex-end">
+                        <Space>
+                          <Tooltip title="View">
                             <Button
                               type="text"
-                              danger
-                              icon={<DeleteOutlined />}
+                              icon={<EyeOutlined />}
+                              href={`/app/#/links/${record.key}`}
                             />
-                          </Popconfirm>
-                        </Tooltip>
-                      </Space>
+                          </Tooltip>
+                          {record.canEdit && (
+                            <>
+                              <Tooltip title="Edit">
+                                <Button
+                                  type="text"
+                                  icon={<EditOutlined />}
+                                  target="_blank"
+                                  href={`/app/#/links/${record.key}?mode=edit`}
+                                />
+                              </Tooltip>
+                              <Tooltip title="Collaborate">
+                                <Button
+                                  type="text"
+                                  icon={<TeamOutlined />}
+                                  target="_blank"
+                                  href={`/app/#/links/${record.key}?mode=collaborate`}
+                                />
+                              </Tooltip>
+                            </>
+                          )}
+
+                          <Tooltip title="Share">
+                            <Button
+                              type="text"
+                              icon={<ShareAltOutlined />}
+                              target="_blank"
+                              href={`/app/#/links/${record.key}?mode=share`}
+                            />
+                          </Tooltip>
+                          <Tooltip title="Delete">
+                            <Popconfirm
+                              title="Are you sure you want to delete this link?"
+                              onConfirm={async () => {
+                                try {
+                                  await fetch(`/api/v1/link/${record.key}`, {
+                                    method: 'DELETE',
+                                  });
+                                  message.success('Link deleted successfully');
+                                  await this.refreshResults();
+                                } catch (error) {
+                                  message.error('Failed to delete link');
+                                }
+                              }}
+                              okText="Yes"
+                              cancelText="No"
+                              okButtonProps={{ danger: true }}
+                            >
+                              <Button
+                                type="text"
+                                danger
+                                icon={<DeleteOutlined />}
+                              />
+                            </Popconfirm>
+                          </Tooltip>
+                        </Space>
+                      </Flex>
                     ),
                   },
                 ].filter((col) => !col.hidden)}
