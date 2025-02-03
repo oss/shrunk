@@ -11,19 +11,7 @@ import dayjs from 'dayjs';
 import base32 from 'hi-base32';
 import React, { useEffect, useState } from 'react';
 
-const { Title } = Typography;
-
-/**
- * Props for the [[TicketTable]] component
- * @interface
- */
-interface Props {
-  /**
-   * The NetID of the currently logged in user
-   * @property
-   */
-  netid: string;
-}
+const { Title, Text } = Typography;
 
 /**
  * Attributes for the ticket table. Not all attributes are displayed in the table
@@ -70,7 +58,7 @@ export interface Ticket {
 /**
  * Component for the table of tickets
  */
-const TicketTable: React.FC<Props> = ({ netid }) => {
+const TicketTable: React.FC = () => {
   /**
    * State for the [[TicketTable]] component
    *
@@ -152,10 +140,57 @@ const TicketTable: React.FC<Props> = ({ netid }) => {
   const renderTimestamp = (timestamp: Date) =>
     dayjs(new Date(Number(timestamp) * 1000)).format('MMM D, YYYY, h:mm a');
 
+  /**
+   * Render the entity column in the table
+   * @method
+   */
+  const renderEntity = (entity: string) => {
+    if (!entity) {
+      return <Text italic>N/A</Text>;
+    }
+    return entity;
+  };
+
   // Fetch the tickets for the currently logged in user
   useEffect(() => {
     fetchTickets();
-  }, [netid]);
+  }, []);
+
+  const columns = [
+    {
+      title: 'ID',
+      dataIndex: '_id',
+      key: '_id',
+      width: '10%',
+    },
+    {
+      title: 'Reason',
+      dataIndex: 'reason',
+      key: 'reason',
+      render: (reason: string) => renderReason(reason),
+      width: '20%',
+    },
+    {
+      title: 'Associated NetID',
+      dataIndex: 'entity',
+      key: 'entity',
+      render: (entity: string) => renderEntity(entity),
+      width: '15%',
+    },
+    {
+      title: 'Comment',
+      dataIndex: 'comment',
+      key: 'comment',
+      width: '40%',
+    },
+    {
+      title: 'Submission Date',
+      dataIndex: 'timestamp',
+      key: 'timestamp',
+      render: (timestamp: Date) => renderTimestamp(timestamp),
+      width: '15%',
+    },
+  ];
 
   return (
     <>
@@ -185,41 +220,7 @@ const TicketTable: React.FC<Props> = ({ netid }) => {
       </Row>
       <Table
         dataSource={tickets}
-        columns={[
-          {
-            title: 'ID',
-            dataIndex: '_id',
-            key: '_id',
-            width: '10%',
-          },
-          {
-            title: 'Reason',
-            dataIndex: 'reason',
-            key: 'reason',
-            render: (reason: string) => renderReason(reason),
-            width: '20%',
-          },
-          {
-            title: 'Associated NetID',
-            dataIndex: 'entity',
-            key: 'entity',
-            render: (entity: string) => entity || 'N/A',
-            width: '15%',
-          },
-          {
-            title: 'Comment',
-            dataIndex: 'comment',
-            key: 'comment',
-            width: '40%',
-          },
-          {
-            title: 'Submission Date',
-            dataIndex: 'timestamp',
-            key: 'timestamp',
-            render: (timestamp: Date) => renderTimestamp(timestamp),
-            width: '15%',
-          },
-        ]}
+        columns={columns}
         rowKey="_id"
         rowSelection={ticketSelection}
         pagination={false}

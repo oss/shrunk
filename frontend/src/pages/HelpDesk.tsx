@@ -27,7 +27,7 @@ const HelpDesk: React.FC<Props> = ({ netid }) => {
       key: 'table',
       icon: <TableOutlined />,
       label: 'My Tickets',
-      children: <TicketTable netid={netid} />,
+      children: <TicketTable />,
     },
     {
       key: 'form',
