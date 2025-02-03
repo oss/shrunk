@@ -121,9 +121,8 @@ const columns = [
 ];
 
 /**
- * The [[UserLookup]] component displays a table of users and allows the user to search for users given
- * certain criteria determined by the admin. The user can add multiple operations to filter and sort the users.
- * The user can also delete operations that have been applied
+ * The [[UserLookup]] component displays a table of users and allows the user to search/filter/add users given
+ * certain criteria determined by the admin.
  * @returns the [[UserLookup]] component
  */
 const UserLookup: React.FC = () => {
@@ -210,7 +209,7 @@ const UserLookup: React.FC = () => {
         <Col>
             <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <Typography.Title level={3} style={{ marginTop: 0, marginBottom: 16 }}>User Lookup</Typography.Title>
-              <Typography.Title level={5} style={{ marginTop: 0, marginBottom: 16, color: '#4F4F4F' }}>{users.length} Result{users.length > 1 && "s"} Found</Typography.Title>
+              <Typography.Title level={5} style={{ marginTop: 0, marginBottom: 16, color: '#4F4F4F' }}>{users.length} Results{users.length > 1 && "s"} Found</Typography.Title>
             </div>
         </Col>
       </Row>

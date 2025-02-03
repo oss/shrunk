@@ -4,7 +4,7 @@
  */
 
 import { CloudDownloadOutlined, PlusCircleFilled, SearchOutlined, ThunderboltOutlined } from '@ant-design/icons';
-import { AutoComplete, Button, Col, Row, Select } from 'antd/lib';
+import { AutoComplete, Button, Col, Form, Modal, Row, Select } from 'antd/lib';
 import React, { useEffect, useState } from 'react';
 import {
   useUsers,
@@ -322,58 +322,17 @@ const SearchUser: React.FC = () => {
   }, [currentOperation, appliedOperations]);
 
   return (
-    <>
-    <Row className="lookup-row" gutter={0}>
-      <Col flex="0 0 50%" style={{ marginRight: '1rem' }}>
-          <AutoComplete
-          style={{ width: '100%' }}
-          options={filterStringOptions}
-          onSelect={handleOperationFilterStringChange}
-          onSearch={updateFilterStringOptions}
-          placeholder="Search for User"
-          suffixIcon={<SearchOutlined />}
-          >
-          </AutoComplete>
-      </Col>
-      <Col>
-          <Button type="text" style={{ border: '1px solid #CFCFCF' }}>
-            AI Filter <ThunderboltOutlined />
-          </Button>
-      </Col>
-
-      <Col flex="0 0 auto" style={{ marginLeft: 'auto', marginRight: 'auto' }}>
-        <div style={{ borderLeft: '1px solid #CFCFCF', height: '100%' }} />
-      </Col>
-      <Col>
-        <Row gutter={[4, 0]}>
-          <Col>
-        <Button
-          type="primary"
-          icon={<CloudDownloadOutlined />}
-          onClick={() => {}}
+    <Col flex="0 0 50%" style={{ marginRight: '1rem' }}>
+        <AutoComplete
+        style={{ width: '100%' }}
+        options={filterStringOptions}
+        onSelect={handleOperationFilterStringChange}
+        onSearch={updateFilterStringOptions}
+        placeholder="Search for User"
+        suffixIcon={<SearchOutlined />}
         >
-          Export as CSV
-        </Button>
-          </Col>
-          <Col>
-        <Button
-          type="primary"
-          icon={<PlusCircleFilled />}
-          onClick={() => {}}
-        >
-          Add User
-        </Button>
-          </Col>
-        </Row>
-      </Col>
-    </Row>
-
-    {/* TODO --> Bring back this error message */}
-      {/* <div className="error"> */}
-        {/* {errorMessage !== '' ? errorMessage : '\u00A0'}{' '} */}
-        {/* HACK: Space character to maintain height */}
-      {/* </div> */}
-    </>
+        </AutoComplete>
+    </Col>
   );
 };
 
