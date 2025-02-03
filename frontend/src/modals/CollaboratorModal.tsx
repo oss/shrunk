@@ -17,26 +17,26 @@ import { serverValidateNetId } from '../Validators';
 import { listOrgs, OrgInfo } from '../api/Org';
 
 export type Entity = {
-  /**
-   * The id of the entity the link is shared with.
-   */
   _id: string;
-  /**
-   * The type of entity the link is shared with.
-   */
   type: 'netid' | 'org';
-  /**
-   * The permission the link is shared with
-   */
-  permission: 'viewer' | 'editor' | 'owner';
+  role?: string; // Optional if removing entity.
 };
 
 interface ICollaboratorModal {
   visible: boolean;
   people: Array<Entity>;
 
-  onAddEntity: (value: Entity) => void;
-  onRemoveEntity: (_id: string, type: string, permission: string) => void;
+  // The first role should be the MASTER role (owner or admin),
+  // while the second must be the DEFAULT role.
+  roles: Array<{ value: string; label: string }>;
+
+  onAddEntity: (activeTab: 'netid' | 'org', value: Entity) => void;
+  onChangeEntity: (
+    activeTab: 'netid' | 'org',
+    value: Entity,
+    newRole: string,
+  ) => void;
+  onRemoveEntity: (activeTab: 'netid' | 'org', value: Entity) => void;
   onOk: () => void;
   onCancel: () => void;
 }
@@ -45,8 +45,8 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
   const [form] = Form.useForm();
 
   const [organizations, setOrganizations] = useState<OrgInfo[]>([]);
-  const [collaboratorRole, setCollaboratorRole] = useState<'editor' | 'viewer'>(
-    'editor',
+  const [collaboratorRole, setCollaboratorRole] = useState<string>(
+    props.roles[1].value,
   );
   const [collaboratorType, setCollaboratorType] = useState<'netid' | 'org'>(
     'netid',
@@ -58,22 +58,22 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
     listOrgs('user').then((orgs) => setOrganizations(orgs));
   }
 
+  const masterRole = props.roles[0].value;
+
   useEffect(() => {
-    props.people.sort((a, b) => {
-      const permissionOrder = { owner: 0, editor: 1, viewer: 2 };
-      return permissionOrder[a.permission] - permissionOrder[b.permission];
+    const permissionOrder: { [key: string]: number } = {};
+    props.roles.forEach((role, index) => {
+      permissionOrder[role.value] = index;
+    });
+    props.people.sort((a: Entity, b: Entity) => {
+      if (a.role === undefined || b.role === undefined) {
+        throw new Error('Entity must have a role');
+      }
+      return permissionOrder[a.role] - permissionOrder[b.role];
     });
 
     refreshOrganizations();
   }, []);
-
-  function onRemoveCollaborator(entity: Entity) {
-    props.onRemoveEntity(entity._id, entity.type, entity.permission);
-
-    if (entity.permission === 'editor') {
-      props.onRemoveEntity(entity._id, entity.type, 'viewer');
-    }
-  }
 
   return (
     <Modal
@@ -139,29 +139,25 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
               )}
               <Select
                 defaultValue={collaboratorRole}
-                onChange={(value: 'editor' | 'viewer') => {
+                onChange={(value: string) => {
                   setCollaboratorRole(value);
                 }}
-              >
-                <Select.Option value="editor">Editor</Select.Option>
-                <Select.Option value="viewer">Viewer</Select.Option>
-              </Select>
+                options={props.roles.map((role) => ({
+                  value: role.value,
+                  label: role.label,
+                }))}
+              />
               <Button
                 icon={<PlusCircleFilled />}
                 onClick={() => {
-                  if (activeTab === 'netid') {
-                    props.onAddEntity({
-                      _id: form.getFieldValue(activeTab),
-                      type: activeTab,
-                      permission: collaboratorRole,
-                    });
-                  } else {
-                    props.onAddEntity({
-                      _id: form.getFieldValue('organization'),
-                      type: activeTab,
-                      permission: collaboratorRole,
-                    });
-                  }
+                  props.onAddEntity(activeTab, {
+                    _id:
+                      activeTab === 'netid'
+                        ? form.getFieldValue('netid')
+                        : form.getFieldValue('organization'),
+                    type: activeTab,
+                    role: collaboratorRole,
+                  });
                 }}
                 type="primary"
               >
@@ -172,9 +168,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
           <Col span={24}>
             <Tabs
               activeKey={activeTab}
-              onChange={(value: 'netid' | 'org') => {
-                setActiveTab(value);
-              }}
+              onChange={(value) => setActiveTab(value as 'netid' | 'org')}
             >
               <Tabs.TabPane tab="People" key="netid" />
               <Tabs.TabPane tab="Organizations" key="org" />
@@ -197,58 +191,31 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                       <Space>
                         <Select
                           style={{ width: 120 }}
-                          defaultValue={entity.permission}
-                          onChange={(value: 'editor' | 'viewer' | 'remove') => {
-                            // Remove viweer if they're an editor
-                            // Search "# SHARING_ACL_REFACTOR" for the following comment
-                            if (
-                              value === 'viewer' &&
-                              entity.permission === 'editor'
-                            ) {
-                              props.onRemoveEntity(
-                                entity._id,
-                                entity.type,
-                                entity.permission,
-                              );
-
-                              return;
-                            }
-
-                            // Remove if requested via dropdown
-                            if (value === 'remove') {
-                              onRemoveCollaborator(entity);
-                              return;
-                            }
-
-                            props.onAddEntity({
-                              _id: entity._id,
-                              type: entity.type,
-                              permission: value,
-                            });
+                          defaultValue={entity.role}
+                          onChange={(value: string) => {
+                            props.onChangeEntity(activeTab, entity, value);
                           }}
-                          options={[
-                            {
-                              label: 'Owner',
-                              value: 'owner',
-                              disabled: true,
-                            },
-                            {
-                              label: 'Editor',
-                              value: 'editor',
-                              disabled: entity.permission === 'owner',
-                            },
-                            {
-                              label: 'Viewer',
-                              value: 'viewer',
-                              disabled: entity.permission === 'owner',
-                            },
-                          ]}
+                          options={props.roles.map((role) => {
+                            if (role.value === masterRole) {
+                              return {
+                                value: role.value,
+                                label: role.label,
+                                disabled: true,
+                              };
+                            }
+
+                            return {
+                              value: role.value,
+                              label: role.label,
+                              disabled: entity.role === masterRole,
+                            };
+                          })}
                         />
 
                         <Popconfirm
                           title="Are you sure you want to remove this collaborator?"
                           onConfirm={() => {
-                            onRemoveCollaborator(entity);
+                            props.onRemoveEntity(activeTab, entity);
                           }}
                         >
                           <Tooltip title="Remove collaborator">

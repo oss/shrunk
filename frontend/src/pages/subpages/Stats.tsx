@@ -386,14 +386,14 @@ export function Stats(props: Props): React.ReactElement {
     tempEntities.push({
       _id: templinkInfo.owner,
       type: 'netid',
-      permission: 'owner',
+      role: 'owner',
     });
 
     templinkInfo.editors.forEach((editor) => {
       tempEntities.push({
         _id: editor._id,
         type: editor.type,
-        permission: 'editor',
+        role: 'editor',
       });
       mentionedIds.add(editor._id);
     });
@@ -405,7 +405,7 @@ export function Stats(props: Props): React.ReactElement {
       tempEntities.push({
         _id: viewer._id,
         type: viewer.type,
-        permission: 'viewer',
+        role: 'viewer',
       });
     });
     setEntities(tempEntities);
@@ -593,6 +593,89 @@ export function Stats(props: Props): React.ReactElement {
       overallStats.total_visits /
       (daysBetween(new Date(linkInfo.created_time)) + 1)
     );
+  };
+
+  async function onAddCollaborator(entity: Entity) {
+    const patchReq = {
+      acl: `${entity.role}s`,
+      action: 'add',
+      entry: {
+        _id: entity._id,
+        type: entity.type,
+      },
+    };
+
+    await fetch(`/api/v1/link/${props.id}/acl`, {
+      method: 'PATCH',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(patchReq),
+    });
+    updateLinkInfo();
+  }
+
+  async function onRemoveCollaborator(entity: Entity, role?: string) {
+    const patchReq = {
+      acl: `viewers`,
+      action: 'remove',
+      entry: { _id: entity._id, type: entity.type },
+    };
+
+    if (role === 'viewer' || role === undefined) {
+      await fetch(`/api/v1/link/${props.id}/acl`, {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(patchReq),
+      });
+    }
+
+    patchReq.acl = 'editors';
+
+    if (role === 'editor' || role === undefined) {
+      await fetch(`/api/v1/link/${props.id}/acl`, {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(patchReq),
+      });
+    }
+
+    updateLinkInfo();
+  }
+
+  const onAddEntity = (activeTab: 'netid' | 'org', entity: Entity) => {
+    onAddCollaborator({
+      _id: entity._id,
+      type: activeTab,
+      role: entity.role,
+    });
+  };
+
+  const onRemoveEntity = (activeTab: 'netid' | 'org', entity: Entity) => {
+    onRemoveCollaborator(entity);
+  };
+
+  const onChangeEntity = (
+    activeTab: 'netid' | 'org',
+    entity: Entity,
+    value: string,
+  ) => {
+    // Remove viewer if they're an editor
+    // Search "# SHARING_ACL_REFACTOR" for the following comment
+    if (value === 'viewer' && entity.role === 'editor') {
+      onRemoveCollaborator(entity, 'editor');
+      return;
+    }
+
+    onAddCollaborator({
+      _id: entity._id,
+      type: activeTab,
+      role: value,
+    });
   };
 
   const statTabsKeys = [
@@ -851,46 +934,15 @@ export function Stats(props: Props): React.ReactElement {
 
           <CollaboratorModal
             visible={collabModalVisible}
+            roles={[
+              { label: 'Owner', value: 'owner' },
+              { label: 'Editor', value: 'editor' },
+              { label: 'Viewer', value: 'viewer' },
+            ]}
             people={entities}
-            onAddEntity={async (value) => {
-              const patchReq = {
-                acl: `${value.permission}s`,
-                action: 'add',
-                entry: {
-                  _id: value._id,
-                  type: value.type,
-                },
-              };
-
-              await fetch(`/api/v1/link/${props.id}/acl`, {
-                method: 'PATCH',
-                headers: {
-                  'content-type': 'application/json',
-                },
-                body: JSON.stringify(patchReq),
-              });
-              updateLinkInfo();
-            }}
-            onRemoveEntity={async (
-              _id: string,
-              type: string,
-              permission: string,
-            ) => {
-              const patchReq = {
-                acl: `${permission}s`,
-                action: 'remove',
-                entry: { _id, type },
-              };
-
-              await fetch(`/api/v1/link/${props.id}/acl`, {
-                method: 'PATCH',
-                headers: {
-                  'content-type': 'application/json',
-                },
-                body: JSON.stringify(patchReq),
-              });
-              updateLinkInfo();
-            }}
+            onAddEntity={onAddEntity}
+            onChangeEntity={onChangeEntity}
+            onRemoveEntity={onRemoveEntity}
             onOk={() => {
               setCollabModalVisible(false);
             }}
