@@ -28,6 +28,7 @@ import {
   WarningFilled,
   EditOutlined,
   UserAddOutlined,
+  TeamOutlined,
 } from '@ant-design/icons';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import dayjs from 'dayjs';
@@ -35,6 +36,7 @@ import type { FormInstance } from 'antd/lib/form';
 
 import { MemberInfo, OrgInfo, getOrgInfo } from '../../api/Org';
 import { serverValidateNetId, serverValidateOrgName } from '../../Validators';
+import CollaboratorModal, { Entity } from '../../modals/CollaboratorModal';
 
 type RouteParams = {
   id: string;
@@ -281,10 +283,10 @@ function ManageOrgBase({
               <>
                 <Button
                   type="primary"
-                  icon={<UserAddOutlined />}
+                  icon={<TeamOutlined />}
                   onClick={() => setShareModalVisible(true)}
                 >
-                  Invite
+                  Collaborate
                 </Button>
               </>
             )}
@@ -397,20 +399,35 @@ function ManageOrgBase({
         </Space>
       </Modal>
 
-      <Modal
-        title="Add Member"
-        open={shareModalVisible}
-        footer={null}
+      <CollaboratorModal
+        // eslint-disable-next-line react/jsx-boolean-value
+        multipleMasters={true}
+        visible={shareModalVisible}
+        roles={[
+          { label: 'Admin', value: 'admin' },
+          { label: 'Member', value: 'member' },
+        ]}
+        people={orgInfo.members.map((member) => ({
+          _id: member.netid,
+          type: 'netid',
+          role: member.is_admin ? 'admin' : 'member',
+        }))}
+        onAddEntity={(_activeTab: 'netid' | 'org', value: Entity) => {
+          onAddMember(value._id, false);
+        }}
+        onRemoveEntity={(_activeTab: 'netid' | 'org', value: Entity) => {
+          onDeleteMember(value._id);
+        }}
+        onChangeEntity={(
+          _activeTab: 'netid' | 'org',
+          value: Entity,
+          newRole: string,
+        ) => {
+          onChangeAdmin(value._id, newRole === 'admin');
+        }}
         onCancel={() => setShareModalVisible(false)}
-      >
-        <AddMemberForm
-          isAdmin={isAdmin}
-          onCreate={async (netid, is_admin) => {
-            await onAddMember(netid, is_admin);
-            setShareModalVisible(false);
-          }}
-        />
-      </Modal>
+        onOk={() => setShareModalVisible(false)}
+      />
     </>
   );
 }

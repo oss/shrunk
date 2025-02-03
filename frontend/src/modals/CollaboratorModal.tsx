@@ -39,6 +39,9 @@ interface ICollaboratorModal {
   onRemoveEntity: (activeTab: 'netid' | 'org', value: Entity) => void;
   onOk: () => void;
   onCancel: () => void;
+
+  // eslint-disable-next-line react/require-default-props
+  multipleMasters?: boolean;
 }
 
 export default function CollaboratorModal(props: ICollaboratorModal) {
@@ -74,6 +77,13 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
 
     refreshOrganizations();
   }, []);
+
+  const mastersCount = props.people.filter(
+    (entity) => entity.role === masterRole,
+  ).length;
+
+  const canAddMaster = props.multipleMasters || mastersCount === 0;
+  const canDemoteMaster = props.multipleMasters && mastersCount > 1;
 
   return (
     <Modal
@@ -142,9 +152,10 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                 onChange={(value: string) => {
                   setCollaboratorRole(value);
                 }}
-                options={props.roles.map((role) => ({
+                options={props.roles.slice(1).map((role) => ({
                   value: role.value,
                   label: role.label,
+                  disabled: role.value === masterRole && !canAddMaster,
                 }))}
               />
               <Button
@@ -184,6 +195,10 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                     ? entity._id
                     : organizations.find((org) => org.id === entity._id)?.name;
 
+                const isMaster = entity.role === masterRole;
+                const canChangeRole =
+                  !isMaster || (isMaster && canDemoteMaster);
+
                 return (
                   <>
                     <Col span={12}>{displayName}</Col>
@@ -195,21 +210,13 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                           onChange={(value: string) => {
                             props.onChangeEntity(activeTab, entity, value);
                           }}
-                          options={props.roles.map((role) => {
-                            if (role.value === masterRole) {
-                              return {
-                                value: role.value,
-                                label: role.label,
-                                disabled: true,
-                              };
-                            }
-
-                            return {
-                              value: role.value,
-                              label: role.label,
-                              disabled: entity.role === masterRole,
-                            };
-                          })}
+                          options={props.roles.map((role) => ({
+                            value: role.value,
+                            label: role.label,
+                            disabled:
+                              (role.value === masterRole && !canAddMaster) ||
+                              (!canChangeRole && role.value !== entity.role),
+                          }))}
                         />
 
                         <Popconfirm
@@ -217,9 +224,20 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                           onConfirm={() => {
                             props.onRemoveEntity(activeTab, entity);
                           }}
+                          disabled={isMaster && !canDemoteMaster}
                         >
-                          <Tooltip title="Remove collaborator">
-                            <Button type="text" icon={<CloseOutlined />} />
+                          <Tooltip
+                            title={
+                              isMaster && !canDemoteMaster
+                                ? `Cannot remove the only ${masterRole}`
+                                : 'Remove collaborator'
+                            }
+                          >
+                            <Button
+                              type="text"
+                              icon={<CloseOutlined />}
+                              disabled={isMaster && !canDemoteMaster}
+                            />
                           </Tooltip>
                         </Popconfirm>
                       </Space>
