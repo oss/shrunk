@@ -153,10 +153,10 @@ class TicketsClient:
         # Construct the email
         SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
         HTML_TEMPLATE_PATH = os.path.join(
-            SCRIPT_DIR, "../templates/html/tickets", f"{category}.html"
+            SCRIPT_DIR, "../static/html/tickets", f"{category}.html"
         )
         PLAINTEXT_TEMPLATE_PATH = os.path.join(
-            SCRIPT_DIR, "../templates/txt/tickets", f"{category}.txt"
+            SCRIPT_DIR, "../static/txt/tickets", f"{category}.txt"
         )
 
         from_email = "go-support@oit.rutgers.edu"
