@@ -16,12 +16,18 @@ interface Props {
    * @property
    */
   netid: string;
+
+  /**
+   * A set of the user's privileges.
+   * @property
+   */
+  userPrivileges: Set<string>;
 }
 
 /**
  * Component for the help desk page
  */
-const HelpDesk: React.FC<Props> = ({ netid }) => {
+const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
   /**
    * State for the [[TicketTable]] component
    *
@@ -36,7 +42,13 @@ const HelpDesk: React.FC<Props> = ({ netid }) => {
       key: 'table',
       icon: <TableOutlined />,
       label: 'My Tickets',
-      children: <TicketTable netid={netid} helpDeskText={helpDeskText} />,
+      children: (
+        <TicketTable
+          netid={netid}
+          userPrivileges={userPrivileges}
+          helpDeskText={helpDeskText}
+        />
+      ),
     },
     {
       key: 'form',

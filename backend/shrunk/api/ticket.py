@@ -151,6 +151,50 @@ def get_tickets(netid: str, client: ShrunkClient):
     return jsonify(client.tickets.get_tickets(sort, reporter))
 
 
+@bp.route("/<b32:id>", methods=["GET"])
+@require_login
+def get_ticket(netid: str, client: ShrunkClient, id: str):
+    """``GET /api/ticket/<id>``
+
+    Get a ticket by its ID.
+
+    :param netid: the NetID of the user
+    :param client: the Shrunk client
+    :param id: the ID of the ticket
+
+    :return: the ticket
+
+    .. code-block:: json
+
+        {
+            "_id": str,
+            "reporter": str,
+            "reason": str,
+            "entity": str,
+            "comment": str,
+            "timestamp": str,
+        }
+    """
+    # Disable route according to help desk configuration
+    if (
+        not client.roles.has("admin", netid)
+        and not client.tickets.get_help_desk_enabled()
+    ):
+        return Response(status=403)
+
+    ticket = client.tickets.get_ticket(ticket_id=id)
+
+    # Ticket does not exist
+    if not ticket:
+        return Response(status=404)
+
+    # User is not the reporter or an admin
+    if ticket["reporter"] != netid and not client.roles.has("admin", netid):
+        return Response(status=403)
+
+    return jsonify(ticket)
+
+
 @bp.route("", methods=["POST"])
 @require_login
 def create_ticket(netid: str, client: ShrunkClient) -> Response:
@@ -198,6 +242,7 @@ def create_ticket(netid: str, client: ShrunkClient) -> Response:
     entity = (
         data.get("entity") if reason != "power_user" else netid
     )  # Set the entity to self if the reason is power_user
+    data["entity"] = entity
     data["reporter"] = reporter
 
     # Duplicate ticket already exists or the user already has the role
@@ -233,7 +278,7 @@ def delete_ticket(netid: str, client: ShrunkClient, id: str) -> Response:
         not client.roles.has("admin", netid)
         and not client.tickets.get_help_desk_enabled()
     ):
-        return abort(403)
+        return Response(status=403)
 
     # Ticket does not exist (nothing happens, but we return 204)
     ticket = client.tickets.get_ticket(ticket_id=id)

@@ -382,7 +382,7 @@ export default function Shrunk(props: Props) {
 
                 {!showAdminTab && isHelpDeskEnabled && (
                   <Route exact path="/tickets">
-                    <HelpDesk netid={netid} />
+                    <HelpDesk netid={netid} userPrivileges={userPrivileges} />
                   </Route>
                 )}
 

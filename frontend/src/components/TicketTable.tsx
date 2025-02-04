@@ -2,8 +2,12 @@ import { DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import {
   App,
   Button,
+  Card,
+  Col,
   Popconfirm,
+  Row,
   Space,
+  Statistic,
   Table,
   Tooltip,
   Typography,
@@ -27,6 +31,12 @@ interface Props {
   netid: string;
 
   /**
+   * A set of the user's privileges.
+   * @property
+   */
+  userPrivileges: Set<string>;
+
+  /**
    * Help desk text
    * @property
    */
@@ -36,14 +46,20 @@ interface Props {
 /**
  * Component for the table of tickets
  */
-const TicketTable: React.FC<Props> = ({ netid, helpDeskText }) => {
+const TicketTable: React.FC<Props> = ({
+  netid,
+  userPrivileges,
+  helpDeskText,
+}) => {
   /**
    * State for the [[TicketTable]] component
    *
    * loading: Whether the component is loading
+   * enabled: Whether the help desk is enabled
    * tickets: The list of tickets from the currently logged in user
    */
   const [loading, setLoading] = useState<boolean>(false);
+  const [isHelpDeskEnabled, setIsHelpDeskEnabled] = useState<boolean>(false);
   const [tickets, setTickets] = useState<TicketInfo[]>([]);
 
   const { message } = App.useApp();
@@ -77,6 +93,18 @@ const TicketTable: React.FC<Props> = ({ netid, helpDeskText }) => {
     } else {
       message.error('Failed to delete ticket', 2);
     }
+  };
+
+  /**
+   * Get the Help Desk status
+   * @method
+   */
+  const fetchIsHelpDeskEnabled = async () => {
+    setLoading(true);
+    const response = await fetch('/api/v1/ticket/enabled');
+    const body = await response.json();
+    setIsHelpDeskEnabled(body.enabled);
+    setLoading(false);
   };
 
   /**
@@ -131,6 +159,9 @@ const TicketTable: React.FC<Props> = ({ netid, helpDeskText }) => {
   // Fetch the tickets for the currently logged in user
   useEffect(() => {
     fetchTickets();
+    if (userPrivileges.has('admin')) {
+      fetchIsHelpDeskEnabled();
+    }
   }, []);
 
   const columns = [
@@ -172,14 +203,37 @@ const TicketTable: React.FC<Props> = ({ netid, helpDeskText }) => {
   ];
 
   return (
-    <Table
-      dataSource={tickets}
-      columns={columns}
-      rowKey="_id"
-      pagination={false}
-      locale={{ emptyText: 'No pending tickets' }}
-      loading={loading}
-    />
+    <Row gutter={[16, 16]}>
+      <Col span={24}>
+        {userPrivileges.has('admin') && (
+          <Row gutter={[16, 16]}>
+            <Col span={12}>
+              <Card loading={loading}>
+                <Statistic
+                  title="Status"
+                  value={isHelpDeskEnabled ? 'Enabled' : 'Disabled'}
+                />
+              </Card>
+            </Col>
+            <Col span={12}>
+              <Card loading={loading}>
+                <Statistic title="Ticket Count" value={tickets.length} />
+              </Card>
+            </Col>
+          </Row>
+        )}
+      </Col>
+      <Col span={24}>
+        <Table
+          dataSource={tickets}
+          columns={columns}
+          rowKey="_id"
+          pagination={false}
+          locale={{ emptyText: 'No pending tickets' }}
+          loading={loading}
+        />
+      </Col>
+    </Row>
   );
 };
 

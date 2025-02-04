@@ -25,7 +25,7 @@ export interface TicketInfo {
    * The entity the ticket is about (same as the reporter if reason is "power_user", empty if reason is "other")
    * @property
    */
-  entity: string;
+  entity?: string;
 
   /**
    * The comment on the ticket
@@ -49,17 +49,17 @@ export interface EntityPositionInfo {
    * A list of titles for the entity
    * @property
    */
-  titles: string[];
+  titles?: string[];
 
   /**
    * A list of departments for the entity
    * @property
    */
-  departments: string[];
+  departments?: string[];
 
   /**
    * A list of employment types for the entity
    * @property
    */
-  employmentTypes: string[];
+  employmentTypes?: string[];
 }

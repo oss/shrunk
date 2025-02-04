@@ -148,11 +148,13 @@ class UserClient:
         return is_valid_netid(entity)
 
     def get_position_info(self, entity: str) -> Dict[str, List[str]]:
-        """Get the position info for a user needed to make role request decisions.
+        """Get the position info for a user needed to make role request
+        decisions.
 
         :param entity: The entity to get the position info for.
 
-        :returns Dict[str, List[str]]: The role request position info for the entity. It is formatted as follows:
+        :returns Dict[str, List[str]]: The role request position info for the
+        entity. It is formatted as follows:
 
         .. code-block:: json
 
@@ -163,12 +165,16 @@ class UserClient:
         }
         """
         position_info = query_position_info(entity)
+
+        # LDAP queries are disabled
         if position_info is None:
             return {
                 "titles": ["LDAP queries disabled"],
                 "departments": ["LDAP queries disabled"],
                 "employmentTypes": ["LDAP queries disabled"],
             }
+
+        # LDAP queries are enabled
         formatted_position_info = {
             "titles": position_info.get("title", ["No titles found"]),
             "departments": position_info.get(
