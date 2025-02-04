@@ -42,6 +42,8 @@ interface ICollaboratorModal {
 
   // eslint-disable-next-line react/require-default-props
   multipleMasters?: boolean;
+  // eslint-disable-next-line react/require-default-props
+  onlyActiveTab?: 'netid' | 'org';
 }
 
 export default function CollaboratorModal(props: ICollaboratorModal) {
@@ -63,18 +65,18 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
 
   const masterRole = props.roles[0].value;
 
-  useEffect(() => {
-    const permissionOrder: { [key: string]: number } = {};
-    props.roles.forEach((role, index) => {
-      permissionOrder[role.value] = index;
-    });
-    props.people.sort((a: Entity, b: Entity) => {
-      if (a.role === undefined || b.role === undefined) {
-        throw new Error('Entity must have a role');
-      }
-      return permissionOrder[a.role] - permissionOrder[b.role];
-    });
+  const permissionOrder: { [key: string]: number } = {};
+  props.roles.forEach((role, index) => {
+    permissionOrder[role.value] = index;
+  });
+  props.people.sort((a: Entity, b: Entity) => {
+    if (a.role === undefined || b.role === undefined) {
+      throw new Error('Entity must have a role');
+    }
+    return permissionOrder[a.role] - permissionOrder[b.role];
+  });
 
+  useEffect(() => {
     refreshOrganizations();
   }, []);
 
@@ -147,17 +149,19 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                   </Select>
                 </Form.Item>
               )}
-              <Select
-                defaultValue={collaboratorRole}
-                onChange={(value: string) => {
-                  setCollaboratorRole(value);
-                }}
-                options={props.roles.slice(1).map((role) => ({
-                  value: role.value,
-                  label: role.label,
-                  disabled: role.value === masterRole && !canAddMaster,
-                }))}
-              />
+              {props.roles.length > 2 && (
+                <Select
+                  defaultValue={collaboratorRole}
+                  onChange={(value: string) => {
+                    setCollaboratorRole(value);
+                  }}
+                  options={props.roles.slice(1).map((role) => ({
+                    value: role.value,
+                    label: role.label,
+                    disabled: role.value === masterRole && !canAddMaster,
+                  }))}
+                />
+              )}
               <Button
                 icon={<PlusCircleFilled />}
                 onClick={() => {
@@ -181,8 +185,12 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
               activeKey={activeTab}
               onChange={(value) => setActiveTab(value as 'netid' | 'org')}
             >
-              <Tabs.TabPane tab="People" key="netid" />
-              <Tabs.TabPane tab="Organizations" key="org" />
+              {['netid', undefined].includes(props.onlyActiveTab) && (
+                <Tabs.TabPane tab="People" key="netid" />
+              )}
+              {['org', undefined].includes(props.onlyActiveTab) && (
+                <Tabs.TabPane tab="Organizations" key="org" />
+              )}
             </Tabs>
             <Row gutter={[2, 16]} justify="space-between" align="middle">
               {props.people.map((entity) => {

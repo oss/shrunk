@@ -27,7 +27,6 @@ import {
   ExclamationCircleOutlined,
   WarningFilled,
   EditOutlined,
-  UserAddOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
@@ -400,6 +399,7 @@ function ManageOrgBase({
       </Modal>
 
       <CollaboratorModal
+        onlyActiveTab="netid"
         // eslint-disable-next-line react/jsx-boolean-value
         multipleMasters={true}
         visible={shareModalVisible}
