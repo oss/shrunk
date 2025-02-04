@@ -134,7 +134,7 @@ export default function Shrunk(props: Props) {
       } else {
         key = 'admin';
       }
-    } else if (route.startsWith('#/help')) {
+    } else if (route.startsWith('#/tickets')) {
       key = 'help';
     } else if (route.startsWith('#/faq')) {
       key = 'faq';
@@ -187,7 +187,7 @@ export default function Shrunk(props: Props) {
           {
             key: 'help',
             icon: <BugOutlined />,
-            label: <NavLink to="/help">Help Desk</NavLink>,
+            label: <NavLink to="/tickets">Help Desk</NavLink>,
           },
         ]
       : []),
@@ -227,7 +227,7 @@ export default function Shrunk(props: Props) {
     linkhubs: { name: 'LinkHub', clickable: false },
     orgs: { name: 'My Organizations', clickable: true },
     admin: { name: 'Admin Dashboard', clickable: true },
-    help: { name: 'Help Desk', clickable: true },
+    tickets: { name: 'Help Desk', clickable: true },
     roles: { name: 'Role', clickable: false },
     faq: { name: 'FAQ', clickable: true },
     links: { name: 'Links', clickable: false },
@@ -380,9 +380,22 @@ export default function Shrunk(props: Props) {
                 </Route>
 
                 {!showAdminTab && isHelpDeskEnabled && (
-                  <Route exact path="/help">
+                  <Route exact path="/tickets">
                     <HelpDesk netid={netid} />
                   </Route>
+                )}
+
+                {(showAdminTab || isHelpDeskEnabled) && (
+                  <Route
+                    exact
+                    path="/tickets/:id"
+                    render={(route) => (
+                      <Ticket
+                        ticketID={route.match.params.id}
+                        userPrivileges={userPrivileges}
+                      />
+                    )}
+                  />
                 )}
 
                 <Route exact path="/faq">

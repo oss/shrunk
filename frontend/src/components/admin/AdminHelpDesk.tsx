@@ -19,7 +19,7 @@ import {
 import dayjs from 'dayjs';
 import base32 from 'hi-base32';
 import React, { useEffect, useState } from 'react';
-import { Ticket, EntityPositionInfo } from '../../types';
+import { TicketInfo, EntityPositionInfo } from '../../types';
 
 const { Sider, Content } = Layout;
 const { Title, Text } = Typography;
@@ -28,7 +28,7 @@ const { Title, Text } = Typography;
  * Component for the ticket review
  */
 const TicketReview: React.FC<{
-  ticket: Ticket;
+  ticket: TicketInfo;
   onTicketDeleted: () => void;
   messageApi: any;
 }> = ({ ticket, onTicketDeleted, messageApi }) => {
@@ -107,7 +107,7 @@ const TicketReview: React.FC<{
    * @param comment - The comment when the ticket was resolved
    */
   const sendEmail = async (
-    resolved_ticket: Ticket,
+    resolved_ticket: TicketInfo,
     approved?: boolean,
     comment?: string,
   ) => {
@@ -269,7 +269,7 @@ const AdminHelpDesk: React.FC = () => {
    */
   const [isHelpDeskEnabled, setIsHelpDeskEnabled] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [tickets, setTickets] = useState<TicketInfo[]>([]);
   const [selectedId, setSelectedId] = useState<string>('');
   const [sortOrder, setSortOrder] = useState<string>('desc');
   const [messageApi, contextHolder] = message.useMessage();
@@ -285,7 +285,7 @@ const AdminHelpDesk: React.FC = () => {
     setTickets(body);
     if (
       !selectedId ||
-      !body.find((ticket: Ticket) => ticket._id === selectedId)
+      !body.find((ticket: TicketInfo) => ticket._id === selectedId)
     ) {
       setSelectedId(body[0]?._id || '');
     }

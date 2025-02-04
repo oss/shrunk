@@ -1,6 +1,6 @@
 import { Button, Form, Input, Result, Select, Typography } from 'antd/lib';
 import React, { useState } from 'react';
-import { Ticket } from '../types';
+import { TicketInfo } from '../types';
 
 const { Text } = Typography;
 
@@ -9,12 +9,6 @@ const { Text } = Typography;
  * @interface
  */
 interface Props {
-  /**
-   * The NetID of the currently logged in user
-   * @property
-   */
-  netid: string;
-
   /**
    * Help desk text
    * @property
@@ -25,7 +19,7 @@ interface Props {
 /**
  * Component for the ticket submission form
  */
-const TicketForm: React.FC<Props> = ({ netid, helpDeskText }) => {
+const TicketForm: React.FC<Props> = ({ helpDeskText }) => {
   /**
    * State for the [[TicketForm]] component
    *
@@ -46,27 +40,22 @@ const TicketForm: React.FC<Props> = ({ netid, helpDeskText }) => {
    * @param values - The values of the form fields
    * @returns the ticket
    */
-  const submitTicket = async (values: any): Promise<Ticket> => {
+  const submitTicket = async (values: any): Promise<TicketInfo> => {
     setSubmitting(true);
-    const body = {
-      reporter: netid,
-      ...values,
-      ...(values.reason === 'power_user' && { entity: netid }),
-    };
 
     const response = await fetch('/api/v1/ticket', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(values),
     });
 
     setTicketStatus(response.status);
     setSubmitting(false);
 
     if (!response.ok) {
-      return {} as Ticket;
+      return {} as TicketInfo;
     }
 
     const data = await response.json();
@@ -80,7 +69,7 @@ const TicketForm: React.FC<Props> = ({ netid, helpDeskText }) => {
    * @param ticket - The ticket that was just submitted
    * @param category - The category of the email
    */
-  const sendEmail = async (ticket: Ticket, category: string) => {
+  const sendEmail = async (ticket: TicketInfo, category: string) => {
     const body = {
       ticketID: ticket._id,
       category,

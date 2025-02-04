@@ -11,7 +11,7 @@ import {
 import dayjs from 'dayjs';
 import base32 from 'hi-base32';
 import React, { useEffect, useState } from 'react';
-import { Ticket } from '../types';
+import { TicketInfo } from '../types';
 
 const { Text } = Typography;
 const { useMessage } = message;
@@ -45,7 +45,7 @@ const TicketTable: React.FC<Props> = ({ netid, helpDeskText }) => {
    * tickets: The list of tickets from the currently logged in user
    */
   const [loading, setLoading] = useState<boolean>(false);
-  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [tickets, setTickets] = useState<TicketInfo[]>([]);
 
   const [messageApi, contextHolder] = useMessage();
 
@@ -65,10 +65,10 @@ const TicketTable: React.FC<Props> = ({ netid, helpDeskText }) => {
    * Delete the ticket with the given ID
    * @method
    *
-   * @param ticketId - The ID of the ticket to delete
+   * @param ticketID - The ID of the ticket to delete
    */
-  const deleteTicket = async (ticketId: string) => {
-    const response = await fetch(`/api/v1/ticket/${base32.encode(ticketId)}`, {
+  const deleteTicket = async (ticketID: string) => {
+    const response = await fetch(`/api/v1/ticket/${base32.encode(ticketID)}`, {
       method: 'DELETE',
     });
 
@@ -106,7 +106,7 @@ const TicketTable: React.FC<Props> = ({ netid, helpDeskText }) => {
    *
    * @param record - The ticket record
    */
-  const renderActions = (record: Ticket) => (
+  const renderActions = (record: TicketInfo) => (
     <Space>
       <Tooltip title="View">
         <Button
@@ -167,7 +167,7 @@ const TicketTable: React.FC<Props> = ({ netid, helpDeskText }) => {
     {
       title: 'Actions',
       key: 'actions',
-      render: (record: Ticket) => renderActions(record),
+      render: (record: TicketInfo) => renderActions(record),
       width: '20%',
     },
   ];

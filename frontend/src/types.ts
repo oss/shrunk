@@ -2,7 +2,7 @@
  * A ticket object from the Help Desk
  * @interface
  */
-export interface Ticket {
+export interface TicketInfo {
   /**
    * The ID of the ticket
    * @property

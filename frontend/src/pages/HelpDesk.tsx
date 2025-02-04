@@ -42,7 +42,7 @@ const HelpDesk: React.FC<Props> = ({ netid }) => {
       key: 'form',
       icon: <FormOutlined />,
       label: 'New Ticket',
-      children: <TicketForm netid={netid} helpDeskText={helpDeskText} />,
+      children: <TicketForm helpDeskText={helpDeskText} />,
     },
   ];
 

@@ -166,7 +166,6 @@ def create_ticket(netid: str, client: ShrunkClient) -> Response:
     .. code-block:: json
 
         {
-            "reporter": str,
             "reason": str,
             "entity": str,
             "comment": str,
@@ -188,18 +187,18 @@ def create_ticket(netid: str, client: ShrunkClient) -> Response:
     if not client.tickets.get_help_desk_enabled():
         return Response(status=403)
 
-    data = request.get_json()
-    reporter = data.get("reporter")
-    reason = data.get("reason")
-    entity = data.get("entity")
-
-    # Reporter is not the same as the logged in user (should never happen)
-    if reporter != netid and not client.roles.has("admin", netid):
-        return Response(status=403)
-
     # Reporter has too many pending tickets. For now, the hard limit is 10.
+    reporter = netid
+
     if client.tickets.count_tickets(reporter) >= 10:
         return Response(status=429)
+
+    data = request.get_json()
+    reason = data.get("reason")
+    entity = (
+        data.get("entity") if reason != "power_user" else netid
+    )  # Set the entity to self if the reason is power_user
+    data["reporter"] = reporter
 
     # Duplicate ticket already exists or the user already has the role
     if (
