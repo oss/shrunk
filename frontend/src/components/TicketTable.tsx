@@ -1,12 +1,12 @@
 import { DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import {
+  App,
   Button,
   Popconfirm,
   Space,
   Table,
   Tooltip,
   Typography,
-  message,
 } from 'antd/lib';
 import dayjs from 'dayjs';
 import base32 from 'hi-base32';
@@ -14,7 +14,6 @@ import React, { useEffect, useState } from 'react';
 import { TicketInfo } from '../types';
 
 const { Text } = Typography;
-const { useMessage } = message;
 
 /**
  * Props for the [[TicketTable]] component
@@ -47,7 +46,7 @@ const TicketTable: React.FC<Props> = ({ netid, helpDeskText }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [tickets, setTickets] = useState<TicketInfo[]>([]);
 
-  const [messageApi, contextHolder] = useMessage();
+  const { message } = App.useApp();
 
   /**
    * Fetch the tickets for the currently logged in user
@@ -74,9 +73,9 @@ const TicketTable: React.FC<Props> = ({ netid, helpDeskText }) => {
 
     if (response.status === 204) {
       fetchTickets();
-      messageApi.success('Successfully deleted ticket', 2);
+      message.success('Successfully deleted ticket', 2);
     } else {
-      messageApi.error('Failed to delete ticket', 2);
+      message.error('Failed to delete ticket', 2);
     }
   };
 
@@ -173,17 +172,14 @@ const TicketTable: React.FC<Props> = ({ netid, helpDeskText }) => {
   ];
 
   return (
-    <>
-      {contextHolder}
-      <Table
-        dataSource={tickets}
-        columns={columns}
-        rowKey="_id"
-        pagination={false}
-        locale={{ emptyText: 'No pending tickets' }}
-        loading={loading}
-      />
-    </>
+    <Table
+      dataSource={tickets}
+      columns={columns}
+      rowKey="_id"
+      pagination={false}
+      locale={{ emptyText: 'No pending tickets' }}
+      loading={loading}
+    />
   );
 };
 

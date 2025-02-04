@@ -1,20 +1,11 @@
 import { DeleteOutlined } from '@ant-design/icons';
-import {
-  Button,
-  Card,
-  Col,
-  Popconfirm,
-  Row,
-  Typography,
-  message,
-} from 'antd/lib';
+import { App, Button, Card, Col, Popconfirm, Row, Typography } from 'antd/lib';
 import base32 from 'hi-base32';
 import React, { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { TicketInfo } from '../../types';
 
 const { Title } = Typography;
-const { useMessage } = message;
 
 /**
  * Props for the [[Ticket]] component
@@ -42,8 +33,8 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
   const [helpDeskText, setHelpDeskText] = useState<any>(false);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const [messageApi, contextHolder] = useMessage();
   const history = useHistory();
+  const { message } = App.useApp();
 
   /**
    * Delete the ticket
@@ -59,10 +50,11 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
       if (userPrivileges.has('admin')) {
         history.push('/admin/tickets');
       } else {
+        message.success('Successfully deleted ticket', 2);
         history.push('/tickets');
       }
     } else {
-      messageApi.error('Failed to delete ticket');
+      message.error('Failed to delete ticket');
     }
   };
 
@@ -97,7 +89,6 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
 
   return (
     <>
-      {contextHolder}
       <Row gutter={[16, 16]}>
         <Col span={24}>
           <Row justify="space-between" align="middle">
