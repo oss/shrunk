@@ -12,7 +12,7 @@ const { Title } = Typography;
  */
 interface Props {
   /**
-   * The NetID of the currently logged in user
+   * NetID of the user
    * @property
    */
   netid: string;
@@ -27,7 +27,7 @@ const HelpDesk: React.FC<Props> = ({ netid }) => {
       key: 'table',
       icon: <TableOutlined />,
       label: 'My Tickets',
-      children: <TicketTable />,
+      children: <TicketTable netid={netid} />,
     },
     {
       key: 'form',

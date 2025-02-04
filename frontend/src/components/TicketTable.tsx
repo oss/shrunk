@@ -1,76 +1,47 @@
+import { DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import {
   Button,
-  Col,
-  message,
   Popconfirm,
-  Row,
+  Space,
   Table,
+  Tooltip,
   Typography,
+  message,
 } from 'antd/lib';
 import dayjs from 'dayjs';
 import base32 from 'hi-base32';
 import React, { useEffect, useState } from 'react';
+import { Ticket } from '../types';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
+const { useMessage } = message;
 
 /**
- * Attributes for the ticket table. Not all attributes are displayed in the table
+ * Props for the [[TicketTable]] component
  * @interface
  */
-export interface Ticket {
+interface Props {
   /**
-   * The ID of the ticket
+   * The NetID of the currently logged in user
    * @property
    */
-  _id: string;
-
-  /**
-   * The NetID of the reporter
-   * @property
-   */
-  reporter: string;
-
-  /**
-   * The reason for the ticket
-   * @property
-   */
-  reason: string;
-
-  /**
-   * The entity the ticket is about (same as the reporter if reason is "power_user", empty if reason is "other")
-   * @property
-   */
-  entity: string;
-
-  /**
-   * The comment on the ticket
-   * @property
-   */
-  comment: string;
-
-  /**
-   * When the ticket was created
-   * @property
-   */
-  timestamp: Date;
+  netid: string;
 }
 
 /**
  * Component for the table of tickets
  */
-const TicketTable: React.FC = () => {
+const TicketTable: React.FC<Props> = ({ netid }) => {
   /**
    * State for the [[TicketTable]] component
    *
    * loading: Whether the component is loading
-   * messageApi: The message API for the component
    * tickets: The list of tickets from the currently logged in user
-   * selectedIds: The IDs of the selected tickets
    */
   const [loading, setLoading] = useState<boolean>(false);
-  const [messageApi, contextHolder] = message.useMessage();
   const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const [messageApi, contextHolder] = useMessage();
 
   /**
    * Fetch the tickets for the currently logged in user
@@ -78,42 +49,29 @@ const TicketTable: React.FC = () => {
    */
   const fetchTickets = async () => {
     setLoading(true);
-    const response = await fetch(`/api/v1/ticket`);
+    const response = await fetch(`/api/v1/ticket?sort=-timestamp`);
     const body = await response.json();
     setTickets(body);
     setLoading(false);
   };
 
   /**
-   * Delete the currently selected tickets
+   * Delete the ticket with the given ID
    * @method
+   *
+   * @param ticketId - The ID of the ticket to delete
    */
-  const deleteTickets = async () => {
-    const deletePromises = selectedIds.map((ticketId) =>
-      fetch(`/api/v1/ticket/${base32.encode(ticketId)}`, {
-        method: 'DELETE',
-      }),
-    );
+  const deleteTicket = async (ticketId: string) => {
+    const response = await fetch(`/api/v1/ticket/${base32.encode(ticketId)}`, {
+      method: 'DELETE',
+    });
 
-    const responses = await Promise.all(deletePromises);
-    const allSuccessful = responses.every(
-      (response) => response.status === 204,
-    );
-
-    if (allSuccessful) {
+    if (response.status === 204) {
       fetchTickets();
-      setSelectedIds([]);
-      messageApi.success('Successfully deleted ticket(s)', 2);
+      messageApi.success('Successfully deleted ticket', 2);
     } else {
-      messageApi.error('Failed to delete some ticket(s)', 2);
+      messageApi.error('Failed to delete ticket', 2);
     }
-  };
-
-  // Selection configuration for the table. Used to select multiple tickets to delete
-  const ticketSelection = {
-    selectedRowKeys: selectedIds,
-    onChange: (selectedRowKeys: React.Key[]) =>
-      setSelectedIds(selectedRowKeys as string[]),
   };
 
   /**
@@ -143,13 +101,51 @@ const TicketTable: React.FC = () => {
   /**
    * Render the entity column in the table
    * @method
+   *
+   * @param entity - The entity to render
    */
   const renderEntity = (entity: string) => {
     if (!entity) {
       return <Text italic>N/A</Text>;
     }
+    if (entity === netid) {
+      return (
+        <Text>
+          {netid} <Text italic>(self)</Text>
+        </Text>
+      );
+    }
     return entity;
   };
+
+  /**
+   * Render the actions column in the table
+   * @method
+   *
+   * @param record - The ticket record
+   */
+  const renderActions = (record: Ticket) => (
+    <Space>
+      <Tooltip title="View">
+        <Button
+          type="text"
+          icon={<EyeOutlined />}
+          href={`/app/#/tickets/${record._id}`}
+        />
+      </Tooltip>
+      <Tooltip title="Delete">
+        <Popconfirm
+          title="Are you sure you want to delete this ticket?"
+          onConfirm={() => deleteTicket(record._id)}
+          okText="Yes"
+          cancelText="No"
+          okButtonProps={{ danger: true }}
+        >
+          <Button type="text" danger icon={<DeleteOutlined />} />
+        </Popconfirm>
+      </Tooltip>
+    </Space>
+  );
 
   // Fetch the tickets for the currently logged in user
   useEffect(() => {
@@ -161,14 +157,14 @@ const TicketTable: React.FC = () => {
       title: 'ID',
       dataIndex: '_id',
       key: '_id',
-      width: '10%',
+      width: '20%',
     },
     {
       title: 'Reason',
       dataIndex: 'reason',
       key: 'reason',
       render: (reason: string) => renderReason(reason),
-      width: '20%',
+      width: '25%',
     },
     {
       title: 'Associated NetID',
@@ -178,51 +174,27 @@ const TicketTable: React.FC = () => {
       width: '15%',
     },
     {
-      title: 'Comment',
-      dataIndex: 'comment',
-      key: 'comment',
-      width: '40%',
-    },
-    {
       title: 'Submission Date',
       dataIndex: 'timestamp',
       key: 'timestamp',
       render: (timestamp: Date) => renderTimestamp(timestamp),
-      width: '15%',
+      width: '20%',
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (record: Ticket) => renderActions(record),
+      width: '20%',
     },
   ];
 
   return (
     <>
       {contextHolder}
-      <Row gutter={[16, 16]}>
-        <Col span={24}>
-          <Row justify="space-between" align="middle">
-            <Col>
-              <Title level={2}>My Tickets</Title>
-            </Col>
-            <Col>
-              <Popconfirm
-                title="Are you sure?"
-                onConfirm={deleteTickets}
-                okText="Yes"
-                cancelText="No"
-              >
-                <Button type="primary" disabled={!selectedIds.length}>
-                  {selectedIds.length > 0
-                    ? `Delete (${selectedIds.length})`
-                    : 'Delete'}
-                </Button>
-              </Popconfirm>
-            </Col>
-          </Row>
-        </Col>
-      </Row>
       <Table
         dataSource={tickets}
         columns={columns}
         rowKey="_id"
-        rowSelection={ticketSelection}
         pagination={false}
         locale={{ emptyText: 'No pending tickets' }}
         loading={loading}

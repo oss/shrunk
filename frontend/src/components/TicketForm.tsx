@@ -8,9 +8,9 @@ import {
   Typography,
 } from 'antd/lib';
 import React, { useEffect, useState } from 'react';
-import { Ticket } from './TicketTable';
+import { Ticket } from '../types';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 /**
  * Props for the [[TicketForm]] component
@@ -207,7 +207,6 @@ const TicketForm: React.FC<Props> = ({ netid }) => {
           layout="vertical"
           requiredMark={false}
         >
-          <Title level={2}>New Ticket</Title>
           <Form.Item
             label="Reason"
             name="reason"

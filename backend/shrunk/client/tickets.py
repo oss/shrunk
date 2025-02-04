@@ -255,23 +255,18 @@ class TicketsClient:
         return self.db.tickets.find_one(query)
 
     def get_tickets(
-        self, reporter: Optional[str] = None, order: Optional[str] = None
+        self, sort: List[tuple], reporter: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """
         Get all tickets by the given reporter or all tickets if no reporter is
         specified.
 
         :param reporter: the reporter of the tickets (optional)
-        :param order: the order to sort the tickets by timestamp (optional)
+        :param sort: a list of tuples to sort the tickets by
 
         :return: a list of tickets
         """
         query = {"reporter": reporter} if reporter else {}
-        sort = []
-        if order == "asc":
-            sort = [("timestamp", pymongo.ASCENDING)]
-        elif order == "desc":
-            sort = [("timestamp", pymongo.DESCENDING)]
         return list(self.db.tickets.find(query, sort=sort))
 
     def count_tickets(self, reporter: Optional[str]) -> int:

@@ -19,34 +19,10 @@ import {
 import dayjs from 'dayjs';
 import base32 from 'hi-base32';
 import React, { useEffect, useState } from 'react';
-import { Ticket } from '../TicketTable';
+import { Ticket, EntityPositionInfo } from '../../types';
 
 const { Sider, Content } = Layout;
 const { Title, Text } = Typography;
-
-/**
- * Additional information related to the entity's position in the university. Used to provide context to the admin when reviewing tickets.
- * @interface
- */
-interface EntityPositionInfo {
-  /**
-   * A list of titles for the entity
-   * @property
-   */
-  titles: string[];
-
-  /**
-   * A list of departments for the entity
-   * @property
-   */
-  departments: string[];
-
-  /**
-   * A list of employment types for the entity
-   * @property
-   */
-  employmentTypes: string[];
-}
 
 /**
  * Component for the ticket review

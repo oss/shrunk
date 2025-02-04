@@ -104,7 +104,9 @@ def get_tickets(netid: str, client: ShrunkClient):
     :param netid: the NetID of the user
     :param client: the Shrunk client
 
-    Also accepts a query parameter ``timestamp_sort`` to sort by timestamp.
+    Also accepts a query parameter ``sort`` formatted as
+    ``?sort=reporter,-timestamp``. The default is ascending order and a `-`
+    prefix indicates descending order.
 
     :return: a list of tickets
 
@@ -133,8 +135,18 @@ def get_tickets(netid: str, client: ShrunkClient):
     # If the user is not an admin, they can only see their own tickets. If
     # they are, they can see all tickets.
     reporter = netid if not client.roles.has("admin", netid) else None
-    timestamp_sort = request.args.get("timestamp_sort", None)
-    return jsonify(client.tickets.get_tickets(reporter, timestamp_sort))
+
+    # Add sort parameter
+    sort_param = request.args.get("sort", None)
+    sort = []
+    if sort_param:
+        for field in sort_param.split(","):
+            if field.startswith("-"):
+                sort.append((field[1:], -1))  # Remove the '-'
+            else:
+                sort.append((field, 1))
+
+    return jsonify(client.tickets.get_tickets(sort, reporter))
 
 
 @bp.route("", methods=["POST"])
