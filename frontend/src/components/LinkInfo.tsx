@@ -54,7 +54,7 @@ export interface SharingInfo {
  * @interface
  */
 export interface LinkInfo {
-  id: string;
+  _id: string;
   title: string;
   long_url: string;
   domain: string;

@@ -8,33 +8,27 @@ import {
   Row,
   Col,
   Button,
-  Popconfirm,
   Spin,
   Form,
   Input,
-  Checkbox,
-  Tooltip,
   Modal,
   Typography,
   Space,
   Table,
-  Select,
 } from 'antd/lib';
 import {
-  ExclamationCircleFilled,
-  PlusCircleFilled,
-  CloseOutlined,
   ExclamationCircleOutlined,
   WarningFilled,
   EditOutlined,
-  UserAddOutlined,
+  TeamOutlined,
 } from '@ant-design/icons';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import dayjs from 'dayjs';
 import type { FormInstance } from 'antd/lib/form';
 
 import { MemberInfo, OrgInfo, getOrgInfo } from '../../api/Org';
-import { serverValidateNetId, serverValidateOrgName } from '../../Validators';
+import { serverValidateOrgName } from '../../Validators';
+import CollaboratorModal, { Entity } from '../../modals/CollaboratorModal';
 
 type RouteParams = {
   id: string;
@@ -50,50 +44,6 @@ interface VisitDatum {
   total_visits: number;
   unique_visits: number;
 }
-
-const AddMemberForm: React.FC<{
-  isAdmin: boolean;
-  onCreate: (netid: string, is_admin: boolean) => Promise<void>;
-}> = ({ isAdmin, onCreate }) => {
-  const [form] = Form.useForm();
-
-  const onFinish = async (values: { netid: string; is_admin: boolean }) => {
-    await onCreate(values.netid, values.is_admin);
-    form.resetFields();
-  };
-
-  return (
-    <div className="dropdown-form">
-      <Form form={form} layout="inline" onFinish={onFinish}>
-        <Input.Group compact>
-          <Form.Item
-            name="netid"
-            rules={[
-              { required: true, message: 'Please input a NetID.' },
-              { validator: serverValidateNetId },
-            ]}
-          >
-            <Input placeholder="NetID" />
-          </Form.Item>
-
-          {isAdmin && (
-            <Form.Item name="is_admin" valuePropName="checked">
-              <Checkbox>Admin?</Checkbox>
-            </Form.Item>
-          )}
-
-          <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              icon={<PlusCircleFilled />}
-            />
-          </Form.Item>
-        </Input.Group>
-      </Form>
-    </div>
-  );
-};
 
 function ManageOrgBase({
   userNetid,
@@ -215,52 +165,6 @@ function ManageOrgBase({
       width: '15%',
       render: (date: string) => dayjs(date).format('MMM D, YYYY'),
     },
-    {
-      title: 'Actions',
-      key: 'actions',
-      width: '10%',
-      render: (_: any, record: MemberInfo) => {
-        if (!isAdmin) return null;
-        const mayNotRemoveMember = record.is_admin && adminsCount === 1;
-
-        return (
-          <Space>
-            <Select
-              value={record.is_admin ? 'admin' : 'member'}
-              style={{ width: 100 }}
-              disabled={mayNotRemoveMember}
-              onChange={(value) =>
-                onChangeAdmin(record.netid, value === 'admin')
-              }
-              options={[
-                { value: 'admin', label: 'Admin' },
-                { value: 'member', label: 'Member' },
-              ]}
-            />
-            <Tooltip
-              title={
-                mayNotRemoveMember
-                  ? 'Cannot remove last admin'
-                  : 'Remove member'
-              }
-            >
-              <Popconfirm
-                title="Are you sure you want to remove this member?"
-                onConfirm={() => onDeleteMember(record.netid)}
-                disabled={mayNotRemoveMember}
-                icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
-              >
-                <Button
-                  type="text"
-                  icon={<CloseOutlined />}
-                  disabled={mayNotRemoveMember}
-                />
-              </Popconfirm>
-            </Tooltip>
-          </Space>
-        );
-      },
-    },
   ];
 
   return (
@@ -278,15 +182,12 @@ function ManageOrgBase({
               Edit
             </Button>
             {isAdmin && (
-              <>
-                <Button
-                  type="primary"
-                  icon={<UserAddOutlined />}
-                  onClick={() => setShareModalVisible(true)}
-                >
-                  Invite
-                </Button>
-              </>
+              <Button
+                icon={<TeamOutlined />}
+                onClick={() => setShareModalVisible(true)}
+              >
+                Collaborate
+              </Button>
             )}
           </Space>
         </Col>
@@ -303,8 +204,9 @@ function ManageOrgBase({
       </Row>
 
       <Modal
-        title="Rename Organization"
-        open={renameOrgModalVisible}
+        title="Edit Organization"
+        open={editModalVisible}
+        footer={null}
         onOk={() => {
           formRef.current?.validateFields().then((values) => {
             onRenameOrg(values.newName);
@@ -314,49 +216,33 @@ function ManageOrgBase({
         }}
         onCancel={() => {
           formRef.current?.resetFields();
-          setRenameOrgModalVisible(false);
+          setEditModalVisible(false);
         }}
       >
-        <Form ref={formRef}>
-          <Form.Item
-            name="newName"
-            rules={[
-              { required: true, message: 'Please input a new name.' },
-              {
-                pattern: /^[a-zA-Z0-9_.,-]*$/,
-                message:
-                  'Name must consist of letters, numbers, and the characters "_.,-".',
-              },
-              {
-                max: 60,
-                message: 'Org names can be at most 60 characters long',
-              },
-              { validator: serverValidateOrgName },
-            ]}
-          >
-            <Input placeholder="Name" />
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      <Modal
-        title="Edit Organization"
-        open={editModalVisible}
-        footer={null}
-        onCancel={() => setEditModalVisible(false)}
-      >
-        <Space direction="vertical" style={{ width: '100%' }}>
+        <Form layout="vertical" ref={formRef}>
           {isAdmin && (
-            <Button
-              block
-              onClick={() => {
-                setEditModalVisible(false);
-                setRenameOrgModalVisible(true);
-              }}
+            <Form.Item
+              label="Rename"
+              name="newName"
+              rules={[
+                { required: true, message: 'Please input a new name.' },
+                {
+                  pattern: /^[a-zA-Z0-9_.,-]*$/,
+                  message:
+                    'Name must consist of letters, numbers, and the characters "_.,-".',
+                },
+                {
+                  max: 60,
+                  message: 'Org names can be at most 60 characters long',
+                },
+                { validator: serverValidateOrgName },
+              ]}
             >
-              Rename
-            </Button>
+              <Input placeholder="Name" />
+            </Form.Item>
           )}
+        </Form>
+        <Space direction="vertical" style={{ width: '100%' }}>
           {orgInfo.is_member && (
             <Button
               block
@@ -397,20 +283,36 @@ function ManageOrgBase({
         </Space>
       </Modal>
 
-      <Modal
-        title="Add Member"
-        open={shareModalVisible}
-        footer={null}
+      <CollaboratorModal
+        onlyActiveTab="netid"
+        // eslint-disable-next-line react/jsx-boolean-value
+        multipleMasters={true}
+        visible={shareModalVisible}
+        roles={[
+          { label: 'Admin', value: 'admin' },
+          { label: 'Member', value: 'member' },
+        ]}
+        people={orgInfo.members.map((member) => ({
+          _id: member.netid,
+          type: 'netid',
+          role: member.is_admin ? 'admin' : 'member',
+        }))}
+        onAddEntity={(_activeTab: 'netid' | 'org', value: Entity) => {
+          onAddMember(value._id, false);
+        }}
+        onRemoveEntity={(_activeTab: 'netid' | 'org', value: Entity) => {
+          onDeleteMember(value._id);
+        }}
+        onChangeEntity={(
+          _activeTab: 'netid' | 'org',
+          value: Entity,
+          newRole: string,
+        ) => {
+          onChangeAdmin(value._id, newRole === 'admin');
+        }}
         onCancel={() => setShareModalVisible(false)}
-      >
-        <AddMemberForm
-          isAdmin={isAdmin}
-          onCreate={async (netid, is_admin) => {
-            await onAddMember(netid, is_admin);
-            setShareModalVisible(false);
-          }}
-        />
-      </Modal>
+        onOk={() => setShareModalVisible(false)}
+      />
     </>
   );
 }

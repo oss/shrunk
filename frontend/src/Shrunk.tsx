@@ -419,7 +419,7 @@ export default function Shrunk(props: Props) {
                   <Orgs userPrivileges={userPrivileges} />
                 </Route>
 
-                <Route exact path="/orgs/:id/manage">
+                <Route exact path="/orgs/:id">
                   <ManageOrg
                     userNetid={netid}
                     userPrivileges={userPrivileges}
