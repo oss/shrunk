@@ -65,26 +65,30 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
 
   const masterRole = props.roles[0].value;
 
-  const permissionOrder: { [key: string]: number } = {};
-  props.roles.forEach((role, index) => {
-    permissionOrder[role.value] = index;
-  });
-  props.people.sort((a: Entity, b: Entity) => {
-    if (a.role === undefined || b.role === undefined) {
-      throw new Error('Entity must have a role');
-    }
-    return permissionOrder[a.role] - permissionOrder[b.role];
-  });
-
   useEffect(() => {
+    const permissionOrder: { [key: string]: number } = {};
+    props.roles.forEach((role, index) => {
+      permissionOrder[role.value] = index;
+    });
+    props.people.sort((a: Entity, b: Entity) => {
+      if (a.role === undefined || b.role === undefined) {
+        throw new Error('Entity must have a role');
+      }
+      return permissionOrder[a.role] - permissionOrder[b.role];
+    });
+
     refreshOrganizations();
   }, []);
 
+  // Count how many masters we currently have
   const mastersCount = props.people.filter(
     (entity) => entity.role === masterRole,
   ).length;
 
+  // Determine if we can add more masters based on multipleMasters prop
   const canAddMaster = props.multipleMasters || mastersCount === 0;
+
+  // Determine if we can demote masters based on multipleMasters prop
   const canDemoteMaster = props.multipleMasters && mastersCount > 1;
 
   return (
@@ -149,19 +153,17 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                   </Select>
                 </Form.Item>
               )}
-              {props.roles.length > 2 && (
-                <Select
-                  defaultValue={collaboratorRole}
-                  onChange={(value: string) => {
-                    setCollaboratorRole(value);
-                  }}
-                  options={props.roles.slice(1).map((role) => ({
-                    value: role.value,
-                    label: role.label,
-                    disabled: role.value === masterRole && !canAddMaster,
-                  }))}
-                />
-              )}
+              <Select
+                defaultValue={collaboratorRole}
+                onChange={(value: string) => {
+                  setCollaboratorRole(value);
+                }}
+                options={props.roles.map((role) => ({
+                  value: role.value,
+                  label: role.label,
+                  disabled: role.value === masterRole && !canAddMaster,
+                }))}
+              />
               <Button
                 icon={<PlusCircleFilled />}
                 onClick={() => {
@@ -204,8 +206,9 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                     : organizations.find((org) => org.id === entity._id)?.name;
 
                 const isMaster = entity.role === masterRole;
+                const isLastMaster = isMaster && mastersCount === 1;
                 const canChangeRole =
-                  !isMaster || (isMaster && canDemoteMaster);
+                  !isLastMaster && (!isMaster || canDemoteMaster);
 
                 return (
                   <>
@@ -223,7 +226,8 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                             label: role.label,
                             disabled:
                               (role.value === masterRole && !canAddMaster) ||
-                              (!canChangeRole && role.value !== entity.role),
+                              (!canChangeRole && role.value !== entity.role) ||
+                              (isLastMaster && role.value !== masterRole),
                           }))}
                         />
 
@@ -232,11 +236,11 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                           onConfirm={() => {
                             props.onRemoveEntity(activeTab, entity);
                           }}
-                          disabled={isMaster && !canDemoteMaster}
+                          disabled={isLastMaster}
                         >
                           <Tooltip
                             title={
-                              isMaster && !canDemoteMaster
+                              isLastMaster
                                 ? `Cannot remove the only ${masterRole}`
                                 : 'Remove collaborator'
                             }
@@ -244,7 +248,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                             <Button
                               type="text"
                               icon={<CloseOutlined />}
-                              disabled={isMaster && !canDemoteMaster}
+                              disabled={isLastMaster}
                             />
                           </Tooltip>
                         </Popconfirm>
