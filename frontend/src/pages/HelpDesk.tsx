@@ -1,6 +1,6 @@
 import { FormOutlined, TableOutlined } from '@ant-design/icons';
-import { Tabs, Typography, Spin } from 'antd/lib';
-import React, { useState, useEffect } from 'react';
+import { Spin, Tabs, Typography } from 'antd/lib';
+import React, { useEffect, useState } from 'react';
 import TicketForm from '../components/TicketForm';
 import TicketTable from '../components/TicketTable';
 

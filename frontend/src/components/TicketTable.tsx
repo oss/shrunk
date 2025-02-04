@@ -1,4 +1,8 @@
-import { DeleteOutlined, EyeOutlined } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  EyeOutlined,
+  IssuesCloseOutlined,
+} from '@ant-design/icons';
 import {
   App,
   Button,
@@ -142,6 +146,15 @@ const TicketTable: React.FC<Props> = ({
           href={`/app/#/tickets/${record._id}`}
         />
       </Tooltip>
+      {userPrivileges.has('admin') && (
+        <Tooltip title="Resolve">
+          <Button
+            type="text"
+            icon={<IssuesCloseOutlined />}
+            href={`/app/#/tickets/${record._id}?mode=resolve`}
+          />
+        </Tooltip>
+      )}
       <Tooltip title="Delete">
         <Popconfirm
           title="Are you sure you want to delete this ticket?"

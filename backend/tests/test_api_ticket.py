@@ -52,51 +52,34 @@ def test_create_delete_ticket(
         assert resp.status_code == 204, "Failed to delete ticket"
 
 
+tickets = [
+    {
+        "reporter": "DEV_USER",
+        "reason": "power_user",
+        "entity": "DEV_USER",
+        "comment": "I need power user access",
+    },
+    {
+        "reporter": "DEV_USER",
+        "reason": "whitelisted",
+        "entity": "ejw135",
+        "comment": "I need to whitelist this person",
+    },
+    {
+        "reporter": "DEV_USER",
+        "reason": "other",
+        "entity": None,
+        "comment": "I have an issue",
+    },
+]
+
+
 @pytest.mark.parametrize(
     ("tickets"),
     [
-        [
-            {
-                "reporter": "DEV_USER",
-                "reason": "power_user",
-                "entity": "DEV_USER",
-                "comment": "I need power user access",
-            }
-        ],
-        [
-            {
-                "reporter": "DEV_USER",
-                "reason": "power_user",
-                "entity": "DEV_USER",
-                "comment": "I need power user access",
-            },
-            {
-                "reporter": "DEV_USER",
-                "reason": "whitelisted",
-                "entity": "ejw135",
-                "comment": "I need to whitelist this person",
-            },
-        ],
-        [
-            {
-                "reporter": "DEV_USER",
-                "reason": "power_user",
-                "entity": "DEV_USER",
-                "comment": "I need power user access",
-            },
-            {
-                "reporter": "DEV_USER",
-                "reason": "whitelisted",
-                "entity": "ejw135",
-                "comment": "I need to whitelist this person",
-            },
-            {
-                "reporter": "DEV_USER",
-                "reason": "other",
-                "entity": None,
-                "comment": "I have an issue",
-            },
-        ],
+        tickets[:1],
+        tickets[:2],
+        tickets,
     ],
 )
 def test_get_tickets(client: Client, tickets: list):
@@ -118,6 +101,14 @@ def test_get_tickets(client: Client, tickets: list):
         resp = client.get("/api/v1/ticket")
         assert resp.status_code == 200, "Failed to get tickets"
         assert len(resp.json) == len(tickets), "Incorrect number of tickets"
+
+        # Get individual tickets
+        for ticket in resp.json:
+            resp = client.get(
+                f"/api/v1/ticket/"
+                f"{str(base64.b32encode(bytes(ticket['_id'], 'utf8')), 'utf8')}"
+            )
+            assert resp.status_code == 200, "Failed to get ticket"
 
         # Delete the tickets
         for ticket_id in ticket_ids:

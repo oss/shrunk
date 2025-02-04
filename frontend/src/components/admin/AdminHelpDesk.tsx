@@ -1,4 +1,4 @@
-import { Typography, Spin } from 'antd/lib';
+import { Spin, Typography } from 'antd/lib';
 import React, { useEffect, useState } from 'react';
 import TicketTable from '../TicketTable';
 
