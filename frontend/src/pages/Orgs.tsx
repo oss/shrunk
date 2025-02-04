@@ -77,7 +77,7 @@ export default function Orgs({ userPrivileges }: Props): React.ReactElement {
       key: 'name',
       render: (record: OrgInfo) => (
         <Space>
-          <a href={`/app/#/orgs/${record.id}/manage`}>{record.name}</a>
+          {record.name}
           {record.is_admin ? <Tag color="red">Admin</Tag> : null}
           {showAll && record.is_member ? <Tag color="blue">Member</Tag> : null}
         </Space>
@@ -94,7 +94,7 @@ export default function Orgs({ userPrivileges }: Props): React.ReactElement {
               <Button
                 type="text"
                 icon={<EyeOutlined />}
-                href={`/app/#/orgs/${record.id}/manage`}
+                href={`/app/#/orgs/${record.id}`}
               />
             </Tooltip>
             <Tooltip title="Delete">

@@ -216,52 +216,6 @@ function ManageOrgBase({
       width: '15%',
       render: (date: string) => dayjs(date).format('MMM D, YYYY'),
     },
-    {
-      title: 'Actions',
-      key: 'actions',
-      width: '10%',
-      render: (_: any, record: MemberInfo) => {
-        if (!isAdmin) return null;
-        const mayNotRemoveMember = record.is_admin && adminsCount === 1;
-
-        return (
-          <Space>
-            <Select
-              value={record.is_admin ? 'admin' : 'member'}
-              style={{ width: 100 }}
-              disabled={mayNotRemoveMember}
-              onChange={(value) =>
-                onChangeAdmin(record.netid, value === 'admin')
-              }
-              options={[
-                { value: 'admin', label: 'Admin' },
-                { value: 'member', label: 'Member' },
-              ]}
-            />
-            <Tooltip
-              title={
-                mayNotRemoveMember
-                  ? 'Cannot remove last admin'
-                  : 'Remove member'
-              }
-            >
-              <Popconfirm
-                title="Are you sure you want to remove this member?"
-                onConfirm={() => onDeleteMember(record.netid)}
-                disabled={mayNotRemoveMember}
-                icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
-              >
-                <Button
-                  type="text"
-                  icon={<CloseOutlined />}
-                  disabled={mayNotRemoveMember}
-                />
-              </Popconfirm>
-            </Tooltip>
-          </Space>
-        );
-      },
-    },
   ];
 
   return (
@@ -279,15 +233,12 @@ function ManageOrgBase({
               Edit
             </Button>
             {isAdmin && (
-              <>
-                <Button
-                  type="primary"
-                  icon={<TeamOutlined />}
-                  onClick={() => setShareModalVisible(true)}
-                >
-                  Collaborate
-                </Button>
-              </>
+              <Button
+                icon={<TeamOutlined />}
+                onClick={() => setShareModalVisible(true)}
+              >
+                Collaborate
+              </Button>
             )}
           </Space>
         </Col>
