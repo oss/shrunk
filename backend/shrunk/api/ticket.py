@@ -30,21 +30,23 @@ def get_help_desk_enabled(netid: str, client: ShrunkClient):
     return jsonify(enabled=client.tickets.get_help_desk_enabled())
 
 
-@bp.route("/<reason>/text", methods=["GET"])
+@bp.route("/text", methods=["GET"])
 @require_login
-def get_help_desk_text(netid: str, client: ShrunkClient, reason: str):
+def get_help_desk_text(
+    netid: str,
+    client: ShrunkClient,
+):
     """``GET /api/ticket/<reason>/text``
 
     Get the text-related attributes needed for messages, modals, and forms.
 
     :param netid: the NetID of the user
     :param client: the Shrunk client
-    :param reason: the reason for the ticket
 
     :return: a dictionary with the text-related attributes
     """
 
-    return jsonify(client.tickets.get_help_desk_text(reason))
+    return jsonify(client.tickets.get_help_desk_text())
 
 
 @bp.route("/email", methods=["POST"])

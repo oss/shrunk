@@ -26,12 +26,18 @@ interface Props {
    * @property
    */
   netid: string;
+
+  /**
+   * Help desk text
+   * @property
+   */
+  helpDeskText: Record<string, any>;
 }
 
 /**
  * Component for the table of tickets
  */
-const TicketTable: React.FC<Props> = ({ netid }) => {
+const TicketTable: React.FC<Props> = ({ netid, helpDeskText }) => {
   /**
    * State for the [[TicketTable]] component
    *
@@ -73,30 +79,6 @@ const TicketTable: React.FC<Props> = ({ netid }) => {
       messageApi.error('Failed to delete ticket', 2);
     }
   };
-
-  /**
-   * Render the reason column in the table
-   * @method
-   */
-  const renderReason = (reason: string) => {
-    switch (reason) {
-      case 'power_user':
-        return 'Grant me the power user role';
-      case 'whitelisted':
-        return 'Whitelist another person to Go services';
-      case 'other':
-        return 'Other';
-      default:
-        return 'Failed to load reason';
-    }
-  };
-
-  /**
-   * Render the timestamp column in the table
-   * @method
-   */
-  const renderTimestamp = (timestamp: Date) =>
-    dayjs(new Date(Number(timestamp) * 1000)).format('MMM D, YYYY, h:mm a');
 
   /**
    * Render the entity column in the table
@@ -163,7 +145,8 @@ const TicketTable: React.FC<Props> = ({ netid }) => {
       title: 'Reason',
       dataIndex: 'reason',
       key: 'reason',
-      render: (reason: string) => renderReason(reason),
+      render: (reason: string) =>
+        helpDeskText.reason[reason].name || 'Failed to load reason',
       width: '25%',
     },
     {
@@ -177,7 +160,8 @@ const TicketTable: React.FC<Props> = ({ netid }) => {
       title: 'Submission Date',
       dataIndex: 'timestamp',
       key: 'timestamp',
-      render: (timestamp: Date) => renderTimestamp(timestamp),
+      render: (timestamp: Date) =>
+        dayjs(new Date(Number(timestamp) * 1000)).format('MMM D, YYYY, h:mm a'),
       width: '20%',
     },
     {

@@ -1,13 +1,5 @@
-import {
-  Button,
-  Form,
-  Input,
-  Result,
-  Select,
-  Spin,
-  Typography,
-} from 'antd/lib';
-import React, { useEffect, useState } from 'react';
+import { Button, Form, Input, Result, Select, Typography } from 'antd/lib';
+import React, { useState } from 'react';
 import { Ticket } from '../types';
 
 const { Text } = Typography;
@@ -22,27 +14,29 @@ interface Props {
    * @property
    */
   netid: string;
+
+  /**
+   * Help desk text
+   * @property
+   */
+  helpDeskText: Record<string, any>;
 }
 
 /**
  * Component for the ticket submission form
  */
-const TicketForm: React.FC<Props> = ({ netid }) => {
+const TicketForm: React.FC<Props> = ({ netid, helpDeskText }) => {
   /**
    * State for the [[TicketForm]] component
    *
-   * loading: Whether the component is loading
    * submitting: Whether the form submission is in progress
    * form: The form instance
    * reasonField: The reason the ticket is being requested
-   * formText: Important strings for the form (e.g. prompt, placeholder, etc.)
    * ticketStatus: The status of the ticket request
    */
-  const [loading, setLoading] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [form] = Form.useForm();
   const [reasonField, setReasonField] = useState<string>('');
-  const [formText, setFormText] = useState<{ [key: string]: string }>({});
   const [ticketStatus, setTicketStatus] = useState<number>(0);
 
   /**
@@ -164,26 +158,9 @@ const TicketForm: React.FC<Props> = ({ netid }) => {
     return Promise.resolve();
   };
 
-  // Fetch the ticket text when the reason field changes
-  useEffect(() => {
-    const fetchTicketText = async () => {
-      if (reasonField) {
-        const response = await fetch(`/api/v1/ticket/${reasonField}/text`);
-        const data = await response.json();
-        setFormText(data);
-      }
-    };
-
-    setLoading(true);
-    fetchTicketText();
-    setLoading(false);
-  }, [reasonField]);
-
   return (
     <>
-      {loading ? (
-        <Spin size="large" />
-      ) : ticketStatus ? (
+      {ticketStatus ? (
         <Result
           status={ticketStatus === 201 ? 'success' : 'error'}
           title={
@@ -192,7 +169,7 @@ const TicketForm: React.FC<Props> = ({ netid }) => {
               : 'An error occurred attempting to submit your ticket'
           }
           subTitle={
-            formText[String(ticketStatus)] || 'Failed to load subtitle text.'
+            helpDeskText.submission[ticketStatus] || 'Failed to load subtitle.'
           }
           extra={[
             <Button key="back" type="primary" onClick={handleAnotherTicket}>
@@ -229,7 +206,8 @@ const TicketForm: React.FC<Props> = ({ netid }) => {
           {reasonField && (
             <Form.Item>
               <Text strong>
-                {formText.prompt || 'Failed to load prompt text.'}
+                {helpDeskText.reason[reasonField].prompt ||
+                  'Failed to load prompt text.'}
               </Text>
             </Form.Item>
           )}
@@ -266,7 +244,8 @@ const TicketForm: React.FC<Props> = ({ netid }) => {
                 <Input.TextArea
                   rows={4}
                   placeholder={
-                    formText.placeholder || 'Failed to load placeholder text.'
+                    helpDeskText.reason[reasonField].placeholder ||
+                    'Failed to load placeholder text.'
                   }
                 />
               </Form.Item>

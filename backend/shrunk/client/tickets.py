@@ -59,75 +59,72 @@ class TicketsClient:
         """
         return self.slack_shrunk_channel_id
 
-    def get_help_desk_text(self, reason: str) -> Dict[str, str]:
+    def get_help_desk_text(self) -> Dict[str, str]:
         """
         Get the text-related attributes needed for messages, emails, and forms.
 
-        :param reason: the reason for the ticket
-
         :return: a dictionary with the text-related attributes
         """
-        data = {
-            "201": (
-                "We have received your ticket, which will be manually reviewed"
-                " and resolved."
-            ),
-            "403": "You are not authorized to submit a ticket.",
-            "409": (
-                "Either a ticket already exists on this person's behalf or "
-                "this person already has the requested role."
-            ),
-            "429": (
-                "You have too many pending tickets. Please wait for your "
-                "existing tickets to be resolved before submitting a new one."
-            ),
-        }
-
-        if reason == "power_user":
-            data.update(
-                {
+        return {
+            "submission": {
+                201: (
+                    "We have received your ticket, which will be manually "
+                    "reviewed and resolved."
+                ),
+                403: "You are not authorized to submit a ticket.",
+                409: (
+                    "Either a ticket already exists on this person's behalf "
+                    "or this person already has the requested role."
+                ),
+                429: (
+                    "You have too many pending tickets. Please wait for your "
+                    "existing tickets to be resolved before submitting a new "
+                    "one."
+                ),
+            },
+            "reason": {
+                "power_user": {
                     "prompt": (
                         "Power users have the ability to create custom aliases"
                         " for their shortened links. The power user role will "
                         "only be granted to faculty/staff members. Your "
-                        "request will be manually processed to ensure that "
+                        "ticket will be manually processed to ensure that "
                         "you meet the criteria."
                     ),
                     "placeholder": (
                         "Please provide a brief explanation of why you need "
                         "the power user role."
                     ),
-                }
-            )
-        elif reason == "whitelisted":
-            data.update(
-                {
+                    "name": "Grant power user role to self",
+                },
+                "whitelisted": {
                     "prompt": (
                         "Only whitelisted users have access to Go services. "
                         "To whitelist another person, please provide their "
-                        "NetID. Your request will be manually processed based "
+                        "NetID. Your ticket will be manually processed based "
                         "on the comment provided."
                     ),
                     "placeholder": (
                         "Please provide a brief explanation of why you need to"
                         " whitelist this person."
                     ),
-                }
-            )
-        else:  # reason == "other"
-            data.update(
-                {
+                    "name": "Whitelist another person to Go services",
+                },
+                "other": {
                     "prompt": (
                         "Please provide a brief description of your issue or "
-                        "request. Your ticket will be manually processed."
+                        "request. This includes issues you have with Go, "
+                        "suggestions on how we can improve the site, etc. "
+                        "Your ticket will be manually processed."
                     ),
                     "placeholder": (
                         "Please provide a brief description of your issue or "
                         "request."
                     ),
-                }
-            )
-        return data
+                    "name": "Other",
+                },
+            },
+        }
 
     def send_help_desk_email(
         self,
@@ -194,13 +191,13 @@ class TicketsClient:
             recipient_list=recipient_list,
         )
 
-    def create_ticket(self, ticket_data: dict) -> str:
+    def create_ticket(self, ticket_data: dict) -> Optional[str]:
         """
         Create a new ticket
 
         :param ticket_data: the data for the new ticket
 
-        :return: the ID of the new ticket
+        :return: the ID of the new ticket or None if the creation failed
         """
         timestamp = str(time.time())
         result = self.db.tickets.insert_one(
