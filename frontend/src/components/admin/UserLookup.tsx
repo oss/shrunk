@@ -204,6 +204,13 @@ const UserLookup: React.FC = () => {
         });
       }
 
+      // Add the "blacklisted" role to signify the user is banned
+      await fetch(`/api/v1/role/blacklisted/entity/${encodedNetId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ comment: 'User banned via User Lookup interface' }),
+      });
+
       message.success('User banned successfully');
       window.location.reload();
     } catch (error) {

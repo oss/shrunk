@@ -109,26 +109,7 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({ onExportClick }) 
                         <div style={{ marginBottom: 8 }}>
                             <div style={{ marginBottom: 8, fontWeight: 500 }}>Roles:</div>
                             <Form.Item name="whitelisted" valuePropName="checked" style={{ marginBottom: 8 }}>
-                                <Checkbox
-                                    onChange={(e) => {
-                                        if (e.target.checked) {
-                                            form.setFieldsValue({ blacklisted: false });
-                                        }
-                                    }}
-                                >
-                                    Whitelisted
-                                </Checkbox>
-                            </Form.Item>
-                            <Form.Item name="blacklisted" valuePropName="checked" style={{ marginBottom: 8 }}>
-                                <Checkbox
-                                    onChange={(e) => {
-                                        if (e.target.checked) {
-                                            form.setFieldsValue({ whitelisted: false });
-                                        }
-                                    }}
-                                >
-                                    Blacklisted
-                                </Checkbox>
+                                <Checkbox>Whitelisted</Checkbox>
                             </Form.Item>
                             <Form.Item name="admin" valuePropName="checked" style={{ marginBottom: 8 }}>
                                 <Checkbox>Admin</Checkbox>
