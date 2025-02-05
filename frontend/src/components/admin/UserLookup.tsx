@@ -4,15 +4,16 @@
  */
 
 import { Button, Col, Row, Table, Tag, Spin } from 'antd/lib';
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Operation,
   generateOperationKey,
   useUsers,
 } from '../../contexts/Users';
-import { ConfigProvider, Typography } from 'antd';
+import { ConfigProvider, Popconfirm, Select, SelectProps, Space, Tooltip, Typography } from 'antd';
 import LookupTableHeader from './LookupTableHeader';
 import { lightTheme } from '../../theme';
+import { DeleteOutlined } from '@ant-design/icons';
 
 /**
  * Renders the netids in bold
@@ -27,11 +28,59 @@ const renderNetIDs = (netids: string[]): JSX.Element[] =>
  * @param roles - the roles to render
  * @returns the rendered roles
  */
+// const renderRoles = (roles: string[]): JSX.Element[] => {
+//   const roleOrder = ['whitelisted', 'facstaff', 'power_user', 'admin'];
+//   const sortedRoles = roles.sort(
+//     (a, b) => roleOrder.indexOf(a) - roleOrder.indexOf(b),
+//   );
+//   return sortedRoles.map((role) => {
+//     let color;
+//     switch (role) {
+//       case 'admin':
+//         color = 'volcano';
+//         break;
+//       case 'whitelisted':
+//         color = 'green';
+//         break;
+//       case 'power_user':
+//         color = 'geekblue';
+//         break;
+//       case 'facstaff':
+//         color = 'purple';
+//         break;
+//       default:
+//         color = 'default';
+//     }
+//     return (
+//       <Tag color={color} key={role}>
+//         {role.toUpperCase()}
+//       </Tag>
+//     );
+//   });
+// };
+
+
+// TODO --> broke still
 const renderRoles = (roles: string[]): JSX.Element[] => {
   const roleOrder = ['whitelisted', 'facstaff', 'power_user', 'admin'];
   const sortedRoles = roles.sort(
     (a, b) => roleOrder.indexOf(a) - roleOrder.indexOf(b),
   );
+
+  const options: SelectProps['options'] = roleOrder.map((role) => ({
+    label: role.toUpperCase(),
+    value: role,
+  }));
+
+  const handleChange = (value: string[]) => {
+    console.log(`Selected: ${value}`);
+  };
+
+  const [selectedItems, setSelectedItems] = useState<string[]>(roles);
+  const filteredOptions = options.filter((o) => {
+    return !selectedItems.some((s) => s === o.value);
+  });
+  
   return sortedRoles.map((role) => {
     let color;
     switch (role) {
@@ -50,13 +99,22 @@ const renderRoles = (roles: string[]): JSX.Element[] => {
       default:
         color = 'default';
     }
+
     return (
-      <Tag color={color} key={role}>
-        {role.toUpperCase()}
-      </Tag>
+      <Space style={{ width: '100%' }} direction="vertical">
+        <Select
+          mode="multiple"
+          allowClear
+          style={{ width: '100%' }}
+          placeholder="Please select roles" 
+          value={sortedRoles}
+          onChange={setSelectedItems}
+          options={filteredOptions}
+        />
+      </Space>
     );
   });
-};
+}
 
 /**
  * Renders the ban button for a user
@@ -70,13 +128,21 @@ const renderBanButton = (netid: string): JSX.Element => {
   };
 
   return (
-    <Button 
-      danger
-      onClick={handleBan}
-      size="small"
-    >
-      Ban User
-    </Button>
+    <Tooltip title="Ban">
+      <Popconfirm
+        title="Are you sure you want to ban this user?"
+        onConfirm={handleBan}
+        okText="Yes"
+        cancelText="No"
+        okButtonProps={{ danger: true }}
+      >
+        <Button
+          type="text"
+          danger
+          icon={<DeleteOutlined />}
+        />
+      </Popconfirm>
+    </Tooltip>
   );
 };
 
@@ -209,7 +275,7 @@ const UserLookup: React.FC = () => {
         <Col>
             <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <Typography.Title level={3} style={{ marginTop: 0, marginBottom: 16 }}>User Lookup</Typography.Title>
-              <Typography.Title level={5} style={{ marginTop: 0, marginBottom: 16, color: '#4F4F4F' }}>{users.length} Results{users.length > 1 && "s"} Found</Typography.Title>
+              <Typography.Title level={5} style={{ marginTop: 0, marginBottom: 16, color: '#4F4F4F' }}>{users.length} Result{users.length > 1 && "s"} Found</Typography.Title>
             </div>
         </Col>
       </Row>
