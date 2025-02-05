@@ -320,8 +320,10 @@ class LinksClient:
                     "deleted": True,
                     "deleted_by": deleted_by,
                     "deleted_time": datetime.now(timezone.utc),
+                    "aliases.$[elem].deleted": True,
                 }
             },
+            array_filters=[{"elem.deleted": False}],
         )
         if result.modified_count != 1:
             raise NoSuchObjectException
