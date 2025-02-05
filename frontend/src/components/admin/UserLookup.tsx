@@ -23,98 +23,67 @@ import { DeleteOutlined } from '@ant-design/icons';
 const renderNetIDs = (netids: string[]): JSX.Element[] =>
   netids.map((netid) => <strong key={netid}>{netid}</strong>);
 
+const roleOrder = ['whitelisted', 'facstaff', 'power_user', 'admin'];
+const roleColors: Record<string, string> = {
+  admin: 'volcano',
+  whitelisted: 'green',
+  power_user: 'geekblue',
+  facstaff: 'purple',
+};
+
+interface RolesSelectProps {
+  initialRoles: string[];
+}
+
+// TODO - Update the onChange function to (persistently) update the roles of the user rather than just visually
 /**
- * Renders the roles as colored tags
+ * Renders a selection component for roles
  * @param roles - the roles to render
  * @returns the rendered roles
  */
-// const renderRoles = (roles: string[]): JSX.Element[] => {
-//   const roleOrder = ['whitelisted', 'facstaff', 'power_user', 'admin'];
-//   const sortedRoles = roles.sort(
-//     (a, b) => roleOrder.indexOf(a) - roleOrder.indexOf(b),
-//   );
-//   return sortedRoles.map((role) => {
-//     let color;
-//     switch (role) {
-//       case 'admin':
-//         color = 'volcano';
-//         break;
-//       case 'whitelisted':
-//         color = 'green';
-//         break;
-//       case 'power_user':
-//         color = 'geekblue';
-//         break;
-//       case 'facstaff':
-//         color = 'purple';
-//         break;
-//       default:
-//         color = 'default';
-//     }
-//     return (
-//       <Tag color={color} key={role}>
-//         {role.toUpperCase()}
-//       </Tag>
-//     );
-//   });
-// };
+const RolesSelect: React.FC<RolesSelectProps> = ({ initialRoles }) => {
+  const [selectedRoles, setSelectedRoles] = useState<string[]>(initialRoles);
 
-
-// TODO --> broke still
-const renderRoles = (roles: string[]): JSX.Element[] => {
-  const roleOrder = ['whitelisted', 'facstaff', 'power_user', 'admin'];
-  const sortedRoles = roles.sort(
-    (a, b) => roleOrder.indexOf(a) - roleOrder.indexOf(b),
-  );
-
-  const options: SelectProps['options'] = roleOrder.map((role) => ({
+  const options = roleOrder.map((role) => ({
     label: role.toUpperCase(),
     value: role,
   }));
 
-  const handleChange = (value: string[]) => {
-    console.log(`Selected: ${value}`);
+  // Filter out already selected roles for the dropdown.
+  const filteredOptions = options.filter(
+    (option) => !selectedRoles.includes(option.value),
+  );
+
+  // Render tags in color using tagRender
+  const tagRender = (props: any) => {
+    const { label, value, closable, onClose } = props;
+    return (
+      <Tag
+        color={roleColors[value] || 'default'}
+        closable={closable}
+        onClose={onClose}
+        style={{ marginRight: 3 }}
+      >
+        {label}
+      </Tag>
+    );
   };
 
-  const [selectedItems, setSelectedItems] = useState<string[]>(roles);
-  const filteredOptions = options.filter((o) => {
-    return !selectedItems.some((s) => s === o.value);
-  });
-  
-  return sortedRoles.map((role) => {
-    let color;
-    switch (role) {
-      case 'admin':
-        color = 'volcano';
-        break;
-      case 'whitelisted':
-        color = 'green';
-        break;
-      case 'power_user':
-        color = 'geekblue';
-        break;
-      case 'facstaff':
-        color = 'purple';
-        break;
-      default:
-        color = 'default';
-    }
-
-    return (
-      <Space style={{ width: '100%' }} direction="vertical">
-        <Select
-          mode="multiple"
-          allowClear
-          style={{ width: '100%' }}
-          placeholder="Please select roles" 
-          value={sortedRoles}
-          onChange={setSelectedItems}
-          options={filteredOptions}
-        />
-      </Space>
-    );
-  });
-}
+  return (
+    <Space style={{ width: '100%' }} direction="vertical">
+      <Select
+        mode="multiple"
+        allowClear
+        style={{ width: '100%' }}
+        placeholder="Please select roles"
+        value={selectedRoles}
+        onChange={setSelectedRoles}
+        options={filteredOptions}
+        tagRender={tagRender}
+      />
+    </Space>
+  );
+};
 
 /**
  * Renders the ban button for a user
@@ -154,38 +123,6 @@ const renderBanButton = (netid: string): JSX.Element => {
 const renderOrganizations = (organizations: string[]): JSX.Element[] =>
   organizations.map((org) => <Tag key={org}>{org}</Tag>);
 
-const columns = [
-  {
-    title: 'NetID',
-    dataIndex: 'netid',
-    key: 'netid',
-    render: (netid: string) => renderNetIDs([netid]),
-  },
-  {
-    title: 'Organizations',
-    dataIndex: 'organizations',
-    key: 'organizations',
-    render: (organizations: string[]) => renderOrganizations(organizations),
-  },
-  {
-    title: 'Roles',
-    dataIndex: 'roles',
-    key: 'roles',
-    render: (roles: string[]) => renderRoles(roles),
-  },
-  {
-    title: 'Links Created',
-    dataIndex: 'linksCreated',
-    key: 'linksCreated',
-  },
-  {
-    title: 'Actions',
-    dataIndex: 'netid',
-    key: 'ban',
-    render: (netid: string) => renderBanButton(netid),
-  },
-];
-
 /**
  * The [[UserLookup]] component displays a table of users and allows the user to search/filter/add users given
  * certain criteria determined by the admin.
@@ -194,19 +131,6 @@ const columns = [
 const UserLookup: React.FC = () => {
   const { users, options, loading, appliedOperations, deleteOperation } =
     useUsers();
-
-  /**
-   * Display the operation in a human-readable format to fill the tag
-   * @param operation - the operation to display
-   * @returns the human-readable format of the operation
-   */
-  const renderOperation = (operation: Operation): string =>
-    `${options?.INTERNAL_TO_EXTERNAL[operation.type]} ${
-      options?.INTERNAL_TO_EXTERNAL[operation.field]
-    } ${options?.INTERNAL_TO_EXTERNAL[operation.specification]} ${
-      operation.type === 'filter' ? operation.filterString : ''
-    }`.toUpperCase();
-
 
   const [organizationsFilters, rolesFilters] = React.useMemo(() => {
     let distinctOrganizations: Set<string> = new Set()
@@ -247,7 +171,7 @@ const UserLookup: React.FC = () => {
       title: 'Roles',
       dataIndex: 'roles',
       key: 'roles',
-      render: (roles: string[]) => renderRoles(roles),
+      render: (roles: string[]) => <RolesSelect initialRoles={roles} />,
       filters: rolesFilters,
       onFilter: (value: string | number | boolean, record: any) => record.roles.includes(value.toString()),
       filterMultiple: true,
