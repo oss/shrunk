@@ -322,9 +322,9 @@ const SearchUser: React.FC = () => {
   }, [currentOperation, appliedOperations]);
 
   return (
-    <Col flex="0 0 50%" style={{ marginRight: '1rem' }}>
+    <Col>
         <AutoComplete
-        style={{ width: '100%' }}
+        style={{ width: '100%', minWidth: '200px' }}
         options={filterStringOptions}
         onSelect={handleOperationFilterStringChange}
         onSearch={updateFilterStringOptions}

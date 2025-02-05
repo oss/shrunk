@@ -1,5 +1,5 @@
 import { CloudDownloadOutlined, PlusCircleFilled, ThunderboltOutlined } from "@ant-design/icons"
-import { Button, Checkbox, Col, Form, Input, Modal, Row } from "antd"
+import { Button, Checkbox, Col, Form, Input, Modal, Row, Space } from "antd"
 import React from "react"
 import SearchUser from "../SearchUser"
 
@@ -20,18 +20,22 @@ const LookupTableHeader = () => {
 
     return (
         <>
-            <Row className="lookup-row" gutter={0}>
-                <SearchUser />
+            <Row className="lookup-row" gutter={0} justify="space-between">
+                
+                <Space direction="horizontal">
+                    <Col>
+                        <Button type="text" style={{ border: '1px solid #CFCFCF' }}>
+                            AI Filter <ThunderboltOutlined />
+                        </Button>
+                    </Col>
 
-                <Col>
-                    <Button type="text" style={{ border: '1px solid #CFCFCF' }}>
-                        AI Filter <ThunderboltOutlined />
-                    </Button>
-                </Col>
-
+                    <SearchUser />
+                </Space>
+                {/* 
                 <Col flex="0 0 auto" style={{ marginLeft: 'auto', marginRight: 'auto' }}>
                     <div style={{ borderLeft: '1px solid #CFCFCF', height: '100%' }} />
                 </Col>
+                 */}
                 <Col>
                     <Row gutter={[4, 0]}>
                         <Col>
@@ -60,7 +64,27 @@ const LookupTableHeader = () => {
                 open={showCreateUserModal}
                 onCancel={() => {setShowCreateUserModal(false)}}
                 title={"Add User"}
-                footer={null}
+                footer={[
+                    <Button
+                      type="default"
+                      key="back"
+                      onClick={() => {
+                        setShowCreateUserModal(false);
+                      }}
+                    >
+                      Cancel
+                    </Button>,
+                    <Button
+                      type="primary"
+                      key="submit"
+                      onClick={() => {
+                        handleConfirm();
+                        setShowCreateUserModal(false);
+                      }}
+                    >
+                      Confirm
+                    </Button>,
+                  ]}
                 width={400}
                 >
                     <Form
@@ -120,31 +144,6 @@ const LookupTableHeader = () => {
                                 rows={4}
                             />
                         </Form.Item>
-
-                        <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'center', 
-                        gap: '8px',
-                        marginTop: 24
-                        }}>
-                            <Button
-                                type="primary"
-                                onClick={handleConfirm}
-                                style={{ 
-                                backgroundColor: '#52c41a', 
-                                borderColor: '#52c41a'
-                                }}
-                            >
-                                Confirm
-                            </Button>
-                            <Button
-                                type="primary"
-                                onClick={() => {setShowCreateUserModal(false)}}
-                                danger
-                            >
-                                Deny
-                            </Button>
-                        </div>
                     </Form>
                 </Modal>
         </>
