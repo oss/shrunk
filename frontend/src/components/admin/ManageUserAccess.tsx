@@ -26,7 +26,6 @@ interface ManageUserAccessProps {
  * @returns the [[ManageUserAccess]] component
  */
 const ManageUserAccess: React.FC<ManageUserAccessProps> = (props) => {
-    console.log("ManageUserAccess props: ", props);
   return (
     <>
       <Row className="secondary-row" style={{ marginBottom: 0 }}>
