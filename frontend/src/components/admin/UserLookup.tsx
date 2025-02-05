@@ -26,23 +26,43 @@ interface RolesSelectProps {
 }
 
 const RolesSelect: React.FC<RolesSelectProps> = ({ initialRoles, netid, onRolesChange }) => {
-  const [selectedRoles, setSelectedRoles] = useState<string[]>(initialRoles);
+  const [selectedRoles, setSelectedRoles] = useState<string[]>(initialRoles.sort((a, b) => roleOrder.indexOf(b) - roleOrder.indexOf(a)));
   const [loading, setLoading] = useState(false);
+
+  const getHighestRole = (roles: string[]): string => {
+    for (let i = roleOrder.length; i >= 0; i--) {
+      const role = roleOrder[i];
+      if (roles.includes(role)) {
+        return role;
+      }
+    }
+    return '';
+  };
 
   const options = roleOrder.map((role) => ({
     label: role.toUpperCase(),
     value: role,
+    disabled: role === getHighestRole(initialRoles),
   }));
 
   const filteredOptions = options.filter(
-    (option) => !selectedRoles.includes(option.value),
+    (option) => !selectedRoles.includes(option.value) || option.disabled,
   );
 
   const handleRolesChange = async (newRoles: string[]) => {
+    const highestRole = getHighestRole(initialRoles);
+    
+    if (highestRole && !newRoles.includes(highestRole)) {
+      newRoles.push(highestRole);
+      message.warning('Cannot remove your highest privilege role');
+    }
+
     setLoading(true);
     try {
       await onRolesChange(netid, newRoles);
-      setSelectedRoles(newRoles);
+      setSelectedRoles(
+        newRoles.sort((a, b) => roleOrder.indexOf(b) - roleOrder.indexOf(a))
+      );
       message.success('Roles updated successfully');
     } catch (error) {
       message.error('Failed to update roles');
@@ -54,14 +74,16 @@ const RolesSelect: React.FC<RolesSelectProps> = ({ initialRoles, netid, onRolesC
 
   const tagRender = (props: any) => {
     const { label, value, closable, onClose } = props;
+    const isHighestRole = value === getHighestRole(initialRoles);
+    
     return (
       <Tag
         color={roleColors[value] || 'default'}
-        closable={closable}
+        closable={!isHighestRole && closable}
         onClose={onClose}
         style={{ marginRight: 3 }}
       >
-        {label}
+        {label.toLowerCase()}
       </Tag>
     );
   };
@@ -183,7 +205,12 @@ const UserLookup: React.FC = () => {
         }
       }
 
-      window.location.reload();
+      setFilteredData(prevData =>
+        prevData.map(user =>
+          user.netid === netid ? { ...user, roles: newRoles } : user
+        )
+      );
+
     } catch (error) {
       console.error('Error updating roles:', error);
       throw error;
@@ -211,8 +238,13 @@ const UserLookup: React.FC = () => {
         body: JSON.stringify({ comment: 'User banned via User Lookup interface' }),
       });
 
+      setFilteredData((prevData) =>
+        prevData.map((user) =>
+          user.netid === netid ? { ...user, roles: ['blacklisted'] } : user
+        )
+      );
+
       message.success('User banned successfully');
-      window.location.reload();
     } catch (error) {
       console.error('Error banning user:', error);
       message.error('Failed to ban user');
