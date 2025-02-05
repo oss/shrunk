@@ -41,7 +41,7 @@ import {
 import dayjs from 'dayjs';
 import { listOrgs, OrgInfo } from '../api/Org';
 import { LinkInfo } from '../components/LinkInfo';
-import { CreateLinkForm } from '../components/CreateLinkForm';
+import { CreateLinkDrawer } from '../drawers/CreateLinkDrawer';
 
 /**
  * The final values of the share link form
@@ -661,7 +661,7 @@ export class Dashboard extends React.Component<Props, State> {
                 icon={<PlusCircleFilled />}
                 onClick={() => this.setState({ isCreateModalOpen: true })}
               >
-                Create Link
+                Shrink
               </Button>
             </Space>
           </Col>
@@ -898,24 +898,19 @@ export class Dashboard extends React.Component<Props, State> {
           </Col>
         </Row>
 
-        <Modal
-          open={this.state.isCreateModalOpen}
-          onCancel={() => this.setState({ isCreateModalOpen: false })}
-          width="50%"
+        <CreateLinkDrawer
           title="Create Link"
-          footer={null}
-        >
-          <CreateLinkForm
-            onFinish={async () => {
-              await this.refreshResults();
-              this.setState({ isCreateModalOpen: false });
-            }}
-            userPrivileges={this.props.userPrivileges}
-            userOrgs={this.state.userOrgs}
-            netid={this.props.netid}
-            tracking_pixel_ui_enabled={this.state.trackingPixelEnabled}
-          />
-        </Modal>
+          visible={this.state.isCreateModalOpen}
+          onCancel={() => this.setState({ isCreateModalOpen: false })}
+          onFinish={async () => {
+            await this.refreshResults();
+            this.setState({ isCreateModalOpen: false });
+          }}
+          userPrivileges={this.props.userPrivileges}
+          userOrgs={this.state.userOrgs}
+          netid={this.props.netid}
+          tracking_pixel_ui_enabled={this.state.trackingPixelEnabled}
+        />
 
         <Modal
           title="Filter Links"
