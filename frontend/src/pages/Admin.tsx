@@ -18,6 +18,7 @@ import AdminStats from '../components/admin/AdminStats';
 import UserLookup from '../components/admin/UserLookup';
 import UsersProvider from '../contexts/Users';
 import ManageUserAccess from '../components/admin/ManageUserAccess';
+import BlockedLinks from '../components/admin/BlockedLinks';
 
 /**
  * Props for the [[Admin]] component
@@ -203,12 +204,18 @@ export default function Admin(props: AdminProps): React.ReactElement {
 
             {
               selectedView === 'manage-access' && ( 
-                <ManageUserAccess userNetid={props.userNetid} userPrivileges={props.userPrivileges} />
+                <UsersProvider>
+                  <ManageUserAccess userNetid={props.userNetid} userPrivileges={props.userPrivileges} />
+                </UsersProvider>
               )
             }
 
             {
-              selectedView === 'links' && ( <SafetyOutlined /> )
+              selectedView === 'links' && ( 
+                <UsersProvider>
+                  <BlockedLinks name={"power_user"} /> 
+                </UsersProvider>
+              )
             }
         </Content>
       </Layout>

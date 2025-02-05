@@ -133,9 +133,6 @@ function LinkSecurity() {
     <>
       <FloatButton.BackTop />
       <Row className="primary-row">
-        <Col span={24}>
-          <Button type="text" href="/app/#/admin" size="large" />
-        </Col>
         <span>
           <strong>Current Security Status</strong>: {securityStatus}
         </span>
