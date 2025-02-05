@@ -49,7 +49,7 @@ const AdminHelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
 
   return (
     <>
-      <Title level={2}>Help Desk</Title>
+      <Title>Help Desk</Title>
       {loading ? (
         <Spin size="large" />
       ) : (
