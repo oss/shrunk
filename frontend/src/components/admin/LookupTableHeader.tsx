@@ -3,7 +3,13 @@ import { Button, Checkbox, Col, Form, Input, Modal, Row, Space } from "antd"
 import React from "react"
 import SearchUser from "../SearchUser"
 
-const LookupTableHeader = () => {
+// TODO - Actually implement the search functionality; just a placeholder for now
+interface LookupTableHeaderProps {
+    onExportClick: () => void;
+    onSearch: (value: string) => void;
+}
+  
+const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({ onExportClick }) => {  
     const [form] = Form.useForm();
   
     const handleConfirm = () => {
@@ -39,13 +45,13 @@ const LookupTableHeader = () => {
                 <Col>
                     <Row gutter={[4, 0]}>
                         <Col>
-                            <Button
+                        <Button
                             type="primary"
                             icon={<CloudDownloadOutlined />}
-                            onClick={() => {}}
-                            >
+                            onClick={onExportClick}
+                        >
                             Export as CSV
-                            </Button>
+                        </Button>
                         </Col>
                         <Col>
                             <Button
