@@ -241,7 +241,7 @@ const TicketTable: React.FC<Props> = ({
           dataSource={tickets}
           columns={columns}
           rowKey="_id"
-          pagination={false}
+          pagination={userPrivileges.has('admin') ? { pageSize: 10 } : false}
           locale={{ emptyText: 'No pending tickets' }}
           loading={loading}
         />
