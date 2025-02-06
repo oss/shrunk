@@ -379,7 +379,7 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
                 # We do not want to promote the use of tracking pixels used under the alias route.
                 return render_template("404.html", dev=enable_dev), 404
 
-        long_url = link_info["long_url"]
+        long_url = client.link.get_long_url(alias)
 
         # Get or generate a tracking id
         tracking_id = request.cookies.get("shrunkid") or client.tracking.get_new_id()
