@@ -372,14 +372,19 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
 
         is_tracking_pixel_link = client.links.is_tracking_pixel_link(alias)
         if is_tracking_pixel_link:
-            if link_info.get("route_served_from", None) is None:
+            # TODO: Add legacy testing after this is done: https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/223
+
+            # Documents have "is_trackingpixel_legacy_endpoint" field if not legacy.. lol
+            if link_info.get("is_trackingpixel_legacy_endpoint", True):
                 # Treat legacy tracking pixels.
                 return redirect(f"/api/v1/t/{alias}")
             else:
                 # We do not want to promote the use of tracking pixels used under the alias route.
                 return render_template("404.html", dev=enable_dev), 404
 
-        long_url = client.link.get_long_url(alias)
+        long_url = client.links.get_long_url(alias)
+        if long_url is None:
+            return render_template("404.html", dev=enable_dev), 404
 
         # Get or generate a tracking id
         tracking_id = request.cookies.get("shrunkid") or client.tracking.get_new_id()

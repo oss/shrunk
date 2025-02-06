@@ -827,7 +827,7 @@ def validate_duplicate_alias(_netid: str, client: ShrunkClient, alias: str) -> A
     :param client:
     :param alias:
     """
-    valid = not client.links.alias_is_duplicate(alias)
+    valid = not client.links.alias_is_duplicate(alias, False)
     response: Dict[str, Any] = {"valid": valid}
 
     if not valid:

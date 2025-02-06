@@ -84,12 +84,18 @@ class LinksClient:
             return True
         return any(alias in str(route) for route in current_app.url_map.iter_rules())
 
-    def alias_is_duplicate(self, alias: str) -> bool:
+    def alias_is_duplicate(self, alias: str, is_tracking_pixel: bool) -> bool:
         """Check whether the given alias already exists"""
 
         # check to see if the alias is already being used
         result = self.db.urls.find_one(
-            {"aliases": {"$elemMatch": {"alias": alias, "deleted": False}}}
+            {
+                "$or": [
+                    {"is_tracking_pixel_link": {"$exists": False}},
+                    {"is_tracking_pixel_link": is_tracking_pixel},
+                ],
+                "aliases": {"$elemMatch": {"alias": alias, "deleted": False}},
+            }
         )
         return True if result is not None else False
 
@@ -182,8 +188,10 @@ class LinksClient:
             "viewers": viewers,
             "editors": editors,
             "is_tracking_pixel_link": is_tracking_pixel_link,
-            "route_served_from": "t",
         }
+
+        if is_tracking_pixel_link:
+            document["is_trackingpixel_legacy_endpoint"] = False
 
         if (
             not bypass_security_measures
@@ -501,7 +509,7 @@ class LinksClient:
             return alias
 
         # Otherwise, try to insert the alias. First check whether it already exists.
-        if self.alias_is_duplicate(alias):
+        if self.alias_is_duplicate(alias, False):
             raise BadAliasException
 
         # Create the alias.
