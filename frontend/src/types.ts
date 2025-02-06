@@ -63,3 +63,26 @@ export interface EntityPositionInfo {
    */
   employmentTypes?: string[];
 }
+
+/**
+ * Information used to create a ticket in the Help Desk
+ */
+export interface CreateTicketInfo {
+  /**
+   * The reason for the ticket
+   * @property
+   */
+  reason: string;
+
+  /**
+   * The entity the ticket is about
+   * @property
+   */
+  entity?: string;
+
+  /**
+   * The comment on the ticket
+   * @property
+   */
+  comment: string;
+}

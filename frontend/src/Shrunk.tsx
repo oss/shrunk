@@ -50,7 +50,6 @@ import { Stats } from './pages/subpages/Stats';
 import { PendingAlerts } from './modals/PendingAlerts';
 import { PendingRequests } from './modals/PendingRequests';
 
-import AdminHelpDesk from './components/admin/AdminHelpDesk';
 import Domains from './components/admin/Domains';
 import UsersProvider from './contexts/Users';
 import HelpDesk from './pages/HelpDesk';

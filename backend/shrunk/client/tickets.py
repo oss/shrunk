@@ -66,21 +66,10 @@ class TicketsClient:
         :return: a dictionary with the text-related attributes
         """
         return {
-            "submission": {
-                201: (
-                    "We have received your ticket, which will be manually "
-                    "reviewed and resolved."
-                ),
-                403: "You are not authorized to submit a ticket.",
-                409: (
-                    "Either a ticket already exists on this person's behalf "
-                    "or this person already has the requested role."
-                ),
-                429: (
-                    "You have too many pending tickets. Please wait for your "
-                    "existing tickets to be resolved before submitting a new "
-                    "one."
-                ),
+            "error": {
+                403: "Unauthorized to submit a ticket",
+                409: "Duplicate ticket",
+                429: "Too many tickets",
             },
             "reason": {
                 "power_user": {

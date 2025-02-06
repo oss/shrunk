@@ -1,10 +1,16 @@
+/**
+ * Implement the [[HelpDesk]] component
+ * @packageDocumentation
+ */
+
 import {
   DeleteOutlined,
   EyeOutlined,
+  FormOutlined,
   IssuesCloseOutlined,
 } from '@ant-design/icons';
-import { App } from 'antd';
 import {
+  App,
   Button,
   Card,
   Col,
@@ -19,10 +25,10 @@ import {
 import dayjs from 'dayjs';
 import base32 from 'hi-base32';
 import React, { useEffect, useState } from 'react';
+import CreateTicketDrawer from '../drawers/CreateTicketDrawer';
 import { TicketInfo } from '../types';
 
 const { Title, Text } = Typography;
-const { useApp } = App;
 
 /**
  * Props for the [[HelpDesk]] component
@@ -50,16 +56,18 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
    * State for the [[TicketTable]] component
    *
    * loading: Whether the component is loading
-   * helpDeskText: Fetch the help desk text
+   * helpDeskText: The text fields related to the help desk
    * isHelpDeskEnabled: Whether the help desk is enabled
    * tickets: The list of tickets
+   * isCreateDrawerOpen: Whether the CreateTicketDrawer is open
    */
   const [loading, setLoading] = useState<boolean>(false);
   const [helpDeskText, setHelpDeskText] = useState<any>(false);
   const [isHelpDeskEnabled, setIsHelpDeskEnabled] = useState<boolean>(false);
   const [tickets, setTickets] = useState<TicketInfo[]>([]);
+  const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState<boolean>(false);
 
-  const { message } = useApp();
+  const { message } = App.useApp();
 
   /**
    * Get whether the help desk is enabled
@@ -86,7 +94,8 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
   };
 
   /**
-   * Get the tickets. This is the user's tickets for the user and all tickets for admins
+   * Get the tickets. This is the user's tickets for the user and all tickets for admins.
+   * By default, the tickets are sorted by timestamp in descending order.
    * @method
    */
   const getTickets = async () => {
@@ -108,8 +117,8 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
       method: 'DELETE',
     });
 
-    if (response.status === 204) {
-      getTickets();
+    if (response.ok) {
+      setTickets(tickets.filter((ticket) => ticket._id !== ticketID));
       message.success('Successfully deleted ticket', 2);
     } else {
       message.error('Failed to delete ticket', 2);
@@ -200,7 +209,7 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
       title: 'Comment',
       dataIndex: 'comment',
       key: 'comment',
-      render: (comment: string) => <Text ellipsis>{comment}</Text>,
+      ellipsis: true,
       width: '40%',
     },
     {
@@ -261,7 +270,26 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
 
   return (
     <>
-      <Title>Help Desk</Title>
+      <Row gutter={[16, 16]}>
+        <Col span={24}>
+          <Row justify="space-between" align="middle">
+            <Col>
+              <Title>Help Desk</Title>
+            </Col>
+            {!userPrivileges.has('admin') && (
+              <Col>
+                <Button
+                  type="primary"
+                  icon={<FormOutlined />}
+                  onClick={() => setIsCreateDrawerOpen(true)}
+                >
+                  New Ticket
+                </Button>
+              </Col>
+            )}
+          </Row>
+        </Col>
+      </Row>
       <Row gutter={[16, 16]}>
         {userPrivileges.has('admin') && (
           <Col span={24}>
@@ -293,6 +321,13 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
           />
         </Col>
       </Row>
+
+      <CreateTicketDrawer
+        open={isCreateDrawerOpen}
+        onClose={() => setIsCreateDrawerOpen(false)}
+        helpDeskText={helpDeskText}
+        setTickets={setTickets}
+      />
     </>
   );
 };
