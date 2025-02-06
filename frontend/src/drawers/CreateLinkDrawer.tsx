@@ -399,7 +399,10 @@ export class CreateLinkDrawer extends React.Component<Props, State> {
                 </Form.Item>
               )}
               {!this.state.tracking_pixel_enabled && (
-                <AliasesForm mayUseCustomAliases={mayUseCustomAliases} />
+                <AliasesForm
+                  mayUseCustomAliases={mayUseCustomAliases}
+                  initialAliases={['']}
+                />
               )}
             </Col>
           </Row>
