@@ -19,7 +19,6 @@ import {
   Descriptions,
   Table,
   message,
-  Dropdown,
 } from 'antd/lib';
 import {
   ExclamationCircleFilled,
@@ -31,8 +30,6 @@ import {
   TeamOutlined,
   ShareAltOutlined,
   CopyOutlined,
-  DeleteOutlined,
-  MoreOutlined,
 } from '@ant-design/icons';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
@@ -45,7 +42,10 @@ import { downloadVisitsCsv } from '../../components/Csv';
 
 import { daysBetween } from '../../lib/utils';
 import ShareModal from '../../modals/ShareModal';
-import { EditLinkFormValues, EditLinkModal } from '../../modals/EditLinkModal';
+import {
+  EditLinkFormValues,
+  EditLinkDrawer,
+} from '../../drawers/EditLinkDrawer';
 import CollaboratorModal, { Entity } from '../../modals/CollaboratorModal';
 
 /**
@@ -918,7 +918,7 @@ export function Stats(props: Props): React.ReactElement {
       </Row>
       {linkInfo && (
         <>
-          <EditLinkModal
+          <EditLinkDrawer
             visible={editModalVisible}
             userPrivileges={props.userPrivileges}
             netid={props.netid}
