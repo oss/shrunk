@@ -688,14 +688,19 @@ export class Dashboard extends React.Component<Props, State> {
                         {record.aliases.map((aliasObj) => {
                           const isDev = process.env.NODE_ENV === 'development';
                           const protocol = isDev ? 'http' : 'https';
+                          const routePrefix = record.isTrackingPixel
+                            ? 'api/v1/t/'
+                            : '';
+
                           const shortUrlWithoutProtocol = `${
                             document.location.host
-                          }/${aliasObj.alias.toString()}`;
+                          }/${routePrefix}${aliasObj.alias.toString()}`;
                           const shortUrl = `${protocol}://${
                             record.domain || ''
                           }${record.domain ? '.' : ''}${
                             document.location.host
-                          }/${aliasObj.alias.toString()}`;
+                          }/${routePrefix}${aliasObj.alias.toString()}`;
+
                           return (
                             <Col span={24}>
                               <Button
@@ -887,6 +892,7 @@ export class Dashboard extends React.Component<Props, State> {
                   totalVisits: link.visits,
                   dateExpires: link.expiration_time,
                   canEdit: link.may_edit,
+                  isTrackingPixel: link.is_tracking_pixel_link,
                 }))}
                 pagination={{
                   total: this.state.totalLinks,
