@@ -119,7 +119,7 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
 
     if (response.ok) {
       setTickets(tickets.filter((ticket) => ticket._id !== ticketID));
-      message.success('Successfully deleted ticket', 2);
+      message.success('Ticket deleted successfully', 2);
     } else {
       message.error('Failed to delete ticket', 2);
     }

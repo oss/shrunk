@@ -84,7 +84,7 @@ const CreateTicketDrawer: React.FC<Props> = ({
     if (response.ok) {
       data = await response.json();
       setTickets((prevTickets) => [data, ...prevTickets]); // Newest ticket first
-      message.success('Created ticket', 2);
+      message.success('Ticket created successfully', 2);
     } else {
       data = {} as TicketInfo;
       message.error(helpDeskText.error[response.status], 2);

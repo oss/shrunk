@@ -91,14 +91,14 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
 
     if (isResolving) {
       if (response.status === 204) {
-        message.success('Successfully resolved ticket', 2);
+        message.success('Ticket resolved successfully', 2);
         history.push('/admin/tickets');
       } else {
         message.error('Failed to resolve ticket; unable to delete ticket', 2);
       }
     } else if (response.status === 204) {
       // If not resolving
-      message.success('Successfully deleted ticket', 2);
+      message.success('Ticket deleted successfully', 2);
       if (userPrivileges.has('admin')) {
         history.push('/admin/tickets');
       } else {
@@ -262,13 +262,15 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
             </Col>
             <Col>
               <Space>
-                <Button
-                  icon={<IssuesCloseOutlined />}
-                  type="primary"
-                  onClick={() => setIsResolveModalVisible(true)}
-                >
-                  Resolve
-                </Button>
+                {userPrivileges.has('admin') && (
+                  <Button
+                    icon={<IssuesCloseOutlined />}
+                    type="primary"
+                    onClick={() => setIsResolveModalVisible(true)}
+                  >
+                    Resolve
+                  </Button>
+                )}
                 <Popconfirm
                   title="Are you sure you want to delete this ticket?"
                   onConfirm={() => deleteTicket(false)}
