@@ -1,16 +1,9 @@
-from ast import Str
-import time
-import base64
-from datetime import datetime, timezone, timedelta
-import random
-
 import pytest
 from werkzeug.test import Client
-
 from util import dev_login
 
 
-def test_create_tracking_pixel(client: Client) -> None:
+def test_tracking_pixel(client: Client) -> None:
     """
     Creates a tracking pixel link using link creation system
     """
@@ -42,6 +35,9 @@ def test_create_tracking_pixel(client: Client) -> None:
         assert 200 <= resp.status_code < 300
         assert resp.json["title"] == "Tracking Pixel"
 
-        resp = client.get(f"/{alias0}")
+        resp = client.get(f"/api/v1/t/{alias0}")
         assert resp.status_code == 200
         assert resp.headers["X-Image-Name"] == "pixel.gif"
+
+        resp = client.get(f"/{alias0}")
+        assert resp.status_code == 404
