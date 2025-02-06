@@ -371,8 +371,13 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
             return render_template("404.html", dev=enable_dev), 404
 
         is_tracking_pixel_link = client.links.is_tracking_pixel_link(alias)
-        if link_info.get("route_served_from", None) is None and is_tracking_pixel_link:
-            return redirect(f"/api/v1/t/{alias}")
+        if is_tracking_pixel_link:
+            if link_info.get("route_served_from", None) is None:
+                # Treat legacy tracking pixels.
+                return redirect(f"/api/v1/t/{alias}")
+            else:
+                # We do not want to promote the use of tracking pixels used under the alias route.
+                return render_template("404.html", dev=enable_dev), 404
 
         long_url = link_info["long_url"]
 
