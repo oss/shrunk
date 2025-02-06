@@ -1,10 +1,28 @@
-import { FormOutlined, TableOutlined } from '@ant-design/icons';
-import { Spin, Tabs, Typography } from 'antd/lib';
+import {
+  DeleteOutlined,
+  EyeOutlined,
+  IssuesCloseOutlined,
+} from '@ant-design/icons';
+import { App } from 'antd';
+import {
+  Button,
+  Card,
+  Col,
+  Popconfirm,
+  Row,
+  Space,
+  Statistic,
+  Table,
+  Tooltip,
+  Typography,
+} from 'antd/lib';
+import dayjs from 'dayjs';
+import base32 from 'hi-base32';
 import React, { useEffect, useState } from 'react';
-import TicketForm from '../components/TicketForm';
-import TicketTable from '../components/TicketTable';
+import { TicketInfo } from '../types';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
+const { useApp } = App;
 
 /**
  * Props for the [[HelpDesk]] component
@@ -25,7 +43,7 @@ interface Props {
 }
 
 /**
- * Component for the help desk page
+ * Component for the help desk page. This includes both the user and admin views.
  */
 const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
   /**
@@ -33,36 +51,33 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
    *
    * loading: Whether the component is loading
    * helpDeskText: Fetch the help desk text
+   * isHelpDeskEnabled: Whether the help desk is enabled
+   * tickets: The list of tickets
    */
   const [loading, setLoading] = useState<boolean>(false);
   const [helpDeskText, setHelpDeskText] = useState<any>(false);
+  const [isHelpDeskEnabled, setIsHelpDeskEnabled] = useState<boolean>(false);
+  const [tickets, setTickets] = useState<TicketInfo[]>([]);
 
-  const tabItems = [
-    {
-      key: 'table',
-      icon: <TableOutlined />,
-      label: 'My Tickets',
-      children: (
-        <TicketTable
-          netid={netid}
-          userPrivileges={userPrivileges}
-          helpDeskText={helpDeskText}
-        />
-      ),
-    },
-    {
-      key: 'form',
-      icon: <FormOutlined />,
-      label: 'New Ticket',
-      children: <TicketForm helpDeskText={helpDeskText} />,
-    },
-  ];
+  const { message } = useApp();
 
   /**
-   * Fetch the help desk text
+   * Get whether the help desk is enabled
    * @method
    */
-  const fetchHelpDeskText = async () => {
+  const getIsHelpDeskEnabled = async () => {
+    setLoading(true);
+    const response = await fetch('/api/v1/ticket/enabled');
+    const body = await response.json();
+    setIsHelpDeskEnabled(body.enabled);
+    setLoading(false);
+  };
+
+  /**
+   * Get text fields related to the help desk
+   * @method
+   */
+  const getHelpDeskText = async () => {
     setLoading(true);
     const response = await fetch('/api/v1/ticket/text');
     const body = await response.json();
@@ -70,18 +85,214 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
     setLoading(false);
   };
 
+  /**
+   * Get the tickets. This is the user's tickets for the user and all tickets for admins
+   * @method
+   */
+  const getTickets = async () => {
+    setLoading(true);
+    const response = await fetch(`/api/v1/ticket?sort=-timestamp`);
+    const body = await response.json();
+    setTickets(body);
+    setLoading(false);
+  };
+
+  /**
+   * Delete the ticket with the given ID
+   * @method
+   *
+   * @param ticketID - The ID of the ticket to delete
+   */
+  const deleteTicket = async (ticketID: string) => {
+    const response = await fetch(`/api/v1/ticket/${base32.encode(ticketID)}`, {
+      method: 'DELETE',
+    });
+
+    if (response.status === 204) {
+      getTickets();
+      message.success('Successfully deleted ticket', 2);
+    } else {
+      message.error('Failed to delete ticket', 2);
+    }
+  };
+
   useEffect(() => {
-    fetchHelpDeskText();
+    getHelpDeskText();
+    getIsHelpDeskEnabled();
+    getTickets();
   }, []);
+
+  /**
+   * Render the entity column in the table
+   * @method
+   *
+   * @param entity - The entity to render
+   */
+  const renderEntity = (entity: string) => {
+    if (!entity) {
+      return <Text italic>N/A</Text>;
+    }
+    if (entity === netid) {
+      return (
+        <Text>
+          {netid} <Text italic>(self)</Text>
+        </Text>
+      );
+    }
+    return entity;
+  };
+
+  /**
+   * Render the actions column in the table
+   * @method
+   *
+   * @param record - The ticket record
+   */
+  const renderActions = (record: TicketInfo) => (
+    <Space>
+      <Tooltip title="View">
+        <Button
+          type="text"
+          icon={<EyeOutlined />}
+          href={`/app/#/tickets/${record._id}`}
+        />
+      </Tooltip>
+      {userPrivileges.has('admin') && (
+        <Tooltip title="Resolve">
+          <Button
+            type="text"
+            icon={<IssuesCloseOutlined />}
+            href={`/app/#/tickets/${record._id}?mode=resolve`}
+          />
+        </Tooltip>
+      )}
+      <Tooltip title="Delete">
+        <Popconfirm
+          title="Are you sure you want to delete this ticket?"
+          onConfirm={() => deleteTicket(record._id)}
+          okText="Yes"
+          cancelText="No"
+          okButtonProps={{ danger: true }}
+        >
+          <Button type="text" danger icon={<DeleteOutlined />} />
+        </Popconfirm>
+      </Tooltip>
+    </Space>
+  );
+
+  const userColumns = [
+    {
+      title: 'Reason',
+      dataIndex: 'reason',
+      key: 'reason',
+      render: (reason: string) =>
+        helpDeskText.reason[reason].name || 'Failed to load reason',
+      width: '15%',
+    },
+    {
+      title: 'Associated NetID',
+      dataIndex: 'entity',
+      key: 'entity',
+      render: (entity: string) => renderEntity(entity),
+      width: '15%',
+    },
+    {
+      title: 'Comment',
+      dataIndex: 'comment',
+      key: 'comment',
+      render: (comment: string) => <Text ellipsis>{comment}</Text>,
+      width: '40%',
+    },
+    {
+      title: 'Submission Date',
+      dataIndex: 'timestamp',
+      key: 'timestamp',
+      render: (timestamp: Date) =>
+        dayjs(new Date(Number(timestamp) * 1000)).format('MMM D, YYYY, h:mm a'),
+      width: '15%',
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (record: TicketInfo) => renderActions(record),
+      width: '15%',
+    },
+  ];
+
+  const adminColumns = [
+    {
+      title: 'Submission Date',
+      dataIndex: 'timestamp',
+      key: 'timestamp',
+      render: (timestamp: Date) =>
+        dayjs(new Date(Number(timestamp) * 1000)).format('MMM D, YYYY, h:mm a'),
+      width: '25%',
+    },
+    {
+      title: 'Reporter',
+      dataIndex: 'reporter',
+      key: 'reporter',
+      width: '20%',
+    },
+    {
+      title: 'Reason',
+      dataIndex: 'reason',
+      key: 'reason',
+      render: (reason: string) =>
+        helpDeskText.reason[reason].name || 'Failed to load reason',
+      width: '20%',
+    },
+    {
+      title: 'Associated NetID',
+      dataIndex: 'entity',
+      key: 'entity',
+      render: (entity: string) => renderEntity(entity),
+      width: '20%',
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (record: TicketInfo) => renderActions(record),
+      width: '15%',
+    },
+  ];
+
+  const columns = userPrivileges.has('admin') ? adminColumns : userColumns;
 
   return (
     <>
       <Title>Help Desk</Title>
-      {loading ? (
-        <Spin size="large" />
-      ) : (
-        <Tabs tabPosition="left" items={tabItems} destroyInactiveTabPane />
-      )}
+      <Row gutter={[16, 16]}>
+        {userPrivileges.has('admin') && (
+          <Col span={24}>
+            <Row gutter={[16, 16]}>
+              <Col span={12}>
+                <Card loading={loading}>
+                  <Statistic
+                    title="Status"
+                    value={isHelpDeskEnabled ? 'Enabled' : 'Disabled'}
+                  />
+                </Card>
+              </Col>
+              <Col span={12}>
+                <Card loading={loading}>
+                  <Statistic title="Ticket Count" value={tickets.length} />
+                </Card>
+              </Col>
+            </Row>
+          </Col>
+        )}
+        <Col span={24}>
+          <Table
+            dataSource={tickets}
+            columns={columns}
+            rowKey="_id"
+            pagination={userPrivileges.has('admin') ? { pageSize: 10 } : false}
+            locale={{ emptyText: 'No pending tickets' }}
+            loading={loading}
+          />
+        </Col>
+      </Row>
     </>
   );
 };
