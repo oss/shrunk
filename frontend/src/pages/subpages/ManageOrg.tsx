@@ -53,7 +53,6 @@ function ManageOrgBase({
 }: Props): React.ReactElement {
   const [orgInfo, setOrgInfo] = useState<OrgInfo | null>(null);
   const [adminsCount, setAdminsCount] = useState(0);
-  const [renameOrgModalVisible, setRenameOrgModalVisible] = useState(false);
   const [shareModalVisible, setShareModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const formRef = useRef<FormInstance>(null);
@@ -207,41 +206,49 @@ function ManageOrgBase({
         title="Edit Organization"
         open={editModalVisible}
         footer={null}
-        onOk={() => {
-          formRef.current?.validateFields().then((values) => {
-            onRenameOrg(values.newName);
-            formRef.current?.resetFields();
-            setRenameOrgModalVisible(false);
-          });
-        }}
         onCancel={() => {
           formRef.current?.resetFields();
           setEditModalVisible(false);
         }}
       >
-        <Form layout="vertical" ref={formRef}>
-          {isAdmin && (
-            <Form.Item
-              label="Rename"
-              name="newName"
-              rules={[
-                { required: true, message: 'Please input a new name.' },
-                {
-                  pattern: /^[a-zA-Z0-9_.,-]*$/,
-                  message:
-                    'Name must consist of letters, numbers, and the characters "_.,-".',
-                },
-                {
-                  max: 60,
-                  message: 'Org names can be at most 60 characters long',
-                },
-                { validator: serverValidateOrgName },
-              ]}
-            >
-              <Input placeholder="Name" />
-            </Form.Item>
-          )}
-        </Form>
+        {isAdmin && (
+          <Form
+            ref={formRef}
+            onFinish={() => {
+              formRef.current?.validateFields().then((values) => {
+                onRenameOrg(values.newName);
+                formRef.current?.resetFields();
+                setEditModalVisible(false);
+              });
+            }}
+          >
+            <Space.Compact>
+              <Form.Item
+                name="newName"
+                rules={[
+                  { required: true, message: 'Please input a new name.' },
+                  {
+                    pattern: /^[a-zA-Z0-9_.,-]*$/,
+                    message:
+                      'Name must consist of letters, numbers, and the characters "_.,-".',
+                  },
+                  {
+                    max: 60,
+                    message: 'Org names can be at most 60 characters long',
+                  },
+                  { validator: serverValidateOrgName },
+                ]}
+              >
+                <Input placeholder="Name" />
+              </Form.Item>
+              <Form.Item>
+                <Button type="primary" htmlType="submit">
+                  Rename
+                </Button>
+              </Form.Item>
+            </Space.Compact>
+          </Form>
+        )}
         <Space direction="vertical" style={{ width: '100%' }}>
           {orgInfo.is_member && (
             <Button
