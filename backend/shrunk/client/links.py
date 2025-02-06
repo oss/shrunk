@@ -28,7 +28,6 @@ from .exceptions import (
     InvalidACL,
     NotUserOrOrg,
     SecurityRiskDetected,
-    LinkIsPendingOrRejected,
 )
 
 
@@ -183,6 +182,7 @@ class LinksClient:
             "viewers": viewers,
             "editors": editors,
             "is_tracking_pixel_link": is_tracking_pixel_link,
+            "route_served_from": "t",
         }
 
         if (
