@@ -126,6 +126,25 @@ class OrgsClient:
             )
         )
 
+    def get_admin_count(self, org_id: ObjectId) -> int:
+        """Get the number of admins in an org
+
+        :param org_id: The org ID
+
+        :returns: The number of admins in the org
+        """
+        result = self.db.organizations.aggregate(
+            [
+                {"$match": {"_id": org_id}},
+                {"$unwind": "$members"},
+                {"$match": {"members.is_admin": True}},
+                {"$count": "count"},
+            ]
+        )
+
+        admin_count = next(result, {"admin_count": 0}).get("admin_count", 0)
+        return admin_count
+
     def create_member(
         self, org_id: ObjectId, netid: str, is_admin: bool = False
     ) -> bool:

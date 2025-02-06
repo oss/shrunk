@@ -52,3 +52,18 @@ def test_rename_org_permissions(client: Client) -> None:
         # Check that can't rename the org
         resp = client.put(f"/api/v1/org/{org_id}/rename/kevinwasheretestrename")
         assert resp.status_code == 403
+
+
+def test_restrict_last_admin_demotion(client: Client) -> None:
+    """Tests that the last admin of an org cannot be demoted."""
+    with dev_login(client, "admin"):
+        # Create an org. By default the creator is an admin of the org
+        resp = client.post("/api/v1/org", json={"name": "test123"})
+        assert 200 <= resp.status_code <= 300
+        org_id = resp.json["id"]
+
+        # Attempt to demote the last admin
+        resp = client.patch(
+            f"/api/v1/org/{org_id}/member/DEV_ADMIN", json={"is_admin": False}
+        )
+        assert resp.status_code == 400
