@@ -361,15 +361,29 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
 
     # serve redirects
     @app.route("/<alias>", methods=["GET"])
-    def _serve_redirect(alias: str) -> Any:
+    def _serve_shortened_links(alias: str) -> Any:
         client: ShrunkClient = current_app.client
-        long_url = client.links.get_long_url(alias)
-        is_tracking_pixel_link = client.links.is_tracking_pixel_link(alias)
+        enable_dev = current_app.config.get("DEV_LOGINS", False)
 
-        # logic to enforce domains
+        # Check if the alias is a legacy tracking pixel link
+        link_info = client.links.get_link_info_by_alias(alias)
+        if link_info is None:
+            return render_template("404.html", dev=enable_dev), 404
+
+        is_tracking_pixel_link = client.links.is_tracking_pixel_link(alias)
+        if link_info.get("route_served_from", None) is None and is_tracking_pixel_link:
+            return redirect(f"/api/v1/t/{alias}")
+
+        long_url = link_info["long_url"]
+
+        # Get or generate a tracking id
+        tracking_id = request.cookies.get("shrunkid") or client.tracking.get_new_id()
+
+        # Check if the request is coming from a custom domain
         full_domain = request.headers.get("Host", "")
+        custom_domain_alias = None
         request_domain = full_domain.split(".")[0] if full_domain else ""
-        # we might want an environment variable here instead but its not super important
+
         if request_domain.startswith("localhost"):
             request_domain = "localhost"
         if not is_tracking_pixel_link and request_domain not in {
@@ -378,17 +392,8 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
             "shrunk",
         }:
             custom_domain_alias = client.links.get_custom_domain(alias)
-
             if request_domain != custom_domain_alias:
-                enable_dev = current_app.config.get("DEV_LOGINS", False)
                 return render_template("404.html", dev=enable_dev), 404
-
-        if long_url is None and not is_tracking_pixel_link:
-            enable_dev = current_app.config.get("DEV_LOGINS", False)
-            return render_template("404.html", dev=enable_dev), 404
-
-        # Get or generate a tracking id
-        tracking_id = request.cookies.get("shrunkid") or client.tracking.get_new_id()
 
         client.links.visit(
             alias,
@@ -398,33 +403,52 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
             request.headers.get("Referer"),
         )
 
-        if is_tracking_pixel_link:
-            extension = None
+        if "://" not in long_url:
+            long_url = f"http://{long_url}"
 
-            if "." in alias:
-                extension = alias.split(".")[-1]
-            else:
-                extension = "gif"
+        # Preserve URL parameters from the original request
+        if request.query_string:
+            separator = "&" if "?" in long_url else "?"
+            long_url = f"{long_url}{separator}{request.query_string.decode('utf-8')}"
 
-            filename = "./static/img/pixel.{}".format(extension)
-            response = send_file(filename, mimetype="image/{}".format(extension))
-            response.headers["X-Image-Name"] = "pixel.{}".format(extension)
+        response = redirect(long_url)
 
-            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
-            response.headers["Pragma"] = "no-cache"
-            response.headers["Expires"] = "0"
+        response.set_cookie("shrunkid", tracking_id)
+
+        return response
+
+    # Add "/api/v1/t/" because you're technically using an API endpoint for the websites using the tracking pixel.
+    # This will also make it easier for the NGINX server in the near future.
+    @app.route("/api/v1/t/<tracking_pixel>", methods=["GET"])
+    def _serve_tracking_pixel(tracking_pixel: str) -> Any:
+        client: ShrunkClient = current_app.client
+        tracking_id = request.cookies.get("shrunkid") or client.tracking.get_new_id()
+
+        if client.links.get_link_info_by_alias(tracking_pixel) is None:
+            return "There was an error trying to find your tracking pixel.", 404
+
+        client.links.visit(
+            tracking_pixel,
+            tracking_id,
+            request.remote_addr,
+            request.headers.get("User-Agent"),
+            request.headers.get("Referer"),
+        )
+
+        extension = None
+
+        if "." in tracking_pixel:
+            extension = tracking_pixel.split(".")[-1]
         else:
-            if "://" not in long_url:
-                long_url = f"http://{long_url}"
+            extension = "gif"
 
-            # Preserve URL parameters from the original request
-            if request.query_string:
-                separator = "&" if "?" in long_url else "?"
-                long_url = (
-                    f"{long_url}{separator}{request.query_string.decode('utf-8')}"
-                )
+        filename = "./static/img/pixel.{}".format(extension)
+        response = send_file(filename, mimetype="image/{}".format(extension))
+        response.headers["X-Image-Name"] = "pixel.{}".format(extension)
 
-            response = redirect(long_url)
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
 
         response.set_cookie("shrunkid", tracking_id)
 
