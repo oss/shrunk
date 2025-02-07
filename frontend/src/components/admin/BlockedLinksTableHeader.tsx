@@ -3,7 +3,7 @@ import {
   PlusCircleFilled,
   ThunderboltOutlined,
 } from '@ant-design/icons';
-import { Button, Form, Input, Modal, Row, Space } from 'antd';
+import { Button, Flex, Form, Input, Modal, Space } from 'antd';
 import React from 'react';
 import SearchBannedLinks from './SearchBannedLinks';
 
@@ -26,7 +26,7 @@ const LookupTableHeader = () => {
 
   return (
     <>
-      <Row gutter={0} justify="space-between">
+      <Flex justify="space-between">
         <Space direction="horizontal">
           <Button disabled={true} icon={<ThunderboltOutlined />}>
             Filter
@@ -46,7 +46,7 @@ const LookupTableHeader = () => {
             Block Link
           </Button>
         </Space>
-      </Row>
+      </Flex>
 
       <Modal
         open={showBlockLinkModal}

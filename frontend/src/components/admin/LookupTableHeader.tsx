@@ -3,7 +3,7 @@ import {
   PlusCircleFilled,
   ThunderboltOutlined,
 } from '@ant-design/icons';
-import { Button, Checkbox, Col, Form, Input, Modal, Row, Space } from 'antd';
+import { Button, Checkbox, Flex, Form, Input, Modal, Space } from 'antd';
 import React from 'react';
 import SearchUser from '../SearchUser';
 
@@ -34,7 +34,7 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
 
   return (
     <>
-      <Row gutter={0} justify="space-between">
+      <Flex justify="space-between">
         <Space direction="horizontal">
           <Button disabled={true} icon={<ThunderboltOutlined />}>
             Filter
@@ -53,7 +53,7 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
             Add User
           </Button>
         </Space>
-      </Row>
+      </Flex>
 
       <Modal
         open={showCreateUserModal}

@@ -6,8 +6,6 @@
 import React, { useState, useEffect } from 'react';
 
 import {
-  Row,
-  Col,
   Spin,
   DatePicker,
   Form,
@@ -15,6 +13,7 @@ import {
   Card,
   Typography,
   Statistic,
+  Flex,
 } from 'antd/lib';
 import { ArrowRightOutlined } from '@ant-design/icons';
 import Highcharts from 'highcharts';
@@ -187,66 +186,43 @@ export default function AdminStats(): React.ReactElement {
 
   return (
     <>
-      <Row gutter={[16, 16]}>
-        <Col span={24}>
-          <Row justify="space-between" align="middle">
-            <Col>
-              <Typography.Title
-                level={3}
-                style={{ marginTop: 0, marginBottom: 16 }}
-              >
-                Admin Statistics
-              </Typography.Title>
-            </Col>
-            <Col>
-              <Form layout="inline" onFinish={submitRangeForm}>
-                <Form.Item name="range">
-                  <RangePicker />
-                </Form.Item>
-                <Form.Item>
-                  <Button htmlType="submit" icon={<ArrowRightOutlined />} />
-                </Form.Item>
-              </Form>
-            </Col>
-          </Row>
-        </Col>
-      </Row>
+      <Flex gap="1rem" align="baseline" justify="space-between">
+        <Typography.Title level={3} style={{ marginTop: 0, marginBottom: 16 }}>
+          Admin Statistics
+        </Typography.Title>
+        <Form layout="inline" onFinish={submitRangeForm}>
+          <Form.Item name="range">
+            <RangePicker />
+          </Form.Item>
+          <Form.Item>
+            <Button htmlType="submit" icon={<ArrowRightOutlined />} />
+          </Form.Item>
+        </Form>
+      </Flex>
 
-      <Row gutter={[16, 16]}>
-        <Col span={24}>
-          {adminData === null ? (
-            <Spin size="small" />
-          ) : (
-            <Row gutter={[16, 16]}>
-              <Col span={6}>
-                <Card>
-                  <Statistic title="Links" value={adminData.links} />
-                </Card>
-              </Col>
-              <Col span={6}>
-                <Card>
-                  <Statistic title="Visits" value={adminData.visits} />
-                </Card>
-              </Col>
-              <Col span={6}>
-                <Card>
-                  <Statistic title="Users" value={adminData.users} />
-                </Card>
-              </Col>
-              <Col span={6}>
-                <Card>
-                  <Statistic title="Version" value={version || ''} />
-                </Card>
-              </Col>
-            </Row>
-          )}
-        </Col>
-        <Col span={24}>
-          <Card>
-            <HighchartsReact highcharts={Highcharts} options={options} />
-          </Card>
-        </Col>
-      </Row>
+      <Flex gap="1rem" wrap="wrap" justify="space-between" vertical>
+        {adminData === null ? (
+          <Spin size="small" />
+        ) : (
+          <Flex gap="1rem" wrap="wrap" justify="space-between">
+            <Card style={{ flex: 1 }}>
+              <Statistic title="Links" value={adminData.links} />
+            </Card>
+            <Card style={{ flex: 1 }}>
+              <Statistic title="Visits" value={adminData.visits} />
+            </Card>
+            <Card style={{ flex: 1 }}>
+              <Statistic title="Users" value={adminData.users} />
+            </Card>
+            <Card style={{ flex: 1 }}>
+              <Statistic title="Version" value={version || ''} />
+            </Card>
+          </Flex>
+        )}
+        <Card>
+          <HighchartsReact highcharts={Highcharts} options={options} />
+        </Card>
+      </Flex>
     </>
   );
 }
