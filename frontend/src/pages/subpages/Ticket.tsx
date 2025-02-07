@@ -68,17 +68,34 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
   const mode = queryParams.get('mode');
 
   /**
-   * Fetch the ticket information
+   * Get the entity position information
+   * @method
+   *
+   * @param entity - The entity to get the position for
+   */
+  const getEntityPosition = async (entity: string) => {
+    const response = await fetch(
+      `/api/v1/user/${base32.encode(entity)}/position`,
+    );
+    const body = await response.json();
+    setEntityPositionInfo(body);
+  };
+
+  /**
+   * Get the ticket information
    * @method
    */
-  const fetchTicket = async () => {
-    setLoading(true);
+  const getTicket = async () => {
     const response = await fetch(`/api/v1/ticket/${base32.encode(ticketID)}`);
     const body = await response.json();
     if (response.ok) {
       setTicketInfo(body);
+
+      // Get the position information of the ticket's entity
+      if (userPrivileges.has('admin') && body.entity) {
+        await getEntityPosition(body.entity);
+      }
     }
-    setLoading(false);
   };
 
   /**
@@ -109,34 +126,13 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
   };
 
   /**
-   * Fetch the entity position information
-   * @method
-   */
-  const fetchEntityPositionInfo = async () => {
-    // Should already be caught in useEffect
-    if (!ticketInfo?.entity) {
-      return;
-    }
-
-    setLoading(true);
-    const response = await fetch(
-      `/api/v1/user/${base32.encode(ticketInfo.entity)}/position`,
-    );
-    const body = await response.json();
-    setEntityPositionInfo(body);
-    setLoading(false);
-  };
-
-  /**
    * Fetch the help desk text
    * @method
    */
-  const fetchHelpDeskText = async () => {
-    setLoading(true);
+  const getHelpDeskText = async () => {
     const response = await fetch('/api/v1/ticket/text');
     const body = await response.json();
     setHelpDeskText(body);
-    setLoading(false);
   };
 
   /**
@@ -219,28 +215,29 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
   };
 
   useEffect(() => {
-    switch (mode) {
-      case 'resolve':
-        setIsResolveModalVisible(true);
-        break;
-      default:
-        break;
-    }
-    const fetchData = async () => {
-      await fetchTicket();
-      if (userPrivileges.has('admin') && ticketInfo?.entity) {
-        await fetchEntityPositionInfo();
+    const initComponent = async () => {
+      // Open the resolve modal if the mode is 'resolve'
+      switch (mode) {
+        case 'resolve':
+          setIsResolveModalVisible(true);
+          break;
+        default:
+          break;
       }
-      await fetchHelpDeskText();
+
+      // Perform fetches
+      setLoading(true);
+      const fetchPromises = [getHelpDeskText(), getTicket()];
+      await Promise.all(fetchPromises);
+      setLoading(false);
     };
 
-    fetchData();
-  }, [ticketInfo?.entity, mode]);
+    initComponent();
+  }, [mode]);
 
   return (
     <>
-      {isResolveModalVisible &&
-        ticketInfo &&
+      {ticketInfo &&
         (entityPositionInfo || !ticketInfo.entity) &&
         helpDeskText && (
           <ResolveTicketModal
@@ -327,7 +324,7 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
         </Col>
         <Col span={12}>
           {userPrivileges.has('admin') && ticketInfo?.entity && (
-            <Card loading={loading} title="Entity Position Details">
+            <Card loading={loading} title="Associated NetID Position Details">
               {entityPositionInfo ? (
                 <Descriptions column={1}>
                   <Descriptions.Item label="Titles">

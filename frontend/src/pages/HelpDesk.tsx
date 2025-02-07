@@ -72,11 +72,9 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
    * @method
    */
   const getIsHelpDeskEnabled = async () => {
-    setLoading(true);
     const response = await fetch('/api/v1/ticket/enabled');
     const body = await response.json();
     setIsHelpDeskEnabled(body.enabled);
-    setLoading(false);
   };
 
   /**
@@ -84,11 +82,9 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
    * @method
    */
   const getHelpDeskText = async () => {
-    setLoading(true);
     const response = await fetch('/api/v1/ticket/text');
     const body = await response.json();
     setHelpDeskText(body);
-    setLoading(false);
   };
 
   /**
@@ -97,11 +93,9 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
    * @method
    */
   const getTickets = async () => {
-    setLoading(true);
     const response = await fetch(`/api/v1/ticket?sort=-timestamp`);
     const body = await response.json();
     setTickets(body);
-    setLoading(false);
   };
 
   /**
@@ -124,9 +118,19 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
   };
 
   useEffect(() => {
-    getHelpDeskText();
-    getIsHelpDeskEnabled();
-    getTickets();
+    const initComponent = async () => {
+      setLoading(true);
+      const fetchPromises = [getHelpDeskText(), getTickets()];
+
+      if (userPrivileges.has('admin')) {
+        fetchPromises.push(getIsHelpDeskEnabled());
+      }
+
+      await Promise.all(fetchPromises);
+      setLoading(false);
+    };
+
+    initComponent();
   }, []);
 
   /**
