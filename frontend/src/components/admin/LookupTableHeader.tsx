@@ -93,37 +93,24 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
             <Input placeholder="NetID" />
           </Form.Item>
 
-          <div style={{ marginBottom: 8 }}>
-            <div style={{ marginBottom: 8, fontWeight: 500 }}>Roles:</div>
-            <Form.Item
-              name="whitelisted"
-              valuePropName="checked"
-              style={{ marginBottom: 8 }}
-            >
-              <Checkbox>Whitelisted</Checkbox>
-            </Form.Item>
-            <Form.Item
-              name="admin"
-              valuePropName="checked"
-              style={{ marginBottom: 8 }}
-            >
-              <Checkbox>Admin</Checkbox>
-            </Form.Item>
-            <Form.Item
-              name="powerUser"
-              valuePropName="checked"
-              style={{ marginBottom: 8 }}
-            >
-              <Checkbox>Power User</Checkbox>
-            </Form.Item>
-            <Form.Item
-              name="facultyStaff"
-              valuePropName="checked"
-              style={{ marginBottom: 8 }}
-            >
-              <Checkbox>Faculty/Staff</Checkbox>
-            </Form.Item>
-          </div>
+          <Form.Item
+            name="roles"
+            label="Roles"
+            rules={[{ required: true, message: 'Please select a role!' }]}
+          >
+            <Checkbox.Group>
+              <Flex gap="1rem" wrap="wrap" justify="space-between">
+                <Space direction="vertical">
+                  <Checkbox value="whitelisted">Whitelisted</Checkbox>
+                  <Checkbox value="admin">Admin</Checkbox>
+                </Space>
+                <Space direction="vertical">
+                  <Checkbox value="powerUser">Power User</Checkbox>
+                  <Checkbox value="facultyStaff">Faculty/Staff</Checkbox>
+                </Space>
+              </Flex>
+            </Checkbox.Group>
+          </Form.Item>
 
           <Form.Item name="comment" label="Comment:">
             <Input.TextArea
