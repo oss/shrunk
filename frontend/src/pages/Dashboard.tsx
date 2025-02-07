@@ -25,6 +25,8 @@ import {
   Popconfirm,
   message,
   Flex,
+  Radio,
+  Tag,
 } from 'antd/lib';
 import {
   CopyOutlined,
@@ -681,9 +683,17 @@ export class Dashboard extends React.Component<Props, State> {
                     render: (_, record) => (
                       <Row gutter={[0, 8]}>
                         <Col span={24}>
-                          <Typography.Title level={5} style={{ margin: 0 }}>
-                            {record.title}
-                          </Typography.Title>
+                          <Space>
+                            <Typography.Title level={5} style={{ margin: 0 }}>
+                              {record.title}
+                            </Typography.Title>
+                            {record.deletedInfo !== null && (
+                              <Tag color="red">Deleted</Tag>
+                            )}
+                            {record.isExpired && (
+                              <Tag color="yellow">Expired</Tag>
+                            )}
+                          </Space>
                         </Col>
                         {record.aliases.map((aliasObj) => {
                           const isDev = process.env.NODE_ENV === 'development';
@@ -821,7 +831,7 @@ export class Dashboard extends React.Component<Props, State> {
                               href={`/app/#/links/${record.key}`}
                             />
                           </Tooltip>
-                          {record.canEdit && (
+                          {record.canEdit && record.deletedInfo === null && (
                             <>
                               <Tooltip title="Edit">
                                 <Button
@@ -850,31 +860,35 @@ export class Dashboard extends React.Component<Props, State> {
                               href={`/app/#/links/${record.key}?mode=share`}
                             />
                           </Tooltip>
-                          <Tooltip title="Delete">
-                            <Popconfirm
-                              title="Are you sure you want to delete this link?"
-                              onConfirm={async () => {
-                                try {
-                                  await fetch(`/api/v1/link/${record.key}`, {
-                                    method: 'DELETE',
-                                  });
-                                  message.success('Link deleted successfully');
-                                  await this.refreshResults();
-                                } catch (error) {
-                                  message.error('Failed to delete link');
-                                }
-                              }}
-                              okText="Yes"
-                              cancelText="No"
-                              okButtonProps={{ danger: true }}
-                            >
-                              <Button
-                                type="text"
-                                danger
-                                icon={<DeleteOutlined />}
-                              />
-                            </Popconfirm>
-                          </Tooltip>
+                          {record.deletedInfo === null && (
+                            <Tooltip title="Delete">
+                              <Popconfirm
+                                title="Are you sure you want to delete this link?"
+                                onConfirm={async () => {
+                                  try {
+                                    await fetch(`/api/v1/link/${record.key}`, {
+                                      method: 'DELETE',
+                                    });
+                                    message.success(
+                                      'Link deleted successfully',
+                                    );
+                                    await this.refreshResults();
+                                  } catch (error) {
+                                    message.error('Failed to delete link');
+                                  }
+                                }}
+                                okText="Yes"
+                                cancelText="No"
+                                okButtonProps={{ danger: true }}
+                              >
+                                <Button
+                                  type="text"
+                                  danger
+                                  icon={<DeleteOutlined />}
+                                />
+                              </Popconfirm>
+                            </Tooltip>
+                          )}
                         </Space>
                       </Flex>
                     ),
@@ -893,6 +907,8 @@ export class Dashboard extends React.Component<Props, State> {
                   dateExpires: link.expiration_time,
                   canEdit: link.may_edit,
                   isTrackingPixel: link.is_tracking_pixel_link,
+                  isExpired: link.is_expired,
+                  deletedInfo: link.deletion_info,
                 }))}
                 pagination={{
                   total: this.state.totalLinks,
@@ -962,24 +978,42 @@ export class Dashboard extends React.Component<Props, State> {
                 <Select.Option value="visits">Number of visits</Select.Option>
               </Select>
             </Form.Item>
-            <Form.Item name="show_expired">
-              <Checkbox
-                checked={this.state.showExpired}
-                onChange={(e) => this.showExpiredLinks(e.target.checked)}
-              >
-                Show expired links?
-              </Checkbox>
-            </Form.Item>
-            {this.props.userPrivileges.has('admin') && (
-              <Form.Item name="show_deleted">
-                <Checkbox
-                  checked={this.state.showDeleted}
-                  onChange={(e) => this.showDeletedLinks(e.target.checked)}
-                >
-                  Show deleted links?
-                </Checkbox>
-              </Form.Item>
-            )}
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item name="show_expired" label="Expired Links">
+                  <Radio.Group
+                    optionType="button"
+                    buttonStyle="solid"
+                    options={[
+                      { label: 'Show', value: 'show' },
+                      { label: 'Hide', value: 'hide' },
+                    ]}
+                    defaultValue="hide"
+                    onChange={(e) =>
+                      this.showExpiredLinks(e.target.value === 'show')
+                    }
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                {this.props.userPrivileges.has('admin') && (
+                  <Form.Item name="show_deleted" label="Deleted Links">
+                    <Radio.Group
+                      optionType="button"
+                      buttonStyle="solid"
+                      options={[
+                        { label: 'Show', value: 'show' },
+                        { label: 'Hide', value: 'hide' },
+                      ]}
+                      defaultValue="hide"
+                      onChange={(e) =>
+                        this.showDeletedLinks(e.target.value === 'show')
+                      }
+                    />
+                  </Form.Item>
+                )}
+              </Col>
+            </Row>
             <Form.Item name="beginTime" label="Created after">
               <DatePicker
                 format="YYYY-MM-DD"

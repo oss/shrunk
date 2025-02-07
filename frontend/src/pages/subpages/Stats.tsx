@@ -369,11 +369,9 @@ export function Stats(props: Props): React.ReactElement {
       resp.json(),
     )) as LinkInfo;
 
-    const aliases = templinkInfo.aliases.filter((alias) => !alias.deleted);
-
-    if (aliases.length === 0) {
-      throw new Error(`link ${props.id} has no aliases!`);
-    }
+    const aliases = !templinkInfo.deleted
+      ? templinkInfo.aliases.filter((alias) => !alias.deleted)
+      : templinkInfo.aliases;
 
     setLinkInfo(templinkInfo);
     setAllAliases(aliases);
@@ -731,6 +729,11 @@ export function Stats(props: Props): React.ReactElement {
           },
         ]}
         pagination={{ pageSize: 5 }}
+        footer={() =>
+          linkInfo?.deleted
+            ? 'Since this link is deleted, these aliases are available for anyone to grab.'
+            : ''
+        }
       />
     ),
   };
@@ -868,13 +871,27 @@ export function Stats(props: Props): React.ReactElement {
                 </Descriptions.Item>
               )}
               <Descriptions.Item label="Date Created">
-                {dayjs(linkInfo?.created_time).format('MMM D, YYYY')}
+                {dayjs(linkInfo?.created_time).format('MMM D, YYYY - h:mm A')}
               </Descriptions.Item>
               <Descriptions.Item label="Date Expires">
                 {linkInfo?.expiration_time
-                  ? dayjs(linkInfo?.expiration_time).format('MMM D, YYYY')
+                  ? dayjs(linkInfo?.expiration_time).format(
+                      'MMM D, YYYY - h:mm A',
+                    )
                   : 'N/A'}
               </Descriptions.Item>
+              {linkInfo !== null && linkInfo.deletion_info !== null && (
+                <>
+                  <Descriptions.Item label="Date Deleted">
+                    {dayjs(linkInfo.deletion_info.deleted_time).format(
+                      'MMM D, YYYY - h:mm A',
+                    )}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Deleted by">
+                    {linkInfo.deletion_info.deleted_by}
+                  </Descriptions.Item>
+                </>
+              )}
             </Descriptions>
           </Card>
         </Col>
