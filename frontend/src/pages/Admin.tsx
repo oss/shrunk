@@ -30,6 +30,7 @@ interface RoleInfo {
   name: string;
   display_name: string;
 }
+
 /**
  * Props for the [[Admin]] component
  * @interface
@@ -39,11 +40,27 @@ interface AdminProps {
   userPrivileges: Set<string>;
 }
 
+const VALID_TABS = [
+  'analytics',
+  'user-lookup',
+  'manage-access',
+  'links',
+  'security',
+];
+const DEFAULT_TAB = 'analytics';
+
 export default function Admin(props: AdminProps): React.ReactElement {
   const [roles, setRoles] = useState<RoleInfo[] | null>(null);
   const [linksToBeVerified, setLinksToBeVerified] = useState(-1);
   const [powerUserRequestsCount, setPowerUserRequestsCount] = useState(-1);
   const [isDomainEnabled, setIsDomainEnabled] = useState(false);
+
+  // Get the initial active tab from URL parameters, validate it, and fall back to default if invalid
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    return VALID_TABS.includes(tabParam || '') ? tabParam! : DEFAULT_TAB;
+  });
 
   const updatePendingPowerUserRequestsCount = async () => {
     const response = await fetch('/api/v1/role_request/power_user/count');
@@ -73,6 +90,15 @@ export default function Admin(props: AdminProps): React.ReactElement {
 
     fetchData();
   }, []);
+
+  const handleTabChange = (key: string) => {
+    if (VALID_TABS.includes(key)) {
+      setActiveTab(key);
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set('tab', key);
+      window.history.pushState({}, '', newUrl);
+    }
+  };
 
   const items: TabsProps['items'] = [
     {
@@ -162,7 +188,12 @@ export default function Admin(props: AdminProps): React.ReactElement {
             },
           }}
         >
-          <Tabs defaultActiveKey="analytics" items={items} type="card" />
+          <Tabs
+            activeKey={activeTab}
+            onChange={handleTabChange}
+            items={items}
+            type="card"
+          />
         </ConfigProvider>
       </Content>
     </>
