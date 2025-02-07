@@ -113,7 +113,7 @@ MAIL_FILE_PATH = "./mail"
 """Used to configure the `file` backend. Other backends have their own config
 options; see flask-mailman documentation."""
 
-GOOGLE_SAFE_BROWSING_API = "Ask Kevin or Jack about acquiring this"
+GOOGLE_SAFE_BROWSING_API = "Check shrunk-test or shrunk-prod for this value."
 """A secret key for Google Cloud Web Risk API"""
 
 SECURITY_MEASURES_ON = False
