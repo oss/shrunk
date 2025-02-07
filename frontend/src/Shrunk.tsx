@@ -272,7 +272,8 @@ export default function Shrunk(props: Props) {
     },
   ];
 
-  const route = location.hash;
+  const { location } = createBrowserHistory();
+  const { hash } = location;
 
   // setSelectedKeysFromLocation() is scheduled to be deleted soon.
   const partToName: {
@@ -360,7 +361,7 @@ export default function Shrunk(props: Props) {
               )}
               <PendingRequests />
               <Breadcrumb
-                items={route.split('/').map((part, index, arr) => {
+                items={hash.split('/').map((part, index, arr) => {
                   if (part === '#') {
                     return {
                       title: 'Home',
