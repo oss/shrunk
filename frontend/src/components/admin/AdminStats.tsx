@@ -191,7 +191,12 @@ export default function AdminStats(): React.ReactElement {
         <Col span={24}>
           <Row justify="space-between" align="middle">
             <Col>
-              <Typography.Title>Admin Statistics</Typography.Title>
+              <Typography.Title
+                level={3}
+                style={{ marginTop: 0, marginBottom: 16 }}
+              >
+                Admin Statistics
+              </Typography.Title>
             </Col>
             <Col>
               <Form layout="inline" onFinish={submitRangeForm}>
