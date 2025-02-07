@@ -7,8 +7,6 @@ import { App, Button, Drawer, Form, Input, Select, Typography } from 'antd/lib';
 import React, { useState } from 'react';
 import { CreateTicketInfo, TicketInfo } from '../types';
 
-const { Text } = Typography;
-
 /**
  * Props for the [[CreateTicketDrawer]] component
  */
@@ -206,10 +204,10 @@ const CreateTicketDrawer: React.FC<Props> = ({
         </Form.Item>
         {reasonField && (
           <Form.Item>
-            <Text strong>
+            <Typography.Text>
               {helpDeskText.reason[reasonField].prompt ||
                 'Failed to load prompt text.'}
-            </Text>
+            </Typography.Text>
           </Form.Item>
         )}
         {reasonField === 'whitelisted' && (

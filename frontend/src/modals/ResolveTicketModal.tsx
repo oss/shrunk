@@ -16,9 +16,6 @@ import dayjs from 'dayjs';
 import React from 'react';
 import { EntityPositionInfo, TicketInfo } from '../types';
 
-const { Text } = Typography;
-const { useForm } = Form;
-
 /**
  * Props for the [[ResolveTicketModal]] component
  * @interface
@@ -73,7 +70,7 @@ const ResolveTicketModal: React.FC<Props> = ({
   onResolve,
   onCancel,
 }) => {
-  const [form] = useForm();
+  const [form] = Form.useForm();
 
   return (
     <Modal
@@ -88,45 +85,49 @@ const ResolveTicketModal: React.FC<Props> = ({
     >
       <Descriptions column={1} size="small">
         <Descriptions.Item label="ID">
-          <Text>{ticketInfo._id}</Text>
+          <Typography.Text>{ticketInfo._id}</Typography.Text>
         </Descriptions.Item>
         <Descriptions.Item label="Reporter">
-          <Text>{ticketInfo.reporter}</Text>
+          <Typography.Text>{ticketInfo.reporter}</Typography.Text>
         </Descriptions.Item>
         <Descriptions.Item label="Reason">
-          <Text>{helpDeskText.reason[ticketInfo.reason].name}</Text>
+          <Typography.Text>
+            {helpDeskText.reason[ticketInfo.reason].name}
+          </Typography.Text>
         </Descriptions.Item>
         <Descriptions.Item label="Associated NetID">
-          <Text italic={!ticketInfo.entity}>{ticketInfo.entity || 'N/A'}</Text>
+          <Typography.Text italic={!ticketInfo.entity}>
+            {ticketInfo.entity || 'N/A'}
+          </Typography.Text>
         </Descriptions.Item>
         <Descriptions.Item label="Submission Date">
-          <Text>
+          <Typography.Text>
             {dayjs(new Date(Number(ticketInfo.timestamp) * 1000)).format(
               'MMM D, YYYY, h:mm a',
             )}
-          </Text>
+          </Typography.Text>
         </Descriptions.Item>
         <Descriptions.Item label="Comment">
-          <Text>{ticketInfo.comment}</Text>
+          <Typography.Text>{ticketInfo.comment}</Typography.Text>
         </Descriptions.Item>
         {entityPositionInfo && (
           <>
             <Descriptions.Item label="Titles">
-              <Text italic={!entityPositionInfo.titles}>
+              <Typography.Text italic={!entityPositionInfo.titles}>
                 {entityPositionInfo.titles?.join(', ') || 'No titles found'}
-              </Text>
+              </Typography.Text>
             </Descriptions.Item>
             <Descriptions.Item label="Departments">
-              <Text italic={!entityPositionInfo.departments}>
+              <Typography.Text italic={!entityPositionInfo.departments}>
                 {entityPositionInfo.departments?.join(', ') ||
                   'No departments found'}
-              </Text>
+              </Typography.Text>
             </Descriptions.Item>
             <Descriptions.Item label="Employments Types">
-              <Text italic={!entityPositionInfo.employmentTypes}>
+              <Typography.Text italic={!entityPositionInfo.employmentTypes}>
                 {entityPositionInfo.employmentTypes?.join(', ') ||
                   'No employment types found'}
-              </Text>
+              </Typography.Text>
             </Descriptions.Item>
           </>
         )}

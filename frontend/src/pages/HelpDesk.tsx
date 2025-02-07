@@ -28,8 +28,6 @@ import React, { useEffect, useState } from 'react';
 import CreateTicketDrawer from '../drawers/CreateTicketDrawer';
 import { TicketInfo } from '../types';
 
-const { Title, Text } = Typography;
-
 /**
  * Props for the [[HelpDesk]] component
  * @interface
@@ -139,13 +137,13 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
    */
   const renderEntity = (entity: string) => {
     if (!entity) {
-      return <Text italic>N/A</Text>;
+      return <Typography.Text italic>N/A</Typography.Text>;
     }
     if (entity === netid) {
       return (
-        <Text>
-          {netid} <Text italic>(self)</Text>
-        </Text>
+        <Typography.Text>
+          {netid} <Typography.Text italic>(self)</Typography.Text>
+        </Typography.Text>
       );
     }
     return entity;
@@ -274,7 +272,7 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
         <Col span={24}>
           <Row justify="space-between" align="middle">
             <Col>
-              <Title>Help Desk</Title>
+              <Typography.Title>Help Desk</Typography.Title>
             </Col>
             {!userPrivileges.has('admin') && (
               <Col>
