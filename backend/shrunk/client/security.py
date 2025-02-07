@@ -263,22 +263,20 @@ class SecurityClient:
         message = "ON"
         try:
             r = requests.post(
-                "https://safebrowsing.googleapis.com/v4/threatMatches:find?key={}".format(
-                    API_KEY
-                ),
+                f"https://safebrowsing.googleapis.com/v4/threatMatches:find?key={API_KEY}",
                 data=json.dumps(postBody),
             )
             r.raise_for_status()
             self.latest_status = message
-            return len(r.json()["matches"]) > 0
+            return len(r.json().get("matches", [])) > 0
         except requests.exceptions.HTTPError as err:
-            message = "Google Safe Browsing API request failed. Status code: {}".format(
-                r.status_code
+            message = (
+                f"Google Safe Browsing API request failed. Status code: {r.status_code}"
             )
             current_app.logger.warning(message)
             current_app.logger.warning(err)
         except KeyError as err:
-            message = "ERROR: The key {} did not exist in the JSON response".format(err)
+            message = f"ERROR: The key {err} did not exist in the JSON response"
             current_app.logger.warning(message)
         except Exception as err:
             message = (
