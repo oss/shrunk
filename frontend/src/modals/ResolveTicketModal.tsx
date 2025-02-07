@@ -136,7 +136,7 @@ const ResolveTicketModal: React.FC<Props> = ({
       <Form
         form={form}
         layout="vertical"
-        initialValues={{ comment: '', action: 'deny' }}
+        initialValues={{ comment: '', action: 'denied' }}
         onFinish={(values: any) => onResolve(values)}
       >
         <Form.Item label="Comment" name="comment">
@@ -145,7 +145,7 @@ const ResolveTicketModal: React.FC<Props> = ({
         {(ticketInfo.reason === 'whitelisted' ||
           ticketInfo.reason === 'power_user') && (
           <Form.Item label="Action" name="action">
-            <Radio.Group>
+            <Radio.Group optionType="button" buttonStyle="solid">
               <Radio.Button value="approved">Approve</Radio.Button>
               <Radio.Button value="denied">Deny</Radio.Button>
             </Radio.Group>

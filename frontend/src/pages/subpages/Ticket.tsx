@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import { DeleteOutlined, IssuesCloseOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import {
   App,
   Button,
@@ -263,7 +263,7 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
               <Space>
                 {userPrivileges.has('admin') && (
                   <Button
-                    icon={<IssuesCloseOutlined />}
+                    icon={<CheckCircleOutlined />}
                     type="primary"
                     onClick={() => setIsResolveModalVisible(true)}
                   >
@@ -271,14 +271,14 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
                   </Button>
                 )}
                 <Popconfirm
-                  title="Are you sure you want to delete this ticket?"
+                  title="Are you sure you want to close this ticket?"
                   onConfirm={() => deleteTicket(false)}
                   okText="Yes"
                   cancelText="No"
                   okButtonProps={{ danger: true }}
                 >
-                  <Button icon={<DeleteOutlined />} danger>
-                    Delete
+                  <Button icon={<CloseCircleOutlined />} danger>
+                    Close
                   </Button>
                 </Popconfirm>
               </Space>

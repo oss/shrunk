@@ -4,10 +4,10 @@
  */
 
 import {
-  DeleteOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
   EyeOutlined,
   FormOutlined,
-  IssuesCloseOutlined,
 } from '@ant-design/icons';
 import {
   App,
@@ -168,20 +168,20 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
         <Tooltip title="Resolve">
           <Button
             type="text"
-            icon={<IssuesCloseOutlined />}
+            icon={<CheckCircleOutlined />}
             href={`/app/#/tickets/${record._id}?mode=resolve`}
           />
         </Tooltip>
       )}
-      <Tooltip title="Delete">
+      <Tooltip title="Close">
         <Popconfirm
-          title="Are you sure you want to delete this ticket?"
+          title="Are you sure you want to close this ticket?"
           onConfirm={() => deleteTicket(record._id)}
           okText="Yes"
           cancelText="No"
           okButtonProps={{ danger: true }}
         >
-          <Button type="text" danger icon={<DeleteOutlined />} />
+          <Button type="text" danger icon={<CloseCircleOutlined />} />
         </Popconfirm>
       </Tooltip>
     </Space>
