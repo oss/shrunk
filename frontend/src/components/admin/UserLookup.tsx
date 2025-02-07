@@ -23,9 +23,10 @@ interface RolesSelectProps {
   initialRoles: string[];
   netid: string;
   onRolesChange: (netid: string, roles: string[]) => Promise<void>;
+  rehydrateData: () => void;
 }
 
-const RolesSelect: React.FC<RolesSelectProps> = ({ initialRoles, netid, onRolesChange }) => {
+const RolesSelect: React.FC<RolesSelectProps> = ({ initialRoles, netid, onRolesChange, rehydrateData }) => {
   const [selectedRoles, setSelectedRoles] = useState<string[]>(initialRoles.sort((a, b) => roleOrder.indexOf(b) - roleOrder.indexOf(a)));
   const [loading, setLoading] = useState(false);
 
@@ -64,6 +65,8 @@ const RolesSelect: React.FC<RolesSelectProps> = ({ initialRoles, netid, onRolesC
         newRoles.sort((a, b) => roleOrder.indexOf(b) - roleOrder.indexOf(a))
       );
       message.success('Roles updated successfully');
+
+      rehydrateData();
     } catch (error) {
       message.error('Failed to update roles');
       console.error('Error updating roles:', error);
@@ -130,7 +133,7 @@ interface TablePagination {
 }
 
 const UserLookup: React.FC = () => {
-  const { users, options, loading: usersLoading, appliedOperations, deleteOperation } = useUsers();
+  const { users, options, loading: usersLoading, appliedOperations, deleteOperation, rehydrateUsers } = useUsers();
   const [loading, setLoading] = useState(false);
   const [filteredData, setFilteredData] = useState<UserData[]>([]);
   const [searchText, setSearchText] = useState('');
@@ -349,6 +352,7 @@ const UserLookup: React.FC = () => {
       key: 'roles',
       render: (roles: string[], record: any) => (
         <RolesSelect 
+          rehydrateData={rehydrateUsers}
           initialRoles={roles} 
           netid={record.netid} 
           onRolesChange={handleRolesChange}
@@ -404,6 +408,7 @@ const UserLookup: React.FC = () => {
 
       <ConfigProvider theme={lightTheme}>
         <LookupTableHeader 
+          rehydrateData={rehydrateUsers}
           onExportClick={exportToCSV}
           onSearch={handleSearch}
         />
