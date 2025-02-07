@@ -20,17 +20,15 @@ const SearchBannedLinks: React.FC = () => {
   );
 
   return (
-    <Col>
-        <AutoComplete
-            style={{ width: '100%', minWidth: '200px' }}
-            // options={filterStringOptions}
-            // onSelect={handleOperationFilterStringChange}
-            // onSearch={updateFilterStringOptions}
-            placeholder="Search for Banned Links"
-            suffixIcon={<SearchOutlined />}
-        >
-        </AutoComplete>
-    </Col>
+      <AutoComplete
+          style={{ width: '100%', minWidth: '200px' }}
+          // options={filterStringOptions}
+          // onSelect={handleOperationFilterStringChange}
+          // onSearch={updateFilterStringOptions}
+          placeholder="Search for Banned Links"
+          suffixIcon={<SearchOutlined />}
+      >
+      </AutoComplete>
   );
 };
 

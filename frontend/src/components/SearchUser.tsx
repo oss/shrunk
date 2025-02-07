@@ -3,8 +3,8 @@
  * @packageDocumentation
  */
 
-import { CloudDownloadOutlined, PlusCircleFilled, SearchOutlined, ThunderboltOutlined } from '@ant-design/icons';
-import { AutoComplete, Button, Col, Form, Modal, Row, Select } from 'antd/lib';
+import { SearchOutlined } from '@ant-design/icons';
+import { AutoComplete, Col, Select } from 'antd/lib';
 import React, { useEffect, useState } from 'react';
 import {
   useUsers,
@@ -322,17 +322,14 @@ const SearchUser: React.FC = () => {
   }, [currentOperation, appliedOperations]);
 
   return (
-    <Col>
-        <AutoComplete
+      <AutoComplete
         style={{ width: '100%', minWidth: '200px' }}
         options={filterStringOptions}
         onSelect={handleOperationFilterStringChange}
         onSearch={updateFilterStringOptions}
         placeholder="Search for User"
         suffixIcon={<SearchOutlined />}
-        >
-        </AutoComplete>
-    </Col>
+      ></AutoComplete>
   );
 };
 
