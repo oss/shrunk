@@ -7,7 +7,6 @@ import React, { useEffect, useState } from 'react';
 import { Badge, Typography, Tabs, Space } from 'antd/lib';
 import {
   LineChartOutlined,
-  UserOutlined,
   SafetyOutlined,
   LockOutlined,
 } from '@ant-design/icons';

@@ -1,3 +1,8 @@
+/**
+ * Implement the [[ResolveTicketModal]] component
+ * @packageDocumentation
+ */
+
 import {
   Descriptions,
   Divider,

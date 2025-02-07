@@ -135,7 +135,7 @@ export default function Shrunk(props: Props) {
         key = 'admin';
       }
     } else if (route.startsWith('#/tickets')) {
-      key = 'help';
+      key = 'tickets';
     } else if (route.startsWith('#/faq')) {
       key = 'faq';
     }
@@ -182,10 +182,10 @@ export default function Shrunk(props: Props) {
       icon: <TeamOutlined />,
       label: <NavLink to="/orgs">My Organizations</NavLink>,
     },
-    ...(!showAdminTab && isHelpDeskEnabled
+    ...(showAdminTab || isHelpDeskEnabled
       ? [
           {
-            key: 'help',
+            key: 'tickets',
             icon: <BugOutlined />,
             label: <NavLink to="/tickets">Help Desk</NavLink>,
           },
@@ -379,7 +379,7 @@ export default function Shrunk(props: Props) {
                   />
                 </Route>
 
-                {!showAdminTab && isHelpDeskEnabled && (
+                {(showAdminTab || isHelpDeskEnabled) && (
                   <Route exact path="/tickets">
                     <HelpDesk netid={netid} userPrivileges={userPrivileges} />
                   </Route>

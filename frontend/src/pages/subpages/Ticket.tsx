@@ -1,3 +1,8 @@
+/**
+ * Implement the [[Ticket]] component
+ * @packageDocumentation
+ */
+
 import { DeleteOutlined, IssuesCloseOutlined } from '@ant-design/icons';
 import {
   App,
@@ -92,18 +97,14 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
     if (isResolving) {
       if (response.status === 204) {
         message.success('Ticket resolved successfully', 2);
-        history.push('/admin/tickets');
+        history.push('/tickets');
       } else {
         message.error('Failed to resolve ticket; unable to delete ticket', 2);
       }
     } else if (response.status === 204) {
       // If not resolving
       message.success('Ticket deleted successfully', 2);
-      if (userPrivileges.has('admin')) {
-        history.push('/admin/tickets');
-      } else {
-        history.push('/tickets');
-      }
+      history.push('/tickets');
     } else {
       message.error('Failed to delete ticket');
     }
