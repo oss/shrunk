@@ -3,7 +3,7 @@ import {
   FilterOutlined,
   PlusCircleFilled
 } from '@ant-design/icons';
-import { Button, Checkbox, Flex, Form, Input, message, Modal, Space } from 'antd';
+import { Button, Checkbox, Flex, Form, Input, message, Modal, Space } from 'antd/lib';
 import React from 'react';
 import base32 from 'hi-base32';
 import SearchUser from '../SearchUser';
