@@ -27,6 +27,7 @@ import {
   Flex,
   Radio,
   Tag,
+  RadioChangeEvent,
 } from 'antd/lib';
 import {
   CopyOutlined,
@@ -40,7 +41,7 @@ import {
   SlidersOutlined,
 } from '@ant-design/icons';
 
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import { listOrgs, OrgInfo } from '../api/Org';
 import { LinkInfo } from '../components/LinkInfo';
 import { CreateLinkDrawer } from '../drawers/CreateLinkDrawer';
@@ -124,6 +125,8 @@ export interface SearchQuery {
    * @property
    */
   end_time: dayjs.Dayjs | null;
+
+  showType: 'links' | 'tracking_pixels';
 }
 
 /**
@@ -245,6 +248,8 @@ export interface State {
   visibleColumns: Set<string>;
 
   customizeDropdownOpen: boolean;
+
+  showType: 'links' | 'tracking_pixels';
 }
 
 // TODO: Add title column
@@ -275,6 +280,7 @@ export class Dashboard extends React.Component<Props, State> {
         sort: { key: 'relevance', order: 'descending' },
         begin_time: null,
         end_time: null,
+        showType: 'links',
       },
       totalPages: 0,
       totalLinks: 0,
@@ -314,6 +320,7 @@ export class Dashboard extends React.Component<Props, State> {
         'totalVisits',
       ]),
       customizeDropdownOpen: false,
+      showType: 'links',
     };
   }
 
@@ -400,6 +407,17 @@ export class Dashboard extends React.Component<Props, State> {
     );
   };
 
+  sortByType = (e: RadioChangeEvent) => {
+    const key = e.target.value;
+    this.setState(
+      {
+        showType: key,
+        query: { ...this.state.query, showType: key },
+      },
+      () => this.setQuery(this.state.query),
+    );
+  };
+
   /**
    * Updates the sort order in the state and executes a search query
    * @method
@@ -417,25 +435,19 @@ export class Dashboard extends React.Component<Props, State> {
     );
   };
 
-  /**
-   * Updates the beginning time in the state and executes a search query
-   * @method
-   * @param begin_time View links created after this date
-   */
-  showLinksAfter = (begin_time: dayjs.Dayjs) => {
-    this.setState({ query: { ...this.state.query, begin_time } }, () =>
-      this.setQuery(this.state.query),
-    );
-  };
-
-  /**
-   * Updates the end time in the state and executes a search query
-   * @method
-   * @param end_time View links created before this date
-   */
-  showLinksBefore = (end_time: dayjs.Dayjs) => {
-    this.setState({ query: { ...this.state.query, end_time } }, () =>
-      this.setQuery(this.state.query),
+  showLinksInRange = (
+    dates: NoUndefinedRangeValueType<Dayjs> | null,
+    _: [string, string],
+  ) => {
+    this.setState(
+      {
+        query: {
+          ...this.state.query,
+          begin_time: dates[0],
+          end_time: dates[1],
+        },
+      },
+      () => this.setQuery(this.state.query),
     );
   };
 
@@ -516,6 +528,7 @@ export class Dashboard extends React.Component<Props, State> {
       show_deleted_links: query.show_deleted_links,
       sort: query.sort,
       pagination: { skip, limit },
+      show_type: query.showType,
     };
 
     if (query.begin_time !== null) {
@@ -851,15 +864,16 @@ export class Dashboard extends React.Component<Props, State> {
                               </Tooltip>
                             </>
                           )}
-
-                          <Tooltip title="Share">
-                            <Button
-                              type="text"
-                              icon={<ShareAltOutlined />}
-                              target="_blank"
-                              href={`/app/#/links/${record.key}?mode=share`}
-                            />
-                          </Tooltip>
+                          {!record.isTrackingPixel && (
+                            <Tooltip title="Share">
+                              <Button
+                                type="text"
+                                icon={<ShareAltOutlined />}
+                                target="_blank"
+                                href={`/app/#/links/${record.key}?mode=share`}
+                              />
+                            </Tooltip>
+                          )}
                           {record.deletedInfo === null && (
                             <Tooltip title="Delete">
                               <Popconfirm
@@ -948,7 +962,7 @@ export class Dashboard extends React.Component<Props, State> {
               sortOrder: 'descending',
             }}
           >
-            <Form.Item name="orgSelect" label="Filter by organization">
+            <Form.Item name="orgSelect" label="Ownership">
               <Select value={this.state.selectedOrg} onChange={this.updateOrg}>
                 <Select.Option value={0}>My Links</Select.Option>
                 <Select.Option value={2}>Shared with Me</Select.Option>
@@ -966,18 +980,40 @@ export class Dashboard extends React.Component<Props, State> {
                 ) : null}
               </Select>
             </Form.Item>
-            <Form.Item name="sortKey" label="Sort by">
-              <Select
-                value={this.state.sortKey}
-                onChange={this.sortLinksByKey}
-                style={{ width: '100%' }}
-              >
-                <Select.Option value="relevance">Relevance</Select.Option>
-                <Select.Option value="created_time">Time created</Select.Option>
-                <Select.Option value="title">Title</Select.Option>
-                <Select.Option value="visits">Number of visits</Select.Option>
-              </Select>
-            </Form.Item>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item name="sortKey" label="Sort by">
+                  <Select
+                    value={this.state.sortKey}
+                    onChange={this.sortLinksByKey}
+                    style={{ width: '100%' }}
+                  >
+                    <Select.Option value="relevance">Relevance</Select.Option>
+                    <Select.Option value="created_time">
+                      Time created
+                    </Select.Option>
+                    <Select.Option value="title">Title</Select.Option>
+                    <Select.Option value="visits">
+                      Number of visits
+                    </Select.Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="links_vs_pixels" label="Link Type">
+                  <Radio.Group
+                    optionType="button"
+                    buttonStyle="solid"
+                    options={[
+                      { label: 'Links', value: 'links' },
+                      { label: 'Tracking Pixels', value: 'tracking_pixels' },
+                    ]}
+                    defaultValue={this.state.showType}
+                    onChange={this.sortByType}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
             <Row gutter={16}>
               <Col span={12}>
                 <Form.Item name="show_expired" label="Expired Links">
@@ -1014,20 +1050,13 @@ export class Dashboard extends React.Component<Props, State> {
                 )}
               </Col>
             </Row>
-            <Form.Item name="beginTime" label="Created after">
-              <DatePicker
+            <Form.Item name="dateRange" label="Creation Date">
+              <DatePicker.RangePicker
                 format="YYYY-MM-DD"
-                value={this.state.beginTime}
-                onChange={this.showLinksAfter}
+                value={[this.state.beginTime, this.state.endTime]}
+                onChange={this.showLinksInRange}
                 style={{ width: '100%' }}
-              />
-            </Form.Item>
-            <Form.Item name="endTime" label="Created before">
-              <DatePicker
-                format="YYYY-MM-DD"
-                value={this.state.endTime}
-                onChange={this.showLinksBefore}
-                style={{ width: '100%' }}
+                allowEmpty={[false, true]} // Allow the second date to be empty
               />
             </Form.Item>
           </Form>

@@ -677,11 +677,20 @@ export function Stats(props: Props): React.ReactElement {
   };
 
   const statTabsKeys = [
-    { key: 'alias', tab: 'Alias' },
+    {
+      key: 'alias',
+      tab: !linkInfo?.is_tracking_pixel_link ? 'Alias' : 'Installation',
+    },
     { key: 'visits', tab: 'Visits' },
     { key: 'geoip', tab: 'Location' },
     { key: 'browser', tab: 'Metadata' },
   ];
+
+  const isDev = process.env.NODE_ENV === 'development';
+  const protocol = isDev ? 'http' : 'https';
+  const trackingUrl = linkInfo
+    ? `${protocol}://${document.location.host}/${linkInfo.aliases[0].alias}`
+    : '';
 
   const statTabs: Record<string, React.ReactNode> = {
     visits: <VisitsChart visitStats={visitStats} />,
@@ -691,7 +700,7 @@ export function Stats(props: Props): React.ReactElement {
         <BrowserCharts browserStats={browserStats} />
       </Row>
     ),
-    alias: (
+    alias: !linkInfo?.is_tracking_pixel_link ? (
       <Table
         showHeader={false}
         size="small"
@@ -706,8 +715,6 @@ export function Stats(props: Props): React.ReactElement {
             key: 'alias',
             width: '25%',
             render: (alias) => {
-              const isDev = process.env.NODE_ENV === 'development';
-              const protocol = isDev ? 'http' : 'https';
               const shortUrl = `${protocol}://${document.location.host}/${alias}`;
               return (
                 <Button
@@ -735,6 +742,20 @@ export function Stats(props: Props): React.ReactElement {
             : ''
         }
       />
+    ) : (
+      <>
+        <Typography.Title level={3} style={{ marginTop: 0 }}>
+          How to use
+        </Typography.Title>
+        <Typography.Text>
+          If you are a developer and would like to incorporate it into your
+          site, just add an image reference into your HTML or JavaScript file.
+          <pre>
+            &lt;img src=&quot;{trackingUrl}&quot; style=&quot;display:none&quot;
+            alt=&quot;&quot;/&gt;
+          </pre>
+        </Typography.Text>
+      </>
     ),
   };
 
@@ -880,7 +901,7 @@ export function Stats(props: Props): React.ReactElement {
                     )
                   : 'N/A'}
               </Descriptions.Item>
-              {linkInfo !== null && linkInfo.deletion_info !== null && (
+              {linkInfo?.deleted && linkInfo.deletion_info !== null && (
                 <>
                   <Descriptions.Item label="Date Deleted">
                     {dayjs(linkInfo.deletion_info.deleted_time).format(

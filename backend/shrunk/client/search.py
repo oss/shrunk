@@ -189,6 +189,11 @@ class SearchClient:
         if "end_time" in query:
             pipeline.append({"$match": {"timeCreated": {"$lte": query["end_time"]}}})
 
+        if "show_type" in query and query["show_type"] == "tracking_pixels":
+            pipeline.append(
+                {"$match": {"is_tracking_pixel_link": {"$exists": True, "$eq": True}}}
+            )
+
         # Pagination.
         facet = {
             "count": [{"$count": "count"}],
