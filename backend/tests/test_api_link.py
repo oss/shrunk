@@ -1000,3 +1000,42 @@ def test_acl(client: Client) -> None:  # pylint: disable=too-many-statements
             ]:
                 resp = client.get(f"/api/v1/link/{link_id}/alias/{alias}/{endpoint}")
                 assert_access(user["view_alias_stats"], resp.status_code)
+
+
+def test_case_sensitive_duplicate_aliases(client: Client) -> None:
+    """
+    Ban the future use of creating case-sensitive aliases
+    (https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/205)
+    """
+
+    with dev_login(client, "admin"):
+        resp = client.post(
+            "/api/v1/link",
+            json={
+                "title": "valorant",
+                "long_url": "https://playvalorant.com/",
+            },
+        )
+        assert 200 <= resp.status_code < 300
+        link_id = resp.json["id"]
+
+        resp = client.post(
+            f"/api/v1/link/{link_id}/alias",
+            json={
+                "alias": "Valorant",
+                "description": "alias0",
+            },
+        )
+        assert 200 <= resp.status_code < 300
+        print(resp.json)
+        assert resp.json["alias"] == "valorant"
+
+        resp = client.post(
+            f"/api/v1/link/{link_id}/alias",
+            json={
+                "alias": "VALORANT",
+                "description": "alias0",
+            },
+        )
+
+        assert resp.status_code == 400

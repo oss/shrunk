@@ -87,6 +87,9 @@ class LinksClient:
     def alias_is_duplicate(self, alias: str, is_tracking_pixel: bool) -> bool:
         """Check whether the given alias already exists"""
 
+        # Ban the future use of creating case-sensitive aliases
+        # (https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/205)
+
         # check to see if the alias is already being used
         result = self.db.urls.find_one(
             {
@@ -94,7 +97,12 @@ class LinksClient:
                     {"is_tracking_pixel_link": {"$exists": False}},
                     {"is_tracking_pixel_link": is_tracking_pixel},
                 ],
-                "aliases": {"$elemMatch": {"alias": alias, "deleted": False}},
+                "aliases": {
+                    "$elemMatch": {
+                        "alias": {"$regex": f"^{alias}$", "$options": "i"},
+                        "deleted": False,
+                    }
+                },
             }
         )
         return True if result is not None else False
@@ -487,6 +495,10 @@ class LinksClient:
     ) -> str:
         if alias is None:
             return self.create_random_alias(link_id, description, extension)
+
+        # Ban the future use of creating case-sensitive aliases
+        # (https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/205)
+        alias = alias.lower()
 
         # If alias is reserved word
         if extension:
