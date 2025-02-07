@@ -1,7 +1,7 @@
 import {
   CloudDownloadOutlined,
-  PlusCircleFilled,
-  ThunderboltOutlined,
+  FilterOutlined,
+  PlusCircleFilled
 } from '@ant-design/icons';
 import { Button, Checkbox, Flex, Form, Input, message, Modal, Space } from 'antd';
 import React from 'react';
@@ -78,7 +78,7 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
     <>
       <Flex justify="space-between">
         <Space direction="horizontal">
-          <Button disabled={true} icon={<ThunderboltOutlined />}>
+          <Button disabled={true} icon={<FilterOutlined />}>
             Filter
           </Button>
           <SearchUser />
