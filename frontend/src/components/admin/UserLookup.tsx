@@ -1,10 +1,22 @@
 // TODO - Document this file
 
-import { Button, Col, Row, Table, Tag, Spin, ConfigProvider, Popconfirm, Select, Space, Tooltip, Typography, message, Flex } from 'antd';
+import {
+  Button,
+  Row,
+  Table,
+  Tag,
+  Spin,
+  Popconfirm,
+  Select,
+  Space,
+  Tooltip,
+  Typography,
+  message,
+  Flex,
+} from 'antd/lib';
 import React, { useState, useCallback, useEffect } from 'react';
-import { Operation, generateOperationKey, useUsers } from '../../contexts/Users';
+import { useUsers } from '../../contexts/Users';
 import LookupTableHeader from './LookupTableHeader';
-import { lightTheme } from '../../theme';
 import { DeleteOutlined } from '@ant-design/icons';
 import base32 from 'hi-base32';
 
@@ -26,8 +38,15 @@ interface RolesSelectProps {
   rehydrateData: () => void;
 }
 
-const RolesSelect: React.FC<RolesSelectProps> = ({ initialRoles, netid, onRolesChange, rehydrateData }) => {
-  const [selectedRoles, setSelectedRoles] = useState<string[]>(initialRoles.sort((a, b) => roleOrder.indexOf(b) - roleOrder.indexOf(a)));
+const RolesSelect: React.FC<RolesSelectProps> = ({
+  initialRoles,
+  netid,
+  onRolesChange,
+  rehydrateData,
+}) => {
+  const [selectedRoles, setSelectedRoles] = useState<string[]>(
+    initialRoles.sort((a, b) => roleOrder.indexOf(b) - roleOrder.indexOf(a)),
+  );
   const [loading, setLoading] = useState(false);
 
   const getHighestRole = (roles: string[]): string => {
@@ -52,7 +71,7 @@ const RolesSelect: React.FC<RolesSelectProps> = ({ initialRoles, netid, onRolesC
 
   const handleRolesChange = async (newRoles: string[]) => {
     const highestRole = getHighestRole(initialRoles);
-    
+
     if (highestRole && !newRoles.includes(highestRole)) {
       newRoles.push(highestRole);
       message.warning('Cannot remove your highest privilege role');
@@ -62,7 +81,7 @@ const RolesSelect: React.FC<RolesSelectProps> = ({ initialRoles, netid, onRolesC
     try {
       await onRolesChange(netid, newRoles);
       setSelectedRoles(
-        newRoles.sort((a, b) => roleOrder.indexOf(b) - roleOrder.indexOf(a))
+        newRoles.sort((a, b) => roleOrder.indexOf(b) - roleOrder.indexOf(a)),
       );
       message.success('Roles updated successfully');
 
@@ -78,7 +97,7 @@ const RolesSelect: React.FC<RolesSelectProps> = ({ initialRoles, netid, onRolesC
   const tagRender = (props: any) => {
     const { label, value, closable, onClose } = props;
     const isHighestRole = value === getHighestRole(initialRoles);
-    
+
     return (
       <Tag
         color={roleColors[value] || 'default'}
@@ -133,7 +152,14 @@ interface TablePagination {
 }
 
 const UserLookup: React.FC = () => {
-  const { users, options, loading: usersLoading, appliedOperations, deleteOperation, rehydrateUsers } = useUsers();
+  const {
+    users,
+    options,
+    loading: usersLoading,
+    appliedOperations,
+    deleteOperation,
+    rehydrateUsers,
+  } = useUsers();
   const [loading, setLoading] = useState(false);
   const [filteredData, setFilteredData] = useState<UserData[]>([]);
   const [searchText, setSearchText] = useState('');
@@ -145,22 +171,27 @@ const UserLookup: React.FC = () => {
 
   const exportToCSV = useCallback(() => {
     const dataToExport = filteredData.length > 0 ? filteredData : users;
-    
+
     const csvContent = [
       ['NetID', 'Organizations', 'Roles', 'Links Created'].join(','),
-      ...dataToExport.map(user => [
-        user.netid,
-        `"${user.organizations.join('; ')}"`,
-        `"${user.roles.join('; ')}"`,
-        user.linksCreated
-      ].join(','))
+      ...dataToExport.map((user) =>
+        [
+          user.netid,
+          `"${user.organizations.join('; ')}"`,
+          `"${user.roles.join('; ')}"`,
+          user.linksCreated,
+        ].join(','),
+      ),
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `user_lookup_export_${new Date().toISOString()}.csv`);
+    link.setAttribute(
+      'download',
+      `user_lookup_export_${new Date().toISOString()}.csv`,
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -170,15 +201,21 @@ const UserLookup: React.FC = () => {
   const [organizationsFilters, rolesFilters] = React.useMemo(() => {
     const distinctOrganizations: Set<string> = new Set();
     const distinctRoles: Set<string> = new Set();
-    
-    users.forEach(user => {
-      user.organizations.forEach(org => distinctOrganizations.add(JSON.stringify({text: org, value: org})));
-      user.roles.forEach(org => distinctRoles.add(JSON.stringify({text: org.toString().toUpperCase(), value: org})));
+
+    users.forEach((user) => {
+      user.organizations.forEach((org) =>
+        distinctOrganizations.add(JSON.stringify({ text: org, value: org })),
+      );
+      user.roles.forEach((org) =>
+        distinctRoles.add(
+          JSON.stringify({ text: org.toString().toUpperCase(), value: org }),
+        ),
+      );
     });
 
     return [
-      Array.from(distinctOrganizations).map(el => JSON.parse(el)), 
-      Array.from(distinctRoles).map(el => JSON.parse(el))
+      Array.from(distinctOrganizations).map((el) => JSON.parse(el)),
+      Array.from(distinctRoles).map((el) => JSON.parse(el)),
     ];
   }, [users]);
 
@@ -186,8 +223,8 @@ const UserLookup: React.FC = () => {
     setLoading(true);
     try {
       const encodedNetId = base32.encode(netid);
-      const existingRoles = users.find(u => u.netid === netid)?.roles || [];
-      
+      const existingRoles = users.find((u) => u.netid === netid)?.roles || [];
+
       // Remove roles that are no longer selected
       for (const role of existingRoles) {
         if (!newRoles.includes(role)) {
@@ -203,17 +240,18 @@ const UserLookup: React.FC = () => {
           await fetch(`/api/v1/role/${role}/entity/${encodedNetId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ comment: `Added via User Lookup interface` }),
+            body: JSON.stringify({
+              comment: `Added via User Lookup interface`,
+            }),
           });
         }
       }
 
-      setFilteredData(prevData =>
-        prevData.map(user =>
-          user.netid === netid ? { ...user, roles: newRoles } : user
-        )
+      setFilteredData((prevData) =>
+        prevData.map((user) =>
+          user.netid === netid ? { ...user, roles: newRoles } : user,
+        ),
       );
-
     } catch (error) {
       console.error('Error updating roles:', error);
       throw error;
@@ -225,8 +263,8 @@ const UserLookup: React.FC = () => {
   const handleBan = async (netid: string) => {
     try {
       const encodedNetId = base32.encode(netid);
-      const userRoles = users.find(u => u.netid === netid)?.roles || [];
-      
+      const userRoles = users.find((u) => u.netid === netid)?.roles || [];
+
       // Remove user from all roles
       for (const role of userRoles) {
         await fetch(`/api/v1/role/${role}/entity/${encodedNetId}`, {
@@ -238,13 +276,15 @@ const UserLookup: React.FC = () => {
       await fetch(`/api/v1/role/blacklisted/entity/${encodedNetId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ comment: 'User banned via User Lookup interface' }),
+        body: JSON.stringify({
+          comment: 'User banned via User Lookup interface',
+        }),
       });
 
       setFilteredData((prevData) =>
         prevData.map((user) =>
-          user.netid === netid ? { ...user, roles: ['blacklisted'] } : user
-        )
+          user.netid === netid ? { ...user, roles: ['blacklisted'] } : user,
+        ),
       );
 
       message.success('User banned successfully');
@@ -257,17 +297,17 @@ const UserLookup: React.FC = () => {
   const handleTableChange = (
     pagination: TablePagination,
     filters: TableFilters,
-    sorter: TableSorter
+    sorter: TableSorter,
   ) => {
     let newData = [...users];
 
     // Apply filters
-    Object.keys(filters).forEach(key => {
+    Object.keys(filters).forEach((key) => {
       const selectedFilters = filters[key];
       if (selectedFilters && selectedFilters.length > 0) {
-        newData = newData.filter(record => {
-          return selectedFilters.some((filter: string) => 
-            record[key].includes(filter)
+        newData = newData.filter((record) => {
+          return selectedFilters.some((filter: string) =>
+            record[key].includes(filter),
           );
         });
       }
@@ -292,14 +332,15 @@ const UserLookup: React.FC = () => {
 
     // Apply search text filter if exists
     if (searchText) {
-      newData = newData.filter(user => 
-        user.netid.toLowerCase().includes(searchText.toLowerCase()) ||
-        user.organizations.some(org => 
-          org.toLowerCase().includes(searchText.toLowerCase())
-        ) ||
-        user.roles.some(role => 
-          role.toLowerCase().includes(searchText.toLowerCase())
-        )
+      newData = newData.filter(
+        (user) =>
+          user.netid.toLowerCase().includes(searchText.toLowerCase()) ||
+          user.organizations.some((org) =>
+            org.toLowerCase().includes(searchText.toLowerCase()),
+          ) ||
+          user.roles.some((role) =>
+            role.toLowerCase().includes(searchText.toLowerCase()),
+          ),
       );
     }
 
@@ -309,19 +350,20 @@ const UserLookup: React.FC = () => {
   const handleSearch = (value: string) => {
     setSearchText(value);
     let newData = [...users];
-    
+
     if (value) {
-      newData = newData.filter(user => 
-        user.netid.toLowerCase().includes(value.toLowerCase()) ||
-        user.organizations.some(org => 
-          org.toLowerCase().includes(value.toLowerCase())
-        ) ||
-        user.roles.some(role => 
-          role.toLowerCase().includes(value.toLowerCase())
-        )
+      newData = newData.filter(
+        (user) =>
+          user.netid.toLowerCase().includes(value.toLowerCase()) ||
+          user.organizations.some((org) =>
+            org.toLowerCase().includes(value.toLowerCase()),
+          ) ||
+          user.roles.some((role) =>
+            role.toLowerCase().includes(value.toLowerCase()),
+          ),
       );
     }
-    
+
     setFilteredData(newData);
   };
 
@@ -341,7 +383,7 @@ const UserLookup: React.FC = () => {
       key: 'organizations',
       render: renderOrganizations,
       filters: organizationsFilters,
-      onFilter: (value: string | number | boolean, record: any) => 
+      onFilter: (value: string | number | boolean, record: any) =>
         record.organizations.includes(value.toString()),
       filterMultiple: true,
       filterOnClose: true,
@@ -351,15 +393,15 @@ const UserLookup: React.FC = () => {
       dataIndex: 'roles',
       key: 'roles',
       render: (roles: string[], record: any) => (
-        <RolesSelect 
+        <RolesSelect
           rehydrateData={rehydrateUsers}
-          initialRoles={roles} 
-          netid={record.netid} 
+          initialRoles={roles}
+          netid={record.netid}
           onRolesChange={handleRolesChange}
         />
       ),
       filters: rolesFilters,
-      onFilter: (value: string | number | boolean, record: any) => 
+      onFilter: (value: string | number | boolean, record: any) =>
         record.roles.includes(value.toString()),
       filterMultiple: true,
       filterOnClose: true,
@@ -384,11 +426,7 @@ const UserLookup: React.FC = () => {
             cancelText="No"
             okButtonProps={{ danger: true }}
           >
-            <Button
-              type="text"
-              danger
-              icon={<DeleteOutlined />}
-            />
+            <Button type="text" danger icon={<DeleteOutlined />} />
           </Popconfirm>
         </Tooltip>
       ),
@@ -401,18 +439,19 @@ const UserLookup: React.FC = () => {
         <Typography.Title level={3} style={{ marginTop: 0, marginBottom: 16 }}>
           User Lookup
         </Typography.Title>
-        <Typography.Title level={5} style={{ marginTop: 0, marginBottom: 16, color: '#4F4F4F' }}>
-          {filteredData.length} Result{filteredData.length !== 1 && "s"} Found
+        <Typography.Title
+          level={5}
+          style={{ marginTop: 0, marginBottom: 16, color: '#4F4F4F' }}
+        >
+          {filteredData.length} Result{filteredData.length !== 1 && 's'} Found
         </Typography.Title>
       </Flex>
 
-      <ConfigProvider theme={lightTheme}>
-        <LookupTableHeader 
-          rehydrateData={rehydrateUsers}
-          onExportClick={exportToCSV}
-          onSearch={handleSearch}
-        />
-      </ConfigProvider>
+      <LookupTableHeader
+        rehydrateData={rehydrateUsers}
+        onExportClick={exportToCSV}
+        onSearch={handleSearch}
+      />
 
       <Row style={{ marginBottom: 24 }} />
 

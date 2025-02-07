@@ -3,7 +3,7 @@ import {
   FilterOutlined,
   PlusCircleFilled
 } from '@ant-design/icons';
-import { Button, Flex, Form, Input, Modal, Space, message } from 'antd';
+import { Button, Flex, Form, Input, Modal, Space, message } from 'antd/lib';
 import React, { useState } from 'react';
 import base32 from 'hi-base32';
 import SearchBannedLinks from './SearchBannedLinks';
@@ -56,7 +56,6 @@ const BlockedLinksTableHeader: React.FC<BlockedLinksTableHeaderProps> = ({
 
         onLinkBanned();
       } catch (error) {
-        console.error('Error blocking link:', error);
         message.error('Failed to block link');
       } finally {
         setLoading(false);

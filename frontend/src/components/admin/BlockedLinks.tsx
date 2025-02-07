@@ -7,15 +7,13 @@ import { Row } from 'antd/lib';
 import React, { useEffect } from 'react';
 import {
   Button,
-  ConfigProvider,
   message,
   Popconfirm,
   Spin,
   Table,
   Tooltip,
   Typography,
-} from 'antd';
-import { lightTheme } from '../../theme';
+} from 'antd/lib';
 import BlockedLinksTableHeader from './BlockedLinksTableHeader';
 import { EntityInfo } from '../GrantedUserCsv';
 import { RoleText } from './Role';
@@ -172,9 +170,7 @@ const BlockedLinks: React.FC<BlockedLinksProps> = (props) => {
       </Typography.Title>
 
       {/* Re-provide theme context to component */}
-      <ConfigProvider theme={lightTheme}>
-        <BlockedLinksTableHeader onLinkBanned={rehydrateData} />
-      </ConfigProvider>
+      <BlockedLinksTableHeader onLinkBanned={rehydrateData} />
 
       <Row style={{ marginBottom: 24 }} />
       {loading ? (

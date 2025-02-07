@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Badge, Typography, Tabs, Space, ConfigProvider } from 'antd';
+import { Badge, Typography, Tabs, Space, ConfigProvider } from 'antd/lib';
 import {
   LineChartOutlined,
   UserOutlined,
@@ -149,6 +149,7 @@ export default function Admin(props: AdminProps): React.ReactElement {
     <>
       <Typography.Title>Administrator Controls</Typography.Title>
       <Content>
+        {/* ConfigProvider required to modify the Design tokens for Tabs component */}
         <ConfigProvider
           theme={{
             inherit: true,
