@@ -3,10 +3,16 @@
  * @packageDocumentation
  */
 
-import { Col, Row } from 'antd/lib';
+import { Row } from 'antd/lib';
 import React, { useEffect } from 'react';
-import { Button, ConfigProvider, Popconfirm, Spin, Table, Tooltip, Typography } from 'antd';
-import { PendingRoleRequests } from './PendingRoleRequests';
+import {
+  Button,
+  ConfigProvider, Popconfirm,
+  Spin,
+  Table,
+  Tooltip,
+  Typography
+} from 'antd';
 import { lightTheme } from '../../theme';
 import BlockedLinksTableHeader from './BlockedLinksTableHeader';
 import { EntityInfo } from '../GrantedUserCsv';
@@ -14,15 +20,16 @@ import { RoleText } from './Role';
 import LinkSecurity from './LinkSecurity';
 import { DeleteOutlined } from '@ant-design/icons';
 
-
 /**
  * Renders the URLs as clickable links
  * @param netids - the URLs to render
  * @returns the rendered URLs
  */
-const renderURLs = (url: string): JSX.Element =>
-  <a key={url} href={url}>{url}</a>
-
+const renderURLs = (url: string): JSX.Element => (
+  <a key={url} href={url}>
+    {url}
+  </a>
+);
 
 /**
  * Renders the netids in bold
@@ -31,7 +38,6 @@ const renderURLs = (url: string): JSX.Element =>
  */
 const renderNetIDs = (netIds: string[]): JSX.Element[] =>
   netIds.map((netid) => <strong key={netid}>{netid}</strong>);
-
 
 /**
  * Renders the unblock button for a URL
@@ -52,16 +58,11 @@ const renderUnblockButton = (url: string): JSX.Element => {
         cancelText="No"
         okButtonProps={{ danger: true }}
       >
-        <Button
-          type="text"
-          danger
-          icon={<DeleteOutlined />}
-        />
+        <Button type="text" danger icon={<DeleteOutlined />} />
       </Popconfirm>
     </Tooltip>
   );
 };
-
 
 const columns = [
   {
@@ -96,7 +97,7 @@ interface BlockedLink {
 }
 
 /**
- * The [[BlockedLinks]] component displays a table of pending power user requests. Admins can manage 
+ * The [[BlockedLinks]] component displays a table of pending power user requests. Admins can manage
  * and approve/deny these requests through this component.
  * @returns the [[ManageUserAccess]] component
  */
@@ -111,7 +112,6 @@ const BlockedLinks: React.FC<BlockedLinksProps> = (props) => {
      * @method
      */
     const updateRoleText = async (): Promise<void> => {
-      console.log("Fetching role text");
       const result = await fetch(`/api/v1/role/${props.name}/text`).then(
         (resp) => resp.json(),
       );
@@ -126,27 +126,26 @@ const BlockedLinks: React.FC<BlockedLinksProps> = (props) => {
       const result = await fetch(`/api/v1/role/${props.name}/entity`).then(
         (resp) => resp.json(),
       );
-      console.log("results returned: ", result);
-      setBlockedLinks(result.entities.map((entity: EntityInfo) => ({
-        url: entity.entity,
-        comment: entity.comment ?? "",
-        blockedBy: entity.granted_by ?? "",
-        timeBlocked: entity.time_granted ?? "",
-      })));
+      setBlockedLinks(
+        result.entities.map((entity: EntityInfo) => ({
+          url: entity.entity,
+          comment: entity.comment ?? '',
+          blockedBy: entity.granted_by ?? '',
+          timeBlocked: entity.time_granted ?? '',
+        })),
+      );
     };
-    
-    Promise.all([updateBlockedLinks(), updateRoleText()]).then(() => setLoading(false));
+
+    Promise.all([updateBlockedLinks(), updateRoleText()]).then(() =>
+      setLoading(false),
+    );
   }, []);
 
   return (
     <>
-      <Row className="secondary-row" style={{ marginBottom: 0 }}>
-        <Col>
-            <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <Typography.Title level={3} style={{ marginTop: 0, marginBottom: 16 }}>Link Control</Typography.Title>
-            </div>
-        </Col>
-      </Row>
+      <Typography.Title level={3} style={{ marginTop: 0, marginBottom: 16 }}>
+        Link Control
+      </Typography.Title>
 
       {/* Re-provide theme context to component */}
       <ConfigProvider theme={lightTheme}>
@@ -154,7 +153,6 @@ const BlockedLinks: React.FC<BlockedLinksProps> = (props) => {
       </ConfigProvider>
 
       <Row style={{ marginBottom: 24 }} />
-      
       {loading ? (
         <Spin size="large" />
       ) : (

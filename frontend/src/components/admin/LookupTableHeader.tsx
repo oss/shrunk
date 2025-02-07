@@ -136,23 +136,5 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
     </>
   );
 };
-//    {/* TODO --> Bring back this error message */}
-//   {/* <div className="error"> */}
-//     {/* {errorMessage !== '' ? errorMessage : '\u00A0'}{' '} */}
-//     {/* HACK: Space character to maintain height */}
-//   {/* </div> */}
-
-//   {/* TODO --> Move this to be more implicit within the filters */}
-//   {/* <div className="operation-tags">
-//     {appliedOperations.map((operation) => (
-//       <Tag
-//         key={generateOperationKey(operation)}
-//         closable
-//         onClose={() => deleteOperation(generateOperationKey(operation))}
-//       >
-//         {renderOperation(operation)}
-//       </Tag>
-//     ))}
-//   </div> */}
 
 export default LookupTableHeader;

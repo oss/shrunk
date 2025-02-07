@@ -1,6 +1,6 @@
 // TODO - Document this file
 
-import { Button, Col, Row, Table, Tag, Spin, ConfigProvider, Popconfirm, Select, Space, Tooltip, Typography, message } from 'antd';
+import { Button, Col, Row, Table, Tag, Spin, ConfigProvider, Popconfirm, Select, Space, Tooltip, Typography, message, Flex } from 'antd';
 import React, { useState, useCallback, useEffect } from 'react';
 import { Operation, generateOperationKey, useUsers } from '../../contexts/Users';
 import LookupTableHeader from './LookupTableHeader';
@@ -393,18 +393,14 @@ const UserLookup: React.FC = () => {
 
   return (
     <>
-      <Row className="secondary-row" style={{ marginBottom: 0 }}>
-        <Col>
-          <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <Typography.Title level={3} style={{ marginTop: 0, marginBottom: 16 }}>
-              User Lookup
-            </Typography.Title>
-            <Typography.Title level={5} style={{ marginTop: 0, marginBottom: 16, color: '#4F4F4F' }}>
-              {filteredData.length} Result{filteredData.length !== 1 && "s"} Found
-            </Typography.Title>
-          </div>
-        </Col>
-      </Row>
+      <Flex gap="1rem" align="baseline">
+        <Typography.Title level={3} style={{ marginTop: 0, marginBottom: 16 }}>
+          User Lookup
+        </Typography.Title>
+        <Typography.Title level={5} style={{ marginTop: 0, marginBottom: 16, color: '#4F4F4F' }}>
+          {filteredData.length} Result{filteredData.length !== 1 && "s"} Found
+        </Typography.Title>
+      </Flex>
 
       <ConfigProvider theme={lightTheme}>
         <LookupTableHeader 
