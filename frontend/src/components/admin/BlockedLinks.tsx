@@ -19,7 +19,6 @@ import { lightTheme } from '../../theme';
 import BlockedLinksTableHeader from './BlockedLinksTableHeader';
 import { EntityInfo } from '../GrantedUserCsv';
 import { RoleText } from './Role';
-import LinkSecurity from './LinkSecurity';
 import { DeleteOutlined } from '@ant-design/icons';
 import base32 from 'hi-base32';
 
@@ -191,8 +190,6 @@ const BlockedLinks: React.FC<BlockedLinksProps> = (props) => {
           />
         </>
       )}
-
-      <LinkSecurity />
     </>
   );
 };

@@ -10,6 +10,7 @@ import {
   UserOutlined,
   SafetyOutlined,
   TeamOutlined,
+  LockOutlined,
 } from '@ant-design/icons';
 import { Content } from 'antd/lib/layout/layout';
 import type { TabsProps } from 'antd';
@@ -19,6 +20,7 @@ import UsersProvider from '../contexts/Users';
 import ManageUserAccess from '../components/admin/ManageUserAccess';
 import BlockedLinks from '../components/admin/BlockedLinks';
 import { red } from '@ant-design/colors';
+import Security from '../components/admin/Security';
 
 /**
  * Summary information for one role
@@ -130,6 +132,16 @@ export default function Admin(props: AdminProps): React.ReactElement {
           <BlockedLinks name="power_user" />
         </UsersProvider>
       ),
+    },
+    {
+      key: 'security',
+      label: (
+        <Space direction="horizontal">
+          <LockOutlined />
+          Security
+        </Space>
+      ),
+      children: <Security />,
     },
   ];
 
