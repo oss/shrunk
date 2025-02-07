@@ -7,11 +7,13 @@ import { Row } from 'antd/lib';
 import React, { useEffect } from 'react';
 import {
   Button,
-  ConfigProvider, Popconfirm,
+  ConfigProvider,
+  message,
+  Popconfirm,
   Spin,
   Table,
   Tooltip,
-  Typography
+  Typography,
 } from 'antd';
 import { lightTheme } from '../../theme';
 import BlockedLinksTableHeader from './BlockedLinksTableHeader';
@@ -19,6 +21,7 @@ import { EntityInfo } from '../GrantedUserCsv';
 import { RoleText } from './Role';
 import LinkSecurity from './LinkSecurity';
 import { DeleteOutlined } from '@ant-design/icons';
+import base32 from 'hi-base32';
 
 /**
  * Renders the URLs as clickable links
@@ -39,14 +42,31 @@ const renderURLs = (url: string): JSX.Element => (
 const renderNetIDs = (netIds: string[]): JSX.Element[] =>
   netIds.map((netid) => <strong key={netid}>{netid}</strong>);
 
+// TODO - Include invalidation function to re-fetch links after unblocking instead of requiring refresh
 /**
  * Renders the unblock button for a URL
  * @param url - the URL to block
  * @returns the rendered unblock button
  */
 const renderUnblockButton = (url: string): JSX.Element => {
-  const handleUnblock = () => {
-    // TODO: Implement the unblock functionality
+  const handleUnblock = async () => {
+    try {
+      const encodedUrl = base32.encode(url);
+
+      const response = await fetch(
+        `/api/v1/role/blocked_url/entity/${encodedUrl}`,
+        {
+          method: 'DELETE',
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to unblock link');
+      }
+    } catch (error) {
+      console.error('Error unblocking link:', error);
+      message.error('Failed to unblock link');
+    }
   };
 
   return (
@@ -79,9 +99,8 @@ const columns = [
   },
   {
     title: 'Actions',
-    dataIndex: 'netid',
-    key: 'unblock',
-    render: (url: string) => renderUnblockButton(url),
+    key: 'actions',
+    render: (_: any, record: BlockedLink) => renderUnblockButton(record.url),
   },
 ];
 
@@ -105,6 +124,12 @@ const BlockedLinks: React.FC<BlockedLinksProps> = (props) => {
   const [loading, setLoading] = React.useState(true);
   const [blockedLinks, setBlockedLinks] = React.useState<BlockedLink[]>([]);
   const [roleText, setRoleText] = React.useState<RoleText | null>(null);
+
+  const [refetchBlockedLinks, setRefetchBlockedLinks] = React.useState(false);
+
+  const rehydrateData = (): void => {
+    setRefetchBlockedLinks((prev) => !prev);
+  };
 
   useEffect(() => {
     /**
@@ -139,7 +164,7 @@ const BlockedLinks: React.FC<BlockedLinksProps> = (props) => {
     Promise.all([updateBlockedLinks(), updateRoleText()]).then(() =>
       setLoading(false),
     );
-  }, []);
+  }, [refetchBlockedLinks]);
 
   return (
     <>
@@ -149,7 +174,7 @@ const BlockedLinks: React.FC<BlockedLinksProps> = (props) => {
 
       {/* Re-provide theme context to component */}
       <ConfigProvider theme={lightTheme}>
-        <BlockedLinksTableHeader />
+        <BlockedLinksTableHeader onLinkBanned={rehydrateData} />
       </ConfigProvider>
 
       <Row style={{ marginBottom: 24 }} />
