@@ -28,13 +28,8 @@ const LookupTableHeader = () => {
     <>
       <Row gutter={0} justify="space-between">
         <Space direction="horizontal">
-          <Button
-            type="text"
-            style={{ border: '1px solid #CFCFCF' }}
-            disabled={true}
-            icon={<ThunderboltOutlined />}
-          >
-            AI Filter
+          <Button disabled={true} icon={<ThunderboltOutlined />}>
+            Filter
           </Button>
 
           <SearchBannedLinks />
