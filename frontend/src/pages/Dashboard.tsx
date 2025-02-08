@@ -621,7 +621,11 @@ export class Dashboard extends React.Component<Props, State> {
                 open={this.state.customizeDropdownOpen}
                 menu={{
                   items: [
-                    { label: 'Long URL', key: 'longUrl' },
+                    {
+                      label: 'Long URL',
+                      key: 'longUrl',
+                      disabled: this.state.showType === 'tracking_pixels',
+                    },
                     { label: 'Owner', key: 'owner' },
                     { label: 'Date Created', key: 'dateCreated' },
                     { label: 'Date Expires', key: 'dateExpires' },
@@ -641,6 +645,7 @@ export class Dashboard extends React.Component<Props, State> {
                           }
                           this.setState({ visibleColumns: newColumns });
                         }}
+                        disabled={item.disabled}
                       >
                         {item.label}
                       </Checkbox>
@@ -745,7 +750,8 @@ export class Dashboard extends React.Component<Props, State> {
                       </Row>
                     ),
                   },
-                  ...(this.state.visibleColumns.has('longUrl')
+                  ...(this.state.visibleColumns.has('longUrl') &&
+                  this.state.showType !== 'tracking_pixels'
                     ? [
                         {
                           title: 'Long URL',
