@@ -369,11 +369,9 @@ export function Stats(props: Props): React.ReactElement {
       resp.json(),
     )) as LinkInfo;
 
-    const aliases = templinkInfo.aliases.filter((alias) => !alias.deleted);
-
-    if (aliases.length === 0) {
-      throw new Error(`link ${props.id} has no aliases!`);
-    }
+    const aliases = !templinkInfo.deleted
+      ? templinkInfo.aliases.filter((alias) => !alias.deleted)
+      : templinkInfo.aliases;
 
     setLinkInfo(templinkInfo);
     setAllAliases(aliases);
@@ -679,11 +677,20 @@ export function Stats(props: Props): React.ReactElement {
   };
 
   const statTabsKeys = [
-    { key: 'alias', tab: 'Alias' },
+    {
+      key: 'alias',
+      tab: !linkInfo?.is_tracking_pixel_link ? 'Alias' : 'Installation',
+    },
     { key: 'visits', tab: 'Visits' },
     { key: 'geoip', tab: 'Location' },
     { key: 'browser', tab: 'Metadata' },
   ];
+
+  const isDev = process.env.NODE_ENV === 'development';
+  const protocol = isDev ? 'http' : 'https';
+  const trackingUrl = linkInfo
+    ? `${protocol}://${document.location.host}/${linkInfo.aliases[0].alias}`
+    : '';
 
   const statTabs: Record<string, React.ReactNode> = {
     visits: <VisitsChart visitStats={visitStats} />,
@@ -693,7 +700,7 @@ export function Stats(props: Props): React.ReactElement {
         <BrowserCharts browserStats={browserStats} />
       </Row>
     ),
-    alias: (
+    alias: !linkInfo?.is_tracking_pixel_link ? (
       <Table
         showHeader={false}
         size="small"
@@ -708,8 +715,6 @@ export function Stats(props: Props): React.ReactElement {
             key: 'alias',
             width: '25%',
             render: (alias) => {
-              const isDev = process.env.NODE_ENV === 'development';
-              const protocol = isDev ? 'http' : 'https';
               const shortUrl = `${protocol}://${document.location.host}/${alias}`;
               return (
                 <Button
@@ -731,7 +736,26 @@ export function Stats(props: Props): React.ReactElement {
           },
         ]}
         pagination={{ pageSize: 5 }}
+        footer={() =>
+          linkInfo?.deleted
+            ? 'Since this link is deleted, these aliases are available for anyone to grab.'
+            : ''
+        }
       />
+    ) : (
+      <>
+        <Typography.Title level={3} style={{ marginTop: 0 }}>
+          How to use
+        </Typography.Title>
+        <Typography.Text>
+          If you are a developer and would like to incorporate it into your
+          site, just add an image reference into your HTML or JavaScript file.
+          <pre>
+            &lt;img src=&quot;{trackingUrl}&quot; style=&quot;display:none&quot;
+            alt=&quot;&quot;/&gt;
+          </pre>
+        </Typography.Text>
+      </>
     ),
   };
 
@@ -868,13 +892,27 @@ export function Stats(props: Props): React.ReactElement {
                 </Descriptions.Item>
               )}
               <Descriptions.Item label="Date Created">
-                {dayjs(linkInfo?.created_time).format('MMM D, YYYY')}
+                {dayjs(linkInfo?.created_time).format('MMM D, YYYY - h:mm A')}
               </Descriptions.Item>
               <Descriptions.Item label="Date Expires">
                 {linkInfo?.expiration_time
-                  ? dayjs(linkInfo?.expiration_time).format('MMM D, YYYY')
+                  ? dayjs(linkInfo?.expiration_time).format(
+                      'MMM D, YYYY - h:mm A',
+                    )
                   : 'N/A'}
               </Descriptions.Item>
+              {linkInfo?.deleted && linkInfo.deletion_info !== null && (
+                <>
+                  <Descriptions.Item label="Date Deleted">
+                    {dayjs(linkInfo.deletion_info.deleted_time).format(
+                      'MMM D, YYYY - h:mm A',
+                    )}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Deleted by">
+                    {linkInfo.deletion_info.deleted_by}
+                  </Descriptions.Item>
+                </>
+              )}
             </Descriptions>
           </Card>
         </Col>

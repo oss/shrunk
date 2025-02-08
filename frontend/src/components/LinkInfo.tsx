@@ -62,6 +62,7 @@ export interface LinkInfo {
   is_expired: boolean;
   expiration_time: Date | null;
   deletion_info: DeletionInfo | null;
+  deleted?: boolean;
   visits: number;
   unique_visits: number;
   owner: string;

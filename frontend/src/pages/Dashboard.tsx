@@ -25,6 +25,9 @@ import {
   Popconfirm,
   message,
   Flex,
+  Radio,
+  Tag,
+  RadioChangeEvent,
 } from 'antd/lib';
 import {
   CopyOutlined,
@@ -38,7 +41,7 @@ import {
   SlidersOutlined,
 } from '@ant-design/icons';
 
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import { listOrgs, OrgInfo } from '../api/Org';
 import { LinkInfo } from '../components/LinkInfo';
 import { CreateLinkDrawer } from '../drawers/CreateLinkDrawer';
@@ -122,6 +125,8 @@ export interface SearchQuery {
    * @property
    */
   end_time: dayjs.Dayjs | null;
+
+  showType: 'links' | 'tracking_pixels';
 }
 
 /**
@@ -243,6 +248,8 @@ export interface State {
   visibleColumns: Set<string>;
 
   customizeDropdownOpen: boolean;
+
+  showType: 'links' | 'tracking_pixels';
 }
 
 // TODO: Add title column
@@ -273,6 +280,7 @@ export class Dashboard extends React.Component<Props, State> {
         sort: { key: 'relevance', order: 'descending' },
         begin_time: null,
         end_time: null,
+        showType: 'links',
       },
       totalPages: 0,
       totalLinks: 0,
@@ -312,6 +320,7 @@ export class Dashboard extends React.Component<Props, State> {
         'totalVisits',
       ]),
       customizeDropdownOpen: false,
+      showType: 'links',
     };
   }
 
@@ -398,6 +407,17 @@ export class Dashboard extends React.Component<Props, State> {
     );
   };
 
+  sortByType = (e: RadioChangeEvent) => {
+    const key = e.target.value;
+    this.setState(
+      {
+        showType: key,
+        query: { ...this.state.query, showType: key },
+      },
+      () => this.setQuery(this.state.query),
+    );
+  };
+
   /**
    * Updates the sort order in the state and executes a search query
    * @method
@@ -415,25 +435,19 @@ export class Dashboard extends React.Component<Props, State> {
     );
   };
 
-  /**
-   * Updates the beginning time in the state and executes a search query
-   * @method
-   * @param begin_time View links created after this date
-   */
-  showLinksAfter = (begin_time: dayjs.Dayjs) => {
-    this.setState({ query: { ...this.state.query, begin_time } }, () =>
-      this.setQuery(this.state.query),
-    );
-  };
-
-  /**
-   * Updates the end time in the state and executes a search query
-   * @method
-   * @param end_time View links created before this date
-   */
-  showLinksBefore = (end_time: dayjs.Dayjs) => {
-    this.setState({ query: { ...this.state.query, end_time } }, () =>
-      this.setQuery(this.state.query),
+  showLinksInRange = (
+    dates: NoUndefinedRangeValueType<Dayjs> | null,
+    _: [string, string],
+  ) => {
+    this.setState(
+      {
+        query: {
+          ...this.state.query,
+          begin_time: dates[0],
+          end_time: dates[1],
+        },
+      },
+      () => this.setQuery(this.state.query),
     );
   };
 
@@ -514,6 +528,7 @@ export class Dashboard extends React.Component<Props, State> {
       show_deleted_links: query.show_deleted_links,
       sort: query.sort,
       pagination: { skip, limit },
+      show_type: query.showType,
     };
 
     if (query.begin_time !== null) {
@@ -606,7 +621,11 @@ export class Dashboard extends React.Component<Props, State> {
                 open={this.state.customizeDropdownOpen}
                 menu={{
                   items: [
-                    { label: 'Long URL', key: 'longUrl' },
+                    {
+                      label: 'Long URL',
+                      key: 'longUrl',
+                      disabled: this.state.showType === 'tracking_pixels',
+                    },
                     { label: 'Owner', key: 'owner' },
                     { label: 'Date Created', key: 'dateCreated' },
                     { label: 'Date Expires', key: 'dateExpires' },
@@ -626,6 +645,7 @@ export class Dashboard extends React.Component<Props, State> {
                           }
                           this.setState({ visibleColumns: newColumns });
                         }}
+                        disabled={item.disabled}
                       >
                         {item.label}
                       </Checkbox>
@@ -681,9 +701,17 @@ export class Dashboard extends React.Component<Props, State> {
                     render: (_, record) => (
                       <Row gutter={[0, 8]}>
                         <Col span={24}>
-                          <Typography.Title level={5} style={{ margin: 0 }}>
-                            {record.title}
-                          </Typography.Title>
+                          <Space>
+                            <Typography.Title level={5} style={{ margin: 0 }}>
+                              {record.title}
+                            </Typography.Title>
+                            {record.deletedInfo !== null && (
+                              <Tag color="red">Deleted</Tag>
+                            )}
+                            {record.isExpired && (
+                              <Tag color="yellow">Expired</Tag>
+                            )}
+                          </Space>
                         </Col>
                         {record.aliases.map((aliasObj) => {
                           const isDev = process.env.NODE_ENV === 'development';
@@ -722,7 +750,8 @@ export class Dashboard extends React.Component<Props, State> {
                       </Row>
                     ),
                   },
-                  ...(this.state.visibleColumns.has('longUrl')
+                  ...(this.state.visibleColumns.has('longUrl') &&
+                  this.state.showType !== 'tracking_pixels'
                     ? [
                         {
                           title: 'Long URL',
@@ -821,7 +850,7 @@ export class Dashboard extends React.Component<Props, State> {
                               href={`/app/#/links/${record.key}`}
                             />
                           </Tooltip>
-                          {record.canEdit && (
+                          {record.canEdit && record.deletedInfo === null && (
                             <>
                               <Tooltip title="Edit">
                                 <Button
@@ -841,40 +870,45 @@ export class Dashboard extends React.Component<Props, State> {
                               </Tooltip>
                             </>
                           )}
-
-                          <Tooltip title="Share">
-                            <Button
-                              type="text"
-                              icon={<ShareAltOutlined />}
-                              target="_blank"
-                              href={`/app/#/links/${record.key}?mode=share`}
-                            />
-                          </Tooltip>
-                          <Tooltip title="Delete">
-                            <Popconfirm
-                              title="Are you sure you want to delete this link?"
-                              onConfirm={async () => {
-                                try {
-                                  await fetch(`/api/v1/link/${record.key}`, {
-                                    method: 'DELETE',
-                                  });
-                                  message.success('Link deleted successfully');
-                                  await this.refreshResults();
-                                } catch (error) {
-                                  message.error('Failed to delete link');
-                                }
-                              }}
-                              okText="Yes"
-                              cancelText="No"
-                              okButtonProps={{ danger: true }}
-                            >
+                          {!record.isTrackingPixel && (
+                            <Tooltip title="Share">
                               <Button
                                 type="text"
-                                danger
-                                icon={<DeleteOutlined />}
+                                icon={<ShareAltOutlined />}
+                                target="_blank"
+                                href={`/app/#/links/${record.key}?mode=share`}
                               />
-                            </Popconfirm>
-                          </Tooltip>
+                            </Tooltip>
+                          )}
+                          {record.deletedInfo === null && (
+                            <Tooltip title="Delete">
+                              <Popconfirm
+                                title="Are you sure you want to delete this link?"
+                                onConfirm={async () => {
+                                  try {
+                                    await fetch(`/api/v1/link/${record.key}`, {
+                                      method: 'DELETE',
+                                    });
+                                    message.success(
+                                      'Link deleted successfully',
+                                    );
+                                    await this.refreshResults();
+                                  } catch (error) {
+                                    message.error('Failed to delete link');
+                                  }
+                                }}
+                                okText="Yes"
+                                cancelText="No"
+                                okButtonProps={{ danger: true }}
+                              >
+                                <Button
+                                  type="text"
+                                  danger
+                                  icon={<DeleteOutlined />}
+                                />
+                              </Popconfirm>
+                            </Tooltip>
+                          )}
                         </Space>
                       </Flex>
                     ),
@@ -893,6 +927,8 @@ export class Dashboard extends React.Component<Props, State> {
                   dateExpires: link.expiration_time,
                   canEdit: link.may_edit,
                   isTrackingPixel: link.is_tracking_pixel_link,
+                  isExpired: link.is_expired,
+                  deletedInfo: link.deletion_info,
                 }))}
                 pagination={{
                   total: this.state.totalLinks,
@@ -932,7 +968,7 @@ export class Dashboard extends React.Component<Props, State> {
               sortOrder: 'descending',
             }}
           >
-            <Form.Item name="orgSelect" label="Filter by organization">
+            <Form.Item name="orgSelect" label="Ownership">
               <Select value={this.state.selectedOrg} onChange={this.updateOrg}>
                 <Select.Option value={0}>My Links</Select.Option>
                 <Select.Option value={2}>Shared with Me</Select.Option>
@@ -950,50 +986,83 @@ export class Dashboard extends React.Component<Props, State> {
                 ) : null}
               </Select>
             </Form.Item>
-            <Form.Item name="sortKey" label="Sort by">
-              <Select
-                value={this.state.sortKey}
-                onChange={this.sortLinksByKey}
-                style={{ width: '100%' }}
-              >
-                <Select.Option value="relevance">Relevance</Select.Option>
-                <Select.Option value="created_time">Time created</Select.Option>
-                <Select.Option value="title">Title</Select.Option>
-                <Select.Option value="visits">Number of visits</Select.Option>
-              </Select>
-            </Form.Item>
-            <Form.Item name="show_expired">
-              <Checkbox
-                checked={this.state.showExpired}
-                onChange={(e) => this.showExpiredLinks(e.target.checked)}
-              >
-                Show expired links?
-              </Checkbox>
-            </Form.Item>
-            {this.props.userPrivileges.has('admin') && (
-              <Form.Item name="show_deleted">
-                <Checkbox
-                  checked={this.state.showDeleted}
-                  onChange={(e) => this.showDeletedLinks(e.target.checked)}
-                >
-                  Show deleted links?
-                </Checkbox>
-              </Form.Item>
-            )}
-            <Form.Item name="beginTime" label="Created after">
-              <DatePicker
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item name="sortKey" label="Sort by">
+                  <Select
+                    value={this.state.sortKey}
+                    onChange={this.sortLinksByKey}
+                    style={{ width: '100%' }}
+                  >
+                    <Select.Option value="relevance">Relevance</Select.Option>
+                    <Select.Option value="created_time">
+                      Time created
+                    </Select.Option>
+                    <Select.Option value="title">Title</Select.Option>
+                    <Select.Option value="visits">
+                      Number of visits
+                    </Select.Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="links_vs_pixels" label="Link Type">
+                  <Radio.Group
+                    optionType="button"
+                    buttonStyle="solid"
+                    options={[
+                      { label: 'Links', value: 'links' },
+                      { label: 'Tracking Pixels', value: 'tracking_pixels' },
+                    ]}
+                    defaultValue={this.state.showType}
+                    onChange={this.sortByType}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item name="show_expired" label="Expired Links">
+                  <Radio.Group
+                    optionType="button"
+                    buttonStyle="solid"
+                    options={[
+                      { label: 'Show', value: 'show' },
+                      { label: 'Hide', value: 'hide' },
+                    ]}
+                    defaultValue="hide"
+                    onChange={(e) =>
+                      this.showExpiredLinks(e.target.value === 'show')
+                    }
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                {this.props.userPrivileges.has('admin') && (
+                  <Form.Item name="show_deleted" label="Deleted Links">
+                    <Radio.Group
+                      optionType="button"
+                      buttonStyle="solid"
+                      options={[
+                        { label: 'Show', value: 'show' },
+                        { label: 'Hide', value: 'hide' },
+                      ]}
+                      defaultValue="hide"
+                      onChange={(e) =>
+                        this.showDeletedLinks(e.target.value === 'show')
+                      }
+                    />
+                  </Form.Item>
+                )}
+              </Col>
+            </Row>
+            <Form.Item name="dateRange" label="Creation Date">
+              <DatePicker.RangePicker
                 format="YYYY-MM-DD"
-                value={this.state.beginTime}
-                onChange={this.showLinksAfter}
+                value={[this.state.beginTime, this.state.endTime]}
+                onChange={this.showLinksInRange}
                 style={{ width: '100%' }}
-              />
-            </Form.Item>
-            <Form.Item name="endTime" label="Created before">
-              <DatePicker
-                format="YYYY-MM-DD"
-                value={this.state.endTime}
-                onChange={this.showLinksBefore}
-                style={{ width: '100%' }}
+                allowEmpty={[false, true]} // Allow the second date to be empty
               />
             </Form.Item>
           </Form>
