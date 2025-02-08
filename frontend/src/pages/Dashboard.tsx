@@ -9,7 +9,6 @@ import React from 'react';
 import {
   Row,
   Col,
-  Spin,
   Button,
   Typography,
   Table,
@@ -686,257 +685,258 @@ export class Dashboard extends React.Component<Props, State> {
             </Space>
           </Col>
           <Col span={24}>
-            {this.state.linkInfo === null ? (
-              <Spin size="large" />
-            ) : (
-              <Table
-                scroll={{ x: 'calc(700px + 50%)' }}
-                columns={[
-                  {
-                    title: 'Aliases',
-                    dataIndex: 'aliases',
-                    key: 'aliases',
-                    width: '350px',
-                    fixed: 'left',
-                    render: (_, record) => (
-                      <Row gutter={[0, 8]}>
-                        <Col span={24}>
-                          <Space>
-                            <Typography.Title level={5} style={{ margin: 0 }}>
-                              {record.title}
-                            </Typography.Title>
-                            {record.deletedInfo !== null && (
-                              <Tag color="red">Deleted</Tag>
-                            )}
-                            {record.isExpired && (
-                              <Tag color="yellow">Expired</Tag>
-                            )}
-                          </Space>
-                        </Col>
-                        {record.aliases.map((aliasObj) => {
-                          const isDev = process.env.NODE_ENV === 'development';
-                          const protocol = isDev ? 'http' : 'https';
-                          const routePrefix = record.isTrackingPixel
-                            ? 'api/v1/t/'
-                            : '';
-
-                          const shortUrlWithoutProtocol = `${
-                            document.location.host
-                          }/${routePrefix}${aliasObj.alias.toString()}`;
-                          const shortUrl = `${protocol}://${
-                            record.domain || ''
-                          }${record.domain ? '.' : ''}${
-                            document.location.host
-                          }/${routePrefix}${aliasObj.alias.toString()}`;
-
-                          return (
-                            <Col span={24}>
-                              <Button
-                                type="text"
-                                onClick={() =>
-                                  navigator.clipboard.writeText(shortUrl)
-                                }
-                              >
-                                <Space>
-                                  <CopyOutlined />
-                                  <Typography key={aliasObj.alias}>
-                                    {shortUrlWithoutProtocol}
-                                  </Typography>
-                                </Space>
-                              </Button>
-                            </Col>
-                          );
-                        })}
-                      </Row>
-                    ),
-                  },
-                  ...(this.state.visibleColumns.has('longUrl') &&
-                  this.state.showType !== 'tracking_pixels'
-                    ? [
-                        {
-                          title: 'Long URL',
-                          dataIndex: 'longUrl',
-                          key: 'longUrl',
-                          width: '300px',
-                          fixed: 'left',
-                          render: (_, record) => (
-                            <Typography.Link href={record.longUrl} ellipsis>
-                              {record.longUrl}
-                            </Typography.Link>
-                          ),
-                        },
-                      ]
-                    : []),
-                  ...(this.state.visibleColumns.has('owner')
-                    ? [
-                        {
-                          title: 'Owner',
-                          dataIndex: 'owner',
-                          key: 'owner',
-                          width: '150px',
-                          sorter: (a, b) => a.owner.localeCompare(b.owner),
-                        },
-                      ]
-                    : []),
-                  ...(this.state.visibleColumns.has('dateCreated')
-                    ? [
-                        {
-                          title: 'Date Created',
-                          dataIndex: 'dateCreated',
-                          key: 'dateCreated',
-                          width: '150px',
-                          sorter: (a, b) =>
-                            dayjs(a.dateCreated).unix() -
-                            dayjs(b.dateCreated).unix(),
-                        },
-                      ]
-                    : []),
-                  ...(this.state.visibleColumns.has('dateExpires')
-                    ? [
-                        {
-                          title: 'Date Expires',
-                          dataIndex: 'dateExpires',
-                          key: 'dateExpires',
-                          width: '150px',
-                          render: (_, record) =>
-                            record.dateExpires
-                              ? dayjs(record.dateExpires).format('MMM DD, YYYY')
-                              : 'Never',
-                          sorter: (a, b) => {
-                            if (!a.dateExpires) return 1;
-                            if (!b.dateExpires) return -1;
-                            return (
-                              dayjs(a.dateExpires).unix() -
-                              dayjs(b.dateExpires).unix()
-                            );
-                          },
-                        },
-                      ]
-                    : []),
-                  ...(this.state.visibleColumns.has('uniqueVisits')
-                    ? [
-                        {
-                          title: 'Unique Visits',
-                          dataIndex: 'uniqueVisits',
-                          key: 'uniqueVisits',
-                          width: '100px',
-                          sorter: (a, b) => a.uniqueVisits - b.uniqueVisits,
-                        },
-                      ]
-                    : []),
-                  ...(this.state.visibleColumns.has('totalVisits')
-                    ? [
-                        {
-                          title: 'Total Visits',
-                          dataIndex: 'totalVisits',
-                          key: 'totalVisits',
-                          width: '100px',
-                          sorter: (a, b) => a.totalVisits - b.totalVisits,
-                        },
-                      ]
-                    : []),
-                  {
-                    title: <Flex justify="flex-end">Actions</Flex>,
-                    key: 'actions',
-                    fixed: 'right',
-                    width: '220px',
-                    render: (_, record) => (
-                      <Flex justify="flex-end">
+            <Table
+              loading={this.state.linkInfo === null}
+              scroll={{ x: 'calc(700px + 50%)' }}
+              columns={[
+                {
+                  title: 'Aliases',
+                  dataIndex: 'aliases',
+                  key: 'aliases',
+                  width: '350px',
+                  fixed: 'left',
+                  render: (_, record) => (
+                    <Row gutter={[0, 8]}>
+                      <Col span={24}>
                         <Space>
-                          <Tooltip title="View">
-                            <Button
-                              type="text"
-                              icon={<EyeOutlined />}
-                              href={`/app/#/links/${record.key}`}
-                            />
-                          </Tooltip>
-                          {record.canEdit && record.deletedInfo === null && (
-                            <>
-                              <Tooltip title="Edit">
-                                <Button
-                                  type="text"
-                                  icon={<EditOutlined />}
-                                  target="_blank"
-                                  href={`/app/#/links/${record.key}?mode=edit`}
-                                />
-                              </Tooltip>
-                              <Tooltip title="Collaborate">
-                                <Button
-                                  type="text"
-                                  icon={<TeamOutlined />}
-                                  target="_blank"
-                                  href={`/app/#/links/${record.key}?mode=collaborate`}
-                                />
-                              </Tooltip>
-                            </>
+                          <Typography.Title level={5} style={{ margin: 0 }}>
+                            {record.title}
+                          </Typography.Title>
+                          {record.deletedInfo !== null && (
+                            <Tag color="red">Deleted</Tag>
                           )}
-                          {!record.isTrackingPixel && (
-                            <Tooltip title="Share">
-                              <Button
-                                type="text"
-                                icon={<ShareAltOutlined />}
-                                target="_blank"
-                                href={`/app/#/links/${record.key}?mode=share`}
-                              />
-                            </Tooltip>
-                          )}
-                          {record.deletedInfo === null && (
-                            <Tooltip title="Delete">
-                              <Popconfirm
-                                title="Are you sure you want to delete this link?"
-                                onConfirm={async () => {
-                                  try {
-                                    await fetch(`/api/v1/link/${record.key}`, {
-                                      method: 'DELETE',
-                                    });
-                                    message.success(
-                                      'Link deleted successfully',
-                                    );
-                                    await this.refreshResults();
-                                  } catch (error) {
-                                    message.error('Failed to delete link');
-                                  }
-                                }}
-                                okText="Yes"
-                                cancelText="No"
-                                okButtonProps={{ danger: true }}
-                              >
-                                <Button
-                                  type="text"
-                                  danger
-                                  icon={<DeleteOutlined />}
-                                />
-                              </Popconfirm>
-                            </Tooltip>
+                          {record.isExpired && (
+                            <Tag color="yellow">Expired</Tag>
                           )}
                         </Space>
-                      </Flex>
-                    ),
-                  },
-                ].filter((col) => !col.hidden)}
-                dataSource={this.state.linkInfo.map((link) => ({
-                  key: link.id,
-                  title: link.title,
-                  aliases: link.aliases,
-                  domain: link.domain,
-                  longUrl: link.long_url,
-                  owner: link.owner,
-                  dateCreated: dayjs(link.created_time).format('MMM DD, YYYY'),
-                  uniqueVisits: link.unique_visits,
-                  totalVisits: link.visits,
-                  dateExpires: link.expiration_time,
-                  canEdit: link.may_edit,
-                  isTrackingPixel: link.is_tracking_pixel_link,
-                  isExpired: link.is_expired,
-                  deletedInfo: link.deletion_info,
-                }))}
-                pagination={{
-                  total: this.state.totalLinks,
-                  current: this.state.currentPage,
-                  onChange: (page) => this.setPage(page),
-                }}
-              />
-            )}
+                      </Col>
+                      {record.aliases.map((aliasObj) => {
+                        const isDev = process.env.NODE_ENV === 'development';
+                        const protocol = isDev ? 'http' : 'https';
+                        const routePrefix = record.isTrackingPixel
+                          ? 'api/v1/t/'
+                          : '';
+
+                        const shortUrlWithoutProtocol = `${
+                          document.location.host
+                        }/${routePrefix}${aliasObj.alias.toString()}`;
+                        const shortUrl = `${protocol}://${record.domain || ''}${
+                          record.domain ? '.' : ''
+                        }${
+                          document.location.host
+                        }/${routePrefix}${aliasObj.alias.toString()}`;
+
+                        return (
+                          <Col span={24}>
+                            <Button
+                              type="text"
+                              onClick={() =>
+                                navigator.clipboard.writeText(shortUrl)
+                              }
+                            >
+                              <Space>
+                                <CopyOutlined />
+                                <Typography key={aliasObj.alias}>
+                                  {shortUrlWithoutProtocol}
+                                </Typography>
+                              </Space>
+                            </Button>
+                          </Col>
+                        );
+                      })}
+                    </Row>
+                  ),
+                },
+                ...(this.state.visibleColumns.has('longUrl') &&
+                this.state.showType !== 'tracking_pixels'
+                  ? [
+                      {
+                        title: 'Long URL',
+                        dataIndex: 'longUrl',
+                        key: 'longUrl',
+                        width: '300px',
+                        fixed: 'left',
+                        render: (_, record) => (
+                          <Typography.Link href={record.longUrl} ellipsis>
+                            {record.longUrl}
+                          </Typography.Link>
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(this.state.visibleColumns.has('owner')
+                  ? [
+                      {
+                        title: 'Owner',
+                        dataIndex: 'owner',
+                        key: 'owner',
+                        width: '150px',
+                        sorter: (a, b) => a.owner.localeCompare(b.owner),
+                      },
+                    ]
+                  : []),
+                ...(this.state.visibleColumns.has('dateCreated')
+                  ? [
+                      {
+                        title: 'Date Created',
+                        dataIndex: 'dateCreated',
+                        key: 'dateCreated',
+                        width: '150px',
+                        sorter: (a, b) =>
+                          dayjs(a.dateCreated).unix() -
+                          dayjs(b.dateCreated).unix(),
+                      },
+                    ]
+                  : []),
+                ...(this.state.visibleColumns.has('dateExpires')
+                  ? [
+                      {
+                        title: 'Date Expires',
+                        dataIndex: 'dateExpires',
+                        key: 'dateExpires',
+                        width: '150px',
+                        render: (_, record) =>
+                          record.dateExpires
+                            ? dayjs(record.dateExpires).format('MMM DD, YYYY')
+                            : 'Never',
+                        sorter: (a, b) => {
+                          if (!a.dateExpires) return 1;
+                          if (!b.dateExpires) return -1;
+                          return (
+                            dayjs(a.dateExpires).unix() -
+                            dayjs(b.dateExpires).unix()
+                          );
+                        },
+                      },
+                    ]
+                  : []),
+                ...(this.state.visibleColumns.has('uniqueVisits')
+                  ? [
+                      {
+                        title: 'Unique Visits',
+                        dataIndex: 'uniqueVisits',
+                        key: 'uniqueVisits',
+                        width: '100px',
+                        sorter: (a, b) => a.uniqueVisits - b.uniqueVisits,
+                      },
+                    ]
+                  : []),
+                ...(this.state.visibleColumns.has('totalVisits')
+                  ? [
+                      {
+                        title: 'Total Visits',
+                        dataIndex: 'totalVisits',
+                        key: 'totalVisits',
+                        width: '100px',
+                        sorter: (a, b) => a.totalVisits - b.totalVisits,
+                      },
+                    ]
+                  : []),
+                {
+                  title: <Flex justify="flex-end">Actions</Flex>,
+                  key: 'actions',
+                  fixed: 'right',
+                  width: '220px',
+                  render: (_, record) => (
+                    <Flex justify="flex-end">
+                      <Space>
+                        <Tooltip title="View">
+                          <Button
+                            type="text"
+                            icon={<EyeOutlined />}
+                            href={`/app/#/links/${record.key}`}
+                          />
+                        </Tooltip>
+                        {record.canEdit && record.deletedInfo === null && (
+                          <>
+                            <Tooltip title="Edit">
+                              <Button
+                                type="text"
+                                icon={<EditOutlined />}
+                                target="_blank"
+                                href={`/app/#/links/${record.key}?mode=edit`}
+                              />
+                            </Tooltip>
+                            <Tooltip title="Collaborate">
+                              <Button
+                                type="text"
+                                icon={<TeamOutlined />}
+                                target="_blank"
+                                href={`/app/#/links/${record.key}?mode=collaborate`}
+                              />
+                            </Tooltip>
+                          </>
+                        )}
+                        {!record.isTrackingPixel && (
+                          <Tooltip title="Share">
+                            <Button
+                              type="text"
+                              icon={<ShareAltOutlined />}
+                              target="_blank"
+                              href={`/app/#/links/${record.key}?mode=share`}
+                            />
+                          </Tooltip>
+                        )}
+                        {record.deletedInfo === null && (
+                          <Tooltip title="Delete">
+                            <Popconfirm
+                              title="Are you sure you want to delete this link?"
+                              onConfirm={async () => {
+                                try {
+                                  await fetch(`/api/v1/link/${record.key}`, {
+                                    method: 'DELETE',
+                                  });
+                                  message.success('Link deleted successfully');
+                                  await this.refreshResults();
+                                } catch (error) {
+                                  message.error('Failed to delete link');
+                                }
+                              }}
+                              okText="Yes"
+                              cancelText="No"
+                              okButtonProps={{ danger: true }}
+                            >
+                              <Button
+                                type="text"
+                                danger
+                                icon={<DeleteOutlined />}
+                              />
+                            </Popconfirm>
+                          </Tooltip>
+                        )}
+                      </Space>
+                    </Flex>
+                  ),
+                },
+              ].filter((col) => !col.hidden)}
+              dataSource={
+                this.state.linkInfo !== null
+                  ? this.state.linkInfo.map((link) => ({
+                      key: link.id,
+                      title: link.title,
+                      aliases: link.aliases,
+                      domain: link.domain,
+                      longUrl: link.long_url,
+                      owner: link.owner,
+                      dateCreated: dayjs(link.created_time).format(
+                        'MMM DD, YYYY',
+                      ),
+                      uniqueVisits: link.unique_visits,
+                      totalVisits: link.visits,
+                      dateExpires: link.expiration_time,
+                      canEdit: link.may_edit,
+                      isTrackingPixel: link.is_tracking_pixel_link,
+                      isExpired: link.is_expired,
+                      deletedInfo: link.deletion_info,
+                    }))
+                  : []
+              }
+              pagination={{
+                total: this.state.totalLinks,
+                current: this.state.currentPage,
+                onChange: (page) => this.setPage(page),
+              }}
+            />
           </Col>
         </Row>
 

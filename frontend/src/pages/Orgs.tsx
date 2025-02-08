@@ -11,7 +11,6 @@ import {
   Button,
   Input,
   Tooltip,
-  Spin,
   Typography,
   Table,
   Space,
@@ -171,16 +170,13 @@ export default function Orgs({ userPrivileges }: Props): React.ReactElement {
         </Col>
       </Row>
 
-      {orgs === null ? (
-        <Spin size="large" />
-      ) : (
-        <Table
-          dataSource={orgs}
-          columns={columns}
-          rowKey="id"
-          pagination={false}
-        />
-      )}
+      <Table
+        dataSource={orgs !== null ? orgs : []}
+        loading={orgs === null}
+        columns={columns}
+        rowKey="id"
+        pagination={false}
+      />
     </>
   );
 }
