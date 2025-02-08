@@ -296,6 +296,21 @@ export default function Shrunk(props: Props) {
     <ConfigProvider theme={lightTheme}>
       <HashRouter>
         <Layout>
+          <Header
+            style={{
+              paddingTop: '20px',
+              display: 'flex',
+              justifyContent: 'center',
+              textAlign: 'center',
+              fontSize: '30px',
+              height: '80px',
+              fontWeight: 'bold',
+              color: 'white',
+            }}
+          >
+            THIS IS A DEVELOPER ENVIRONMENT, DO NOT USE IF YOU'RE NOT A
+            DEVELOPER.
+          </Header>
           <Header>
             <Row gutter={16}>
               <Col>
