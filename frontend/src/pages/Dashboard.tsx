@@ -14,7 +14,6 @@ import {
   Table,
   Input,
   Space,
-  Modal,
   Form,
   Select,
   Checkbox,
@@ -45,6 +44,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { listOrgs, OrgInfo } from '../api/Org';
 import { LinkInfo } from '../components/LinkInfo';
 import { CreateLinkDrawer } from '../drawers/CreateLinkDrawer';
+import { serverValidateNetId } from '../Validators';
 
 /**
  * The final values of the share link form
@@ -127,6 +127,8 @@ export interface SearchQuery {
   end_time: dayjs.Dayjs | null;
 
   showType: 'links' | 'tracking_pixels';
+
+  owner: string | null;
 }
 
 /**
@@ -281,6 +283,7 @@ export class Dashboard extends React.Component<Props, State> {
         begin_time: null,
         end_time: null,
         showType: 'links',
+        owner: null,
       },
       totalPages: 0,
       totalLinks: 0,
@@ -538,6 +541,11 @@ export class Dashboard extends React.Component<Props, State> {
     if (query.end_time !== null) {
       req.end_time = query.end_time.format();
     }
+
+    if (query.owner !== null || query.owner === '') {
+      req.owner = query.owner;
+    }
+
     const result = await fetch('/api/v1/search', {
       method: 'POST',
       headers: {
@@ -994,8 +1002,18 @@ export class Dashboard extends React.Component<Props, State> {
                 </Form.Item>
               </Col>
               <Col span={12}>
-                <Form.Item name="owner" label="Owner">
-                  <Input />
+                <Form.Item
+                  name="owner"
+                  label="Owner"
+                  rules={[{ validator: serverValidateNetId }]}
+                >
+                  <Input
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      this.setState({
+                        query: { ...this.state.query, owner: e.target.value },
+                      });
+                    }}
+                  />
                 </Form.Item>
               </Col>
               <Col span={12}>
