@@ -26,7 +26,7 @@ import {
 } from '@ant-design/icons';
 
 import { LinkInfo } from '../components/LinkInfo';
-import { serverValidateLongUrl, serverValidateNetId } from '../Validators';
+import { serverValidateLongUrl, serverValidateNetId } from '../lib/validators';
 import AliasesForm from '../components/AliasesForm';
 
 /**
