@@ -27,6 +27,7 @@ import {
   Radio,
   Tag,
   RadioChangeEvent,
+  Drawer,
 } from 'antd/lib';
 import {
   CopyOutlined,
@@ -667,7 +668,7 @@ export class Dashboard extends React.Component<Props, State> {
               </Button>
               <Input.Search
                 style={{ width: 500 }}
-                placeholder="Find a shortened link"
+                placeholder="Find a shortend link by its alias"
                 onChange={this.updateQueryString}
                 onSearch={this.onSearch}
               />
@@ -949,16 +950,16 @@ export class Dashboard extends React.Component<Props, State> {
             this.setState({ isCreateModalOpen: false });
           }}
           userPrivileges={this.props.userPrivileges}
-          userOrgs={this.state.userOrgs}
-          netid={this.props.netid}
+          userOrgs={this.state.userOrgs ? this.state.userOrgs : []}
           tracking_pixel_ui_enabled={this.state.trackingPixelEnabled}
         />
 
-        <Modal
+        <Drawer
           title="Filter Links"
+          width={720}
           open={this.state.filterModalVisible}
-          onCancel={() => this.setState({ filterModalVisible: false })}
-          footer={null}
+          onClose={() => this.setState({ filterModalVisible: false })}
+          placement="left"
         >
           <Form
             layout="vertical"
@@ -968,25 +969,35 @@ export class Dashboard extends React.Component<Props, State> {
               sortOrder: 'descending',
             }}
           >
-            <Form.Item name="orgSelect" label="Ownership">
-              <Select value={this.state.selectedOrg} onChange={this.updateOrg}>
-                <Select.Option value={0}>My Links</Select.Option>
-                <Select.Option value={2}>Shared with Me</Select.Option>
-                {!this.props.userPrivileges.has('admin') ? null : (
-                  <Select.Option value={1}>All Links</Select.Option>
-                )}
-                {this.state.userOrgs?.length ? (
-                  <Select.OptGroup label="My Organizations">
-                    {this.state.userOrgs.map((info) => (
-                      <Select.Option key={info.id} value={info.id}>
-                        <em>{info.name}</em>
-                      </Select.Option>
-                    ))}
-                  </Select.OptGroup>
-                ) : null}
-              </Select>
-            </Form.Item>
             <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item name="orgSelect" label="Links">
+                  <Select
+                    value={this.state.selectedOrg}
+                    onChange={this.updateOrg}
+                  >
+                    <Select.Option value={0}>My Links</Select.Option>
+                    <Select.Option value={2}>Shared with Me</Select.Option>
+                    {!this.props.userPrivileges.has('admin') ? null : (
+                      <Select.Option value={1}>All Links</Select.Option>
+                    )}
+                    {this.state.userOrgs?.length ? (
+                      <Select.OptGroup label="My Organizations">
+                        {this.state.userOrgs.map((info) => (
+                          <Select.Option key={info.id} value={info.id}>
+                            <em>{info.name}</em>
+                          </Select.Option>
+                        ))}
+                      </Select.OptGroup>
+                    ) : null}
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="owner" label="Owner">
+                  <Input />
+                </Form.Item>
+              </Col>
               <Col span={12}>
                 <Form.Item name="sortKey" label="Sort by">
                   <Select
@@ -1006,21 +1017,16 @@ export class Dashboard extends React.Component<Props, State> {
                 </Form.Item>
               </Col>
               <Col span={12}>
-                <Form.Item name="links_vs_pixels" label="Link Type">
-                  <Radio.Group
-                    optionType="button"
-                    buttonStyle="solid"
-                    options={[
-                      { label: 'Links', value: 'links' },
-                      { label: 'Tracking Pixels', value: 'tracking_pixels' },
-                    ]}
-                    defaultValue={this.state.showType}
-                    onChange={this.sortByType}
+                <Form.Item name="dateRange" label="Creation Date">
+                  <DatePicker.RangePicker
+                    format="YYYY-MM-DD"
+                    value={[this.state.beginTime, this.state.endTime]}
+                    onChange={this.showLinksInRange}
+                    style={{ width: '100%' }}
+                    allowEmpty={[false, true]} // Allow the second date to be empty
                   />
                 </Form.Item>
               </Col>
-            </Row>
-            <Row gutter={16}>
               <Col span={12}>
                 <Form.Item name="show_expired" label="Expired Links">
                   <Radio.Group
@@ -1037,8 +1043,8 @@ export class Dashboard extends React.Component<Props, State> {
                   />
                 </Form.Item>
               </Col>
-              <Col span={12}>
-                {this.props.userPrivileges.has('admin') && (
+              {this.props.userPrivileges.has('admin') && (
+                <Col span={12}>
                   <Form.Item name="show_deleted" label="Deleted Links">
                     <Radio.Group
                       optionType="button"
@@ -1053,20 +1059,25 @@ export class Dashboard extends React.Component<Props, State> {
                       }
                     />
                   </Form.Item>
-                )}
+                </Col>
+              )}
+              <Col span={12}>
+                <Form.Item name="links_vs_pixels" label="Link Type">
+                  <Radio.Group
+                    optionType="button"
+                    buttonStyle="solid"
+                    options={[
+                      { label: 'Links', value: 'links' },
+                      { label: 'Tracking Pixels', value: 'tracking_pixels' },
+                    ]}
+                    defaultValue={this.state.showType}
+                    onChange={this.sortByType}
+                  />
+                </Form.Item>
               </Col>
             </Row>
-            <Form.Item name="dateRange" label="Creation Date">
-              <DatePicker.RangePicker
-                format="YYYY-MM-DD"
-                value={[this.state.beginTime, this.state.endTime]}
-                onChange={this.showLinksInRange}
-                style={{ width: '100%' }}
-                allowEmpty={[false, true]} // Allow the second date to be empty
-              />
-            </Form.Item>
           </Form>
-        </Modal>
+        </Drawer>
       </>
     );
   }
