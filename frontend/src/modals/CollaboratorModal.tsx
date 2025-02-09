@@ -13,7 +13,7 @@ import {
   Tooltip,
 } from 'antd/lib';
 import { CloseOutlined, PlusCircleFilled } from '@ant-design/icons';
-import { serverValidateNetId } from '../Validators';
+import { serverValidateNetId } from '../lib/validators';
 import { listOrgs, OrgInfo } from '../api/Org';
 
 export type Entity = {

@@ -27,7 +27,7 @@ import dayjs from 'dayjs';
 import type { FormInstance } from 'antd/lib/form';
 
 import { MemberInfo, OrgInfo, getOrgInfo } from '../../api/Org';
-import { serverValidateOrgName } from '../../Validators';
+import { serverValidateOrgName } from '../../lib/validators';
 import CollaboratorModal, { Entity } from '../../modals/CollaboratorModal';
 
 type RouteParams = {
