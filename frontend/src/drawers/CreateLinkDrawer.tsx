@@ -24,8 +24,8 @@ import {
 import { SendOutlined } from '@ant-design/icons';
 import { FormInstance } from 'antd/lib/form';
 import { serverValidateLongUrl } from '../lib/validators';
-import { OrgInfo } from '../api/Org';
 import AliasesForm from '../components/AliasesForm';
+import { OrgInfo } from '../api/Org';
 /**
  * The final values of the create link form
  * @interface
@@ -267,15 +267,17 @@ export class CreateLinkDrawer extends React.Component<Props, State> {
       this.props.userPrivileges.has('power_user') ||
       this.props.userPrivileges.has('admin');
 
-    const uniqueDomains = this.props.userOrgs
-      ? [
-          ...new Set(
-            this.props.userOrgs.flatMap((org: { domains: any }) =>
-              org.domains.map((item: any) => item.domain),
-            ),
-          ),
-        ]
-      : [];
+    const uniqueDomains = new Set<string>();
+
+    if (this.props.userOrgs.length !== 0) {
+      this.props.userOrgs.forEach((org) => {
+        if (org.domains !== undefined) {
+          org.domains.forEach((domain: string) => {
+            uniqueDomains.add(domain);
+          });
+        }
+      });
+    }
 
     return (
       <Drawer
@@ -337,10 +339,12 @@ export class CreateLinkDrawer extends React.Component<Props, State> {
                   <Form.Item label="Domain" name="domain">
                     <Select
                       showSearch
-                      options={uniqueDomains.map((domain) => ({
-                        value: domain,
-                        label: domain,
-                      }))}
+                      options={Array.from(uniqueDomains).map(
+                        (domain: string) => ({
+                          value: domain,
+                          label: domain,
+                        }),
+                      )}
                       defaultValue=""
                       placeholder="Select a domain"
                     />
