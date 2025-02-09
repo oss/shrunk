@@ -194,6 +194,9 @@ class SearchClient:
                 {"$match": {"is_tracking_pixel_link": {"$exists": True, "$eq": True}}}
             )
 
+        if "owner" in query and query["owner"]:
+            pipeline.append({"$match": {"netid": query["owner"]}})
+
         # Pagination.
         facet = {
             "count": [{"$count": "count"}],
