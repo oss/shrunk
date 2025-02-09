@@ -5,7 +5,6 @@
 
 import {
   BookOutlined,
-  BulbOutlined,
   ClockCircleOutlined,
   LogoutOutlined,
   MenuOutlined,
@@ -247,19 +246,6 @@ export default function Shrunk(props: Props) {
       : []),
     { type: 'divider' },
     {
-      key: 'feedback',
-      icon: <BulbOutlined />,
-      label: (
-        <a
-          href="https://forms.gle/Gv1L1bNZWtLS21wW8"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Feedback
-        </a>
-      ),
-    },
-    {
       key: 'faq',
       icon: <BookOutlined />,
       label: <NavLink to="/faq">FAQ</NavLink>,
@@ -277,7 +263,7 @@ export default function Shrunk(props: Props) {
 
   // setSelectedKeysFromLocation() is scheduled to be deleted soon.
   const partToName: {
-    [key: string]: { name: string; clickable: boolean };
+    [key: string]: { name: string; clickable: boolean; href?: string };
   } = {
     dash: { name: 'URL Shortener', clickable: true },
     linkhubs: { name: 'LinkHub', clickable: false },
@@ -288,8 +274,8 @@ export default function Shrunk(props: Props) {
       name: 'Request Power User Role',
       clickable: false,
     },
-    faq: { name: 'FAQ', clickable: true },
-    links: { name: 'Links', clickable: false },
+    faq: { name: 'Frequently Asked Questions', clickable: true },
+    links: { name: 'URL Shortener', clickable: true, href: '/dash' },
   };
 
   return (
@@ -373,10 +359,13 @@ export default function Shrunk(props: Props) {
                     return { title: part.split('?')[0] };
                   }
 
-                  const path = arr
-                    .slice(0, index + 1)
-                    .join('/')
-                    .replace('#', '');
+                  const path =
+                    partToName[part].href === undefined
+                      ? arr
+                          .slice(0, index + 1)
+                          .join('/')
+                          .replace('#', '')
+                      : partToName[part].href;
 
                   return {
                     title: partToName[part].name,

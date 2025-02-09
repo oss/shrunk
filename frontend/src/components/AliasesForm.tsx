@@ -1,7 +1,7 @@
 import { MinusCircleOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Form, Input, Row } from 'antd/lib';
 import React from 'react';
-import { serverValidateDuplicateAlias } from '../Validators';
+import { serverValidateDuplicateAlias } from '../lib/validators';
 
 interface IAliasesForm {
   mayUseCustomAliases: boolean;
