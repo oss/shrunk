@@ -22,7 +22,7 @@ import LinkHubComponent, {
 import EditLinkFromLinkHubModal, {
   EditLinkData,
 } from '../../modals/EditLinkFromLinkHubModal';
-import { serverValidateLinkHubAlias } from '../../Validators';
+import { serverValidateLinkHubAlias } from '../../lib/validators';
 import CollaboratorModal, { Entity } from '../../modals/CollaboratorModal';
 import { getOrgInfo } from '../../api/Org';
 import {

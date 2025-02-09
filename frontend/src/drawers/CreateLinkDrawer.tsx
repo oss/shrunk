@@ -23,7 +23,7 @@ import {
 } from 'antd/lib';
 import { SendOutlined } from '@ant-design/icons';
 import { FormInstance } from 'antd/lib/form';
-import { serverValidateLongUrl } from '../Validators';
+import { serverValidateLongUrl } from '../lib/validators';
 import { OrgInfo } from '../api/Org';
 import AliasesForm from '../components/AliasesForm';
 /**
