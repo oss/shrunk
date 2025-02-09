@@ -44,7 +44,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { listOrgs, OrgInfo } from '../api/Org';
 import { LinkInfo } from '../components/LinkInfo';
 import { CreateLinkDrawer } from '../drawers/CreateLinkDrawer';
-import { serverValidateNetId } from '../Validators';
+import { serverValidateNetId } from '../lib/validators';
 
 /**
  * The final values of the share link form
