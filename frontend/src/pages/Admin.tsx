@@ -8,15 +8,12 @@ import { Badge, Typography, Tabs, Space } from 'antd/lib';
 import {
   LineChartOutlined,
   UserOutlined,
-  SafetyOutlined,
-  TeamOutlined,
-  LockOutlined,
+  SafetyOutlined, LockOutlined
 } from '@ant-design/icons';
 import type { TabsProps } from 'antd';
 import AdminStats from '../components/admin/AdminStats';
 import UserLookup from '../components/admin/UserLookup';
 import UsersProvider from '../contexts/Users';
-import ManageUserAccess from '../components/admin/ManageUserAccess';
 import BlockedLinks from '../components/admin/BlockedLinks';
 import Security from '../components/admin/Security';
 
@@ -38,13 +35,7 @@ interface AdminProps {
   userPrivileges: Set<string>;
 }
 
-const VALID_TABS = [
-  'analytics',
-  'user-lookup',
-  'manage-access',
-  'links',
-  'security',
-];
+const VALID_TABS = ['analytics', 'user-lookup', 'links', 'security'];
 const DEFAULT_TAB = 'analytics';
 
 export default function Admin(props: AdminProps): React.ReactElement {
@@ -54,11 +45,7 @@ export default function Admin(props: AdminProps): React.ReactElement {
   const [isDomainEnabled, setIsDomainEnabled] = useState(false);
 
   // Get the initial active tab from URL parameters, validate it, and fall back to default if invalid
-  const [activeTab, setActiveTab] = useState<string>(() => {
-    const params = new URLSearchParams(window.location.search);
-    const tabParam = params.get('tab');
-    return VALID_TABS.includes(tabParam || '') ? tabParam! : DEFAULT_TAB;
-  });
+  const [activeTab, setActiveTab] = useState<string>(DEFAULT_TAB);
 
   const updatePendingPowerUserRequestsCount = async () => {
     const response = await fetch('/api/v1/role_request/power_user/count');
@@ -89,12 +76,38 @@ export default function Admin(props: AdminProps): React.ReactElement {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const handleLocationChange = () => {
+      const hashParams = new URLSearchParams(
+        window.location.hash.split('?')[1] || '',
+      );
+      const tabParam = hashParams.get('tab');
+      if (!VALID_TABS.includes(tabParam || '')) {
+        const baseUrl = window.location.pathname;
+        const hash = window.location.hash.split('?')[0];
+        window.history.pushState(
+          {},
+          '',
+          `${baseUrl}${hash}?tab=${DEFAULT_TAB}`,
+        );
+        setActiveTab(DEFAULT_TAB);
+      } else {
+        setActiveTab(tabParam!);
+      }
+    };
+
+    window.addEventListener('hashchange', handleLocationChange);
+    handleLocationChange(); // Handle initial URL
+
+    return () => window.removeEventListener('hashchange', handleLocationChange);
+  }, []);
+
   const handleTabChange = (key: string) => {
     if (VALID_TABS.includes(key)) {
       setActiveTab(key);
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.set('tab', key);
-      window.history.pushState({}, '', newUrl);
+      const baseUrl = window.location.pathname;
+      const hash = window.location.hash.split('?')[0];
+      window.history.pushState({}, '', `${baseUrl}${hash}?tab=${key}`);
     }
   };
 
