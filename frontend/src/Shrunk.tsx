@@ -24,6 +24,7 @@ import {
   Row,
   Tag,
   Typography,
+  Alert,
 } from 'antd/lib';
 import { createBrowserHistory, Location } from 'history';
 import React, { useEffect, useState } from 'react';
@@ -261,6 +262,8 @@ export default function Shrunk(props: Props) {
   const { location } = createBrowserHistory();
   const { hash } = location;
 
+  const shortUrl = window.location.hostname;
+
   // setSelectedKeysFromLocation() is scheduled to be deleted soon.
   const partToName: {
     [key: string]: { name: string; clickable: boolean; href?: string };
@@ -282,21 +285,25 @@ export default function Shrunk(props: Props) {
     <ConfigProvider theme={lightTheme}>
       <HashRouter>
         <Layout>
-          <Header
-            style={{
-              paddingTop: '20px',
-              display: 'flex',
-              justifyContent: 'center',
-              textAlign: 'center',
-              fontSize: '30px',
-              height: '80px',
-              fontWeight: 'bold',
-              color: 'white',
-            }}
-          >
-            THIS IS A DEVELOPER ENVIRONMENT, DO NOT USE IF YOU'RE NOT A
-            DEVELOPER.
-          </Header>
+          {shortUrl === 'shrunk' ? (
+            <Alert
+              style={{
+                paddingTop: '20px',
+                display: 'flex',
+                justifyContent: 'center',
+                textAlign: 'center',
+                fontSize: '30px',
+                height: '80px',
+                fontWeight: 'bold',
+              }}
+              message="THIS IS A DEVELOPER ENVIRONMENT, DO NOT USE IF YOU'RE NOT A DEVELOPER."
+              type="warning"
+              showIcon
+              closable
+            />
+          ) : (
+            <></>
+          )}
           <Header>
             <Row gutter={16}>
               <Col>
