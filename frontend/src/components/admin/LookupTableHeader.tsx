@@ -4,9 +4,7 @@
  */
 
 import {
-  CloudDownloadOutlined,
-  FilterOutlined,
-  PlusCircleFilled,
+  CloudDownloadOutlined, PlusCircleFilled
 } from '@ant-design/icons';
 import {
   Button,
@@ -117,9 +115,6 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
     <>
       <Flex justify="space-between">
         <Space direction="horizontal">
-          <Button disabled={true} icon={<FilterOutlined />}>
-            Filter
-          </Button>
           <SearchUser users={users} onSearch={onSearch} />
         </Space>
         <Space direction="horizontal">

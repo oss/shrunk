@@ -4,9 +4,7 @@
  */
 
 import {
-  CloudDownloadOutlined,
-  FilterOutlined,
-  PlusCircleFilled,
+  CloudDownloadOutlined, PlusCircleFilled
 } from '@ant-design/icons';
 import { Button, Flex, Form, Input, Modal, Space, message } from 'antd/lib';
 import React, { useState } from 'react';
@@ -103,9 +101,6 @@ const BlockedLinksTableHeader: React.FC<BlockedLinksTableHeaderProps> = ({
     <>
       <Flex justify="space-between">
         <Space direction="horizontal">
-          <Button disabled={true} icon={<FilterOutlined />}>
-            Filter
-          </Button>
           <SearchBannedLinks
             blockedLinks={blockedLinks}
             onSearch={onSearch ?? (() => {})}

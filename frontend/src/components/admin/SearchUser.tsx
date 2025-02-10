@@ -3,6 +3,8 @@
  * @packageDocumentation
  */
 
+// TODO - Merge with SearchBannedLinks.tsx for code deduplication
+
 import { SearchOutlined } from '@ant-design/icons';
 import { AutoComplete } from 'antd/lib';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -79,7 +81,7 @@ const SearchUser: React.FC<SearchUserProps> = ({ users, onSearch }) => {
 
   return (
     <AutoComplete
-      style={{ width: '100%', minWidth: '200px' }}
+      style={{ width: '100%', minWidth: '300px' }}
       value={value}
       placeholder="Search for User"
       options={options}

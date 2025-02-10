@@ -492,14 +492,14 @@ const UserLookup: React.FC = () => {
       key: 'actions',
       render: (_: any, record: any) => (
         <Flex justify="flex-end">
-            <Tooltip title="Ban">
-              <Popconfirm
-                title="Are you sure you want to ban this user?"
-                onConfirm={() => handleBan(record.netid)}
-                okText="Yes"
-                cancelText="No"
-                okButtonProps={{ danger: true }}
-              >
+          <Tooltip title="Ban">
+            <Popconfirm
+              title="Are you sure you want to ban this user?"
+              onConfirm={() => handleBan(record.netid)}
+              okText="Yes"
+              cancelText="No"
+              okButtonProps={{ danger: true }}
+            >
               <Button type="text" danger icon={<DeleteOutlined />} />
             </Popconfirm>
           </Tooltip>

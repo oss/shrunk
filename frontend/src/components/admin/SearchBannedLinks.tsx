@@ -74,7 +74,7 @@ const SearchBannedLinks: React.FC<SearchBannedLinksProps> = ({
 
   return (
     <AutoComplete
-      style={{ width: '100%', minWidth: '200px' }}
+      style={{ width: '100%', minWidth: '300px' }}
       value={value}
       onChange={handleSearch}
       onSelect={handleSelect}

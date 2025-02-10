@@ -230,9 +230,17 @@ const BlockedLinks: React.FC<BlockedLinksProps> = (props) => {
 
   return (
     <>
-      <Typography.Title level={3} style={{ marginTop: 0, marginBottom: 16 }}>
-        Link Control
-      </Typography.Title>
+      <Flex gap="1rem" align="baseline">
+        <Typography.Title level={3} style={{ marginTop: 0, marginBottom: 16 }}>
+          Link Control
+        </Typography.Title>
+        <Typography.Title
+          level={5}
+          style={{ marginTop: 0, marginBottom: 16, color: '#4F4F4F' }}
+        >
+          {filteredLinks.length} Result{filteredLinks.length !== 1 && 's'} Found
+        </Typography.Title>
+      </Flex>
 
       <BlockedLinksTableHeader
         onLinkBanned={rehydrateData}
