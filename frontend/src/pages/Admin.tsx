@@ -124,28 +124,11 @@ export default function Admin(props: AdminProps): React.ReactElement {
       ),
     },
     {
-      key: 'manage-access',
-      label: (
-        <Space direction="horizontal">
-          <TeamOutlined />
-          Manage Access
-        </Space>
-      ),
-      children: (
-        <UsersProvider>
-          <ManageUserAccess
-            userNetid={props.userNetid}
-            userPrivileges={props.userPrivileges}
-          />
-        </UsersProvider>
-      ),
-    },
-    {
       key: 'links',
       label: (
         <Space direction="horizontal">
           <SafetyOutlined />
-          Links{' '}
+          Link Control{' '}
           {linksToBeVerified > 0 && (
             <Badge count={linksToBeVerified} style={{ marginLeft: '8px' }} />
           )}
