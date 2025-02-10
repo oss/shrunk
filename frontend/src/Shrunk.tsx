@@ -262,7 +262,7 @@ export default function Shrunk(props: Props) {
   const { location } = createBrowserHistory();
   const { hash } = location;
 
-  const shortUrl = window.location.hostname;
+  const domain = window.location.hostname;
 
   // setSelectedKeysFromLocation() is scheduled to be deleted soon.
   const partToName: {
@@ -285,17 +285,8 @@ export default function Shrunk(props: Props) {
     <ConfigProvider theme={lightTheme}>
       <HashRouter>
         <Layout>
-          {shortUrl === 'shrunk' ? (
+          {domain === 'shrunk.rutgers.edu' ? (
             <Alert
-              style={{
-                paddingTop: '20px',
-                display: 'flex',
-                justifyContent: 'center',
-                textAlign: 'center',
-                fontSize: '30px',
-                height: '80px',
-                fontWeight: 'bold',
-              }}
               message="THIS IS A DEVELOPER ENVIRONMENT, DO NOT USE IF YOU'RE NOT A DEVELOPER."
               type="warning"
               showIcon
