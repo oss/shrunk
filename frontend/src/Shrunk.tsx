@@ -285,15 +285,13 @@ export default function Shrunk(props: Props) {
     <ConfigProvider theme={lightTheme}>
       <HashRouter>
         <Layout>
-          {domain === 'shrunk.rutgers.edu' ? (
+          {domain === 'shrunk.rutgers.edu' && (
             <Alert
-              message="THIS IS A DEVELOPER ENVIRONMENT, DO NOT USE IF YOU'RE NOT A DEVELOPER."
+              message="This is a developer environment, any progress you make on this site is prone to deletion."
               type="warning"
               showIcon
               closable
             />
-          ) : (
-            <></>
           )}
           <Header>
             <Row gutter={16}>
