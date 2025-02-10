@@ -1,3 +1,8 @@
+/**
+ * Implements the [[LinkSecurity]] component
+ * @packageDocumentation
+ */
+
 import ExclamationCircleFilled from '@ant-design/icons/lib/icons/ExclamationCircleFilled';
 import { FloatButton, Button, Col, Popconfirm, Row } from 'antd/lib';
 import Spin from 'antd/es/spin';
@@ -50,6 +55,11 @@ enum PendingLinkAction {
   Deny = 'reject',
 }
 
+/**
+ * Wrapper function to approve or deny a pending link
+ * @param action - pending link action
+ * @param link_id - id of the link
+ */
 function LinkAction(action: PendingLinkAction, link_id: string) {
   fetch(`/api/v1/security/${action}/${link_id}`, {
     method: 'PATCH',
@@ -57,6 +67,10 @@ function LinkAction(action: PendingLinkAction, link_id: string) {
   document.location.reload();
 }
 
+/**
+ * The [[PendingLinkRow]] component displays the pending link row
+ * @param props - the props for the component
+ */
 function PendingLinkRow(props: PendingRowProps) {
   const { document } = props;
   return (
@@ -108,6 +122,10 @@ function PendingLinkRow(props: PendingRowProps) {
   );
 }
 
+/**
+ * The [[LinkSecurity]] component displays the security status of the links
+ * @returns the [[LinkSecurity]] component
+ */
 function LinkSecurity() {
   const [pendingLinks, setPendingLinks] = useState<Array<PendingLink> | null>(
     null,

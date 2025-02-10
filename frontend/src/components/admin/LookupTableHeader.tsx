@@ -21,7 +21,7 @@ import {
 import React from 'react';
 import base32 from 'hi-base32';
 import { User } from '../../contexts/Users';
-import SearchUser from '../SearchUser';
+import SearchUser from './SearchUser';
 
 /**
  * Props for the [[LookupTableHeader]] component
