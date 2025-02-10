@@ -174,28 +174,12 @@ export default function Admin(props: AdminProps): React.ReactElement {
   return (
     <>
       <Typography.Title>Administrator Controls</Typography.Title>
-      <Content>
-        {/* ConfigProvider required to modify the Design tokens for Tabs component */}
-        <ConfigProvider
-          theme={{
-            inherit: true,
-            components: {
-              Tabs: {
-                itemHoverColor: red[6],
-                itemSelectedColor: red[6],
-                itemActiveColor: red[6],
-              },
-            },
-          }}
-        >
-          <Tabs
-            activeKey={activeTab}
-            onChange={handleTabChange}
-            items={items}
-            type="card"
-          />
-        </ConfigProvider>
-      </Content>
+      <Tabs
+        activeKey={activeTab}
+        onChange={handleTabChange}
+        items={items}
+        type="card"
+      />
     </>
   );
 }

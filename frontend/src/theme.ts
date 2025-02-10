@@ -21,6 +21,11 @@ export const lightTheme: ThemeConfig = {
       colorText: '#FFFFFF',
       colorPrimary: '#FFFFFF',
     },
+    Tabs: {
+      itemHoverColor: red[6],
+      itemSelectedColor: red[6],
+      itemActiveColor: red[6],
+    },
   },
 };
 
