@@ -4,7 +4,7 @@
  */
 
 import { Flex, Row } from 'antd/lib';
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   Button,
   message,
@@ -128,6 +128,33 @@ const BlockedLinks: React.FC<BlockedLinksProps> = (props) => {
 
   const [refetchBlockedLinks, setRefetchBlockedLinks] = React.useState(false);
 
+  const exportAsCSV = useCallback(() => {
+    const csvContent = [
+      ['URL', 'Blocked By', 'Time Blocked', 'Comment'].join(','),
+      ...blockedLinks.map((link) =>
+        [
+          `"${link.url}"`,
+          link.blockedBy,
+          link.timeBlocked,
+          `"${link.comment}"`,
+        ].join(','),
+      ),
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute(
+      'download',
+      `blocked_links_export_${new Date().toISOString()}.csv`,
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, [blockedLinks]);
+
   const rehydrateData = (): void => {
     setRefetchBlockedLinks((prev) => !prev);
   };
@@ -174,7 +201,10 @@ const BlockedLinks: React.FC<BlockedLinksProps> = (props) => {
       </Typography.Title>
 
       {/* Re-provide theme context to component */}
-      <BlockedLinksTableHeader onLinkBanned={rehydrateData} />
+      <BlockedLinksTableHeader
+        onLinkBanned={rehydrateData}
+        onExportClick={exportAsCSV}
+      />
 
       <Row style={{ marginBottom: 24 }} />
       {loading ? (
