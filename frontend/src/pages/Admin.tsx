@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { Badge, Typography, Tabs, Space, ConfigProvider } from 'antd/lib';
+import { Badge, Typography, Tabs, Space } from 'antd/lib';
 import {
   LineChartOutlined,
   UserOutlined,
@@ -12,14 +12,12 @@ import {
   TeamOutlined,
   LockOutlined,
 } from '@ant-design/icons';
-import { Content } from 'antd/lib/layout/layout';
 import type { TabsProps } from 'antd';
 import AdminStats from '../components/admin/AdminStats';
 import UserLookup from '../components/admin/UserLookup';
 import UsersProvider from '../contexts/Users';
 import ManageUserAccess from '../components/admin/ManageUserAccess';
 import BlockedLinks from '../components/admin/BlockedLinks';
-import { red } from '@ant-design/colors';
 import Security from '../components/admin/Security';
 
 /**

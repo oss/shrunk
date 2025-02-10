@@ -415,7 +415,9 @@ const UserLookup: React.FC = () => {
       defaultSortOrder: 'descend' as const,
     },
     {
-      title: 'Actions',
+      title: () => {
+        return <Flex justify="flex-end">Actions</Flex>;
+      },
       key: 'actions',
       render: (_: any, record: any) => (
         <Tooltip title="Ban">
@@ -426,7 +428,9 @@ const UserLookup: React.FC = () => {
             cancelText="No"
             okButtonProps={{ danger: true }}
           >
-            <Button type="text" danger icon={<DeleteOutlined />} />
+            <Flex justify="flex-end">
+              <Button type="text" danger icon={<DeleteOutlined />} />
+            </Flex>
           </Popconfirm>
         </Tooltip>
       ),

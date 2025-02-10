@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import { Row } from 'antd/lib';
+import { Flex, Row } from 'antd/lib';
 import React, { useEffect } from 'react';
 import {
   Button,
@@ -95,9 +95,13 @@ const columns = [
     render: (netid: string) => renderNetIDs([netid]),
   },
   {
-    title: 'Actions',
+    title: () => {
+      return <Flex justify="flex-end">Actions</Flex>;
+    },
     key: 'actions',
-    render: (_: any, record: BlockedLink) => renderUnblockButton(record.url),
+    render: (_: any, record: BlockedLink) => {
+      return <Flex justify="flex-end">{renderUnblockButton(record.url)}</Flex>;
+    },
   },
 ];
 
