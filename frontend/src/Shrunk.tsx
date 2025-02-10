@@ -24,6 +24,7 @@ import {
   Row,
   Tag,
   Typography,
+  Alert,
 } from 'antd/lib';
 import { createBrowserHistory, Location } from 'history';
 import React, { useEffect, useState } from 'react';
@@ -261,6 +262,8 @@ export default function Shrunk(props: Props) {
   const { location } = createBrowserHistory();
   const { hash } = location;
 
+  const domain = window.location.hostname;
+
   // setSelectedKeysFromLocation() is scheduled to be deleted soon.
   const partToName: {
     [key: string]: { name: string; clickable: boolean; href?: string };
@@ -282,6 +285,14 @@ export default function Shrunk(props: Props) {
     <ConfigProvider theme={lightTheme}>
       <HashRouter>
         <Layout>
+          {domain === 'shrunk.rutgers.edu' && (
+            <Alert
+              message="This is a developer environment, any progress you make on this site is prone to deletion."
+              type="warning"
+              showIcon
+              closable
+            />
+          )}
           <Header>
             <Row gutter={16}>
               <Col>
