@@ -1,23 +1,57 @@
+/**
+ * Implements the [[BlockedLinksTableHeader]] component
+ * @packageDocumentation
+ */
+
 import {
   CloudDownloadOutlined,
   FilterOutlined,
-  PlusCircleFilled
+  PlusCircleFilled,
 } from '@ant-design/icons';
 import { Button, Flex, Form, Input, Modal, Space, message } from 'antd/lib';
 import React, { useState } from 'react';
 import base32 from 'hi-base32';
 import SearchBannedLinks from './SearchBannedLinks';
 
+/**
+ * Props for the [[BlockedLinksTableHeader]] component
+ * @interface
+ */
 interface BlockedLinksTableHeaderProps {
+  /**
+   * Callback function to execute when the export button is clicked
+   * @property
+   */
   onExportClick?: () => void;
+
+  /**
+   * Callback function to execute when the user searches for a banned link
+   * @property
+   */
   onSearch?: (value: string) => void;
+
+  /**
+   * Callback function to execute when a link is banned
+   * @property
+   */
   onLinkBanned: () => void;
+
+  /**
+   * List of blocked links. Values are used for filtering/sorting
+   * @property
+   */
+  blockedLinks: Array<{ url: string; blockedBy: string }>;
 }
 
+/**
+ * The [[BlockedLinksTableHeader]] component allows the user to search for banned links based on criteria
+ * @class
+ */
 const BlockedLinksTableHeader: React.FC<BlockedLinksTableHeaderProps> = ({
   onExportClick,
   onSearch,
   onLinkBanned,
+  blockedLinks,
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -45,13 +79,9 @@ const BlockedLinksTableHeader: React.FC<BlockedLinksTableHeaderProps> = ({
           throw new Error('Failed to block link');
         }
 
-        // Show success message
         message.success('Link blocked successfully');
 
-        // Reset form
         form.resetFields();
-
-        // Close modal
         setShowBlockLinkModal(false);
 
         onLinkBanned();
@@ -76,7 +106,10 @@ const BlockedLinksTableHeader: React.FC<BlockedLinksTableHeaderProps> = ({
           <Button disabled={true} icon={<FilterOutlined />}>
             Filter
           </Button>
-          <SearchBannedLinks />
+          <SearchBannedLinks
+            blockedLinks={blockedLinks}
+            onSearch={onSearch ?? (() => {})}
+          />
         </Space>
         <Space direction="horizontal">
           <Button icon={<CloudDownloadOutlined />} onClick={onExportClick}>

@@ -1,4 +1,7 @@
-// TODO - Document this file
+/**
+ * Implements the [[UserLookup]] component
+ * @packageDocumentation
+ */
 
 import {
   Button,
@@ -20,10 +23,24 @@ import LookupTableHeader from './LookupTableHeader';
 import { DeleteOutlined } from '@ant-design/icons';
 import base32 from 'hi-base32';
 
+/**
+ * Renders the netids in bold
+ * @param netids - the netids to render
+ * @returns the rendered netids as bold elements
+ */
 const renderNetIDs = (netids: string[]): JSX.Element[] =>
   netids.map((netid) => <strong key={netid}>{netid}</strong>);
 
+/**
+ * Order of roles in the select dropdown
+ * @constant
+ */
 const roleOrder = ['whitelisted', 'facstaff', 'power_user', 'admin'];
+
+/**
+ * Colors for each role in the select dropdown
+ * @constant
+ */
 const roleColors: Record<string, string> = {
   admin: 'volcano',
   whitelisted: 'green',
@@ -31,13 +48,40 @@ const roleColors: Record<string, string> = {
   facstaff: 'purple',
 };
 
+/**
+ * Props for the RolesSelect component
+ * @interface
+ */
 interface RolesSelectProps {
+  /**
+   * Initial roles for the user
+   * @property
+   */
   initialRoles: string[];
+
+  /**
+   * NetID of the user
+   * @property
+   */
   netid: string;
+
+  /**
+   * Callback function to execute when the user's roles change
+   * @property
+   */
   onRolesChange: (netid: string, roles: string[]) => Promise<void>;
+
+  /**
+   * Callback function to force rehydrate the data
+   * @property
+   */
   rehydrateData: () => void;
 }
 
+/**
+ * The RolesSelect component allows the current user to select roles for a specific user within the table
+ * @class
+ */
 const RolesSelect: React.FC<RolesSelectProps> = ({
   initialRoles,
   netid,
@@ -45,6 +89,7 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
   rehydrateData,
 }) => {
   const [selectedRoles, setSelectedRoles] = useState<string[]>(
+    // Sort roles in descending order of privilege
     initialRoles.sort((a, b) => roleOrder.indexOf(b) - roleOrder.indexOf(a)),
   );
   const [loading, setLoading] = useState(false);
@@ -69,6 +114,11 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
     (option) => !selectedRoles.includes(option.value) || option.disabled,
   );
 
+  /**
+   * Handles the change in roles for the user. Updates the roles in the backend and UI.
+   * Ensures that users do not revoke highest privilege role from themselves.
+   * @param newRoles - the new roles to assign to the user
+   */
   const handleRolesChange = async (newRoles: string[]) => {
     const highestRole = getHighestRole(initialRoles);
 
@@ -130,10 +180,33 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
 const renderOrganizations = (organizations: string[]): JSX.Element[] =>
   organizations.map((org) => <Tag key={org}>{org}</Tag>);
 
+/**
+ * User data interface
+ * @interface
+ */
 interface UserData {
+  /**
+   * NetID of the user
+   * @property
+   */
   netid: string;
+
+  /**
+   * Organizations the user is a part of
+   * @property
+   */
   organizations: string[];
+
+  /**
+   * Roles the user has
+   * @property
+   */
   roles: string[];
+
+  /**
+   * Number of links created by the user
+   * @property
+   */
   linksCreated: number;
 }
 
@@ -151,15 +224,12 @@ interface TablePagination {
   pageSize?: number;
 }
 
+/**
+ * The [[UserLookup]] component allows the current user to search for users and manage their roles
+ * @class
+ */
 const UserLookup: React.FC = () => {
-  const {
-    users,
-    options,
-    loading: usersLoading,
-    appliedOperations,
-    deleteOperation,
-    rehydrateUsers,
-  } = useUsers();
+  const { users, loading: usersLoading, rehydrateUsers } = useUsers();
   const [loading, setLoading] = useState(false);
   const [filteredData, setFilteredData] = useState<UserData[]>([]);
   const [searchText, setSearchText] = useState('');
@@ -171,7 +241,6 @@ const UserLookup: React.FC = () => {
 
   const exportToCSV = useCallback(() => {
     const dataToExport = filteredData.length > 0 ? filteredData : users;
-
     const csvContent = [
       ['NetID', 'Organizations', 'Roles', 'Links Created'].join(','),
       ...dataToExport.map((user) =>
@@ -301,14 +370,16 @@ const UserLookup: React.FC = () => {
   ) => {
     let newData = [...users];
 
-    // Apply filters
     Object.keys(filters).forEach((key) => {
       const selectedFilters = filters[key];
       if (selectedFilters && selectedFilters.length > 0) {
         newData = newData.filter((record) => {
-          return selectedFilters.some((filter: string) =>
-            record[key].includes(filter),
-          );
+          if (key === 'organizations' || key === 'roles') {
+            return selectedFilters.some((filter: string) =>
+              record[key as 'organizations' | 'roles'].includes(filter),
+            );
+          }
+          return false;
         });
       }
     });
@@ -330,7 +401,7 @@ const UserLookup: React.FC = () => {
       });
     }
 
-    // Apply search text filter if exists
+    // Apply search text filter
     if (searchText) {
       newData = newData.filter(
         (user) =>
@@ -452,6 +523,7 @@ const UserLookup: React.FC = () => {
       </Flex>
 
       <LookupTableHeader
+        users={users}
         rehydrateData={rehydrateUsers}
         onExportClick={exportToCSV}
         onSearch={handleSearch}
