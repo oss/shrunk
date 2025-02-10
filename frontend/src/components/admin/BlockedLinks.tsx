@@ -60,6 +60,8 @@ const renderUnblockButton = (url: string): JSX.Element => {
       if (!response.ok) {
         throw new Error('Failed to unblock link');
       }
+
+      message.success('Link unblocked successfully');
     } catch (error) {
       console.error('Error unblocking link:', error);
       message.error('Failed to unblock link');
