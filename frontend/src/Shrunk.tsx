@@ -6,7 +6,6 @@
 import {
   BookOutlined,
   BugOutlined,
-  BulbOutlined,
   LogoutOutlined,
   MenuOutlined,
   SlidersOutlined,
@@ -235,100 +234,101 @@ export default function Shrunk(props: Props) {
 
   return (
     <ConfigProvider theme={lightTheme}>
-      <HashRouter>
-        <Layout>
-          {domain === 'shrunk.rutgers.edu' && (
-            <Alert
-              message="This is a developer environment, any progress you make on this site is prone to deletion."
-              type="warning"
-              showIcon
-              closable
-            />
-          )}
-          <Header>
-            <Row gutter={16}>
-              <Col>
-                <Link to="/dash">
-                  <Image
-                    preview={false}
-                    alt="Rutgers"
-                    src="/static/img/rutgers.png"
-                    width="175px"
-                    srcSet="/static/img/rutgers.png"
-                  />
-                </Link>
-              </Col>
-              <Col flex="auto">
-                <Menu
-                  overflowedIndicator={<MenuOutlined />}
-                  mode="horizontal"
-                  selectedKeys={selectedKeys}
-                >
-                  <Menu.Item key="dash">
-                    <NavLink to="/dash">URL Shortener</NavLink>
-                  </Menu.Item>
-                  {isLinkHubEnabled ? (
-                    <Menu.Item key="linkhubs">
-                      <NavLink to="/linkhubs">
-                        LinkHub <Tag color="warning">beta</Tag>
-                      </NavLink>
-                    </Menu.Item>
-                  ) : (
-                    <></>
-                  )}
-                  {!showWhitelistTab ? (
-                    <></>
-                  ) : (
-                    <Menu.Item key="whitelist">
-                      <NavLink to="/roles/whitelisted">Whitelist</NavLink>
-                    </Menu.Item>
-                  )}
-                </Menu>
-              </Col>
-              <Col>
-                <Dropdown menu={{ items: menuItems }}>
-                  <Button type="text" style={{ color: 'white' }}>
-                    {props.netid}
-                  </Button>
-                </Dropdown>
-              </Col>
-            </Row>
-          </Header>
+      <App>
+        <HashRouter>
           <Layout>
-            <Sider width={siderWidth} breakpoint="xl" collapsedWidth="10" />
-            <Content
-              style={{
-                padding: 24,
-                margin: 0,
-                minHeight: '90vh',
-              }}
-            >
-              {pendingAlerts.length === 0 ? (
-                <></>
-              ) : (
-                <PendingAlerts netid={netid} pendingAlerts={pendingAlerts} />
-              )}
-              <PendingRequests />
-              <Breadcrumb
-                items={hash.split('/').map((part, index, arr) => {
-                  if (part === '#') {
-                    return {
-                      title: 'Home',
-                      href: '/#',
-                    };
-                  }
+            {domain === 'shrunk.rutgers.edu' && (
+              <Alert
+                message="This is a developer environment, any progress you make on this site is prone to deletion."
+                type="warning"
+                showIcon
+                closable
+              />
+            )}
+            <Header>
+              <Row gutter={16}>
+                <Col>
+                  <Link to="/dash">
+                    <Image
+                      preview={false}
+                      alt="Rutgers"
+                      src="/static/img/rutgers.png"
+                      width="175px"
+                      srcSet="/static/img/rutgers.png"
+                    />
+                  </Link>
+                </Col>
+                <Col flex="auto">
+                  <Menu
+                    overflowedIndicator={<MenuOutlined />}
+                    mode="horizontal"
+                    selectedKeys={selectedKeys}
+                  >
+                    <Menu.Item key="dash">
+                      <NavLink to="/dash">URL Shortener</NavLink>
+                    </Menu.Item>
+                    {isLinkHubEnabled ? (
+                      <Menu.Item key="linkhubs">
+                        <NavLink to="/linkhubs">
+                          LinkHub <Tag color="warning">beta</Tag>
+                        </NavLink>
+                      </Menu.Item>
+                    ) : (
+                      <></>
+                    )}
+                    {!showWhitelistTab ? (
+                      <></>
+                    ) : (
+                      <Menu.Item key="whitelist">
+                        <NavLink to="/roles/whitelisted">Whitelist</NavLink>
+                      </Menu.Item>
+                    )}
+                  </Menu>
+                </Col>
+                <Col>
+                  <Dropdown menu={{ items: menuItems }}>
+                    <Button type="text" style={{ color: 'white' }}>
+                      {props.netid}
+                    </Button>
+                  </Dropdown>
+                </Col>
+              </Row>
+            </Header>
+            <Layout>
+              <Sider width={siderWidth} breakpoint="xl" collapsedWidth="10" />
+              <Content
+                style={{
+                  padding: 24,
+                  margin: 0,
+                  minHeight: '90vh',
+                }}
+              >
+                {pendingAlerts.length === 0 ? (
+                  <></>
+                ) : (
+                  <PendingAlerts netid={netid} pendingAlerts={pendingAlerts} />
+                )}
+                <PendingRequests />
+                <Breadcrumb
+                  items={hash.split('/').map((part, index, arr) => {
+                    if (part === '#') {
+                      return {
+                        title: 'Home',
+                        href: '/#',
+                      };
+                    }
 
                   if (!Object.prototype.hasOwnProperty.call(partToName, part)) {
                     return { title: part.split('?')[0] };
                   }
 
-                  const path =
-                    partToName[part].href === undefined
-                      ? arr
-                          .slice(0, index + 1)
-                          .join('/')
-                          .replace('#', '')
-                      : partToName[part].href;
+                    const path =
+                      partToName[part].href === undefined
+                        ? arr
+                            .slice(0, index + 1)
+                            .join('/')
+                            .replace('#', '')
+                        : partToName[part].href;
 
                   return {
                     title: partToName[part].name,
