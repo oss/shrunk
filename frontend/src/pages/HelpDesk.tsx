@@ -14,6 +14,7 @@ import {
   Button,
   Card,
   Col,
+  Flex,
   Popconfirm,
   Row,
   Space,
@@ -162,35 +163,37 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
    * @param record - The ticket record
    */
   const renderActions = (record: TicketInfo) => (
-    <Space>
-      <Tooltip title="View">
-        <Button
-          type="text"
-          icon={<EyeOutlined />}
-          href={`/app/#/tickets/${record._id}`}
-        />
-      </Tooltip>
-      {userPrivileges.has('admin') && (
-        <Tooltip title="Resolve">
+    <Flex justify="flex-end">
+      <Space>
+        <Tooltip title="View">
           <Button
             type="text"
-            icon={<CheckCircleOutlined />}
-            href={`/app/#/tickets/${record._id}?mode=resolve`}
+            icon={<EyeOutlined />}
+            href={`/app/#/tickets/${record._id}`}
           />
         </Tooltip>
-      )}
-      <Tooltip title="Close">
-        <Popconfirm
-          title="Are you sure you want to close this ticket?"
-          onConfirm={() => deleteTicket(record._id)}
-          okText="Yes"
-          cancelText="No"
-          okButtonProps={{ danger: true }}
-        >
-          <Button type="text" danger icon={<CloseCircleOutlined />} />
-        </Popconfirm>
-      </Tooltip>
-    </Space>
+        {userPrivileges.has('admin') && (
+          <Tooltip title="Resolve">
+            <Button
+              type="text"
+              icon={<CheckCircleOutlined />}
+              href={`/app/#/tickets/${record._id}?mode=resolve`}
+            />
+          </Tooltip>
+        )}
+        <Tooltip title="Close">
+          <Popconfirm
+            title="Are you sure you want to close this ticket?"
+            onConfirm={() => deleteTicket(record._id)}
+            okText="Yes"
+            cancelText="No"
+            okButtonProps={{ danger: true }}
+          >
+            <Button type="text" danger icon={<CloseCircleOutlined />} />
+          </Popconfirm>
+        </Tooltip>
+      </Space>
+    </Flex>
   );
 
   const userColumns = [
@@ -227,7 +230,7 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
       width: '15%',
     },
     {
-      title: 'Actions',
+      title: <Flex justify="flex-end">Actions</Flex>,
       key: 'actions',
       render: (record: TicketInfo) => renderActions(record),
       width: '15%',
