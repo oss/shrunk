@@ -9,18 +9,17 @@ import {
   Button,
   Card,
   Col,
-  Descriptions,
   Popconfirm,
   Row,
   Space,
   Typography,
 } from 'antd/lib';
-import dayjs from 'dayjs';
 import base32 from 'hi-base32';
 import React, { useEffect, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
-import ResolveTicketModal from '../../modals/ResolveTicketModal';
-import { EntityPositionInfo, TicketInfo } from '../../types';
+import TicketDetails, { EntityDetails } from '../../components/TicketDetails';
+import ResolveTicketDrawer from '../../drawers/ResolveTicketDrawer';
+import { EntityPositionInfo, ResolveTicketInfo, TicketInfo } from '../../types';
 
 /**
  * Props for the [[Ticket]] component
@@ -51,7 +50,7 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
    * entityPositionInfo: The entity position information
    * helpDeskText: The text fields related to the help desk
    * loading: Whether the component is loading
-   * isResolveModalVisible: Whether the resolve modal is visible
+   * isResolveDrawerOpen: Whether the ResolveTicketModal is open
    */
   const [ticketInfo, setTicketInfo] = useState<TicketInfo | null>(null);
   const [entityPositionInfo, setEntityPositionInfo] =
@@ -60,7 +59,7 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
     null,
   );
   const [loading, setLoading] = useState<boolean>(false);
-  const [isResolveModalVisible, setIsResolveModalVisible] =
+  const [isResolveDrawerOpen, setIsResolveDrawerOpen] =
     useState<boolean>(false);
 
   const history = useHistory();
@@ -144,7 +143,7 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
    * @param role The role to grant
    * @param comment The comment to add to the grant
    */
-  const grantRole = async (entity: string, role: string, comment: string) => {
+  const grantRole = async (entity: string, role: string, comment?: string) => {
     const encodedEntity = base32.encode(entity);
     await fetch(`/api/v1/role/${role}/entity/${encodedEntity}`, {
       method: 'PUT',
@@ -194,7 +193,7 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
    *
    * @param values - The values from the form
    */
-  const resolveTicket = async (values: any) => {
+  const resolveTicket = async (values: ResolveTicketInfo) => {
     // Grant the role if the ticket is an approved role request
     if (!ticketInfo) {
       return;
@@ -204,7 +203,7 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
       (ticketInfo.reason === 'whitelisted' ||
         ticketInfo.reason === 'power_user') &&
       ticketInfo.entity &&
-      values.action === 'approve'
+      values.action === 'approved'
     ) {
       await grantRole(ticketInfo.entity, ticketInfo.reason, values.comment);
     }
@@ -221,7 +220,7 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
       // Open the resolve modal if the mode is 'resolve'
       switch (mode) {
         case 'resolve':
-          setIsResolveModalVisible(true);
+          setIsResolveDrawerOpen(true);
           break;
         default:
           break;
@@ -242,13 +241,13 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
       {ticketInfo &&
         helpDeskText &&
         (entityPositionInfo || !ticketInfo.entity) && (
-          <ResolveTicketModal
-            visible={isResolveModalVisible}
+          <ResolveTicketDrawer
+            open={isResolveDrawerOpen}
             ticketInfo={ticketInfo}
             entityPositionInfo={entityPositionInfo}
             helpDeskText={helpDeskText}
             onResolve={resolveTicket}
-            onCancel={() => setIsResolveModalVisible(false)}
+            onClose={() => setIsResolveDrawerOpen(false)}
           />
         )}
 
@@ -264,7 +263,7 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
                   <Button
                     icon={<CheckCircleOutlined />}
                     type="primary"
-                    onClick={() => setIsResolveModalVisible(true)}
+                    onClick={() => setIsResolveDrawerOpen(true)}
                   >
                     Resolve
                   </Button>
@@ -289,34 +288,10 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
         <Col span={userPrivileges.has('admin') && ticketInfo?.entity ? 12 : 24}>
           <Card loading={loading} title="Ticket Details">
             {ticketInfo && helpDeskText ? (
-              <Descriptions column={1}>
-                <Descriptions.Item label="ID">
-                  <Typography.Text>{ticketInfo._id}</Typography.Text>
-                </Descriptions.Item>
-                <Descriptions.Item label="Reporter">
-                  <Typography.Text>{ticketInfo.reporter}</Typography.Text>
-                </Descriptions.Item>
-                <Descriptions.Item label="Reason">
-                  <Typography.Text>
-                    {helpDeskText.reason[ticketInfo.reason].name}
-                  </Typography.Text>
-                </Descriptions.Item>
-                <Descriptions.Item label="Associated NetID">
-                  <Typography.Text italic={!ticketInfo.entity}>
-                    {ticketInfo.entity || 'N/A'}
-                  </Typography.Text>
-                </Descriptions.Item>
-                <Descriptions.Item label="Submission Date">
-                  <Typography.Text>
-                    {dayjs(
-                      new Date(Number(ticketInfo.timestamp) * 1000),
-                    ).format('MMM D, YYYY, h:mm a')}
-                  </Typography.Text>
-                </Descriptions.Item>
-                <Descriptions.Item label="Comment">
-                  <Typography.Text>{ticketInfo.comment}</Typography.Text>
-                </Descriptions.Item>
-              </Descriptions>
+              <TicketDetails
+                helpDeskText={helpDeskText}
+                ticketInfo={ticketInfo}
+              />
             ) : (
               <Typography.Text italic>
                 Failed to load ticket details
@@ -326,30 +301,9 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
         </Col>
         <Col span={12}>
           {userPrivileges.has('admin') && ticketInfo?.entity && (
-            <Card loading={loading} title="Associated NetID Position Details">
+            <Card loading={loading} title="Associated NetID Details">
               {entityPositionInfo ? (
-                <Descriptions column={1}>
-                  <Descriptions.Item label="Titles">
-                    <Typography.Text italic={!entityPositionInfo.titles}>
-                      {entityPositionInfo.titles?.join(', ') ||
-                        'No titles found'}
-                    </Typography.Text>
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Departments">
-                    <Typography.Text italic={!entityPositionInfo.departments}>
-                      {entityPositionInfo.departments?.join(', ') ||
-                        'No departments found'}
-                    </Typography.Text>
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Employments Types">
-                    <Typography.Text
-                      italic={!entityPositionInfo.employmentTypes}
-                    >
-                      {entityPositionInfo.employmentTypes?.join(', ') ||
-                        'No employment types found'}
-                    </Typography.Text>
-                  </Descriptions.Item>
-                </Descriptions>
+                <EntityDetails entityPositionInfo={entityPositionInfo} />
               ) : (
                 <Typography.Text>
                   Failed to load associated NetID position details

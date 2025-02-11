@@ -86,3 +86,17 @@ export interface CreateTicketInfo {
    */
   comment: string;
 }
+
+export interface ResolveTicketInfo {
+  /**
+   * The comment on the ticket resolution
+   * @property
+   */
+  comment?: string;
+
+  /**
+   * The action to perform based on the ticket's request
+   * @property
+   */
+  action?: string;
+}
