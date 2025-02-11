@@ -60,7 +60,9 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
    * isCreateDrawerOpen: Whether the CreateTicketDrawer is open
    */
   const [loading, setLoading] = useState<boolean>(false);
-  const [helpDeskText, setHelpDeskText] = useState<any>(false);
+  const [helpDeskText, setHelpDeskText] = useState<Record<string, any> | null>(
+    null,
+  );
   const [isHelpDeskEnabled, setIsHelpDeskEnabled] = useState<boolean>(false);
   const [tickets, setTickets] = useState<TicketInfo[]>([]);
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState<boolean>(false);
@@ -197,7 +199,9 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
       dataIndex: 'reason',
       key: 'reason',
       render: (reason: string) =>
-        helpDeskText.reason[reason].name || 'Failed to load reason',
+        helpDeskText
+          ? helpDeskText.reason[reason].name
+          : 'Failed to load reason',
       width: '15%',
     },
     {
@@ -250,7 +254,9 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
       dataIndex: 'reason',
       key: 'reason',
       render: (reason: string) =>
-        helpDeskText.reason[reason].name || 'Failed to load reason',
+        helpDeskText
+          ? helpDeskText.reason[reason].name
+          : 'Failed to load reason',
       width: '20%',
     },
     {
@@ -324,12 +330,14 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
         </Col>
       </Row>
 
-      <CreateTicketDrawer
-        open={isCreateDrawerOpen}
-        onClose={() => setIsCreateDrawerOpen(false)}
-        helpDeskText={helpDeskText}
-        setTickets={setTickets}
-      />
+      {helpDeskText && (
+        <CreateTicketDrawer
+          open={isCreateDrawerOpen}
+          onClose={() => setIsCreateDrawerOpen(false)}
+          helpDeskText={helpDeskText}
+          setTickets={setTickets}
+        />
+      )}
     </>
   );
 };

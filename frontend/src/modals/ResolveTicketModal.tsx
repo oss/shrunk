@@ -28,19 +28,19 @@ interface Props {
   visible: boolean;
 
   /**
-   * Ticket information
+   * The ticket information
    * @property
    */
   ticketInfo: TicketInfo;
 
   /**
-   * Entity position information
+   * Entity position information. Null if no entity is associated with the ticket
    * @property
    */
   entityPositionInfo: EntityPositionInfo | null;
 
   /**
-   * Help desk text
+   * The text fields related to the help desk
    * @property
    */
   helpDeskText: Record<string, any>;

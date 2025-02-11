@@ -49,14 +49,16 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
    *
    * ticketInfo: The ticket information
    * entityPositionInfo: The entity position information
-   * helpDeskText: The help desk text
+   * helpDeskText: The text fields related to the help desk
    * loading: Whether the component is loading
    * isResolveModalVisible: Whether the resolve modal is visible
    */
   const [ticketInfo, setTicketInfo] = useState<TicketInfo | null>(null);
   const [entityPositionInfo, setEntityPositionInfo] =
     useState<EntityPositionInfo | null>(null);
-  const [helpDeskText, setHelpDeskText] = useState<any>(false);
+  const [helpDeskText, setHelpDeskText] = useState<Record<string, any> | null>(
+    null,
+  );
   const [loading, setLoading] = useState<boolean>(false);
   const [isResolveModalVisible, setIsResolveModalVisible] =
     useState<boolean>(false);
@@ -238,8 +240,8 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
   return (
     <>
       {ticketInfo &&
-        (entityPositionInfo || !ticketInfo.entity) &&
-        helpDeskText && (
+        helpDeskText &&
+        (entityPositionInfo || !ticketInfo.entity) && (
           <ResolveTicketModal
             visible={isResolveModalVisible}
             ticketInfo={ticketInfo}
@@ -317,7 +319,7 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
               </Descriptions>
             ) : (
               <Typography.Text italic>
-                Unable to retrieve ticket details
+                Failed to load ticket details
               </Typography.Text>
             )}
           </Card>
@@ -350,7 +352,7 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
                 </Descriptions>
               ) : (
                 <Typography.Text>
-                  Unable to retrieve entity position details
+                  Failed to load associated NetID position details
                 </Typography.Text>
               )}
             </Card>

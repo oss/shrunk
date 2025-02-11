@@ -205,8 +205,7 @@ const CreateTicketDrawer: React.FC<Props> = ({
         {reasonField && (
           <Form.Item>
             <Typography.Text>
-              {helpDeskText.reason[reasonField].prompt ||
-                'Failed to load prompt text.'}
+              {helpDeskText.reason[reasonField].prompt}
             </Typography.Text>
           </Form.Item>
         )}
@@ -242,10 +241,7 @@ const CreateTicketDrawer: React.FC<Props> = ({
             >
               <Input.TextArea
                 rows={4}
-                placeholder={
-                  helpDeskText.reason[reasonField].placeholder ||
-                  'Failed to load placeholder text.'
-                }
+                placeholder={helpDeskText.reason[reasonField].placeholder}
               />
             </Form.Item>
             <Form.Item>
