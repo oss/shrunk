@@ -3,9 +3,9 @@
  * @packageDocumentation
  */
 
-import { Flex, Row } from 'antd/lib';
-import React, { useCallback, useEffect, useMemo } from 'react';
 import {
+  Flex,
+  Row,
   Button,
   message,
   Popconfirm,
@@ -14,12 +14,13 @@ import {
   Tooltip,
   Typography,
 } from 'antd/lib';
-import BlockedLinksTableHeader from './BlockedLinksTableHeader';
-import { EntityInfo } from '../GrantedUserCsv';
-import { RoleText } from './Role';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { DeleteOutlined } from '@ant-design/icons';
 import base32 from 'hi-base32';
 import Fuse from 'fuse.js';
+import BlockedLinksTableHeader from './BlockedLinksTableHeader';
+import { EntityInfo } from '../GrantedUserCsv';
+import { RoleText } from './Role';
 
 /**
  * Renders the URLs as clickable links

@@ -8,8 +8,8 @@
 import { SearchOutlined } from '@ant-design/icons';
 import { AutoComplete } from 'antd/lib';
 import React, { useCallback, useMemo, useState } from 'react';
-import { User } from '../../contexts/Users';
 import Fuse from 'fuse.js';
+import { User } from '../../contexts/Users';
 
 /**
  * Props for the [[SearchUser]] component

@@ -105,8 +105,10 @@ const UsersProvider: React.FC = ({ children }) => {
   ]);
 
   // Re-fetch users when there are user modifications without a page refresh
-  const rehydrateUsers = (): void => { setRefetchUsers((prev) => !prev); };
-  
+  const rehydrateUsers = (): void => {
+    setRefetchUsers((prev) => !prev);
+  };
+
   const [refetchUsers, setRefetchUsers] = useState<boolean>(false);
   useEffect(() => {
     const fetchUsers = async (): Promise<void> => {
@@ -133,7 +135,7 @@ const UsersProvider: React.FC = ({ children }) => {
     };
 
     fetchUsers();
-  }, [refetchUsers])
+  }, [refetchUsers]);
 
   useEffect(() => {
     const fetchUsers = async (): Promise<void> => {

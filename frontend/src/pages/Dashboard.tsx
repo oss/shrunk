@@ -590,6 +590,7 @@ export class Dashboard extends React.Component<Props, State> {
       customizeDropdownOpen: !prevState.customizeDropdownOpen,
     }));
   };
+
   render(): React.ReactNode {
     return (
       <>

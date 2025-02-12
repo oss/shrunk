@@ -8,7 +8,8 @@ import { Badge, Typography, Tabs, Space } from 'antd/lib';
 import {
   LineChartOutlined,
   UserOutlined,
-  SafetyOutlined, LockOutlined
+  SafetyOutlined,
+  LockOutlined,
 } from '@ant-design/icons';
 import type { TabsProps } from 'antd';
 import AdminStats from '../components/admin/AdminStats';

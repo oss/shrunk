@@ -18,10 +18,10 @@ import {
   Flex,
 } from 'antd/lib';
 import React, { useState, useCallback, useEffect } from 'react';
-import { useUsers } from '../../contexts/Users';
-import LookupTableHeader from './LookupTableHeader';
 import { DeleteOutlined } from '@ant-design/icons';
 import base32 from 'hi-base32';
+import { useUsers } from '../../contexts/Users';
+import LookupTableHeader from './LookupTableHeader';
 
 /**
  * Renders the netids in bold
@@ -486,9 +486,7 @@ const UserLookup: React.FC = () => {
       defaultSortOrder: 'descend' as const,
     },
     {
-      title: () => {
-        return <Flex justify="flex-end">Actions</Flex>;
-      },
+      title: () => <Flex justify="flex-end">Actions</Flex>,
       key: 'actions',
       render: (_: any, record: any) => (
         <Flex justify="flex-end">

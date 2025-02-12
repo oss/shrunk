@@ -37,6 +37,7 @@ import {
 } from 'react-router-dom';
 
 import base32 from 'hi-base32';
+import { red } from '@ant-design/colors';
 import Admin from './pages/Admin';
 import { Dashboard } from './pages/Dashboard';
 import Faq from './pages/Faq';
@@ -59,7 +60,6 @@ import LinkHubDashboard from './pages/LinkHubDashboard';
 import LinkHubEditor from './pages/subpages/LinkHubEditor';
 import UsersProvider from './contexts/Users';
 import Domains from './components/admin/Domains';
-import { red } from '@ant-design/colors';
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -421,8 +421,8 @@ export default function Shrunk(props: Props) {
                             Menu: {
                               itemBg: '#FFFFFF',
                               itemColor: 'rgba(0, 0, 0, 0.88)',
-                              itemSelectedBg: '#FFFFFF', 
-                              itemSelectedColor: red[6], 
+                              itemSelectedBg: '#FFFFFF',
+                              itemSelectedColor: red[6],
                               subMenuItemBg: '#FFFFFF',
                               itemHoverBg: 'rgba(0, 0, 0, 0.06)',
                               itemHoverColor: 'rgba(0, 0, 0, 0.88)',
@@ -434,7 +434,10 @@ export default function Shrunk(props: Props) {
                           },
                         }}
                       >
-                        <Admin userNetid={netid} userPrivileges={userPrivileges}/>
+                        <Admin
+                          userNetid={netid}
+                          userPrivileges={userPrivileges}
+                        />
                       </ConfigProvider>
                     </Route>
                     <Route exact path="/admin/stats">

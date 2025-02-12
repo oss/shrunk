@@ -99,7 +99,7 @@ export interface Props {
    */
   tracking_pixel_ui_enabled: boolean;
 
-  //the any should be fixed but its fine for now
+  // the any should be fixed but its fine for now
   userOrgs: any;
 }
 

@@ -3,9 +3,7 @@
  * @packageDocumentation
  */
 
-import {
-  CloudDownloadOutlined, PlusCircleFilled
-} from '@ant-design/icons';
+import { CloudDownloadOutlined, PlusCircleFilled } from '@ant-design/icons';
 import { Button, Flex, Form, Input, Modal, Space, message } from 'antd/lib';
 import React, { useState } from 'react';
 import base32 from 'hi-base32';
@@ -126,7 +124,7 @@ const BlockedLinksTableHeader: React.FC<BlockedLinksTableHeaderProps> = ({
           setShowBlockLinkModal(false);
           form.resetFields();
         }}
-        title={'Block Link'}
+        title="Block Link"
         footer={[
           <Button
             type="default"

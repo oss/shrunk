@@ -3,9 +3,7 @@
  * @packageDocumentation
  */
 
-import {
-  CloudDownloadOutlined, PlusCircleFilled
-} from '@ant-design/icons';
+import { CloudDownloadOutlined, PlusCircleFilled } from '@ant-design/icons';
 import {
   Button,
   Checkbox,

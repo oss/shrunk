@@ -17,18 +17,16 @@ interface ManageUserAccessProps {
  * and approve/deny these requests through this component.
  * @returns the [[ManageUserAccess]] component
  */
-const ManageUserAccess: React.FC<ManageUserAccessProps> = (props) => {
-  return (
-    <>
-      <Typography.Title level={3} style={{ marginTop: 0, marginBottom: 16 }}>
-        Pending Requests
-      </Typography.Title>
-      <PendingRoleRequests
-        name={'power_user'}
-        userPrivileges={props.userPrivileges}
-      />
-    </>
-  );
-};
+const ManageUserAccess: React.FC<ManageUserAccessProps> = (props) => (
+  <>
+    <Typography.Title level={3} style={{ marginTop: 0, marginBottom: 16 }}>
+      Pending Requests
+    </Typography.Title>
+    <PendingRoleRequests
+      name="power_user"
+      userPrivileges={props.userPrivileges}
+    />
+  </>
+);
 
 export default ManageUserAccess;
