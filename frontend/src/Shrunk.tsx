@@ -12,6 +12,7 @@ import {
   TeamOutlined,
 } from '@ant-design/icons';
 import {
+  Alert,
   App,
   Breadcrumb,
   Button,
@@ -24,7 +25,6 @@ import {
   Row,
   Tag,
   Typography,
-  Alert,
 } from 'antd/lib';
 import { createBrowserHistory, Location } from 'history';
 import React, { useEffect, useState } from 'react';
@@ -49,11 +49,11 @@ import { Stats } from './pages/subpages/Stats';
 import { PendingAlerts } from './modals/PendingAlerts';
 import { PendingRequests } from './modals/PendingRequests';
 
-import Domains from './components/admin/Domains';
-import UsersProvider from './contexts/Users';
 import HelpDesk from './pages/HelpDesk';
 import LinkHubDashboard from './pages/LinkHubDashboard';
 import LinkHubEditor from './pages/subpages/LinkHubEditor';
+import Ticket from './pages/subpages/Ticket';
+import { lightTheme } from './theme';
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -94,9 +94,7 @@ export default function Shrunk(props: Props) {
   const [selectedKeys, setSelectedKeys] = useState<string[]>(['dash']);
   const [pendingAlerts, setPendingAlerts] = useState<string[]>([]);
   const [isLinkHubEnabled, setIsLinkHubEnabled] = useState(false);
-  const [isDomainEnabled, setIsDomainEnabled] = useState(false);
   const [isHelpDeskEnabled, setIsHelpDeskEnabled] = useState(false);
-  const [isRoleRequestsEnabled, setIsRoleRequestsEnabled] = useState(false);
 
   const fetchIsLinkHubEnabled = async () => {
     const resp = await fetch('/api/v1/linkhub/is-linkhub-enabled');
@@ -318,9 +316,11 @@ export default function Shrunk(props: Props) {
                       };
                     }
 
-                  if (!Object.prototype.hasOwnProperty.call(partToName, part)) {
-                    return { title: part.split('?')[0] };
-                  }
+                    if (
+                      !Object.prototype.hasOwnProperty.call(partToName, part)
+                    ) {
+                      return { title: part.split('?')[0] };
+                    }
 
                     const path =
                       partToName[part].href === undefined
@@ -330,123 +330,124 @@ export default function Shrunk(props: Props) {
                             .replace('#', '')
                         : partToName[part].href;
 
-                  return {
-                    title: partToName[part].name,
-                    href: partToName[part].clickable ? `#${path}` : undefined,
-                  };
-                })}
-              />
-              <Switch>
-                <Route exact path="/">
-                  <Redirect to="/dash" />
-                </Route>
-
-                <Route exact path="/dash">
-                  <Dashboard userPrivileges={userPrivileges} netid={netid} />
-                </Route>
-                <Route exact path="/linkhubs">
-                  <LinkHubDashboard netid={netid} />
-                </Route>
-
-                <Route
-                  exact
-                  path="/linkhubs/:linkHubId/edit"
-                  render={(route) => (
-                    <LinkHubEditor linkhubId={route.match.params.linkHubId} />
-                  )}
+                    return {
+                      title: partToName[part].name,
+                      href: partToName[part].clickable ? `#${path}` : undefined,
+                    };
+                  })}
                 />
-
-                <Route
-                  exact
-                  path="/links/:id"
-                  render={(route) => (
-                    <Stats
-                      id={route.match.params.id}
-                      netid={netid}
-                      userPrivileges={userPrivileges}
-                    />
-                  )}
-                />
-
-                <Route exact path="/orgs">
-                  <Orgs userPrivileges={userPrivileges} />
-                </Route>
-
-                <Route exact path="/orgs/:id">
-                  <ManageOrg
-                    userNetid={netid}
-                    userPrivileges={userPrivileges}
-                  />
-                </Route>
-
-                {(showAdminTab || isHelpDeskEnabled) && (
-                  <Route exact path="/tickets">
-                    <HelpDesk netid={netid} userPrivileges={userPrivileges} />
+                <Switch>
+                  <Route exact path="/">
+                    <Redirect to="/dash" />
                   </Route>
-                )}
 
-                {(showAdminTab || isHelpDeskEnabled) && (
+                  <Route exact path="/dash">
+                    <Dashboard userPrivileges={userPrivileges} netid={netid} />
+                  </Route>
+                  <Route exact path="/linkhubs">
+                    <LinkHubDashboard netid={netid} />
+                  </Route>
+
                   <Route
                     exact
-                    path="/tickets/:id"
+                    path="/linkhubs/:linkHubId/edit"
                     render={(route) => (
-                      <Ticket
-                        ticketID={route.match.params.id}
+                      <LinkHubEditor linkhubId={route.match.params.linkHubId} />
+                    )}
+                  />
+
+                  <Route
+                    exact
+                    path="/links/:id"
+                    render={(route) => (
+                      <Stats
+                        id={route.match.params.id}
+                        netid={netid}
                         userPrivileges={userPrivileges}
                       />
                     )}
                   />
-                )}
 
-                <Route exact path="/faq">
-                  <Faq />
-                </Route>
+                  <Route exact path="/orgs">
+                    <Orgs userPrivileges={userPrivileges} />
+                  </Route>
 
-                <Route
-                  exact
-                  path="/roles/:name"
-                  render={(route) => (
-                    <Role
+                  <Route exact path="/orgs/:id">
+                    <ManageOrg
+                      userNetid={netid}
                       userPrivileges={userPrivileges}
-                      name={route.match.params.name}
+                    />
+                  </Route>
+
+                  {(showAdminTab || isHelpDeskEnabled) && (
+                    <Route exact path="/tickets">
+                      <HelpDesk netid={netid} userPrivileges={userPrivileges} />
+                    </Route>
+                  )}
+
+                  {(showAdminTab || isHelpDeskEnabled) && (
+                    <Route
+                      exact
+                      path="/tickets/:id"
+                      render={(route) => (
+                        <Ticket
+                          ticketID={route.match.params.id}
+                          userPrivileges={userPrivileges}
+                        />
+                      )}
                     />
                   )}
-                />
 
-                <Route exact path="/admin">
-                  <Admin />
-                </Route>
-              </Switch>
-            </Content>
-            <Sider width={siderWidth} breakpoint="xl" collapsedWidth="10" />
+                  <Route exact path="/faq">
+                    <Faq />
+                  </Route>
+
+                  <Route
+                    exact
+                    path="/roles/:name"
+                    render={(route) => (
+                      <Role
+                        userPrivileges={userPrivileges}
+                        name={route.match.params.name}
+                      />
+                    )}
+                  />
+
+                  <Route exact path="/admin">
+                    <Admin />
+                  </Route>
+                </Switch>
+              </Content>
+              <Sider width={siderWidth} breakpoint="xl" collapsedWidth="10" />
+            </Layout>
+            <Footer
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                textAlign: 'center',
+              }}
+            >
+              <Typography.Paragraph style={{ width: '70%' }}>
+                Rutgers is an equal access/equal opportunity institution.
+                Individuals with disabilities are encouraged to direct
+                suggestions, comments, or complaints concerning any
+                accessibility issues with Rutgers websites to{' '}
+                <Link target="_blank" to="mailto:accessibility@rutgers.edu">
+                  accessibility@rutgers.edu
+                </Link>{' '}
+                or complete the{' '}
+                <Link
+                  target="_blank"
+                  to="https://rutgers.ca1.qualtrics.com/jfe/form/SV_57iH6Rfeocz51z0"
+                >
+                  Report Accessibility Barrier or Provide Feedback Form
+                </Link>
+                .
+              </Typography.Paragraph>
+            </Footer>
           </Layout>
-          <Footer
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              textAlign: 'center',
-            }}
-          >
-            <Typography.Paragraph style={{ width: '70%' }}>
-              Rutgers is an equal access/equal opportunity institution.
-              Individuals with disabilities are encouraged to direct
-              suggestions, comments, or complaints concerning any accessibility
-              issues with Rutgers websites to{' '}
-              <Link target="_blank" to="mailto:accessibility@rutgers.edu">
-                accessibility@rutgers.edu
-              </Link>{' '}
-              or complete the{' '}
-              <Link
-                target="_blank"
-                to="https://rutgers.ca1.qualtrics.com/jfe/form/SV_57iH6Rfeocz51z0"
-              >
-                Report Accessibility Barrier or Provide Feedback Form
-              </Link>
-              .
-            </Typography.Paragraph>
-          </Footer>
-        </Layout>
-      </HashRouter>
+        </HashRouter>
+      </App>
     </ConfigProvider>
   );
 }

@@ -3,19 +3,20 @@
  * @packageDocumentation
  */
 
-import React, { useEffect, useState } from 'react';
-import { Badge, Typography, Tabs, Space } from 'antd/lib';
 import {
   LineChartOutlined,
-  SafetyOutlined,
   LockOutlined,
+  SafetyOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
 import type { TabsProps } from 'antd';
+import { Badge, Space, Tabs, Typography } from 'antd/lib';
+import React, { useEffect, useState } from 'react';
 import AdminStats from '../components/admin/AdminStats';
-import UserLookup from '../components/admin/UserLookup';
-import UsersProvider from '../contexts/Users';
 import BlockedLinks from '../components/admin/BlockedLinks';
 import Security from '../components/admin/Security';
+import UserLookup from '../components/admin/UserLookup';
+import UsersProvider from '../contexts/Users';
 
 const VALID_TABS = ['analytics', 'user-lookup', 'links', 'security'];
 const DEFAULT_TAB = 'analytics';
