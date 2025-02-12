@@ -110,7 +110,7 @@ export default function Admin(): React.ReactElement {
       ),
       children: (
         <UsersProvider>
-          <BlockedLinks name="power_user" />
+          <BlockedLinks />
         </UsersProvider>
       ),
     },

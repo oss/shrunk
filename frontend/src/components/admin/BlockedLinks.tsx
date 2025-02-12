@@ -12,12 +12,22 @@ import {
   Table,
   Tooltip,
   Typography,
+  Col,
+  Form,
+  Input,
+  Modal,
+  Space,
+  AutoComplete,
 } from 'antd/lib';
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { DeleteOutlined } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  CloudDownloadOutlined,
+  PlusCircleFilled,
+  SearchOutlined,
+} from '@ant-design/icons';
 import base32 from 'hi-base32';
 import Fuse from 'fuse.js';
-import BlockedLinksTableHeader from './BlockedLinksTableHeader';
 import { EntityInfo } from '../GrantedUserCsv';
 
 /**
@@ -86,12 +96,70 @@ const renderUnblockButton = (
 };
 
 /**
- * The [[BlockedLinksProps]] interface
- * @param name - the role name
+ * Props for the [[SearchBannedLinks]] component
+ * @interface
  */
-interface BlockedLinksProps {
-  name: string;
+interface SearchBannedLinksProps {
+  blockedLinks: Array<{
+    url: string;
+    blockedBy: string;
+  }>;
+  onSearch: (value: string) => void;
 }
+
+/**
+ * The [[SearchBannedLinks]] component allows the user to search for banned links based on criteria
+ * Available filters include: URL, NetID
+ * @class
+ */
+const SearchBannedLinks: React.FC<SearchBannedLinksProps> = ({
+  blockedLinks,
+  onSearch,
+}) => {
+  const [value, setValue] = React.useState('');
+
+  const fuse = useMemo(
+    () =>
+      new Fuse(blockedLinks, {
+        keys: ['url', 'blockedBy'],
+        threshold: 0.3,
+        distance: 100,
+      }),
+    [blockedLinks],
+  );
+
+  const handleSearch = useCallback(
+    (searchValue: string) => {
+      setValue(searchValue);
+      if (!searchValue) {
+        onSearch('');
+        return;
+      }
+      onSearch(searchValue);
+    },
+    [fuse, onSearch],
+  );
+
+  const handleSelect = useCallback(
+    (selectedValue: string) => {
+      setValue(selectedValue);
+      onSearch(selectedValue);
+    },
+    [onSearch],
+  );
+
+  return (
+    <AutoComplete
+      style={{ width: '100%', minWidth: '300px' }}
+      value={value}
+      onChange={handleSearch}
+      onSelect={handleSelect}
+      allowClear
+      placeholder="Search by URL or NetID"
+      suffixIcon={<SearchOutlined />}
+    />
+  );
+};
 
 /**
  * The [[BlockedLink]] interface
@@ -114,11 +182,14 @@ interface BlockedLink {
  * @param props - Component props containing the role name
  * @returns the [[BlockedLinks]] component
  */
-const BlockedLinks: React.FC<BlockedLinksProps> = (props) => {
+const BlockedLinks = () => {
   const [loading, setLoading] = React.useState(true);
   const [blockedLinks, setBlockedLinks] = React.useState<BlockedLink[]>([]);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [refetchBlockedLinks, setRefetchBlockedLinks] = React.useState(false);
+  const [form] = Form.useForm();
+  const [modalLoading, setModalLoading] = React.useState(false);
+  const [showBlockLinkModal, setShowBlockLinkModal] = React.useState(false);
 
   /**
    * Triggers a refresh of the blocked links data
@@ -196,7 +267,7 @@ const BlockedLinks: React.FC<BlockedLinksProps> = (props) => {
 
   useEffect(() => {
     const updateBlockedLinks = async (): Promise<void> => {
-      const result = await fetch(`/api/v1/role/${props.name}/entity`).then(
+      const result = await fetch(`/api/v1/role/blocked_url/entity`).then(
         (resp) => resp.json(),
       );
       setBlockedLinks(
@@ -216,36 +287,144 @@ const BlockedLinks: React.FC<BlockedLinksProps> = (props) => {
     setSearchQuery(value);
   };
 
+  const handleConfirm = () => {
+    form.validateFields().then(async (values) => {
+      const { link, comment } = values;
+      setModalLoading(true);
+
+      try {
+        const encodedLink = base32.encode(link);
+
+        const response = await fetch(
+          `/api/v1/role/blocked_url/entity/${encodedLink}`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              comment: comment || 'Link blocked via Link Management interface',
+            }),
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error('Failed to block link');
+        }
+
+        message.success('Link blocked successfully');
+        form.resetFields();
+        setShowBlockLinkModal(false);
+        rehydrateData();
+      } catch (error) {
+        message.error('Failed to block link');
+      } finally {
+        setModalLoading(false);
+      }
+    });
+  };
+
   return (
     <>
-      <Flex gap="1rem" align="baseline">
-        <Typography.Title level={3} style={{ marginTop: 0, marginBottom: 16 }}>
-          Link Control
-        </Typography.Title>
-        <Typography.Title
-          level={5}
-          style={{ marginTop: 0, marginBottom: 16, color: '#4F4F4F' }}
-        >
-          {filteredLinks.length} Result{filteredLinks.length !== 1 && 's'} Found
-        </Typography.Title>
-      </Flex>
+      <Row gutter={[16, 16]}>
+        <Col span={24}>
+          <Flex gap="1rem" align="baseline">
+            <Typography.Title level={3} style={{ margin: 0 }}>
+              Link Control
+            </Typography.Title>
+          </Flex>
+        </Col>
 
-      <BlockedLinksTableHeader
-        onLinkBanned={rehydrateData}
-        onExportClick={exportAsCSV}
-        onSearch={handleSearch}
-        blockedLinks={blockedLinks}
-      />
+        <Col span={24}>
+          <Flex justify="space-between" style={{ width: '100%' }}>
+            <Space direction="horizontal">
+              <SearchBannedLinks
+                blockedLinks={blockedLinks}
+                onSearch={handleSearch}
+              />
+            </Space>
+            <Space direction="horizontal">
+              <Button icon={<CloudDownloadOutlined />} onClick={exportAsCSV}>
+                Export
+              </Button>
+              <Button
+                type="primary"
+                icon={<PlusCircleFilled />}
+                onClick={() => setShowBlockLinkModal(true)}
+              >
+                Block Link
+              </Button>
+            </Space>
+          </Flex>
+        </Col>
 
-      <Row style={{ marginBottom: 24 }} />
-      <Table
-        loading={loading}
-        columns={columns}
-        dataSource={filteredLinks}
-        rowKey="url"
-        pagination={{ position: ['bottomCenter'], pageSize: 10 }}
-        scroll={{ x: 'max-content' }}
-      />
+        <Col span={24}>
+          <Table
+            loading={loading}
+            columns={columns}
+            dataSource={filteredLinks}
+            rowKey="url"
+            pagination={{ position: ['bottomCenter'], pageSize: 10 }}
+            scroll={{ x: 'max-content' }}
+          />
+        </Col>
+      </Row>
+
+      <Modal
+        open={showBlockLinkModal}
+        onCancel={() => {
+          setShowBlockLinkModal(false);
+          form.resetFields();
+        }}
+        title="Block Link"
+        footer={[
+          <Button
+            type="default"
+            key="back"
+            onClick={() => {
+              setShowBlockLinkModal(false);
+              form.resetFields();
+            }}
+          >
+            Cancel
+          </Button>,
+          <Button
+            type="primary"
+            key="submit"
+            onClick={handleConfirm}
+            loading={modalLoading}
+          >
+            Confirm
+          </Button>,
+        ]}
+        width={400}
+      >
+        <Form form={form} layout="vertical">
+          <Form.Item
+            name="link"
+            label="Link:"
+            rules={[
+              { required: true, message: 'Please enter a link to block' },
+            ]}
+          >
+            <Input placeholder="https://example.com" />
+          </Form.Item>
+
+          <Form.Item
+            name="comment"
+            label="Comment:"
+            rules={[
+              {
+                required: true,
+                message: 'Please provide a reason for blocking this link',
+              },
+            ]}
+          >
+            <Input.TextArea
+              placeholder="Why is this link being blocked?"
+              rows={4}
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
     </>
   );
 };
