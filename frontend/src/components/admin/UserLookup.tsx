@@ -104,8 +104,15 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
     return '';
   };
 
+  const labelCase = {
+    admin: 'Admin',
+    whitelisted: 'Whitelisted',
+    power_user: 'Power User',
+    facstaff: 'Faculty',
+  };
+
   const options = roleOrder.map((role) => ({
-    label: role.toUpperCase(),
+    label: labelCase[role.toLowerCase() as keyof typeof labelCase],
     value: role,
     disabled: role === getHighestRole(initialRoles),
   }));
@@ -154,7 +161,7 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
         onClose={onClose}
         style={{ marginRight: 3 }}
       >
-        {label.toLowerCase()}
+        {labelCase[label.toLowerCase() as keyof typeof labelCase]}
       </Tag>
     );
   };
@@ -535,18 +542,15 @@ const UserLookup: React.FC = () => {
 
       <Row style={{ marginBottom: 24 }} />
 
-      {usersLoading || loading ? (
-        <Spin size="large" />
-      ) : (
-        <Table
-          columns={columns}
-          dataSource={filteredData}
-          rowKey="netid"
-          pagination={{ position: ['bottomCenter'], pageSize: 10 }}
-          scroll={{ x: 'max-content' }}
-          onChange={handleTableChange}
-        />
-      )}
+      <Table
+        loading={usersLoading || loading}
+        columns={columns}
+        dataSource={filteredData}
+        rowKey="netid"
+        pagination={{ position: ['bottomCenter'], pageSize: 10 }}
+        scroll={{ x: 'max-content' }}
+        onChange={handleTableChange}
+      />
     </>
   );
 };
