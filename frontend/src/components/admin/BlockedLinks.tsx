@@ -20,7 +20,6 @@ import base32 from 'hi-base32';
 import Fuse from 'fuse.js';
 import BlockedLinksTableHeader from './BlockedLinksTableHeader';
 import { EntityInfo } from '../GrantedUserCsv';
-import { RoleText } from './Role';
 
 /**
  * Renders the URLs as clickable links
@@ -68,8 +67,7 @@ const renderUnblockButton = (
       message.success('Link unblocked successfully');
       onUnblock();
     } catch (error) {
-      console.error('Error unblocking link:', error);
-      message.error('Failed to unblock link');
+      message.error(`Failed to unblock link: ${error}`);
     }
   };
 
@@ -120,9 +118,16 @@ interface BlockedLink {
 const BlockedLinks: React.FC<BlockedLinksProps> = (props) => {
   const [loading, setLoading] = React.useState(true);
   const [blockedLinks, setBlockedLinks] = React.useState<BlockedLink[]>([]);
-  const [roleText, setRoleText] = React.useState<RoleText | null>(null);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [refetchBlockedLinks, setRefetchBlockedLinks] = React.useState(false);
+
+  /**
+   * Triggers a refresh of the blocked links data
+   * Used to force data updates after blocking/unblocking a link
+   */
+  const rehydrateData = (): void => {
+    setRefetchBlockedLinks((prev) => !prev);
+  };
 
   const fuse = useMemo(
     () =>
@@ -190,22 +195,7 @@ const BlockedLinks: React.FC<BlockedLinksProps> = (props) => {
     URL.revokeObjectURL(url);
   }, [blockedLinks]);
 
-  /**
-   * Triggers a refresh of the blocked links data
-   * Used to force data updates after blocking/unblocking a link
-   */
-  const rehydrateData = (): void => {
-    setRefetchBlockedLinks((prev) => !prev);
-  };
-
   useEffect(() => {
-    const updateRoleText = async (): Promise<void> => {
-      const result = await fetch(`/api/v1/role/${props.name}/text`).then(
-        (resp) => resp.json(),
-      );
-      setRoleText(result.text as RoleText);
-    };
-
     const updateBlockedLinks = async (): Promise<void> => {
       const result = await fetch(`/api/v1/role/${props.name}/entity`).then(
         (resp) => resp.json(),
@@ -220,9 +210,7 @@ const BlockedLinks: React.FC<BlockedLinksProps> = (props) => {
       );
     };
 
-    Promise.all([updateBlockedLinks(), updateRoleText()]).then(() =>
-      setLoading(false),
-    );
+    Promise.all([updateBlockedLinks()]).then(() => setLoading(false));
   }, [refetchBlockedLinks]);
 
   const handleSearch = (value: string) => {

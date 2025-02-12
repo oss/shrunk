@@ -18,60 +18,20 @@ import UsersProvider from '../contexts/Users';
 import BlockedLinks from '../components/admin/BlockedLinks';
 import Security from '../components/admin/Security';
 
-/**
- * Summary information for one role
- * @interface
- */
-interface RoleInfo {
-  name: string;
-  display_name: string;
-}
-
-/**
- * Props for the [[Admin]] component
- * @interface
- */
-interface AdminProps {
-  userNetid: string;
-  userPrivileges: Set<string>;
-}
-
 const VALID_TABS = ['analytics', 'user-lookup', 'links', 'security'];
 const DEFAULT_TAB = 'analytics';
 
-export default function Admin(props: AdminProps): React.ReactElement {
-  const [roles, setRoles] = useState<RoleInfo[] | null>(null);
+export default function Admin(): React.ReactElement {
   const [linksToBeVerified, setLinksToBeVerified] = useState(-1);
-  const [powerUserRequestsCount, setPowerUserRequestsCount] = useState(-1);
-  const [isDomainEnabled, setIsDomainEnabled] = useState(false);
 
   // Get the initial active tab from URL parameters, validate it, and fall back to default if invalid
   const [activeTab, setActiveTab] = useState<string>(DEFAULT_TAB);
-
-  const updatePendingPowerUserRequestsCount = async () => {
-    const response = await fetch('/api/v1/role_request/power_user/count');
-    const json = await response.json();
-    setPowerUserRequestsCount(json.count);
-  };
-
-  const updateIsDomainEnabled = async () => {
-    const response = await fetch('/api/v1/org/domain_enabled');
-    const json = await response.json();
-    setIsDomainEnabled(json.enabled);
-  };
 
   useEffect(() => {
     const fetchData = async () => {
       const linksResp = await fetch('/api/v1/security/pending_links/count');
       const linksJson = await linksResp.json();
       setLinksToBeVerified(linksJson.pending_links_count);
-
-      const rolesResp = await fetch('/api/v1/role');
-      const rolesJson = await rolesResp.json();
-      setRoles(rolesJson.roles);
-
-      await updatePendingPowerUserRequestsCount();
-      await updateIsDomainEnabled();
     };
 
     fetchData();

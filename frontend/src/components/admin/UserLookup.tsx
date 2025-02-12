@@ -137,8 +137,7 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
 
       rehydrateData();
     } catch (error) {
-      message.error('Failed to update roles');
-      console.error('Error updating roles:', error);
+      message.error(`Failed to update roles: ${error}`);
     } finally {
       setLoading(false);
     }
@@ -295,26 +294,32 @@ const UserLookup: React.FC = () => {
       const existingRoles = users.find((u) => u.netid === netid)?.roles || [];
 
       // Remove roles that are no longer selected
-      for (const role of existingRoles) {
-        if (!newRoles.includes(role)) {
-          await fetch(`/api/v1/role/${role}/entity/${encodedNetId}`, {
-            method: 'DELETE',
-          });
-        }
-      }
+      await Promise.all(
+        existingRoles.map((role) => {
+          if (!newRoles.includes(role)) {
+            return fetch(`/api/v1/role/${role}/entity/${encodedNetId}`, {
+              method: 'DELETE',
+            });
+          }
+          return Promise.resolve();
+        }),
+      );
 
       // Add newly selected roles
-      for (const role of newRoles) {
-        if (!existingRoles.includes(role)) {
-          await fetch(`/api/v1/role/${role}/entity/${encodedNetId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              comment: `Added via User Lookup interface`,
-            }),
-          });
-        }
-      }
+      await Promise.all(
+        newRoles.map((role) => {
+          if (!existingRoles.includes(role)) {
+            return fetch(`/api/v1/role/${role}/entity/${encodedNetId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                comment: `Added via User Lookup interface`,
+              }),
+            });
+          }
+          return Promise.resolve();
+        }),
+      );
 
       setFilteredData((prevData) =>
         prevData.map((user) =>
@@ -322,7 +327,7 @@ const UserLookup: React.FC = () => {
         ),
       );
     } catch (error) {
-      console.error('Error updating roles:', error);
+      message.error(`Error updating roles: ${error}`);
       throw error;
     } finally {
       setLoading(false);
@@ -335,11 +340,13 @@ const UserLookup: React.FC = () => {
       const userRoles = users.find((u) => u.netid === netid)?.roles || [];
 
       // Remove user from all roles
-      for (const role of userRoles) {
-        await fetch(`/api/v1/role/${role}/entity/${encodedNetId}`, {
-          method: 'DELETE',
-        });
-      }
+      await Promise.all(
+        userRoles.map((role) =>
+          fetch(`/api/v1/role/${role}/entity/${encodedNetId}`, {
+            method: 'DELETE',
+          }),
+        ),
+      );
 
       // Add the "blacklisted" role to signify the user is banned
       await fetch(`/api/v1/role/blacklisted/entity/${encodedNetId}`, {
@@ -358,8 +365,7 @@ const UserLookup: React.FC = () => {
 
       message.success('User banned successfully');
     } catch (error) {
-      console.error('Error banning user:', error);
-      message.error('Failed to ban user');
+      message.error(`Failed to ban user ${error}`);
     }
   };
 

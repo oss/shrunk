@@ -18,12 +18,14 @@ interface BlockedLinksTableHeaderProps {
    * Callback function to execute when the export button is clicked
    * @property
    */
+  // eslint-disable-next-line react/require-default-props
   onExportClick?: () => void;
 
   /**
    * Callback function to execute when the user searches for a banned link
    * @property
    */
+  // eslint-disable-next-line react/require-default-props
   onSearch?: (value: string) => void;
 
   /**
@@ -51,6 +53,7 @@ const BlockedLinksTableHeader: React.FC<BlockedLinksTableHeaderProps> = ({
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [showBlockLinkModal, setShowBlockLinkModal] = useState(false);
 
   const handleConfirm = () => {
     form.validateFields().then(async (values) => {
@@ -88,8 +91,6 @@ const BlockedLinksTableHeader: React.FC<BlockedLinksTableHeaderProps> = ({
       }
     });
   };
-
-  const [showBlockLinkModal, setShowBlockLinkModal] = React.useState(false);
 
   const toggleShowBlockLinkModal = () => {
     setShowBlockLinkModal(!showBlockLinkModal);

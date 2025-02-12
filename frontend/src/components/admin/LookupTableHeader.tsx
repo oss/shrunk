@@ -103,8 +103,7 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
         form.resetFields();
         rehydrateData();
       } catch (error) {
-        console.error('Error assigning roles:', error);
-        message.error('Failed to assign user roles');
+        message.error(`Failed to assign user roles ${error}`);
       }
     });
   };
