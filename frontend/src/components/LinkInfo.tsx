@@ -54,7 +54,7 @@ export interface SharingInfo {
  * @interface
  */
 export interface LinkInfo {
-  id: string;
+  _id: string;
   title: string;
   long_url: string;
   domain: string;
@@ -62,6 +62,7 @@ export interface LinkInfo {
   is_expired: boolean;
   expiration_time: Date | null;
   deletion_info: DeletionInfo | null;
+  deleted?: boolean;
   visits: number;
   unique_visits: number;
   owner: string;

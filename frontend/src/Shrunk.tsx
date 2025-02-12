@@ -5,7 +5,6 @@
 
 import {
   BookOutlined,
-  BulbOutlined,
   ClockCircleOutlined,
   LogoutOutlined,
   MenuOutlined,
@@ -14,6 +13,7 @@ import {
   TeamOutlined,
 } from '@ant-design/icons';
 import {
+  Breadcrumb,
   Button,
   Col,
   ConfigProvider,
@@ -24,6 +24,7 @@ import {
   Row,
   Tag,
   Typography,
+  Alert,
 } from 'antd/lib';
 import { createBrowserHistory, Location } from 'history';
 import React, { useEffect, useState } from 'react';
@@ -247,19 +248,6 @@ export default function Shrunk(props: Props) {
       : []),
     { type: 'divider' },
     {
-      key: 'feedback',
-      icon: <BulbOutlined />,
-      label: (
-        <a
-          href="https://forms.gle/Gv1L1bNZWtLS21wW8"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Feedback
-        </a>
-      ),
-    },
-    {
       key: 'faq',
       icon: <BookOutlined />,
       label: <NavLink to="/faq">FAQ</NavLink>,
@@ -272,10 +260,40 @@ export default function Shrunk(props: Props) {
     },
   ];
 
+  const { location } = createBrowserHistory();
+  const { hash } = location;
+
+  const domain = window.location.hostname;
+
+  // setSelectedKeysFromLocation() is scheduled to be deleted soon.
+  const partToName: {
+    [key: string]: { name: string; clickable: boolean; href?: string };
+  } = {
+    dash: { name: 'URL Shortener', clickable: true },
+    linkhubs: { name: 'LinkHub', clickable: false },
+    orgs: { name: 'My Organizations', clickable: true },
+    admin: { name: 'Admin Dashboard', clickable: true },
+    roles: { name: 'Role', clickable: false },
+    'request-power-user-role': {
+      name: 'Request Power User Role',
+      clickable: false,
+    },
+    faq: { name: 'Frequently Asked Questions', clickable: true },
+    links: { name: 'URL Shortener', clickable: true, href: '/dash' },
+  };
+
   return (
     <ConfigProvider theme={lightTheme}>
       <HashRouter>
         <Layout>
+          {domain === 'shrunk.rutgers.edu' && (
+            <Alert
+              message="This is a developer environment, any progress you make on this site is prone to deletion."
+              type="warning"
+              showIcon
+              closable
+            />
+          )}
           <Header>
             <Row gutter={16}>
               <Col>
@@ -340,6 +358,33 @@ export default function Shrunk(props: Props) {
                 <PendingAlerts netid={netid} pendingAlerts={pendingAlerts} />
               )}
               <PendingRequests />
+              <Breadcrumb
+                items={hash.split('/').map((part, index, arr) => {
+                  if (part === '#') {
+                    return {
+                      title: 'Home',
+                      href: '/#',
+                    };
+                  }
+
+                  if (!Object.prototype.hasOwnProperty.call(partToName, part)) {
+                    return { title: part.split('?')[0] };
+                  }
+
+                  const path =
+                    partToName[part].href === undefined
+                      ? arr
+                          .slice(0, index + 1)
+                          .join('/')
+                          .replace('#', '')
+                      : partToName[part].href;
+
+                  return {
+                    title: partToName[part].name,
+                    href: partToName[part].clickable ? `#${path}` : undefined,
+                  };
+                })}
+              />
               <Switch>
                 <Route exact path="/">
                   <Redirect to="/dash" />
@@ -362,7 +407,7 @@ export default function Shrunk(props: Props) {
 
                 <Route
                   exact
-                  path="/links/:id/view"
+                  path="/links/:id"
                   render={(route) => (
                     <Stats
                       id={route.match.params.id}
@@ -376,7 +421,7 @@ export default function Shrunk(props: Props) {
                   <Orgs userPrivileges={userPrivileges} />
                 </Route>
 
-                <Route exact path="/orgs/:id/manage">
+                <Route exact path="/orgs/:id">
                   <ManageOrg
                     userNetid={netid}
                     userPrivileges={userPrivileges}

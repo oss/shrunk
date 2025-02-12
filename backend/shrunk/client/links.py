@@ -28,7 +28,6 @@ from .exceptions import (
     InvalidACL,
     NotUserOrOrg,
     SecurityRiskDetected,
-    LinkIsPendingOrRejected,
 )
 
 
@@ -85,12 +84,26 @@ class LinksClient:
             return True
         return any(alias in str(route) for route in current_app.url_map.iter_rules())
 
-    def alias_is_duplicate(self, alias: str) -> bool:
+    def alias_is_duplicate(self, alias: str, is_tracking_pixel: bool) -> bool:
         """Check whether the given alias already exists"""
+
+        # Ban the future use of creating case-sensitive aliases
+        # (https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/205)
 
         # check to see if the alias is already being used
         result = self.db.urls.find_one(
-            {"aliases": {"$elemMatch": {"alias": alias, "deleted": False}}}
+            {
+                "$or": [
+                    {"is_tracking_pixel_link": {"$exists": False}},
+                    {"is_tracking_pixel_link": is_tracking_pixel},
+                ],
+                "aliases": {
+                    "$elemMatch": {
+                        "alias": {"$regex": f"^{alias}$", "$options": "i"},
+                        "deleted": False,
+                    }
+                },
+            }
         )
         return True if result is not None else False
 
@@ -184,6 +197,9 @@ class LinksClient:
             "editors": editors,
             "is_tracking_pixel_link": is_tracking_pixel_link,
         }
+
+        if is_tracking_pixel_link:
+            document["is_trackingpixel_legacy_endpoint"] = False
 
         if (
             not bypass_security_measures
@@ -320,8 +336,10 @@ class LinksClient:
                     "deleted": True,
                     "deleted_by": deleted_by,
                     "deleted_time": datetime.now(timezone.utc),
+                    "aliases.$[elem].deleted": True,
                 }
             },
+            array_filters=[{"elem.deleted": False}],
         )
         if result.modified_count != 1:
             raise NoSuchObjectException
@@ -478,6 +496,10 @@ class LinksClient:
         if alias is None:
             return self.create_random_alias(link_id, description, extension)
 
+        # Ban the future use of creating case-sensitive aliases
+        # (https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/205)
+        alias = alias.lower()
+
         # If alias is reserved word
         if extension:
             alias += extension
@@ -499,7 +521,7 @@ class LinksClient:
             return alias
 
         # Otherwise, try to insert the alias. First check whether it already exists.
-        if self.alias_is_duplicate(alias):
+        if self.alias_is_duplicate(alias, False):
             raise BadAliasException
 
         # Create the alias.

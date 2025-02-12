@@ -93,6 +93,14 @@ SEARCH_SCHEMA = {
             "type": "string",
             "format": "date-time",
         },
+        "show_type": {
+            "type": "string",
+            "enum": ["links", "tracking_pixels"],
+        },
+        "owner": {
+            "type": "string",
+            "description": "Filter links by owner netid",
+        },
     },
 }
 

@@ -104,6 +104,8 @@ backend_build:
 pytest:
   stage: test
   image: python:3.6
+  needs:
+    - backend_build
   dependencies:
     - backend_build
   variables:

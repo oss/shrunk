@@ -11,12 +11,12 @@ import {
   Button,
   Input,
   Tooltip,
-  Spin,
   Typography,
   Table,
   Space,
   Tag,
   message,
+  Flex,
 } from 'antd/lib';
 import {
   PlusCircleFilled,
@@ -76,44 +76,46 @@ export default function Orgs({ userPrivileges }: Props): React.ReactElement {
       key: 'name',
       render: (record: OrgInfo) => (
         <Space>
-          <a href={`/app/#/orgs/${record.id}/manage`}>{record.name}</a>
+          {record.name}
           {record.is_admin ? <Tag color="red">Admin</Tag> : null}
           {showAll && record.is_member ? <Tag color="blue">Member</Tag> : null}
         </Space>
       ),
     },
     {
-      title: 'Actions',
+      title: <Flex justify="flex-end">Actions</Flex>,
       key: 'actions',
-      width: 150,
+      width: '150px',
       render: (record: OrgInfo) => (
-        <Space>
-          <Tooltip title="View">
-            <Button
-              type="text"
-              icon={<EyeOutlined />}
-              href={`/app/#/orgs/${record.id}/manage`}
-            />
-          </Tooltip>
-          <Tooltip title="Delete">
-            <Popconfirm
-              title="Are you sure you want to delete this organization?"
-              onConfirm={async () => {
-                try {
-                  await onDeleteOrg(record.id);
-                  message.success('Organization deleted successfully');
-                } catch (error) {
-                  message.error('Failed to delete organization');
-                }
-              }}
-              okText="Yes"
-              cancelText="No"
-              okButtonProps={{ danger: true }}
-            >
-              <Button type="text" danger icon={<DeleteOutlined />} />
-            </Popconfirm>
-          </Tooltip>
-        </Space>
+        <Flex justify="flex-end">
+          <Space>
+            <Tooltip title="View">
+              <Button
+                type="text"
+                icon={<EyeOutlined />}
+                href={`/app/#/orgs/${record.id}`}
+              />
+            </Tooltip>
+            <Tooltip title="Delete">
+              <Popconfirm
+                title="Are you sure you want to delete this organization?"
+                onConfirm={async () => {
+                  try {
+                    await onDeleteOrg(record.id);
+                    message.success('Organization deleted successfully');
+                  } catch (error) {
+                    message.error('Failed to delete organization');
+                  }
+                }}
+                okText="Yes"
+                cancelText="No"
+                okButtonProps={{ danger: true }}
+              >
+                <Button type="text" danger icon={<DeleteOutlined />} />
+              </Popconfirm>
+            </Tooltip>
+          </Space>
+        </Flex>
       ),
     },
   ];
@@ -168,16 +170,13 @@ export default function Orgs({ userPrivileges }: Props): React.ReactElement {
         </Col>
       </Row>
 
-      {orgs === null ? (
-        <Spin size="large" />
-      ) : (
-        <Table
-          dataSource={orgs}
-          columns={columns}
-          rowKey="id"
-          pagination={false}
-        />
-      )}
+      <Table
+        dataSource={orgs !== null ? orgs : []}
+        loading={orgs === null}
+        columns={columns}
+        rowKey="id"
+        pagination={false}
+      />
     </>
   );
 }

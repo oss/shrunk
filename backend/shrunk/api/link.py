@@ -289,6 +289,10 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         "domain": info.get("domain", None),
         "aliases": aliases,
         "deleted": info.get("deleted", False),
+        "deletion_info": {
+            "deleted_by": info.get("deleted_by", None),
+            "delete_time": info.get("deleted_time", None),
+        },
         "editors": info["editors"] if "editors" in info else [],
         "viewers": info["viewers"] if "viewers" in info else [],
         "is_tracking_pixel_link": info.get("is_tracking_pixel_link", False),
@@ -827,7 +831,7 @@ def validate_duplicate_alias(_netid: str, client: ShrunkClient, alias: str) -> A
     :param client:
     :param alias:
     """
-    valid = not client.links.alias_is_duplicate(alias)
+    valid = not client.links.alias_is_duplicate(alias, False)
     response: Dict[str, Any] = {"valid": valid}
 
     if not valid:

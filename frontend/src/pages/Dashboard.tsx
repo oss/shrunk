@@ -9,13 +9,11 @@ import React from 'react';
 import {
   Row,
   Col,
-  Spin,
   Button,
   Typography,
   Table,
   Input,
   Space,
-  Modal,
   Form,
   Select,
   Checkbox,
@@ -24,6 +22,11 @@ import {
   Dropdown,
   Popconfirm,
   message,
+  Flex,
+  Radio,
+  Tag,
+  RadioChangeEvent,
+  Drawer,
 } from 'antd/lib';
 import {
   CopyOutlined,
@@ -37,10 +40,11 @@ import {
   SlidersOutlined,
 } from '@ant-design/icons';
 
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import { listOrgs, OrgInfo } from '../api/Org';
 import { LinkInfo } from '../components/LinkInfo';
-import { CreateLinkForm } from '../components/CreateLinkForm';
+import { CreateLinkDrawer } from '../drawers/CreateLinkDrawer';
+import { serverValidateNetId } from '../lib/validators';
 
 /**
  * The final values of the share link form
@@ -121,6 +125,10 @@ export interface SearchQuery {
    * @property
    */
   end_time: dayjs.Dayjs | null;
+
+  showType: 'links' | 'tracking_pixels';
+
+  owner: string | null;
 }
 
 /**
@@ -242,6 +250,8 @@ export interface State {
   visibleColumns: Set<string>;
 
   customizeDropdownOpen: boolean;
+
+  showType: 'links' | 'tracking_pixels';
 }
 
 // TODO: Add title column
@@ -272,6 +282,8 @@ export class Dashboard extends React.Component<Props, State> {
         sort: { key: 'relevance', order: 'descending' },
         begin_time: null,
         end_time: null,
+        showType: 'links',
+        owner: null,
       },
       totalPages: 0,
       totalLinks: 0,
@@ -311,6 +323,7 @@ export class Dashboard extends React.Component<Props, State> {
         'totalVisits',
       ]),
       customizeDropdownOpen: false,
+      showType: 'links',
     };
   }
 
@@ -397,6 +410,17 @@ export class Dashboard extends React.Component<Props, State> {
     );
   };
 
+  sortByType = (e: RadioChangeEvent) => {
+    const key = e.target.value;
+    this.setState(
+      {
+        showType: key,
+        query: { ...this.state.query, showType: key },
+      },
+      () => this.setQuery(this.state.query),
+    );
+  };
+
   /**
    * Updates the sort order in the state and executes a search query
    * @method
@@ -414,25 +438,19 @@ export class Dashboard extends React.Component<Props, State> {
     );
   };
 
-  /**
-   * Updates the beginning time in the state and executes a search query
-   * @method
-   * @param begin_time View links created after this date
-   */
-  showLinksAfter = (begin_time: dayjs.Dayjs) => {
-    this.setState({ query: { ...this.state.query, begin_time } }, () =>
-      this.setQuery(this.state.query),
-    );
-  };
-
-  /**
-   * Updates the end time in the state and executes a search query
-   * @method
-   * @param end_time View links created before this date
-   */
-  showLinksBefore = (end_time: dayjs.Dayjs) => {
-    this.setState({ query: { ...this.state.query, end_time } }, () =>
-      this.setQuery(this.state.query),
+  showLinksInRange = (
+    dates: NoUndefinedRangeValueType<Dayjs> | null,
+    _: [string, string],
+  ) => {
+    this.setState(
+      {
+        query: {
+          ...this.state.query,
+          begin_time: dates[0],
+          end_time: dates[1],
+        },
+      },
+      () => this.setQuery(this.state.query),
     );
   };
 
@@ -513,6 +531,7 @@ export class Dashboard extends React.Component<Props, State> {
       show_deleted_links: query.show_deleted_links,
       sort: query.sort,
       pagination: { skip, limit },
+      show_type: query.showType,
     };
 
     if (query.begin_time !== null) {
@@ -522,6 +541,11 @@ export class Dashboard extends React.Component<Props, State> {
     if (query.end_time !== null) {
       req.end_time = query.end_time.format();
     }
+
+    if (query.owner !== null || query.owner === '') {
+      req.owner = query.owner;
+    }
+
     const result = await fetch('/api/v1/search', {
       method: 'POST',
       headers: {
@@ -605,7 +629,11 @@ export class Dashboard extends React.Component<Props, State> {
                 open={this.state.customizeDropdownOpen}
                 menu={{
                   items: [
-                    { label: 'Long URL', key: 'longUrl' },
+                    {
+                      label: 'Long URL',
+                      key: 'longUrl',
+                      disabled: this.state.showType === 'tracking_pixels',
+                    },
                     { label: 'Owner', key: 'owner' },
                     { label: 'Date Created', key: 'dateCreated' },
                     { label: 'Date Expires', key: 'dateExpires' },
@@ -625,6 +653,7 @@ export class Dashboard extends React.Component<Props, State> {
                           }
                           this.setState({ visibleColumns: newColumns });
                         }}
+                        disabled={item.disabled}
                       >
                         {item.label}
                       </Checkbox>
@@ -647,7 +676,7 @@ export class Dashboard extends React.Component<Props, State> {
               </Button>
               <Input.Search
                 style={{ width: 500 }}
-                placeholder="Find a shortened link"
+                placeholder="Find a shortend link by its alias"
                 onChange={this.updateQueryString}
                 onSearch={this.onSearch}
               />
@@ -660,258 +689,285 @@ export class Dashboard extends React.Component<Props, State> {
                 icon={<PlusCircleFilled />}
                 onClick={() => this.setState({ isCreateModalOpen: true })}
               >
-                Create Link
+                Shrink
               </Button>
             </Space>
           </Col>
           <Col span={24}>
-            {this.state.linkInfo === null ? (
-              <Spin size="large" />
-            ) : (
-              <Table
-                scroll={{ x: 'calc(700px + 50%)' }}
-                columns={[
-                  {
-                    title: 'Aliases',
-                    dataIndex: 'aliases',
-                    key: 'aliases',
-                    width: '40%',
-                    fixed: 'left',
-                    render: (_, record) => (
-                      <Row gutter={[0, 8]}>
-                        <Col span={24}>
+            <Table
+              loading={this.state.linkInfo === null}
+              scroll={{ x: 'calc(700px + 50%)' }}
+              columns={[
+                {
+                  title: 'Aliases',
+                  dataIndex: 'aliases',
+                  key: 'aliases',
+                  width: '350px',
+                  fixed: 'left',
+                  render: (_, record) => (
+                    <Row gutter={[0, 8]}>
+                      <Col span={24}>
+                        <Space>
                           <Typography.Title level={5} style={{ margin: 0 }}>
                             {record.title}
                           </Typography.Title>
-                        </Col>
-                        {record.aliases.map((aliasObj) => {
-                          const isDev = process.env.NODE_ENV === 'development';
-                          const protocol = isDev ? 'http' : 'https';
-                          const shortUrlWithoutProtocol = `${
-                            document.location.host
-                          }/${aliasObj.alias.toString()}`;
-                          const shortUrl = `${protocol}://${
-                            record.domain || ''
-                          }${record.domain ? '.' : ''}${
-                            document.location.host
-                          }/${aliasObj.alias.toString()}`;
+                          {record.deletedInfo !== null && (
+                            <Tag color="red">Deleted</Tag>
+                          )}
+                          {record.isExpired && (
+                            <Tag color="yellow">Expired</Tag>
+                          )}
+                        </Space>
+                      </Col>
+                      {record.aliases.map((aliasObj) => {
+                        const isDev = process.env.NODE_ENV === 'development';
+                        const protocol = isDev ? 'http' : 'https';
+                        const routePrefix = record.isTrackingPixel
+                          ? 'api/v1/t/'
+                          : '';
+
+                        const shortUrlWithoutProtocol = `${
+                          document.location.host
+                        }/${routePrefix}${aliasObj.alias.toString()}`;
+                        const shortUrl = `${protocol}://${record.domain || ''}${
+                          record.domain ? '.' : ''
+                        }${
+                          document.location.host
+                        }/${routePrefix}${aliasObj.alias.toString()}`;
+
+                        return (
+                          <Col span={24}>
+                            <Button
+                              type="text"
+                              onClick={() =>
+                                navigator.clipboard.writeText(shortUrl)
+                              }
+                            >
+                              <Space>
+                                <CopyOutlined />
+                                <Typography key={aliasObj.alias}>
+                                  {shortUrlWithoutProtocol}
+                                </Typography>
+                              </Space>
+                            </Button>
+                          </Col>
+                        );
+                      })}
+                    </Row>
+                  ),
+                },
+                ...(this.state.visibleColumns.has('longUrl') &&
+                this.state.showType !== 'tracking_pixels'
+                  ? [
+                      {
+                        title: 'Long URL',
+                        dataIndex: 'longUrl',
+                        key: 'longUrl',
+                        width: '300px',
+                        fixed: 'left',
+                        render: (_, record) => (
+                          <Typography.Link href={record.longUrl} ellipsis>
+                            {record.longUrl}
+                          </Typography.Link>
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(this.state.visibleColumns.has('owner')
+                  ? [
+                      {
+                        title: 'Owner',
+                        dataIndex: 'owner',
+                        key: 'owner',
+                        width: '150px',
+                        sorter: (a, b) => a.owner.localeCompare(b.owner),
+                      },
+                    ]
+                  : []),
+                ...(this.state.visibleColumns.has('dateCreated')
+                  ? [
+                      {
+                        title: 'Date Created',
+                        dataIndex: 'dateCreated',
+                        key: 'dateCreated',
+                        width: '150px',
+                        sorter: (a, b) =>
+                          dayjs(a.dateCreated).unix() -
+                          dayjs(b.dateCreated).unix(),
+                      },
+                    ]
+                  : []),
+                ...(this.state.visibleColumns.has('dateExpires')
+                  ? [
+                      {
+                        title: 'Date Expires',
+                        dataIndex: 'dateExpires',
+                        key: 'dateExpires',
+                        width: '150px',
+                        render: (_, record) =>
+                          record.dateExpires
+                            ? dayjs(record.dateExpires).format('MMM DD, YYYY')
+                            : 'Never',
+                        sorter: (a, b) => {
+                          if (!a.dateExpires) return 1;
+                          if (!b.dateExpires) return -1;
                           return (
-                            <Col span={24}>
-                              <Button
-                                type="text"
-                                onClick={() =>
-                                  navigator.clipboard.writeText(shortUrl)
-                                }
-                              >
-                                <Space>
-                                  <CopyOutlined />
-                                  <Typography key={aliasObj.alias}>
-                                    {shortUrlWithoutProtocol}
-                                  </Typography>
-                                </Space>
-                              </Button>
-                            </Col>
+                            dayjs(a.dateExpires).unix() -
+                            dayjs(b.dateExpires).unix()
                           );
-                        })}
-                      </Row>
-                    ),
-                  },
-                  ...(this.state.visibleColumns.has('longUrl')
-                    ? [
-                        {
-                          title: 'Long URL',
-                          dataIndex: 'longUrl',
-                          key: 'longUrl',
-                          width: '40%',
-                          fixed: 'left',
-                          render: (_, record) => (
-                            <Typography.Link href={record.longUrl} ellipsis>
-                              {record.longUrl}
-                            </Typography.Link>
-                          ),
                         },
-                      ]
-                    : []),
-                  ...(this.state.visibleColumns.has('owner')
-                    ? [
-                        {
-                          title: 'Owner',
-                          dataIndex: 'owner',
-                          key: 'owner',
-                          width: '15%',
-                          sorter: (a, b) => a.owner.localeCompare(b.owner),
-                        },
-                      ]
-                    : []),
-                  ...(this.state.visibleColumns.has('dateCreated')
-                    ? [
-                        {
-                          title: 'Date Created',
-                          dataIndex: 'dateCreated',
-                          key: 'dateCreated',
-                          width: '15%',
-                          sorter: (a, b) =>
-                            dayjs(a.dateCreated).unix() -
-                            dayjs(b.dateCreated).unix(),
-                        },
-                      ]
-                    : []),
-                  ...(this.state.visibleColumns.has('dateExpires')
-                    ? [
-                        {
-                          title: 'Date Expires',
-                          dataIndex: 'dateExpires',
-                          key: 'dateExpires',
-                          width: '15%',
-                          render: (_, record) =>
-                            record.dateExpires
-                              ? dayjs(record.dateExpires).format('MMM DD, YYYY')
-                              : 'Never',
-                          sorter: (a, b) => {
-                            if (!a.dateExpires) return 1;
-                            if (!b.dateExpires) return -1;
-                            return (
-                              dayjs(a.dateExpires).unix() -
-                              dayjs(b.dateExpires).unix()
-                            );
-                          },
-                        },
-                      ]
-                    : []),
-                  ...(this.state.visibleColumns.has('uniqueVisits')
-                    ? [
-                        {
-                          title: 'Unique Visits',
-                          dataIndex: 'uniqueVisits',
-                          key: 'uniqueVisits',
-                          width: '15%',
-                          sorter: (a, b) => a.uniqueVisits - b.uniqueVisits,
-                        },
-                      ]
-                    : []),
-                  ...(this.state.visibleColumns.has('totalVisits')
-                    ? [
-                        {
-                          title: 'Total Visits',
-                          dataIndex: 'totalVisits',
-                          key: 'totalVisits',
-                          width: '15%',
-                          sorter: (a, b) => a.totalVisits - b.totalVisits,
-                        },
-                      ]
-                    : []),
-                  {
-                    title: 'Actions',
-                    key: 'actions',
-                    fixed: 'right',
-                    width: '25%',
-                    render: (_, record) => (
+                      },
+                    ]
+                  : []),
+                ...(this.state.visibleColumns.has('uniqueVisits')
+                  ? [
+                      {
+                        title: 'Unique Visits',
+                        dataIndex: 'uniqueVisits',
+                        key: 'uniqueVisits',
+                        width: '100px',
+                        sorter: (a, b) => a.uniqueVisits - b.uniqueVisits,
+                      },
+                    ]
+                  : []),
+                ...(this.state.visibleColumns.has('totalVisits')
+                  ? [
+                      {
+                        title: 'Total Visits',
+                        dataIndex: 'totalVisits',
+                        key: 'totalVisits',
+                        width: '100px',
+                        sorter: (a, b) => a.totalVisits - b.totalVisits,
+                      },
+                    ]
+                  : []),
+                {
+                  title: <Flex justify="flex-end">Actions</Flex>,
+                  key: 'actions',
+                  fixed: 'right',
+                  width: '220px',
+                  render: (_, record) => (
+                    <Flex justify="flex-end">
                       <Space>
                         <Tooltip title="View">
                           <Button
                             type="text"
                             icon={<EyeOutlined />}
-                            href={`/app/#/links/${record.key}/view`}
+                            href={`/app/#/links/${record.key}`}
                           />
                         </Tooltip>
-                        <Tooltip title="Edit">
-                          <Button
-                            type="text"
-                            icon={<EditOutlined />}
-                            target="_blank"
-                            href={`/app/#/links/${record.key}/view?mode=edit`}
-                          />
-                        </Tooltip>
-                        <Tooltip title="Collaborate">
-                          <Button
-                            type="text"
-                            icon={<TeamOutlined />}
-                            target="_blank"
-                            href={`/app/#/links/${record.key}/view?mode=collaborate`}
-                          />
-                        </Tooltip>
-                        <Tooltip title="Share">
-                          <Button
-                            type="text"
-                            icon={<ShareAltOutlined />}
-                            target="_blank"
-                            href={`/app/#/links/${record.key}/view?mode=share`}
-                          />
-                        </Tooltip>
-                        <Tooltip title="Delete">
-                          <Popconfirm
-                            title="Are you sure you want to delete this link?"
-                            onConfirm={async () => {
-                              try {
-                                await fetch(`/api/v1/link/${record.key}`, {
-                                  method: 'DELETE',
-                                });
-                                message.success('Link deleted successfully');
-                                await this.refreshResults();
-                              } catch (error) {
-                                message.error('Failed to delete link');
-                              }
-                            }}
-                            okText="Yes"
-                            cancelText="No"
-                            okButtonProps={{ danger: true }}
-                          >
+                        {record.canEdit && record.deletedInfo === null && (
+                          <>
+                            <Tooltip title="Edit">
+                              <Button
+                                type="text"
+                                icon={<EditOutlined />}
+                                target="_blank"
+                                href={`/app/#/links/${record.key}?mode=edit`}
+                              />
+                            </Tooltip>
+                            <Tooltip title="Collaborate">
+                              <Button
+                                type="text"
+                                icon={<TeamOutlined />}
+                                target="_blank"
+                                href={`/app/#/links/${record.key}?mode=collaborate`}
+                              />
+                            </Tooltip>
+                          </>
+                        )}
+                        {!record.isTrackingPixel && (
+                          <Tooltip title="Share">
                             <Button
                               type="text"
-                              danger
-                              icon={<DeleteOutlined />}
+                              icon={<ShareAltOutlined />}
+                              target="_blank"
+                              href={`/app/#/links/${record.key}?mode=share`}
                             />
-                          </Popconfirm>
-                        </Tooltip>
+                          </Tooltip>
+                        )}
+                        {record.deletedInfo === null && (
+                          <Tooltip title="Delete">
+                            <Popconfirm
+                              title="Are you sure you want to delete this link?"
+                              onConfirm={async () => {
+                                try {
+                                  await fetch(`/api/v1/link/${record.key}`, {
+                                    method: 'DELETE',
+                                  });
+                                  message.success('Link deleted successfully');
+                                  await this.refreshResults();
+                                } catch (error) {
+                                  message.error('Failed to delete link');
+                                }
+                              }}
+                              okText="Yes"
+                              cancelText="No"
+                              okButtonProps={{ danger: true }}
+                            >
+                              <Button
+                                type="text"
+                                danger
+                                icon={<DeleteOutlined />}
+                              />
+                            </Popconfirm>
+                          </Tooltip>
+                        )}
                       </Space>
-                    ),
-                  },
-                ].filter((col) => !col.hidden)}
-                dataSource={this.state.linkInfo.map((link) => ({
-                  key: link.id,
-                  title: link.title,
-                  aliases: link.aliases,
-                  domain: link.domain,
-                  longUrl: link.long_url,
-                  owner: link.owner,
-                  dateCreated: dayjs(link.created_time).format('MMM DD, YYYY'),
-                  uniqueVisits: link.unique_visits,
-                  totalVisits: link.visits,
-                  dateExpires: link.expiration_time,
-                }))}
-                pagination={{
-                  total: this.state.totalLinks,
-                  current: this.state.currentPage,
-                  onChange: (page) => this.setPage(page),
-                }}
-              />
-            )}
+                    </Flex>
+                  ),
+                },
+              ].filter((col) => !col.hidden)}
+              dataSource={
+                this.state.linkInfo !== null
+                  ? this.state.linkInfo.map((link) => ({
+                      key: link.id,
+                      title: link.title,
+                      aliases: link.aliases,
+                      domain: link.domain,
+                      longUrl: link.long_url,
+                      owner: link.owner,
+                      dateCreated: dayjs(link.created_time).format(
+                        'MMM DD, YYYY',
+                      ),
+                      uniqueVisits: link.unique_visits,
+                      totalVisits: link.visits,
+                      dateExpires: link.expiration_time,
+                      canEdit: link.may_edit,
+                      isTrackingPixel: link.is_tracking_pixel_link,
+                      isExpired: link.is_expired,
+                      deletedInfo: link.deletion_info,
+                    }))
+                  : []
+              }
+              pagination={{
+                total: this.state.totalLinks,
+                current: this.state.currentPage,
+                onChange: (page) => this.setPage(page),
+              }}
+            />
           </Col>
         </Row>
 
-        <Modal
-          open={this.state.isCreateModalOpen}
-          onCancel={() => this.setState({ isCreateModalOpen: false })}
-          width="50%"
+        <CreateLinkDrawer
           title="Create Link"
-          footer={null}
-        >
-          <CreateLinkForm
-            onFinish={async () => {
-              await this.refreshResults();
-              this.setState({ isCreateModalOpen: false });
-            }}
-            userPrivileges={this.props.userPrivileges}
-            userOrgs={this.state.userOrgs}
-            refreshResults={this.refreshResults}
-          />
-        </Modal>
+          visible={this.state.isCreateModalOpen}
+          onCancel={() => this.setState({ isCreateModalOpen: false })}
+          onFinish={async () => {
+            await this.refreshResults();
+            this.setState({ isCreateModalOpen: false });
+          }}
+          userPrivileges={this.props.userPrivileges}
+          userOrgs={this.state.userOrgs ? this.state.userOrgs : []}
+          tracking_pixel_ui_enabled={this.state.trackingPixelEnabled}
+        />
 
-        <Modal
+        <Drawer
           title="Filter Links"
+          width={720}
           open={this.state.filterModalVisible}
-          onCancel={() => this.setState({ filterModalVisible: false })}
-          footer={null}
+          onClose={() => this.setState({ filterModalVisible: false })}
+          placement="left"
         >
           <Form
             layout="vertical"
@@ -921,72 +977,125 @@ export class Dashboard extends React.Component<Props, State> {
               sortOrder: 'descending',
             }}
           >
-            <Form.Item name="orgSelect" label="Filter by organization">
-              <Select value={this.state.selectedOrg} onChange={this.updateOrg}>
-                <Select.Option value={0}>My Links</Select.Option>
-                <Select.Option value={2}>Shared with Me</Select.Option>
-                {!this.props.userPrivileges.has('admin') ? null : (
-                  <Select.Option value={1}>All Links</Select.Option>
-                )}
-                {this.state.userOrgs?.length ? (
-                  <Select.OptGroup label="My Organizations">
-                    {this.state.userOrgs.map((info) => (
-                      <Select.Option key={info.id} value={info.id}>
-                        <em>{info.name}</em>
-                      </Select.Option>
-                    ))}
-                  </Select.OptGroup>
-                ) : null}
-              </Select>
-            </Form.Item>
-            <Form.Item name="sortKey" label="Sort by">
-              <Select
-                value={this.state.sortKey}
-                onChange={this.sortLinksByKey}
-                style={{ width: '100%' }}
-              >
-                <Select.Option value="relevance">Relevance</Select.Option>
-                <Select.Option value="created_time">Time created</Select.Option>
-                <Select.Option value="title">Title</Select.Option>
-                <Select.Option value="visits">Number of visits</Select.Option>
-              </Select>
-            </Form.Item>
-            <Form.Item name="show_expired">
-              <Checkbox
-                checked={this.state.showExpired}
-                onChange={(e) => this.showExpiredLinks(e.target.checked)}
-              >
-                Show expired links?
-              </Checkbox>
-            </Form.Item>
-            {this.props.userPrivileges.has('admin') && (
-              <Form.Item name="show_deleted">
-                <Checkbox
-                  checked={this.state.showDeleted}
-                  onChange={(e) => this.showDeletedLinks(e.target.checked)}
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item name="orgSelect" label="Links">
+                  <Select
+                    value={this.state.selectedOrg}
+                    onChange={this.updateOrg}
+                  >
+                    <Select.Option value={0}>My Links</Select.Option>
+                    <Select.Option value={2}>Shared with Me</Select.Option>
+                    {!this.props.userPrivileges.has('admin') ? null : (
+                      <Select.Option value={1}>All Links</Select.Option>
+                    )}
+                    {this.state.userOrgs?.length ? (
+                      <Select.OptGroup label="My Organizations">
+                        {this.state.userOrgs.map((info) => (
+                          <Select.Option key={info.id} value={info.id}>
+                            <em>{info.name}</em>
+                          </Select.Option>
+                        ))}
+                      </Select.OptGroup>
+                    ) : null}
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="owner"
+                  label="Owner"
+                  rules={[{ validator: serverValidateNetId }]}
                 >
-                  Show deleted links?
-                </Checkbox>
-              </Form.Item>
-            )}
-            <Form.Item name="beginTime" label="Created after">
-              <DatePicker
-                format="YYYY-MM-DD"
-                value={this.state.beginTime}
-                onChange={this.showLinksAfter}
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
-            <Form.Item name="endTime" label="Created before">
-              <DatePicker
-                format="YYYY-MM-DD"
-                value={this.state.endTime}
-                onChange={this.showLinksBefore}
-                style={{ width: '100%' }}
-              />
-            </Form.Item>
+                  <Input
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      this.setState({
+                        query: { ...this.state.query, owner: e.target.value },
+                      });
+                    }}
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="sortKey" label="Sort by">
+                  <Select
+                    value={this.state.sortKey}
+                    onChange={this.sortLinksByKey}
+                    style={{ width: '100%' }}
+                  >
+                    <Select.Option value="relevance">Relevance</Select.Option>
+                    <Select.Option value="created_time">
+                      Time created
+                    </Select.Option>
+                    <Select.Option value="title">Title</Select.Option>
+                    <Select.Option value="visits">
+                      Number of visits
+                    </Select.Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="dateRange" label="Creation Date">
+                  <DatePicker.RangePicker
+                    format="YYYY-MM-DD"
+                    value={[this.state.beginTime, this.state.endTime]}
+                    onChange={this.showLinksInRange}
+                    style={{ width: '100%' }}
+                    allowEmpty={[false, true]} // Allow the second date to be empty
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item name="show_expired" label="Expired Links">
+                  <Radio.Group
+                    optionType="button"
+                    buttonStyle="solid"
+                    options={[
+                      { label: 'Show', value: 'show' },
+                      { label: 'Hide', value: 'hide' },
+                    ]}
+                    defaultValue="hide"
+                    onChange={(e) =>
+                      this.showExpiredLinks(e.target.value === 'show')
+                    }
+                  />
+                </Form.Item>
+              </Col>
+              {this.props.userPrivileges.has('admin') && (
+                <Col span={12}>
+                  <Form.Item name="show_deleted" label="Deleted Links">
+                    <Radio.Group
+                      optionType="button"
+                      buttonStyle="solid"
+                      options={[
+                        { label: 'Show', value: 'show' },
+                        { label: 'Hide', value: 'hide' },
+                      ]}
+                      defaultValue="hide"
+                      onChange={(e) =>
+                        this.showDeletedLinks(e.target.value === 'show')
+                      }
+                    />
+                  </Form.Item>
+                </Col>
+              )}
+              <Col span={12}>
+                <Form.Item name="links_vs_pixels" label="Link Type">
+                  <Radio.Group
+                    optionType="button"
+                    buttonStyle="solid"
+                    options={[
+                      { label: 'Links', value: 'links' },
+                      { label: 'Tracking Pixels', value: 'tracking_pixels' },
+                    ]}
+                    defaultValue={this.state.showType}
+                    onChange={this.sortByType}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
           </Form>
-        </Modal>
+        </Drawer>
       </>
     );
   }
