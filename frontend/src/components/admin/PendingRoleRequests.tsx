@@ -78,15 +78,34 @@ interface RoleRequestInfo {
 }
 
 /**
- * The [[PendingRoleRequestRow]] component displays one row in the pending role requests list
- * @function
- * @param props Props
+ * Props for the [[PendingRoleRequestRow]] component
+ * @interface
  */
-const PendingRoleRequestRow: React.FC<{
+interface PendingRoleRequestRowProps {
+  /**
+   * The role request information
+   * @property
+   */
   role_request: RoleRequestInfo;
+
+  /**
+   * Open the modal to approve the role request
+   * @property
+   */
   onOpenApproveModal: () => void;
+
+  /**
+   * Open the modal to deny the role request
+   * @property
+   */
   onOpenDenyModal: () => void;
-}> = (props) => (
+}
+
+/**
+ * The [[PendingRoleRequestRow]] component displays a single pending role request
+ * @param props - the props for the component
+ */
+const PendingRoleRequestRow: React.FC<PendingRoleRequestRowProps> = (props) => (
   <Row className="primary-row">
     <Col span={20}>
       <Row>

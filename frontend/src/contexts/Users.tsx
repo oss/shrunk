@@ -78,6 +78,7 @@ interface UsersContextType {
   appliedOperations: Operation[];
   addOperation: (operation: Operation) => void;
   deleteOperation: (key: string) => void;
+  rehydrateUsers: () => void;
 }
 
 const UsersContext = createContext<UsersContextType | undefined>(undefined);
@@ -102,6 +103,39 @@ const UsersProvider: React.FC = ({ children }) => {
       filterString: '',
     },
   ]);
+  const [refetchUsers, setRefetchUsers] = useState<boolean>(false);
+
+  // Re-fetch users when there are user modifications without a page refresh
+  const rehydrateUsers = (): void => {
+    setRefetchUsers((prev) => !prev);
+  };
+
+  useEffect(() => {
+    const fetchUsers = async (): Promise<void> => {
+      setLoading(true);
+      try {
+        const response = await fetch('/api/v1/user', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ operations: appliedOperations }),
+        });
+        if (!response.ok) {
+          setUsers([]);
+          throw new Error('Something went wrong');
+        }
+        const data = await response.json();
+        setUsers(data.users);
+      } catch (error) {
+        throw new Error(`Failed to fetch users: {error}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, [refetchUsers]);
 
   useEffect(() => {
     const fetchUsers = async (): Promise<void> => {
@@ -176,6 +210,7 @@ const UsersProvider: React.FC = ({ children }) => {
         appliedOperations,
         addOperation,
         deleteOperation,
+        rehydrateUsers,
       }}
     >
       {children}

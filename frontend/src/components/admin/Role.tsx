@@ -47,7 +47,7 @@ export interface Props {
  * A role's display text as fetched from the backend
  * @interface
  */
-interface RoleText {
+export interface RoleText {
   title: string;
   invalid: string;
   grant_title: string;

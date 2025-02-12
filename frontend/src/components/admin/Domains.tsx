@@ -55,7 +55,7 @@ const Domains: React.FC = () => {
       message.success('Custom Domain Deletion Succeeded');
       deleteForm.resetFields();
     } catch (error) {
-      message.error('Custom Domain Deletion Failed');
+      message.error(`Custom Domain Deletion Failed: ${error}`);
     } finally {
       setLoading(false);
     }

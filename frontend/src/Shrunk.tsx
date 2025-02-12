@@ -44,11 +44,7 @@ import Faq from './pages/Faq';
 import Orgs from './pages/Orgs';
 import { RoleRequestForm } from './pages/RoleRequestForm';
 
-import AdminStats from './components/admin/AdminStats';
-import LinkSecurity from './components/admin/LinkSecurity';
-import { PendingRoleRequests } from './components/admin/PendingRoleRequests';
 import { Role } from './components/admin/Role';
-import UserLookup from './components/admin/UserLookup';
 import ManageOrg from './pages/subpages/ManageOrg';
 import { Stats } from './pages/subpages/Stats';
 
@@ -58,8 +54,6 @@ import { PendingRequests } from './modals/PendingRequests';
 import { lightTheme } from './theme';
 import LinkHubDashboard from './pages/LinkHubDashboard';
 import LinkHubEditor from './pages/subpages/LinkHubEditor';
-import UsersProvider from './contexts/Users';
-import Domains from './components/admin/Domains';
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -102,20 +96,12 @@ export default function Shrunk(props: Props) {
   const [powerUserRoleRequestMade, setPowerUserRoleRequestMade] =
     useState(false);
   const [isLinkHubEnabled, setIsLinkHubEnabled] = useState(false);
-  const [isDomainEnabled, setIsDomainEnabled] = useState(false);
   const [isRoleRequestsEnabled, setIsRoleRequestsEnabled] = useState(false);
 
   const fetchIsLinkHubEnabled = async () => {
     const resp = await fetch('/api/v1/linkhub/is-linkhub-enabled');
     const json = await resp.json();
     setIsLinkHubEnabled(json.status as boolean);
-  };
-
-  const fetchIsDomainEnabled = async () => {
-    const resp = await fetch('/api/v1/org/domain_enabled');
-    const json = await resp.json();
-
-    setIsDomainEnabled(json.enabled as boolean);
   };
 
   const fetchRoleRequestsEnabled = async () => {
@@ -179,7 +165,6 @@ export default function Shrunk(props: Props) {
   useEffect(() => {
     const init = async () => {
       await fetchIsLinkHubEnabled();
-      await fetchIsDomainEnabled();
       await updatePendingAlerts();
       await fetchRoleRequestsEnabled();
       await updatePowerUserRoleRequestMade();
@@ -452,39 +437,9 @@ export default function Shrunk(props: Props) {
                   )}
                 />
 
-                {!showAdminTab ? (
-                  <></>
-                ) : (
-                  <>
-                    <Route exact path="/admin">
-                      <Admin />
-                    </Route>
-                    <Route exact path="/admin/stats">
-                      <AdminStats />
-                    </Route>
-                    {isDomainEnabled ? (
-                      <Route exact path="/admin/domain">
-                        <Domains />
-                      </Route>
-                    ) : (
-                      <></>
-                    )}
-                    <Route exact path="/admin/user_lookup">
-                      <UsersProvider>
-                        <UserLookup />
-                      </UsersProvider>
-                    </Route>
-                    <Route exact path="/admin/link_security">
-                      <LinkSecurity />
-                    </Route>
-                    <Route exact path="/admin/role_requests/power_user">
-                      <PendingRoleRequests
-                        name="power_user"
-                        userPrivileges={userPrivileges}
-                      />
-                    </Route>
-                  </>
-                )}
+                <Route exact path="/admin">
+                  <Admin />
+                </Route>
               </Switch>
             </Content>
             <Sider width={siderWidth} breakpoint="xl" collapsedWidth="10" />
