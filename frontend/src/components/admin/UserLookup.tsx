@@ -8,7 +8,6 @@ import {
   Row,
   Table,
   Tag,
-  Spin,
   Popconfirm,
   Select,
   Space,
@@ -112,7 +111,7 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
   };
 
   const options = roleOrder.map((role) => ({
-    label: labelCase[role.toLowerCase() as keyof typeof labelCase],
+    label: role,
     value: role,
     disabled: role === getHighestRole(initialRoles),
   }));

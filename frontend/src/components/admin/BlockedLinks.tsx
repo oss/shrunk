@@ -9,7 +9,6 @@ import {
   Button,
   message,
   Popconfirm,
-  Spin,
   Table,
   Tooltip,
   Typography,
@@ -239,17 +238,14 @@ const BlockedLinks: React.FC<BlockedLinksProps> = (props) => {
       />
 
       <Row style={{ marginBottom: 24 }} />
-      {loading ? (
-        <Spin size="large" />
-      ) : (
-        <Table
-          columns={columns}
-          dataSource={filteredLinks}
-          rowKey="url"
-          pagination={{ position: ['bottomCenter'], pageSize: 10 }}
-          scroll={{ x: 'max-content' }}
-        />
-      )}
+      <Table
+        loading={loading}
+        columns={columns}
+        dataSource={filteredLinks}
+        rowKey="url"
+        pagination={{ position: ['bottomCenter'], pageSize: 10 }}
+        scroll={{ x: 'max-content' }}
+      />
     </>
   );
 };
