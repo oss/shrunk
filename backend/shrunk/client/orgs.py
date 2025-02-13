@@ -24,7 +24,13 @@ class OrgsClient:
         :returns: The Mongo document for the org, or ``None`` if no org
           exists with the provided ID
         """
-        return self.db.organizations.find_one({"_id": org_id})
+        org = self.db.organizations.find_one({"_id": org_id})
+
+        # Organizations created before implementations of domains key do not have the `domains` field
+        if org is not None and org.get("domains") is None:
+            org["domains"] = []
+
+        return org
 
     def get_orgs(self, netid: str, only_member_orgs: bool) -> List[Any]:
         """Get a list of orgs
