@@ -91,32 +91,48 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
   };
 
   /**
-   * Get the tickets. This is the user's tickets for the user and all tickets for admins.
+   * Get the tickets. This is the user's open tickets for the user and all open tickets for admins.
    * By default, the tickets are sorted by timestamp in descending order.
    * @method
    */
   const getTickets = async () => {
-    const response = await fetch(`/api/v1/ticket?sort=-timestamp`);
+    let response = null;
+    if (userPrivileges.has('admin')) {
+      response = await fetch(
+        `/api/v1/ticket?filter=status:open&sort=-timestamp`,
+      );
+    } else {
+      response = await fetch(
+        `/api/v1/ticket?filter=reporter:${netid},status:open&sort=-timestamp`,
+      );
+    }
     const body = await response.json();
     setTickets(body);
   };
 
   /**
-   * Delete the ticket with the given ID
+   * Close a ticket with the given ID
    * @method
    *
    * @param ticketID - The ID of the ticket to delete
    */
-  const deleteTicket = async (ticketID: string) => {
+  const closeTicket = async (ticketID: string) => {
     const response = await fetch(`/api/v1/ticket/${base32.encode(ticketID)}`, {
-      method: 'DELETE',
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'close',
+        actioned_by: netid,
+      }),
     });
 
     if (response.ok) {
       setTickets(tickets.filter((ticket) => ticket._id !== ticketID));
-      message.success('Ticket deleted successfully', 2);
+      message.success('Ticket closed successfully', 2);
     } else {
-      message.error('Failed to delete ticket', 2);
+      message.error('Failed to close ticket', 2);
     }
   };
 
@@ -184,7 +200,7 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
         <Tooltip title="Close">
           <Popconfirm
             title="Are you sure you want to close this ticket?"
-            onConfirm={() => deleteTicket(record._id)}
+            onConfirm={() => closeTicket(record._id)}
             okText="Yes"
             cancelText="No"
             okButtonProps={{ danger: true }}
@@ -216,18 +232,18 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
     },
     {
       title: 'Comment',
-      dataIndex: 'comment',
-      key: 'comment',
+      dataIndex: 'user_comment',
+      key: 'user_comment',
       ellipsis: true,
       width: '40%',
     },
     {
-      title: 'Submission Date',
-      dataIndex: 'timestamp',
-      key: 'timestamp',
-      render: (timestamp: Date) =>
-        dayjs(new Date(Number(timestamp) * 1000)).format('MMM D, YYYY, h:mm a'),
-      width: '15%',
+      title: 'Time Created',
+      dataIndex: 'created_time',
+      key: 'created_time',
+      render: (created_time: number) =>
+        dayjs(new Date(created_time * 1000)).format('MMM D, YYYY, h:mm a'),
+      width: '25%',
     },
     {
       title: <Flex justify="flex-end">Actions</Flex>,
@@ -239,11 +255,11 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
 
   const adminColumns = [
     {
-      title: 'Submission Date',
-      dataIndex: 'timestamp',
-      key: 'timestamp',
-      render: (timestamp: Date) =>
-        dayjs(new Date(Number(timestamp) * 1000)).format('MMM D, YYYY, h:mm a'),
+      title: 'Time Created',
+      dataIndex: 'created_time',
+      key: 'created_time',
+      render: (created_time: number) =>
+        dayjs(new Date(created_time * 1000)).format('MMM D, YYYY, h:mm a'),
       width: '25%',
     },
     {

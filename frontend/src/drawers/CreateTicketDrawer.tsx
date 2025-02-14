@@ -67,7 +67,7 @@ const CreateTicketDrawer: React.FC<Props> = ({
    */
   const createTicket = async (
     values: CreateTicketInfo,
-  ): Promise<TicketInfo> => {
+  ): Promise<TicketInfo | null> => {
     setSubmitting(true);
 
     const response = await fetch('/api/v1/ticket', {
@@ -78,38 +78,38 @@ const CreateTicketDrawer: React.FC<Props> = ({
       body: JSON.stringify(values),
     });
 
-    let data = {} as TicketInfo;
+    const data = await response.json();
+
     if (response.ok) {
-      data = await response.json();
-      setTickets((prevTickets) => [data, ...prevTickets]); // Newest ticket first
-      message.success('Ticket created successfully', 2);
-    } else {
-      data = {} as TicketInfo;
-      message.error(helpDeskText.error[response.status], 2);
+      setTickets((tickets) => [data.ticket, ...tickets]);
+      message.success(data.message, 2);
+      setSubmitting(false);
+      return data.ticket;
     }
+
+    // Failed to create the ticket
+    message.error(data.message, 2);
     setSubmitting(false);
-    return data;
+    return null;
   };
 
   /**
    * Send a confirmation/notification email
    * @method
    *
-   * @param ticket - The ticket that was just submitted
+   * @param id - The ID of the ticket
    * @param category - The category of the email
    */
-  const sendEmail = async (ticket: TicketInfo, category: string) => {
-    const body = {
-      ticketID: ticket._id,
-      category,
-    };
-
+  const sendEmail = async (id: string, category: string) => {
     await fetch('/api/v1/ticket/email', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify({
+        id,
+        category,
+      }),
     });
   };
 
@@ -122,9 +122,9 @@ const CreateTicketDrawer: React.FC<Props> = ({
   const handleFormSubmit = async (values: CreateTicketInfo) => {
     // Perform the actual submission
     const ticket = await createTicket(values);
-    if (Object.keys(ticket).length !== 0) {
-      await sendEmail(ticket, 'confirmation');
-      await sendEmail(ticket, 'notification');
+    if (ticket) {
+      await sendEmail(ticket._id, 'confirmation');
+      await sendEmail(ticket._id, 'notification');
     }
 
     // Reset the drawer
@@ -229,7 +229,7 @@ const CreateTicketDrawer: React.FC<Props> = ({
           <>
             <Form.Item
               label="Comment"
-              name="comment"
+              name="user_comment"
               rules={[
                 { required: true, message: 'Please enter a comment' },
                 {

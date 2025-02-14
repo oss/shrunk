@@ -66,7 +66,7 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
       </Typography.Text>
     </Descriptions.Item>
     <Descriptions.Item label="Comment">
-      <Typography.Text>{ticketInfo.comment}</Typography.Text>
+      <Typography.Text>{ticketInfo.user_comment}</Typography.Text>
     </Descriptions.Item>
   </Descriptions>
 );

@@ -7,10 +7,10 @@
     <body>
         <p>Dear {{ reporter }},</p>
 
-        <p>Your ticket ({{ ticket_id }}) has been resolved.</p>
+        <p>Your ticket ({{ _id }}) has been resolved.</p>
 
-        {% if resolution %}<p>Status: {{ resolution }}</p>{% endif %}
-        {% if comment %}<p>Comment: {{ comment }}</p>{% endif %}
+        {% if role_request_status %}<p>Status: {{ role_request_status }}</p>{% endif %}
+        {% if admin_review %}<p>Comment: {{ admin_review }}</p>{% endif %}
         
         <p>Thank you for your interest and usage of go.rutgers.edu, the official URL shortener of Rutgers, The State University of New Jersey.</p>
         

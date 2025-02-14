@@ -1,9 +1,9 @@
 Dear {{ reporter }},
 
-Your ticket ({{ ticket_id }}) has been resolved.
+Your ticket ({{ _id }}) has been resolved.
 
-{% if resolution %}Status: {{ resolution }}{% endif %}
-{% if comment %}Comment: {{ comment }}{% endif %}
+{% if role_request_status %}Status: {{ role_request_status }}{% endif %}
+{% if admin_review %}Comment: {{ admin_review }}{% endif %}
 
 Thank you for your interest and usage of go.rutgers.edu, the official URL shortener of Rutgers, The State University of New Jersey.
 

@@ -10,16 +10,22 @@ export interface TicketInfo {
   _id: string;
 
   /**
+   * When the ticket was created
+   * @property
+   */
+  created_time: number;
+
+  /**
    * The NetID of the reporter
    * @property
    */
   reporter: string;
 
   /**
-   * The reason for the ticket
+   * The user's comment justifying their ticket
    * @property
    */
-  reason: string;
+  user_comment: string;
 
   /**
    * The entity the ticket is about (same as the reporter if reason is "power_user", empty if reason is "other")
@@ -28,16 +34,40 @@ export interface TicketInfo {
   entity?: string;
 
   /**
-   * The comment on the ticket
+   * The reason for the ticket
    * @property
    */
-  comment: string;
+  reason: string;
 
   /**
-   * When the ticket was created
+   * The status of the ticket
    * @property
    */
-  timestamp: Date;
+  status: string;
+
+  /**
+   * The person that actioned the ticket
+   * @property
+   */
+  actioned_by?: string;
+
+  /**
+   * When the ticket was actioned
+   * @property
+   */
+  actioned_time?: number;
+
+  /**
+   * The admin's comment that reviews the ticket
+   * @property
+   */
+  admin_review?: string;
+
+  /**
+   * Whether the role requested by the ticket was granted
+   * @property
+   */
+  is_role_granted?: boolean;
 }
 
 /**
@@ -81,22 +111,34 @@ export interface CreateTicketInfo {
   entity?: string;
 
   /**
-   * The comment on the ticket
+   * The user's comment justifying their ticket
    * @property
    */
-  comment: string;
+  user_comment: string;
 }
 
 export interface ResolveTicketInfo {
   /**
-   * The comment on the ticket resolution
-   * @property
-   */
-  comment?: string;
-
-  /**
    * The action to perform based on the ticket's request
    * @property
    */
-  action?: string;
+  action: string;
+
+  /**
+   * The person that actioned the ticket
+   * @property
+   */
+  actioned_by: string;
+
+  /**
+   * The admin's comment that reviews the ticket
+   * @property
+   */
+  admin_review?: string;
+
+  /**
+   * Whether the role requested by the ticket was granted
+   * @property
+   */
+  is_role_granted?: boolean;
 }

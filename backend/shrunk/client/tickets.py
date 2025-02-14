@@ -1,5 +1,4 @@
 import os
-import time
 from typing import Any, Dict, List, Optional
 
 import pymongo
@@ -8,6 +7,20 @@ from flask import render_template_string
 from flask_mailman import Mail
 
 __all__ = ["TicketsClient"]
+
+REASON_CODES = {
+    "power_user": "PU",
+    "whitelisted": "WL",
+    "other": "OT",
+}
+CATEGORY_TO_SUBJECT = {
+    "confirmation": "Ticket Submitted",
+    "notification": "New Pending Ticket",
+    "resolution": "Ticket Resolved",
+    "closed": "Ticket Closed Without Resolution",
+}
+
+Ticket = Dict[str, Any]
 
 
 class TicketsClient:
@@ -28,49 +41,40 @@ class TicketsClient:
         self.slack_shrunk_channel_id = SLACK_SHRUNK_CHANNEL_ID
 
     def get_help_desk_enabled(self) -> bool:
-        """
-        Getter for help_desk_enabled.
+        """Getter for help_desk_enabled.
 
         :return: True if the help desk is enabled, False otherwise
         """
         return self.help_desk_enabled
 
     def get_slack_integration_enabled(self) -> bool:
-        """
-        Getter for slack_integration_enabled.
+        """Getter for slack_integration_enabled.
 
         :return: True if the slack integration is enabled, False otherwise
         """
         return self.slack_integration_enabled
 
     def get_slack_bot_token(self) -> str:
-        """
-        Getter for slack_bot_token
+        """Getter for slack_bot_token
 
         :return: the slack bot token
         """
         return self.slack_bot_token
 
     def get_slack_shrunk_channel_id(self) -> str:
-        """
-        Getter for slack_shrunk_channel_id.
+        """Getter for slack_shrunk_channel_id.
 
         :return: the slack shrunk channel ID
         """
         return self.slack_shrunk_channel_id
 
     def get_help_desk_text(self) -> Dict[str, str]:
-        """
-        Get the text-related attributes needed for messages, emails, and forms.
+        """Get the text-related attributes needed for messages, emails, and
+        forms.
 
         :return: a dictionary with the text-related attributes
         """
         return {
-            "error": {
-                403: "Unauthorized to submit a ticket",
-                409: "Duplicate ticket",
-                429: "Too many tickets",
-            },
             "reason": {
                 "power_user": {
                     "prompt": (
@@ -120,21 +124,13 @@ class TicketsClient:
         mail: Mail,
         ticket_id: str,
         category: str,
-        resolution: Optional[str] = None,
-        comment: Optional[str] = None,
     ):
-        """
-        Send an email to the help desk with the ticket ID and action.
+        """Send an email to the help desk with the ticket ID and action.
 
         :param ticket_id: the ID of the ticket
         :param category: the category of the ticket
-        :param resolution: the resolution of the ticket (optional)
-        :param comment: the admin comment for the ticket resolution (optional)
         """
-        ticket = self.get_ticket(ticket_id=ticket_id)
-
-        if not ticket:
-            return
+        ticket = self.get_ticket({"_id": ticket_id})
 
         # Construct the email
         SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -147,21 +143,18 @@ class TicketsClient:
 
         from_email = "go-support@oit.rutgers.edu"
         recipient_list = [f"{ticket['reporter']}@rutgers.edu"]
-        subject = "Go: Rutgers University URL Shortener - "
-        variables = {
-            "ticket_id": ticket_id,
-            "reporter": ticket["reporter"],
-            "resolution": resolution.upper() if resolution else None,
-            "comment": comment,
-        }
+        subject = (
+            f"Go: Rutgers University URL Shortener - {CATEGORY_TO_SUBJECT[category]}"
+        )
 
-        if category == "confirmation":
-            subject += "Ticket Submitted"
-        elif category == "notification":
-            subject += "New Pending Ticket"
-            recipient_list = ["oss@oit.rutgers.edu"]
-        else:  # category == "resolution"
-            subject += "Ticket Resolved"
+        variables = ticket
+        if "is_role_granted" in ticket:
+            variables["role_request_status"] = (
+                "APPROVED" if ticket["is_role_granted"] else "DENIED"
+            )
+
+        if category == "notification":
+            recipient_list = ["oss@oit.rutgers.edu"]  # Send to OSS team
 
         with open(HTML_TEMPLATE_PATH, "r", encoding="utf-8") as file:
             html_content = file.read()
@@ -180,89 +173,61 @@ class TicketsClient:
             recipient_list=recipient_list,
         )
 
-    def create_ticket(self, ticket_data: dict) -> Optional[str]:
+    def create_ticket(self, data: dict) -> str:
+        """Create a ticket with the given data.
+
+        :param data: the data for the new ticket
+
+        :return: the ticket
         """
-        Create a new ticket
+        result = self.db.tickets.insert_one(data)
 
-        :param ticket_data: the data for the new ticket
+        return self.get_ticket({"_id": result.inserted_id})
 
-        :return: the ID of the new ticket or None if the creation failed
+    def update_ticket(self, query: dict, data: dict):
+        """Update an existing ticket
+
+        :param query: the query to match the ticket
+        :param data: the data to update the ticket with
         """
-        timestamp = str(time.time())
-        result = self.db.tickets.insert_one(
-            {
-                "timestamp": timestamp,
-                **ticket_data,
-            }
-        )
-        if not result.acknowledged:
-            return None
+        if "_id" in query and isinstance(query["_id"], str):
+            query["_id"] = ObjectId(query["_id"])
 
-        return str(result.inserted_id)
+        self.db.tickets.update_one(query, {"$set": data})
 
-    def delete_ticket(self, ticket_id: str):
-        """
-        Delete a ticket
+    def get_ticket(self, query: dict) -> Optional[Ticket]:
+        """Get a single ticket that matches the given criteria.
 
-        :param ticket_id: the ID of the ticket to delete
-        """
-        self.db.tickets.delete_one({"_id": ObjectId(ticket_id)})
-
-    def get_ticket(
-        self,
-        *,
-        ticket_id: Optional[str] = None,
-        reporter: Optional[str] = None,
-        reason: Optional[str] = None,
-        entity: Optional[str] = None,
-    ) -> Optional[Dict[str, Any]]:
-        """
-        Get a single ticket that matches the given criteria. Note that this
-        will return either 0 or 1 tickets.
-
-        :param ticket_id: the ID of the ticket (optional)
-        :param reporter: the reporter of the ticket (optional)
-        :param reason: the reason for the ticket (optional)
-        :param entity: the entity for the ticket (optional)
+        :param query: the query to match the ticket
 
         :return: the ticket or None if no ticket matches the criteria
         """
-        query = {}
-
-        if ticket_id:
-            query["_id"] = ObjectId(ticket_id)
-        if reporter:
-            query["reporter"] = reporter
-        if reason:
-            query["reason"] = reason
-        if entity:
-            query["entity"] = entity
+        if "_id" in query and isinstance(query["_id"], str):
+            query["_id"] = ObjectId(query["_id"])
 
         return self.db.tickets.find_one(query)
 
     def get_tickets(
-        self, sort: List[tuple], reporter: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
-        """
-        Get all tickets by the given reporter or all tickets if no reporter is
-        specified.
+        self, query: dict, sort: Optional[List[tuple]] = None
+    ) -> List[Ticket]:
+        """Get all tickets that match the given criteria and sort them if
+        needed.
 
-        :param reporter: the reporter of the tickets (optional)
+        :param query: the query to match the tickets
         :param sort: a list of tuples to sort the tickets by
 
         :return: a list of tickets
         """
-        query = {"reporter": reporter} if reporter else {}
+        if "_id" in query and isinstance(query["_id"], str):
+            query["_id"] = ObjectId(query["_id"])
+
         return list(self.db.tickets.find(query, sort=sort))
 
-    def count_tickets(self, reporter: Optional[str]) -> int:
-        """
-        Count the number of tickets by reporter or all tickets if no reporter
-        is specified.
+    def count_tickets(self, query: dict) -> int:
+        """Count the number of tickets that match the given criteria.
 
-        :param reporter: the reporter of the tickets (optional)
+        :param query: the query to match the tickets
 
-        :return: the number of tickets by the reporter
+        :return: the number of tickets that match the criteria
         """
-        query = {"reporter": reporter} if reporter else {}
         return self.db.tickets.count_documents(query)
