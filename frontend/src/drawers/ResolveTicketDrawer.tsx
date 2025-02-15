@@ -43,12 +43,6 @@ interface Props {
    * @property
    */
   onClose: () => void;
-
-  /**
-   * The NetID of the user
-   * @property
-   */
-  netid: string;
 }
 
 /**
@@ -61,7 +55,6 @@ const ResolveTicketDrawer: React.FC<Props> = ({
   entityPositionInfo,
   helpDeskText,
   onClose,
-  netid,
 }) => {
   /**
    * State for the [[ResolveTicketDrawer]] component
@@ -91,7 +84,6 @@ const ResolveTicketDrawer: React.FC<Props> = ({
         },
         body: JSON.stringify({
           action: 'resolve',
-          actioned_by: netid,
           ...values,
         }),
       },

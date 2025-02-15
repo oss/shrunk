@@ -48,15 +48,14 @@ CREATE_TICKET_SCHEMA = {
     },
 }
 
-UPDATE_TICKET_SCHEMA = {
+PATCH_TICKET_SCHEMA = {
     "type": "object",
     "properties": {
         "action": {"type": "string"},
-        "actioned_by": {"type": "string"},
         "admin_review": {"type": "string"},
         "is_role_granted": {"type": "boolean"},
     },
-    "required": ["action", "actioned_by"],
+    "required": ["action"],
 }
 
 
@@ -151,7 +150,8 @@ def get_tickets(netid: str, client: ShrunkClient) -> Response:
         filter by.
     - ``sort``: a comma-separated list of fields to sort by. Prefix a field
         with a '-' to sort in descending order.
-    - ``count``: if present, return the count of tickets instead of the tickets.
+    - ``count``: if present (e.g. "count=true"), return the count of tickets
+        instead of the tickets.
 
     :return: a list of tickets
     """
@@ -294,7 +294,7 @@ def create_ticket(netid: str, client: ShrunkClient, req: Any) -> Response:
 
 
 @bp.route("/<b32:id>", methods=["PATCH"])
-@request_schema(UPDATE_TICKET_SCHEMA)
+@request_schema(PATCH_TICKET_SCHEMA)
 @require_login
 def patch_ticket(netid: str, client: ShrunkClient, req: Any, id: str) -> Response:
     """``PATCH /api/ticket/<id>``
@@ -334,6 +334,7 @@ def patch_ticket(netid: str, client: ShrunkClient, req: Any, id: str) -> Respons
             {
                 **req,
                 "status": "closed",
+                "actioned_by": netid,
                 "actioned_time": time.time(),
             },
         )
@@ -352,6 +353,7 @@ def patch_ticket(netid: str, client: ShrunkClient, req: Any, id: str) -> Respons
             {
                 **req,
                 "status": "resolved",
+                "actioned_by": netid,
                 "actioned_time": time.time(),
             },
         )

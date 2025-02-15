@@ -138,7 +138,6 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
       },
       body: JSON.stringify({
         action: 'close',
-        actioned_by: netid,
       }),
     });
 

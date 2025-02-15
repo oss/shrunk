@@ -33,12 +33,6 @@ interface Props {
   ticketID: string;
 
   /**
-   * NetID of the user
-   * @property
-   */
-  netid: string;
-
-  /**
    * A set of the user's privileges.
    * @property
    */
@@ -48,7 +42,7 @@ interface Props {
 /**
  * Component for the ticket page
  */
-const Ticket: React.FC<Props> = ({ ticketID, netid, userPrivileges }) => {
+const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
   /**
    * State for the [[Ticket]] component
    *
@@ -120,7 +114,6 @@ const Ticket: React.FC<Props> = ({ ticketID, netid, userPrivileges }) => {
       },
       body: JSON.stringify({
         action: 'close',
-        actioned_by: netid,
       }),
     });
 
@@ -178,7 +171,6 @@ const Ticket: React.FC<Props> = ({ ticketID, netid, userPrivileges }) => {
             entityPositionInfo={entityPositionInfo}
             helpDeskText={helpDeskText}
             onClose={() => setIsResolveDrawerOpen(false)}
-            netid={netid}
           />
         )}
 

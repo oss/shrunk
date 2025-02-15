@@ -37,7 +37,7 @@ def test_create_ticket(client: Client, ticket: dict):
         # Create the ticket
         resp = client.post("/api/v1/ticket", json=ticket)
         assert resp.status_code == 201, "Failed to create ticket"
-        ticket_id = resp.json["_id"]
+        ticket_id = ["ticket"]["_id"]
 
     with dev_login(client, "admin"):
         # Delete the tickets
@@ -63,7 +63,7 @@ def test_create_ticket_duplicate(client: Client):
         # Create the ticket
         resp = client.post("/api/v1/ticket", json=ticket)
         assert resp.status_code == 201, "Failed to create ticket"
-        ticket_id = resp.json["_id"]
+        ticket_id = ["ticket"]["_id"]
 
         # Create the ticket again
         resp = client.post("/api/v1/ticket", json=ticket)
@@ -117,7 +117,7 @@ def test_get_tickets(client: Client):
         for ticket in general_tickets:
             resp = client.post("/api/v1/ticket", json=ticket)
             assert resp.status_code == 201, "Failed to create ticket"
-            ticket_ids.append(resp.json["_id"])
+            ticket_ids.append(["ticket"]["_id"])
 
         # Get the tickets
         resp = client.get("/api/v1/ticket")
@@ -161,7 +161,7 @@ def test_close_ticket(client: Client, ticket: dict):
         # Create the ticket
         resp = client.post("/api/v1/ticket", json=ticket)
         assert resp.status_code == 201, "Failed to create ticket"
-        ticket_id = resp.json["_id"]
+        ticket_id = resp.json["ticket"]["_id"]
 
         # Close the ticket
         resp = client.put(
@@ -172,6 +172,50 @@ def test_close_ticket(client: Client, ticket: dict):
         assert resp.status_code == 200, "Failed to close ticket"
 
     with dev_login(client, "admin"):
+        # Delete the ticket
+        resp = client.delete(
+            f"/api/v1/ticket/"
+            f"{str(base64.b32encode(bytes(ticket_id, 'utf8')), 'utf8')}"
+        )
+        assert resp.status_code == 204, "Failed to delete ticket"
+
+
+@pytest.mark.parametrize(
+    ("ticket"),
+    general_tickets,
+)
+def test_resolve_ticket(client: Client, ticket: dict):
+    """Test resolving a ticket
+
+    Args:
+        client (Client): The test client
+        ticket (dict): The ticket to create
+    """
+    ticket_id = ""
+    with dev_login(client, "user"):
+        # Create the ticket
+        resp = client.post("/api/v1/ticket", json=ticket)
+        assert resp.status_code == 201, "Failed to create ticket"
+        ticket_id = resp.json["ticket"]["_id"]
+
+    with dev_login(client, "admin"):
+        # Resolve the ticket
+        if ticket["reason"] == "power_user" or ticket["reason"] == "whitelisted":
+            data = {
+                "action": "resolve",
+                "admin_review": "I do not want to give this person the role",
+                "is_role_granted": False,
+            }
+        else:
+            data = {"action": "resolve", "admin_review": "I have resolved the issue"}
+
+        resp = client.put(
+            f"/api/v1/ticket/"
+            f"{str(base64.b32encode(bytes(ticket_id, 'utf8')), 'utf8')}",
+            json=data,
+        )
+        assert resp.status_code == 200, "Failed to resolve ticket"
+
         # Delete the ticket
         resp = client.delete(
             f"/api/v1/ticket/"

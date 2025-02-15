@@ -392,7 +392,6 @@ export default function Shrunk(props: Props) {
                       render={(route) => (
                         <Ticket
                           ticketID={route.match.params.id}
-                          netid={netid}
                           userPrivileges={userPrivileges}
                         />
                       )}
