@@ -40,7 +40,7 @@ def test_create_ticket(client: Client, ticket: dict):
         ticket_id = resp.json["ticket"]["_id"]
 
     with dev_login(client, "admin"):
-        # Delete the tickets
+        # Delete the ticket
         resp = client.delete(
             f"/api/v1/ticket/"
             f"{str(base64.b32encode(bytes(ticket_id, 'utf8')), 'utf8')}"
@@ -65,7 +65,7 @@ def test_create_ticket_duplicate(client: Client):
         assert resp.status_code == 201, "Failed to create ticket"
         ticket_id = resp.json["ticket"]["_id"]
 
-        # Create the ticket again
+        # Attempt to create the ticket again
         resp = client.post("/api/v1/ticket", json=ticket)
         assert resp.status_code == 409, "Created duplicate ticket"
 
@@ -89,9 +89,8 @@ def test_create_ticket_has_role(client: Client):
         "reason": "power_user",
         "user_comment": "Give me power user access",
     }
-
     with dev_login(client, "power"):
-        # Create the ticket
+        # Attempt to create the ticket
         resp = client.post("/api/v1/ticket", json=ticket)
         assert resp.status_code == 409, "Created ticket for user with role"
 
@@ -123,7 +122,7 @@ def test_get_tickets(client: Client):
         assert resp.status_code == 200, "Failed to get tickets"
 
         # Get the number of tickets
-        resp = client.get("/api/v1/ticket?reporter:DEV_USER&count=true")
+        resp = client.get("/api/v1/ticket?filter=reporter:DEV_USER&count=true")
         assert resp.json["count"] == 3, "Failed to get tickets count"
 
     with dev_login(client, "admin"):
@@ -199,7 +198,6 @@ def test_resolve_ticket(client: Client, ticket: dict):
             }
         else:
             data = {"action": "resolve", "admin_review": "I have resolved the issue"}
-
         resp = client.patch(
             f"/api/v1/ticket/"
             f"{str(base64.b32encode(bytes(ticket_id, 'utf8')), 'utf8')}",
