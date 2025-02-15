@@ -57,6 +57,7 @@ const CreateTicketDrawer: React.FC<Props> = ({
   const [form] = Form.useForm();
 
   const { message } = App.useApp();
+  const isDev = process.env.NODE_ENV === 'development';
 
   /**
    * Create a ticket.
@@ -146,14 +147,20 @@ const CreateTicketDrawer: React.FC<Props> = ({
   };
 
   /**
-   * Validate whether the entity field is alphanumeric
+   * Validate whether the entity field is alphanumeric. Allow for non-alphanumeric NetIDs in development mode.
    * @method
    *
    * @param _ - The form instance
    * @param value - The value of the entity field
    */
   const validateEntity = (_: any, value: string) => {
-    if (value && !/^[a-zA-Z0-9]+$/.test(value)) {
+    const devUsers = ['DEV_USER', 'DEV_FACSTAFF', 'DEV_PWR_USER', 'DEV_ADMIN'];
+
+    if (
+      value &&
+      !/^[a-zA-Z0-9]+$/.test(value) &&
+      (!isDev || !devUsers.includes(value))
+    ) {
       return Promise.reject(new Error('NetID must be alphanumeric'));
     }
     return Promise.resolve();
