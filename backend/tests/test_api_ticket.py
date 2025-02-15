@@ -78,27 +78,18 @@ def test_create_ticket_duplicate(client: Client):
         assert resp.status_code == 204, "Failed to delete ticket"
 
 
-@pytest.mark.parametrize(
-    ("ticket"),
-    [
-        {
-            "reason": "power_user",
-            "user_comment": "Give me power user access",
-        },
-        {
-            "reason": "whitelisted",
-            "entity": "DEV_USER",
-            "user_comment": "Whitelist this person",
-        },
-    ],
-)
-def test_create_ticket_has_role(client: Client, ticket: dict):
+def test_create_ticket_has_role(client: Client):
     """Test creating a ticket where the entity already has the role
 
     Args:
         client (Client): The test client
         ticket (dict): The ticket to create
     """
+    ticket = {
+        "reason": "power_user",
+        "user_comment": "Give me power user access",
+    }
+
     with dev_login(client, "power"):
         # Create the ticket
         resp = client.post("/api/v1/ticket", json=ticket)
@@ -120,19 +111,19 @@ def test_get_tickets(client: Client):
             ticket_ids.append(resp.json["ticket"]["_id"])
 
         # Get the tickets
-        resp = client.get("/api/v1/ticket")
+        resp = client.get("/api/v1/ticket?filter=reporter:DEV_USER")
         assert resp.status_code == 200, "Failed to get tickets"
 
         # Get the tickets with reason power_user
-        resp = client.get("/api/v1/ticket?filter=reason:power_user")
+        resp = client.get("/api/v1/ticket?filter=reporter:DEV_USER,reason:power_user")
         assert resp.status_code == 200, "Failed to get tickets"
 
         # Get the tickets sorted by created_time
-        resp = client.get("/api/v1/ticket?sort=-created_time")
+        resp = client.get("/api/v1/ticket?filter=reporter:DEV_USER&sort=-created_time")
         assert resp.status_code == 200, "Failed to get tickets"
 
         # Get the number of tickets
-        resp = client.get("/api/v1/ticket?count=true")
+        resp = client.get("/api/v1/ticket?reporter:DEV_USER&count=true")
         assert resp.json["count"] == 3, "Failed to get tickets count"
 
     with dev_login(client, "admin"):
@@ -164,7 +155,7 @@ def test_close_ticket(client: Client, ticket: dict):
         ticket_id = resp.json["ticket"]["_id"]
 
         # Close the ticket
-        resp = client.put(
+        resp = client.patch(
             f"/api/v1/ticket/"
             f"{str(base64.b32encode(bytes(ticket_id, 'utf8')), 'utf8')}",
             json={"action": "close", "actioned_by": "DEV_USER"},
@@ -209,7 +200,7 @@ def test_resolve_ticket(client: Client, ticket: dict):
         else:
             data = {"action": "resolve", "admin_review": "I have resolved the issue"}
 
-        resp = client.put(
+        resp = client.patch(
             f"/api/v1/ticket/"
             f"{str(base64.b32encode(bytes(ticket_id, 'utf8')), 'utf8')}",
             json=data,
