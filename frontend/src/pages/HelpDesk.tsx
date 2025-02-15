@@ -58,6 +58,7 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
    * helpDeskText: The text fields related to the help desk
    * isHelpDeskEnabled: Whether the help desk is enabled
    * tickets: The list of tickets
+   * numTicketsResolved: The number of tickets resolved
    * isCreateDrawerOpen: Whether the CreateTicketDrawer is open
    */
   const [loading, setLoading] = useState<boolean>(false);
@@ -66,6 +67,7 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
   );
   const [isHelpDeskEnabled, setIsHelpDeskEnabled] = useState<boolean>(false);
   const [tickets, setTickets] = useState<TicketInfo[]>([]);
+  const [numTicketsResolved, setNumTicketsResolved] = useState<number>(0);
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState<boolean>(false);
 
   const { message } = App.useApp();
@@ -88,6 +90,18 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
     const response = await fetch('/api/v1/ticket/text');
     const data = await response.json();
     setHelpDeskText(data);
+  };
+
+  /**
+   * Get the number of tickets resolved
+   * @method
+   */
+  const getNumTicketsResolved = async () => {
+    const response = await fetch(
+      `/api/v1/ticket?filter=status:resolved&count=true`,
+    );
+    const data = await response.json();
+    setNumTicketsResolved(data.count);
   };
 
   /**
@@ -143,6 +157,7 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
 
       if (userPrivileges.has('admin')) {
         fetchPromises.push(getIsHelpDeskEnabled());
+        fetchPromises.push(getNumTicketsResolved());
       }
 
       await Promise.all(fetchPromises);
@@ -321,7 +336,7 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
         {userPrivileges.has('admin') && (
           <Col span={24}>
             <Row gutter={[16, 16]}>
-              <Col span={12}>
+              <Col span={8}>
                 <Card loading={loading}>
                   <Statistic
                     title="Status"
@@ -329,9 +344,17 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
                   />
                 </Card>
               </Col>
-              <Col span={12}>
+              <Col span={8}>
                 <Card loading={loading}>
-                  <Statistic title="Ticket Count" value={tickets.length} />
+                  <Statistic title="Open Tickets" value={tickets.length} />
+                </Card>
+              </Col>
+              <Col span={8}>
+                <Card loading={loading}>
+                  <Statistic
+                    title="Tickets Resolved"
+                    value={numTicketsResolved}
+                  />
                 </Card>
               </Col>
             </Row>

@@ -151,6 +151,7 @@ def get_tickets(netid: str, client: ShrunkClient) -> Response:
         filter by.
     - ``sort``: a comma-separated list of fields to sort by. Prefix a field
         with a '-' to sort in descending order.
+    - ``count``: if present, return the count of tickets instead of the tickets.
 
     :return: a list of tickets
     """
@@ -174,6 +175,11 @@ def get_tickets(netid: str, client: ShrunkClient) -> Response:
         "admin", netid
     ):
         abort(403)
+
+    # Add count parameter
+    count_param = request.args.get("count", None)
+    if count_param:
+        return jsonify({"count": client.tickets.count_tickets(query)})
 
     # Add sort parameter
     sort_param = request.args.get("sort", None)
