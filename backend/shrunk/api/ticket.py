@@ -360,3 +360,31 @@ def patch_ticket(netid: str, client: ShrunkClient, req: Any, id: str) -> Respons
     # Action is invalid
     else:
         abort(400)
+
+
+@bp.route("/<b32:id>", methods=["DELETE"])
+@require_login
+def delete_ticket(netid: str, client: ShrunkClient, id: str) -> Response:
+    """``DELETE /api/ticket/<id>``
+
+    Delete a ticket. This route is mainly used for testing purposes.
+
+    :param netid: the NetID of the user
+    :param client: the Shrunk client
+    :param id: the ID of the ticket
+
+    :return: an empty response
+
+    """
+    # Disable route if the user is not an admin
+    if not client.roles.has("admin", netid):
+        abort(403)
+
+    # Ticket does not exist
+    ticket = client.tickets.get_ticket({"_id": id})
+    if not ticket:
+        abort(404)
+
+    client.tickets.delete_ticket({"_id": id})
+
+    return Response(status=204)

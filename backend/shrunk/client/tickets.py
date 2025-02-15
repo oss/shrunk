@@ -8,11 +8,6 @@ from flask_mailman import Mail
 
 __all__ = ["TicketsClient"]
 
-REASON_CODES = {
-    "power_user": "PU",
-    "whitelisted": "WL",
-    "other": "OT",
-}
 CATEGORY_TO_SUBJECT = {
     "confirmation": "Ticket Submitted",
     "notification": "New Pending Ticket",
@@ -222,6 +217,16 @@ class TicketsClient:
             query["_id"] = ObjectId(query["_id"])
 
         return list(self.db.tickets.find(query, sort=sort))
+
+    def delete_ticket(self, query: dict):
+        """Delete a ticket that matches the given criteria.
+
+        :param query: the query to match the ticket
+        """
+        if "_id" in query and isinstance(query["_id"], str):
+            query["_id"] = ObjectId(query["_id"])
+
+        self.db.tickets.delete_one(query)
 
     def count_tickets(self, query: dict) -> int:
         """Count the number of tickets that match the given criteria.
