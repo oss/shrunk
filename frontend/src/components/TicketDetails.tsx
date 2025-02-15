@@ -45,6 +45,11 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
     <Descriptions.Item label="ID">
       <Typography.Text>{ticketInfo._id}</Typography.Text>
     </Descriptions.Item>
+    <Descriptions.Item label="Status">
+      <Typography.Text strong>
+        {ticketInfo.status.toUpperCase()}
+      </Typography.Text>
+    </Descriptions.Item>
     <Descriptions.Item label="Reporter">
       <Typography.Text>{ticketInfo.reporter}</Typography.Text>
     </Descriptions.Item>
@@ -60,7 +65,7 @@ const TicketDetails: React.FC<TicketDetailsProps> = ({
     </Descriptions.Item>
     <Descriptions.Item label="Submission Date">
       <Typography.Text>
-        {dayjs(new Date(Number(ticketInfo.timestamp) * 1000)).format(
+        {dayjs(new Date(ticketInfo.created_time * 1000)).format(
           'MMM D, YYYY, h:mm a',
         )}
       </Typography.Text>

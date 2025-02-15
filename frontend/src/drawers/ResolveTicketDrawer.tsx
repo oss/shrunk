@@ -187,7 +187,7 @@ const ResolveTicketDrawer: React.FC<Props> = ({
           <Form.Item label="Decision" name="is_role_granted">
             <Radio.Group optionType="button" buttonStyle="solid">
               <Radio.Button value>Approve</Radio.Button>
-              <Radio.Button>Deny</Radio.Button>
+              <Radio.Button value={false}>Deny</Radio.Button>
             </Radio.Group>
           </Form.Item>
         )}

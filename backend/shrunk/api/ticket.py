@@ -320,6 +320,9 @@ def patch_ticket(netid: str, client: ShrunkClient, req: Any, id: str) -> Respons
         # Only the reporter or an admin can close the ticket
         if ticket["reporter"] != netid and not client.roles.has("admin", netid):
             abort(403)
+        # Ticket is not open
+        if ticket["status"] != "open":
+            return jsonify({"message": "Ticket is not open"}), 409
         client.tickets.update_ticket(
             {"_id": id},
             {
@@ -335,6 +338,9 @@ def patch_ticket(netid: str, client: ShrunkClient, req: Any, id: str) -> Respons
         # Only an admin can resolve the ticket
         if not client.roles.has("admin", netid):
             abort(403)
+        # Ticket is not open
+        if ticket["status"] != "open":
+            return jsonify({"message": "Ticket is not open"}), 409
         client.tickets.update_ticket(
             {"_id": id},
             {

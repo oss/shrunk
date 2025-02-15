@@ -56,6 +56,7 @@ const Ticket: React.FC<Props> = ({ ticketID, netid, userPrivileges }) => {
    * entityPositionInfo: The entity position information
    * helpDeskText: The text fields related to the help desk
    * loading: Whether the component is loading
+   * closing: Whether the ticket is closing
    * isResolveDrawerOpen: Whether the ResolveTicketModal is open
    */
   const [ticketInfo, setTicketInfo] = useState<TicketInfo | null>(null);
@@ -65,6 +66,7 @@ const Ticket: React.FC<Props> = ({ ticketID, netid, userPrivileges }) => {
     null,
   );
   const [loading, setLoading] = useState<boolean>(false);
+  const [closing, setClosing] = useState<boolean>(false);
   const [isResolveDrawerOpen, setIsResolveDrawerOpen] =
     useState<boolean>(false);
 
@@ -110,6 +112,7 @@ const Ticket: React.FC<Props> = ({ ticketID, netid, userPrivileges }) => {
    * @method
    */
   const closeTicket = async () => {
+    setClosing(true);
     const response = await fetch(`/api/v1/ticket/${base32.encode(ticketID)}`, {
       method: 'PATCH',
       headers: {
@@ -125,9 +128,11 @@ const Ticket: React.FC<Props> = ({ ticketID, netid, userPrivileges }) => {
 
     if (response.ok) {
       message.success(data.message || 'Success', 2);
+      setClosing(false);
       history.push('/tickets');
     } else {
       message.error(data.message || 'Error', 2);
+      setClosing(false);
     }
   };
 
@@ -190,6 +195,7 @@ const Ticket: React.FC<Props> = ({ ticketID, netid, userPrivileges }) => {
                     icon={<CheckCircleOutlined />}
                     type="primary"
                     onClick={() => setIsResolveDrawerOpen(true)}
+                    disabled={ticketInfo?.status !== 'open'}
                   >
                     Resolve
                   </Button>
@@ -201,7 +207,12 @@ const Ticket: React.FC<Props> = ({ ticketID, netid, userPrivileges }) => {
                   cancelText="No"
                   okButtonProps={{ danger: true }}
                 >
-                  <Button icon={<CloseCircleOutlined />} danger>
+                  <Button
+                    icon={<CloseCircleOutlined />}
+                    danger
+                    disabled={ticketInfo?.status !== 'open'}
+                    loading={closing}
+                  >
                     Close
                   </Button>
                 </Popconfirm>
