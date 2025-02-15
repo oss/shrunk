@@ -234,7 +234,7 @@ def create_ticket(netid: str, client: ShrunkClient, req: Any) -> Response:
     :param client: the Shrunk client
     :param req: the request JSON data
 
-    :return: a response with the new ticket on success
+    :return: a response with a message, and the new ticket on success
     """
     # Disable route according to help desk configuration
     if (
@@ -243,7 +243,7 @@ def create_ticket(netid: str, client: ShrunkClient, req: Any) -> Response:
     ):
         abort(403)
 
-    # Reporter has too many pending tickets. For now, the hard limit is 10.
+    # Reporter has too many open tickets. For now, the hard limit is 10.
     if client.tickets.count_tickets({"reporter": netid, "status": "open"}) >= 10:
         return jsonify({"message": "Too many open tickets"}), 409
 
@@ -328,7 +328,7 @@ def patch_ticket(netid: str, client: ShrunkClient, req: Any, id: str) -> Respons
                 "actioned_time": time.time(),
             },
         )
-        return Response(status=204)
+        return jsonify({"message": "Ticket closed successfully"}), 200
 
     # Action is resolve
     elif req["action"] == "resolve":
@@ -343,7 +343,7 @@ def patch_ticket(netid: str, client: ShrunkClient, req: Any, id: str) -> Respons
                 "actioned_time": time.time(),
             },
         )
-        return Response(status=204)
+        return jsonify({"message": "Ticket resolved successfully"}), 200
 
     # Action is invalid
     else:

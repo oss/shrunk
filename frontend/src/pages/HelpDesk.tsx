@@ -76,8 +76,8 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
    */
   const getIsHelpDeskEnabled = async () => {
     const response = await fetch('/api/v1/ticket/enabled');
-    const body = await response.json();
-    setIsHelpDeskEnabled(body.enabled);
+    const data = await response.json();
+    setIsHelpDeskEnabled(data.enabled);
   };
 
   /**
@@ -86,8 +86,8 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
    */
   const getHelpDeskText = async () => {
     const response = await fetch('/api/v1/ticket/text');
-    const body = await response.json();
-    setHelpDeskText(body);
+    const data = await response.json();
+    setHelpDeskText(data);
   };
 
   /**
@@ -343,7 +343,7 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
             columns={columns}
             rowKey="_id"
             pagination={userPrivileges.has('admin') ? { pageSize: 10 } : false}
-            locale={{ emptyText: 'No pending tickets' }}
+            locale={{ emptyText: 'No open tickets' }}
             loading={loading}
           />
         </Col>

@@ -82,19 +82,19 @@ const CreateTicketDrawer: React.FC<Props> = ({
 
     if (response.ok) {
       setTickets((tickets) => [data.ticket, ...tickets]);
-      message.success(data.message, 2);
+      message.success(data.message || 'Success', 2);
       setSubmitting(false);
       return data.ticket;
     }
 
     // Failed to create the ticket
-    message.error(data.message, 2);
+    message.error(data.message || 'Error', 2);
     setSubmitting(false);
     return null;
   };
 
   /**
-   * Send a confirmation/notification email
+   * Send an email about the ticket
    * @method
    *
    * @param id - The ID of the ticket

@@ -19,7 +19,7 @@ import React, { useEffect, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import TicketDetails, { EntityDetails } from '../../components/TicketDetails';
 import ResolveTicketDrawer from '../../drawers/ResolveTicketDrawer';
-import { EntityPositionInfo, ResolveTicketInfo, TicketInfo } from '../../types';
+import { EntityPositionInfo, TicketInfo } from '../../types';
 
 /**
  * Props for the [[Ticket]] component
@@ -33,6 +33,12 @@ interface Props {
   ticketID: string;
 
   /**
+   * NetID of the user
+   * @property
+   */
+  netid: string;
+
+  /**
    * A set of the user's privileges.
    * @property
    */
@@ -42,7 +48,7 @@ interface Props {
 /**
  * Component for the ticket page
  */
-const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
+const Ticket: React.FC<Props> = ({ ticketID, netid, userPrivileges }) => {
   /**
    * State for the [[Ticket]] component
    *
@@ -100,29 +106,28 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
   };
 
   /**
-   * Delete the ticket
+   * Close the ticket
    * @method
-   *
-   * @param isResolving - Whether the ticket is being resolved
    */
-  const deleteTicket = async (isResolving: boolean) => {
+  const closeTicket = async () => {
     const response = await fetch(`/api/v1/ticket/${base32.encode(ticketID)}`, {
-      method: 'DELETE',
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        action: 'close',
+        actioned_by: netid,
+      }),
     });
 
-    if (isResolving) {
-      if (response.status === 204) {
-        message.success('Ticket resolved successfully', 2);
-        history.push('/tickets');
-      } else {
-        message.error('Failed to resolve ticket; unable to delete ticket', 2);
-      }
-    } else if (response.status === 204) {
-      // If not resolving
-      message.success('Ticket deleted successfully', 2);
+    const data = await response.json();
+
+    if (response.ok) {
+      message.success(data.message || 'Success', 2);
       history.push('/tickets');
     } else {
-      message.error('Failed to delete ticket');
+      message.error(data.message || 'Error', 2);
     }
   };
 
@@ -132,87 +137,8 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
    */
   const getHelpDeskText = async () => {
     const response = await fetch('/api/v1/ticket/text');
-    const body = await response.json();
-    setHelpDeskText(body);
-  };
-
-  /**
-   * Grant a role to an entity
-   *
-   * @param entity The entity to grant the role to
-   * @param role The role to grant
-   * @param comment The comment to add to the grant
-   */
-  const grantRole = async (entity: string, role: string, comment?: string) => {
-    const encodedEntity = base32.encode(entity);
-    await fetch(`/api/v1/role/${role}/entity/${encodedEntity}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ comment }),
-    });
-  };
-
-  /**
-   * Send a resolution email
-   * @method
-   *
-   * @param resolved_ticket - The ticket that was just submitted
-   * @param action - Whether the ticket was approved or denied
-   * @param comment - The comment when the ticket was resolved
-   */
-  const sendEmail = async (
-    resolved_ticket: TicketInfo,
-    action?: string,
-    comment?: string,
-  ) => {
-    const body: any = {
-      ticketID: resolved_ticket._id,
-      category: 'resolution',
-    };
-
-    if (action !== undefined) {
-      body.resolution = action.toUpperCase();
-    }
-
-    if (comment !== undefined && comment !== '') {
-      body.comment = comment;
-    }
-
-    await fetch('/api/v1/ticket/email', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    });
-  };
-
-  /**
-   * Handle resolving the ticket. This includes granting the role, deleting the ticket, and sending an email.
-   * @method
-   *
-   * @param values - The values from the form
-   */
-  const resolveTicket = async (values: ResolveTicketInfo) => {
-    // Grant the role if the ticket is an approved role request
-    if (!ticketInfo) {
-      return;
-    }
-
-    if (
-      (ticketInfo.reason === 'whitelisted' ||
-        ticketInfo.reason === 'power_user') &&
-      ticketInfo.entity &&
-      values.action === 'approved'
-    ) {
-      await grantRole(ticketInfo.entity, ticketInfo.reason, values.comment);
-    }
-
-    // Send the resolution email
-    await sendEmail(ticketInfo, values.action, values.comment);
-
-    // Delete the ticket
-    await deleteTicket(true);
+    const data = await response.json();
+    setHelpDeskText(data);
   };
 
   useEffect(() => {
@@ -246,8 +172,8 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
             ticketInfo={ticketInfo}
             entityPositionInfo={entityPositionInfo}
             helpDeskText={helpDeskText}
-            onResolve={resolveTicket}
             onClose={() => setIsResolveDrawerOpen(false)}
+            netid={netid}
           />
         )}
 
@@ -270,7 +196,7 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
                 )}
                 <Popconfirm
                   title="Are you sure you want to close this ticket?"
-                  onConfirm={() => deleteTicket(false)}
+                  onConfirm={() => closeTicket()}
                   okText="Yes"
                   cancelText="No"
                   okButtonProps={{ danger: true }}

@@ -95,7 +95,7 @@ export interface EntityPositionInfo {
 }
 
 /**
- * Information used to create a ticket in the Help Desk
+ * Form values for creating a ticket in the Help Desk
  */
 export interface CreateTicketInfo {
   /**
@@ -117,19 +117,10 @@ export interface CreateTicketInfo {
   user_comment: string;
 }
 
+/**
+ * Form values for resolving a ticket in the Help Desk
+ */
 export interface ResolveTicketInfo {
-  /**
-   * The action to perform based on the ticket's request
-   * @property
-   */
-  action: string;
-
-  /**
-   * The person that actioned the ticket
-   * @property
-   */
-  actioned_by: string;
-
   /**
    * The admin's comment that reviews the ticket
    * @property
