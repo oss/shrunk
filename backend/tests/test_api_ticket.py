@@ -37,7 +37,7 @@ def test_create_ticket(client: Client, ticket: dict):
         # Create the ticket
         resp = client.post("/api/v1/ticket", json=ticket)
         assert resp.status_code == 201, "Failed to create ticket"
-        ticket_id = ["ticket"]["_id"]
+        ticket_id = resp.json["ticket"]["_id"]
 
     with dev_login(client, "admin"):
         # Delete the tickets
@@ -63,7 +63,7 @@ def test_create_ticket_duplicate(client: Client):
         # Create the ticket
         resp = client.post("/api/v1/ticket", json=ticket)
         assert resp.status_code == 201, "Failed to create ticket"
-        ticket_id = ["ticket"]["_id"]
+        ticket_id = resp.json["ticket"]["_id"]
 
         # Create the ticket again
         resp = client.post("/api/v1/ticket", json=ticket)
@@ -117,7 +117,7 @@ def test_get_tickets(client: Client):
         for ticket in general_tickets:
             resp = client.post("/api/v1/ticket", json=ticket)
             assert resp.status_code == 201, "Failed to create ticket"
-            ticket_ids.append(["ticket"]["_id"])
+            ticket_ids.append(resp.json["ticket"]["_id"])
 
         # Get the tickets
         resp = client.get("/api/v1/ticket")
