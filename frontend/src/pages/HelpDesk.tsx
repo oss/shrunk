@@ -65,22 +65,11 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
   const [helpDeskText, setHelpDeskText] = useState<Record<string, any> | null>(
     null,
   );
-  const [isHelpDeskEnabled, setIsHelpDeskEnabled] = useState<boolean>(false);
   const [tickets, setTickets] = useState<TicketInfo[]>([]);
   const [numTicketsResolved, setNumTicketsResolved] = useState<number>(0);
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState<boolean>(false);
 
   const { message } = App.useApp();
-
-  /**
-   * Get whether the help desk is enabled
-   * @method
-   */
-  const getIsHelpDeskEnabled = async () => {
-    const response = await fetch('/api/v1/ticket/enabled');
-    const data = await response.json();
-    setIsHelpDeskEnabled(data.enabled);
-  };
 
   /**
    * Get text fields related to the help desk
@@ -155,7 +144,6 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
       const fetchPromises = [getHelpDeskText(), getTickets()];
 
       if (userPrivileges.has('admin')) {
-        fetchPromises.push(getIsHelpDeskEnabled());
         fetchPromises.push(getNumTicketsResolved());
       }
 
@@ -262,6 +250,7 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
     {
       title: <Flex justify="flex-end">Actions</Flex>,
       key: 'actions',
+      fixed: 'right',
       render: (record: TicketInfo) => renderActions(record),
       width: '15%',
     },
@@ -300,8 +289,9 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
       width: '20%',
     },
     {
-      title: 'Actions',
+      title: <Flex justify="flex-end">Actions</Flex>,
       key: 'actions',
+      fixed: 'right',
       render: (record: TicketInfo) => renderActions(record),
       width: '15%',
     },
@@ -335,20 +325,12 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
         {userPrivileges.has('admin') && (
           <Col span={24}>
             <Row gutter={[16, 16]}>
-              <Col span={8}>
-                <Card loading={loading}>
-                  <Statistic
-                    title="Status"
-                    value={isHelpDeskEnabled ? 'Enabled' : 'Disabled'}
-                  />
-                </Card>
-              </Col>
-              <Col span={8}>
+              <Col span={12}>
                 <Card loading={loading}>
                   <Statistic title="Open Tickets" value={tickets.length} />
                 </Card>
               </Col>
-              <Col span={8}>
+              <Col span={12}>
                 <Card loading={loading}>
                   <Statistic
                     title="Tickets Resolved"
