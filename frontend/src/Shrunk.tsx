@@ -5,14 +5,15 @@
 
 import {
   BookOutlined,
-  ClockCircleOutlined,
+  BugOutlined,
   LogoutOutlined,
   MenuOutlined,
-  SafetyOutlined,
   SlidersOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
 import {
+  Alert,
+  App,
   Breadcrumb,
   Button,
   Col,
@@ -24,7 +25,6 @@ import {
   Row,
   Tag,
   Typography,
-  Alert,
 } from 'antd/lib';
 import { createBrowserHistory, Location } from 'history';
 import React, { useEffect, useState } from 'react';
@@ -37,12 +37,10 @@ import {
   Switch,
 } from 'react-router-dom';
 
-import base32 from 'hi-base32';
 import Admin from './pages/Admin';
 import { Dashboard } from './pages/Dashboard';
 import Faq from './pages/Faq';
 import Orgs from './pages/Orgs';
-import { RoleRequestForm } from './pages/RoleRequestForm';
 
 import { Role } from './components/admin/Role';
 import ManageOrg from './pages/subpages/ManageOrg';
@@ -51,9 +49,11 @@ import { Stats } from './pages/subpages/Stats';
 import { PendingAlerts } from './modals/PendingAlerts';
 import { PendingRequests } from './modals/PendingRequests';
 
-import { lightTheme } from './theme';
+import HelpDesk from './pages/HelpDesk';
 import LinkHubDashboard from './pages/LinkHubDashboard';
 import LinkHubEditor from './pages/subpages/LinkHubEditor';
+import Ticket from './pages/subpages/Ticket';
+import { lightTheme } from './theme';
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -93,10 +93,8 @@ export default function Shrunk(props: Props) {
 
   const [selectedKeys, setSelectedKeys] = useState<string[]>(['dash']);
   const [pendingAlerts, setPendingAlerts] = useState<string[]>([]);
-  const [powerUserRoleRequestMade, setPowerUserRoleRequestMade] =
-    useState(false);
   const [isLinkHubEnabled, setIsLinkHubEnabled] = useState(false);
-  const [isRoleRequestsEnabled, setIsRoleRequestsEnabled] = useState(false);
+  const [isHelpDeskEnabled, setIsHelpDeskEnabled] = useState(false);
 
   const fetchIsLinkHubEnabled = async () => {
     const resp = await fetch('/api/v1/linkhub/is-linkhub-enabled');
@@ -104,32 +102,16 @@ export default function Shrunk(props: Props) {
     setIsLinkHubEnabled(json.status as boolean);
   };
 
-  const fetchRoleRequestsEnabled = async () => {
-    const resp = await fetch('/api/v1/role_request/role_requests_enabled');
-    const json = await resp.json();
-    setIsRoleRequestsEnabled(json.role_requests_enabled as boolean);
+  const fetchIsHelpDeskEnabled = async () => {
+    const response = await fetch('/api/v1/ticket/enabled');
+    const body = await response.json();
+    setIsHelpDeskEnabled(body.enabled as boolean);
   };
 
   const updatePendingAlerts = async () => {
     const resp = await fetch(`/api/v1/alert/${netid}`);
     const json = await resp.json();
     setPendingAlerts(json.pending_alerts as string[]);
-  };
-
-  const updatePowerUserRoleRequestMade = async () => {
-    const encodedEntity = base32.encode(netid);
-    try {
-      const response = await fetch(
-        `/api/v1/role_request/power_user/${encodedEntity}`,
-      );
-      if (response.status === 200) {
-        setPowerUserRoleRequestMade(true);
-      } else if (response.status === 204) {
-        setPowerUserRoleRequestMade(false);
-      }
-    } catch (error) {
-      setPowerUserRoleRequestMade(false);
-    }
   };
 
   const setSelectedKeysFromLocation = (location: Location) => {
@@ -149,8 +131,8 @@ export default function Shrunk(props: Props) {
       } else {
         key = 'admin';
       }
-    } else if (route.startsWith('#/request-power-user-role')) {
-      key = 'request-power-user-role';
+    } else if (route.startsWith('#/tickets')) {
+      key = 'tickets';
     } else if (route.startsWith('#/faq')) {
       key = 'faq';
     }
@@ -166,8 +148,7 @@ export default function Shrunk(props: Props) {
     const init = async () => {
       await fetchIsLinkHubEnabled();
       await updatePendingAlerts();
-      await fetchRoleRequestsEnabled();
-      await updatePowerUserRoleRequestMade();
+      await fetchIsHelpDeskEnabled();
       const history = createBrowserHistory();
       setSelectedKeysFromLocation(history.location);
       history.listen(({ location }) => setSelectedKeysFromLocation(location));
@@ -198,29 +179,15 @@ export default function Shrunk(props: Props) {
       icon: <TeamOutlined />,
       label: <NavLink to="/orgs">My Organizations</NavLink>,
     },
-    ...(role === 'Administrator' ||
-    role === 'Power User' ||
-    !isRoleRequestsEnabled
-      ? []
-      : [
-          { type: 'divider' },
-          powerUserRoleRequestMade
-            ? {
-                key: 'request-power-user-role',
-                icon: <ClockCircleOutlined />,
-                label: 'Pending Request',
-                disabled: true,
-              }
-            : {
-                key: 'request-power-user-role',
-                icon: <SafetyOutlined />,
-                label: (
-                  <NavLink to="/request-power-user-role">
-                    Request Power User Role
-                  </NavLink>
-                ),
-              },
-        ]),
+    ...(showAdminTab || isHelpDeskEnabled
+      ? [
+          {
+            key: 'tickets',
+            icon: <BugOutlined />,
+            label: <NavLink to="/tickets">Help Desk</NavLink>,
+          },
+        ]
+      : []),
     ...(showAdminTab
       ? [
           {
@@ -257,220 +224,230 @@ export default function Shrunk(props: Props) {
     linkhubs: { name: 'LinkHub', clickable: false },
     orgs: { name: 'My Organizations', clickable: true },
     admin: { name: 'Admin Dashboard', clickable: true },
+    tickets: { name: 'Help Desk', clickable: true },
     roles: { name: 'Role', clickable: false },
-    'request-power-user-role': {
-      name: 'Request Power User Role',
-      clickable: false,
-    },
-    faq: { name: 'Frequently Asked Questions', clickable: true },
-    links: { name: 'URL Shortener', clickable: true, href: '/dash' },
+    faq: { name: 'FAQ', clickable: true },
+    links: { name: 'Links', clickable: false },
   };
 
   return (
     <ConfigProvider theme={lightTheme}>
-      <HashRouter>
-        <Layout>
-          {domain === 'shrunk.rutgers.edu' && (
-            <Alert
-              message="This is a developer environment, any progress you make on this site is prone to deletion."
-              type="warning"
-              showIcon
-              closable
-            />
-          )}
-          <Header>
-            <Row gutter={16}>
-              <Col>
-                <Link to="/dash">
-                  <Image
-                    preview={false}
-                    alt="Rutgers"
-                    src="/static/img/rutgers.png"
-                    width="175px"
-                    srcSet="/static/img/rutgers.png"
-                  />
-                </Link>
-              </Col>
-              <Col flex="auto">
-                <Menu
-                  overflowedIndicator={<MenuOutlined />}
-                  mode="horizontal"
-                  selectedKeys={selectedKeys}
-                >
-                  <Menu.Item key="dash">
-                    <NavLink to="/dash">URL Shortener</NavLink>
-                  </Menu.Item>
-                  {isLinkHubEnabled ? (
-                    <Menu.Item key="linkhubs">
-                      <NavLink to="/linkhubs">
-                        LinkHub <Tag color="warning">beta</Tag>
-                      </NavLink>
-                    </Menu.Item>
-                  ) : (
-                    <></>
-                  )}
-                  {!showWhitelistTab ? (
-                    <></>
-                  ) : (
-                    <Menu.Item key="whitelist">
-                      <NavLink to="/roles/whitelisted">Whitelist</NavLink>
-                    </Menu.Item>
-                  )}
-                </Menu>
-              </Col>
-              <Col>
-                <Dropdown menu={{ items: menuItems }}>
-                  <Button type="text" style={{ color: 'white' }}>
-                    {props.netid}
-                  </Button>
-                </Dropdown>
-              </Col>
-            </Row>
-          </Header>
+      <App>
+        <HashRouter>
           <Layout>
-            <Sider width={siderWidth} breakpoint="xl" collapsedWidth="10" />
-            <Content
+            {domain === 'shrunk.rutgers.edu' && (
+              <Alert
+                message="This is a developer environment, any progress you make on this site is prone to deletion."
+                type="warning"
+                showIcon
+                closable
+              />
+            )}
+            <Header>
+              <Row gutter={16}>
+                <Col>
+                  <Link to="/dash">
+                    <Image
+                      preview={false}
+                      alt="Rutgers"
+                      src="/static/img/rutgers.png"
+                      width="175px"
+                      srcSet="/static/img/rutgers.png"
+                    />
+                  </Link>
+                </Col>
+                <Col flex="auto">
+                  <Menu
+                    overflowedIndicator={<MenuOutlined />}
+                    mode="horizontal"
+                    selectedKeys={selectedKeys}
+                  >
+                    <Menu.Item key="dash">
+                      <NavLink to="/dash">URL Shortener</NavLink>
+                    </Menu.Item>
+                    {isLinkHubEnabled ? (
+                      <Menu.Item key="linkhubs">
+                        <NavLink to="/linkhubs">
+                          LinkHub <Tag color="warning">beta</Tag>
+                        </NavLink>
+                      </Menu.Item>
+                    ) : (
+                      <></>
+                    )}
+                    {!showWhitelistTab ? (
+                      <></>
+                    ) : (
+                      <Menu.Item key="whitelist">
+                        <NavLink to="/roles/whitelisted">Whitelist</NavLink>
+                      </Menu.Item>
+                    )}
+                  </Menu>
+                </Col>
+                <Col>
+                  <Dropdown menu={{ items: menuItems }}>
+                    <Button type="text" style={{ color: 'white' }}>
+                      {props.netid}
+                    </Button>
+                  </Dropdown>
+                </Col>
+              </Row>
+            </Header>
+            <Layout>
+              <Sider width={siderWidth} breakpoint="xl" collapsedWidth="10" />
+              <Content
+                style={{
+                  padding: 24,
+                  margin: 0,
+                  minHeight: '90vh',
+                }}
+              >
+                {pendingAlerts.length === 0 ? (
+                  <></>
+                ) : (
+                  <PendingAlerts netid={netid} pendingAlerts={pendingAlerts} />
+                )}
+                <PendingRequests />
+                <Breadcrumb
+                  items={hash.split('/').map((part, index, arr) => {
+                    if (part === '#') {
+                      return {
+                        title: 'Home',
+                        href: '/#',
+                      };
+                    }
+
+                    if (
+                      !Object.prototype.hasOwnProperty.call(partToName, part)
+                    ) {
+                      return { title: part.split('?')[0] };
+                    }
+
+                    const path =
+                      partToName[part].href === undefined
+                        ? arr
+                            .slice(0, index + 1)
+                            .join('/')
+                            .replace('#', '')
+                        : partToName[part].href;
+
+                    return {
+                      title: partToName[part].name,
+                      href: partToName[part].clickable ? `#${path}` : undefined,
+                    };
+                  })}
+                />
+                <Switch>
+                  <Route exact path="/">
+                    <Redirect to="/dash" />
+                  </Route>
+
+                  <Route exact path="/dash">
+                    <Dashboard userPrivileges={userPrivileges} netid={netid} />
+                  </Route>
+                  <Route exact path="/linkhubs">
+                    <LinkHubDashboard netid={netid} />
+                  </Route>
+
+                  <Route
+                    exact
+                    path="/linkhubs/:linkHubId/edit"
+                    render={(route) => (
+                      <LinkHubEditor linkhubId={route.match.params.linkHubId} />
+                    )}
+                  />
+
+                  <Route
+                    exact
+                    path="/links/:id"
+                    render={(route) => (
+                      <Stats
+                        id={route.match.params.id}
+                        netid={netid}
+                        userPrivileges={userPrivileges}
+                      />
+                    )}
+                  />
+
+                  <Route exact path="/orgs">
+                    <Orgs userPrivileges={userPrivileges} />
+                  </Route>
+
+                  <Route exact path="/orgs/:id">
+                    <ManageOrg
+                      userNetid={netid}
+                      userPrivileges={userPrivileges}
+                    />
+                  </Route>
+
+                  {(showAdminTab || isHelpDeskEnabled) && (
+                    <Route exact path="/tickets">
+                      <HelpDesk netid={netid} userPrivileges={userPrivileges} />
+                    </Route>
+                  )}
+
+                  {(showAdminTab || isHelpDeskEnabled) && (
+                    <Route
+                      exact
+                      path="/tickets/:id"
+                      render={(route) => (
+                        <Ticket
+                          ticketID={route.match.params.id}
+                          userPrivileges={userPrivileges}
+                        />
+                      )}
+                    />
+                  )}
+
+                  <Route exact path="/faq">
+                    <Faq />
+                  </Route>
+
+                  <Route
+                    exact
+                    path="/roles/:name"
+                    render={(route) => (
+                      <Role
+                        userPrivileges={userPrivileges}
+                        name={route.match.params.name}
+                      />
+                    )}
+                  />
+
+                  <Route exact path="/admin">
+                    <Admin />
+                  </Route>
+                </Switch>
+              </Content>
+              <Sider width={siderWidth} breakpoint="xl" collapsedWidth="10" />
+            </Layout>
+            <Footer
               style={{
-                padding: 24,
-                margin: 0,
-                minHeight: '90vh',
+                display: 'flex',
+                justifyContent: 'center',
+                textAlign: 'center',
               }}
             >
-              {pendingAlerts.length === 0 ? (
-                <></>
-              ) : (
-                <PendingAlerts netid={netid} pendingAlerts={pendingAlerts} />
-              )}
-              <PendingRequests />
-              <Breadcrumb
-                items={hash.split('/').map((part, index, arr) => {
-                  if (part === '#') {
-                    return {
-                      title: 'Home',
-                      href: '/#',
-                    };
-                  }
-
-                  if (!Object.prototype.hasOwnProperty.call(partToName, part)) {
-                    return { title: part.split('?')[0] };
-                  }
-
-                  const path =
-                    partToName[part].href === undefined
-                      ? arr
-                          .slice(0, index + 1)
-                          .join('/')
-                          .replace('#', '')
-                      : partToName[part].href;
-
-                  return {
-                    title: partToName[part].name,
-                    href: partToName[part].clickable ? `#${path}` : undefined,
-                  };
-                })}
-              />
-              <Switch>
-                <Route exact path="/">
-                  <Redirect to="/dash" />
-                </Route>
-
-                <Route exact path="/dash">
-                  <Dashboard userPrivileges={userPrivileges} netid={netid} />
-                </Route>
-                <Route exact path="/linkhubs">
-                  <LinkHubDashboard netid={netid} />
-                </Route>
-
-                <Route
-                  exact
-                  path="/linkhubs/:linkHubId/edit"
-                  render={(route) => (
-                    <LinkHubEditor linkhubId={route.match.params.linkHubId} />
-                  )}
-                />
-
-                <Route
-                  exact
-                  path="/links/:id"
-                  render={(route) => (
-                    <Stats
-                      id={route.match.params.id}
-                      netid={netid}
-                      userPrivileges={userPrivileges}
-                    />
-                  )}
-                />
-
-                <Route exact path="/orgs">
-                  <Orgs userPrivileges={userPrivileges} />
-                </Route>
-
-                <Route exact path="/orgs/:id">
-                  <ManageOrg
-                    userNetid={netid}
-                    userPrivileges={userPrivileges}
-                  />
-                </Route>
-
-                {isRoleRequestsEnabled && (
-                  <Route exact path="/request-power-user-role">
-                    {!powerUserRoleRequestMade &&
-                      !userPrivileges.has('admin') &&
-                      !userPrivileges.has('power_user') && (
-                        <RoleRequestForm netid={netid} name="power_user" />
-                      )}
-                  </Route>
-                )}
-
-                <Route exact path="/faq">
-                  <Faq />
-                </Route>
-
-                <Route
-                  exact
-                  path="/roles/:name"
-                  render={(route) => (
-                    <Role
-                      userPrivileges={userPrivileges}
-                      name={route.match.params.name}
-                    />
-                  )}
-                />
-
-                <Route exact path="/admin">
-                  <Admin />
-                </Route>
-              </Switch>
-            </Content>
-            <Sider width={siderWidth} breakpoint="xl" collapsedWidth="10" />
+              <Typography.Paragraph style={{ width: '70%' }}>
+                Rutgers is an equal access/equal opportunity institution.
+                Individuals with disabilities are encouraged to direct
+                suggestions, comments, or complaints concerning any
+                accessibility issues with Rutgers websites to{' '}
+                <Link target="_blank" to="mailto:accessibility@rutgers.edu">
+                  accessibility@rutgers.edu
+                </Link>{' '}
+                or complete the{' '}
+                <Link
+                  target="_blank"
+                  to="https://rutgers.ca1.qualtrics.com/jfe/form/SV_57iH6Rfeocz51z0"
+                >
+                  Report Accessibility Barrier or Provide Feedback Form
+                </Link>
+                .
+              </Typography.Paragraph>
+            </Footer>
           </Layout>
-          <Footer
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              textAlign: 'center',
-            }}
-          >
-            <Typography.Paragraph style={{ width: '70%' }}>
-              Rutgers is an equal access/equal opportunity institution.
-              Individuals with disabilities are encouraged to direct
-              suggestions, comments, or complaints concerning any accessibility
-              issues with Rutgers websites to{' '}
-              <Link target="_blank" to="mailto:accessibility@rutgers.edu">
-                accessibility@rutgers.edu
-              </Link>{' '}
-              or complete the{' '}
-              <Link
-                target="_blank"
-                to="https://rutgers.ca1.qualtrics.com/jfe/form/SV_57iH6Rfeocz51z0"
-              >
-                Report Accessibility Barrier or Provide Feedback Form
-              </Link>
-              .
-            </Typography.Paragraph>
-          </Footer>
-        </Layout>
-      </HashRouter>
+        </HashRouter>
+      </App>
     </ConfigProvider>
   );
 }

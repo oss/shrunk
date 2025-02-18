@@ -1,0 +1,10 @@
+Dear {{ reporter }},
+        
+This email is to confirm that your ticket ({{ _id }}) has been successfully submitted. Please wait for your ticket to be processed, as an admin needs to manually review your ticket. You will receive another email on your ticket's resolution.
+
+Thank you for your interest and usage of go.rutgers.edu, the official URL shortener of Rutgers, The State University of New Jersey.
+
+Sincerely,
+The OSS Team
+
+Please do not reply to this email. You may direct any questions to oss@oit.rutgers.edu.

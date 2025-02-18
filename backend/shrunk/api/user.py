@@ -3,10 +3,9 @@
 from typing import Any, Dict
 
 from flask import Blueprint, jsonify, request
-from werkzeug.exceptions import abort
-
 from shrunk.client import ShrunkClient
 from shrunk.util.decorators import require_login
+from werkzeug.exceptions import abort
 
 __all__ = ["bp"]
 bp = Blueprint("user", __name__, url_prefix="/api/v1/user")
@@ -83,3 +82,50 @@ def get_user_system_options(netid: str, client: ShrunkClient) -> Dict[Any, Any]:
     if options is None:
         abort(410)
     return jsonify({"options": options})
+
+
+@bp.route("/<b32:entity>/valid", methods=["GET"])
+@require_login
+def is_valid_entity(netid: str, client: ShrunkClient, entity: str) -> Any:
+    """GET /api/v1/user/<b32:entity>/valid
+
+    Args:
+        netid (str): the netid of the user logged in
+        client (ShrunkClient): the client object
+        entity (str): the entity to check
+
+    Check whether an entity is a valid netid.
+
+    Response format:
+
+    .. code-block:: json
+
+        { "valid": bool }
+
+    """
+    return jsonify({"valid": client.users.is_valid_entity(entity)})
+
+
+@bp.route("/<b32:entity>/position", methods=["GET"])
+@require_login
+def get_position_info(netid: str, client: ShrunkClient, entity: str) -> Any:
+    """GET /api/v1/user/<b32:entity>/position
+
+    Args:
+        netid (str): the netid of the user logged in
+        client (ShrunkClient): the client object
+        entity (str): the entity to get position info for
+
+    Get the position info for a user. Response format:
+
+    .. code-block:: json
+
+       {
+            "titles": List[str],
+            "departments": List[str],
+            "employmentTypes": List[str]
+        }
+    """
+    if not client.roles.has("admin", netid):
+        abort(403)
+    return jsonify(client.users.get_position_info(entity))

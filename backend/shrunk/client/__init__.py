@@ -1,21 +1,20 @@
 """Implements the :py:class:`ShrunkClient` class."""
 
-from typing import Optional, List, Set, Any
 from datetime import datetime
+from typing import Any, List, Optional, Set
 
 import pymongo
 
-from .security import SecurityClient
-from .search import SearchClient
-from .geoip import GeoipClient
-from .orgs import OrgsClient
-from .tracking import TrackingClient
-from .roles import RolesClient
-from .links import LinksClient
 from .alerts import AlertsClient
+from .geoip import GeoipClient
 from .linkhub import LinkHubClient
-from .role_requests import RoleRequestClient
-from .positions import PositionClient
+from .links import LinksClient
+from .orgs import OrgsClient
+from .roles import RolesClient
+from .search import SearchClient
+from .security import SecurityClient
+from .tickets import TicketsClient
+from .tracking import TrackingClient
 from .users import UserClient
 
 __all__ = ["ShrunkClient"]
@@ -45,8 +44,7 @@ class ShrunkClient:
         TRACKING_PIXEL_UI_ENABLED: Optional[bool] = False,
         DOMAIN_ENABLED: Optional[bool] = False,
         LINKHUB_INTEGRATION_ENABLED: Optional[bool] = False,
-        ROLE_REQUESTS_ENABLED: Optional[bool] = False,
-        EMAILS_ENABLED: Optional[bool] = False,
+        HELP_DESK_ENABLED: Optional[bool] = False,
         **_kwargs: Any,
     ):
         self.conn = pymongo.MongoClient(
@@ -88,15 +86,13 @@ class ShrunkClient:
             SECURITY_MEASURES_ON=SECURITY_MEASURES_ON or False,
             GOOGLE_SAFE_BROWSING_API=GOOGLE_SAFE_BROWSING_API or None,
         )
-        self.role_requests = RoleRequestClient(
+        self.tickets = TicketsClient(
             db=self.db,
-            ROLE_REQUESTS_ENABLED=ROLE_REQUESTS_ENABLED or False,
-            EMAILS_ENABLED=EMAILS_ENABLED or False,
+            HELP_DESK_ENABLED=HELP_DESK_ENABLED or False,
             SLACK_INTEGRATION_ENABLED=SLACK_INTEGRATION_ENABLED or False,
             SLACK_BOT_TOKEN=SLACK_BOT_TOKEN or None,
             SLACK_SHRUNK_CHANNEL_ID=SLACK_SHRUNK_CHANNEL_ID or None,
         )
-        self.positions = PositionClient()
         self.users = UserClient(db=self.db)
 
     def _ensure_indexes(self) -> None:

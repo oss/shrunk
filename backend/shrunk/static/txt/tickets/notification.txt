@@ -1,0 +1,3 @@
+The user {{ reporter }} has submitted a ticket ({{ _id }}). Please review the ticket.
+        
+Please do not reply to this email. You may direct any questions to oss@oit.rutgers.edu.

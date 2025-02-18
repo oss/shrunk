@@ -1,7 +1,7 @@
-from typing import Optional, List, Tuple, Dict, cast
+from typing import Dict, List, Optional, Tuple, cast
 
-from flask import current_app
 import ldap
+from flask import current_app
 
 __all__ = ["is_valid_netid", "query_given_name"]
 
@@ -66,27 +66,26 @@ def query_given_name(netid: str) -> str:
 
 
 def query_position_info(netid: str) -> Dict[str, List[str]]:
-    """Query LDAP for position info of a given netid. Return a dictionary of attributes.
+    """Query LDAP for position info of a given netid. Return a dictionary of
+    attributes.
 
     Args:
         netid (str): The netid of the user to query position info for.
 
     Returns:
-        Dict[str, List[str]]: A dictionary containing the position information of the user.
-            The keys of the dictionary represent the attribute names, and the values are lists
-            of attribute values.
+        Dict[str, List[str]]: A dictionary of attributes.
     """
     if not is_valid_netid(netid) or not current_app.config.get(
         "LDAP_VALIDATE_NETIDS", False
     ):
-        return {}
+        return None
 
     intermediate = _query_netid(netid)
     if intermediate is None:
         return {}
 
     # The attributes that relate to the user's position in the university
-    attributes = ["uid", "title", "rutgersEduStaffDepartment", "employeeType"]
+    attributes = ["title", "rutgersEduStaffDepartment", "employeeType"]
 
     result = {}
 

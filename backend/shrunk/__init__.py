@@ -1,40 +1,32 @@
 """Shrunk, the official URL shortener of Rutgers University."""
 
-import logging
 import base64
 import binascii
 import codecs
 import datetime
 import json
+import logging
 from typing import Any
 
+import bson.errors
 import flask
-from flask import Flask, current_app, render_template, redirect, request, send_file
+from backports import datetime_fromisoformat
+from bson import ObjectId
+from flask import Flask, current_app, redirect, render_template, request, send_file
 from flask.json import JSONEncoder
 from flask.logging import default_handler
 from flask_mailman import Mail
-from werkzeug.routing import BaseConverter, ValidationError
 from werkzeug.middleware.proxy_fix import ProxyFix
-from bson import ObjectId
-import bson.errors
-from backports import datetime_fromisoformat
-
-from .util.github import pull_outlook_assets_from_github
-
-from .util.verification import verify_signature
-
-# Blueprints
-from . import views
-from . import linkhub_viewer
-from . import dev_logins
-from . import api
+from werkzeug.routing import BaseConverter, ValidationError
 
 # Extensions
-from . import sso
-
-from .util.ldap import is_valid_netid
+# Blueprints
+from . import api, dev_logins, linkhub_viewer, sso, views
 from .client import ShrunkClient
-from .util.string import validate_url, get_domain
+from .util.github import pull_outlook_assets_from_github
+from .util.ldap import is_valid_netid
+from .util.string import get_domain, validate_url
+from .util.verification import verify_signature
 
 
 class ObjectIdConverter(BaseConverter):
@@ -293,8 +285,7 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
     app.register_blueprint(api.request.bp)
     app.register_blueprint(api.security.bp)
     app.register_blueprint(api.linkhub.bp)
-    app.register_blueprint(api.role_request.bp)
-    app.register_blueprint(api.position.bp)
+    app.register_blueprint(api.ticket.bp)
     app.register_blueprint(api.user.bp)
 
     # set up extensions

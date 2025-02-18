@@ -1,8 +1,9 @@
 """Module for the user system client"""
 
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 import pymongo
+from shrunk.util.ldap import is_valid_netid, query_position_info
 
 __all__ = ["UserClient"]
 
@@ -141,3 +142,46 @@ class UserClient:
             "FILTER_STRING_PLACEHOLDER": "Input filter string",
             "FILTER_NUMBER_PLACEHOLDER": "Input filter number",
         }
+
+    def is_valid_entity(self, entity: str) -> bool:
+        """Check whether an entity is valid"""
+        return is_valid_netid(entity)
+
+    def get_position_info(self, entity: str) -> Dict[str, List[str]]:
+        """Get the position info for a user needed to make role request
+        decisions.
+
+        :param entity: The entity to get the position info for.
+
+        :returns Dict[str, List[str]]: The role request position info for the
+        entity. It is formatted as follows:
+
+        .. code-block:: json
+
+        {
+            "titles": List[str],
+            "departments": List[str],
+            "employmentTypes": List[str]
+        }
+        """
+        position_info = query_position_info(entity)
+
+        # LDAP queries are disabled
+        if position_info is None:
+            return {
+                "titles": ["LDAP queries disabled"],
+                "departments": ["LDAP queries disabled"],
+                "employmentTypes": ["LDAP queries disabled"],
+            }
+
+        # LDAP queries are enabled
+        formatted_position_info = {
+            "titles": position_info.get("title", ["No titles found"]),
+            "departments": position_info.get(
+                "rutgersEduStaffDepartment", ["No departments found"]
+            ),
+            "employmentTypes": position_info.get(
+                "employeeType", ["No employment types found"]
+            ),
+        }
+        return formatted_position_info
