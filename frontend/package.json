@@ -5,9 +5,9 @@
   "scripts": {
     "build": "parcel build --no-source-maps --no-content-hash --public-url=../static/dist/ --dist-dir=../backend/shrunk/static/dist src/index.html src/linkhub-loader.html",
     "watch": "parcel watch --public-url=../static/dist/ --dist-dir=../backend/shrunk/static/dist src/index.html src/linkhub-loader.html",
-    "lint": "eslint ./src --ext .ts,tsx --ignore-path ../.gitignore",
-    "lint-fix": "eslint ./src --ext .ts,tsx --fix --ignore-path ../.gitignore",
-    "format": "prettier --write . --config ./.prettierrc.js --ignore-path ../.gitignore"
+    "lint": "eslint ./src --ext .ts,tsx --ignore-path .eslintignore",
+    "lint-fix": "eslint ./src --ext .ts,tsx --fix --ignore-path .eslintignore",
+    "format": "prettier --write . --config ./.prettierrc.js --ignore-path .eslintignore"
   },
   "dependencies": {
     "@ant-design/colors": "^7.2.0",
