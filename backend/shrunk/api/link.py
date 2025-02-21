@@ -1024,3 +1024,39 @@ def generate_qrcode():
     return Response(
         resized_img_io.getvalue(), mimetype="image/png", direct_passthrough=True
     )
+
+
+@bp.route("/<ObjectId:link_id>/revert", methods=["POST"])
+@require_login
+def revert_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
+    """``POST /api/link/<link_id>/revert``
+
+    Revert an expired link such that it has no expiration date. Returns 204 on success or 403 on error. Request format:
+
+    .. code-block:: json
+
+    :param netid:
+    :param client:
+    :param link_id:
+    """
+    try:
+        info = client.links.get_link_info(link_id)
+    except NoSuchObjectException:
+        abort(404)
+
+    if not client.roles.has("admin", netid) and not client.links.may_edit(
+        link_id, netid
+    ):
+        abort(403)
+    for alias in info["aliases"]:
+        if client.links.alias_is_reserved(
+            alias["alias"]
+        ) and client.links.alias_is_duplicate(alias["alias"]):
+            abort(400)
+
+    try:
+        client.links.remove_expiration_time(link_id)
+
+    except NoSuchObjectException:
+        abort(404)
+    return "", 204

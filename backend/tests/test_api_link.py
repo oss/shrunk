@@ -1039,3 +1039,37 @@ def test_case_sensitive_duplicate_aliases(client: Client) -> None:
         )
 
         assert resp.status_code == 400
+
+
+def test_revert_link(client: Client) -> None:
+    with dev_login(client, "user"):
+        # Add link with expiration time set 500 milliseconds in the future
+        expiration_time = datetime.now(timezone.utc) + timedelta(milliseconds=500)
+        resp = client.post(
+            "/api/v1/link",
+            json={
+                "title": "title",
+                "long_url": "https://sample.com",
+                "expiration_time": expiration_time.isoformat(),
+            },
+        )
+
+        assert resp.status_code == 200, "Failed to create link"
+        link_id = resp.json["id"]
+
+        # Create random alias
+        resp = client.post(
+            f"/api/v1/link/{link_id}/alias", json={"description": "aliasTest"}
+        )
+
+        assert resp.status_code == 200, "Failed to add alias"
+        alias = resp.json["alias"]
+
+        # Restore link
+        resp = client.post(f"/api/v1/link/{link_id}/revert")
+        assert resp.status_code == 204, "Failed to restore link"
+
+        # Fetch link and ensure expiration time field is set to None
+        resp = client.get(f"/api/v1/link/{link_id}")
+        assert resp.status_code == 200, "Failed to fetch link"
+        assert resp.json["expiration_time"] == None, "Expiration time is not None"
