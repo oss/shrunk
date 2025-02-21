@@ -3,7 +3,8 @@
  * @packageDocumentation
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import base32 from 'hi-base32';
 import dayjs from 'dayjs';
 import {
   Col,
@@ -137,6 +138,28 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
   const isTrackingPixelLink = props.linkInfo.is_tracking_pixel_link;
 
   const [ownerInputVal, setOwnerInputVal] = useState(initialValues.owner);
+
+  const currDate = new Date();
+  const isExpired =
+    props.linkInfo.expiration_time !== null &&
+    new Date(props.linkInfo.expiration_time) < new Date(currDate.toISOString());
+
+  const [aliasInUse, setAliasInUse] = useState(false);
+  useEffect(() => {
+    props.linkInfo.aliases.map(
+      async (alias: { description: string; alias: string }) => {
+        let res = null;
+        res = await fetch(
+          `/api/v1/link/validate_duplicate_alias/${base32.encode(
+            alias.alias!,
+          )}`,
+        ).then((resp) => resp.json());
+        if (res.valid) {
+          setAliasInUse(true);
+        }
+      },
+    );
+  });
   const handleChange = (e: any) => {
     setOwnerInputVal(e.target.value);
   };
@@ -158,6 +181,21 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
       }, 1000); // 1-second delay
     } catch (error) {
       message.error('Failed to delete link');
+    }
+  };
+
+  const handleRevert = async () => {
+    try {
+      await fetch(`/api/v1/link/${props.linkInfo._id}/revert`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      message.success('Link restored successfully');
+    } catch (error) {
+      message.error('Failed to restore link');
     }
   };
 
@@ -189,6 +227,9 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
       }}
       extra={
         <Space>
+          {isExpired && !aliasInUse && (
+            <Button onClick={handleRevert}>Restore</Button>
+          )}
           <Popconfirm
             title="Are you sure you want to delete this link?"
             onConfirm={handleDelete}
@@ -200,6 +241,7 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
               Delete
             </Button>
           </Popconfirm>
+
           <Button icon={<SaveOutlined />} onClick={onSave} type="primary">
             Save
           </Button>
