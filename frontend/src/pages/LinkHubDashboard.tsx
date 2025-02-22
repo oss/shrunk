@@ -38,14 +38,14 @@ export default function LinkHubDashboard(props: ILinkHubDashboard) {
         title: 'Untitled LinkHub',
       }),
     }).then((resp) => resp.json());
-    history.push(`/linkhubs/${result.id}/edit`);
+    history.push(`/app/linkhubs/${result.id}/edit`);
   }
 
   searchLinkHubs(props.netid).then((value) => {
     if (value.length === 0) {
       createLinkHub();
     } else {
-      history.push(`/linkhubs/${value[0]._id}/edit`);
+      history.push(`/app/linkhubs/${value[0]._id}/edit`);
     }
   });
 

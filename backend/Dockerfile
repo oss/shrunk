@@ -1,6 +1,6 @@
 FROM python:3.6
 
-EXPOSE 4343
+EXPOSE 3050
 WORKDIR /usr/shrunk/backend/
 
 COPY . .
@@ -13,7 +13,5 @@ RUN pip install poetry
 
 RUN poetry config virtualenvs.create false
 RUN poetry lock
-
-RUN bash scripts/install-tailwindcss.sh
 
 RUN poetry install

@@ -4,7 +4,7 @@
  */
 
 import ExclamationCircleFilled from '@ant-design/icons/lib/icons/ExclamationCircleFilled';
-import { FloatButton, Button, Col, Popconfirm, Row } from 'antd/lib';
+import { Button, Col, Popconfirm, Row } from 'antd/lib';
 import Spin from 'antd/es/spin';
 import React, { useEffect, useState } from 'react';
 
@@ -149,7 +149,6 @@ function LinkSecurity() {
 
   return (
     <>
-      <FloatButton.BackTop />
       <Row className="primary-row">
         <span>
           <strong>Current Security Status</strong>: {securityStatus}

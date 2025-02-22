@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "shrunk"
-version = "2.4.7"
+version = "3.0.0"
 # readme = "../README.md"  # THIS HAS BEEN REPORTED TO THE POETRY DEVELOPMENT TEAM: https://github.com/python-poetry/poetry/issues/9488
 description = "URL Shortener for Rutgers University"
 repository = "https://github.com/oss/shrunk"
@@ -10,6 +10,7 @@ maintainers = ["Andrew Hong <ah1371@oit.rutgers.edu>"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "License :: OSI Approved :: MIT License",
+    "Private :: Do not Upload",  # Do not upload to PyPi, this is not meant to be used by anyone outside of our team.
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.6",
 ]

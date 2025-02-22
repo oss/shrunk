@@ -5,6 +5,7 @@ export const lightTheme: ThemeConfig = {
   token: {
     colorPrimary: red[6],
     colorLink: red[5],
+    fontFamily: 'Geist',
   },
   components: {
     Layout: {

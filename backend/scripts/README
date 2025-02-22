@@ -1,2 +1,5 @@
-Q: Where did all the scripts go?
-A: https://gitlab.rutgers.edu/MaCS/OSS/shrunk-scripts.git
+Scripts related to the production environment have been moved to a different repository.
+
+https://gitlab.rutgers.edu/MaCS/OSS/shrunk-scripts.git
+
+Please delete this directory and file by late December 2025.

@@ -10,9 +10,17 @@ from typing import Any
 
 import bson.errors
 import flask
+from flask import (
+    Flask,
+    current_app,
+    jsonify,
+    redirect,
+    request,
+    session,
+    send_file,
+)
 from backports import datetime_fromisoformat
 from bson import ObjectId
-from flask import Flask, current_app, redirect, render_template, request, send_file
 from flask.json import JSONEncoder
 from flask.logging import default_handler
 from flask_mailman import Mail
@@ -294,10 +302,46 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
     app.mail = mail
     sso.ext.init_app(app)
 
-    # redirect / to /app
     @app.route("/", methods=["GET"])
     def _redirect_to_real_index() -> Any:
         return redirect("/app")
+
+    @app.route("/api/v1/logout", methods=["POST"])
+    def logout() -> Any:
+        """Clears the user's session and sends them to Shibboleth to finish logging out.
+        Redirects to index if user is not logged in."""
+        if "user" not in session:
+            return "", 200
+
+        # Get the current netid and clear the session.
+        netid = session["user"]["netid"]
+        session.clear()
+
+        # If the user is a dev user, all we need to do to log out is to clear the session,
+        # which we did above.
+        if current_app.config.get("DEV_LOGINS") and netid in {
+            "DEV_USER",
+            "DEV_FACSTAFF",
+            "DEV_PWR_USER",
+            "DEV_ADMIN",
+        }:
+            return "", 200
+
+        # If the user is not a dev user, redirect to shibboleth to complete the logout process.
+        return jsonify({"redirect-to": "/shibboleth/Logout"}), 200
+
+    @app.route("/api/v1/config", methods=["GET"])
+    def get_features_status() -> Any:
+        return jsonify(
+            {
+                "devlogins": app.config.get("DEV_LOGINS", False),
+                "slack_bot": app.config.get("SLACK_INTEGRATION_ON", False),
+                "tracking_pixel": app.config.get("TRACKING_PIXEL_UI_ENABLED", False),
+                "linkhub": app.config.get("LINKHUB_INTEGRATION_ENABLED", False),
+                "domains": app.config.get("DOMAIN_ENABLED", False),
+                "role_requests": app.config.get("ROLE_REQUESTS_ENABLED", False),
+            }
+        )
 
     # webhook for GitHub Actions to alert server of new Outlook add-in release
     @app.route("/outlook/update", methods=["POST"])
@@ -354,12 +398,11 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
     @app.route("/<alias>", methods=["GET"])
     def _serve_shortened_links(alias: str) -> Any:
         client: ShrunkClient = current_app.client
-        enable_dev = current_app.config.get("DEV_LOGINS", False)
 
         # Check if the alias is a legacy tracking pixel link
         link_info = client.links.get_link_info_by_alias(alias)
         if link_info is None:
-            return render_template("404.html", dev=enable_dev), 404
+            return jsonify({"message": "Link not found"}), 404
 
         is_tracking_pixel_link = client.links.is_tracking_pixel_link(alias)
         if is_tracking_pixel_link:
@@ -368,14 +411,16 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
             # Documents have "is_trackingpixel_legacy_endpoint" field if not legacy.. lol
             if link_info.get("is_trackingpixel_legacy_endpoint", True):
                 # Treat legacy tracking pixels.
+
+                # TODO: Make this for the /<alias> route
                 return redirect(f"/api/v1/t/{alias}")
             else:
                 # We do not want to promote the use of tracking pixels used under the alias route.
-                return render_template("404.html", dev=enable_dev), 404
+                return jsonify({"message": "Link not found"}), 404
 
         long_url = client.links.get_long_url(alias)
         if long_url is None:
-            return render_template("404.html", dev=enable_dev), 404
+            return jsonify({"message": "Link not found"}), 404
 
         # Get or generate a tracking id
         tracking_id = request.cookies.get("shrunkid") or client.tracking.get_new_id()
@@ -394,7 +439,13 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
         }:
             custom_domain_alias = client.links.get_custom_domain(alias)
             if request_domain != custom_domain_alias:
-                return render_template("404.html", dev=enable_dev), 404
+                return jsonify({"message": "Domain not found"}), 404
+
+        if long_url is None and not is_tracking_pixel_link:
+            return jsonify({"message": "Link not found"}), 404
+
+        # Get or generate a tracking id
+        tracking_id = request.cookies.get("shrunkid") or client.tracking.get_new_id()
 
         client.links.visit(
             alias,
@@ -414,6 +465,7 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
 
         response = redirect(long_url)
 
+        # Not entirely sure what this is here for, maybe to track unique visitors?
         response.set_cookie("shrunkid", tracking_id)
 
         return response
@@ -446,7 +498,6 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
         filename = "./static/img/pixel.{}".format(extension)
         response = send_file(filename, mimetype="image/{}".format(extension))
         response.headers["X-Image-Name"] = "pixel.{}".format(extension)
-
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"

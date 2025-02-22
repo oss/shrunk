@@ -135,17 +135,20 @@ export interface SearchQuery {
  * Props for the [[Dashboard]] component.
  * @interface
  */
-export interface Props {
+interface Props {
   userPrivileges: Set<string>;
   // eslint-disable-next-line react/no-unused-prop-types
   netid: string;
+
+  demo?: boolean;
+  mockData?: LinkInfo[];
 }
 
 /**
  * State of the [[Dashboard]] component.
  * @interface
  */
-export interface State {
+interface State {
   /**
    * The organizations of which the user is a member. This is used in the
    * advanced search settings menu.
@@ -272,7 +275,7 @@ export class Dashboard extends React.Component<Props, State> {
     super(props);
     this.state = {
       userOrgs: null,
-      linkInfo: null,
+      linkInfo: this.props.mockData === undefined ? null : this.props.mockData,
       linksPerPage: 10,
       query: {
         queryString: '',
@@ -341,6 +344,10 @@ export class Dashboard extends React.Component<Props, State> {
    * @method
    */
   fetchUserOrgs = async (): Promise<void> => {
+    if (this.props.demo) {
+      return;
+    }
+
     const userOrgs = await listOrgs('user');
     this.setState({ userOrgs });
   };
@@ -460,6 +467,10 @@ export class Dashboard extends React.Component<Props, State> {
    * @param newQuery The new query
    */
   setQuery = async (newQuery: SearchQuery): Promise<void> => {
+    if (this.props.demo) {
+      return;
+    }
+
     const results = await this.doQuery(newQuery, 0, this.state.linksPerPage);
 
     const totalPages = Math.ceil(results.count / this.state.linksPerPage);
@@ -480,6 +491,11 @@ export class Dashboard extends React.Component<Props, State> {
    * @param newPage The new page
    */
   setPage = async (newPage: number): Promise<void> => {
+    if (this.props.demo) {
+      this.setState({ currentPage: newPage });
+      return;
+    }
+
     if (this.state.query === null) {
       throw new Error('attempted to set page with this.state.query === null');
     }
@@ -580,11 +596,11 @@ export class Dashboard extends React.Component<Props, State> {
    * @method
    */
   trackingPixelEnabledOnUI = async () => {
-    const result = await fetch('/api/v1/link/tracking_pixel_ui_enabled', {
+    const result = await fetch('/api/v1/config', {
       method: 'GET',
     }).then((resp) => resp.json());
 
-    const isEnabled = result.enabled;
+    const isEnabled = result.tracking_pixel;
     this.setState({ trackingPixelEnabled: isEnabled });
   };
 
@@ -610,6 +626,10 @@ export class Dashboard extends React.Component<Props, State> {
   };
 
   handleCustomizeClick = () => {
+    if (this.props.demo) {
+      return;
+    }
+
     this.setState((prevState) => ({
       customizeDropdownOpen: !prevState.customizeDropdownOpen,
     }));
@@ -670,7 +690,12 @@ export class Dashboard extends React.Component<Props, State> {
               </Dropdown>
               <Button
                 icon={<FilterOutlined />}
-                onClick={() => this.setState({ filterModalVisible: true })}
+                onClick={() => {
+                  if (this.props.demo) {
+                    return;
+                  }
+                  this.setState({ filterModalVisible: true });
+                }}
               >
                 Filter
               </Button>
@@ -687,7 +712,13 @@ export class Dashboard extends React.Component<Props, State> {
               <Button
                 type="primary"
                 icon={<PlusCircleFilled />}
-                onClick={() => this.setState({ isCreateModalOpen: true })}
+                onClick={() => {
+                  if (this.props.demo) {
+                    return;
+                  }
+
+                  this.setState({ isCreateModalOpen: true });
+                }}
               >
                 Shrink
               </Button>
@@ -853,7 +884,7 @@ export class Dashboard extends React.Component<Props, State> {
                           <Button
                             type="text"
                             icon={<EyeOutlined />}
-                            href={`/app/#/links/${record.key}`}
+                            href={`/app/links/${record.key}`}
                           />
                         </Tooltip>
                         {record.canEdit && record.deletedInfo === null && (
@@ -863,7 +894,7 @@ export class Dashboard extends React.Component<Props, State> {
                                 type="text"
                                 icon={<EditOutlined />}
                                 target="_blank"
-                                href={`/app/#/links/${record.key}?mode=edit`}
+                                href={`/app/links/${record.key}?mode=edit`}
                               />
                             </Tooltip>
                             <Tooltip title="Collaborate">
@@ -871,48 +902,47 @@ export class Dashboard extends React.Component<Props, State> {
                                 type="text"
                                 icon={<TeamOutlined />}
                                 target="_blank"
-                                href={`/app/#/links/${record.key}?mode=collaborate`}
+                                href={`/app/links/${record.key}?mode=collaborate`}
                               />
                             </Tooltip>
                           </>
                         )}
-                        {!record.isTrackingPixel && (
-                          <Tooltip title="Share">
+                        <Tooltip title="Share">
+                          <Button
+                            type="text"
+                            icon={<ShareAltOutlined />}
+                            target="_blank"
+                            href={`/app/links/${record.key}?mode=share`}
+                            disabled={record.isTrackingPixel}
+                          />
+                        </Tooltip>
+
+                        <Tooltip title="Delete">
+                          <Popconfirm
+                            title="Are you sure you want to delete this link?"
+                            onConfirm={async () => {
+                              try {
+                                await fetch(`/api/v1/link/${record.key}`, {
+                                  method: 'DELETE',
+                                });
+                                message.success('Link deleted successfully');
+                                await this.refreshResults();
+                              } catch (error) {
+                                message.error('Failed to delete link');
+                              }
+                            }}
+                            okText="Yes"
+                            cancelText="No"
+                            okButtonProps={{ danger: true }}
+                          >
                             <Button
                               type="text"
-                              icon={<ShareAltOutlined />}
-                              target="_blank"
-                              href={`/app/#/links/${record.key}?mode=share`}
+                              danger
+                              disabled={record.deletedInfo !== null}
+                              icon={<DeleteOutlined />}
                             />
-                          </Tooltip>
-                        )}
-                        {record.deletedInfo === null && (
-                          <Tooltip title="Delete">
-                            <Popconfirm
-                              title="Are you sure you want to delete this link?"
-                              onConfirm={async () => {
-                                try {
-                                  await fetch(`/api/v1/link/${record.key}`, {
-                                    method: 'DELETE',
-                                  });
-                                  message.success('Link deleted successfully');
-                                  await this.refreshResults();
-                                } catch (error) {
-                                  message.error('Failed to delete link');
-                                }
-                              }}
-                              okText="Yes"
-                              cancelText="No"
-                              okButtonProps={{ danger: true }}
-                            >
-                              <Button
-                                type="text"
-                                danger
-                                icon={<DeleteOutlined />}
-                              />
-                            </Popconfirm>
-                          </Tooltip>
-                        )}
+                          </Popconfirm>
+                        </Tooltip>
                       </Space>
                     </Flex>
                   ),

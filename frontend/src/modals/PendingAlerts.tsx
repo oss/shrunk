@@ -16,7 +16,7 @@ const NewUser: React.FC<{ closePopup: () => Promise<void> }> = (props) => (
   <>
     <p>You can do so with an organization.</p>
     Head to the{' '}
-    <Link onClick={async (_ev) => props.closePopup()} to="/orgs">
+    <Link onClick={async (_ev) => props.closePopup()} to="/app/orgs">
       Orgs
     </Link>{' '}
     page to check it out!
@@ -43,7 +43,7 @@ const CurrentUser: React.FC<{ closePopup: () => Promise<void> }> = (props) => (
       <li>use go.rutgers.edu on mobile</li>
     </ul>
     Head to the{' '}
-    <Link onClick={async (_ev) => props.closePopup()} to="/orgs">
+    <Link onClick={async (_ev) => props.closePopup()} to="/app/orgs">
       Orgs
     </Link>{' '}
     page to check it out!

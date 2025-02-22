@@ -802,6 +802,7 @@ export function Stats(props: Props): React.ReactElement {
               type="primary"
               icon={<ShareAltOutlined />}
               onClick={() => setShareModalVisible(true)}
+              disabled={linkInfo?.is_tracking_pixel_link}
             >
               Share
             </Button>

@@ -109,21 +109,21 @@ function ManageOrgBase({
     await fetch(`/api/v1/org/${match.params.id}/rename/${newName}`, {
       method: 'PUT',
     });
-    history.push('/orgs');
+    history.push('/app/orgs');
   };
 
   const leaveOrg = async () => {
     await fetch(`/api/v1/org/${match.params.id}/member/${userNetid}`, {
       method: 'DELETE',
     });
-    history.push('/orgs');
+    history.push('/app/orgs');
   };
 
   const deleteOrg = async () => {
     await fetch(`/api/v1/org/${match.params.id}`, {
       method: 'DELETE',
     });
-    history.push('/orgs');
+    history.push('/app/orgs');
   };
 
   if (!orgInfo) {

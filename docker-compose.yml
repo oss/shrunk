@@ -1,35 +1,48 @@
 volumes:
   shrunk-volume:
+  mongodb_data:
 
 services:
   backend:
     build: ./backend
-    command: python3 -m flask run --host=0.0.0.0 -p 4343
-    ports:
-      - '4343:4343'
+    command: python3 -m flask run --host=0.0.0.0 -p 3050
     volumes:
-      - shrunk-volume:/usr/shrunk/
       - ./backend:/usr/shrunk/backend
-      - ./frontend:/usr/shrunk/frontend
     environment:
       - FLASK_APP=shrunk
       - FLASK_DEBUG=true
       - FLASK_ENV=development
       - WERKZEUG_DEBUG_PIN=off
     depends_on:
-      - database
+      - mongodb
 
   frontend:
     build: ./frontend
     volumes:
-      - shrunk-volume:/usr/shrunk/
       - ./frontend:/usr/shrunk/frontend
-      - ./backend/shrunk/static/dist:/usr/shrunk/backend/shrunk/static/dist
+      - ./frontend/dist:/var/www/html
+    environment:
+      - NODE_ENV=development
 
-  database:
+  httpd:
+    image: httpd:2.4
+    stdin_open: true
+    tty: true
+    ports:
+      - "4343:4343"
+    volumes:
+      - ./frontend/dist:/var/www/html
+      - ./httpd/httpd.conf:/usr/local/apache2/conf/httpd.conf
+      - ./frontend/dist:/usr/local/apache2/htdocs
+      - ./httpd:/usr/local/apache2/logs
+    depends_on:
+      - backend
+      - frontend
+
+  mongodb:
     hostname: mongodb
     container_name: shrunk-mongo
     image: mongo:latest
-    attach: false
+    attach: false  # We don't care.
     ports:
       - '27017:27017'

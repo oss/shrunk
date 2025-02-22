@@ -2,10 +2,10 @@
 
 from typing import Any, Dict
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, session, current_app
+from werkzeug.exceptions import abort
 from shrunk.client import ShrunkClient
 from shrunk.util.decorators import require_login
-from werkzeug.exceptions import abort
 
 __all__ = ["bp"]
 bp = Blueprint("user", __name__, url_prefix="/api/v1/user")
@@ -82,6 +82,30 @@ def get_user_system_options(netid: str, client: ShrunkClient) -> Dict[Any, Any]:
     if options is None:
         abort(410)
     return jsonify({"options": options})
+
+
+@bp.route("/info")
+def get_user_info():
+    """Get current user info from session"""
+    if "user" not in session:
+        return jsonify({"netid": "", "privileges": []})
+
+    user = session["user"]
+    client = current_app.client
+    netid = user.get("netid", "")
+
+    # Get user privileges
+    privileges = []
+    if client.roles.has("admin", netid):
+        privileges.append("admin")
+    if client.roles.has("facstaff", netid):
+        privileges.append("facstaff")
+    if client.roles.has("power_user", netid):
+        privileges.append("power_user")
+    if client.roles.has("whitelisted", netid):
+        privileges.append("whitelisted")
+
+    return jsonify({"netid": netid, "privileges": privileges})
 
 
 @bp.route("/<b32:entity>/valid", methods=["GET"])
