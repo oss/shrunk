@@ -19,7 +19,7 @@ export default function LinkHubRow(props: ILinkHubRow) {
   const history = useHistory();
 
   const onEdit = () => {
-    history.push(`/linkhubs/${props.linkHubId}/edit`);
+    history.push(`/app/linkhubs/${props.linkHubId}/edit`);
   };
 
   const onDelete = () => {

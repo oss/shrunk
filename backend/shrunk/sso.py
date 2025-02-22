@@ -2,7 +2,7 @@
 
 from typing import Any, List
 
-from flask import current_app, render_template, session, redirect, url_for
+from flask import current_app, session, redirect
 from flask_sso import SSO
 from werkzeug.exceptions import abort
 
@@ -25,8 +25,7 @@ def login(user_info: Any) -> Any:
     netid: str = user_info.get("netid")
     twoFactorAuth = user_info.get("twoFactorAuth")
     if not twoFactorAuth and current_app.config["REQUIRE_2FA"]:
-        enable_dev = current_app.config.get("DEV_LOGINS", False)
-        return render_template("help_no_2fa.html", dev=enable_dev)
+        return redirect("/app")
 
     def t(typ: str) -> bool:  # pylint: disable=invalid-name
         return typ in types
@@ -71,4 +70,4 @@ def login(user_info: Any) -> Any:
     # have been granted.
     logger.debug(f"login: SSO login by {netid}")
     session["user"] = user_info
-    return redirect(url_for("shrunk.index"))
+    return redirect("/app")

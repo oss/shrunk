@@ -249,7 +249,7 @@ export default function LinkHubEditor(props: PLinkHubEditor) {
         return;
       }
 
-      history.push('/linkhubs');
+      history.push('/app/linkhubs');
     });
   };
 

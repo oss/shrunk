@@ -1,3 +1,6 @@
+import { clsx, ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
 /**
  * Initiate a download of CSV data
  * @function
@@ -28,4 +31,8 @@ export function daysBetween(date: Date): number {
   );
 
   return Math.abs(differenceInDays);
+}
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
 }

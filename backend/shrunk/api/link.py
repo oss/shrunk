@@ -973,19 +973,6 @@ def get_alias_browser_stats(
     return jsonify(stats)
 
 
-@bp.route("/tracking_pixel_ui_enabled", methods=["GET"])
-@require_login
-def tracking_pixel_ui_enabled(netid: str, client: ShrunkClient) -> Any:
-    """
-    ``GET /api/link/tracking_pixel_ui_enabled``
-
-    Check if the tracking pixel UI is enabled.
-    """
-    is_enabled = client.links.get_tracking_pixel_ui_status()
-
-    return jsonify({"enabled": is_enabled})
-
-
 @bp.route("/qrcode", methods=["GET"])
 def generate_qrcode():
     """

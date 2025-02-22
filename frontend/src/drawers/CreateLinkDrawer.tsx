@@ -140,9 +140,11 @@ export class CreateLinkDrawer extends React.Component<Props, State> {
   }
 
   fetchIsDomainEnabled = async (): Promise<void> => {
-    await fetch('/api/v1/org/domain_enabled')
+    await fetch('/api/v1/config')
       .then((resp) => resp.json())
-      .then((json) => this.setState({ domain_enabled: json.enabled }));
+      .then((json) =>
+        this.setState({ domain_enabled: json.domains as boolean }),
+      );
   };
 
   toggleLoading = () => {

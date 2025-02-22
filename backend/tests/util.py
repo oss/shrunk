@@ -32,8 +32,8 @@ def assert_json(resp: Response, expected: Any) -> None:
 
 @contextlib.contextmanager
 def dev_login(client: Client, login: str) -> Generator[None, None, None]:
-    assert_status(client.get(f"/app/devlogins/{login}"), 302)
+    assert_status(client.post(f"/api/v1/devlogins/{login}"), 200)
     try:
         yield
     finally:
-        assert_status(client.get("/app/logout"), 302)
+        assert_status(client.post("/api/v1/logout"), 200)

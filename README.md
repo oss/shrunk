@@ -1,10 +1,8 @@
-# Shrunk ![license: MIT](https://img.shields.io/badge/license-MIT-blue) ![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg) ![code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)
+# Shrunk, the URL Shortener for Rutgers University
 
-[Shrunk](https://go.rutgers.edu/) is an open-source full-stack application primarily made to shorten URLs for faculty, staff, and professors of Rutgers University. It is written in [Python 3.6](https://www.python.org/) and [TypeScript](https://www.typescriptlang.org/) and uses [MongoDB](https://www.mongodb.com/), [React](https://react.dev/), and [Flask](https://flask.palletsprojects.com/).
+[Shrunk](https://go.rutgers.edu/) is an open-source full-stack application primarily made to shorten URLs for faculty and professors of Rutgers University. It is written in [Python 3.6](https://www.python.org/) and [TypeScript](https://www.typescriptlang.org/) and uses [MongoDB](https://www.mongodb.com/), [HTTPD](https://httpd.apache.org/), [React](https://react.dev/), and [Flask](https://flask.palletsprojects.com/).
 
-<div align="center">
-    <img src="./docs/images/home.png">
-</div>
+![Preview of Shrunk](./docs/images/home.png)
 
 ## Features
 
@@ -17,10 +15,14 @@
 
 ## Build Instructions
 
+> [!WARNING]  
+> Make sure you are connected to an outlet before running Shrunk, it will drain your laptop's battery.
+
 1. Install or update [Docker Desktop](https://docs.docker.com/desktop/) with your Docker Engine being version 27 or newer
 2. Create a copy of `backend/shrunk/config.py.example` to `config.py`
 3. Change the value `DB_HOST` to `mongodb` in the backend's config file
-4. Start the Docker containers
+4. Change the vaue `DEV_LOGINS` to `True` in the backend's config file
+5. Start the Docker containers
 
 ```
 docker-compose up

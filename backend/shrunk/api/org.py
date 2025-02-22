@@ -399,19 +399,6 @@ def delete_domain(netid: str, client: ShrunkClient) -> Any:
         return jsonify({"error": str(e)}), 500
 
 
-@bp.route("/domain_enabled", methods=["GET"])
-@require_login
-def domain_enabled(netid: str, client: ShrunkClient) -> Any:
-    """
-    ``GET /api/v1/org/domain_enabled``
-
-    Check if the Domain feature is enabled.
-    """
-    is_enabled = client.orgs.get_domain_status()
-
-    return jsonify({"enabled": is_enabled})
-
-
 @bp.route("/<ObjectId:org_id>/member/<member_netid>", methods=["DELETE"])
 @require_login
 def delete_org_member(

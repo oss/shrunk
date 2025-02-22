@@ -413,11 +413,6 @@ def validate_alias_linkhub(netid: str, client: ShrunkClient, value: str) -> Any:
     return jsonify({"valid": client.linkhubs.is_alias_valid(value)})
 
 
-@bp.route("/is-linkhub-enabled", methods=["GET"])
-def is_linkhub_enabled() -> Any:
-    return jsonify({"status": current_app.client.linkhubs.is_enabled})
-
-
 @bp.route("/netid/<string:netid_query>", methods=["GET"])
 @require_login
 def get_linkhubs_from_netid(netid: str, client: ShrunkClient, netid_query: str) -> Any:

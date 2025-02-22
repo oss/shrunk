@@ -63,5 +63,10 @@ dist-newstyle
 
 backend/mail
 
-#for MacOS users
+#for macOS users
 .DS_Store
+
+# HTTPD
+httpd/error_log
+httpd/httpd.pid
+httpd/*.log

@@ -248,7 +248,7 @@ export default function Faq(): JSX.Element {
           <p style={{ paddingLeft: 24 }}>
             Only faculty and staff members are able to create a new
             organization. To do so, navigate to the{' '}
-            <Link to="/orgs">Organizations </Link>
+            <Link to="/app/orgs">Organizations </Link>
             page and click the <b>Create an Organization</b> button. You will
             automatically be made an administrator of the newly created
             organization. Once the organization has been created, you may

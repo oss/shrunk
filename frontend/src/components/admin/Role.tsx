@@ -370,7 +370,7 @@ export class Role extends React.Component<Props, State> {
         <FloatButton.BackTop />
         <Row className="primary-row">
           <Col span={20}>
-            <Button type="text" href="/app/#/admin" size="large" />
+            <Button type="text" href="/app/admin" size="large" />
             <span className="page-title">
               {this.state.roleText.grant_title}
             </span>
