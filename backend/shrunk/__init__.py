@@ -346,7 +346,7 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
         """Clears the user's session and sends them to Shibboleth to finish logging out.
         Redirects to index if user is not logged in."""
         if "user" not in session:
-            return "", 200
+            return jsonify({}), 200
 
         # Get the current netid and clear the session.
         netid = session["user"]["netid"]
@@ -360,7 +360,7 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
             "DEV_PWR_USER",
             "DEV_ADMIN",
         }:
-            return "", 200
+            return jsonify({}), 200
 
         # If the user is not a dev user, redirect to shibboleth to complete the logout process.
         return jsonify({"redirect-to": "/shibboleth/Logout"}), 200
