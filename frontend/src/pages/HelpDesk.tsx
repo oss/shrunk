@@ -187,7 +187,7 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
           <Button
             type="text"
             icon={<EyeOutlined />}
-            href={`/app/#/tickets/${record._id}`}
+            href={`/app/tickets/${record._id}`}
           />
         </Tooltip>
         {userPrivileges.has('admin') && (
@@ -195,7 +195,7 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
             <Button
               type="text"
               icon={<CheckCircleOutlined />}
-              href={`/app/#/tickets/${record._id}?mode=resolve`}
+              href={`/app/tickets/${record._id}?mode=resolve`}
             />
           </Tooltip>
         )}

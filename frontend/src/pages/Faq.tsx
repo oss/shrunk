@@ -4,7 +4,6 @@
  */
 import React from 'react';
 import { Row, Table, Collapse, Typography } from 'antd/lib';
-import { Link } from 'react-router-dom';
 
 const Data = {
   data: [
@@ -211,10 +210,10 @@ export default function Faq(): JSX.Element {
         >
           <p style={{ paddingLeft: 24 }}>
             To grant access to an undergraduate user, click the&nbsp;
-            <Link to="/roles/whitelisted">Whitelist </Link>
-            tab in the navigation bar, then enter the user&rsquo;s NetID and the
-            reason the user needs access to Go. Undergraduate users should only
-            use Go for purposes related to their employment with the University.
+            <a href="/roles/whitelisted">Whitelist</a> tab in the navigation
+            bar, then enter the user&rsquo;s NetID and the reason the user needs
+            access to Go. Undergraduate users should only use Go for purposes
+            related to their employment with the University.
           </p>
         </Panel>
         <Panel
@@ -248,14 +247,13 @@ export default function Faq(): JSX.Element {
           <p style={{ paddingLeft: 24 }}>
             Only faculty and staff members are able to create a new
             organization. To do so, navigate to the{' '}
-            <Link to="/app/orgs">Organizations </Link>
-            page and click the <b>Create an Organization</b> button. You will
-            automatically be made an administrator of the newly created
-            organization. Once the organization has been created, you may
-            navigate to its management page and use the <b>Add a Member</b>{' '}
-            button to add members to the organization. Only admins of the
-            organization can delete an organization, which removes member access
-            to the shared links.
+            <a href="/app/orgs">Organizations</a> page and click the{' '}
+            <b>Create an Organization</b> button. You will automatically be made
+            an administrator of the newly created organization. Once the
+            organization has been created, you may navigate to its management
+            page and use the <b>Add a Member</b> button to add members to the
+            organization. Only admins of the organization can delete an
+            organization, which removes member access to the shared links.
           </p>
           <p style={{ paddingLeft: 24 }}>
             To view the links created by members of an organization, click on

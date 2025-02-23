@@ -28,14 +28,7 @@ import {
   Typography,
 } from 'antd/lib';
 import React, { useEffect, useState } from 'react';
-import {
-  BrowserRouter,
-  Link,
-  NavLink,
-  Redirect,
-  Route,
-  Switch,
-} from 'react-router-dom';
+import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom';
 
 import { message } from 'antd';
 import Admin from './pages/Admin';
@@ -159,6 +152,8 @@ export default function Shrunk(props: Props) {
       .then((data: any) => {
         if ('redirect-to' in data) {
           window.location.href = data['redirect-to'];
+        } else {
+          window.location.href = '/app/login';
         }
       });
   };
@@ -195,14 +190,14 @@ export default function Shrunk(props: Props) {
     {
       key: 'orgs',
       icon: <TeamOutlined />,
-      label: <NavLink to="/app/orgs">My Organizations</NavLink>,
+      label: <a href="/app/orgs">My Organizations</a>,
     },
     ...(showAdminTab || isHelpDeskEnabled
       ? [
           {
             key: 'tickets',
             icon: <BugOutlined />,
-            label: <NavLink to="/tickets">Help Desk</NavLink>,
+            label: <a href="/tickets">Help Desk</a>,
           },
         ]
       : []),
@@ -211,7 +206,7 @@ export default function Shrunk(props: Props) {
           {
             key: 'admin-dashboard',
             icon: <SlidersOutlined />,
-            label: <NavLink to="/app/admin">Admin Dashboard</NavLink>,
+            label: <a href="/app/admin">Admin Dashboard</a>,
           },
         ]
       : []),
@@ -219,12 +214,12 @@ export default function Shrunk(props: Props) {
     {
       key: 'faq',
       icon: <BookOutlined />,
-      label: <NavLink to="/app/faq">FAQ</NavLink>,
+      label: <a href="/app/faq">FAQ</a>,
     },
     {
       key: 'releases',
       icon: <CodeOutlined />,
-      label: <NavLink to="/app/releases">Release Notes</NavLink>,
+      label: <a href="/app/releases">Release Notes</a>,
     },
     { type: 'divider' },
     {
@@ -260,6 +255,7 @@ export default function Shrunk(props: Props) {
     releases: { name: 'Release Notes', clickable: true },
     links: { name: 'URL Shortener', clickable: true, href: '/app/dash' },
   };
+  const isApp = window.location.pathname.split('/').slice(1)[0] === 'app';
 
   return (
     <ConfigProvider theme={lightTheme}>
@@ -277,7 +273,7 @@ export default function Shrunk(props: Props) {
             <Header>
               <Row gutter={16}>
                 <Col className="tw-flex tw-items-center tw-justify-center">
-                  <Link to={netid ? '/app/dash' : '/app/login'}>
+                  <a href={netid ? '/app/dash' : '/app/login'}>
                     <Image
                       preview={false}
                       alt="Rutgers"
@@ -285,7 +281,7 @@ export default function Shrunk(props: Props) {
                       width="175px"
                       srcSet={rutgersLogo}
                     />
-                  </Link>
+                  </a>
                 </Col>
                 <Col flex="auto">
                   {netid && (
@@ -294,13 +290,13 @@ export default function Shrunk(props: Props) {
                       mode="horizontal"
                     >
                       <Menu.Item key="dash">
-                        <NavLink to="/app/dash">URL Shortener</NavLink>
+                        <a href="/app/dash">URL Shortener</a>
                       </Menu.Item>
                       {isLinkHubEnabled ? (
                         <Menu.Item key="linkhubs">
-                          <NavLink to="/app/linkhubs">
+                          <a href="/app/linkhubs">
                             LinkHub <Tag color="warning">beta</Tag>
-                          </NavLink>
+                          </a>
                         </Menu.Item>
                       ) : (
                         <></>
@@ -330,7 +326,7 @@ export default function Shrunk(props: Props) {
                   <PendingAlerts netid={netid} pendingAlerts={pendingAlerts} />
                 )}
                 <PendingRequests />
-                {netid !== '' && (
+                {netid !== '' && isApp && (
                   <Breadcrumb
                     items={window.location.pathname
                       .split('/')
@@ -343,27 +339,19 @@ export default function Shrunk(props: Props) {
                           };
                         }
 
-                        if (
-                          !Object.prototype.hasOwnProperty.call(
-                            partToName,
-                            part,
-                          )
-                        ) {
-                          return { title: part.split('?')[0] };
+                        if (!(part in partToName)) {
+                          return {};
                         }
 
                         const path =
                           partToName[part].href === undefined
-                            ? arr
-                                .slice(0, index + 1)
-                                .join('/')
-                                .replace('#', '')
+                            ? arr.slice(0, index + 1).join('/')
                             : partToName[part].href;
 
                         return {
                           title: partToName[part].name,
                           href: partToName[part].clickable
-                            ? `#${path}`
+                            ? `/${path}`
                             : undefined,
                         };
                       })}
@@ -462,16 +450,21 @@ export default function Shrunk(props: Props) {
                 Individuals with disabilities are encouraged to direct
                 suggestions, comments, or complaints concerning any
                 accessibility issues with Rutgers websites to{' '}
-                <Link target="_blank" to="mailto:accessibility@rutgers.edu">
-                  accessibility@rutgers.edu
-                </Link>{' '}
-                or complete the{' '}
-                <Link
+                <a
                   target="_blank"
-                  to="https://rutgers.ca1.qualtrics.com/jfe/form/SV_57iH6Rfeocz51z0"
+                  rel="noreferrer"
+                  href="mailto:accessibility@rutgers.edu"
+                >
+                  accessibility@rutgers.edu
+                </a>{' '}
+                or complete the{' '}
+                <a
+                  target="_blank"
+                  rel="noreferrer"
+                  href="https://rutgers.ca1.qualtrics.com/jfe/form/SV_57iH6Rfeocz51z0"
                 >
                   Report Accessibility Barrier or Provide Feedback Form
-                </Link>
+                </a>
                 .
               </Typography.Paragraph>
             </Footer>

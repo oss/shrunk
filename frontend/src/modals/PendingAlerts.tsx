@@ -5,7 +5,6 @@
 
 import React from 'react';
 import { Modal, Button } from 'antd/lib';
-import { Link } from 'react-router-dom';
 
 /**
  * Alert regarding Orgsv2 shown to a user who is _not_ yet a member of any organizations.
@@ -16,9 +15,9 @@ const NewUser: React.FC<{ closePopup: () => Promise<void> }> = (props) => (
   <>
     <p>You can do so with an organization.</p>
     Head to the{' '}
-    <Link onClick={async (_ev) => props.closePopup()} to="/app/orgs">
+    <a onClick={async (_ev) => props.closePopup()} href="/app/orgs">
       Orgs
-    </Link>{' '}
+    </a>{' '}
     page to check it out!
   </>
 );
@@ -43,9 +42,9 @@ const CurrentUser: React.FC<{ closePopup: () => Promise<void> }> = (props) => (
       <li>use go.rutgers.edu on mobile</li>
     </ul>
     Head to the{' '}
-    <Link onClick={async (_ev) => props.closePopup()} to="/app/orgs">
+    <a onClick={async (_ev) => props.closePopup()} href="/app/orgs">
       Orgs
-    </Link>{' '}
+    </a>{' '}
     page to check it out!
   </>
 );

@@ -7,6 +7,18 @@
   "plugins": ["@typescript-eslint", "prettier"],
   "extends": ["airbnb-typescript", "prettier"],
   "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "react-router-dom",
+            "importNames": ["Link", "NavLink"],
+            "message": "To support `Breadcrumb` in Shrunk.tsx to reload once a page changes, this is banned. Use HTML's `a` component instead."
+          }
+        ]
+      }
+    ],
     "react/require-default-props": "off",
     "no-unused-vars": [
       "error",
