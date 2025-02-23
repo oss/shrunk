@@ -267,11 +267,11 @@ class LinksClient:
         ):
             raise NotUserOrOrg(f"{target} is not a valid {mtype}. can't add to {acl}")
 
-    def modify_acl(
-        self, link_id: ObjectId, entry: Dict[str, Any], add: bool, acl: str, owner: str
-    ):
+    def modify_acl(self, link_id: ObjectId, entry: Dict[str, Any], add: bool, acl: str):
+        info = self.get_link_info(link_id)
+
         # dont modify if they are owner
-        if entry["_id"] == owner:
+        if entry["_id"] == info["netid"]:
             return
         # make sure we don't add a dupe if they already have the perm
         operator = "$addToSet"

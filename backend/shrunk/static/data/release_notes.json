@@ -105,6 +105,10 @@
         {
           "text": "Fix issue where Google's Safe Browsing shows a broken status message",
           "contributors": ["ah1371"]
+        },
+        {
+          "text": "Editors are allowed to add owners as an editor or viewer",
+          "contributors": ["pk641"]
         }
       ]
     }

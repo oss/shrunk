@@ -447,7 +447,7 @@ def modify_acl(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) ->
         )
     try:
         client.links.modify_acl(
-            link_id, req["entry"], req["action"] == "add", req["acl"], netid
+            link_id, req["entry"], req["action"] == "add", req["acl"]
         )
     except InvalidACL:
         return jsonify({"errors": ["invalid acl"]})

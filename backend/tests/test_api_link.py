@@ -779,6 +779,7 @@ def test_update_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
             resp = client.get(f"/api/v1/link/{link_id}")
             return resp.json, status
 
+        owner = {"_id": "DEV_FACSTAFF", "type": "netid"}
         person = {"_id": "roofus", "type": "netid"}
         person2 = {"_id": "doofus", "type": "netid"}
         inv_org = {"_id": "not_obj_id", "type": "org"}
@@ -793,6 +794,13 @@ def test_update_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
         # duplicates should be ignored
         link, status = mod_acl("add", person, "viewers")
         assert 200 <= status <= 300
+        assert len(link["viewers"]) == 1
+        assert len(link["editors"]) == 0
+
+        # should be unable to add owner
+        link, status = mod_acl("add", owner, "viewers")
+        print(link)
+        assert status == 204
         assert len(link["viewers"]) == 1
         assert len(link["editors"]) == 0
 
