@@ -744,7 +744,7 @@ export function Stats(props: Props): React.ReactElement {
       />
     ) : (
       <>
-        <Typography.Title level={3} style={{ marginTop: 0 }}>
+        <Typography.Title level={3} className="tw-mt-0">
           How to use
         </Typography.Title>
         <Typography.Text>

@@ -1,4 +1,5 @@
 /* eslint-disable react/require-default-props */
+/* eslint-disable react/forbid-dom-props */
 import React from 'react';
 import './LinkHubComponent.css';
 

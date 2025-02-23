@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable no-unused-vars */
+/* eslint-disable react/forbid-dom-props */
 import React, { useEffect, useState } from 'react';
 import {
   Typography,
@@ -57,9 +58,9 @@ function LinkHubEditRow(props: PLinkHubEditRow) {
         marginTop: '10px',
       }}
     >
-      <div style={{ marginRight: '10px', width: '100%' }}>
-        <p style={{ margin: 0 }}>{props.link.title}</p>
-        <p style={{ margin: 0 }}>{props.link.url}</p>
+      <div className="mr-2 w-full">
+        <p className="m-0">{props.link.title}</p>
+        <p className="m-0">{props.link.url}</p>
       </div>
       <EditOutlined
         onClick={() => {
@@ -67,7 +68,7 @@ function LinkHubEditRow(props: PLinkHubEditRow) {
         }}
       />
       <DeleteOutlined
-        style={{ marginLeft: '8px' }}
+        className="tw-ml-2"
         onClick={() => {
           props.onDeleteDisplayLink(props.index);
         }}

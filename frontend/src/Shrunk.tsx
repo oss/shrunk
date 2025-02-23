@@ -171,16 +171,10 @@ export default function Shrunk(props: Props) {
       key: 'role-status',
       disabled: true,
       label: (
-        <p style={{ margin: 0, marginBottom: '-4px', textAlign: 'center' }}>
+        <p className="tw-m-0 tw-text-center">
           {netid} ({role})
         </p>
       ),
-      style: {
-        textAlign: 'center',
-        cursor: 'default',
-        paddingTop: '8px',
-        paddingBottom: '8px',
-      },
     },
     { type: 'divider' },
     {
@@ -290,7 +284,7 @@ export default function Shrunk(props: Props) {
             </Header>
             <Layout>
               <Sider width={siderWidth} breakpoint="xl" collapsedWidth="10" />
-              <Content className="tw-m-0 tw-p-6 tw-min-h-[90vh]">
+              <Content className="tw-m-0 tw-min-h-[90vh] tw-p-6">
                 {pendingAlerts.length !== 0 && (
                   <PendingAlerts netid={netid} pendingAlerts={pendingAlerts} />
                 )}
@@ -413,7 +407,7 @@ export default function Shrunk(props: Props) {
               </Content>
               <Sider width={siderWidth} breakpoint="xl" collapsedWidth="10" />
             </Layout>
-            <Footer className="tw-flex tw-justify-center tw-text-center tw-bg-black">
+            <Footer className="tw-flex tw-justify-center tw-bg-black tw-text-center">
               <Typography.Paragraph className="tw-w-[70%] tw-text-gray-200">
                 Rutgers is an equal access/equal opportunity institution.
                 Individuals with disabilities are encouraged to direct

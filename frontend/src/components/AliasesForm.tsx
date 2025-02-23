@@ -25,13 +25,7 @@ export default function AliasesForm(props: IAliasesForm) {
     <Form.Item label="Aliases">
       <Form.List name="aliases">
         {(fields, { add, remove }) => (
-          <div
-            style={{
-              display: 'flex',
-              rowGap: 16,
-              flexDirection: 'column',
-            }}
-          >
+          <div className="tw-flex tw-flex-col tw-gap-4">
             {fields.length < 6 && (
               <Button type="dashed" onClick={() => add()} block>
                 + Add Alias

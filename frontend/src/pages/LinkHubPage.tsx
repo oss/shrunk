@@ -1,3 +1,4 @@
+/* eslint-disable react/forbid-dom-props */
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import LinkHubComponent, { DisplayLink } from '../components/LinkHubComponent';

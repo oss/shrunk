@@ -43,16 +43,16 @@ export default function Login() {
   return (
     <>
       <Row gutter={[16, 16]}>
-        <Col span={24} className="tw-text-center tw-mt-12 tw-mb-2">
+        <Col span={24} className="tw-mb-2 tw-mt-12 tw-text-center">
           <Flex justify="center">
             <BlurFade delay={0.25} inView className="tw-size-2/3">
-              <h1 className="tw-m-0 tw-text-7xl tw-font-bold tw-tracking-tighter tw-text-balance">
+              <h1 className="tw-m-0 tw-text-balance tw-text-7xl tw-font-bold tw-tracking-tighter">
                 Shorten Links for the Rutgers Community
               </h1>
             </BlurFade>
           </Flex>
         </Col>
-        <Col span={24} className="tw-text-center tw-mb-6">
+        <Col span={24} className="tw-mb-6 tw-text-center">
           <BlurFade delay={0.25 * 1.5} inView>
             <Space>
               {devLogins && (
@@ -92,7 +92,7 @@ export default function Login() {
         </Col>
         <Col span={24}>
           <BlurFade delay={0.25 * 2} inView>
-            <Card className="tw-relative tw-pointer-events-none tw-select-none">
+            <Card className="tw-pointer-events-none tw-relative tw-select-none">
               <Dashboard
                 demo
                 mockData={[

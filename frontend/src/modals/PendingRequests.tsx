@@ -60,22 +60,13 @@ const PendingRequestRow: React.FC<{
       <Col span={20}>
         <Row>
           <Col>
-            <span style={{ fontWeight: 'bold' }}>
-              {request.requesting_netid}
-            </span>{' '}
-            has requested access to edit &ldquo;{request.title}&rdquo;
+            <span className="tw-font-bold">{request.requesting_netid}</span> has
+            requested access to edit &ldquo;{request.title}&rdquo;
           </Col>
         </Row>
         <Row>
           <Col>
-            <span
-              style={{
-                fontVariantCaps: 'small-caps',
-                fontVariantNumeric: 'oldstyle-nums',
-                fontSize: 'small',
-                color: 'gray',
-              }}
-            >
+            <span className="font-variant-caps uppercase text-sm text-gray-500">
               Requested at{' '}
               {dayjs(request.request_time).format('MMMM D, YYYY h:mm a')}
             </span>

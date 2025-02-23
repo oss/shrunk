@@ -4,9 +4,21 @@
   "parserOptions": {
     "project": "./tsconfig.json"
   },
-  "plugins": ["@typescript-eslint", "prettier"],
+  "plugins": ["@typescript-eslint", "prettier", "tailwindcss", "react"],
   "extends": ["airbnb-typescript", "prettier"],
   "rules": {
+    "tailwindcss/classnames-order": "error",
+    "react/forbid-dom-props": [
+      2,
+      {
+        "forbid": [
+          {
+            "propName": "style",
+            "message": "Use Tailwind CSS instead."
+          }
+        ]
+      }
+    ],
     "no-restricted-imports": [
       "error",
       {
