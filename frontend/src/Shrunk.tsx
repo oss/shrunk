@@ -6,6 +6,7 @@
 import {
   BookOutlined,
   BugOutlined,
+  CodeOutlined,
   LogoutOutlined,
   MenuOutlined,
   SlidersOutlined,
@@ -58,6 +59,7 @@ import ErrorPage from './pages/ErrorPage';
 import rutgersLogo from './images/rutgers.png';
 import Ticket from './pages/subpages/Ticket';
 import { lightTheme } from './theme';
+import ChangeLog from './pages/ChangeLog';
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -219,6 +221,11 @@ export default function Shrunk(props: Props) {
       icon: <BookOutlined />,
       label: <NavLink to="/app/faq">FAQ</NavLink>,
     },
+    {
+      key: 'releases',
+      icon: <CodeOutlined />,
+      label: <NavLink to="/app/releases">Release Notes</NavLink>,
+    },
     { type: 'divider' },
     {
       key: 'logout',
@@ -250,6 +257,7 @@ export default function Shrunk(props: Props) {
     tickets: { name: 'Help Desk', clickable: true },
     roles: { name: 'Role', clickable: false },
     faq: { name: 'Frequently Asked Questions', clickable: true },
+    releases: { name: 'Release Notes', clickable: true },
     links: { name: 'URL Shortener', clickable: true, href: '/app/dash' },
   };
 
@@ -428,6 +436,9 @@ export default function Shrunk(props: Props) {
                       />
                     )}
                   />
+                  <Route exact path="/app/releases">
+                    <ChangeLog />
+                  </Route>
                   <Route exact path="/app/admin">
                     <ProtectedRoute requiredPrivilege="admin">
                       <Admin />

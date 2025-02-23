@@ -1,0 +1,174 @@
+[
+  {
+    "major": 3,
+    "minor": 0,
+    "patch": 0,
+    "projectDirector": "ah1371",
+    "date": "TODO",
+    "description": "The modern UI/UX & codebase update.",
+    "categories": {
+      "improvements": [
+        {
+          "text": "HTTPD handles routing instead of Flask",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Dashboard displays links in a table",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Links and tracking pixels have their own page dedicated for editing, collaborating, sharing, and viewing stats",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "New admin dashboard with all pages condensed into one with tab",
+          "contributors": ["yas55"]
+        },
+        {
+          "text": "New page for release notes",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "New collaborating UI",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Add filter options for owner and link type (links and tracking pixels)",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Add 403 and 404 pages with consistent styling with the rest of the website",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "HTTPD conditionally serves frontend and backend at the root",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Changed to a new font \"Geist\"",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Icons are now consistent throughout the site by using one icon framework (Ant Design) instead of two (Ant Design and react-icons)",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "URI parameters being preserved from redirect",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Tracking pixels are now served as an API route",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Utilizing TailwindCSS 3 over SCSS",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "No longer using HashRouter, using BrowserRouter",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Use breadcrumbs instead of a back button",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Add QR code generator via an exposed API endpoint",
+          "contributors": ["av782", "kgm74"]
+        },
+        {
+          "text": "Ban the future creation of case-sensitive aliases",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Add GitLab CI/CD for Python and TypeScript code",
+          "contributors": ["ah1371"]
+        }
+      ],
+      "fixes": [
+        {
+          "text": "Setting expiration time after creation leads to invalid dates",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Deleting a link with multiple aliases only deletes its first alias",
+          "contributors": ["ejw135"]
+        },
+        {
+          "text": "Organizations can exist without any admins",
+          "contributors": ["ejw135"]
+        },
+        {
+          "text": "Support iCloud Private Relay on Safari",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Fix issue where Google's Safe Browsing shows a broken status message",
+          "contributors": ["ah1371"]
+        }
+      ]
+    }
+  },
+  {
+    "major": 2,
+    "minor": 3,
+    "patch": 0,
+    "projectDirector": "kgm74",
+    "date": "11-5-2024",
+    "description": "Tracking pixels introduced.",
+    "categories": {
+      "improvements": [
+        {
+          "text": "Implement tracking pixel functionality",
+          "contributors": ["av782", "kgm74"]
+        },
+        {
+          "text": "Symbolic links are no longer needed in the building and deploying process",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Dockerized entire codebase",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Google's Safe Browsing integrated to prevent malicious websites from being added to the site",
+          "contributors": ["kgm74"]
+        },
+        {
+          "text": "Reworked the search functionality by using MongoDB's aggregate pipeline",
+          "contributors": ["av782"]
+        },
+        {
+          "text": "Admins of its organization can change their organization's name",
+          "contributors": ["kgm74"]
+        },
+        {
+          "text": "Admins of Shrunk can change easily change ownership of links",
+          "contributors": ["kgm74"]
+        },
+        {
+          "text": "Admins of Shrunk can change edit any link without permission from its owner",
+          "contributors": ["kgm74"]
+        },
+        {
+          "text": "Delete unnecessary HTML documentation generator for the frontend and backend",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Add a 60 character limit to organization names",
+          "contributors": ["jsp241"]
+        },
+        {
+          "text": "Add user lookup to the admin dashboard",
+          "contributors": ["ejw135"]
+        }
+      ],
+      "fixes": [
+        {
+          "text": "Update to the new Rutgers University logo",
+          "contributors": ["kgm74"]
+        }
+      ]
+    }
+  }
+]

@@ -5,6 +5,7 @@ import binascii
 import codecs
 import datetime
 import json
+import os
 import logging
 from typing import Any
 
@@ -18,6 +19,7 @@ from flask import (
     request,
     session,
     send_file,
+    send_from_directory,
 )
 from backports import datetime_fromisoformat
 from bson import ObjectId
@@ -305,6 +307,39 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
     @app.route("/", methods=["GET"])
     def _redirect_to_real_index() -> Any:
         return redirect("/app")
+
+    @app.route("/api/v1/release-notes", methods=["GET"])
+    def serve_release_notes() -> Any:
+        releases = json.load(
+            open(
+                os.path.join(
+                    current_app.root_path,
+                    current_app.static_folder,
+                    "data",
+                    "release_notes.json",
+                )
+            )
+        )
+        contributors = json.load(
+            open(
+                os.path.join(
+                    current_app.root_path,
+                    current_app.static_folder,
+                    "data",
+                    "contributors.json",
+                )
+            )
+        )
+
+        for release in releases:
+            for category, changes in release["categories"].items():
+                for change in changes:
+                    change["contributors"] = [
+                        contributors.get(contrib_id, contrib_id)
+                        for contrib_id in change["contributors"]
+                    ]
+
+        return jsonify(releases)
 
     @app.route("/api/v1/logout", methods=["POST"])
     def logout() -> Any:
