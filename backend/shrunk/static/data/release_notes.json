@@ -33,6 +33,10 @@
           "contributors": ["ah1371"]
         },
         {
+          "text": "New profile dropdown menu",
+          "contributors": ["ah1371"]
+        },
+        {
           "text": "Add filter options for owner and link type (links and tracking pixels)",
           "contributors": ["ah1371"]
         },
@@ -49,7 +53,7 @@
           "contributors": ["ah1371"]
         },
         {
-          "text": "Icons are now consistent throughout the site by using one icon framework (Ant Design) instead of two (Ant Design and react-icons)",
+          "text": "Icons are now consistent throughout the site by using one icon framework instead of two",
           "contributors": ["ah1371"]
         },
         {
@@ -83,19 +87,23 @@
         {
           "text": "Add GitLab CI/CD for Python and TypeScript code",
           "contributors": ["ah1371"]
+        },
+        {
+          "text": "Drop Internet Explorer support",
+          "contributors": ["ah1371", "kgm74"]
         }
       ],
       "fixes": [
         {
-          "text": "Setting expiration time after creation leads to invalid dates",
+          "text": "Setting expiration time after creation no longer leads to invalid dates",
           "contributors": ["ah1371"]
         },
         {
-          "text": "Deleting a link with multiple aliases only deletes its first alias",
+          "text": "Deleting a link with multiple aliases no longer only deletes its first alias",
           "contributors": ["ejw135"]
         },
         {
-          "text": "Organizations can exist without any admins",
+          "text": "Organizations can no longer exist without any admins",
           "contributors": ["ejw135"]
         },
         {
@@ -103,11 +111,11 @@
           "contributors": ["ah1371"]
         },
         {
-          "text": "Fix issue where Google's Safe Browsing shows a broken status message",
+          "text": "Google Safe Browsing no longer shows a broken status message",
           "contributors": ["ah1371"]
         },
         {
-          "text": "Editors are allowed to add owners as an editor or viewer",
+          "text": "Editors are no longer allowed to add owners as an editor or viewer",
           "contributors": ["pk641"]
         }
       ]
@@ -116,7 +124,7 @@
   {
     "major": 2,
     "minor": 3,
-    "patch": 0,
+    "patch": 1,
     "projectDirector": "kgm74",
     "date": "11-5-2024",
     "description": "Tracking pixels introduced.",
@@ -135,24 +143,8 @@
           "contributors": ["ah1371"]
         },
         {
-          "text": "Google's Safe Browsing integrated to prevent malicious websites from being added to the site",
-          "contributors": ["kgm74"]
-        },
-        {
           "text": "Reworked the search functionality by using MongoDB's aggregate pipeline",
           "contributors": ["av782"]
-        },
-        {
-          "text": "Admins of its organization can change their organization's name",
-          "contributors": ["kgm74"]
-        },
-        {
-          "text": "Admins of Shrunk can change easily change ownership of links",
-          "contributors": ["kgm74"]
-        },
-        {
-          "text": "Admins of Shrunk can change edit any link without permission from its owner",
-          "contributors": ["kgm74"]
         },
         {
           "text": "Delete unnecessary HTML documentation generator for the frontend and backend",
@@ -165,12 +157,87 @@
         {
           "text": "Add user lookup to the admin dashboard",
           "contributors": ["ejw135"]
+        },
+        {
+          "text": "Update to the new Rutgers University logo",
+          "contributors": ["kgm74"]
+        }
+      ],
+      "fixes": []
+    }
+  },
+  {
+    "major": 2,
+    "minor": 3,
+    "patch": 0,
+    "projectDirector": "kgm74",
+    "date": "3-16-2023",
+    "description": "Google Safe Browsing introduced.",
+    "categories": {
+      "improvements": [
+        {
+          "text": "Google Safe Browsing integrated to prevent malicious websites from being added to the site",
+          "contributors": ["kgm74"]
         }
       ],
       "fixes": [
         {
-          "text": "Update to the new Rutgers University logo",
+          "text": "Landing page footer styles fixed",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Made both dropdowns styles consistent with the dashboard",
           "contributors": ["kgm74"]
+        },
+        {
+          "text": "Admins of Shrunk can change easily change ownership of links",
+          "contributors": ["kgm74"]
+        },
+        {
+          "text": "Admins of Shrunk can change edit any link without permission from its owner",
+          "contributors": ["kgm74"]
+        }
+      ]
+    }
+  },
+  {
+    "major": 2,
+    "minor": 2,
+    "patch": 1,
+    "projectDirector": "",
+    "date": "2-2-2022",
+    "description": "",
+    "categories": {
+      "improvements": [
+        {
+          "text": "Add references to other Rutgers sites to the footer",
+          "contributors": ["gracechen11"]
+        },
+        {
+          "text": "Add back buttons to subpages",
+          "contributors": ["gracechen11"]
+        },
+        {
+          "text": "Add a FAQ",
+          "contributors": ["gracechen11"]
+        },
+        {
+          "text": "Admins of its organization can change their organization's name",
+          "contributors": ["kgm74"]
+        },
+        {
+          "text": "Power users can now have comments when granted the role",
+          "contributors": ["gracechen11"]
+        }
+      ],
+      "fixes": [
+        {
+          "text": "Admins of its organization can change their organization's name",
+          "contributors": ["kgm74"]
+        },
+        {
+          "text": "Remove button for users of an organization to add a member",
+          "contributors": ["gracechen11"]
         }
       ]
     }
