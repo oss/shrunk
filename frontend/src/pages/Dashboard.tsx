@@ -804,7 +804,8 @@ export class Dashboard extends React.Component<Props, State> {
                       },
                     ]
                   : []),
-                ...(this.state.visibleColumns.has('owner')
+                ...(this.state.visibleColumns.has('owner') &&
+                this.props.mockData === undefined
                   ? [
                       {
                         title: 'Owner',
@@ -815,7 +816,8 @@ export class Dashboard extends React.Component<Props, State> {
                       },
                     ]
                   : []),
-                ...(this.state.visibleColumns.has('dateCreated')
+                ...(this.state.visibleColumns.has('dateCreated') &&
+                this.props.mockData === undefined
                   ? [
                       {
                         title: 'Date Created',
@@ -876,7 +878,7 @@ export class Dashboard extends React.Component<Props, State> {
                   title: <Flex justify="flex-end">Actions</Flex>,
                   key: 'actions',
                   fixed: 'right',
-                  width: '220px',
+                  width: this.props.mockData === undefined ? '220px' : '100px',
                   render: (_, record) => (
                     <Flex justify="flex-end">
                       <Space>

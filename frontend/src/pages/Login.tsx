@@ -156,7 +156,7 @@ export default function Login() {
                     owner: 'FAKE_NETID2',
                     aliases: [
                       {
-                        alias: 'valorant911',
+                        alias: 'camden',
                         description: '',
                         deleted: false,
                       },
@@ -172,8 +172,10 @@ export default function Login() {
                     viewers: [],
                   },
                   {
-                    title: 'Open Source Software at Rutgers University',
-                    long_url: 'https://oss.rutgers.edu/',
+                    title:
+                      'Rutgers University Open System Solutions creating Open Source Software',
+                    long_url:
+                      'https://www.rutgers.edu/news/rutgers-start-ups-student-developers-gain-skills-building-real-world-apps',
                     created_time: new Date('2012-02-16T03:24:00'),
                     visits: 3451242,
                     unique_visits: 4123,
@@ -232,8 +234,3 @@ export default function Login() {
     </>
   );
 }
-
-// Marketing
-// - "You can have custom aliases"
-// - "Free statistics and analytics"
-// - "Manage your links with your department under organizations"

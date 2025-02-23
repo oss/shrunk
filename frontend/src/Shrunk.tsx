@@ -8,7 +8,6 @@ import {
   BugOutlined,
   CodeOutlined,
   LogoutOutlined,
-  MenuOutlined,
   SlidersOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
@@ -17,14 +16,10 @@ import {
   App,
   Breadcrumb,
   Button,
-  Col,
   ConfigProvider,
   Dropdown,
   Image,
   Layout,
-  Menu,
-  Row,
-  Tag,
   Typography,
 } from 'antd/lib';
 import React, { useEffect, useState } from 'react';
@@ -123,6 +118,7 @@ export default function Shrunk(props: Props) {
       : 'Administrator';
 
   const [pendingAlerts, setPendingAlerts] = useState<string[]>([]);
+  // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
   const [isLinkHubEnabled, setIsLinkHubEnabled] = useState(false);
   const [isHelpDeskEnabled, setIsHelpDeskEnabled] = useState(false);
 
@@ -270,54 +266,27 @@ export default function Shrunk(props: Props) {
                 closable
               />
             )}
-            <Header>
-              <Row gutter={16}>
-                <Col className="tw-flex tw-items-center tw-justify-center">
-                  <a href={netid ? '/app/dash' : '/app/login'}>
-                    <Image
-                      preview={false}
-                      alt="Rutgers"
-                      src={rutgersLogo}
-                      width="175px"
-                      srcSet={rutgersLogo}
-                    />
-                  </a>
-                </Col>
-                <Col flex="auto">
-                  {netid && (
-                    <Menu
-                      overflowedIndicator={<MenuOutlined />}
-                      mode="horizontal"
-                    >
-                      <Menu.Item key="dash">
-                        <a href="/app/dash">URL Shortener</a>
-                      </Menu.Item>
-                      {isLinkHubEnabled ? (
-                        <Menu.Item key="linkhubs">
-                          <a href="/app/linkhubs">
-                            LinkHub <Tag color="warning">beta</Tag>
-                          </a>
-                        </Menu.Item>
-                      ) : (
-                        <></>
-                      )}
-                    </Menu>
-                  )}
-                </Col>
-                <Col className="tw-flex tw-items-center tw-justify-center">
-                  {isLoading ? (
-                    <Button type="text" className="tw-text-white" loading />
-                  ) : netid ? (
-                    <Dropdown menu={{ items: menuItems }}>
-                      <Button type="text" className="tw-text-white">
-                        {netid}
-                      </Button>
-                    </Dropdown>
-                  ) : (
-                    <></>
-                  )}
-                </Col>
-              </Row>
+            <Header className="tw-flex tw-items-center tw-justify-between">
+              <a href={netid ? '/app/dash' : '/app/login'}>
+                <Image
+                  preview={false}
+                  alt="Rutgers"
+                  src={rutgersLogo}
+                  width="175px"
+                  srcSet={rutgersLogo}
+                />
+              </a>
+              {isLoading ? (
+                <Button type="text" className="tw-text-white" loading />
+              ) : netid ? (
+                <Dropdown menu={{ items: menuItems }}>
+                  <Button type="text" className="tw-text-white">
+                    {netid}
+                  </Button>
+                </Dropdown>
+              ) : (
+                <></>
+              )}
             </Header>
             <Layout>
               <Sider width={siderWidth} breakpoint="xl" collapsedWidth="10" />
