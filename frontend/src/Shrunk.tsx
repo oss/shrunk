@@ -182,7 +182,7 @@ export default function Shrunk(props: Props) {
       icon: <TeamOutlined />,
       label: <a href="/app/orgs">My Organizations</a>,
     },
-    ...(showAdminTab || isHelpDeskEnabled
+    ...(showAdminTab && isHelpDeskEnabled
       ? [
           {
             key: 'tickets',
