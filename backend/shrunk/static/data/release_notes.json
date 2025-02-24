@@ -7,6 +7,25 @@
     "date": "TODO",
     "description": "The modern UI/UX & codebase update.",
     "categories": {
+      "features": [
+        {
+          "text": "Links and tracking pixels have their own page dedicated for editing, collaborating, sharing, and viewing stats",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "New page for release notes",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "URI parameters being preserved from redirect",
+          "contributors": ["ah1371"],
+          "warning": true
+        },
+        {
+          "text": "Add QR code generator via an exposed API endpoint",
+          "contributors": ["av782", "kgm74"]
+        }
+      ],
       "improvements": [
         {
           "text": "HTTPD handles routing instead of Flask",
@@ -17,16 +36,8 @@
           "contributors": ["ah1371"]
         },
         {
-          "text": "Links and tracking pixels have their own page dedicated for editing, collaborating, sharing, and viewing stats",
-          "contributors": ["ah1371"]
-        },
-        {
           "text": "New admin dashboard with all pages condensed into one with tab",
           "contributors": ["yas55"]
-        },
-        {
-          "text": "New page for release notes",
-          "contributors": ["ah1371"]
         },
         {
           "text": "New collaborating UI",
@@ -57,12 +68,9 @@
           "contributors": ["ah1371"]
         },
         {
-          "text": "URI parameters being preserved from redirect",
-          "contributors": ["ah1371"]
-        },
-        {
           "text": "Tracking pixels are now served as an API route",
-          "contributors": ["ah1371"]
+          "contributors": ["ah1371"],
+          "warning": true
         },
         {
           "text": "Utilizing TailwindCSS 3 over SCSS",
@@ -70,19 +78,17 @@
         },
         {
           "text": "No longer using HashRouter, using BrowserRouter",
-          "contributors": ["ah1371"]
+          "contributors": ["ah1371"],
+          "warning": true
         },
         {
           "text": "Use breadcrumbs instead of a back button",
           "contributors": ["ah1371"]
         },
         {
-          "text": "Add QR code generator via an exposed API endpoint",
-          "contributors": ["av782", "kgm74"]
-        },
-        {
           "text": "Ban the future creation of case-sensitive aliases",
-          "contributors": ["ah1371"]
+          "contributors": ["ah1371"],
+          "warning": true
         },
         {
           "text": "Add GitLab CI/CD for Python and TypeScript code",
@@ -90,7 +96,8 @@
         },
         {
           "text": "Drop Internet Explorer support",
-          "contributors": ["ah1371", "kgm74"]
+          "contributors": ["ah1371", "kgm74"],
+          "warning": true
         }
       ],
       "fixes": [
@@ -129,11 +136,17 @@
     "date": "11-5-2024",
     "description": "Tracking pixels introduced.",
     "categories": {
-      "improvements": [
+      "features": [
         {
           "text": "Implement tracking pixel functionality",
           "contributors": ["av782", "kgm74"]
         },
+        {
+          "text": "Add user lookup to the admin dashboard",
+          "contributors": ["ejw135"]
+        }
+      ],
+      "improvements": [
         {
           "text": "Symbolic links are no longer needed in the building and deploying process",
           "contributors": ["ah1371"]
@@ -155,10 +168,6 @@
           "contributors": ["jsp241"]
         },
         {
-          "text": "Add user lookup to the admin dashboard",
-          "contributors": ["ejw135"]
-        },
-        {
           "text": "Update to the new Rutgers University logo",
           "contributors": ["kgm74"]
         }
@@ -174,12 +183,13 @@
     "date": "3-16-2023",
     "description": "Google Safe Browsing introduced.",
     "categories": {
-      "improvements": [
+      "features": [
         {
           "text": "Google Safe Browsing integrated to prevent malicious websites from being added to the site",
           "contributors": ["kgm74"]
         }
       ],
+      "improvements": [],
       "fixes": [
         {
           "text": "Landing page footer styles fixed",
@@ -208,6 +218,16 @@
     "date": "2-2-2022",
     "description": "",
     "categories": {
+      "features": [
+        {
+          "text": "Add a FAQ",
+          "contributors": ["gracechen11"]
+        },
+        {
+          "text": "Admins of its organization can change their organization's name",
+          "contributors": ["kgm74"]
+        }
+      ],
       "improvements": [
         {
           "text": "Add references to other Rutgers sites to the footer",
@@ -216,14 +236,6 @@
         {
           "text": "Add back buttons to subpages",
           "contributors": ["gracechen11"]
-        },
-        {
-          "text": "Add a FAQ",
-          "contributors": ["gracechen11"]
-        },
-        {
-          "text": "Admins of its organization can change their organization's name",
-          "contributors": ["kgm74"]
         },
         {
           "text": "Power users can now have comments when granted the role",

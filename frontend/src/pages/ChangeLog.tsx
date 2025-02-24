@@ -3,6 +3,7 @@ import { Col, Row, Typography } from 'antd/lib';
 
 enum ReleaseCategory {
   IMPROVEMENTS = 'improvements',
+  FEATURES = 'features',
   FIXES = 'fixes',
 }
 
@@ -16,6 +17,7 @@ interface Note {
   text: string;
   contributors: Contributor[];
   internal?: boolean;
+  warning?: boolean;
 }
 
 interface Release {
@@ -24,6 +26,7 @@ interface Release {
   patch: number;
   description: string;
   categories: {
+    [ReleaseCategory.FEATURES]: Note[];
     [ReleaseCategory.IMPROVEMENTS]: Note[];
     [ReleaseCategory.FIXES]: Note[];
   };
@@ -36,27 +39,37 @@ const ReleaseSection = ({ title, notes }: { title: string; notes: Note[] }) => (
     </Typography.Title>
     <Typography.Paragraph>
       <ul>
-        {notes.map((note: Note) => (
-          <li key={note.text}>
-            {note.text}{' '}
-            {note.contributors.length !== 0 && (
-              <span className="tw-text-gray-500">
-                by{' '}
-                {note.contributors
-                  .map((contributor: Contributor) => (
-                    <Typography.Link
-                      className="!tw-text-gray-500 !tw-underline"
-                      href={contributor.href ? contributor.href : undefined}
-                      target="_blank"
-                    >
-                      {contributor.firstName} {contributor.lastName}
-                    </Typography.Link>
-                  ))
-                  .reduce((prev, curr) => [prev, ', ', curr] as any)}
-              </span>
-            )}
-          </li>
-        ))}
+        {notes.map((note: Note) => {
+          const primaryColor = note.warning ? 'tw-text-red-600' : '';
+          const secondaryColor = note.warning
+            ? '!tw-text-red-500'
+            : '!tw-text-gray-500';
+
+          // The last period after span is NOT a mistake.
+
+          return (
+            <li key={note.text} className={primaryColor}>
+              {note.text}{' '}
+              {note.contributors.length !== 0 && (
+                <span className={secondaryColor}>
+                  by{' '}
+                  {note.contributors
+                    .map((contributor: Contributor) => (
+                      <Typography.Link
+                        className={`${secondaryColor} !tw-underline`}
+                        href={contributor.href ? contributor.href : undefined}
+                        target="_blank"
+                      >
+                        {contributor.firstName} {contributor.lastName}
+                      </Typography.Link>
+                    ))
+                    .reduce((prev, curr) => [prev, ', ', curr] as any)}
+                  .
+                </span>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </Typography.Paragraph>
   </>
@@ -86,10 +99,16 @@ export default function ChangeLog() {
             <Typography.Title>
               {release.major}.{release.minor}.{release.patch}
             </Typography.Title>
-            <Typography.Text>{release.description}</Typography.Text>{' '}
+            <Typography.Text>{release.description}</Typography.Text>
+            {release.categories.features.length !== 0 && (
+              <ReleaseSection
+                title="New Features"
+                notes={release.categories.features}
+              />
+            )}
             {release.categories.improvements.length !== 0 && (
               <ReleaseSection
-                title="Features & Improvements"
+                title="Improvements"
                 notes={release.categories.improvements}
               />
             )}

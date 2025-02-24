@@ -202,14 +202,14 @@ export default function Shrunk(props: Props) {
       : []),
     { type: 'divider' },
     {
-      key: 'faq',
-      icon: <BookOutlined />,
-      label: <a href="/app/faq">FAQ</a>,
-    },
-    {
       key: 'releases',
       icon: <CodeOutlined />,
       label: <a href="/app/releases">Release Notes</a>,
+    },
+    {
+      key: 'faq',
+      icon: <BookOutlined />,
+      label: <a href="/app/faq">FAQ</a>,
     },
     { type: 'divider' },
     {
@@ -217,6 +217,7 @@ export default function Shrunk(props: Props) {
       icon: <LogoutOutlined />,
       onClick: onLogout,
       label: 'Logout',
+      danger: true,
     },
   ];
 
