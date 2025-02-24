@@ -27,6 +27,7 @@ import {
   Tag,
   RadioChangeEvent,
   Drawer,
+  theme,
 } from 'antd/lib';
 import {
   CopyOutlined,
@@ -253,19 +254,61 @@ interface State {
   customizeDropdownOpen: boolean;
 }
 
-// TODO: Add title column
-// TODO: Next page does not work
-// TODO: Add option to full-screen for more information
+function CustomizeButton(props: {
+  showType: 'links' | 'tracking_pixels';
+  visibleColumns: Set<string>;
+  setVisibleColumns: (newColumns: string[]) => void;
+}): JSX.Element {
+  const { useToken } = theme;
+  const { token } = useToken();
 
-/**
- * The [[Dashboard]] component implements most of Shrunk's core functionality.
- * It allows the user to
- *   * Search for links
- *   * Create, edit, and delete links
- *   * Navigate to the stats page for link
- *   * Create QR codes
- * @class
- */
+  const columns = [
+    {
+      label: 'Long URL',
+      key: 'longUrl',
+      disabled: props.showType === 'tracking_pixels',
+    },
+    { label: 'Owner', key: 'owner' },
+    { label: 'Date Created', key: 'dateCreated' },
+    { label: 'Date Expires', key: 'dateExpires' },
+    { label: 'Unique Visits', key: 'uniqueVisits' },
+    { label: 'Total Visits', key: 'totalVisits' },
+  ];
+
+  return (
+    <Dropdown
+      dropdownRender={() => (
+        <div
+          className={`tw-bg-[ tw-rounded-lg tw-px-4 tw-py-2${token.colorBgBase}] tw-box-shadow`}
+        >
+          {columns.map((item) => (
+            <div key={item.key}>
+              <Checkbox
+                className="tw-py-1"
+                checked={props.visibleColumns.has(item.key)}
+                onChange={(e) => {
+                  const newColumns = new Set(props.visibleColumns);
+                  if (e.target.checked) {
+                    newColumns.add(item.key);
+                  } else {
+                    newColumns.delete(item.key);
+                  }
+                  props.setVisibleColumns(Array.from(newColumns));
+                }}
+                disabled={item.disabled}
+              >
+                {item.label}
+              </Checkbox>
+            </div>
+          ))}
+        </div>
+      )}
+    >
+      <Button icon={<SlidersOutlined />}>Customize</Button>
+    </Dropdown>
+  );
+}
+
 export class Dashboard extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -614,16 +657,6 @@ export class Dashboard extends React.Component<Props, State> {
     this.setState({ visibleColumns: new Set(selectedColumns) });
   };
 
-  handleCustomizeClick = () => {
-    if (this.props.demo) {
-      return;
-    }
-
-    this.setState((prevState) => ({
-      customizeDropdownOpen: !prevState.customizeDropdownOpen,
-    }));
-  };
-
   render(): React.ReactNode {
     return (
       <>
@@ -633,50 +666,11 @@ export class Dashboard extends React.Component<Props, State> {
         <Row gutter={[16, 16]} justify="space-between">
           <Col span={12}>
             <Space>
-              <Dropdown
-                trigger={['click']}
-                open={this.state.customizeDropdownOpen}
-                menu={{
-                  items: [
-                    {
-                      label: 'Long URL',
-                      key: 'longUrl',
-                      disabled: this.state.query.showType === 'tracking_pixels',
-                    },
-                    { label: 'Owner', key: 'owner' },
-                    { label: 'Date Created', key: 'dateCreated' },
-                    { label: 'Date Expires', key: 'dateExpires' },
-                    { label: 'Unique Visits', key: 'uniqueVisits' },
-                    { label: 'Total Visits', key: 'totalVisits' },
-                  ].map((item) => ({
-                    key: item.key,
-                    label: (
-                      <Checkbox
-                        checked={this.state.visibleColumns.has(item.key)}
-                        onChange={(e) => {
-                          const newColumns = new Set(this.state.visibleColumns);
-                          if (e.target.checked) {
-                            newColumns.add(item.key);
-                          } else {
-                            newColumns.delete(item.key);
-                          }
-                          this.setState({ visibleColumns: newColumns });
-                        }}
-                        disabled={item.disabled}
-                      >
-                        {item.label}
-                      </Checkbox>
-                    ),
-                  })),
-                }}
-              >
-                <Button
-                  icon={<SlidersOutlined />}
-                  onClick={this.handleCustomizeClick}
-                >
-                  Customize
-                </Button>
-              </Dropdown>
+              <CustomizeButton
+                showType={this.state.query.showType}
+                visibleColumns={this.state.visibleColumns}
+                setVisibleColumns={this.handleColumnVisibilityChange}
+              />
               <Button
                 icon={<FilterOutlined />}
                 onClick={() => {
