@@ -244,8 +244,6 @@ interface State {
 
   endTime: dayjs.Dayjs | null;
 
-  selectedOrg: number | string;
-
   orgDropdownOpen: boolean;
 
   orgLoading: boolean;
@@ -253,8 +251,6 @@ interface State {
   visibleColumns: Set<string>;
 
   customizeDropdownOpen: boolean;
-
-  showType: 'links' | 'tracking_pixels';
 }
 
 // TODO: Add title column
@@ -279,7 +275,7 @@ export class Dashboard extends React.Component<Props, State> {
       linksPerPage: 10,
       query: {
         queryString: '',
-        set: { set: this.props.userPrivileges.has('admin') ? 'all' : 'user' },
+        set: { set: 'user' },
         show_expired_links: false,
         show_deleted_links: false,
         sort: { key: 'relevance', order: 'descending' },
@@ -315,7 +311,6 @@ export class Dashboard extends React.Component<Props, State> {
       sortOrder: 'descending',
       beginTime: null,
       endTime: null,
-      selectedOrg: this.props.userPrivileges.has('admin') ? 1 : 0,
       orgDropdownOpen: false,
       orgLoading: false,
       visibleColumns: new Set([
@@ -326,7 +321,6 @@ export class Dashboard extends React.Component<Props, State> {
         'totalVisits',
       ]),
       customizeDropdownOpen: false,
-      showType: 'links',
     };
   }
 
@@ -421,7 +415,6 @@ export class Dashboard extends React.Component<Props, State> {
     const key = e.target.value;
     this.setState(
       {
-        showType: key,
         query: { ...this.state.query, showType: key },
       },
       () => this.setQuery(this.state.query),
@@ -604,19 +597,15 @@ export class Dashboard extends React.Component<Props, State> {
     this.setState({ trackingPixelEnabled: isEnabled });
   };
 
-  updateOrg = async (value: any): Promise<void> => {
+  updateOrg = async (value: string): Promise<void> => {
     this.setState({ orgLoading: true });
     setTimeout(() => {
-      this.setState({ selectedOrg: value });
-      const searchSet: SearchSet =
-        value === 0
-          ? { set: 'user' }
-          : value === 1
-          ? { set: 'all' }
-          : value === 2
-          ? { set: 'shared' }
-          : { set: 'org', org: value as string };
-      this.showByOrg(searchSet);
+      if (value.startsWith('org_')) {
+        const orgId = value.slice(4);
+        this.showByOrg({ set: 'org', org: orgId });
+      } else {
+        this.showByOrg({ set: value as 'user' | 'shared' | 'all' });
+      }
       this.setState({ orgLoading: false });
     }, 300);
   };
@@ -652,7 +641,7 @@ export class Dashboard extends React.Component<Props, State> {
                     {
                       label: 'Long URL',
                       key: 'longUrl',
-                      disabled: this.state.showType === 'tracking_pixels',
+                      disabled: this.state.query.showType === 'tracking_pixels',
                     },
                     { label: 'Owner', key: 'owner' },
                     { label: 'Date Created', key: 'dateCreated' },
@@ -788,7 +777,7 @@ export class Dashboard extends React.Component<Props, State> {
                   ),
                 },
                 ...(this.state.visibleColumns.has('longUrl') &&
-                this.state.showType !== 'tracking_pixels'
+                this.state.query.showType !== 'tracking_pixels'
                   ? [
                       {
                         title: 'Long URL',
@@ -1004,7 +993,10 @@ export class Dashboard extends React.Component<Props, State> {
           <Form
             layout="vertical"
             initialValues={{
-              orgSelect: this.props.userPrivileges.has('admin') ? 1 : 0,
+              orgSelect: this.state.query.set.set,
+              show_expired: 'hide',
+              show_deleted: 'hide',
+              links_vs_pixels: 'links',
               sortKey: 'relevance',
               sortOrder: 'descending',
             }}
@@ -1012,24 +1004,21 @@ export class Dashboard extends React.Component<Props, State> {
             <Row gutter={16}>
               <Col span={12}>
                 <Form.Item name="orgSelect" label="Links">
-                  <Select
-                    value={this.state.selectedOrg}
-                    onChange={this.updateOrg}
-                  >
-                    <Select.Option value={0}>My Links</Select.Option>
-                    <Select.Option value={2}>Shared with Me</Select.Option>
-                    {!this.props.userPrivileges.has('admin') ? null : (
-                      <Select.Option value={1}>All Links</Select.Option>
+                  <Select onChange={this.updateOrg}>
+                    <Select.Option value="user">My Links</Select.Option>
+                    <Select.Option value="shared">Shared with Me</Select.Option>
+                    {this.props.userPrivileges.has('admin') && (
+                      <Select.Option value="all">All Links</Select.Option>
                     )}
-                    {this.state.userOrgs?.length ? (
+                    {this.state.userOrgs?.length && (
                       <Select.OptGroup label="My Organizations">
                         {this.state.userOrgs.map((info) => (
-                          <Select.Option key={info.id} value={info.id}>
+                          <Select.Option key={info.id} value={`org_${info.id}`}>
                             <em>{info.name}</em>
                           </Select.Option>
                         ))}
                       </Select.OptGroup>
-                    ) : null}
+                    )}
                   </Select>
                 </Form.Item>
               </Col>
@@ -1120,7 +1109,7 @@ export class Dashboard extends React.Component<Props, State> {
                       { label: 'Links', value: 'links' },
                       { label: 'Tracking Pixels', value: 'tracking_pixels' },
                     ]}
-                    defaultValue={this.state.showType}
+                    defaultValue={this.state.query.showType}
                     onChange={this.sortByType}
                   />
                 </Form.Item>
