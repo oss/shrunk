@@ -271,16 +271,16 @@ export default function Shrunk(props: Props) {
                   srcSet={rutgersLogo}
                 />
               </a>
-              {isLoading ? (
-                <Button type="text" className="tw-text-white" loading />
-              ) : netid ? (
+              {netid && (
                 <Dropdown menu={{ items: menuItems }}>
-                  <Button type="text" className="tw-text-white">
+                  <Button
+                    type="text"
+                    className="!tw-text-white"
+                    loading={isLoading}
+                  >
                     {netid}
                   </Button>
                 </Dropdown>
-              ) : (
-                <></>
               )}
             </Header>
             <Layout>
