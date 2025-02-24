@@ -3,6 +3,7 @@
   "version": "3.0.0",
   "description": "Rutgers University URL Shortener",
   "scripts": {
+    "dev": "parcel --public-url=/app/ src/index.html src/linkhub-loader.html",
     "build": "parcel build --public-url=/app/ --no-source-maps --no-content-hash src/index.html src/linkhub-loader.html",
     "watch": "parcel watch --public-url=/app/ src/index.html src/linkhub-loader.html",
     "lint": "eslint ./src --ext .ts,tsx --ignore-path .eslintignore",

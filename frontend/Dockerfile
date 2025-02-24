@@ -7,4 +7,4 @@ COPY package.json package-lock.json ./
 # Source: https://stackoverflow.com/a/71867505
 RUN npm install -g react-scripts
 
-CMD [ "sh", "-c", "npm install && npm run build && npm run watch" ]
+CMD [ "sh", "-c", "npm install && npm run dev" ]
