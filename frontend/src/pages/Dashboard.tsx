@@ -275,12 +275,13 @@ function CustomizeButton(props: {
     { label: 'Total Visits', key: 'totalVisits' },
   ];
 
+  // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
+  const bgColor = `tw-bg-[${token.colorBgBase}]`;
+
   return (
     <Dropdown
       dropdownRender={() => (
-        <div
-          className={`tw-bg-[ tw-rounded-lg tw-px-4 tw-py-2${token.colorBgBase}] tw-box-shadow`}
-        >
+        <div className="tw-rounded-lg tw-bg-white tw-px-4 tw-py-2 tw-shadow-md">
           {columns.map((item) => (
             <div key={item.key}>
               <Checkbox
