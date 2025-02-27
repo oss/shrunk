@@ -31,7 +31,7 @@ from werkzeug.routing import BaseConverter, ValidationError
 
 # Extensions
 # Blueprints
-from . import api, dev_logins, linkhub_viewer, sso, views
+from . import api, dev_logins, sso, views
 from .client import ShrunkClient
 from .util.github import pull_outlook_assets_from_github
 from .util.ldap import is_valid_netid
@@ -283,7 +283,6 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
 
     # set up blueprints
     app.register_blueprint(views.bp)
-    app.register_blueprint(linkhub_viewer.bp)
     if app.config.get("DEV_LOGINS", False) is True:
         app.register_blueprint(dev_logins.bp)
     app.register_blueprint(api.link.bp)
@@ -294,7 +293,6 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
     app.register_blueprint(api.alert.bp)
     app.register_blueprint(api.request.bp)
     app.register_blueprint(api.security.bp)
-    app.register_blueprint(api.linkhub.bp)
     app.register_blueprint(api.ticket.bp)
     app.register_blueprint(api.user.bp)
 
@@ -372,7 +370,6 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
                 "devlogins": app.config.get("DEV_LOGINS", False),
                 "slack_bot": app.config.get("SLACK_INTEGRATION_ON", False),
                 "tracking_pixel": app.config.get("TRACKING_PIXEL_UI_ENABLED", False),
-                "linkhub": app.config.get("LINKHUB_INTEGRATION_ENABLED", False),
                 "domains": app.config.get("DOMAIN_ENABLED", False),
                 "role_requests": app.config.get("ROLE_REQUESTS_ENABLED", False),
             }

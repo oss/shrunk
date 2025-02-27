@@ -7,7 +7,6 @@ from . import (
     alert,
     request,
     security,
-    linkhub,
     ticket,
     user,
 )
@@ -21,7 +20,6 @@ __all__ = [
     "alert",
     "request",
     "security",
-    "linkhub",
     "ticket",
     "user",
 ]

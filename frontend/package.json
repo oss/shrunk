@@ -3,9 +3,9 @@
   "version": "3.0.0",
   "description": "Rutgers University URL Shortener",
   "scripts": {
-    "dev": "parcel --public-url=/app/ src/index.html src/linkhub-loader.html",
-    "build": "parcel build --public-url=/app/ --no-source-maps --no-content-hash src/index.html src/linkhub-loader.html",
-    "watch": "parcel watch --public-url=/app/ src/index.html src/linkhub-loader.html",
+    "dev": "parcel --public-url=/app/ src/index.html",
+    "build": "parcel build --public-url=/app/ --no-source-maps --no-content-hash src/index.html",
+    "watch": "parcel watch --public-url=/app/ src/index.html",
     "lint": "eslint ./src --ext .ts,tsx --ignore-path .eslintignore",
     "lint-fix": "eslint ./src --ext .ts,tsx --fix --ignore-path .eslintignore",
     "format": "prettier --write . --config ./.prettierrc.js --ignore-path .eslintignore"
