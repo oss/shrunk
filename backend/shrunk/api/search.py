@@ -18,7 +18,13 @@ bp = Blueprint("search", __name__, url_prefix="/api/v1/search")
 SEARCH_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
-    "required": ["set", "show_expired_links", "show_deleted_links", "sort"],
+    "required": [
+        "set",
+        "show_expired_links",
+        "show_deleted_links",
+        "sort",
+        "show_type",
+    ],
     "properties": {
         # The search query. May be omitted to show all links.
         "query": {"type": "string"},
