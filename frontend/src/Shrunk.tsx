@@ -40,8 +40,6 @@ import { PendingAlerts } from './modals/PendingAlerts';
 import { PendingRequests } from './modals/PendingRequests';
 
 import HelpDesk from './pages/HelpDesk';
-import LinkHubDashboard from './pages/LinkHubDashboard';
-import LinkHubEditor from './pages/subpages/LinkHubEditor';
 import ErrorPage from './pages/ErrorPage';
 
 import rutgersLogo from './images/rutgers.png';
@@ -118,15 +116,7 @@ export default function Shrunk(props: Props) {
       : 'Administrator';
 
   const [pendingAlerts, setPendingAlerts] = useState<string[]>([]);
-  // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
-  const [isLinkHubEnabled, setIsLinkHubEnabled] = useState(false);
   const [isHelpDeskEnabled, setIsHelpDeskEnabled] = useState(false);
-
-  const fetchFeatureStatuses = async () => {
-    const resp = await fetch('/api/v1/config');
-    const json = await resp.json();
-    setIsLinkHubEnabled(json.linkhub);
-  };
 
   const fetchIsHelpDeskEnabled = async () => {
     const response = await fetch('/api/v1/ticket/enabled');
@@ -157,7 +147,6 @@ export default function Shrunk(props: Props) {
   useEffect(() => {
     const init = async () => {
       if (netid) {
-        await fetchFeatureStatuses();
         await fetchIsHelpDeskEnabled();
         updatePendingAlerts();
       }
@@ -237,7 +226,6 @@ export default function Shrunk(props: Props) {
     [key: string]: { name: string; clickable: boolean; href?: string };
   } = {
     dash: { name: 'URL Shortener', clickable: true },
-    linkhubs: { name: 'LinkHub', clickable: false },
     orgs: { name: 'My Organizations', clickable: true },
     admin: { name: 'Admin Dashboard', clickable: true },
     tickets: { name: 'Help Desk', clickable: true },
@@ -333,16 +321,6 @@ export default function Shrunk(props: Props) {
                   <Route exact path="/app/dash">
                     <Dashboard userPrivileges={userPrivileges} netid={netid} />
                   </Route>
-                  <Route exact path="/app/linkhubs">
-                    <LinkHubDashboard netid={netid} />
-                  </Route>
-                  <Route
-                    exact
-                    path="/app/linkhubs/:linkHubId/edit"
-                    render={(route) => (
-                      <LinkHubEditor linkhubId={route.match.params.linkHubId} />
-                    )}
-                  />
                   <Route
                     exact
                     path="/app/links/:id"

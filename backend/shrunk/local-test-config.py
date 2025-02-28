@@ -85,11 +85,6 @@ TRACKING_PIXEL_UI_ENABLED = False
 Temporary flag to enable or disable the tracking pixel creation feature on user's dashboard.
 """
 
-LINKHUB_INTEGRATION_ENABLED = True
-"""
-Configuration value to enable or disable dynamically generated web pages that contains URLs.
-"""
-
 DOMAIN_ENABLED = False
 """
 Temporary flag to enable or disable the custom domains feature on user's dashboard.
