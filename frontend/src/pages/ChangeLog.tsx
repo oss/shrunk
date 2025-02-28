@@ -45,7 +45,10 @@ const ReleaseSection = ({ title, notes }: { title: string; notes: Note[] }) => (
             ? '!tw-text-red-500'
             : '!tw-text-gray-500';
 
-          // The last period after span is NOT a mistake.
+          /*
+           * The last period after span is NOT a mistake, it is to
+           * support Apple's VoiceOver for reading text outloud.
+           */
 
           return (
             <li key={note.text} className={primaryColor}>

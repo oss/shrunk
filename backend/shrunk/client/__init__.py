@@ -7,7 +7,6 @@ import pymongo
 
 from .alerts import AlertsClient
 from .geoip import GeoipClient
-from .linkhub import LinkHubClient
 from .links import LinksClient
 from .orgs import OrgsClient
 from .roles import RolesClient
@@ -43,7 +42,6 @@ class ShrunkClient:
         SLACK_SHRUNK_CHANNEL_ID: Optional[str] = None,
         TRACKING_PIXEL_UI_ENABLED: Optional[bool] = False,
         DOMAIN_ENABLED: Optional[bool] = False,
-        LINKHUB_INTEGRATION_ENABLED: Optional[bool] = False,
         HELP_DESK_ENABLED: Optional[bool] = False,
         **_kwargs: Any,
     ):
@@ -68,11 +66,6 @@ class ShrunkClient:
             TRACKING_PIXEL_UI_ENABLED=TRACKING_PIXEL_UI_ENABLED or False,
             REDIRECT_CHECK_TIMEOUT=REDIRECT_CHECK_TIMEOUT or 0.5,
             other_clients=self,
-        )
-        self.linkhubs = LinkHubClient(
-            db=self.db,
-            other_clients=self,
-            LINKHUB_ENABLED=LINKHUB_INTEGRATION_ENABLED or False,
         )
         self.roles = RolesClient(db=self.db)
         self.tracking = TrackingClient(db=self.db)
@@ -106,12 +99,6 @@ class ShrunkClient:
                 ("aliases.alias", pymongo.TEXT),
             ]
         )
-
-        self.db.linkhubs.create_index(
-            [("title", pymongo.TEXT), ("alias", pymongo.TEXT), ("owner", pymongo.TEXT)]
-        )
-        self.db.linkhubs.create_index([("links", pymongo.ASCENDING)])
-        self.db.linkhubs.create_index([("collaborators", pymongo.ASCENDING)])
 
         self.db.unsafe_links.create_index([("long_url", pymongo.TEXT)])
         self.db.unsafe_links.create_index([("netid", pymongo.ASCENDING)])
@@ -149,7 +136,6 @@ class ShrunkClient:
             "visitors",
             "visits",
             "unsafe_links",
-            "linkhubs",
         ]:
             self.db[col].delete_many({})
 
