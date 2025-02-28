@@ -244,7 +244,7 @@ export default function Shrunk(props: Props) {
     roles: { name: 'Role', clickable: false },
     faq: { name: 'Frequently Asked Questions', clickable: true },
     releases: { name: 'Release Notes', clickable: true },
-    links: { name: 'URL Shortener', clickable: true, href: '/app/dash' },
+    links: { name: 'URL Shortener', clickable: true, href: 'app/dash' },
   };
   const isApp = window.location.pathname.split('/').slice(1)[0] === 'app';
 
@@ -304,7 +304,9 @@ export default function Shrunk(props: Props) {
                         }
 
                         if (!(part in partToName)) {
-                          return {};
+                          return {
+                            title: part,
+                          };
                         }
 
                         const path =
