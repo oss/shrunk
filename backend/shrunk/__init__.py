@@ -11,16 +11,7 @@ from typing import Any
 
 import bson.errors
 import flask
-from flask import (
-    Flask,
-    current_app,
-    jsonify,
-    redirect,
-    request,
-    session,
-    send_file,
-    send_from_directory,
-)
+from flask import Flask, current_app, jsonify, redirect, request, session, send_file
 from backports import datetime_fromisoformat
 from bson import ObjectId
 from flask.json import JSONEncoder
@@ -105,8 +96,8 @@ class RequestFormatter(logging.Formatter):
 
 def _init_logging() -> None:
     """Sets up self.logger with default settings."""
-    formatter = logging.Formatter(current_app.config["LOG_FORMAT"])
-    handler = logging.FileHandler(current_app.config["LOG_FILENAME"])
+    formatter = logging.Formatter(os.getenv("SHRUNK_LOG_FORMAT"))
+    handler = logging.FileHandler(os.getenv("SHRUNK_LOG_FILENAME"))
     handler.setLevel(logging.INFO)
     handler.setFormatter(formatter)
     current_app.logger.addHandler(handler)
@@ -114,9 +105,9 @@ def _init_logging() -> None:
 
 
 def _init_shrunk_client() -> None:
-    """Connect to the database specified in self.config.
+    """Connect to the database.
     self.logger must be initialized before this function is called."""
-    current_app.client = ShrunkClient(**current_app.config)
+    current_app.client = ShrunkClient()
 
 
 def _init_roles() -> None:
@@ -251,14 +242,14 @@ def _init_roles() -> None:
     )
 
 
-def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
+def create_app(**kwargs: Any) -> Flask:
     # Backport the datetime.datetime.fromisoformat method. Can be removed
     # once we update to Python 3.7+.
     datetime_fromisoformat.MonkeyPatch.patch_fromisoformat()
 
     app = Flask(__name__, static_url_path="/static")
-    app.config.from_pyfile(config_path, silent=False)
-    app.config.update(kwargs)
+    app.secret_key = os.getenv("SHRUNK_SECRET_KEY")
+    app.testing = bool(os.getenv("SHRUNK_FLASK_TESTING", 0))
 
     app.json_encoder = ShrunkEncoder
 
@@ -283,7 +274,7 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
 
     # set up blueprints
     app.register_blueprint(views.bp)
-    if app.config.get("DEV_LOGINS", False) is True:
+    if bool(os.getenv("SHRUNK_DEV_LOGINS", 0)):
         app.register_blueprint(dev_logins.bp)
     app.register_blueprint(api.link.bp)
     app.register_blueprint(api.org.bp)
@@ -352,7 +343,7 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
 
         # If the user is a dev user, all we need to do to log out is to clear the session,
         # which we did above.
-        if current_app.config.get("DEV_LOGINS") and netid in {
+        if bool(os.getenv("SHRUNK_DEV_LOGINS", 0)) and netid in {
             "DEV_USER",
             "DEV_FACSTAFF",
             "DEV_PWR_USER",
@@ -363,18 +354,6 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
         # If the user is not a dev user, redirect to shibboleth to complete the logout process.
         return jsonify({"redirect-to": "/shibboleth/Logout"}), 200
 
-    @app.route("/api/v1/config", methods=["GET"])
-    def get_features_status() -> Any:
-        return jsonify(
-            {
-                "devlogins": app.config.get("DEV_LOGINS", False),
-                "slack_bot": app.config.get("SLACK_INTEGRATION_ON", False),
-                "tracking_pixel": app.config.get("TRACKING_PIXEL_UI_ENABLED", False),
-                "domains": app.config.get("DOMAIN_ENABLED", False),
-                "role_requests": app.config.get("ROLE_REQUESTS_ENABLED", False),
-            }
-        )
-
     # webhook for GitHub Actions to alert server of new Outlook add-in release
     @app.route("/outlook/update", methods=["POST"])
     def _outlook_webhook() -> Any:
@@ -382,11 +361,11 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
         try:
             data = request.get_data()
             data_json = json.loads(data)
-            app.logger.info(current_app.config["GITHUB_OUTLOOK_WEBHOOK_UPDATE_SECRET"])
+            app.logger.info(("GITHUB_OUTLOOK_WEBHOOK_UPDATE_SECRET"))
 
             verify_signature(
                 data,
-                current_app.config["GITHUB_OUTLOOK_WEBHOOK_UPDATE_SECRET"],
+                os.getenv("GITHUB_OUTLOOK_WEBHOOK_UPDATE_SECRET"),
                 request.headers.get("X-Hub-Signature-256"),
             )
 
@@ -425,6 +404,20 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
             return send_file(f"{OUTLOOK_PATH}/{filename}")
         else:
             return "Bad Request. Env variable was invalid.", 400
+
+    @app.route("/api/v1/enabled", methods=["GET"])
+    def get_features_flag() -> Any:
+        return jsonify(
+            {
+                "devLogins": bool(os.getenv("SHRUNK_DEV_LOGINS", 0)),
+                "trackingPixel": bool(os.getenv("SHRUNK_TRACKING_PIXELS_ENABLED", 0)),
+                "domains": bool(os.getenv("SHRUNK_DOMAINS_ENABLED", 0)),
+                "googleSafeBrowsing": bool(
+                    os.getenv("SHRUNK_GOOGLE_SAFEBROWSE_ENABLED", 0)
+                ),
+                "helpDesk": bool(os.getenv("SHRUNK_HELP_DESK_ENABLED", 0)),
+            }
+        )
 
     # serve redirects
     @app.route("/<alias>", methods=["GET"])

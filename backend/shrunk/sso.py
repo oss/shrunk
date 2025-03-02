@@ -2,6 +2,8 @@
 
 from typing import Any, List
 
+import os
+
 from flask import current_app, session, redirect
 from flask_sso import SSO
 from werkzeug.exceptions import abort
@@ -24,7 +26,7 @@ def login(user_info: Any) -> Any:
     types: List[str] = user_info.get("employeeType").split(";")
     netid: str = user_info.get("netid")
     twoFactorAuth = user_info.get("twoFactorAuth")
-    if not twoFactorAuth and current_app.config["REQUIRE_2FA"]:
+    if not twoFactorAuth and bool(os.getenv("SHRUNK_REQUIRE_2FA"), False):
         return redirect("/app")
 
     def t(typ: str) -> bool:  # pylint: disable=invalid-name
@@ -42,18 +44,18 @@ def login(user_info: Any) -> Any:
     # get info from ACLs
     is_blacklisted = client.roles.has("blacklisted", netid)
     is_whitelisted = client.roles.has("whitelisted", netid)
-    is_config_whitelisted = netid in current_app.config["USER_WHITELIST"]
+    is_super_admin = os.getenv("SHRUNK_SUPER_ADMIN")
 
     # now make decisions regarding whether the user can login, and what privs they should get
 
     # blacklisted users can never login, except config-whitelisted users can't
     # be blacklisted (so OSS people can always login)
-    if is_blacklisted and not is_config_whitelisted:
+    if is_blacklisted and not is_super_admin:
         log_failed("blacklisted")
         abort(403)
 
     # config-whitelisted users are automatically made admins
-    if is_config_whitelisted:
+    if is_super_admin:
         client.roles.grant("admin", "Justice League", netid)
 
     # (if not blacklisted) facstaff can always login, but we need to grant a role
@@ -62,7 +64,7 @@ def login(user_info: Any) -> Any:
         client.roles.grant("facstaff", "shibboleth", netid)
 
     # now determine whether to allow login
-    if not (is_config_whitelisted or fac_staff or is_whitelisted):
+    if not (is_super_admin or fac_staff or is_whitelisted):
         log_failed("unauthorized")
         abort(403)
 

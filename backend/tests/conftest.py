@@ -1,4 +1,3 @@
-import os
 from typing import Any, Generator
 
 import pytest
@@ -15,10 +14,7 @@ def pytest_configure(config: Any) -> None:
 
 @pytest.fixture(scope="session")
 def app() -> Flask:
-    config_path = os.getenv("SHRUNK_CONFIG_PATH")
-    if config_path is None:
-        config_path = "./local-test-config.py"
-    shrunk_app: Flask = shrunk.create_app(config_path=config_path)
+    shrunk_app: Flask = shrunk.create_app()
     with shrunk_app.test_client() as test_client:
         # Force the app to initialize the database connection, since that
         # initialization is deferred until the first request.

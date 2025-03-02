@@ -10,6 +10,7 @@ from typing import Optional, List, Set, Any, Dict, cast
 from flask import current_app, url_for
 from flask_mailman import Mail
 import requests
+import os
 import pymongo
 from pymongo.collection import ReturnDocument
 from pymongo.results import UpdateResult
@@ -63,8 +64,6 @@ class LinksClient:
         geoip: GeoipClient,
         RESERVED_WORDS: Set[str],
         BANNED_REGEXES: List[str],
-        REDIRECT_CHECK_TIMEOUT: float,
-        TRACKING_PIXEL_UI_ENABLED: bool,
         other_clients: Any,
     ):
         self.db = db
@@ -73,8 +72,9 @@ class LinksClient:
         self.banned_regexes = [
             re.compile(regex, re.IGNORECASE) for regex in BANNED_REGEXES
         ]
-        self.redirect_check_timeout = REDIRECT_CHECK_TIMEOUT
-        self.tracking_pixel_ui_enabled = TRACKING_PIXEL_UI_ENABLED
+        self.tracking_pixel_ui_enabled = bool(
+            os.getenv("SHRUNK_TRACKING_PIXELS_ENABLED", 0)
+        )
         self.other_clients = other_clients
 
     def alias_is_reserved(self, alias: str) -> bool:
@@ -137,7 +137,7 @@ class LinksClient:
         """
         try:
             redirected_url = requests.head(
-                long_url, allow_redirects=True, timeout=self.redirect_check_timeout
+                long_url, allow_redirects=True, timeout=0.5
             ).url
         except requests.exceptions.RequestException:
             return False

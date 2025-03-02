@@ -21,47 +21,15 @@ Ticket = Dict[str, Any]
 class TicketsClient:
     """This class implements the help desk ticketing system"""
 
-    def __init__(
-        self,
-        db: pymongo.database.Database,
-        HELP_DESK_ENABLED: bool,
-        SLACK_INTEGRATION_ENABLED: bool,
-        SLACK_BOT_TOKEN: str,
-        SLACK_SHRUNK_CHANNEL_ID: str,
-    ):
+    def __init__(self, db: pymongo.database.Database):
         self.db = db
-        self.help_desk_enabled = HELP_DESK_ENABLED
-        self.slack_integration_enabled = SLACK_INTEGRATION_ENABLED
-        self.slack_bot_token = SLACK_BOT_TOKEN
-        self.slack_shrunk_channel_id = SLACK_SHRUNK_CHANNEL_ID
 
     def get_help_desk_enabled(self) -> bool:
         """Getter for help_desk_enabled.
 
         :return: True if the help desk is enabled, False otherwise
         """
-        return self.help_desk_enabled
-
-    def get_slack_integration_enabled(self) -> bool:
-        """Getter for slack_integration_enabled.
-
-        :return: True if the slack integration is enabled, False otherwise
-        """
-        return self.slack_integration_enabled
-
-    def get_slack_bot_token(self) -> str:
-        """Getter for slack_bot_token
-
-        :return: the slack bot token
-        """
-        return self.slack_bot_token
-
-    def get_slack_shrunk_channel_id(self) -> str:
-        """Getter for slack_shrunk_channel_id.
-
-        :return: the slack shrunk channel ID
-        """
-        return self.slack_shrunk_channel_id
+        return bool(os.getenv("SHRUNK_HELP_DESK_ENABLED", 0))
 
     def get_help_desk_text(self) -> Dict[str, str]:
         """Get the text-related attributes needed for messages, emails, and

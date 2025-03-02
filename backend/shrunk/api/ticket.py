@@ -59,26 +59,6 @@ PATCH_TICKET_SCHEMA = {
 }
 
 
-@bp.route("/enabled", methods=["GET"])
-@require_login
-def get_help_desk_enabled(netid: str, client: ShrunkClient) -> Response:
-    """``GET /api/ticket/enabled``
-
-    Get the help desk enabled status.
-
-    :param netid: the NetID of the user
-    :param client: the Shrunk client
-
-    :return: the status of the help desk
-
-    .. code-block:: json
-
-        { "enabled": bool }
-
-    """
-    return jsonify({"enabled": client.tickets.get_help_desk_enabled()})
-
-
 @bp.route("/text", methods=["GET"])
 @require_login
 def get_help_desk_text(

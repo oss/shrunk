@@ -3,6 +3,8 @@
 
 from typing import Optional, Any
 
+import os
+
 from flask import Blueprint, current_app, session, jsonify
 from werkzeug.exceptions import abort
 
@@ -13,7 +15,7 @@ bp = Blueprint("devlogins", __name__, url_prefix="/api/v1/devlogins")
 
 def mk_dev_login(netid: str, display_name: str, role: Optional[str]) -> Any:
     def view() -> Any:
-        if not current_app.config.get("DEV_LOGINS"):
+        if not bool(os.getenv("SHRUNK_DEV_LOGINS", 0)):
             current_app.logger.warning(f"failed dev login with {netid}")
             abort(403)
 

@@ -1,9 +1,10 @@
 import { LoginOutlined } from '@ant-design/icons';
 import { Button, Col, Row, Flex, Card, Select, Space } from 'antd/lib';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import BlurFade from '../ext/components/ui/blur-fade';
 import { Dashboard } from './Dashboard';
 import { BorderBeam } from '../ext/components/ui/border-beam';
+import { FeatureFlags, useFeatureFlags } from '../contexts/FeatureFlags';
 
 interface LoginType {
   loginMessage: string;
@@ -11,7 +12,8 @@ interface LoginType {
 }
 
 export default function Login() {
-  const [devLogins, setDevLogins] = useState<boolean>(false);
+  const featureFlags: FeatureFlags = useFeatureFlags();
+
   const [loginLink, setLoginLink] = useState<
     'user' | 'facstaff' | 'powerUser' | 'admin' | 'default'
   >('default');
@@ -30,16 +32,6 @@ export default function Login() {
     default: { href: '/login', loginMessage: 'PROD_SAML' },
   };
 
-  const fetchDevLogins = async () => {
-    const resp = await fetch('/api/v1/config');
-    const json = await resp.json();
-    setDevLogins(json.devlogins);
-  };
-
-  useEffect(() => {
-    fetchDevLogins();
-  }, []);
-
   return (
     <>
       <Row gutter={[16, 16]}>
@@ -55,7 +47,7 @@ export default function Login() {
         <Col span={24} className="tw-mb-6 tw-text-center">
           <BlurFade delay={0.25 * 1.5} inView>
             <Space>
-              {devLogins && (
+              {featureFlags.devLogins && (
                 <Select
                   defaultValue={loginLink}
                   size="large"
@@ -85,7 +77,7 @@ export default function Login() {
                   });
                 }}
               >
-                {devLogins ? 'Developer Login' : 'Login with CAS'}
+                {featureFlags.devLogins ? 'Developer Login' : 'Login with CAS'}
               </Button>
             </Space>
           </BlurFade>

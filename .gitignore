@@ -2,16 +2,9 @@
 *.sw[op]
 *~
 
-frontend/typedoc.json
-frontend/.cache
-frontend/docs.json
-
 # Cache
 .cache
 .parcel-cache
-
-# Secrets
-backend/shrunk/config.py
 
 # Build artifacts and the like
 shrunk/static/css/static.css
@@ -63,10 +56,11 @@ dist-newstyle
 
 backend/mail
 
-#for macOS users
+# macOS
 .DS_Store
 
 # HTTPD
 httpd/error_log
 httpd/httpd.pid
 httpd/*.log
+*.env

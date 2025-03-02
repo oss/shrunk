@@ -2,6 +2,28 @@
   {
     "major": 3,
     "minor": 0,
+    "patch": 1,
+    "projectDirector": "ah1371",
+    "date": "TODO",
+    "description": "The continued codebase cleanup update.",
+    "categories": {
+      "features": [],
+      "improvements": [
+        {
+          "text": "Feature flags are stored using React context hooks",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Utilize environment variables over using a Python file for configuration values so feature flags can be changed at runtime",
+          "contributors": ["ah1371"]
+        }
+      ],
+      "fixes": []
+    }
+  },
+  {
+    "major": 3,
+    "minor": 0,
     "patch": 0,
     "projectDirector": "ah1371",
     "date": "TODO",
