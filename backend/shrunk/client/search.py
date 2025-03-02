@@ -195,7 +195,16 @@ class SearchClient:
             )
 
         if query["show_type"] == "links":
-            pipeline.append({"$match": {"is_tracking_pixel_link": {"$eq": False}}})
+            pipeline.append(
+                {
+                    "$match": {
+                        "$or": [
+                            {"is_tracking_pixel_link": {"$eq": False}},
+                            {"is_tracking_pixel_link": {"$exists": False}},
+                        ]
+                    }
+                }
+            )
 
         if "owner" in query and query["owner"]:
             pipeline.append({"$match": {"netid": query["owner"]}})
