@@ -152,13 +152,17 @@ pytest:
     - apt-get update
     - apt-get install -y libldap2-dev libsasl2-dev
     - pip3 install backend/dist/shrunk-*.whl
-    - export SHRUNK_CONFIG_PATH=$(pwd)/backend/shrunk/ci-test-config.py
     - mkdir /usr/share/GeoIP
     - cp backend/GeoLite2-City.mmdb /usr/share/GeoIP/GeoLite2-City.mmdb
+
+    - curl -fsS https://dotenvx.sh | sh
+    - echo "SHRUNK_DB_HOST=mongo" >> .env.example
+    - echo "SHRUNK_DB_NAME=shrunk_test" >> .env.example
+    - echo "SHRUNK_FLASK_TESTING=1" >> .env.example
+
     - cd backend
     - pip install pytest
-    - echo "GOOGLE_SAFE_BROWSING_API = '$GOOGLE_SAFE_BROWSING_API'" >> ./shrunk/ci-test-config.py
-    - pytest --junitxml=../pytest.xml tests
+    - dotenvx -f .env.example -- pytest --junitxml=../pytest.xml tests
   artifacts:
     reports:
       junit: pytest.xml

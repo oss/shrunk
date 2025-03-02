@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import base32 from 'hi-base32';
 import dayjs from 'dayjs';
 import {
@@ -26,6 +26,7 @@ import { FormInstance } from 'antd/lib/form';
 import { serverValidateLongUrl } from '../lib/validators';
 import AliasesForm from '../components/AliasesForm';
 import { OrgInfo } from '../api/Org';
+import { FeatureFlags, useFeatureFlags } from '../contexts/FeatureFlags';
 /**
  * The final values of the create link form
  * @interface
@@ -92,92 +93,41 @@ export interface Props {
    */
   onFinish: () => Promise<void>;
 
-  /**
-   * Per request of Jack: We want a way to enable/disable the tracking pixel UI
-   * by using the config in the backend. There exists an API call
-   * called /api/v1/get_pixel_ui_enabled that returns a boolean value. This is temporary
-   * as we roll out. This is DIFFERENT from "tracking_pixel_enabled".
-   *
-   * tracking_pixel_enabled is a boolean value that is set by the user through the radio buttons.
-   * tracking_pixel_ui_enabled is a boolean value that is set by the backend.
-   */
-  tracking_pixel_ui_enabled: boolean;
-
   userOrgs: OrgInfo[];
 }
 
-/**
- * State for the [[CreateLinkDrawer]] component
- * @interface
- */
-interface State {
-  loading: boolean;
-  tracking_pixel_enabled: boolean;
-  tracking_pixel_extension: string;
-  domain_enabled: boolean;
-}
+export default function CreateLinkDrawer(props: Props): JSX.Element {
+  const featureFlags: FeatureFlags = useFeatureFlags();
+  const [loading, setLoading] = useState<boolean>(false);
+  const [linkCreationMode, setLinkCreationMode] = useState<'url' | 'pixel'>(
+    'url',
+  );
+  const [trackingPixelExtension, setTrackingPixelExtension] =
+    useState<string>('.png');
 
-/**
- * The [[CreateLinkDrawer]] component allows the user to create a new link
- * @class
- */
+  const formRef = React.createRef<FormInstance>();
 
-export class CreateLinkDrawer extends React.Component<Props, State> {
-  formRef = React.createRef<FormInstance>();
-
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      loading: false,
-      tracking_pixel_enabled: false,
-      domain_enabled: false,
-      tracking_pixel_extension: '.png',
-    };
-  }
-
-  async componentDidMount(): Promise<void> {
-    await this.fetchIsDomainEnabled();
-  }
-
-  fetchIsDomainEnabled = async (): Promise<void> => {
-    await fetch('/api/v1/config')
-      .then((resp) => resp.json())
-      .then((json) =>
-        this.setState({ domain_enabled: json.domains as boolean }),
-      );
+  const onSubmitClick = async (): Promise<void> => {
+    formRef.current!.resetFields();
+    await props.onFinish();
+    setLoading(false);
+    setLinkCreationMode('url');
+    setTrackingPixelExtension('.png');
   };
 
-  toggleLoading = () => {
-    this.setState({ loading: true });
+  const onTrackingPixelChange = (e: RadioChangeEvent) => {
+    setLinkCreationMode(e.target.value);
   };
 
-  /**
-   * Basic finishing actions when a user clicks on
-   * the Shrink! button.
-   */
-  onSubmitClick = async (): Promise<void> => {
-    this.formRef.current!.resetFields();
-    await this.props.onFinish();
-    this.setState({ loading: false, tracking_pixel_enabled: false });
+  const onTrackingPixelExtensionChange = (e: RadioChangeEvent) => {
+    setTrackingPixelExtension(e.target.value);
   };
 
-  onTrackingPixelChange = (e: RadioChangeEvent) => {
-    this.setState({ tracking_pixel_enabled: e.target.value === 'pixel' });
-  };
-
-  onTrackingPixelExtensionChange = (e: RadioChangeEvent) => {
-    this.setState({ tracking_pixel_extension: e.target.value });
-  };
-
-  /**
-   * Executes API requests to create a new link and then calls the `onFinish` callback
-   * @param values The values from the form
-   */
-  createLink = async (): Promise<void> => {
+  const createLink = async (): Promise<void> => {
     const values: CreateLinkDrawerValues =
-      await this.formRef.current!.validateFields();
+      await formRef.current!.validateFields();
 
-    this.toggleLoading();
+    setLoading(true);
     const createLinkReq: {
       title: string;
       long_url: string;
@@ -189,7 +139,7 @@ export class CreateLinkDrawer extends React.Component<Props, State> {
       long_url: values.long_url,
     };
 
-    if (this.state.tracking_pixel_enabled) {
+    if (linkCreationMode === 'pixel') {
       createLinkReq.long_url = 'https://example.com';
     }
 
@@ -226,7 +176,7 @@ export class CreateLinkDrawer extends React.Component<Props, State> {
         title: 'An error has ocurred',
         content: createLinkResp.errors,
       });
-      this.onSubmitClick();
+      onSubmitClick();
       return;
     }
 
@@ -248,8 +198,8 @@ export class CreateLinkDrawer extends React.Component<Props, State> {
           if (alias.alias !== undefined && result.valid) {
             createAliasReq.alias = alias.alias;
           }
-          if (this.state.tracking_pixel_enabled) {
-            createAliasReq.extension = this.state.tracking_pixel_extension;
+          if (featureFlags.trackingPixel) {
+            createAliasReq.extension = trackingPixelExtension;
           }
           await fetch(`/api/v1/link/${linkId}/alias`, {
             method: 'POST',
@@ -260,160 +210,157 @@ export class CreateLinkDrawer extends React.Component<Props, State> {
       ),
     );
 
-    this.onSubmitClick();
+    onSubmitClick();
   };
 
-  render(): React.ReactNode {
-    const initialValues = { aliases: [{ description: '' }] };
-    const mayUseCustomAliases =
-      this.props.userPrivileges.has('power_user') ||
-      this.props.userPrivileges.has('admin');
+  const initialValues = { aliases: [{ description: '' }] };
+  const mayUseCustomAliases =
+    props.userPrivileges.has('power_user') || props.userPrivileges.has('admin');
 
-    const uniqueDomains = new Set<string>();
+  const uniqueDomains = new Set<string>();
 
-    if (this.props.userOrgs.length !== 0) {
-      this.props.userOrgs.forEach((org) => {
-        if (org.domains !== undefined) {
-          org.domains.forEach((domain: string) => {
-            uniqueDomains.add(domain);
-          });
-        }
-      });
-    }
+  if (props.userOrgs.length !== 0) {
+    props.userOrgs.forEach((org) => {
+      if (org.domains !== undefined) {
+        org.domains.forEach((domain: string) => {
+          uniqueDomains.add(domain);
+        });
+      }
+    });
+  }
 
-    return (
-      <Drawer
-        title={this.props.title}
-        open={this.props.visible}
-        width={720}
-        onClose={this.props.onCancel}
-        placement="right"
-        extra={
-          <Space>
-            <Button
-              icon={<SendOutlined />}
-              onClick={this.createLink}
-              type="primary"
-              loading={this.state.loading}
-            >
-              {this.state.tracking_pixel_enabled ? 'Create' : 'Shrink'}
-            </Button>
-          </Space>
-        }
+  return (
+    <Drawer
+      title={props.title}
+      open={props.visible}
+      width={720}
+      onClose={props.onCancel}
+      placement="right"
+      extra={
+        <Space>
+          <Button
+            icon={<SendOutlined />}
+            onClick={createLink}
+            type="primary"
+            loading={loading}
+          >
+            Create
+          </Button>
+        </Space>
+      }
+    >
+      <Form
+        ref={formRef}
+        layout="vertical"
+        initialValues={initialValues}
+        requiredMark={false}
       >
-        <Form
-          ref={this.formRef}
-          layout="vertical"
-          initialValues={initialValues}
-          requiredMark={false}
-        >
-          <Row gutter={16} justify="end">
-            <Col span={24}>
+        <Row gutter={16} justify="end">
+          <Col span={24}>
+            <Form.Item
+              label="Title"
+              name="title"
+              rules={[{ required: true, message: 'Please input a title.' }]}
+            >
+              <Input />
+            </Form.Item>
+
+            {!featureFlags.trackingPixel && (
               <Form.Item
-                label="Title"
-                name="title"
-                rules={[{ required: true, message: 'Please input a title.' }]}
+                label="URL"
+                name="long_url"
+                rules={[
+                  { required: true },
+                  { type: 'url', message: 'Invalid URL' },
+                  { validator: serverValidateLongUrl },
+                ]}
               >
                 <Input />
               </Form.Item>
-
-              {!this.state.tracking_pixel_enabled && (
-                <Form.Item
-                  label="URL"
-                  name="long_url"
-                  rules={[
-                    { required: true },
-                    { type: 'url', message: 'Invalid URL' },
-                    { validator: serverValidateLongUrl },
-                  ]}
-                >
-                  <Input />
-                </Form.Item>
-              )}
-            </Col>
-            <Col span={24}>
-              <Typography.Title level={4}>Advanced Options</Typography.Title>
-            </Col>
-            <Col span={12}>
-              {!this.state.tracking_pixel_enabled &&
-                this.state.domain_enabled &&
-                mayUseCustomAliases && (
-                  <Form.Item label="Domain" name="domain">
-                    <Select
-                      showSearch
-                      options={Array.from(uniqueDomains).map(
-                        (domain: string) => ({
-                          value: domain,
-                          label: domain,
-                        }),
-                      )}
-                      defaultValue=""
-                      placeholder="Select a domain"
-                    />
-                  </Form.Item>
-                )}
-
-              {!this.state.tracking_pixel_enabled && (
-                <Form.Item label="Expiration time" name="expiration_time">
-                  <DatePicker
-                    format="YYYY-MM-DD HH:mm:ss"
-                    disabledDate={(current) =>
-                      current && current < dayjs().startOf('day')
-                    }
-                    showTime={{ defaultValue: dayjs() }}
+            )}
+          </Col>
+          <Col span={24}>
+            <Typography.Title level={4}>Advanced Options</Typography.Title>
+          </Col>
+          <Col span={12}>
+            {!featureFlags.trackingPixel &&
+              featureFlags.domains &&
+              mayUseCustomAliases && (
+                <Form.Item label="Domain" name="domain">
+                  <Select
+                    showSearch
+                    options={Array.from(uniqueDomains).map(
+                      (domain: string) => ({
+                        value: domain,
+                        label: domain,
+                      }),
+                    )}
+                    defaultValue=""
+                    placeholder="Select a domain"
                   />
                 </Form.Item>
               )}
 
-              {this.props.tracking_pixel_ui_enabled && (
-                <>
-                  <Form.Item
-                    required
-                    label="Link Type"
-                    name="is_tracking_pixel_link"
-                    valuePropName="checked"
-                  >
-                    <Radio.Group
-                      onChange={this.onTrackingPixelChange}
-                      defaultValue="url"
-                      optionType="button"
-                      buttonStyle="solid"
-                    >
-                      <Radio.Button value="url">URL</Radio.Button>
-                      <Radio.Button value="pixel">Tracking Pixel</Radio.Button>
-                    </Radio.Group>
-                  </Form.Item>
-                </>
-              )}
-            </Col>
-            <Col span={12}>
-              {this.state.tracking_pixel_enabled && (
+            {!featureFlags.trackingPixel && (
+              <Form.Item label="Expiration time" name="expiration_time">
+                <DatePicker
+                  format="YYYY-MM-DD HH:mm:ss"
+                  disabledDate={(current) =>
+                    current && current < dayjs().startOf('day')
+                  }
+                  showTime={{ defaultValue: dayjs() }}
+                />
+              </Form.Item>
+            )}
+
+            {featureFlags.trackingPixel && (
+              <>
                 <Form.Item
                   required
-                  label="Image Type"
-                  name="tracking_pixel_extension"
+                  label="Link Type"
+                  name="is_tracking_pixel_link"
+                  valuePropName="checked"
                 >
                   <Radio.Group
-                    onChange={this.onTrackingPixelExtensionChange}
-                    defaultValue=".png"
+                    onChange={onTrackingPixelChange}
+                    defaultValue="url"
                     optionType="button"
                     buttonStyle="solid"
                   >
-                    <Radio.Button value=".png">PNG</Radio.Button>
-                    <Radio.Button value=".gif">GIF</Radio.Button>
+                    <Radio.Button value="url">URL</Radio.Button>
+                    <Radio.Button value="pixel">Tracking Pixel</Radio.Button>
                   </Radio.Group>
                 </Form.Item>
-              )}
-              {!this.state.tracking_pixel_enabled && (
-                <AliasesForm
-                  mayUseCustomAliases={mayUseCustomAliases}
-                  initialAliases={['']}
-                />
-              )}
-            </Col>
-          </Row>
-        </Form>
-      </Drawer>
-    );
-  }
+              </>
+            )}
+          </Col>
+          <Col span={12}>
+            {featureFlags.trackingPixel && (
+              <Form.Item
+                required
+                label="Image Type"
+                name="tracking_pixel_extension"
+              >
+                <Radio.Group
+                  onChange={onTrackingPixelExtensionChange}
+                  defaultValue=".png"
+                  optionType="button"
+                  buttonStyle="solid"
+                >
+                  <Radio.Button value=".png">PNG</Radio.Button>
+                  <Radio.Button value=".gif">GIF</Radio.Button>
+                </Radio.Group>
+              </Form.Item>
+            )}
+            {!featureFlags.trackingPixel && (
+              <AliasesForm
+                mayUseCustomAliases={mayUseCustomAliases}
+                initialAliases={['']}
+              />
+            )}
+          </Col>
+        </Row>
+      </Form>
+    </Drawer>
+  );
 }

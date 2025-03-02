@@ -1,28 +1,26 @@
-volumes:
-  shrunk-volume:
-  mongodb_data:
-
 services:
   backend:
     build: ./backend
     command: python3 -m flask run --host=0.0.0.0 -p 3050
     volumes:
+      - ./development.env:/usr/shrunk/backend/.env
       - ./backend:/usr/shrunk/backend
-    environment:
-      - FLASK_APP=shrunk
-      - FLASK_DEBUG=true
-      - FLASK_ENV=development
-      - WERKZEUG_DEBUG_PIN=off
+    env_file:
+      - ./development.env
     depends_on:
       - mongodb
+      - httpd
 
   frontend:
     build: ./frontend
     volumes:
+      - ./development.env:/usr/shrunk/frontend/.env
       - ./frontend:/usr/shrunk/frontend
       - ./frontend/dist:/var/www/html
-    environment:
-      - NODE_ENV=development
+    env_file:
+      - ./development.env
+    depends_on:
+      - httpd
 
   httpd:
     image: httpd:2.4
@@ -35,9 +33,6 @@ services:
       - ./httpd/httpd.conf:/usr/local/apache2/conf/httpd.conf
       - ./frontend/dist:/usr/local/apache2/htdocs
       - ./httpd:/usr/local/apache2/logs
-    depends_on:
-      - backend
-      - frontend
 
   mongodb:
     hostname: mongodb

@@ -44,7 +44,7 @@ import {
 import dayjs, { Dayjs } from 'dayjs';
 import { listOrgs, OrgInfo } from '../api/Org';
 import { LinkInfo } from '../components/LinkInfo';
-import { CreateLinkDrawer } from '../drawers/CreateLinkDrawer';
+import CreateLinkDrawer from '../drawers/CreateLinkDrawer';
 import { serverValidateNetId } from '../lib/validators';
 
 /**
@@ -223,12 +223,6 @@ interface State {
    */
   qrModalState: { visible: boolean; linkInfo: LinkInfo | null };
 
-  /**
-   * Whether the tracking pixel feature is enabled
-   * @property
-   */
-  trackingPixelEnabled: boolean;
-
   isCreateModalOpen: boolean;
 
   filterModalVisible: boolean;
@@ -346,7 +340,6 @@ export class Dashboard extends React.Component<Props, State> {
         visible: false,
         linkInfo: null,
       },
-      trackingPixelEnabled: false,
       isCreateModalOpen: false,
       filterModalVisible: false,
       showExpired: false,
@@ -370,7 +363,6 @@ export class Dashboard extends React.Component<Props, State> {
 
   async componentDidMount(): Promise<void> {
     await Promise.all([this.fetchUserOrgs(), this.refreshResults()]);
-    await this.trackingPixelEnabledOnUI();
   }
 
   onSearch = async () => {
@@ -626,19 +618,6 @@ export class Dashboard extends React.Component<Props, State> {
           } as LinkInfo),
       ),
     };
-  };
-
-  /**
-   * Check if tracking pixel ui is enabled
-   * @method
-   */
-  trackingPixelEnabledOnUI = async () => {
-    const result = await fetch('/api/v1/config', {
-      method: 'GET',
-    }).then((resp) => resp.json());
-
-    const isEnabled = result.tracking_pixel;
-    this.setState({ trackingPixelEnabled: isEnabled });
   };
 
   updateOrg = async (value: string): Promise<void> => {
@@ -975,7 +954,6 @@ export class Dashboard extends React.Component<Props, State> {
           }}
           userPrivileges={this.props.userPrivileges}
           userOrgs={this.state.userOrgs ? this.state.userOrgs : []}
-          tracking_pixel_ui_enabled={this.state.trackingPixelEnabled}
         />
 
         <Drawer

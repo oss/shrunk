@@ -3,6 +3,7 @@
 from datetime import datetime
 from typing import Any, List, Optional, Set
 
+import os
 import pymongo
 
 from .alerts import AlertsClient
@@ -26,66 +27,40 @@ class ShrunkClient:
 
     def __init__(
         self,
-        DB_HOST: str,
-        DB_PORT: int = 27017,
-        DB_NAME: str = "shrunk",
         DB_USERNAME: Optional[str] = None,
         DB_PASSWORD: Optional[str] = None,
-        GEOLITE_PATH: Optional[str] = None,
         RESERVED_WORDS: Optional[Set[str]] = None,
         BANNED_REGEXES: Optional[List[str]] = None,
-        REDIRECT_CHECK_TIMEOUT: Optional[float] = 0.5,
-        SECURITY_MEASURES_ON: Optional[bool] = False,
-        GOOGLE_SAFE_BROWSING_API: Optional[str] = None,
-        SLACK_INTEGRATION_ENABLED: Optional[bool] = False,
-        SLACK_BOT_TOKEN: Optional[str] = None,
-        SLACK_SHRUNK_CHANNEL_ID: Optional[str] = None,
-        TRACKING_PIXEL_UI_ENABLED: Optional[bool] = False,
-        DOMAIN_ENABLED: Optional[bool] = False,
-        HELP_DESK_ENABLED: Optional[bool] = False,
         **_kwargs: Any,
     ):
         self.conn = pymongo.MongoClient(
-            DB_HOST,
-            DB_PORT,
+            os.getenv("SHRUNK_DB_HOST"),
+            int(os.getenv("SHRUNK_DB_PORT")),
             username=DB_USERNAME,
             password=DB_PASSWORD,
             authSource="admin",
             connect=False,
             tz_aware=True,
         )
-        self.db = self.conn[DB_NAME]
+        self.db = self.conn[os.getenv("SHRUNK_DB_NAME")]
         self._ensure_indexes()
 
-        self.geoip = GeoipClient(GEOLITE_PATH=GEOLITE_PATH)
+        self.geoip = GeoipClient(GEOLITE_PATH=os.getenv("SHRUNK_GEOLITE_PATH"))
         self.links = LinksClient(
             db=self.db,
             geoip=self.geoip,
             RESERVED_WORDS=RESERVED_WORDS or set(),
             BANNED_REGEXES=BANNED_REGEXES or [],
-            TRACKING_PIXEL_UI_ENABLED=TRACKING_PIXEL_UI_ENABLED or False,
-            REDIRECT_CHECK_TIMEOUT=REDIRECT_CHECK_TIMEOUT or 0.5,
             other_clients=self,
         )
         self.roles = RolesClient(db=self.db)
         self.tracking = TrackingClient(db=self.db)
 
-        self.orgs = OrgsClient(db=self.db, DOMAIN_ENABLED=DOMAIN_ENABLED or False)
+        self.orgs = OrgsClient(db=self.db)
         self.search = SearchClient(db=self.db, client=self)
         self.alerts = AlertsClient(db=self.db)
-        self.security = SecurityClient(
-            db=self.db,
-            other_clients=self,
-            SECURITY_MEASURES_ON=SECURITY_MEASURES_ON or False,
-            GOOGLE_SAFE_BROWSING_API=GOOGLE_SAFE_BROWSING_API or None,
-        )
-        self.tickets = TicketsClient(
-            db=self.db,
-            HELP_DESK_ENABLED=HELP_DESK_ENABLED or False,
-            SLACK_INTEGRATION_ENABLED=SLACK_INTEGRATION_ENABLED or False,
-            SLACK_BOT_TOKEN=SLACK_BOT_TOKEN or None,
-            SLACK_SHRUNK_CHANNEL_ID=SLACK_SHRUNK_CHANNEL_ID or None,
-        )
+        self.security = SecurityClient(db=self.db, other_clients=self)
+        self.tickets = TicketsClient(db=self.db)
         self.users = UserClient(db=self.db)
 
     def _ensure_indexes(self) -> None:

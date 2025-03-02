@@ -3,6 +3,7 @@
 from datetime import datetime, timezone
 from enum import Enum
 import json
+import os
 from typing import Any, Dict
 from bson.objectid import ObjectId
 from flask import current_app
@@ -33,19 +34,16 @@ class SecurityClient:
     verification system.
     """
 
-    def __init__(
-        self,
-        *,
-        db: pymongo.database.Database,
-        other_clients: Any,
-        SECURITY_MEASURES_ON: bool,
-        GOOGLE_SAFE_BROWSING_API: str,
-    ):
+    def __init__(self, *, db: pymongo.database.Database, other_clients: Any):
         self.db = db
         self.other_clients = other_clients
-        self.security_measures_on = SECURITY_MEASURES_ON
-        self.google_safe_browsing_api = GOOGLE_SAFE_BROWSING_API
-        self.latest_status = "OFF" if not SECURITY_MEASURES_ON else "ON"
+        self.security_measures_on = bool(
+            os.getenv("SHRUNK_GOOGLE_SAFEBROWSE_ENABLED", 0)
+        )
+        self.google_safe_browsing_api = os.getenv(
+            "SHRUNK_GOOGLE_SAFEBROWSE_API_KEY", None
+        )
+        self.latest_status = "OFF" if not self.security_measures_on else "ON"
 
     def create_pending_link(self, link_document: Dict[str, Any]):
         """

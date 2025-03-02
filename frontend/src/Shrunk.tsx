@@ -46,6 +46,11 @@ import rutgersLogo from './images/rutgers.png';
 import Ticket from './pages/subpages/Ticket';
 import { lightTheme } from './theme';
 import ChangeLog from './pages/ChangeLog';
+import {
+  FeatureFlags,
+  FeatureFlagsProvider,
+  useFeatureFlags,
+} from './contexts/FeatureFlags';
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -58,6 +63,8 @@ export default function Shrunk(props: Props) {
   const [userPrivileges, setUserPrivileges] = useState<Set<string>>(new Set());
   const [netid, setNetid] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
+
+  const featureFlags: FeatureFlags = useFeatureFlags();
 
   function ProtectedRoute(protectedProps: {
     children: any;
@@ -116,13 +123,6 @@ export default function Shrunk(props: Props) {
       : 'Administrator';
 
   const [pendingAlerts, setPendingAlerts] = useState<string[]>([]);
-  const [isHelpDeskEnabled, setIsHelpDeskEnabled] = useState(false);
-
-  const fetchIsHelpDeskEnabled = async () => {
-    const response = await fetch('/api/v1/ticket/enabled');
-    const body = await response.json();
-    setIsHelpDeskEnabled(body.enabled as boolean);
-  };
 
   const updatePendingAlerts = async () => {
     const resp = await fetch(`/api/v1/alert/${netid}`);
@@ -147,7 +147,6 @@ export default function Shrunk(props: Props) {
   useEffect(() => {
     const init = async () => {
       if (netid) {
-        await fetchIsHelpDeskEnabled();
         updatePendingAlerts();
       }
     };
@@ -171,7 +170,7 @@ export default function Shrunk(props: Props) {
       icon: <TeamOutlined />,
       label: <a href="/app/orgs">My Organizations</a>,
     },
-    ...(showAdminTab && isHelpDeskEnabled
+    ...(showAdminTab && featureFlags.helpDesk
       ? [
           {
             key: 'tickets',
@@ -237,184 +236,192 @@ export default function Shrunk(props: Props) {
   const isApp = window.location.pathname.split('/').slice(1)[0] === 'app';
 
   return (
-    <ConfigProvider theme={lightTheme}>
-      <App>
-        <BrowserRouter>
-          <Layout>
-            {domain === 'shrunk.rutgers.edu' && (
-              <Alert
-                message="This is a developer environment, any progress you make on this site is prone to deletion."
-                type="warning"
-                showIcon
-                closable
-              />
-            )}
-            <Header className="tw-flex tw-items-center tw-justify-between">
-              <a href={netid ? '/app/dash' : '/app/login'}>
-                <Image
-                  preview={false}
-                  alt="Rutgers"
-                  src={rutgersLogo}
-                  width="175px"
-                  srcSet={rutgersLogo}
-                />
-              </a>
-              {netid && (
-                <Dropdown menu={{ items: menuItems }}>
-                  <Button
-                    type="text"
-                    className="!tw-text-white"
-                    loading={isLoading}
-                  >
-                    {netid}
-                  </Button>
-                </Dropdown>
-              )}
-            </Header>
+    <FeatureFlagsProvider>
+      <ConfigProvider theme={lightTheme}>
+        <App>
+          <BrowserRouter>
             <Layout>
-              <Sider width={siderWidth} breakpoint="xl" collapsedWidth="10" />
-              <Content className="tw-m-0 tw-min-h-[90vh] tw-p-6">
-                {pendingAlerts.length !== 0 && (
-                  <PendingAlerts netid={netid} pendingAlerts={pendingAlerts} />
-                )}
-                <PendingRequests />
-                {netid !== '' && isApp && (
-                  <Breadcrumb
-                    items={window.location.pathname
-                      .split('/')
-                      .slice(1)
-                      .map((part, index, arr) => {
-                        if (part === 'app') {
-                          return {
-                            title: 'Home',
-                            href: '/',
-                          };
-                        }
-
-                        if (!(part in partToName)) {
-                          return {
-                            title: part,
-                          };
-                        }
-
-                        const path =
-                          partToName[part].href === undefined
-                            ? arr.slice(0, index + 1).join('/')
-                            : partToName[part].href;
-
-                        return {
-                          title: partToName[part].name,
-                          href: partToName[part].clickable
-                            ? `/${path}`
-                            : undefined,
-                        };
-                      })}
+              {domain === 'shrunk.rutgers.edu' && (
+                <Alert
+                  message="This is a developer environment, any progress you make on this site is prone to deletion."
+                  type="warning"
+                  showIcon
+                  closable
+                />
+              )}
+              <Header className="tw-flex tw-items-center tw-justify-between">
+                <a href={netid ? '/app/dash' : '/app/login'}>
+                  <Image
+                    preview={false}
+                    alt="Rutgers"
+                    src={rutgersLogo}
+                    width="175px"
+                    srcSet={rutgersLogo}
                   />
+                </a>
+                {netid && (
+                  <Dropdown menu={{ items: menuItems }}>
+                    <Button
+                      type="text"
+                      className="!tw-text-white"
+                      loading={isLoading}
+                    >
+                      {netid}
+                    </Button>
+                  </Dropdown>
                 )}
-                <Switch>
-                  <Route exact path="/app">
-                    <Redirect to="/app/dash" />
-                  </Route>
-                  <Route exact path="/app/login">
-                    <Login />
-                  </Route>
-                  <Route exact path="/app/dash">
-                    <Dashboard userPrivileges={userPrivileges} netid={netid} />
-                  </Route>
-                  <Route
-                    exact
-                    path="/app/links/:id"
-                    render={(route) => (
-                      <Stats
-                        id={route.match.params.id}
-                        netid={netid}
-                        userPrivileges={userPrivileges}
-                      />
-                    )}
-                  />
-                  <Route exact path="/app/orgs">
-                    <Orgs userPrivileges={userPrivileges} />
-                  </Route>
-
-                  <Route exact path="/app/orgs/:id">
-                    <ManageOrg
-                      userNetid={netid}
-                      userPrivileges={userPrivileges}
+              </Header>
+              <Layout>
+                <Sider width={siderWidth} breakpoint="xl" collapsedWidth="10" />
+                <Content className="tw-m-0 tw-min-h-[90vh] tw-p-6">
+                  {pendingAlerts.length !== 0 && (
+                    <PendingAlerts
+                      netid={netid}
+                      pendingAlerts={pendingAlerts}
                     />
-                  </Route>
-                  <Route exact path="/app/tickets">
-                    <HelpDesk netid={netid} userPrivileges={userPrivileges} />
-                  </Route>
-                  <Route
-                    exact
-                    path="/app/tickets/:id"
-                    render={(route) => (
-                      <Ticket
-                        ticketID={route.match.params.id}
+                  )}
+                  <PendingRequests />
+                  {netid !== '' && isApp && (
+                    <Breadcrumb
+                      items={window.location.pathname
+                        .split('/')
+                        .slice(1)
+                        .map((part, index, arr) => {
+                          if (part === 'app') {
+                            return {
+                              title: 'Home',
+                              href: '/',
+                            };
+                          }
+
+                          if (!(part in partToName)) {
+                            return {
+                              title: part,
+                            };
+                          }
+
+                          const path =
+                            partToName[part].href === undefined
+                              ? arr.slice(0, index + 1).join('/')
+                              : partToName[part].href;
+
+                          return {
+                            title: partToName[part].name,
+                            href: partToName[part].clickable
+                              ? `/${path}`
+                              : undefined,
+                          };
+                        })}
+                    />
+                  )}
+                  <Switch>
+                    <Route exact path="/app">
+                      <Redirect to="/app/dash" />
+                    </Route>
+                    <Route exact path="/app/login">
+                      <Login />
+                    </Route>
+                    <Route exact path="/app/dash">
+                      <Dashboard
+                        userPrivileges={userPrivileges}
+                        netid={netid}
+                      />
+                    </Route>
+                    <Route
+                      exact
+                      path="/app/links/:id"
+                      render={(route) => (
+                        <Stats
+                          id={route.match.params.id}
+                          netid={netid}
+                          userPrivileges={userPrivileges}
+                        />
+                      )}
+                    />
+                    <Route exact path="/app/orgs">
+                      <Orgs userPrivileges={userPrivileges} />
+                    </Route>
+
+                    <Route exact path="/app/orgs/:id">
+                      <ManageOrg
+                        userNetid={netid}
                         userPrivileges={userPrivileges}
                       />
-                    )}
-                  />
-                  <Route exact path="/app/faq">
-                    <Faq />
-                  </Route>
-                  <Route
-                    exact
-                    path="/app/roles/:name"
-                    render={(route) => (
-                      <Role
-                        userPrivileges={userPrivileges}
-                        name={route.match.params.name}
-                      />
-                    )}
-                  />
-                  <Route exact path="/app/releases">
-                    <ChangeLog />
-                  </Route>
-                  <Route exact path="/app/admin">
-                    <ProtectedRoute requiredPrivilege="admin">
-                      <Admin />
-                    </ProtectedRoute>
-                  </Route>
-                  <Route path="*">
-                    <ErrorPage
-                      title="Ooops!"
-                      description="
+                    </Route>
+                    <Route exact path="/app/tickets">
+                      <HelpDesk netid={netid} userPrivileges={userPrivileges} />
+                    </Route>
+                    <Route
+                      exact
+                      path="/app/tickets/:id"
+                      render={(route) => (
+                        <Ticket
+                          ticketID={route.match.params.id}
+                          userPrivileges={userPrivileges}
+                        />
+                      )}
+                    />
+                    <Route exact path="/app/faq">
+                      <Faq />
+                    </Route>
+                    <Route
+                      exact
+                      path="/app/roles/:name"
+                      render={(route) => (
+                        <Role
+                          userPrivileges={userPrivileges}
+                          name={route.match.params.name}
+                        />
+                      )}
+                    />
+                    <Route exact path="/app/releases">
+                      <ChangeLog />
+                    </Route>
+                    <Route exact path="/app/admin">
+                      <ProtectedRoute requiredPrivilege="admin">
+                        <Admin />
+                      </ProtectedRoute>
+                    </Route>
+                    <Route path="*">
+                      <ErrorPage
+                        title="Ooops!"
+                        description="
                               The page you are looking for is not found, are you sure you typed
                               the URL correctly?"
-                    />
-                  </Route>
-                </Switch>
-              </Content>
-              <Sider width={siderWidth} breakpoint="xl" collapsedWidth="10" />
+                      />
+                    </Route>
+                  </Switch>
+                </Content>
+                <Sider width={siderWidth} breakpoint="xl" collapsedWidth="10" />
+              </Layout>
+              <Footer className="tw-flex tw-justify-center tw-bg-black tw-text-center">
+                <Typography.Paragraph className="tw-w-[70%] tw-text-gray-200">
+                  Rutgers is an equal access/equal opportunity institution.
+                  Individuals with disabilities are encouraged to direct
+                  suggestions, comments, or complaints concerning any
+                  accessibility issues with Rutgers websites to{' '}
+                  <a
+                    target="_blank"
+                    rel="noreferrer"
+                    href="mailto:accessibility@rutgers.edu"
+                  >
+                    accessibility@rutgers.edu
+                  </a>{' '}
+                  or complete the{' '}
+                  <a
+                    target="_blank"
+                    rel="noreferrer"
+                    href="https://rutgers.ca1.qualtrics.com/jfe/form/SV_57iH6Rfeocz51z0"
+                  >
+                    Report Accessibility Barrier or Provide Feedback Form
+                  </a>
+                  .
+                </Typography.Paragraph>
+              </Footer>
             </Layout>
-            <Footer className="tw-flex tw-justify-center tw-bg-black tw-text-center">
-              <Typography.Paragraph className="tw-w-[70%] tw-text-gray-200">
-                Rutgers is an equal access/equal opportunity institution.
-                Individuals with disabilities are encouraged to direct
-                suggestions, comments, or complaints concerning any
-                accessibility issues with Rutgers websites to{' '}
-                <a
-                  target="_blank"
-                  rel="noreferrer"
-                  href="mailto:accessibility@rutgers.edu"
-                >
-                  accessibility@rutgers.edu
-                </a>{' '}
-                or complete the{' '}
-                <a
-                  target="_blank"
-                  rel="noreferrer"
-                  href="https://rutgers.ca1.qualtrics.com/jfe/form/SV_57iH6Rfeocz51z0"
-                >
-                  Report Accessibility Barrier or Provide Feedback Form
-                </a>
-                .
-              </Typography.Paragraph>
-            </Footer>
-          </Layout>
-        </BrowserRouter>
-      </App>
-    </ConfigProvider>
+          </BrowserRouter>
+        </App>
+      </ConfigProvider>
+    </FeatureFlagsProvider>
   );
 }

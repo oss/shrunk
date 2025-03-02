@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from typing import Any, Optional, List, cast
 
 from bson import ObjectId
+import os
 import pymongo
 import pymongo.errors
 
@@ -13,9 +14,9 @@ __all__ = ["OrgsClient"]
 class OrgsClient:
     """This class implements all orgs-related functionality."""
 
-    def __init__(self, *, db: pymongo.database.Database, DOMAIN_ENABLED: bool):
+    def __init__(self, *, db: pymongo.database.Database):
         self.db = db
-        self.domain_enabled = DOMAIN_ENABLED
+        self.domain_enabled = bool(os.getenv("SHRUNK_DOMAINS_ENABLED", 0))
 
     def get_org(self, org_id: ObjectId) -> Optional[Any]:
         """Get information about a given org

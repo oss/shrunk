@@ -19,10 +19,8 @@
 > Make sure you are connected to an outlet before running Shrunk, it will drain your laptop's battery.
 
 1. Install or update [Docker Desktop](https://docs.docker.com/desktop/) with your Docker Engine being version 27 or newer
-2. Create a copy of `backend/shrunk/config.py.example` to `config.py`
-3. Change the value `DB_HOST` to `mongodb` in the backend's config file
-4. Change the vaue `DEV_LOGINS` to `True` in the backend's config file
-5. Start the Docker containers
+2. Create a copy of `.env.example` and name it `development.env`
+3. Start the Docker containers
 
 ```
 docker-compose up
