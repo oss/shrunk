@@ -155,7 +155,7 @@ class LinksClient:
         self,
         title: str,
         long_url: str,
-        alias: str,
+        alias: Optional[str],
         expiration_time: Optional[datetime],
         netid: str,
         creator_ip: str,
@@ -193,7 +193,6 @@ class LinksClient:
             "expiration_time": expiration_time,
             "netid": netid,
             "domain": domain,
-            "aliases": [{"alias": alias, "description": "!ONEALIAS", "deleted": False}],
             "viewers": viewers,
             "editors": editors,
             "is_tracking_pixel_link": is_tracking_pixel_link,
@@ -210,6 +209,12 @@ class LinksClient:
             raise SecurityRiskDetected
 
         result = self.db.urls.insert_one(document)
+
+        if alias is None:
+            self.create_random_alias(result.inserted_id, "!ONEALIAS")
+        else:
+            self.create_or_modify_alias(result.inserted_id, alias, "!ONEALIAS", None)
+
         return result.inserted_id
 
     def modify(

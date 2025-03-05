@@ -50,7 +50,7 @@ ACL_ENTRY_SCHEMA = {
 CREATE_LINK_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
-    "required": ["title"],
+    "required": ["title", "long_url"],
     "properties": {
         "title": {"type": "string", "minLength": 1},
         "long_url": {"type": "string", "minLength": 1},
@@ -170,11 +170,13 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
             viewer_ids.add(editor["_id"])
             req["viewers"].append(editor)
 
+    alias = req.get("alias", None)
+
     try:
         link_id = client.links.create(
             req["title"],
             req["long_url"],
-            req["alias"],
+            alias,
             expiration_time,
             netid,
             request.remote_addr,

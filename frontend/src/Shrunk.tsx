@@ -27,11 +27,10 @@ import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom';
 
 import { message } from 'antd';
 import Admin from './pages/Admin';
-import { Dashboard } from './pages/Dashboard';
+import Dashboard from './pages/Dashboard';
 import Faq from './pages/Faq';
 import Orgs from './pages/Orgs';
 
-import { Role } from './components/admin/Role';
 import Login from './pages/Login';
 import ManageOrg from './pages/subpages/ManageOrg';
 import { Stats } from './pages/subpages/Stats';
@@ -48,7 +47,7 @@ import rutgersLogo from './images/rutgers.png';
 import ChangeLog from './pages/ChangeLog';
 import Ticket from './pages/subpages/Ticket';
 import { lightTheme } from './theme';
-import { logout } from './api/app';
+import { getUserInfo, logout } from './api/app';
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -92,8 +91,7 @@ export default function Shrunk(props: Props) {
       }
 
       try {
-        const response = await fetch('/api/v1/user/info');
-        const data = await response.json();
+        const data = await getUserInfo();
 
         if (data.netid) {
           setNetid(data.netid);
@@ -127,6 +125,8 @@ export default function Shrunk(props: Props) {
   const [pendingAlerts, setPendingAlerts] = useState<string[]>([]);
 
   const updatePendingAlerts = async () => {
+    // Scheduled for deletion: https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/278
+    // eslint-disable-next-line no-restricted-globals
     const resp = await fetch(`/api/v1/alert/${netid}`);
     const json = await resp.json();
     setPendingAlerts(json.pending_alerts as string[]);
@@ -356,16 +356,6 @@ export default function Shrunk(props: Props) {
                     <Route exact path="/app/faq">
                       <Faq />
                     </Route>
-                    <Route
-                      exact
-                      path="/app/roles/:name"
-                      render={(route) => (
-                        <Role
-                          userPrivileges={userPrivileges}
-                          name={route.match.params.name}
-                        />
-                      )}
-                    />
                     <Route exact path="/app/releases">
                       <ChangeLog />
                     </Route>

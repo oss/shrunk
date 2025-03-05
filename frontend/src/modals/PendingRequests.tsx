@@ -1,7 +1,6 @@
-/**
- * Implements the [[PendingRequests]] component
- * @packageDocumentation
- */
+/* eslint-disable no-restricted-globals */
+
+// TODO: Scheduled for deletion. See: https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/277
 
 import React from 'react';
 import { Row, Col, Modal, Button } from 'antd/lib';

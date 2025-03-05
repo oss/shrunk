@@ -24,10 +24,15 @@ import {
   Typography,
 } from 'antd/lib';
 import dayjs from 'dayjs';
-import base32 from 'hi-base32';
 import React, { useEffect, useState } from 'react';
 import CreateTicketDrawer from '../drawers/CreateTicketDrawer';
 import { TicketInfo } from '../interfaces/tickets';
+import {
+  closeTicket,
+  getHelpDeskText,
+  getTickets,
+  getTicketsResolvedCount,
+} from '../api/tickets';
 
 /**
  * Props for the [[HelpDesk]] component
@@ -75,9 +80,8 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
    * Get text fields related to the help desk
    * @method
    */
-  const getHelpDeskText = async () => {
-    const response = await fetch('/api/v1/ticket/text');
-    const data = await response.json();
+  const onGetHelpDeskText = async () => {
+    const data = await getHelpDeskText();
     setHelpDeskText(data);
   };
 
@@ -86,11 +90,7 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
    * @method
    */
   const getNumTicketsResolved = async () => {
-    const response = await fetch(
-      `/api/v1/ticket?filter=status:resolved&count=true`,
-    );
-    const data = await response.json();
-    setNumTicketsResolved(data.count);
+    setNumTicketsResolved(await getTicketsResolvedCount());
   };
 
   /**
@@ -98,19 +98,8 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
    * By default, the tickets are sorted by timestamp in descending order.
    * @method
    */
-  const getTickets = async () => {
-    let response = null;
-    if (userPrivileges.has('admin')) {
-      response = await fetch(
-        `/api/v1/ticket?filter=status:open&sort=-timestamp`,
-      );
-    } else {
-      response = await fetch(
-        `/api/v1/ticket?filter=reporter:${netid},status:open&sort=-timestamp`,
-      );
-    }
-    const body = await response.json();
-    setTickets(body);
+  const onGetTickets = async () => {
+    setTickets(await getTickets(userPrivileges, netid));
   };
 
   /**
@@ -119,16 +108,8 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
    *
    * @param ticketID - The ID of the ticket to delete
    */
-  const closeTicket = async (ticketID: string) => {
-    const response = await fetch(`/api/v1/ticket/${base32.encode(ticketID)}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action: 'close',
-      }),
-    });
+  const onCloseTicket = async (ticketID: string) => {
+    const response = await closeTicket(ticketID);
 
     if (response.ok) {
       setTickets(tickets.filter((ticket) => ticket._id !== ticketID));
@@ -141,7 +122,7 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
   useEffect(() => {
     const initComponent = async () => {
       setLoading(true);
-      const fetchPromises = [getHelpDeskText(), getTickets()];
+      const fetchPromises = [onGetHelpDeskText(), onGetTickets()];
 
       if (userPrivileges.has('admin')) {
         fetchPromises.push(getNumTicketsResolved());
@@ -202,7 +183,7 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
         <Tooltip title="Close">
           <Popconfirm
             title="Are you sure you want to close this ticket?"
-            onConfirm={() => closeTicket(record._id)}
+            onConfirm={() => onCloseTicket(record._id)}
             okText="Yes"
             cancelText="No"
             okButtonProps={{ danger: true }}

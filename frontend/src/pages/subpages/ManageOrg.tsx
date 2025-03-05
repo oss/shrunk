@@ -37,6 +37,7 @@ import {
   addMemberToOrganization,
   setAdminStatusOrganization,
   removeMemberFromOrganization,
+  getOrganizationVisits,
 } from '../../api/organization';
 import { serverValidateOrgName } from '../../api/validators';
 import CollaboratorModal, {
@@ -73,9 +74,7 @@ function ManageOrgBase({
   const refreshOrganization = async () => {
     const [info, visitData] = await Promise.all([
       getOrganization(match.params.id),
-      fetch(`/api/v1/org/${match.params.id}/stats/visits`).then((r) =>
-        r.json(),
-      ),
+      getOrganizationVisits(match.params.id),
     ]);
 
     const adminCount = info.members.filter((member) => member.is_admin).length;

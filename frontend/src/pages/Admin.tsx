@@ -17,6 +17,7 @@ import BlockedLinks from '../components/admin/BlockedLinks';
 import Security from '../components/admin/Security';
 import UserLookup from '../components/admin/UserLookup';
 import UsersProvider from '../contexts/Users';
+import { getPendingLinksCount } from '../api/google-safebrowse';
 
 const VALID_TABS = ['analytics', 'user-lookup', 'links', 'security'];
 const DEFAULT_TAB = 'analytics';
@@ -29,9 +30,7 @@ export default function Admin(): React.ReactElement {
 
   useEffect(() => {
     const fetchData = async () => {
-      const linksResp = await fetch('/api/v1/security/pending_links/count');
-      const linksJson = await linksResp.json();
-      setLinksToBeVerified(linksJson.pending_links_count);
+      setLinksToBeVerified(await getPendingLinksCount());
     };
 
     fetchData();

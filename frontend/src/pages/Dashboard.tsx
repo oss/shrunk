@@ -44,69 +44,10 @@ import {
 import dayjs, { Dayjs } from 'dayjs';
 import { getOrganizations } from '../api/organization';
 import { Organization } from '../interfaces/organizations';
-import { LinkInfo } from '../interfaces/link';
+import { Link, SearchQuery, SearchSet } from '../interfaces/link';
 import CreateLinkDrawer from '../drawers/CreateLinkDrawer';
 import { serverValidateNetId } from '../api/validators';
-import { deleteLink } from '../api/links';
-
-/**
- * The type of the `set` parameter in the search query.
- * @type
- */
-export type SearchSet =
-  | { set: 'user' | 'shared' | 'all' }
-  | { set: 'org'; org: string };
-
-/**
- * The type of a search query
- * @interface
- */
-export interface SearchQuery {
-  /**
-   * An array that holds query strings
-   * @property
-   */
-  queryString: string;
-
-  /**
-   * The set of links to search (c.f. [[SearchSet]])
-   * @property
-   */
-  set: SearchSet;
-
-  /**
-   * Whether to show expired links
-   * @property
-   */
-  show_expired_links: boolean;
-
-  /** Whether to show deleted links
-   * @property
-   */
-  show_deleted_links: boolean;
-
-  /**
-   * The sort order and key
-   * @property
-   */
-  sort: { key: string; order: string };
-
-  /**
-   * The beginning of the time range to search
-   * @property
-   */
-  begin_time: dayjs.Dayjs | null;
-
-  /**
-   * The end of the time range to search
-   * @property
-   */
-  end_time: dayjs.Dayjs | null;
-
-  showType: 'links' | 'tracking_pixels';
-
-  owner: string | null;
-}
+import { deleteLink, searchLinks } from '../api/links';
 
 /**
  * Props for the [[Dashboard]] component.
@@ -118,7 +59,7 @@ interface Props {
   netid: string;
 
   demo?: boolean;
-  mockData?: LinkInfo[];
+  mockData?: Link[];
 }
 
 /**
@@ -137,7 +78,7 @@ interface State {
    * An array of [[LinkInfo]] objects for the current search results.
    * @property
    */
-  linkInfo: LinkInfo[] | null;
+  linkInfo: Link[] | null;
 
   /**
    * The number of links to display per page. Currently this is constant,
@@ -150,7 +91,7 @@ interface State {
    * The current search query.
    * @property
    */
-  query: SearchQuery;
+  query: onGetTickets;
 
   /**
    * The current page in the search results. Starts from `1`.
@@ -257,7 +198,7 @@ function CustomizeButton(props: {
   );
 }
 
-export class Dashboard extends React.Component<Props, State> {
+export default class Dashboard extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -507,8 +448,8 @@ export class Dashboard extends React.Component<Props, State> {
     query: SearchQuery,
     skip: number,
     limit: number,
-  ): Promise<{ count: number; results: LinkInfo[] }> => {
-    const req: Record<string, any> = {
+  ): Promise<{ count: number; results: Link[] }> => {
+    const req: SearchQuery = {
       query: query.queryString,
       set: query.set,
       show_expired_links: query.show_expired_links,
@@ -530,13 +471,7 @@ export class Dashboard extends React.Component<Props, State> {
       req.owner = query.owner;
     }
 
-    const result = await fetch('/api/v1/search', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(req),
-    }).then((resp) => resp.json());
+    const result = await searchLinks(req);
 
     return {
       count: result.count,
@@ -554,7 +489,7 @@ export class Dashboard extends React.Component<Props, State> {
                   deleted_by: output.deletion_info.deleted_by,
                   deleted_time: new Date(output.deletion_info.deleted_time),
                 },
-          } as LinkInfo),
+          } as Link),
       ),
     };
   };

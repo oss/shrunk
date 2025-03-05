@@ -15,9 +15,9 @@ import {
   Space,
 } from 'antd/lib';
 import React from 'react';
-import base32 from 'hi-base32';
 import { User } from '../../contexts/Users';
 import SearchUser from './SearchUser';
+import { addRoleToUser } from '../../api/users';
 
 /**
  * Props for the [[LookupTableHeader]] component
@@ -65,7 +65,6 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
   const handleConfirm = () => {
     form.validateFields().then(async (values) => {
       const { netid, roles, comment } = values;
-      const encodedNetId = base32.encode(netid);
 
       try {
         const rolePromises = roles.map(async (role: string) => {
@@ -81,15 +80,10 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
             throw new Error(`Invalid role mapping for ${role}`);
           }
 
-          const response = await fetch(
-            `/api/v1/role/${backendRole}/entity/${encodedNetId}`,
-            {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                comment: comment || `Added via User Lookup interface`,
-              }),
-            },
+          const response = await addRoleToUser(
+            netid,
+            backendRole,
+            comment || `Added via User Lookup interface`,
           );
 
           if (!response.ok) {

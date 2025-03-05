@@ -57,7 +57,7 @@
       "excludedFiles": ["src/api/**"],
       "rules": {
         "no-restricted-globals": [
-          "off",
+          "error",
           {
             "name": "fetch",
             "message": "Use a dedicated API client or a wrapper around fetch() or define a function utilizing fetch in src/api/**.ts"

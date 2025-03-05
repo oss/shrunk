@@ -18,9 +18,9 @@ import {
 } from 'antd/lib';
 import React, { useState, useCallback, useEffect } from 'react';
 import { DeleteOutlined } from '@ant-design/icons';
-import base32 from 'hi-base32';
 import { useUsers } from '../../contexts/Users';
 import LookupTableHeader from './LookupTableHeader';
+import { addRoleToUser, removeRoleFromUser } from '../../api/users';
 
 /**
  * Renders the netids in bold
@@ -296,16 +296,13 @@ const UserLookup: React.FC = () => {
   const handleRolesChange = async (netid: string, newRoles: string[]) => {
     setLoading(true);
     try {
-      const encodedNetId = base32.encode(netid);
       const existingRoles = users.find((u) => u.netid === netid)?.roles || [];
 
       // Remove roles that are no longer selected
       await Promise.all(
         existingRoles.map((role) => {
           if (!newRoles.includes(role)) {
-            return fetch(`/api/v1/role/${role}/entity/${encodedNetId}`, {
-              method: 'DELETE',
-            });
+            return removeRoleFromUser(netid, role);
           }
           return Promise.resolve();
         }),
@@ -315,13 +312,11 @@ const UserLookup: React.FC = () => {
       await Promise.all(
         newRoles.map((role) => {
           if (!existingRoles.includes(role)) {
-            return fetch(`/api/v1/role/${role}/entity/${encodedNetId}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                comment: `Added via User Lookup interface`,
-              }),
-            });
+            return addRoleToUser(
+              netid,
+              role,
+              'Added via User Lookup interface',
+            );
           }
           return Promise.resolve();
         }),
@@ -342,26 +337,18 @@ const UserLookup: React.FC = () => {
 
   const handleBan = async (netid: string) => {
     try {
-      const encodedNetId = base32.encode(netid);
       const userRoles = users.find((u) => u.netid === netid)?.roles || [];
 
       // Remove user from all roles
       await Promise.all(
-        userRoles.map((role) =>
-          fetch(`/api/v1/role/${role}/entity/${encodedNetId}`, {
-            method: 'DELETE',
-          }),
-        ),
+        userRoles.map((role) => removeRoleFromUser(netid, role)),
       );
 
-      // Add the "blacklisted" role to signify the user is banned
-      await fetch(`/api/v1/role/blacklisted/entity/${encodedNetId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          comment: 'User banned via User Lookup interface',
-        }),
-      });
+      await addRoleToUser(
+        netid,
+        'blacklisted',
+        'User banned via User Lookup interface',
+      );
 
       setFilteredData((prevData) =>
         prevData.map((user) =>

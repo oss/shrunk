@@ -114,6 +114,7 @@ const UsersProvider: React.FC = ({ children }) => {
     const fetchUsers = async (): Promise<void> => {
       setLoading(true);
       try {
+        // eslint-disable-next-line no-restricted-globals
         const response = await fetch('/api/v1/user', {
           method: 'POST',
           headers: {
@@ -141,6 +142,7 @@ const UsersProvider: React.FC = ({ children }) => {
     const fetchUsers = async (): Promise<void> => {
       setLoading(true);
       try {
+        // eslint-disable-next-line no-restricted-globals
         const response = await fetch('/api/v1/user', {
           method: 'POST',
           headers: {
@@ -168,6 +170,7 @@ const UsersProvider: React.FC = ({ children }) => {
     const fetchOptions = async (): Promise<void> => {
       setLoading(true);
       try {
+        // eslint-disable-next-line no-restricted-globals
         const response = await fetch('/api/v1/user/options', {
           method: 'GET',
           headers: {

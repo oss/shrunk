@@ -4,7 +4,6 @@
  */
 
 import { App, Button, Divider, Drawer, Form, Input, Radio } from 'antd/lib';
-import base32 from 'hi-base32';
 import React from 'react';
 import { useHistory } from 'react-router-dom';
 import TicketDetails, { EntityDetails } from '../components/TicketDetails';
@@ -13,6 +12,8 @@ import {
   ResolveTicketInfo,
   TicketInfo,
 } from '../interfaces/tickets';
+import { resolveTicket, sendTicketEmail } from '../api/tickets';
+import { addRoleToUser } from '../api/users';
 
 /**
  * Props for the [[ResolveTicketModal]] component
@@ -77,22 +78,9 @@ const ResolveTicketDrawer: React.FC<Props> = ({
    *
    * @param values - The values from the form
    */
-  const resolveTicket = async (values: ResolveTicketInfo) => {
+  const onResolveTicket = async (values: ResolveTicketInfo) => {
     setSubmitting(true);
-    const response = await fetch(
-      `/api/v1/ticket/${base32.encode(ticketInfo._id)}`,
-      {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'resolve',
-          ...values,
-        }),
-      },
-    );
-
+    const response = await resolveTicket(ticketInfo._id, values);
     const data = await response.json();
 
     if (response.ok) {
@@ -113,32 +101,7 @@ const ResolveTicketDrawer: React.FC<Props> = ({
    * @param comment The comment to add to the grant
    */
   const grantRole = async (entity: string, role: string, comment?: string) => {
-    const encodedEntity = base32.encode(entity);
-    await fetch(`/api/v1/role/${role}/entity/${encodedEntity}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ comment }),
-    });
-  };
-
-  /**
-   * Send an email about the ticket
-   * @method
-   *
-   * @param id - The ID of the ticket
-   * @param category - The category of the email
-   */
-  const sendEmail = async (id: string, category: string) => {
-    await fetch('/api/v1/ticket/email', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        id,
-        category,
-      }),
-    });
+    await addRoleToUser(entity, role, comment);
   };
 
   /**
@@ -148,7 +111,7 @@ const ResolveTicketDrawer: React.FC<Props> = ({
    * @param values - The values from the form
    */
   const handleFormSubmit = async (values: ResolveTicketInfo) => {
-    await resolveTicket(values);
+    await onResolveTicket(values);
 
     // Grant the role if it was approved
     if (values.is_role_granted && ticketInfo?.entity) {
@@ -159,7 +122,7 @@ const ResolveTicketDrawer: React.FC<Props> = ({
       );
     }
 
-    await sendEmail(ticketInfo._id, 'resolution');
+    await sendTicketEmail(ticketInfo._id, 'resolution');
   };
 
   return (

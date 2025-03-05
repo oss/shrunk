@@ -4,7 +4,6 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import base32 from 'hi-base32';
 import dayjs from 'dayjs';
 import {
   Col,
@@ -26,47 +25,14 @@ import {
   SaveOutlined,
 } from '@ant-design/icons';
 
-import { Alias, LinkInfo } from '../interfaces/link';
+import { Alias, EditLinkValues, Link } from '../interfaces/link';
 import { serverValidateLongUrl, serverValidateNetId } from '../api/validators';
 import AliasesForm from '../components/AliasesForm';
-import { deleteLink, reverLinkExpirationDate } from '../api/links';
-
-/**
- * The final values of the edit link form
- * @interface
- */
-export interface EditLinkFormValues {
-  /**
-   * The new title
-   * @property
-   */
-  title: string;
-
-  /**
-   * The new long URL
-   * @property
-   */
-  long_url: string;
-
-  /**
-   * The new expiration time, or `null` if the expiration time should
-   * be cleared
-   * @property
-   */
-  expiration_time: dayjs.Dayjs | null;
-
-  /**
-   * The new owner of the link.
-   * @property
-   */
-  owner: string;
-
-  /**
-   * The new aliases
-   * @property
-   */
-  aliases: { alias: string; description: string }[];
-}
+import {
+  deleteLink,
+  isValidAlias,
+  reverLinkExpirationDate,
+} from '../api/links';
 
 /**
  * Props of the [[EditLinkDrawer]] component
@@ -96,13 +62,13 @@ export interface Props {
    * The original [[LinkInfo]] of the link to edit
    * @property
    */
-  linkInfo: LinkInfo;
+  linkInfo: Link;
 
   /**
    * Callback that will be called when the user clicks the "ok" button
    * @property
    */
-  onOk: (values: EditLinkFormValues) => void;
+  onOk: (values: EditLinkValues) => void;
 
   /**
    * Callback that will be called when the user closes the modal without
@@ -149,13 +115,7 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
   useEffect(() => {
     props.linkInfo.aliases.map(
       async (alias: { description: string; alias: string }) => {
-        let res = null;
-        res = await fetch(
-          `/api/v1/link/validate_duplicate_alias/${base32.encode(
-            alias.alias!,
-          )}`,
-        ).then((resp) => resp.json());
-        if (res.valid) {
+        if (await isValidAlias(alias.alias!)) {
           setAliasInUse(true);
         }
       },
@@ -167,7 +127,7 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
 
   const handleSubmit = () => {
     form.validateFields().then((values) => {
-      props.onOk(values as EditLinkFormValues);
+      props.onOk(values as EditLinkValues);
     });
   };
 

@@ -14,12 +14,17 @@ import {
   Space,
   Typography,
 } from 'antd/lib';
-import base32 from 'hi-base32';
 import React, { useEffect, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import TicketDetails, { EntityDetails } from '../../components/TicketDetails';
 import ResolveTicketDrawer from '../../drawers/ResolveTicketDrawer';
 import { EntityPositionInfo, TicketInfo } from '../../interfaces/tickets';
+import {
+  closeTicket,
+  getEntityPosition,
+  getHelpDeskText,
+  getTicket,
+} from '../../api/tickets';
 
 /**
  * Props for the [[Ticket]] component
@@ -76,28 +81,22 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
    *
    * @param entity - The entity to get the position for
    */
-  const getEntityPosition = async (entity: string) => {
-    const response = await fetch(
-      `/api/v1/user/${base32.encode(entity)}/position`,
-    );
-    const body = await response.json();
-    setEntityPositionInfo(body);
+  const onGetEntityPosition = async (entity: string) => {
+    const data = await getEntityPosition(entity);
+    setEntityPositionInfo(data);
   };
 
   /**
    * Get the ticket information
    * @method
    */
-  const getTicket = async () => {
-    const response = await fetch(`/api/v1/ticket/${base32.encode(ticketID)}`);
-    const body = await response.json();
-    if (response.ok) {
-      setTicketInfo(body);
+  const onGetTicket = async () => {
+    const data = await getTicket(ticketID);
+    setTicketInfo(data);
 
-      // Get the position information of the ticket's entity
-      if (userPrivileges.has('admin') && body.entity) {
-        await getEntityPosition(body.entity);
-      }
+    // Get the position information of the ticket's entity
+    if (userPrivileges.has('admin') && data.entity) {
+      await onGetEntityPosition(data.entity);
     }
   };
 
@@ -105,18 +104,9 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
    * Close the ticket
    * @method
    */
-  const closeTicket = async () => {
+  const onCloseTicket = async () => {
     setClosing(true);
-    const response = await fetch(`/api/v1/ticket/${base32.encode(ticketID)}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        action: 'close',
-      }),
-    });
-
+    const response = await closeTicket(ticketID);
     const data = await response.json();
 
     if (response.ok) {
@@ -129,13 +119,8 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
     }
   };
 
-  /**
-   * Fetch the help desk text
-   * @method
-   */
-  const getHelpDeskText = async () => {
-    const response = await fetch('/api/v1/ticket/text');
-    const data = await response.json();
+  const onGetHelpDeskText = async () => {
+    const data = await getHelpDeskText();
     setHelpDeskText(data);
   };
 
@@ -152,7 +137,7 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
 
       // Perform fetches
       setLoading(true);
-      const fetchPromises = [getHelpDeskText(), getTicket()];
+      const fetchPromises = [onGetHelpDeskText(), onGetTicket()];
       await Promise.all(fetchPromises);
       setLoading(false);
     };
@@ -194,7 +179,7 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
                 )}
                 <Popconfirm
                   title="Are you sure you want to close this ticket?"
-                  onConfirm={() => closeTicket()}
+                  onConfirm={onCloseTicket}
                   okText="Yes"
                   cancelText="No"
                   okButtonProps={{ danger: true }}
