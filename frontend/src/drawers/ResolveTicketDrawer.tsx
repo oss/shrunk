@@ -8,7 +8,11 @@ import base32 from 'hi-base32';
 import React from 'react';
 import { useHistory } from 'react-router-dom';
 import TicketDetails, { EntityDetails } from '../components/TicketDetails';
-import { EntityPositionInfo, ResolveTicketInfo, TicketInfo } from '../types';
+import {
+  EntityPositionInfo,
+  ResolveTicketInfo,
+  TicketInfo,
+} from '../interfaces/tickets';
 
 /**
  * Props for the [[ResolveTicketModal]] component

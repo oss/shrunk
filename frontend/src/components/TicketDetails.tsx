@@ -1,7 +1,7 @@
 import { Descriptions, Typography } from 'antd/lib';
 import dayjs from 'dayjs';
 import React from 'react';
-import { EntityPositionInfo, TicketInfo } from '../types';
+import { EntityPositionInfo, TicketInfo } from '../interfaces/tickets';
 
 /**
  * Props for the [[TicketDetails]] component

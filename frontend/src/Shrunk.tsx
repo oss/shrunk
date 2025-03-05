@@ -42,15 +42,13 @@ import { PendingRequests } from './modals/PendingRequests';
 import ErrorPage from './pages/ErrorPage';
 import HelpDesk from './pages/HelpDesk';
 
-import {
-  FeatureFlags,
-  FeatureFlagsProvider,
-  useFeatureFlags,
-} from './contexts/FeatureFlags';
+import { FeatureFlags } from './interfaces/app';
+import { FeatureFlagsProvider, useFeatureFlags } from './contexts/FeatureFlags';
 import rutgersLogo from './images/rutgers.png';
 import ChangeLog from './pages/ChangeLog';
 import Ticket from './pages/subpages/Ticket';
 import { lightTheme } from './theme';
+import { logout } from './api/app';
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -135,17 +133,7 @@ export default function Shrunk(props: Props) {
   };
 
   const onLogout = async () => {
-    await fetch('/api/v1/logout', {
-      method: 'POST',
-    })
-      .then((response) => response.json())
-      .then((data: any) => {
-        if ('redirect-to' in data) {
-          window.location.href = data['redirect-to'];
-        } else {
-          window.location.href = '/app/login';
-        }
-      });
+    window.location.href = await logout();
   };
 
   useEffect(() => {

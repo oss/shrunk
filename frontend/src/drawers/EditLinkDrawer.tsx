@@ -26,9 +26,10 @@ import {
   SaveOutlined,
 } from '@ant-design/icons';
 
-import { LinkInfo } from '../components/LinkInfo';
-import { serverValidateLongUrl, serverValidateNetId } from '../lib/validators';
+import { Alias, LinkInfo } from '../interfaces/link';
+import { serverValidateLongUrl, serverValidateNetId } from '../api/validators';
 import AliasesForm from '../components/AliasesForm';
+import { deleteLink, reverLinkExpirationDate } from '../api/links';
 
 /**
  * The final values of the edit link form
@@ -130,7 +131,7 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
       props.linkInfo.expiration_time === null
         ? null
         : dayjs(props.linkInfo.expiration_time),
-    aliases: props.linkInfo.aliases.filter((alias) => !alias.deleted),
+    aliases: props.linkInfo.aliases.filter((alias: Alias) => !alias.deleted),
   };
   const mayEditOwner =
     props.netid === initialValues.owner || props.userPrivileges.has('admin');
@@ -172,9 +173,7 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
 
   const handleDelete = async () => {
     try {
-      await fetch(`/api/v1/link/${props.linkInfo._id}`, {
-        method: 'DELETE',
-      });
+      deleteLink(props.linkInfo._id);
       message.success('Link deleted successfully');
       setTimeout(() => {
         window.location.href = '/app/dash';
@@ -186,13 +185,7 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
 
   const handleRevert = async () => {
     try {
-      await fetch(`/api/v1/link/${props.linkInfo._id}/revert`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
+      reverLinkExpirationDate(props.linkInfo._id);
       message.success('Link restored successfully');
     } catch (error) {
       message.error('Failed to restore link');

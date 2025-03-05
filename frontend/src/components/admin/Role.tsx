@@ -22,7 +22,8 @@ import {
 } from '@ant-design/icons';
 import base32 from 'hi-base32';
 import dayjs from 'dayjs';
-import { downloadGrantedUsersCsv, EntityInfo } from '../GrantedUserCsv';
+import { downloadGrantedUsers } from '../../api/csv';
+import { GrantedBy } from '../../interfaces/csv';
 
 /**
  * Props for the [[Role]] component
@@ -142,7 +143,7 @@ const GrantForm: React.FC<{
  */
 const EntityRow: React.FC<{
   roleText: RoleText;
-  info: EntityInfo;
+  info: GrantedBy;
   onRevoke: (entity: string) => Promise<void>;
 }> = (props) => (
   <Row className="primary-row">
@@ -218,7 +219,7 @@ interface State {
    * The entities that have the role
    * @property
    */
-  entities: EntityInfo[] | null;
+  entities: GrantedBy[] | null;
 
   /**
    * Loading state for the download button
@@ -306,7 +307,7 @@ export class Role extends React.Component<Props, State> {
     const result = await fetch(`/api/v1/role/${this.props.name}/entity`).then(
       (resp) => resp.json(),
     );
-    this.setState({ entities: result.entities as EntityInfo[] });
+    this.setState({ entities: result.entities as GrantedBy[] });
   };
 
   /**
@@ -344,7 +345,7 @@ export class Role extends React.Component<Props, State> {
    */
   downloadCsv = async (): Promise<void> => {
     this.setState({ loading: true });
-    await downloadGrantedUsersCsv(this.props.name);
+    await downloadGrantedUsers(this.props.name);
     this.setState({ loading: false });
   };
 

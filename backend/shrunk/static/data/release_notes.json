@@ -16,6 +16,10 @@
         {
           "text": "Utilize environment variables over using a Python file for configuration values so feature flags can be changed at runtime",
           "contributors": ["ah1371"]
+        },
+        {
+          "text": "All API routes from the frontend to the backend are under a single directory",
+          "contributors": ["ah1371"]
         }
       ],
       "fixes": [

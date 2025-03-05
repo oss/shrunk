@@ -13,30 +13,31 @@ import {
   Tooltip,
 } from 'antd/lib';
 import { CloseOutlined, PlusCircleFilled } from '@ant-design/icons';
-import { serverValidateNetId } from '../lib/validators';
-import { listOrgs, OrgInfo } from '../api/Org';
+import { serverValidateNetId } from '../api/validators';
+import { getOrganizations } from '../api/organization';
+import { Organization } from '../interfaces/organizations';
 
-export type Entity = {
+export interface Collaborator {
   _id: string;
   type: 'netid' | 'org';
   role?: string; // Optional if removing entity.
-};
+}
 
 interface ICollaboratorModal {
   visible: boolean;
-  people: Array<Entity>;
+  people: Array<Collaborator>;
 
   // The first role should be the MASTER role (owner or admin),
   // while the second must be the DEFAULT role.
   roles: Array<{ value: string; label: string }>;
 
-  onAddEntity: (activeTab: 'netid' | 'org', value: Entity) => void;
+  onAddEntity: (activeTab: 'netid' | 'org', value: Collaborator) => void;
   onChangeEntity: (
     activeTab: 'netid' | 'org',
-    value: Entity,
+    value: Collaborator,
     newRole: string,
   ) => void;
-  onRemoveEntity: (activeTab: 'netid' | 'org', value: Entity) => void;
+  onRemoveEntity: (activeTab: 'netid' | 'org', value: Collaborator) => void;
   onOk: () => void;
   onCancel: () => void;
 
@@ -49,7 +50,7 @@ interface ICollaboratorModal {
 export default function CollaboratorModal(props: ICollaboratorModal) {
   const [form] = Form.useForm();
 
-  const [organizations, setOrganizations] = useState<OrgInfo[]>([]);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [collaboratorRole, setCollaboratorRole] = useState<string>(
     props.roles[1].value,
   );
@@ -60,7 +61,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
   const [activeTab, setActiveTab] = useState<'netid' | 'org'>(collaboratorType);
 
   function refreshOrganizations() {
-    listOrgs('user').then((orgs) => setOrganizations(orgs));
+    getOrganizations('user').then((orgs) => setOrganizations(orgs));
   }
 
   const masterRole = props.roles[0].value;
@@ -70,9 +71,9 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
     props.roles.forEach((role, index) => {
       permissionOrder[role.value] = index;
     });
-    props.people.sort((a: Entity, b: Entity) => {
+    props.people.sort((a: Collaborator, b: Collaborator) => {
       if (a.role === undefined || b.role === undefined) {
-        throw new Error('Entity must have a role');
+        throw new Error('Collaborator must have a role');
       }
       return permissionOrder[a.role] - permissionOrder[b.role];
     });

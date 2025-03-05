@@ -50,5 +50,26 @@
     "no-nested-ternary": "off",
     "no-plusplus": ["error", { "allowForLoopAfterthoughts": true }],
     "react/no-access-state-in-setstate": "off"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["*.js", "*.jsx", "*.ts", "*.tsx"],
+      "excludedFiles": ["src/api/**"],
+      "rules": {
+        "no-restricted-globals": [
+          "off",
+          {
+            "name": "fetch",
+            "message": "Use a dedicated API client or a wrapper around fetch() or define a function utilizing fetch in src/api/**.ts"
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/api/**"],
+      "rules": {
+        "no-restricted-globals": ["off", "fetch"]
+      }
+    }
+  ]
 }

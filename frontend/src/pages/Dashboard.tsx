@@ -42,36 +42,12 @@ import {
 } from '@ant-design/icons';
 
 import dayjs, { Dayjs } from 'dayjs';
-import { listOrgs, OrgInfo } from '../api/Org';
-import { LinkInfo } from '../components/LinkInfo';
+import { getOrganizations } from '../api/organization';
+import { Organization } from '../interfaces/organizations';
+import { LinkInfo } from '../interfaces/link';
 import CreateLinkDrawer from '../drawers/CreateLinkDrawer';
-import { serverValidateNetId } from '../lib/validators';
-
-/**
- * The final values of the share link form
- * @type
- */
-export type Entity = {
-  /**
-   * The id of the entity the link is shared with
-   * @property
-   */
-  _id: string;
-  /**
-   * The name of the entity. For an organization, it would be the organization name. For a netid, it would be the netid.
-   */
-  name: string;
-  /**
-   * The type of entity the link is shared with (netid/org)
-   * @property
-   */
-  type: string;
-  /**
-   * The permission of the entity the link is shared with (viewer/editor)
-   * @property
-   */
-  permission: string;
-};
+import { serverValidateNetId } from '../api/validators';
+import { deleteLink } from '../api/links';
 
 /**
  * The type of the `set` parameter in the search query.
@@ -155,7 +131,7 @@ interface State {
    * advanced search settings menu.
    * @property
    */
-  userOrgs: OrgInfo[] | null;
+  userOrgs: Organization[] | null;
 
   /**
    * An array of [[LinkInfo]] objects for the current search results.
@@ -199,29 +175,6 @@ interface State {
    * @property
    */
   totalLinks: number;
-
-  /**
-   * The current state of the edit modal.
-   * @property
-   */
-  editModalState: { visible: boolean; linkInfo: LinkInfo | null };
-
-  /**
-   * The current state of the share link modal. Contains the netids and orgs.
-   * @property
-   */
-  CollaboratorLinkModalState: {
-    visible: boolean;
-    entities: Array<Entity>;
-    linkInfo: LinkInfo | null;
-    isLoading: boolean;
-  };
-
-  /**
-   * The current state of the QR code modal.
-   * @property
-   */
-  qrModalState: { visible: boolean; linkInfo: LinkInfo | null };
 
   isCreateModalOpen: boolean;
 
@@ -326,20 +279,6 @@ export class Dashboard extends React.Component<Props, State> {
       totalLinks: 0,
       currentPage: 1,
       currentOffset: 0,
-      editModalState: {
-        visible: false,
-        linkInfo: null,
-      },
-      CollaboratorLinkModalState: {
-        visible: false,
-        entities: [],
-        linkInfo: null,
-        isLoading: false,
-      },
-      qrModalState: {
-        visible: false,
-        linkInfo: null,
-      },
       isCreateModalOpen: false,
       filterModalVisible: false,
       showExpired: false,
@@ -378,7 +317,7 @@ export class Dashboard extends React.Component<Props, State> {
       return;
     }
 
-    const userOrgs = await listOrgs('user');
+    const userOrgs = await getOrganizations('user');
     this.setState({ userOrgs });
   };
 
@@ -887,9 +826,7 @@ export class Dashboard extends React.Component<Props, State> {
                             title="Are you sure you want to delete this link?"
                             onConfirm={async () => {
                               try {
-                                await fetch(`/api/v1/link/${record.key}`, {
-                                  method: 'DELETE',
-                                });
+                                await deleteLink(record.key);
                                 message.success('Link deleted successfully');
                                 await this.refreshResults();
                               } catch (error) {

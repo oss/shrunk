@@ -54,6 +54,7 @@ CREATE_LINK_SCHEMA = {
     "properties": {
         "title": {"type": "string", "minLength": 1},
         "long_url": {"type": "string", "minLength": 1},
+        "alias": {"type": "string", "minLength": 5},
         "expiration_time": {"type": "string", "format": "date-time"},
         "editors": {"type": "array", "items": ACL_ENTRY_SCHEMA},
         "viewers": {"type": "array", "items": ACL_ENTRY_SCHEMA},
@@ -173,6 +174,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
         link_id = client.links.create(
             req["title"],
             req["long_url"],
+            req["alias"],
             expiration_time,
             netid,
             request.remote_addr,
@@ -742,6 +744,8 @@ def create_alias(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) 
 
     Create a new alias for a link. Returns the created alias or an error. Request format:
 
+    DEPRECATED: https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/274
+
     .. code-block:: json
 
        { "alias?": "string", "description?": "string", "extension?" : "string" }
@@ -765,9 +769,8 @@ def create_alias(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) 
     :param link_id:
     """
     # Check that netid is able to modify link_id
-    if not client.roles.has("admin", netid) and not client.links.may_edit(
-        link_id, netid
-    ):
+    # DEPRECATED: https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/274
+    if not client.roles.has("admin", netid):
         abort(403)
 
     # If a custom URL is specified, check that user has power_user or admin role.
@@ -848,15 +851,17 @@ def delete_alias(
 
     Delete an alias. Returns 204 on success or 4xx on error.
 
+    DEPRECATED: https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/274
+
     :param netid:
     :param client:
     :param link_id:
     :param alias:
     """
-    if not client.roles.has("admin", netid) and not client.links.is_owner(
-        link_id, netid
-    ):
+    # DEPRECATED: https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/274
+    if not client.roles.has("admin", netid):
         abort(403)
+
     client.links.delete_alias(link_id, alias)
     return "", 204
 

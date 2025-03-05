@@ -150,7 +150,7 @@ def toggle_security(netid: str, client: ShrunkClient) -> Any:
     return jsonify({"status": status}), 200
 
 
-@bp.route("/get_status", methods=["GET"])
+@bp.route("/status", methods=["GET"])
 @require_login
 def get_security_status(netid: str, client: ShrunkClient) -> Any:
     """``GET /api/v1/security/get_status``
@@ -167,4 +167,4 @@ def get_security_status(netid: str, client: ShrunkClient) -> Any:
             500,
         )
 
-    return jsonify({"status": status}), 200
+    return status, 200

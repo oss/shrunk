@@ -19,7 +19,7 @@ import React, { useEffect, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import TicketDetails, { EntityDetails } from '../../components/TicketDetails';
 import ResolveTicketDrawer from '../../drawers/ResolveTicketDrawer';
-import { EntityPositionInfo, TicketInfo } from '../../types';
+import { EntityPositionInfo, TicketInfo } from '../../interfaces/tickets';
 
 /**
  * Props for the [[Ticket]] component
