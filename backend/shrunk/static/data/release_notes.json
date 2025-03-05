@@ -20,6 +20,10 @@
         {
           "text": "All API routes from the frontend to the backend are under a single directory",
           "contributors": ["ah1371"]
+        },
+        {
+          "text": "No longer able to clear visit data via the frontend to prevent accidental purges",
+          "contributors": ["ah1371"]
         }
       ],
       "fixes": [

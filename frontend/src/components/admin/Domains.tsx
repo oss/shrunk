@@ -1,3 +1,7 @@
+/* eslint-disable no-restricted-globals */
+
+// TODO: Scheduled for deletion: https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/260
+
 import React, { useState } from 'react';
 import { Form, Input, Button, Typography, message, Col } from 'antd';
 

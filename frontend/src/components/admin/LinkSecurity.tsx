@@ -7,42 +7,25 @@ import ExclamationCircleFilled from '@ant-design/icons/lib/icons/ExclamationCirc
 import { Button, Col, Popconfirm, Row } from 'antd/lib';
 import Spin from 'antd/es/spin';
 import React, { useEffect, useState } from 'react';
+import { PendingLink } from '../../interfaces/google-safebrowse';
 import {
-  PendingLink,
-  PendingLinkAction,
-} from '../../interfaces/google-safebrowse';
-import { getPendingLinks, getStatus } from '../../api/google-safebrowse';
+  getPendingLinks,
+  getStatus,
+  updateLinkSecurity,
+} from '../../api/google-safebrowse';
 
-/**
- * Specifies the props for each pending link
- * @interface
- */
 interface PendingRowProps {
-  /**
-   * Takes in the link row object.
-   * @property
-   */
   document: PendingLink;
 }
 
-/**
- * Wrapper function to approve or deny a pending link
- * @param action - pending link action
- * @param link_id - id of the link
- */
-function LinkAction(action: PendingLinkAction, link_id: string) {
-  fetch(`/api/v1/security/${action}/${link_id}`, {
-    method: 'PATCH',
-  });
-  document.location.reload();
-}
-
-/**
- * The [[PendingLinkRow]] component displays the pending link row
- * @param props - the props for the component
- */
 function PendingLinkRow(props: PendingRowProps) {
   const { document } = props;
+
+  function updateLink(action: 'promote' | 'reject') {
+    updateLinkSecurity(document._id, action);
+    window.location.reload();
+  }
+
   return (
     <Row className="primary-row">
       <Col span={20}>
@@ -68,7 +51,7 @@ function PendingLinkRow(props: PendingRowProps) {
         <Popconfirm
           placement="top"
           title="Are you sure?"
-          onConfirm={() => LinkAction(PendingLinkAction.Deny, document._id)}
+          onConfirm={() => updateLink('reject')}
           icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
         >
           <Button danger style={{ margin: '0px 10px' }}>
@@ -80,7 +63,7 @@ function PendingLinkRow(props: PendingRowProps) {
         <Popconfirm
           placement="top"
           title="Are you sure?"
-          onConfirm={() => LinkAction(PendingLinkAction.Approve, document._id)}
+          onConfirm={() => updateLink('promote')}
           icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
         >
           <Button type="primary" style={{ margin: '0px 10px' }}>

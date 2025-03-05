@@ -85,3 +85,10 @@ export async function removeMemberFromOrganization(
     method: 'DELETE',
   });
 }
+
+export async function getOrganizationVisits(linkId: string) {
+  const resp = await fetch(`/api/v1/org/${linkId}/stats/visits`);
+  const data = resp.json();
+
+  return data as any;
+}

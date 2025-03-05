@@ -11,3 +11,18 @@ export async function getPendingLinks(): Promise<PendingLink[]> {
   const data = await resp.json();
   return data.pendingLinks as PendingLink[];
 }
+
+export async function updateLinkSecurity(
+  linkId: string,
+  action: 'promote' | 'reject',
+) {
+  await fetch(`/api/v1/security/${action}/${linkId}`, {
+    method: 'PATCH',
+  });
+}
+
+export async function getPendingLinksCount(): Promise<number> {
+  const resp = await fetch('/api/v1/security/pending_links/count');
+  const data = await resp.json();
+  return data.pending_links_count as number;
+}

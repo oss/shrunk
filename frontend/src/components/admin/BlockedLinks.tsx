@@ -26,9 +26,9 @@ import {
   PlusCircleFilled,
   SearchOutlined,
 } from '@ant-design/icons';
-import base32 from 'hi-base32';
 import Fuse from 'fuse.js';
 import { GrantedBy } from '../../interfaces/csv';
+import { blockLink, getBlockedLinks, unBlockLink } from '../../api/app';
 
 /**
  * Renders the URLs as clickable links
@@ -61,18 +61,7 @@ const renderUnblockButton = (
 ): JSX.Element => {
   const handleUnblock = async () => {
     try {
-      const encodedUrl = base32.encode(url);
-      const response = await fetch(
-        `/api/v1/role/blocked_url/entity/${encodedUrl}`,
-        {
-          method: 'DELETE',
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to unblock link');
-      }
-
+      unBlockLink(url);
       message.success('Link unblocked successfully');
       onUnblock();
     } catch (error) {
@@ -267,9 +256,7 @@ const BlockedLinks = () => {
 
   useEffect(() => {
     const updateBlockedLinks = async (): Promise<void> => {
-      const result = await fetch(`/api/v1/role/blocked_url/entity`).then(
-        (resp) => resp.json(),
-      );
+      const result = await getBlockedLinks();
       setBlockedLinks(
         result.entities.map((entity: GrantedBy) => ({
           url: entity.entity,
@@ -289,26 +276,10 @@ const BlockedLinks = () => {
 
   const handleConfirm = () => {
     form.validateFields().then(async (values) => {
-      const { link, comment } = values;
       setModalLoading(true);
 
       try {
-        const encodedLink = base32.encode(link);
-
-        const response = await fetch(
-          `/api/v1/role/blocked_url/entity/${encodedLink}`,
-          {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              comment: comment || 'Link blocked via Link Management interface',
-            }),
-          },
-        );
-
-        if (!response.ok) {
-          throw new Error('Failed to block link');
-        }
+        blockLink(values.link, values.comment);
 
         message.success('Link blocked successfully');
         form.resetFields();

@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import dayjs from 'dayjs';
 import {
   Form,
@@ -73,7 +73,7 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
     'url',
   );
 
-  const formRef = React.createRef<FormInstance>();
+  const formRef = useRef<FormInstance>(null);
 
   const onSubmitClick = async (): Promise<void> => {
     formRef.current!.resetFields();
@@ -96,9 +96,9 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
         values.is_tracking_pixel_link as boolean,
         values.title,
         values.long_url,
-        undefined,
+        values.alias,
         values.expiration_time,
-        values.tracking_pixel_extension,
+        values.tracking_pixel_extension as '.png' | '.gif',
       );
     } catch (e: any) {
       message.error(e.message);

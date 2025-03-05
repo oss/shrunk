@@ -2,7 +2,7 @@ import { LoginOutlined } from '@ant-design/icons';
 import { Button, Col, Row, Flex, Card, Select, Space } from 'antd/lib';
 import React, { useState } from 'react';
 import BlurFade from '../ext/components/ui/blur-fade';
-import { Dashboard } from './Dashboard';
+import Dashboard from './Dashboard';
 import { BorderBeam } from '../ext/components/ui/border-beam';
 import { FeatureFlags, useFeatureFlags } from '../contexts/FeatureFlags';
 
@@ -70,6 +70,7 @@ export default function Login() {
                     window.location.href = loginTypes[loginLink].href;
                   }
 
+                  // eslint-disable-next-line no-restricted-globals
                   await fetch(loginTypes[loginLink].href, {
                     method: 'POST',
                   }).then(() => {

@@ -11,7 +11,6 @@ import {
   Spin,
   Select,
   Button,
-  Popconfirm,
   Typography,
   Tag,
   Card,
@@ -21,8 +20,6 @@ import {
   message,
 } from 'antd/lib';
 import {
-  ExclamationCircleFilled,
-  ClearOutlined,
   CloudDownloadOutlined,
   LoadingOutlined,
   GlobalOutlined,
@@ -36,20 +33,37 @@ import HighchartsReact from 'highcharts-react-official';
 import dayjs from 'dayjs';
 import { useLocation } from 'react-router-dom';
 
-import { Alias, Link, LinkSharedWith } from '../../interfaces/link';
+import {
+  Alias,
+  BrowserStats,
+  Link,
+  LinkSharedWith,
+  OverallStats,
+  PieDatum,
+  VisitDatum,
+  VisitStats,
+} from '../../interfaces/link';
 import { GeoipStats, MENU_ITEMS, GeoipChart } from './StatsCommon';
 import { downloadVisits } from '../../api/csv';
 
 import { daysBetween } from '../../lib/utils';
 import ShareModal from '../../modals/ShareModal';
-import {
-  EditLinkFormValues,
-  EditLinkDrawer,
-} from '../../drawers/EditLinkDrawer';
+import { EditLinkValues, EditLinkDrawer } from '../../drawers/EditLinkDrawer';
 import CollaboratorModal, {
   Collaborator,
 } from '../../modals/CollaboratorModal';
-import { addCollaborator, getLink, removeCollaborator } from '../../api/links';
+import {
+  addCollaborator,
+  deleteAlias,
+  editLink,
+  getLink,
+  getLinkBrowserStats,
+  getLinkGeoIpStats,
+  getLinkStats,
+  getLinkVisitsStats,
+  removeCollaborator,
+  updateAlias,
+} from '../../api/links';
 
 /**
  * Props for the [[Stats]] component
@@ -64,102 +78,6 @@ export interface Props {
 
   netid: string;
   userPrivileges: Set<string>;
-}
-
-/**
- * General summary statistics
- * @interface
- */
-interface OverallStats {
-  /**
-   * The total number of visits to the link
-   * @property
-   */
-  total_visits: number;
-
-  /**
-   * The number of unique visits to the link
-   * @property
-   */
-  unique_visits: number;
-}
-
-/**
- * Data for one day worth of visits to a link
- * @interface
- */
-interface VisitDatum {
-  /**
-   * The date, represented as year/month/day numbers
-   * @property
-   */
-  _id: { year: number; month: number; day: number };
-
-  /**
-   * The total number of visits on the date
-   * @property
-   */
-  all_visits: number;
-
-  /**
-   * The number of first-time visits on the date
-   * @property
-   */
-  first_time_visits: number;
-}
-
-/**
- * Time-series visit statistics
- * @property
- */
-interface VisitStats {
-  /**
-   * A [[VisitDatum]] for every day in the link's history
-   * @property
-   */
-  visits: VisitDatum[];
-}
-
-/**
- * Data for one slice of a pie chart
- * @interface
- */
-interface PieDatum {
-  /**
-   * The name of the slice
-   * @property
-   */
-  name: string;
-
-  /**
-   * The value of the slice
-   * @property
-   */
-  y: number;
-}
-
-/**
- * Data pertaining to browsers and referers of visitors
- * @interface
- */
-interface BrowserStats {
-  /**
-   * Data for the browser name pie chart
-   * @property
-   */
-  browsers: PieDatum[];
-
-  /**
-   * Data for the platform name pie chart
-   * @property
-   */
-  platforms: PieDatum[];
-
-  /**
-   * Data for the referer pie chart
-   * @property
-   */
-  referers: PieDatum[];
 }
 
 /**
@@ -319,16 +237,7 @@ const BrowserCharts: React.FC<{ browserStats: BrowserStats | null }> = (
   );
 };
 
-/**
- * The [[Stats]] component implements the link stats view. It allows the user
- * to optionally select an alias, then displays visit stats, GeoIP stats, User-Agent stats,
- * and referer stats
- * @class
- */
-
 export function Stats(props: Props): React.ReactElement {
-  const showPurge = false;
-
   const [linkInfo, setLinkInfo] = useState<Link | null>(null);
   const [allAliases, setAllAliases] = useState<Alias[]>([]);
   const [selectedAlias, setSelectedAlias] = useState<string | null>(null);
@@ -379,7 +288,7 @@ export function Stats(props: Props): React.ReactElement {
     setSelectedAlias(null);
     setMayEdit(templinkInfo.may_edit);
 
-    const tempEntities: Entity[] = [];
+    const tempEntities: Collaborator[] = [];
     const mentionedIds = new Set<string>();
 
     tempEntities.push({
@@ -411,41 +320,10 @@ export function Stats(props: Props): React.ReactElement {
   }
 
   async function updateStats() {
-    const baseApiPath =
-      selectedAlias === null
-        ? `/api/v1/link/${props.id}/stats`
-        : `/api/v1/link/${props.id}/alias/${selectedAlias}/stats`;
-
-    const overallPromise = fetch(baseApiPath)
-      .then((resp) => resp.json())
-      .then((json) => {
-        setOverallStats(json as OverallStats);
-      });
-
-    const visitsPromise = fetch(`${baseApiPath}/visits`)
-      .then((resp) => resp.json())
-      .then((json) => {
-        setVisitStats(json as VisitStats);
-      });
-
-    const geoipPromise = fetch(`${baseApiPath}/geoip`)
-      .then((resp) => resp.json())
-      .then((json) => {
-        setGeoipStats(json as GeoipStats);
-      });
-
-    const browsersPromise = fetch(`${baseApiPath}/browser`)
-      .then((resp) => resp.json())
-      .then((json) => {
-        setBrowserStats(json as BrowserStats);
-      });
-
-    await Promise.all([
-      overallPromise,
-      visitsPromise,
-      geoipPromise,
-      browsersPromise,
-    ]);
+    setOverallStats(await getLinkStats(props.id, selectedAlias));
+    setVisitStats(await getLinkVisitsStats(props.id, selectedAlias));
+    setGeoipStats(await getLinkGeoIpStats(props.id, selectedAlias));
+    setBrowserStats(await getLinkBrowserStats(props.id, selectedAlias));
   }
 
   useEffect(() => {
@@ -467,14 +345,14 @@ export function Stats(props: Props): React.ReactElement {
    * Executes API requests to update a link
    * @param values The form values from the edit link form
    */
-  async function doEditLink(values: EditLinkFormValues): Promise<void> {
+  async function doEditLink(values: EditLinkValues): Promise<void> {
     const oldLinkInfo = linkInfo;
     if (oldLinkInfo === null) {
       throw new Error('oldLinkInfo should not be null');
     }
 
     // Create the request to edit title, long_url, and expiration_time
-    const patchReq: Record<string, any> = {};
+    const patchReq: EditLinkValues = {};
     if (values.title !== oldLinkInfo.title) {
       patchReq.title = values.title;
     }
@@ -492,11 +370,7 @@ export function Stats(props: Props): React.ReactElement {
     }
 
     const promises = [];
-    const patchRequest = await fetch(`/api/v1/link/${props.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(patchReq),
-    });
+    const patchRequest = await editLink(props.id, patchReq);
 
     // //get the status and the json message
     const patchRequestStatus = patchRequest.status;
@@ -517,11 +391,7 @@ export function Stats(props: Props): React.ReactElement {
     Array.from(oldAliases.keys())
       .filter((alias) => !newAliases.has(alias))
       .forEach((alias) => {
-        promises.push(
-          fetch(`/api/v1/link/${props.id}/alias/${alias}`, {
-            method: 'DELETE',
-          }),
-        );
+        promises.push(deleteAlias(props.id, alias));
       });
 
     // Create/update aliases
@@ -534,16 +404,7 @@ export function Stats(props: Props): React.ReactElement {
         return isNew || isDescriptionChanged;
       })
       .forEach(([alias, info]) => {
-        promises.push(
-          fetch(`/api/v1/link/${props.id}/alias`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              alias,
-              description: info.description,
-            }),
-          }),
-        );
+        promises.push(updateAlias(props.id, alias, info.description));
       });
   }
 
@@ -570,17 +431,6 @@ export function Stats(props: Props): React.ReactElement {
     setLoading(true);
     await downloadVisits(props.id, selectedAlias);
     setLoading(false);
-  };
-
-  /**
-   * Execute API requests to clear visit data associated with a link
-   * @method
-   */
-  const clearVisitData = async (): Promise<void> => {
-    await fetch(`/api/v1/link/${props.id}/clear_visits`, {
-      method: 'POST',
-    });
-    await updateStats();
   };
 
   const averageClicks = (): number => {
@@ -905,18 +755,6 @@ export function Stats(props: Props): React.ReactElement {
                 >
                   Export
                 </Button>
-                {mayEdit && showPurge && (
-                  <Popconfirm
-                    placement="bottom"
-                    title="Are you sure? This action cannot be undone."
-                    onConfirm={clearVisitData}
-                    icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
-                  >
-                    <Button danger icon={<ClearOutlined />}>
-                      Purge
-                    </Button>
-                  </Popconfirm>
-                )}
               </Space>
             }
           >

@@ -27,8 +27,3 @@ export interface PendingLink {
    */
   netid: string;
 }
-
-export enum PendingLinkAction {
-  Approve = 'promote',
-  Deny = 'reject',
-}

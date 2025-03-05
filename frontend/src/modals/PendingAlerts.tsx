@@ -1,7 +1,4 @@
-/**
- * Implements the [[PendingAlerts]] component
- * @packageDocumentation
- */
+/* eslint-disable no-restricted-globals */
 
 import React from 'react';
 import { Modal, Button } from 'antd/lib';

@@ -21,62 +21,11 @@ import HighchartsReact from 'highcharts-react-official';
 import dayjs from 'dayjs';
 
 import { MENU_ITEMS } from '../../pages/subpages/StatsCommon';
+import { getAppStats, getEndpointData, getShrunkVersion } from '../../api/app';
+import { AdminStatsData, EndpointDatum } from '../../interfaces/app';
 
 const { RangePicker } = DatePicker;
 
-/**
- * Results of an admin stats query to the backend
- * @interface
- */
-interface AdminStatsData {
-  /**
-   * Total number of links created during the specified time period
-   * @property
-   */
-  links: number;
-
-  /**
-   * Total number of visits occurring during the specified time period
-   * @property
-   */
-  visits: number;
-
-  /**
-   * Total number of distinct NetIDs creating links during the specified time period
-   */
-  users: number;
-}
-
-/**
- * Statistics about visits to a single Flask endpoint
- * @interface
- */
-interface EndpointDatum {
-  /**
-   * Name of the Flask endpoint
-   * @property
-   */
-  endpoint: string;
-
-  /**
-   * Total number of visits
-   * @property
-   */
-  total_visits: number;
-
-  /**
-   * Total number of unique visits by NetID
-   * @property
-   */
-  unique_visits: number;
-}
-
-/**
- * The [[AdminStats]] component allows the user to view summary statistics
- * about the total number of links, users, and visits on Shrunk, as well
- * as to view statistics about the number of visits to each Flask endpoint
- * @function
- */
 export default function AdminStats(): React.ReactElement {
   const [endpointData, setEndpointData] = useState<EndpointDatum[] | null>(
     null,
@@ -89,35 +38,15 @@ export default function AdminStats(): React.ReactElement {
   const [version, setVersion] = useState<string | null>(null);
 
   const updateAdminData = async () => {
-    const req: Record<string, any> = {};
-    if (adminDataRange !== null) {
-      req.range = {
-        begin: adminDataRange.begin.format(),
-        end: adminDataRange.end.format(),
-      };
-    }
-
-    const json = await fetch('/api/v1/admin/stats/overview', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(req),
-    }).then((resp) => resp.json());
-
-    setAdminData(json as AdminStatsData);
+    setAdminData(await getAppStats(adminDataRange?.begin, adminDataRange?.end));
   };
 
   const updateEndpointData = async () => {
-    const json = await fetch('/api/v1/admin/stats/endpoint').then((resp) =>
-      resp.json(),
-    );
-    setEndpointData(json.stats as EndpointDatum[]);
+    setEndpointData(await getEndpointData());
   };
 
   const updateShrunkVersion = async () => {
-    const json = await fetch('/api/v1/admin/app-version').then((resp) =>
-      resp.json(),
-    );
-    setVersion(json.version as string);
+    setVersion(await getShrunkVersion());
   };
 
   useEffect(() => {

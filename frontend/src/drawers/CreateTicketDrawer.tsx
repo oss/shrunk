@@ -6,6 +6,7 @@
 import { App, Button, Drawer, Form, Input, Select, Typography } from 'antd/lib';
 import React, { useState } from 'react';
 import { CreateTicketInfo, TicketInfo } from '../interfaces/tickets';
+import { createTicket, sendTicketEmail } from '../api/tickets';
 
 /**
  * Props for the [[CreateTicketDrawer]] component
@@ -66,19 +67,16 @@ const CreateTicketDrawer: React.FC<Props> = ({
    * @param values - The values of the form fields
    * @returns the ticket information
    */
-  const createTicket = async (
+  const onCreateTicket = async (
     values: CreateTicketInfo,
   ): Promise<TicketInfo | null> => {
     setSubmitting(true);
 
-    const response = await fetch('/api/v1/ticket', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(values),
-    });
-
+    const response = await createTicket(
+      values.reason,
+      values.user_comment,
+      values.entity,
+    );
     const data = await response.json();
 
     if (response.ok) {
@@ -95,26 +93,6 @@ const CreateTicketDrawer: React.FC<Props> = ({
   };
 
   /**
-   * Send an email about the ticket
-   * @method
-   *
-   * @param id - The ID of the ticket
-   * @param category - The category of the email
-   */
-  const sendEmail = async (id: string, category: string) => {
-    await fetch('/api/v1/ticket/email', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        id,
-        category,
-      }),
-    });
-  };
-
-  /**
    * Handle the form submission; send the ticket and show the status
    * @method
    *
@@ -122,10 +100,10 @@ const CreateTicketDrawer: React.FC<Props> = ({
    */
   const handleFormSubmit = async (values: CreateTicketInfo) => {
     // Perform the actual submission
-    const ticket = await createTicket(values);
+    const ticket = await onCreateTicket(values);
     if (ticket) {
-      await sendEmail(ticket._id, 'confirmation');
-      await sendEmail(ticket._id, 'notification');
+      await sendTicketEmail(ticket._id, 'confirmation');
+      await sendTicketEmail(ticket._id, 'notification');
     }
 
     // Reset the drawer
