@@ -32,25 +32,25 @@ import Faq from './pages/Faq';
 import Orgs from './pages/Orgs';
 
 import { Role } from './components/admin/Role';
+import Login from './pages/Login';
 import ManageOrg from './pages/subpages/ManageOrg';
 import { Stats } from './pages/subpages/Stats';
-import Login from './pages/Login';
 
 import { PendingAlerts } from './modals/PendingAlerts';
 import { PendingRequests } from './modals/PendingRequests';
 
-import HelpDesk from './pages/HelpDesk';
 import ErrorPage from './pages/ErrorPage';
+import HelpDesk from './pages/HelpDesk';
 
-import rutgersLogo from './images/rutgers.png';
-import Ticket from './pages/subpages/Ticket';
-import { lightTheme } from './theme';
-import ChangeLog from './pages/ChangeLog';
 import {
   FeatureFlags,
   FeatureFlagsProvider,
   useFeatureFlags,
 } from './contexts/FeatureFlags';
+import rutgersLogo from './images/rutgers.png';
+import ChangeLog from './pages/ChangeLog';
+import Ticket from './pages/subpages/Ticket';
+import { lightTheme } from './theme';
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -70,6 +70,10 @@ export default function Shrunk(props: Props) {
     children: any;
     requiredPrivilege: string;
   }) {
+    if (isLoading) {
+      return <></>;
+    }
+
     if (userPrivileges.has(protectedProps.requiredPrivilege)) {
       return protectedProps.children;
     }
