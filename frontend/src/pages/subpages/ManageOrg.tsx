@@ -26,9 +26,22 @@ import { RouteComponentProps, withRouter } from 'react-router-dom';
 import dayjs from 'dayjs';
 import type { FormInstance } from 'antd/lib/form';
 
-import { MemberInfo, OrgInfo, getOrgInfo } from '../../api/Org';
-import { serverValidateOrgName } from '../../lib/validators';
-import CollaboratorModal, { Entity } from '../../modals/CollaboratorModal';
+import {
+  OrganizationMember,
+  Organization,
+} from '../../interfaces/organizations';
+import {
+  getOrganization,
+  renameOrganization,
+  deleteOrganization,
+  addMemberToOrganization,
+  setAdminStatusOrganization,
+  removeMemberFromOrganization,
+} from '../../api/organization';
+import { serverValidateOrgName } from '../../api/validators';
+import CollaboratorModal, {
+  Collaborator,
+} from '../../modals/CollaboratorModal';
 
 type RouteParams = {
   id: string;
@@ -51,87 +64,69 @@ function ManageOrgBase({
   match,
   history,
 }: Props): React.ReactElement {
-  const [orgInfo, setOrgInfo] = useState<OrgInfo | null>(null);
+  const [organization, setOrganization] = useState<Organization | null>(null);
   const [adminsCount, setAdminsCount] = useState(0);
   const [shareModalVisible, setShareModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const formRef = useRef<FormInstance>(null);
   const [visitStats, setVisitStats] = useState<VisitDatum[] | null>(null);
-  const refreshOrgInfo = async () => {
+  const refreshOrganization = async () => {
     const [info, visitData] = await Promise.all([
-      getOrgInfo(match.params.id),
+      getOrganization(match.params.id),
       fetch(`/api/v1/org/${match.params.id}/stats/visits`).then((r) =>
         r.json(),
       ),
     ]);
 
     const adminCount = info.members.filter((member) => member.is_admin).length;
-    setOrgInfo(info);
+    setOrganization(info);
     setAdminsCount(adminCount);
     setVisitStats(visitData.visits);
   };
 
   useEffect(() => {
-    refreshOrgInfo();
+    refreshOrganization();
   }, [match.params.id]);
 
-  const onAddMember = async (netid: string, is_admin: boolean) => {
-    await fetch(`/api/v1/org/${match.params.id}/member/${netid}`, {
-      method: 'PUT',
-    });
-    if (is_admin) {
-      await fetch(`/api/v1/org/${match.params.id}/member/${netid}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_admin: true }),
-      });
+  const onAddMember = async (netid: string, isAdmin: boolean) => {
+    await addMemberToOrganization(match.params.id, netid);
+    if (isAdmin) {
+      await setAdminStatusOrganization(match.params.id, netid, isAdmin);
     }
-    await refreshOrgInfo();
+    await refreshOrganization();
   };
 
   const onDeleteMember = async (netid: string) => {
-    await fetch(`/api/v1/org/${match.params.id}/member/${netid}`, {
-      method: 'DELETE',
-    });
-    await refreshOrgInfo();
+    await removeMemberFromOrganization(match.params.id, netid);
+    await refreshOrganization();
   };
 
   const onChangeAdmin = async (netid: string, admin: boolean) => {
-    await fetch(`/api/v1/org/${match.params.id}/member/${netid}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ is_admin: admin }),
-    });
-    await refreshOrgInfo();
+    await setAdminStatusOrganization(match.params.id, netid, admin);
+    await refreshOrganization();
   };
 
   const onRenameOrg = async (newName: string) => {
-    await fetch(`/api/v1/org/${match.params.id}/rename/${newName}`, {
-      method: 'PUT',
-    });
+    await renameOrganization(match.params.id, newName);
     history.push('/app/orgs');
   };
 
   const leaveOrg = async () => {
-    await fetch(`/api/v1/org/${match.params.id}/member/${userNetid}`, {
-      method: 'DELETE',
-    });
+    removeMemberFromOrganization(match.params.id, userNetid);
     history.push('/app/orgs');
   };
 
-  const deleteOrg = async () => {
-    await fetch(`/api/v1/org/${match.params.id}`, {
-      method: 'DELETE',
-    });
+  const onDeleteOrganization = async () => {
+    deleteOrganization(match.params.id);
     history.push('/app/orgs');
   };
 
-  if (!orgInfo) {
+  if (!organization) {
     return <Spin size="large" />;
   }
 
-  const isAdmin = orgInfo.is_admin || userPrivileges.has('admin');
-  const userMayNotLeave = orgInfo.is_admin && adminsCount === 1;
+  const isAdmin = organization.is_admin || userPrivileges.has('admin');
+  const userMayNotLeave = organization.is_admin && adminsCount === 1;
 
   const columns = [
     {
@@ -143,7 +138,7 @@ function ManageOrgBase({
       title: 'Total Visits',
       key: 'total_visits',
       width: '15%',
-      render: (_: any, record: MemberInfo) => {
+      render: (_: any, record: OrganizationMember) => {
         const stats = visitStats?.find((v) => v.netid === record.netid);
         return stats?.total_visits || 0;
       },
@@ -152,7 +147,7 @@ function ManageOrgBase({
       title: 'Unique Visits',
       key: 'unique_visits',
       width: '15%',
-      render: (_: any, record: MemberInfo) => {
+      render: (_: any, record: OrganizationMember) => {
         const stats = visitStats?.find((v) => v.netid === record.netid);
         return stats?.unique_visits || 0;
       },
@@ -170,7 +165,7 @@ function ManageOrgBase({
     <>
       <Row gutter={16} justify="space-between" align="middle">
         <Col>
-          <Typography.Title>{orgInfo.name}</Typography.Title>
+          <Typography.Title>{organization.name}</Typography.Title>
         </Col>
         <Col>
           <Space>
@@ -194,7 +189,7 @@ function ManageOrgBase({
       <Row gutter={[16, 16]}>
         <Col span={24}>
           <Table
-            dataSource={orgInfo.members}
+            dataSource={organization.members}
             columns={columns}
             rowKey="netid"
             pagination={false}
@@ -203,7 +198,7 @@ function ManageOrgBase({
       </Row>
 
       <Modal
-        title="Edit Organization"
+        title="Edit"
         open={editModalVisible}
         footer={null}
         onCancel={() => {
@@ -250,7 +245,7 @@ function ManageOrgBase({
           </Form>
         )}
         <Space direction="vertical" style={{ width: '100%' }}>
-          {orgInfo.is_member && (
+          {organization.is_member && (
             <Button
               block
               danger
@@ -280,7 +275,7 @@ function ManageOrgBase({
                   content: 'This action cannot be undone. Are you sure?',
                   okText: 'Delete',
                   okType: 'danger',
-                  onOk: deleteOrg,
+                  onOk: onDeleteOrganization,
                 });
               }}
             >
@@ -299,20 +294,20 @@ function ManageOrgBase({
           { label: 'Admin', value: 'admin' },
           { label: 'Member', value: 'member' },
         ]}
-        people={orgInfo.members.map((member) => ({
+        people={organization.members.map((member) => ({
           _id: member.netid,
           type: 'netid',
           role: member.is_admin ? 'admin' : 'member',
         }))}
-        onAddEntity={(_activeTab: 'netid' | 'org', value: Entity) => {
+        onAddEntity={(_activeTab: 'netid' | 'org', value: Collaborator) => {
           onAddMember(value._id, false);
         }}
-        onRemoveEntity={(_activeTab: 'netid' | 'org', value: Entity) => {
+        onRemoveEntity={(_activeTab: 'netid' | 'org', value: Collaborator) => {
           onDeleteMember(value._id);
         }}
         onChangeEntity={(
           _activeTab: 'netid' | 'org',
-          value: Entity,
+          value: Collaborator,
           newRole: string,
         ) => {
           onChangeAdmin(value._id, newRole === 'admin');

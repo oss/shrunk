@@ -28,7 +28,7 @@ import {
 } from '@ant-design/icons';
 import base32 from 'hi-base32';
 import Fuse from 'fuse.js';
-import { EntityInfo } from '../GrantedUserCsv';
+import { GrantedBy } from '../../interfaces/csv';
 
 /**
  * Renders the URLs as clickable links
@@ -271,7 +271,7 @@ const BlockedLinks = () => {
         (resp) => resp.json(),
       );
       setBlockedLinks(
-        result.entities.map((entity: EntityInfo) => ({
+        result.entities.map((entity: GrantedBy) => ({
           url: entity.entity,
           comment: entity.comment ?? '',
           blockedBy: entity.granted_by ?? '',

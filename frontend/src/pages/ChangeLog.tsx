@@ -1,36 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Col, Row, Typography } from 'antd/lib';
-
-enum ReleaseCategory {
-  IMPROVEMENTS = 'improvements',
-  FEATURES = 'features',
-  FIXES = 'fixes',
-}
-
-interface Contributor {
-  firstName: string;
-  lastName: string;
-  href?: string;
-}
-
-interface Note {
-  text: string;
-  contributors: Contributor[];
-  internal?: boolean;
-  warning?: boolean;
-}
-
-interface Release {
-  major: number;
-  minor: number;
-  patch: number;
-  description: string;
-  categories: {
-    [ReleaseCategory.FEATURES]: Note[];
-    [ReleaseCategory.IMPROVEMENTS]: Note[];
-    [ReleaseCategory.FIXES]: Note[];
-  };
-}
+import { getReleaseNotes } from '../api/app';
+import { Note, Contributor, Release } from '../interfaces/releases';
 
 const ReleaseSection = ({ title, notes }: { title: string; notes: Note[] }) => (
   <>
@@ -82,11 +53,7 @@ export default function ChangeLog() {
   const [releaseNotes, setReleaseNotes] = useState<Release[]>([]);
 
   async function fetchReleaseNotes() {
-    const resp = await fetch(`/api/v1/release-notes`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-    });
-    const result = await resp.json();
+    const result = await getReleaseNotes();
     setReleaseNotes(result as Release[]);
   }
 

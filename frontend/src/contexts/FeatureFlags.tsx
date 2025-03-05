@@ -1,12 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-
-export interface FeatureFlags {
-  devLogins: boolean;
-  trackingPixel: boolean;
-  domains: boolean;
-  googleSafeBrowsing: boolean;
-  helpDesk: boolean;
-}
+import { FeatureFlags } from '../interfaces/app';
+import { getFeatureFlags } from '../api/app';
 
 const FeatureFlagsContext = createContext<FeatureFlags>({});
 
@@ -28,9 +22,7 @@ export const FeatureFlagsProvider = ({
 
   useEffect(() => {
     const fetchFeatureFlags = async () => {
-      const response = await fetch('/api/v1/enabled');
-      const data = (await response.json()) as FeatureFlags;
-      setFlags(data);
+      getFeatureFlags().then((data) => setFlags(data));
     };
 
     fetchFeatureFlags();

@@ -36,9 +36,9 @@ import HighchartsReact from 'highcharts-react-official';
 import dayjs from 'dayjs';
 import { useLocation } from 'react-router-dom';
 
-import { LinkInfo, AliasInfo } from '../../components/LinkInfo';
+import { Alias, Link, LinkSharedWith } from '../../interfaces/link';
 import { GeoipStats, MENU_ITEMS, GeoipChart } from './StatsCommon';
-import { downloadVisitsCsv } from '../../components/Csv';
+import { downloadVisits } from '../../api/csv';
 
 import { daysBetween } from '../../lib/utils';
 import ShareModal from '../../modals/ShareModal';
@@ -46,7 +46,10 @@ import {
   EditLinkFormValues,
   EditLinkDrawer,
 } from '../../drawers/EditLinkDrawer';
-import CollaboratorModal, { Entity } from '../../modals/CollaboratorModal';
+import CollaboratorModal, {
+  Collaborator,
+} from '../../modals/CollaboratorModal';
+import { addCollaborator, getLink, removeCollaborator } from '../../api/links';
 
 /**
  * Props for the [[Stats]] component
@@ -326,8 +329,8 @@ const BrowserCharts: React.FC<{ browserStats: BrowserStats | null }> = (
 export function Stats(props: Props): React.ReactElement {
   const showPurge = false;
 
-  const [linkInfo, setLinkInfo] = useState<LinkInfo | null>(null);
-  const [allAliases, setAllAliases] = useState<AliasInfo[]>([]);
+  const [linkInfo, setLinkInfo] = useState<Link | null>(null);
+  const [allAliases, setAllAliases] = useState<Alias[]>([]);
   const [selectedAlias, setSelectedAlias] = useState<string | null>(null);
   const [overallStats, setOverallStats] = useState<OverallStats | null>(null);
   const [visitStats, setVisitStats] = useState<VisitStats | null>(null);
@@ -365,9 +368,7 @@ export function Stats(props: Props): React.ReactElement {
   }, [mode]);
 
   async function updateLinkInfo() {
-    const templinkInfo = (await fetch(`/api/v1/link/${props.id}`).then((resp) =>
-      resp.json(),
-    )) as LinkInfo;
+    const templinkInfo = await getLink(props.id);
 
     const aliases = !templinkInfo.deleted
       ? templinkInfo.aliases.filter((alias) => !alias.deleted)
@@ -567,7 +568,7 @@ export function Stats(props: Props): React.ReactElement {
    */
   const downloadCsv = async (): Promise<void> => {
     setLoading(true);
-    await downloadVisitsCsv(props.id, selectedAlias);
+    await downloadVisits(props.id, selectedAlias);
     setLoading(false);
   };
 
@@ -593,73 +594,39 @@ export function Stats(props: Props): React.ReactElement {
     );
   };
 
-  async function onAddCollaborator(entity: Entity) {
-    const patchReq = {
-      acl: `${entity.role}s`,
-      action: 'add',
-      entry: {
+  async function onAddCollaborator(
+    collaborator: LinkSharedWith,
+    role: 'viewer' | 'editor',
+  ) {
+    await addCollaborator(props.id, collaborator, role);
+    await updateLinkInfo();
+  }
+
+  async function onRemoveCollaborator(
+    entity: LinkSharedWith,
+    role?: 'viewer' | 'editor',
+  ) {
+    await removeCollaborator(props.id, entity, role);
+    await updateLinkInfo();
+  }
+
+  const onAddEntity = (activeTab: 'netid' | 'org', entity: Collaborator) => {
+    onAddCollaborator(
+      {
         _id: entity._id,
-        type: entity.type,
+        type: activeTab,
       },
-    };
-
-    await fetch(`/api/v1/link/${props.id}/acl`, {
-      method: 'PATCH',
-      headers: {
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify(patchReq),
-    });
-    updateLinkInfo();
-  }
-
-  async function onRemoveCollaborator(entity: Entity, role?: string) {
-    const patchReq = {
-      acl: `viewers`,
-      action: 'remove',
-      entry: { _id: entity._id, type: entity.type },
-    };
-
-    if (role === 'viewer' || role === undefined) {
-      await fetch(`/api/v1/link/${props.id}/acl`, {
-        method: 'PATCH',
-        headers: {
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify(patchReq),
-      });
-    }
-
-    patchReq.acl = 'editors';
-
-    if (role === 'editor' || role === undefined) {
-      await fetch(`/api/v1/link/${props.id}/acl`, {
-        method: 'PATCH',
-        headers: {
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify(patchReq),
-      });
-    }
-
-    updateLinkInfo();
-  }
-
-  const onAddEntity = (activeTab: 'netid' | 'org', entity: Entity) => {
-    onAddCollaborator({
-      _id: entity._id,
-      type: activeTab,
-      role: entity.role,
-    });
+      entity.role as 'viewer' | 'editor',
+    );
   };
 
-  const onRemoveEntity = (activeTab: 'netid' | 'org', entity: Entity) => {
+  const onRemoveEntity = (activeTab: 'netid' | 'org', entity: Collaborator) => {
     onRemoveCollaborator(entity);
   };
 
   const onChangeEntity = (
     activeTab: 'netid' | 'org',
-    entity: Entity,
+    entity: Collaborator,
     value: string,
   ) => {
     // Remove viewer if they're an editor
@@ -669,11 +636,13 @@ export function Stats(props: Props): React.ReactElement {
       return;
     }
 
-    onAddCollaborator({
-      _id: entity._id,
-      type: activeTab,
-      role: value,
-    });
+    onAddCollaborator(
+      {
+        _id: entity._id,
+        type: activeTab,
+      },
+      value as 'viewer' | 'editor',
+    );
   };
 
   const statTabsKeys = [

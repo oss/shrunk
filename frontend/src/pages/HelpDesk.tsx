@@ -27,7 +27,7 @@ import dayjs from 'dayjs';
 import base32 from 'hi-base32';
 import React, { useEffect, useState } from 'react';
 import CreateTicketDrawer from '../drawers/CreateTicketDrawer';
-import { TicketInfo } from '../types';
+import { TicketInfo } from '../interfaces/tickets';
 
 /**
  * Props for the [[HelpDesk]] component

@@ -4,7 +4,6 @@
  */
 
 import React, { useState } from 'react';
-import base32 from 'hi-base32';
 import dayjs from 'dayjs';
 import {
   Form,
@@ -19,56 +18,27 @@ import {
   Drawer,
   Space,
   Typography,
-  Modal,
+  message,
 } from 'antd/lib';
 import { SendOutlined } from '@ant-design/icons';
 import { FormInstance } from 'antd/lib/form';
-import { serverValidateLongUrl } from '../lib/validators';
-import AliasesForm from '../components/AliasesForm';
-import { OrgInfo } from '../api/Org';
-import { FeatureFlags, useFeatureFlags } from '../contexts/FeatureFlags';
+import { serverValidateLongUrl } from '../api/validators';
+import { Organization } from '../interfaces/organizations';
+import { useFeatureFlags } from '../contexts/FeatureFlags';
+import { FeatureFlags } from '../interfaces/app';
+import { createLink } from '../api/links';
 /**
  * The final values of the create link form
  * @interface
  */
 interface CreateLinkDrawerValues {
-  /**
-   * The link title
-   * @property
-   */
   title: string;
-
-  /**
-   * The long URL
-   * @property
-   */
   long_url: string;
-
-  /**
-   * The expiration time. Absent if the link has no expiration time
-   * @property
-   */
   expiration_time?: dayjs.Dayjs;
-
-  /**
-   * The link's aliases. The `alias` field of an array element is absent
-   * if the alias should be generated randomly by the server
-   * @property
-   */
-  aliases: { alias?: string; description: string }[];
-
-  /**
-   * The link's domain. The `domain` field of an array element is absent
-   * if the domain is the dafault domain
-   * @property
-   */
+  alias: string;
   domain?: string;
-
-  /**
-   * Whether the link is a tracking pixel link
-   * @property
-   */
   is_tracking_pixel_link?: boolean;
+  tracking_pixel_extension?: string;
 }
 
 /**
@@ -93,7 +63,7 @@ export interface Props {
    */
   onFinish: () => Promise<void>;
 
-  userOrgs: OrgInfo[];
+  userOrgs: Organization[];
 }
 
 export default function CreateLinkDrawer(props: Props): JSX.Element {
@@ -102,8 +72,6 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
   const [linkCreationMode, setLinkCreationMode] = useState<'url' | 'pixel'>(
     'url',
   );
-  const [trackingPixelExtension, setTrackingPixelExtension] =
-    useState<string>('.png');
 
   const formRef = React.createRef<FormInstance>();
 
@@ -112,103 +80,30 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
     await props.onFinish();
     setLoading(false);
     setLinkCreationMode('url');
-    setTrackingPixelExtension('.png');
   };
 
   const onTrackingPixelChange = (e: RadioChangeEvent) => {
     setLinkCreationMode(e.target.value);
   };
 
-  const onTrackingPixelExtensionChange = (e: RadioChangeEvent) => {
-    setTrackingPixelExtension(e.target.value);
-  };
-
-  const createLink = async (): Promise<void> => {
+  const onCreateLink = async (): Promise<void> => {
     const values: CreateLinkDrawerValues =
       await formRef.current!.validateFields();
 
     setLoading(true);
-    const createLinkReq: {
-      title: string;
-      long_url: string;
-      domain?: string;
-      expiration_time?: string;
-      is_tracking_pixel_link?: boolean;
-    } = {
-      title: values.title,
-      long_url: values.long_url,
-    };
-
-    if (linkCreationMode === 'pixel') {
-      createLinkReq.long_url = 'https://example.com';
+    try {
+      await createLink(
+        values.is_tracking_pixel_link as boolean,
+        values.title,
+        values.long_url,
+        undefined,
+        values.expiration_time,
+        values.tracking_pixel_extension,
+      );
+    } catch (e: any) {
+      message.error(e.message);
+      setLoading(false);
     }
-
-    createLinkReq.is_tracking_pixel_link = !!values.is_tracking_pixel_link;
-
-    if (values.expiration_time !== undefined) {
-      createLinkReq.expiration_time = values.expiration_time.format();
-    }
-
-    if (values.aliases === undefined) {
-      values.aliases = [
-        {
-          description: '',
-        },
-      ];
-    }
-
-    if (values.domain !== undefined) {
-      createLinkReq.domain = values.domain;
-    }
-
-    let statusOfReq = 200;
-    const createLinkResp = await fetch('/api/v1/link', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(createLinkReq),
-    }).then((resp) => {
-      statusOfReq = resp.status;
-      return resp.json();
-    });
-
-    if (statusOfReq >= 400 && statusOfReq < 500) {
-      Modal.error({
-        title: 'An error has ocurred',
-        content: createLinkResp.errors,
-      });
-      onSubmitClick();
-      return;
-    }
-
-    const linkId: string = createLinkResp.id;
-
-    await Promise.all(
-      values.aliases.map(
-        async (alias: { description: string; alias?: string }) => {
-          const createAliasReq: any = { description: alias.description };
-          let result = null;
-          // Check if there are duplicate aliases
-          if (alias.alias !== undefined) {
-            result = await fetch(
-              `/api/v1/link/validate_duplicate_alias/${base32.encode(
-                alias.alias!,
-              )}`,
-            ).then((resp) => resp.json());
-          }
-          if (alias.alias !== undefined && result.valid) {
-            createAliasReq.alias = alias.alias;
-          }
-          if (featureFlags.trackingPixel) {
-            createAliasReq.extension = trackingPixelExtension;
-          }
-          await fetch(`/api/v1/link/${linkId}/alias`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(createAliasReq),
-          });
-        },
-      ),
-    );
 
     onSubmitClick();
   };
@@ -229,6 +124,8 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
     });
   }
 
+  const isCreatingTrackingPixel = linkCreationMode === 'pixel';
+
   return (
     <Drawer
       title={props.title}
@@ -240,7 +137,7 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
         <Space>
           <Button
             icon={<SendOutlined />}
-            onClick={createLink}
+            onClick={onCreateLink}
             type="primary"
             loading={loading}
           >
@@ -265,9 +162,9 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
               <Input />
             </Form.Item>
 
-            {!featureFlags.trackingPixel && (
+            {!isCreatingTrackingPixel && (
               <Form.Item
-                label="URL"
+                label="Original URL"
                 name="long_url"
                 rules={[
                   { required: true },
@@ -278,12 +175,20 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
                 <Input />
               </Form.Item>
             )}
+            {!isCreatingTrackingPixel && mayUseCustomAliases && (
+              <Form.Item required label="New Shortened URL" name="alias">
+                <Input
+                  addonBefore="http://go.rutgers.edu/"
+                  placeholder="If left blank, it will be randomized"
+                />
+              </Form.Item>
+            )}
           </Col>
           <Col span={24}>
             <Typography.Title level={4}>Advanced Options</Typography.Title>
           </Col>
           <Col span={12}>
-            {!featureFlags.trackingPixel &&
+            {!isCreatingTrackingPixel &&
               featureFlags.domains &&
               mayUseCustomAliases && (
                 <Form.Item label="Domain" name="domain">
@@ -301,7 +206,7 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
                 </Form.Item>
               )}
 
-            {!featureFlags.trackingPixel && (
+            {!isCreatingTrackingPixel && (
               <Form.Item label="Expiration time" name="expiration_time">
                 <DatePicker
                   format="YYYY-MM-DD HH:mm:ss"
@@ -335,14 +240,13 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
             )}
           </Col>
           <Col span={12}>
-            {featureFlags.trackingPixel && (
+            {isCreatingTrackingPixel && (
               <Form.Item
                 required
                 label="Image Type"
                 name="tracking_pixel_extension"
               >
                 <Radio.Group
-                  onChange={onTrackingPixelExtensionChange}
                   defaultValue=".png"
                   optionType="button"
                   buttonStyle="solid"
@@ -351,12 +255,6 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
                   <Radio.Button value=".gif">GIF</Radio.Button>
                 </Radio.Group>
               </Form.Item>
-            )}
-            {!featureFlags.trackingPixel && (
-              <AliasesForm
-                mayUseCustomAliases={mayUseCustomAliases}
-                initialAliases={['']}
-              />
             )}
           </Col>
         </Row>

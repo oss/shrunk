@@ -24,8 +24,12 @@ import {
   EyeOutlined,
   EyeInvisibleOutlined,
 } from '@ant-design/icons';
-
-import { OrgInfo, listOrgs, createOrg, deleteOrg } from '../api/Org';
+import { Organization } from '../interfaces/organizations';
+import {
+  getOrganizations,
+  createOrg,
+  deleteOrganization,
+} from '../api/organization';
 
 /**
  * Props for the [[Orgs]] component
@@ -44,11 +48,11 @@ interface Props {
  */
 export default function Orgs({ userPrivileges }: Props): React.ReactElement {
   const [showAll, setShowAll] = useState(false);
-  const [orgs, setOrgs] = useState<OrgInfo[] | null>(null);
+  const [orgs, setOrgs] = useState<Organization[] | null>(null);
   const [newOrgName, setNewOrgName] = useState('');
 
   const refreshOrgs = async () => {
-    const newOrgs = await listOrgs(showAll ? 'all' : 'user');
+    const newOrgs = await getOrganizations(showAll ? 'all' : 'user');
     setOrgs(newOrgs);
   };
 
@@ -62,7 +66,7 @@ export default function Orgs({ userPrivileges }: Props): React.ReactElement {
   };
 
   const onDeleteOrg = async (id: string) => {
-    await deleteOrg(id);
+    await deleteOrganization(id);
     await refreshOrgs();
   };
 
@@ -74,7 +78,7 @@ export default function Orgs({ userPrivileges }: Props): React.ReactElement {
     {
       title: 'Name',
       key: 'name',
-      render: (record: OrgInfo) => (
+      render: (record: Organization) => (
         <Space>
           {record.name}
           {record.is_admin ? <Tag color="red">Admin</Tag> : null}
@@ -86,7 +90,7 @@ export default function Orgs({ userPrivileges }: Props): React.ReactElement {
       title: <Flex justify="flex-end">Actions</Flex>,
       key: 'actions',
       width: '150px',
-      render: (record: OrgInfo) => (
+      render: (record: Organization) => (
         <Flex justify="flex-end">
           <Space>
             <Tooltip title="View">

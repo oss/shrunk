@@ -7,36 +7,11 @@ import ExclamationCircleFilled from '@ant-design/icons/lib/icons/ExclamationCirc
 import { Button, Col, Popconfirm, Row } from 'antd/lib';
 import Spin from 'antd/es/spin';
 import React, { useEffect, useState } from 'react';
-
-/**
- * PendingLinkRow information fetched form backend
- * @interface
- */
-interface PendingLink {
-  /**
-   * Id of pending link
-   * @property
-   */
-  _id: string;
-
-  /**
-   * Name of pending link
-   * @property
-   */
-  title: string;
-
-  /**
-   * Long url of pending link
-   * @property
-   */
-  long_url: string;
-
-  /**
-   * netid of the creator
-   * @property
-   */
-  netid: string;
-}
+import {
+  PendingLink,
+  PendingLinkAction,
+} from '../../interfaces/google-safebrowse';
+import { getPendingLinks, getStatus } from '../../api/google-safebrowse';
 
 /**
  * Specifies the props for each pending link
@@ -48,11 +23,6 @@ interface PendingRowProps {
    * @property
    */
   document: PendingLink;
-}
-
-enum PendingLinkAction {
-  Approve = 'promote',
-  Deny = 'reject',
 }
 
 /**
@@ -122,11 +92,7 @@ function PendingLinkRow(props: PendingRowProps) {
   );
 }
 
-/**
- * The [[LinkSecurity]] component displays the security status of the links
- * @returns the [[LinkSecurity]] component
- */
-function LinkSecurity() {
+export default function LinkSecurity() {
   const [pendingLinks, setPendingLinks] = useState<Array<PendingLink> | null>(
     null,
   );
@@ -134,17 +100,13 @@ function LinkSecurity() {
   const [securityStatus, setSecurityStatus] = useState<string>('OFF');
 
   useEffect(() => {
-    fetch('/api/v1/security/pending_links')
-      .then((resp) => resp.json())
-      .then((data) => {
-        setPendingLinks(data.pendingLinks);
-      });
+    getPendingLinks().then((links: PendingLink[]) => {
+      setPendingLinks(links);
+    });
 
-    fetch('/api/v1/security/get_status')
-      .then((resp) => resp.json())
-      .then((data) => {
-        setSecurityStatus(data.status);
-      });
+    getStatus().then((status: string) => {
+      setSecurityStatus(status);
+    });
   }, []);
 
   return (
@@ -165,5 +127,3 @@ function LinkSecurity() {
     </>
   );
 }
-
-export default LinkSecurity;

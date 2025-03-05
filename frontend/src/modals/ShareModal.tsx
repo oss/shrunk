@@ -1,6 +1,6 @@
 import React from 'react';
 import { Col, Modal, QRCode, Row, Button, Input, Space } from 'antd/lib';
-import { LinkInfo } from '../components/LinkInfo';
+import { LinkInfo } from '../interfaces/link';
 
 interface IShareModal {
   visible: boolean;

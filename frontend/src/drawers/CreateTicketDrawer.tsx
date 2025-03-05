@@ -5,7 +5,7 @@
 
 import { App, Button, Drawer, Form, Input, Select, Typography } from 'antd/lib';
 import React, { useState } from 'react';
-import { CreateTicketInfo, TicketInfo } from '../types';
+import { CreateTicketInfo, TicketInfo } from '../interfaces/tickets';
 
 /**
  * Props for the [[CreateTicketDrawer]] component
