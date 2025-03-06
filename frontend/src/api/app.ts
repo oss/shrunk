@@ -107,3 +107,8 @@ export async function getBlockedLinks() {
   const data = resp.json();
   return data;
 }
+
+export async function getMOTD() {
+  const resp = await fetch(`/api/v1/motd`);
+  return resp.text;
+}

@@ -6,7 +6,6 @@ from typing import Any, List, Optional, Set
 import os
 import pymongo
 
-from .alerts import AlertsClient
 from .geoip import GeoipClient
 from .links import LinksClient
 from .orgs import OrgsClient
@@ -58,7 +57,6 @@ class ShrunkClient:
 
         self.orgs = OrgsClient(db=self.db)
         self.search = SearchClient(db=self.db, client=self)
-        self.alerts = AlertsClient(db=self.db)
         self.security = SecurityClient(db=self.db, other_clients=self)
         self.tickets = TicketsClient(db=self.db)
         self.users = UserClient(db=self.db)

@@ -26,6 +26,7 @@ import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom';
 
 import { message } from 'antd';
+import Markdown from 'markdown-to-jsx';
 import Admin from './pages/Admin';
 import Dashboard from './pages/Dashboard';
 import Faq from './pages/Faq';
@@ -35,7 +36,6 @@ import Login from './pages/Login';
 import ManageOrg from './pages/subpages/ManageOrg';
 import { Stats } from './pages/subpages/Stats';
 
-import { PendingAlerts } from './modals/PendingAlerts';
 import { PendingRequests } from './modals/PendingRequests';
 
 import ErrorPage from './pages/ErrorPage';
@@ -60,6 +60,7 @@ export default function Shrunk(props: Props) {
   const [userPrivileges, setUserPrivileges] = useState<Set<string>>(new Set());
   const [netid, setNetid] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
+  const [motd, setMotd] = useState<string>('');
 
   const featureFlags: FeatureFlags = useFeatureFlags();
 
@@ -96,6 +97,7 @@ export default function Shrunk(props: Props) {
         if (data.netid) {
           setNetid(data.netid);
           setUserPrivileges(new Set(data.privileges || []));
+          setMotd(data.motd);
 
           // If we're on login page and have session, redirect to dash
           if (window.location.pathname === '/app/login') {
@@ -122,29 +124,17 @@ export default function Shrunk(props: Props) {
       ? 'Faculty'
       : 'Administrator';
 
-  const [pendingAlerts, setPendingAlerts] = useState<string[]>([]);
-
-  const updatePendingAlerts = async () => {
-    // Scheduled for deletion: https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/278
-    // eslint-disable-next-line no-restricted-globals
-    const resp = await fetch(`/api/v1/alert/${netid}`);
-    const json = await resp.json();
-    setPendingAlerts(json.pending_alerts as string[]);
-  };
-
   const onLogout = async () => {
     window.location.href = await logout();
   };
 
-  useEffect(() => {
-    const init = async () => {
-      if (netid) {
-        updatePendingAlerts();
-      }
-    };
+  const onAlertClose = async () => {
+    if (motd === '') {
+      return;
+    }
 
-    init();
-  }, [netid]);
+    localStorage.setItem('alert-read', motd);
+  };
 
   const menuItems: any[] = [
     {
@@ -226,6 +216,7 @@ export default function Shrunk(props: Props) {
     links: { name: 'URL Shortener', clickable: true, href: 'app/dash' },
   };
   const isApp = window.location.pathname.split('/').slice(1)[0] === 'app';
+  const showMotd = motd !== '' && localStorage.getItem('alert-read') !== motd;
 
   return (
     <FeatureFlagsProvider>
@@ -239,6 +230,17 @@ export default function Shrunk(props: Props) {
                   type="warning"
                   showIcon
                   closable
+                  banner
+                />
+              )}
+              {showMotd && (
+                <Alert
+                  message={<Markdown>{motd}</Markdown>}
+                  type="info"
+                  showIcon
+                  closable
+                  onClose={onAlertClose}
+                  banner
                 />
               )}
               <Header className="tw-flex tw-items-center tw-justify-between">
@@ -266,12 +268,6 @@ export default function Shrunk(props: Props) {
               <Layout>
                 <Sider width={siderWidth} breakpoint="xl" collapsedWidth="10" />
                 <Content className="tw-m-0 tw-min-h-[90vh] tw-p-6">
-                  {pendingAlerts.length !== 0 && (
-                    <PendingAlerts
-                      netid={netid}
-                      pendingAlerts={pendingAlerts}
-                    />
-                  )}
                   <PendingRequests />
                   {netid !== '' && isApp && (
                     <Breadcrumb

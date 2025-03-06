@@ -1,6 +1,7 @@
 """Implement API endpoints under ``/api/user``"""
 
 from typing import Any, Dict
+import os
 
 from flask import Blueprint, jsonify, request, session, current_app
 from werkzeug.exceptions import abort
@@ -105,7 +106,13 @@ def get_user_info():
     if client.roles.has("whitelisted", netid):
         privileges.append("whitelisted")
 
-    return jsonify({"netid": netid, "privileges": privileges})
+    return jsonify(
+        {
+            "netid": netid,
+            "privileges": privileges,
+            "motd": os.getenv("SHRUNK_MOTD", None),
+        }
+    )
 
 
 @bp.route("/<b32:entity>/valid", methods=["GET"])

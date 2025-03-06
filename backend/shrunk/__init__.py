@@ -281,7 +281,7 @@ def create_app(**kwargs: Any) -> Flask:
     app.register_blueprint(api.role.bp)
     app.register_blueprint(api.search.bp)
     app.register_blueprint(api.admin.bp)
-    app.register_blueprint(api.alert.bp)
+    app.register_blueprint(api.motd.bp)
     app.register_blueprint(api.request.bp)
     app.register_blueprint(api.security.bp)
     app.register_blueprint(api.ticket.bp)
