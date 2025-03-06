@@ -2,13 +2,6 @@
  * Implement the [[HelpDesk]] component
  * @packageDocumentation
  */
-
-import {
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  EyeOutlined,
-  FormOutlined,
-} from '@ant-design/icons';
 import {
   App,
   Button,
@@ -24,15 +17,21 @@ import {
   Typography,
 } from 'antd/lib';
 import dayjs from 'dayjs';
+import {
+  CircleCheckIcon,
+  CirclePlusIcon,
+  CircleXIcon,
+  EyeIcon,
+} from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import CreateTicketDrawer from '../drawers/CreateTicketDrawer';
-import { TicketInfo } from '../interfaces/tickets';
 import {
   closeTicket,
   getHelpDeskText,
   getTickets,
   getTicketsResolvedCount,
 } from '../api/tickets';
+import CreateTicketDrawer from '../drawers/CreateTicketDrawer';
+import { TicketInfo } from '../interfaces/tickets';
 
 /**
  * Props for the [[HelpDesk]] component
@@ -167,7 +166,7 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
         <Tooltip title="View">
           <Button
             type="text"
-            icon={<EyeOutlined />}
+            icon={<EyeIcon />}
             href={`/app/tickets/${record._id}`}
           />
         </Tooltip>
@@ -175,7 +174,7 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
           <Tooltip title="Resolve">
             <Button
               type="text"
-              icon={<CheckCircleOutlined />}
+              icon={<CircleCheckIcon />}
               href={`/app/tickets/${record._id}?mode=resolve`}
             />
           </Tooltip>
@@ -188,7 +187,7 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
             cancelText="No"
             okButtonProps={{ danger: true }}
           >
-            <Button type="text" danger icon={<CloseCircleOutlined />} />
+            <Button type="text" danger icon={<CircleXIcon />} />
           </Popconfirm>
         </Tooltip>
       </Space>
@@ -292,7 +291,7 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
               <Col>
                 <Button
                   type="primary"
-                  icon={<FormOutlined />}
+                  icon={<CirclePlusIcon />}
                   onClick={() => setIsCreateDrawerOpen(true)}
                 >
                   New Ticket

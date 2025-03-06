@@ -1,5 +1,5 @@
-import { MinusCircleOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Form, Input, Row } from 'antd/lib';
+import { CircleMinusIcon } from 'lucide-react';
 import React from 'react';
 import { serverValidateDuplicateAlias } from '../api/validators';
 
@@ -38,7 +38,9 @@ export default function AliasesForm(props: IAliasesForm) {
                 key={field.key}
                 extra={
                   fields.length > 1 && (
-                    <MinusCircleOutlined
+                    <Button
+                      type="text"
+                      icon={<CircleMinusIcon />}
                       onClick={() => {
                         if (fields.length > 1) {
                           remove(field.name);

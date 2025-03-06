@@ -3,7 +3,6 @@
  * @packageDocumentation
  */
 
-import { CloudDownloadOutlined, PlusCircleFilled } from '@ant-design/icons';
 import {
   Button,
   Checkbox,
@@ -14,10 +13,11 @@ import {
   Modal,
   Space,
 } from 'antd/lib';
+import { CloudDownloadIcon, PlusCircleIcon } from 'lucide-react';
 import React from 'react';
+import { addRoleToUser } from '../../api/users';
 import { User } from '../../contexts/Users';
 import SearchUser from './SearchUser';
-import { addRoleToUser } from '../../api/users';
 
 /**
  * Props for the [[LookupTableHeader]] component
@@ -109,12 +109,12 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
           <SearchUser users={users} onSearch={onSearch} />
         </Space>
         <Space direction="horizontal">
-          <Button icon={<CloudDownloadOutlined />} onClick={onExportClick}>
+          <Button icon={<CloudDownloadIcon />} onClick={onExportClick}>
             Export
           </Button>
           <Button
             type="primary"
-            icon={<PlusCircleFilled />}
+            icon={<PlusCircleIcon />}
             onClick={() => setShowCreateUserModal(true)}
           >
             Add User

@@ -4,13 +4,14 @@
  */
 
 import {
-  BookOutlined,
-  BugOutlined,
-  CodeOutlined,
-  LogoutOutlined,
-  SlidersOutlined,
-  TeamOutlined,
-} from '@ant-design/icons';
+  BugIcon,
+  CircleHelpIcon,
+  LayoutDashboardIcon,
+  LogOutIcon,
+  RocketIcon,
+  UsersIcon,
+} from 'lucide-react';
+
 import {
   Alert,
   App,
@@ -41,13 +42,13 @@ import { PendingRequests } from './modals/PendingRequests';
 import ErrorPage from './pages/ErrorPage';
 import HelpDesk from './pages/HelpDesk';
 
-import { FeatureFlags } from './interfaces/app';
+import { getUserInfo, logout } from './api/app';
 import { FeatureFlagsProvider, useFeatureFlags } from './contexts/FeatureFlags';
 import rutgersLogo from './images/rutgers.png';
+import { FeatureFlags } from './interfaces/app';
 import ChangeLog from './pages/ChangeLog';
 import Ticket from './pages/subpages/Ticket';
 import { lightTheme } from './theme';
-import { getUserInfo, logout } from './api/app';
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -149,14 +150,14 @@ export default function Shrunk(props: Props) {
     { type: 'divider' },
     {
       key: 'orgs',
-      icon: <TeamOutlined />,
+      icon: <UsersIcon />,
       label: <a href="/app/orgs">My Organizations</a>,
     },
     ...(showAdminTab && featureFlags.helpDesk
       ? [
           {
             key: 'tickets',
-            icon: <BugOutlined />,
+            icon: <BugIcon />,
             label: <a href="/tickets">Help Desk</a>,
           },
         ]
@@ -165,7 +166,7 @@ export default function Shrunk(props: Props) {
       ? [
           {
             key: 'admin-dashboard',
-            icon: <SlidersOutlined />,
+            icon: <LayoutDashboardIcon />,
             label: <a href="/app/admin">Admin Dashboard</a>,
           },
         ]
@@ -173,18 +174,18 @@ export default function Shrunk(props: Props) {
     { type: 'divider' },
     {
       key: 'releases',
-      icon: <CodeOutlined />,
+      icon: <RocketIcon />,
       label: <a href="/app/releases">Release Notes</a>,
     },
     {
       key: 'faq',
-      icon: <BookOutlined />,
+      icon: <CircleHelpIcon />,
       label: <a href="/app/faq">FAQ</a>,
     },
     { type: 'divider' },
     {
       key: 'logout',
-      icon: <LogoutOutlined />,
+      icon: <LogOutIcon />,
       onClick: onLogout,
       label: 'Logout',
       danger: true,

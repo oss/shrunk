@@ -5,10 +5,10 @@
 
 // TODO - Merge with SearchBannedLinks.tsx for code deduplication
 
-import { SearchOutlined } from '@ant-design/icons';
 import { AutoComplete } from 'antd/lib';
-import React, { useCallback, useMemo, useState } from 'react';
 import Fuse from 'fuse.js';
+import { SearchIcon } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { User } from '../../contexts/Users';
 
 /**
@@ -88,7 +88,7 @@ const SearchUser: React.FC<SearchUserProps> = ({ users, onSearch }) => {
       onChange={handleSearch}
       onSelect={handleSelect}
       allowClear
-      suffixIcon={<SearchOutlined />}
+      suffixIcon={<SearchIcon />}
     />
   );
 };

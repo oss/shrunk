@@ -1,20 +1,20 @@
-import React, { useEffect, useState } from 'react';
 import {
-  Modal,
+  Button,
+  Col,
   Form,
   Input,
-  Tabs,
-  Select,
-  Button,
-  Space,
-  Row,
-  Col,
+  Modal,
   Popconfirm,
+  Row,
+  Select,
+  Space,
+  Tabs,
   Tooltip,
 } from 'antd/lib';
-import { CloseOutlined, PlusCircleFilled } from '@ant-design/icons';
-import { serverValidateNetId } from '../api/validators';
+import { PlusCircleIcon, XIcon } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { getOrganizations } from '../api/organization';
+import { serverValidateNetId } from '../api/validators';
 import { Organization } from '../interfaces/organizations';
 
 export interface Collaborator {
@@ -166,7 +166,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                 }))}
               />
               <Button
-                icon={<PlusCircleFilled />}
+                icon={<PlusCircleIcon />}
                 onClick={() => {
                   props.onAddEntity(activeTab, {
                     _id:
@@ -248,7 +248,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                           >
                             <Button
                               type="text"
-                              icon={<CloseOutlined />}
+                              icon={<XIcon />}
                               disabled={isLastMaster}
                             />
                           </Tooltip>

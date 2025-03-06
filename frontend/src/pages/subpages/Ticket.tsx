@@ -3,7 +3,6 @@
  * @packageDocumentation
  */
 
-import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import {
   App,
   Button,
@@ -14,17 +13,18 @@ import {
   Space,
   Typography,
 } from 'antd/lib';
+import { CircleCheckIcon, CircleXIcon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
-import TicketDetails, { EntityDetails } from '../../components/TicketDetails';
-import ResolveTicketDrawer from '../../drawers/ResolveTicketDrawer';
-import { EntityPositionInfo, TicketInfo } from '../../interfaces/tickets';
 import {
   closeTicket,
   getEntityPosition,
   getHelpDeskText,
   getTicket,
 } from '../../api/tickets';
+import TicketDetails, { EntityDetails } from '../../components/TicketDetails';
+import ResolveTicketDrawer from '../../drawers/ResolveTicketDrawer';
+import { EntityPositionInfo, TicketInfo } from '../../interfaces/tickets';
 
 /**
  * Props for the [[Ticket]] component
@@ -169,7 +169,7 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
               <Space>
                 {userPrivileges.has('admin') && (
                   <Button
-                    icon={<CheckCircleOutlined />}
+                    icon={<CircleCheckIcon />}
                     type="primary"
                     onClick={() => setIsResolveDrawerOpen(true)}
                     disabled={ticketInfo?.status !== 'open'}
@@ -185,7 +185,7 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
                   okButtonProps={{ danger: true }}
                 >
                   <Button
-                    icon={<CloseCircleOutlined />}
+                    icon={<CircleXIcon />}
                     danger
                     disabled={ticketInfo?.status !== 'open'}
                     loading={closing}

@@ -3,36 +3,31 @@
  * @packageDocumentation
  */
 
-import React, { useState, useEffect } from 'react';
-import dayjs from 'dayjs';
 import {
+  Button,
   Col,
-  Modal,
+  Drawer,
   Form,
   Input,
-  Button,
-  DatePicker,
-  Space,
-  Popconfirm,
   message,
+  Modal,
+  Popconfirm,
   Row,
-  Drawer,
+  Space,
 } from 'antd/lib';
-import {
-  LinkOutlined,
-  ExclamationCircleFilled,
-  DeleteOutlined,
-  SaveOutlined,
-} from '@ant-design/icons';
+import dayjs from 'dayjs';
+import { CircleAlertIcon, Link2Icon, SaveIcon, TrashIcon } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
-import { Alias, EditLinkValues, Link } from '../interfaces/link';
-import { serverValidateLongUrl, serverValidateNetId } from '../api/validators';
-import AliasesForm from '../components/AliasesForm';
 import {
   deleteLink,
   isValidAlias,
   reverLinkExpirationDate,
 } from '../api/links';
+import { serverValidateLongUrl, serverValidateNetId } from '../api/validators';
+import AliasesForm from '../components/AliasesForm';
+import DatePicker from '../components/date-picker';
+import { Alias, EditLinkValues, Link } from '../interfaces/link';
 
 /**
  * Props of the [[EditLinkDrawer]] component
@@ -156,7 +151,7 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
     if (ownerInputVal !== initialValues.owner) {
       Modal.confirm({
         title: 'Link owner modification',
-        icon: <ExclamationCircleFilled />,
+        icon: <CircleAlertIcon />,
         content:
           'You are about to modify the link owner. Do you wish to proceed?',
         okText: 'Yes',
@@ -190,12 +185,12 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
             cancelText="No"
             okButtonProps={{ danger: true }}
           >
-            <Button danger icon={<DeleteOutlined />}>
+            <Button danger icon={<TrashIcon />}>
               Delete
             </Button>
           </Popconfirm>
 
-          <Button icon={<SaveOutlined />} onClick={onSave} type="primary">
+          <Button icon={<SaveIcon />} onClick={onSave} type="primary">
             Save
           </Button>
         </Space>
@@ -231,7 +226,7 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
               >
                 <Input
                   placeholder="Long URL"
-                  prefix={<LinkOutlined className="site-from-item-icon" />}
+                  prefix={<Link2Icon />}
                   disabled={isTrackingPixelLink}
                 />
               </Form.Item>

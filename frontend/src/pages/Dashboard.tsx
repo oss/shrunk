@@ -7,47 +7,46 @@
 import React from 'react';
 
 import {
-  Row,
-  Col,
   Button,
-  Typography,
-  Table,
-  Input,
-  Space,
-  Form,
-  Select,
   Checkbox,
-  DatePicker,
-  Tooltip,
-  Dropdown,
-  Popconfirm,
-  message,
-  Flex,
-  Radio,
-  Tag,
-  RadioChangeEvent,
+  Col,
   Drawer,
+  Dropdown,
+  Flex,
+  Form,
+  Popconfirm,
+  Radio,
+  RadioChangeEvent,
+  Row,
+  Select,
+  Space,
+  Table,
+  Tag,
+  Tooltip,
+  Typography,
+  message,
   theme,
 } from 'antd/lib';
-import {
-  CopyOutlined,
-  PlusCircleFilled,
-  FilterOutlined,
-  EyeOutlined,
-  DeleteOutlined,
-  TeamOutlined,
-  ShareAltOutlined,
-  EditOutlined,
-  SlidersOutlined,
-} from '@ant-design/icons';
-
 import dayjs, { Dayjs } from 'dayjs';
-import { getOrganizations } from '../api/organization';
-import { Organization } from '../interfaces/organizations';
-import { Link, SearchQuery, SearchSet } from '../interfaces/link';
-import CreateLinkDrawer from '../drawers/CreateLinkDrawer';
-import { serverValidateNetId } from '../api/validators';
+import {
+  CopyIcon,
+  EyeIcon,
+  FilterIcon,
+  PencilIcon,
+  PlusCircleIcon,
+  Share2Icon,
+  SlidersHorizontalIcon,
+  TrashIcon,
+  UsersIcon,
+} from 'lucide-react';
 import { deleteLink, searchLinks } from '../api/links';
+import { getOrganizations } from '../api/organization';
+import { serverValidateNetId } from '../api/validators';
+import DatePicker from '../components/date-picker';
+import Input from '../components/input';
+import CreateLinkDrawer from '../drawers/CreateLinkDrawer';
+import { Link, SearchQuery, SearchSet } from '../interfaces/link';
+import { Organization } from '../interfaces/organizations';
 
 /**
  * Props for the [[Dashboard]] component.
@@ -193,7 +192,7 @@ function CustomizeButton(props: {
         </div>
       )}
     >
-      <Button icon={<SlidersOutlined />}>Customize</Button>
+      <Button icon={<SlidersHorizontalIcon />}>Customize</Button>
     </Dropdown>
   );
 }
@@ -526,7 +525,7 @@ export default class Dashboard extends React.Component<Props, State> {
                 setVisibleColumns={this.handleColumnVisibilityChange}
               />
               <Button
-                icon={<FilterOutlined />}
+                icon={<FilterIcon />}
                 onClick={() => {
                   if (this.props.demo) {
                     return;
@@ -548,7 +547,7 @@ export default class Dashboard extends React.Component<Props, State> {
             <Space>
               <Button
                 type="primary"
-                icon={<PlusCircleFilled />}
+                icon={<PlusCircleIcon />}
                 onClick={() => {
                   if (this.props.demo) {
                     return;
@@ -612,7 +611,7 @@ export default class Dashboard extends React.Component<Props, State> {
                               }
                             >
                               <Space>
-                                <CopyOutlined />
+                                <CopyIcon />
                                 <Typography key={aliasObj.alias}>
                                   {shortUrlWithoutProtocol}
                                 </Typography>
@@ -722,7 +721,7 @@ export default class Dashboard extends React.Component<Props, State> {
                         <Tooltip title="View">
                           <Button
                             type="text"
-                            icon={<EyeOutlined />}
+                            icon={<EyeIcon />}
                             href={`/app/links/${record.key}`}
                           />
                         </Tooltip>
@@ -731,7 +730,7 @@ export default class Dashboard extends React.Component<Props, State> {
                             <Tooltip title="Edit">
                               <Button
                                 type="text"
-                                icon={<EditOutlined />}
+                                icon={<PencilIcon />}
                                 target="_blank"
                                 href={`/app/links/${record.key}?mode=edit`}
                               />
@@ -739,7 +738,7 @@ export default class Dashboard extends React.Component<Props, State> {
                             <Tooltip title="Collaborate">
                               <Button
                                 type="text"
-                                icon={<TeamOutlined />}
+                                icon={<UsersIcon />}
                                 target="_blank"
                                 href={`/app/links/${record.key}?mode=collaborate`}
                               />
@@ -749,7 +748,7 @@ export default class Dashboard extends React.Component<Props, State> {
                         <Tooltip title="Share">
                           <Button
                             type="text"
-                            icon={<ShareAltOutlined />}
+                            icon={<Share2Icon />}
                             target="_blank"
                             href={`/app/links/${record.key}?mode=share`}
                             disabled={record.isTrackingPixel}
@@ -776,7 +775,7 @@ export default class Dashboard extends React.Component<Props, State> {
                               type="text"
                               danger
                               disabled={record.deletedInfo !== null}
-                              icon={<DeleteOutlined />}
+                              icon={<TrashIcon />}
                             />
                           </Popconfirm>
                         </Tooltip>

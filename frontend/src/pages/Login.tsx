@@ -1,10 +1,10 @@
-import { LoginOutlined } from '@ant-design/icons';
-import { Button, Col, Row, Flex, Card, Select, Space } from 'antd/lib';
+import { Button, Card, Col, Flex, Row, Select, Space } from 'antd/lib';
+import { LogInIcon } from 'lucide-react';
 import React, { useState } from 'react';
-import BlurFade from '../ext/components/ui/blur-fade';
-import Dashboard from './Dashboard';
-import { BorderBeam } from '../ext/components/ui/border-beam';
 import { FeatureFlags, useFeatureFlags } from '../contexts/FeatureFlags';
+import BlurFade from '../ext/components/ui/blur-fade';
+import { BorderBeam } from '../ext/components/ui/border-beam';
+import Dashboard from './Dashboard';
 
 interface LoginType {
   loginMessage: string;
@@ -62,7 +62,7 @@ export default function Login() {
                 />
               )}
               <Button
-                icon={<LoginOutlined />}
+                icon={<LogInIcon />}
                 size="large"
                 type="primary"
                 onClick={async () => {
