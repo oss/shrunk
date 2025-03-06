@@ -36,6 +36,10 @@
         {
           "text": "403 page no longer flickers before loading the actual page",
           "contributors": ["ejw135"]
+        },
+        {
+          "text": "404 page is returned when attempting to fetch an unavailable link",
+          "contributors": ["ah1371"]
         }
       ]
     }

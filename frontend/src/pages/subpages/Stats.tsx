@@ -64,6 +64,7 @@ import {
   removeCollaborator,
   updateAlias,
 } from '../../api/links';
+import ErrorPage from '../ErrorPage';
 
 /**
  * Props for the [[Stats]] component
@@ -578,6 +579,14 @@ export function Stats(props: Props): React.ReactElement {
     ),
   };
 
+  if (!loading && linkInfo === null) {
+    return (
+      <ErrorPage
+        title="Link not found."
+        description="This link is either deleted or doesn't exist"
+      />
+    );
+  }
   return (
     <>
       <Row justify="space-between" align="middle">
