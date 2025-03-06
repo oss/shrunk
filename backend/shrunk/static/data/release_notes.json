@@ -7,7 +7,13 @@
     "date": "TODO",
     "description": "The continued codebase cleanup update.",
     "categories": {
-      "features": [],
+      "features": [
+        {
+          "text": "Alert system replaced with a new MOTD system",
+          "contributors": ["ah1371"],
+          "warning": true
+        }
+      ],
       "improvements": [
         {
           "text": "Feature flags are stored using React context hooks",
