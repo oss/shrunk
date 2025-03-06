@@ -30,6 +30,10 @@
         {
           "text": "No longer able to clear visit data via the frontend to prevent accidental purges",
           "contributors": ["ah1371"]
+        },
+        {
+          "text":"Move to Lucide's Icon Framework from Ant Design's Icon Framework for more icon options",
+          "contributors": ["ejw135"]
         }
       ],
       "fixes": [

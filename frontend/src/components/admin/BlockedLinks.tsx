@@ -4,31 +4,31 @@
  */
 
 import {
-  Flex,
-  Row,
+  AutoComplete,
   Button,
+  Col,
+  Flex,
+  Form,
+  Input,
   message,
+  Modal,
   Popconfirm,
+  Row,
+  Space,
   Table,
   Tooltip,
   Typography,
-  Col,
-  Form,
-  Input,
-  Modal,
-  Space,
-  AutoComplete,
 } from 'antd/lib';
-import React, { useCallback, useEffect, useMemo } from 'react';
-import {
-  DeleteOutlined,
-  CloudDownloadOutlined,
-  PlusCircleFilled,
-  SearchOutlined,
-} from '@ant-design/icons';
 import Fuse from 'fuse.js';
-import { GrantedBy } from '../../interfaces/csv';
+import {
+  CloudDownloadIcon,
+  PlusCircleIcon,
+  SearchIcon,
+  TrashIcon,
+} from 'lucide-react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { blockLink, getBlockedLinks, unBlockLink } from '../../api/app';
+import { GrantedBy } from '../../interfaces/csv';
 
 /**
  * Renders the URLs as clickable links
@@ -78,7 +78,7 @@ const renderUnblockButton = (
         cancelText="No"
         okButtonProps={{ danger: true }}
       >
-        <Button type="text" danger icon={<DeleteOutlined />} />
+        <Button type="text" danger icon={<TrashIcon />} />
       </Popconfirm>
     </Tooltip>
   );
@@ -145,7 +145,7 @@ const SearchBannedLinks: React.FC<SearchBannedLinksProps> = ({
       onSelect={handleSelect}
       allowClear
       placeholder="Search by URL or NetID"
-      suffixIcon={<SearchOutlined />}
+      suffixIcon={<SearchIcon />}
     />
   );
 };
@@ -313,12 +313,12 @@ const BlockedLinks = () => {
               />
             </Space>
             <Space direction="horizontal">
-              <Button icon={<CloudDownloadOutlined />} onClick={exportAsCSV}>
+              <Button icon={<CloudDownloadIcon />} onClick={exportAsCSV}>
                 Export
               </Button>
               <Button
                 type="primary"
-                icon={<PlusCircleFilled />}
+                icon={<PlusCircleIcon />}
                 onClick={() => setShowBlockLinkModal(true)}
               >
                 Block Link

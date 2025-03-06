@@ -2,10 +2,10 @@
 
 // TODO: Scheduled for deletion. See: https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/277
 
-import React from 'react';
-import { Row, Col, Modal, Button } from 'antd/lib';
+import { Button, Col, Modal, Row } from 'antd/lib';
 import dayjs from 'dayjs';
-import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { CheckIcon, XIcon } from 'lucide-react';
+import React from 'react';
 
 /**
  * Data describing a pending access request
@@ -75,13 +75,13 @@ const PendingRequestRow: React.FC<{
       <Col span={4} className="btn-col">
         <Button
           type="text"
-          icon={<CheckOutlined />}
+          icon={<CheckIcon />}
           onClick={async (_ev) => props.onAccept(request.request_token)}
         />
         <Button
           danger
           type="text"
-          icon={<CloseOutlined />}
+          icon={<XIcon />}
           onClick={async (_ev) => props.onDeny(request.request_token)}
         />
       </Col>

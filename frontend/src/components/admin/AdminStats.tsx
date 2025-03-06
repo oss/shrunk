@@ -3,26 +3,26 @@
  * @packageDocumentation
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
-  Spin,
-  DatePicker,
-  Form,
   Button,
   Card,
-  Typography,
-  Statistic,
   Flex,
+  Form,
+  Spin,
+  Statistic,
+  Typography,
 } from 'antd/lib';
-import { ArrowRightOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
-import dayjs from 'dayjs';
+import { MoveRightIcon } from 'lucide-react';
+import DatePicker from '../date-picker';
 
-import { MENU_ITEMS } from '../../pages/subpages/StatsCommon';
 import { getAppStats, getEndpointData, getShrunkVersion } from '../../api/app';
 import { AdminStatsData, EndpointDatum } from '../../interfaces/app';
+import { MENU_ITEMS } from '../../pages/subpages/StatsCommon';
 
 const { RangePicker } = DatePicker;
 
@@ -124,7 +124,7 @@ export default function AdminStats(): React.ReactElement {
             <RangePicker />
           </Form.Item>
           <Form.Item>
-            <Button htmlType="submit" icon={<ArrowRightOutlined />} />
+            <Button htmlType="submit" icon={<MoveRightIcon />} />
           </Form.Item>
         </Form>
       </Flex>

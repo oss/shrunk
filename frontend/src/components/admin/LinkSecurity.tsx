@@ -3,16 +3,16 @@
  * @packageDocumentation
  */
 
-import ExclamationCircleFilled from '@ant-design/icons/lib/icons/ExclamationCircleFilled';
-import { Button, Col, Popconfirm, Row } from 'antd/lib';
 import Spin from 'antd/es/spin';
+import { Button, Col, Popconfirm, Row } from 'antd/lib';
+import { CircleAlertIcon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { PendingLink } from '../../interfaces/google-safebrowse';
 import {
   getPendingLinks,
   getStatus,
   updateLinkSecurity,
 } from '../../api/google-safebrowse';
+import { PendingLink } from '../../interfaces/google-safebrowse';
 
 interface PendingRowProps {
   document: PendingLink;
@@ -52,7 +52,7 @@ function PendingLinkRow(props: PendingRowProps) {
           placement="top"
           title="Are you sure?"
           onConfirm={() => updateLink('reject')}
-          icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
+          icon={<CircleAlertIcon style={{ color: 'red' }} />}
         >
           <Button danger style={{ margin: '0px 10px' }}>
             Deny
@@ -64,7 +64,7 @@ function PendingLinkRow(props: PendingRowProps) {
           placement="top"
           title="Are you sure?"
           onConfirm={() => updateLink('promote')}
-          icon={<ExclamationCircleFilled style={{ color: 'red' }} />}
+          icon={<CircleAlertIcon style={{ color: 'red' }} />}
         >
           <Button type="primary" style={{ margin: '0px 10px' }}>
             Approve

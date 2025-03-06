@@ -5,22 +5,22 @@
 
 import {
   Button,
-  Row,
-  Table,
-  Tag,
+  Flex,
   Popconfirm,
+  Row,
   Select,
   Space,
+  Table,
+  Tag,
   Tooltip,
   Typography,
   message,
-  Flex,
 } from 'antd/lib';
-import React, { useState, useCallback, useEffect } from 'react';
-import { DeleteOutlined } from '@ant-design/icons';
+import { TrashIcon } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { addRoleToUser, removeRoleFromUser } from '../../api/users';
 import { useUsers } from '../../contexts/Users';
 import LookupTableHeader from './LookupTableHeader';
-import { addRoleToUser, removeRoleFromUser } from '../../api/users';
 
 /**
  * Renders the netids in bold
@@ -497,7 +497,7 @@ const UserLookup: React.FC = () => {
               cancelText="No"
               okButtonProps={{ danger: true }}
             >
-              <Button type="text" danger icon={<DeleteOutlined />} />
+              <Button type="text" danger icon={<TrashIcon />} />
             </Popconfirm>
           </Tooltip>
         </Flex>

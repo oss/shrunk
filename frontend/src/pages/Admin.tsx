@@ -3,21 +3,21 @@
  * @packageDocumentation
  */
 
-import {
-  LineChartOutlined,
-  LockOutlined,
-  SafetyOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
 import type { TabsProps } from 'antd';
 import { Badge, Space, Tabs, Typography } from 'antd/lib';
+import {
+  ChartLineIcon,
+  LockKeyholeIcon,
+  ShieldCheckIcon,
+  UserIcon,
+} from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { getPendingLinksCount } from '../api/google-safebrowse';
 import AdminStats from '../components/admin/AdminStats';
 import BlockedLinks from '../components/admin/BlockedLinks';
 import Security from '../components/admin/Security';
 import UserLookup from '../components/admin/UserLookup';
 import UsersProvider from '../contexts/Users';
-import { getPendingLinksCount } from '../api/google-safebrowse';
 
 const VALID_TABS = ['analytics', 'user-lookup', 'links', 'security'];
 const DEFAULT_TAB = 'analytics';
@@ -76,7 +76,7 @@ export default function Admin(): React.ReactElement {
       key: 'analytics',
       label: (
         <Space direction="horizontal">
-          <LineChartOutlined />
+          <ChartLineIcon />
           Analytics
         </Space>
       ),
@@ -86,7 +86,7 @@ export default function Admin(): React.ReactElement {
       key: 'user-lookup',
       label: (
         <Space direction="horizontal">
-          <UserOutlined />
+          <UserIcon />
           User Lookup
         </Space>
       ),
@@ -100,7 +100,7 @@ export default function Admin(): React.ReactElement {
       key: 'links',
       label: (
         <Space direction="horizontal">
-          <SafetyOutlined />
+          <ShieldCheckIcon />
           Link Control{' '}
           {linksToBeVerified > 0 && (
             <Badge count={linksToBeVerified} style={{ marginLeft: '8px' }} />
@@ -117,7 +117,7 @@ export default function Admin(): React.ReactElement {
       key: 'security',
       label: (
         <Space direction="horizontal">
-          <LockOutlined />
+          <LockKeyholeIcon />
           Security
         </Space>
       ),

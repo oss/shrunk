@@ -3,33 +3,28 @@
  * @packageDocumentation
  */
 
-import React, { useEffect, useState } from 'react';
 import {
-  Row,
-  Col,
-  Popconfirm,
   Button,
+  Col,
+  Flex,
   Input,
+  Popconfirm,
+  Row,
+  Space,
+  Table,
+  Tag,
   Tooltip,
   Typography,
-  Table,
-  Space,
-  Tag,
   message,
-  Flex,
 } from 'antd/lib';
+import { EyeIcon, EyeOffIcon, PlusCircleIcon, TrashIcon } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import {
-  PlusCircleFilled,
-  DeleteOutlined,
-  EyeOutlined,
-  EyeInvisibleOutlined,
-} from '@ant-design/icons';
-import { Organization } from '../interfaces/organizations';
-import {
-  getOrganizations,
   createOrg,
   deleteOrganization,
+  getOrganizations,
 } from '../api/organization';
+import { Organization } from '../interfaces/organizations';
 
 /**
  * Props for the [[Orgs]] component
@@ -96,7 +91,7 @@ export default function Orgs({ userPrivileges }: Props): React.ReactElement {
             <Tooltip title="View">
               <Button
                 type="text"
-                icon={<EyeOutlined />}
+                icon={<EyeIcon />}
                 href={`/app/orgs/${record.id}`}
               />
             </Tooltip>
@@ -115,7 +110,7 @@ export default function Orgs({ userPrivileges }: Props): React.ReactElement {
                 cancelText="No"
                 okButtonProps={{ danger: true }}
               >
-                <Button type="text" danger icon={<DeleteOutlined />} />
+                <Button type="text" danger icon={<TrashIcon />} />
               </Popconfirm>
             </Tooltip>
           </Space>
@@ -141,7 +136,7 @@ export default function Orgs({ userPrivileges }: Props): React.ReactElement {
                 }
               >
                 <Button
-                  icon={showAll ? <EyeOutlined /> : <EyeInvisibleOutlined />}
+                  icon={showAll ? <EyeIcon /> : <EyeOffIcon />}
                   onClick={() => {
                     setShowAll(!showAll);
                   }}
@@ -158,7 +153,7 @@ export default function Orgs({ userPrivileges }: Props): React.ReactElement {
                 />
                 <Button
                   type="primary"
-                  icon={<PlusCircleFilled />}
+                  icon={<PlusCircleIcon />}
                   onClick={async () => {
                     if (newOrgName.trim()) {
                       await onCreateOrg(newOrgName.trim());

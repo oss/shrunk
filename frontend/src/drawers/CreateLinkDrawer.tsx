@@ -3,30 +3,30 @@
  * @packageDocumentation
  */
 
-import React, { useRef, useState } from 'react';
-import dayjs from 'dayjs';
 import {
-  Form,
-  Select,
-  Input,
   Button,
-  DatePicker,
+  Col,
+  Drawer,
+  Form,
+  Input,
   Radio,
   RadioChangeEvent,
-  Col,
   Row,
-  Drawer,
+  Select,
   Space,
   Typography,
   message,
 } from 'antd/lib';
-import { SendOutlined } from '@ant-design/icons';
 import { FormInstance } from 'antd/lib/form';
+import dayjs from 'dayjs';
+import { SendHorizontalIcon } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { createLink } from '../api/links';
 import { serverValidateLongUrl } from '../api/validators';
-import { Organization } from '../interfaces/organizations';
+import DatePicker from '../components/date-picker';
 import { useFeatureFlags } from '../contexts/FeatureFlags';
 import { FeatureFlags } from '../interfaces/app';
-import { createLink } from '../api/links';
+import { Organization } from '../interfaces/organizations';
 /**
  * The final values of the create link form
  * @interface
@@ -136,7 +136,7 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
       extra={
         <Space>
           <Button
-            icon={<SendOutlined />}
+            icon={<SendHorizontalIcon />}
             onClick={onCreateLink}
             type="primary"
             loading={loading}

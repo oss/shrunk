@@ -3,43 +3,43 @@
  * @packageDocumentation
  */
 
-import React, { useState, useRef, useEffect } from 'react';
 import {
-  Row,
-  Col,
   Button,
-  Spin,
+  Col,
   Form,
   Input,
   Modal,
-  Typography,
+  Row,
   Space,
+  Spin,
   Table,
+  Typography,
 } from 'antd/lib';
-import {
-  ExclamationCircleOutlined,
-  WarningFilled,
-  EditOutlined,
-  TeamOutlined,
-} from '@ant-design/icons';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
-import dayjs from 'dayjs';
 import type { FormInstance } from 'antd/lib/form';
+import dayjs from 'dayjs';
+import {
+  CircleAlert,
+  PencilIcon,
+  TriangleAlertIcon,
+  UsersIcon,
+} from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { RouteComponentProps, withRouter } from 'react-router-dom';
 
 import {
-  OrganizationMember,
-  Organization,
-} from '../../interfaces/organizations';
-import {
-  getOrganization,
-  renameOrganization,
-  deleteOrganization,
   addMemberToOrganization,
-  setAdminStatusOrganization,
-  removeMemberFromOrganization,
+  deleteOrganization,
+  getOrganization,
   getOrganizationVisits,
+  removeMemberFromOrganization,
+  renameOrganization,
+  setAdminStatusOrganization,
 } from '../../api/organization';
 import { serverValidateOrgName } from '../../api/validators';
+import {
+  Organization,
+  OrganizationMember,
+} from '../../interfaces/organizations';
 import CollaboratorModal, {
   Collaborator,
 } from '../../modals/CollaboratorModal';
@@ -169,14 +169,14 @@ function ManageOrgBase({
         <Col>
           <Space>
             <Button
-              icon={<EditOutlined />}
+              icon={<PencilIcon />}
               onClick={() => setEditModalVisible(true)}
             >
               Edit
             </Button>
             {isAdmin && (
               <Button
-                icon={<TeamOutlined />}
+                icon={<UsersIcon />}
                 onClick={() => setShareModalVisible(true)}
               >
                 Collaborate
@@ -253,7 +253,7 @@ function ManageOrgBase({
                 setEditModalVisible(false);
                 Modal.confirm({
                   title: 'Leave Organization',
-                  icon: <ExclamationCircleOutlined />,
+                  icon: <CircleAlert />,
                   content: 'Are you sure you want to leave this organization?',
                   onOk: leaveOrg,
                 });
@@ -270,7 +270,7 @@ function ManageOrgBase({
                 setEditModalVisible(false);
                 Modal.confirm({
                   title: 'Delete Organization',
-                  icon: <WarningFilled style={{ color: '#ff4d4f' }} />,
+                  icon: <TriangleAlertIcon style={{ color: '#ff4d4f' }} />,
                   content: 'This action cannot be undone. Are you sure?',
                   okText: 'Delete',
                   okType: 'danger',

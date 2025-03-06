@@ -3,36 +3,36 @@
  * @packageDocumentation
  */
 
-import React, { useEffect, useState } from 'react';
 import {
-  Row,
-  Space,
-  Col,
-  Spin,
-  Select,
   Button,
-  Typography,
-  Tag,
   Card,
-  Statistic,
+  Col,
   Descriptions,
+  Row,
+  Select,
+  Space,
+  Spin,
+  Statistic,
   Table,
+  Tag,
+  Typography,
   message,
 } from 'antd/lib';
-import {
-  CloudDownloadOutlined,
-  LoadingOutlined,
-  GlobalOutlined,
-  EditOutlined,
-  TeamOutlined,
-  ShareAltOutlined,
-  CopyOutlined,
-} from '@ant-design/icons';
+import dayjs from 'dayjs';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
-import dayjs from 'dayjs';
+import {
+  CloudDownloadIcon,
+  CopyIcon,
+  GlobeIcon,
+  PencilIcon,
+  Share2Icon,
+  UsersIcon,
+} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import { downloadVisits } from '../../api/csv';
 import {
   Alias,
   BrowserStats,
@@ -43,15 +43,8 @@ import {
   VisitDatum,
   VisitStats,
 } from '../../interfaces/link';
-import { GeoipStats, MENU_ITEMS, GeoipChart } from './StatsCommon';
-import { downloadVisits } from '../../api/csv';
+import { GeoipChart, GeoipStats, MENU_ITEMS } from './StatsCommon';
 
-import { daysBetween } from '../../lib/utils';
-import ShareModal from '../../modals/ShareModal';
-import { EditLinkValues, EditLinkDrawer } from '../../drawers/EditLinkDrawer';
-import CollaboratorModal, {
-  Collaborator,
-} from '../../modals/CollaboratorModal';
 import {
   addCollaborator,
   deleteAlias,
@@ -64,6 +57,12 @@ import {
   removeCollaborator,
   updateAlias,
 } from '../../api/links';
+import { EditLinkDrawer, EditLinkValues } from '../../drawers/EditLinkDrawer';
+import { daysBetween } from '../../lib/utils';
+import CollaboratorModal, {
+  Collaborator,
+} from '../../modals/CollaboratorModal';
+import ShareModal from '../../modals/ShareModal';
 import ErrorPage from '../ErrorPage';
 
 /**
@@ -542,7 +541,7 @@ export function Stats(props: Props): React.ReactElement {
                   onClick={() => navigator.clipboard.writeText(shortUrl)}
                 >
                   <Space>
-                    <CopyOutlined />
+                    <CopyIcon />
                     <Typography.Text>{alias}</Typography.Text>
                   </Space>
                 </Button>
@@ -609,7 +608,7 @@ export function Stats(props: Props): React.ReactElement {
             {mayEdit && (
               <>
                 <Button
-                  icon={<EditOutlined />}
+                  icon={<PencilIcon />}
                   onClick={() => {
                     setEditModalVisible(true);
                   }}
@@ -617,7 +616,7 @@ export function Stats(props: Props): React.ReactElement {
                   Edit
                 </Button>
                 <Button
-                  icon={<TeamOutlined />}
+                  icon={<UsersIcon />}
                   onClick={() => {
                     setCollabModalVisible(true);
                   }}
@@ -628,7 +627,7 @@ export function Stats(props: Props): React.ReactElement {
             )}
             <Button
               type="primary"
-              icon={<ShareAltOutlined />}
+              icon={<Share2Icon />}
               onClick={() => setShareModalVisible(true)}
               disabled={linkInfo?.is_tracking_pixel_link}
             >
@@ -692,7 +691,7 @@ export function Stats(props: Props): React.ReactElement {
                   popupMatchSelectWidth={false}
                 >
                   <Select.Option value={0}>
-                    <GlobalOutlined />
+                    <GlobeIcon />
                   </Select.Option>
 
                   {allAliases.map((alias) => (
@@ -753,13 +752,8 @@ export function Stats(props: Props): React.ReactElement {
             tabBarExtraContent={
               <Space>
                 <Button
-                  icon={
-                    loading ? (
-                      <LoadingOutlined spin />
-                    ) : (
-                      <CloudDownloadOutlined />
-                    )
-                  }
+                  icon={<CloudDownloadIcon />}
+                  loading={loading}
                   onClick={downloadCsv}
                 >
                   Export

@@ -3,10 +3,10 @@
  * @packageDocumentation
  */
 
-import { SearchOutlined } from '@ant-design/icons';
 import { AutoComplete } from 'antd/lib';
-import React, { useCallback, useMemo, useState } from 'react';
 import Fuse from 'fuse.js';
+import { SearchIcon } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 /**
  * Props for the [[SearchBannedLinks]] component
@@ -80,7 +80,7 @@ const SearchBannedLinks: React.FC<SearchBannedLinksProps> = ({
       onSelect={handleSelect}
       allowClear
       placeholder="Search by URL or NetID"
-      suffixIcon={<SearchOutlined />}
+      suffixIcon={<SearchIcon />}
     />
   );
 };
