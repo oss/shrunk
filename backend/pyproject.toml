@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "shrunk"
-version = "3.0.1"
+version = "3.1.0"
 # readme = "../README.md"  # THIS HAS BEEN REPORTED TO THE POETRY DEVELOPMENT TEAM: https://github.com/python-poetry/poetry/issues/9488
 description = "URL Shortener for Rutgers University"
 repository = "https://github.com/oss/shrunk"
