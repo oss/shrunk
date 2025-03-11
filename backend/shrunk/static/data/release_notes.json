@@ -189,12 +189,7 @@
           "contributors": ["kgm74"]
         }
       ],
-      "improvements": [],
-      "fixes": [
-        {
-          "text": "Landing page footer styles fixed",
-          "contributors": ["ah1371"]
-        },
+      "improvements": [
         {
           "text": "Made both dropdowns styles consistent with the dashboard",
           "contributors": ["kgm74"]
@@ -206,6 +201,12 @@
         {
           "text": "Admins of Shrunk can change edit any link without permission from its owner",
           "contributors": ["kgm74"]
+        }
+      ],
+      "fixes": [
+        {
+          "text": "Landing page footer styles fixed",
+          "contributors": ["ah1371"]
         }
       ]
     }
@@ -240,18 +241,17 @@
         {
           "text": "Power users can now have comments when granted the role",
           "contributors": ["gracechen11"]
-        }
-      ],
-      "fixes": [
+        },
         {
           "text": "Admins of its organization can change their organization's name",
           "contributors": ["kgm74"]
         },
         {
-          "text": "Remove button for users of an organization to add a member",
+          "text": "Add remove button for users of an organization to add a member",
           "contributors": ["gracechen11"]
         }
-      ]
+      ],
+      "fixes": []
     }
   }
 ]
