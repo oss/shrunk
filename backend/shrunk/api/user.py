@@ -94,6 +94,7 @@ def get_user_info():
     user = session["user"]
     client = current_app.client
     netid = user.get("netid", "")
+    filterOptions = client.users.get_user_filter_options(netid)
 
     # Get user privileges
     privileges = []
@@ -111,6 +112,7 @@ def get_user_info():
             "netid": netid,
             "privileges": privileges,
             "motd": os.getenv("SHRUNK_MOTD", None),
+            "filterOptions": filterOptions,
         }
     )
 
@@ -160,3 +162,34 @@ def get_position_info(netid: str, client: ShrunkClient, entity: str) -> Any:
     if not client.roles.has("admin", netid):
         abort(403)
     return jsonify(client.users.get_position_info(entity))
+
+
+@bp.route("/options/filter", methods=["PATCH"])
+@require_login
+def update_user_options(
+    netid: str,
+    client: ShrunkClient,
+) -> Any:
+    """PATCH /api/v1/user/options/filter
+
+    Args:
+        netid (str): the netid of the user logged in
+        client (ShrunkClient): the client object
+
+
+
+
+
+    """
+
+    data = request.get_json()
+    filterOptions = data.get("filterOptions")
+
+    if filterOptions is None:
+        abort(400)
+
+    try:
+        client.users.update_user_filter_options(netid, filterOptions)
+    except ValueError:
+        abort(400)
+    return "", 204

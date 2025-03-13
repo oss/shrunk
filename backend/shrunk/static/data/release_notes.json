@@ -34,6 +34,10 @@
         {
           "text":"Move to Lucide's Icon Framework from Ant Design's Icon Framework for more icon options",
           "contributors": ["ejw135"]
+        },
+        {
+          "text": "Filter settings now persist between login sessions",
+          "contributors": ["ak2399"]
         }
       ],
       "fixes": [

@@ -57,11 +57,13 @@ def login(user_info: Any) -> Any:
     # config-whitelisted users are automatically made admins
     if is_super_admin:
         client.roles.grant("admin", "Justice League", netid)
+        client.users.initialize_user(netid)
 
     # (if not blacklisted) facstaff can always login, but we need to grant a role
     # so the rest of the app knows what privs to give the user
     if fac_staff:
         client.roles.grant("facstaff", "shibboleth", netid)
+        client.users.initialize_user(netid)
 
     # now determine whether to allow login
     if not (is_super_admin or fac_staff or is_whitelisted):
