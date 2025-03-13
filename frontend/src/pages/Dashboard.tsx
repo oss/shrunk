@@ -39,7 +39,7 @@ import {
   TrashIcon,
   UsersIcon,
 } from 'lucide-react';
-import { deleteLink, searchLinks } from '../api/links';
+import { deleteLink, searchLinks, updateUserFilterOptions } from '../api/links';
 import { getOrganizations } from '../api/organization';
 import { serverValidateNetId } from '../api/validators';
 import DatePicker from '../components/date-picker';
@@ -56,7 +56,7 @@ interface Props {
   userPrivileges: Set<string>;
   // eslint-disable-next-line react/no-unused-prop-types
   netid: string;
-
+  filterOptions: SearchQuery;
   demo?: boolean;
   mockData?: Link[];
 }
@@ -204,25 +204,34 @@ export default class Dashboard extends React.Component<Props, State> {
       userOrgs: null,
       linkInfo: this.props.mockData === undefined ? null : this.props.mockData,
       linksPerPage: 10,
-      query: {
-        queryString: '',
-        set: { set: 'user' },
-        show_expired_links: false,
-        show_deleted_links: false,
-        sort: { key: 'relevance', order: 'descending' },
-        begin_time: null,
-        end_time: null,
-        showType: 'links',
-        owner: null,
-      },
+      query:
+        this.props.filterOptions === undefined
+          ? {
+              queryString: '',
+              set: { set: 'user' },
+              show_expired_links: false,
+              show_deleted_links: false,
+              sort: { key: 'relevance', order: 'descending' },
+              begin_time: null,
+              end_time: null,
+              showType: 'links',
+              owner: null,
+            }
+          : this.props.filterOptions,
       totalPages: 0,
       totalLinks: 0,
       currentPage: 1,
       currentOffset: 0,
       isCreateModalOpen: false,
       filterModalVisible: false,
-      showExpired: false,
-      showDeleted: false,
+      showExpired:
+        this.props.filterOptions === undefined
+          ? false
+          : this.props.filterOptions.show_expired_links,
+      showDeleted:
+        this.props.filterOptions === undefined
+          ? false
+          : this.props.filterOptions.show_deleted_links,
       sortKey: 'relevance',
       sortOrder: 'descending',
       beginTime: null,
@@ -241,11 +250,51 @@ export default class Dashboard extends React.Component<Props, State> {
   }
 
   async componentDidMount(): Promise<void> {
-    await Promise.all([this.fetchUserOrgs(), this.refreshResults()]);
+    await this.fetchUserOrgs();
+  }
+
+  componentDidUpdate(prevProps: Readonly<Props>): void {
+    // update config once /info loads
+    if (this.props.filterOptions !== prevProps.filterOptions) {
+      this.setState(
+        {
+          query: {
+            ...this.props.filterOptions,
+            begin_time: this.props.filterOptions.begin_time
+              ? dayjs(this.props.filterOptions.begin_time)
+              : null,
+            end_time: this.props.filterOptions.end_time
+              ? dayjs(this.props.filterOptions.end_time)
+              : null,
+          },
+          showExpired: this.props.filterOptions.show_expired_links,
+          showDeleted: this.props.filterOptions.show_deleted_links,
+          sortKey: this.props.filterOptions.sort.key,
+          sortOrder: this.props.filterOptions.sort.order,
+          beginTime: this.props.filterOptions.begin_time
+            ? dayjs(this.props.filterOptions.begin_time)
+            : null,
+          endTime: this.props.filterOptions.end_time
+            ? dayjs(this.props.filterOptions.end_time)
+            : null,
+          currentPage: 1,
+        },
+        () => {
+          this.refreshResults();
+        },
+      );
+    }
   }
 
   onSearch = async () => {
     this.setQuery(this.state.query);
+  };
+
+  /**
+   * Update filter options for user
+   */
+  updateFilterOptions = async () => {
+    await updateUserFilterOptions(this.state.query);
   };
 
   /**
@@ -361,8 +410,8 @@ export default class Dashboard extends React.Component<Props, State> {
       {
         query: {
           ...this.state.query,
-          begin_time: dates[0],
-          end_time: dates[1],
+          begin_time: dates?.[0] ?? null,
+          end_time: dates?.[1] ?? null,
         },
       },
       () => this.setQuery(this.state.query),
@@ -380,6 +429,7 @@ export default class Dashboard extends React.Component<Props, State> {
     }
 
     const results = await this.doQuery(newQuery, 0, this.state.linksPerPage);
+    await this.updateFilterOptions();
 
     const totalPages = Math.ceil(results.count / this.state.linksPerPage);
     this.setState({
@@ -538,6 +588,7 @@ export default class Dashboard extends React.Component<Props, State> {
               <Input.Search
                 style={{ width: 500 }}
                 placeholder="Find a shortend link by its alias"
+                value={this.state.query.queryString}
                 onChange={this.updateQueryString}
                 onSearch={this.onSearch}
               />
@@ -838,11 +889,12 @@ export default class Dashboard extends React.Component<Props, State> {
             layout="vertical"
             initialValues={{
               orgSelect: this.state.query.set.set,
-              show_expired: 'hide',
-              show_deleted: 'hide',
-              links_vs_pixels: 'links',
-              sortKey: 'relevance',
-              sortOrder: 'descending',
+              owner: this.state.query.owner,
+              sortKey: this.state.query.sort.key,
+              show_expired: this.state.showExpired ? 'show' : 'hide',
+              show_deleted: this.state.showDeleted ? 'show' : 'hide',
+              links_vs_pixels: this.state.query.showType,
+              dateRange: [this.state.beginTime, this.state.endTime],
             }}
           >
             <Row gutter={16}>
@@ -903,9 +955,12 @@ export default class Dashboard extends React.Component<Props, State> {
                 <Form.Item name="dateRange" label="Creation Date">
                   <DatePicker.RangePicker
                     format="YYYY-MM-DD"
-                    value={[this.state.beginTime, this.state.endTime]}
                     onChange={this.showLinksInRange}
                     style={{ width: '100%' }}
+                    value={[
+                      dayjs(this.state.beginTime),
+                      dayjs(this.state.endTime),
+                    ]}
                     allowEmpty={[false, true]} // Allow the second date to be empty
                   />
                 </Form.Item>

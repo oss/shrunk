@@ -1,6 +1,6 @@
 """Module for the user system client"""
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import pymongo
 from shrunk.util.ldap import is_valid_netid, query_position_info
@@ -185,3 +185,74 @@ class UserClient:
             ),
         }
         return formatted_position_info
+
+    def initialize_user(
+        self,
+        netid: str,
+    ) -> None:
+        """Initialize a user in the database
+        :param entity: The entity to initialize
+        :param filterOptions: The filter options for the user
+        """
+        existing_user = self.db["users"].find_one({"netid": netid})
+        if not existing_user:
+            new_user = {
+                "netid": netid,
+            }
+            self.db["users"].insert_one(new_user)
+
+    def get_user_filter_options(self, netid: str) -> Dict[str, Any]:
+        """Get the filter options for a user
+
+        :param netid: The netid of the user to get the filter options for
+
+        :returns Dict[str, Any]: The filter options for the user
+
+
+
+        """
+        user: Dict[str, Any] = self.db["users"].find_one({"netid": netid})
+        if "filterOptions" not in user:
+            filterOptions = {
+                "show_expired_links": False,
+                "show_deleted_links": False,
+                "sort": {"key": "relevance", "order": "descending"},
+                "showType": "links",
+                "set": {"set": "user"},
+                "begin_time": None,
+                "end_time": None,
+                "owner": None,
+                "queryString": "",
+            }
+
+            self.update_user_filter_options(netid, filterOptions)
+            return filterOptions
+        return user["filterOptions"]
+
+    def update_user_filter_options(
+        self, netid: str, filterOptions: Dict[str, Any]
+    ) -> None:
+        """Update the filter options for a user
+
+        :param netid: The netid of the user to update the filter options for
+        :param filter_options: The new filter options for the user
+        """
+
+        keys = [
+            "show_expired_links",
+            "show_deleted_links",
+            "sort",
+            "showType",
+            "set",
+            "begin_time",
+            "end_time",
+            "owner",
+            "queryString",
+        ]
+        for key in keys:
+            if key not in filterOptions:
+                raise ValueError(f"Missing key {key} in filterOptions")
+
+            self.db["users"].update_one(
+                {"netid": netid}, {"$set": {"filterOptions": filterOptions}}
+            )

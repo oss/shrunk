@@ -93,6 +93,8 @@ class ShrunkClient:
             [("token", pymongo.ASCENDING)], unique=True
         )
 
+        self.db.users.create_index([("netid", pymongo.ASCENDING)], unique=True)
+
     def user_exists(self, netid: str) -> bool:
         """Check whether there exist any links belonging to a user.
 
@@ -109,6 +111,7 @@ class ShrunkClient:
             "visitors",
             "visits",
             "unsafe_links",
+            "users",
         ]:
             self.db[col].delete_many({})
 
