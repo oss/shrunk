@@ -5,7 +5,7 @@
     "patch": 0,
     "projectDirector": "ah1371",
     "date": "TODO",
-    "description": "The continued codebase cleanup update.",
+    "description": "The new public API for faculty developers, real-time notifications, continued codebase cleanup update, and testing suite update.",
     "categories": {
       "features": [
         {
