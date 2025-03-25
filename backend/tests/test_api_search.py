@@ -4,7 +4,7 @@ from util import dev_login, create_link, create_tracking_pixel
 
 def test_search_types(client: Client) -> None:
     with dev_login(client, "user"):
-        create_link(client, "link", "http://example.com", "alias")
+        create_link(client, "link", "http://example.com", "alias0")
         create_tracking_pixel(client, "tracking_pixel")
 
         resp = client.post(

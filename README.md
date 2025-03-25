@@ -28,20 +28,30 @@ docker-compose up
 
 5. Start developing at `http://localhost:4343` [(click to learn more about this change)](https://stackoverflow.com/questions/72369320/why-always-something-is-running-at-port-5000-on-my-mac)
 
+### Test your code locally
+
+This is completely optional as GitLab CI/CD should also provide you the test results.
+
+1. Create a copy of `.env.example` and name it `test.env`
+2. Set the following values
+```
+SHRUNK_DB_HOST="mongodb-test"
+SHRUNK_DB_PORT="27018"
+SHRUNK_FLASK_TESTING=1
+```
+3. Start the Docker containers
+```
+docker-compose -f docker-compose.tests.yml up
+```
+
 ## Contributing
 
 ### Formatting
 
-We use [pytest](https://pytest.org) for our unit tests framework, you can run this command inside the backend directory to check if you've made regressive changes.
-
-```
-python -m pytest
-```
-
 We use [black](https://github.com/psf/black) for our backend's formatting, while using pylint, flake8, and mypy for linting in the GitLab CI/CD, you can run this command to make sure your code is up to standards. If you're using Visual Studio Code, it does this automatically.
 
 ```
-black .
+python3 -m black .
 ```
 
 We also use [Prettier](https://prettier.io/) for our frontend's formatting, you can run this command to make sure your code is up to standards. If you're using Visual Studio Code, it does this automatically.
@@ -49,11 +59,3 @@ We also use [Prettier](https://prettier.io/) for our frontend's formatting, you 
 ```
 npx prettier --write .
 ```
-
-### Adding dependencies to backend
-
-Make sure you're
- - using Python 3.6.x
- - inside a virtual environment
- - run `pip install poetry`
- - run `poetry cache clear --all pypi` if you're having problems with poetry

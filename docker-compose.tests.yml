@@ -1,0 +1,21 @@
+services:
+  backend-test:
+    build: ./backend
+    command: watchmedo shell-command --recursive --patterns="*.py" --command='python -m pytest' .
+    volumes:
+      - ./test.env:/usr/shrunk/backend/.env
+      - ./backend:/usr/shrunk/backend
+    working_dir: /usr/shrunk/backend
+    env_file:
+      - ./test.env
+    depends_on:
+      - mongodb-test
+
+  mongodb-test:
+    hostname: mongodb-test
+    container_name: shrunk-mongo-test
+    image: mongo:latest
+    attach: false  # We don't care.
+    command: mongod --port 27018
+    ports:
+        - '27018:27018'

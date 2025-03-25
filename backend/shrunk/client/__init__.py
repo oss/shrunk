@@ -105,13 +105,17 @@ class ShrunkClient:
     def reset_database(self) -> None:
         """Delete all documents from all collections in the shrunk database."""
         for col in [
+            "access_requests",
+            "endpoint_statistics",
             "grants",
             "organizations",
+            "tickets",
+            "tracking_ids",
+            "unsafe_links",
             "urls",
+            "users",
             "visitors",
             "visits",
-            "unsafe_links",
-            "users",
         ]:
             self.db[col].delete_many({})
 
