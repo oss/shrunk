@@ -21,7 +21,7 @@ def test_default_options(client: Client, user: str) -> None:
         "begin_time": None,
         "end_time": None,
         "owner": None,
-        "queryString": None,
+        "queryString": "",
     }
     with dev_login(client, user):
         resp = client.get("/api/v1/user/info")

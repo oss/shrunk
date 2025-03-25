@@ -133,7 +133,7 @@ package:
       - shrunk/
     expose_as: 'shrunk'
 
-pytest:
+backend-test:
   stage: test
   image: python:3.6
   needs: [backend]
@@ -156,13 +156,17 @@ pytest:
     - cp backend/GeoLite2-City.mmdb /usr/share/GeoIP/GeoLite2-City.mmdb
 
     - curl -fsS https://dotenvx.sh | sh
-    - echo "SHRUNK_DB_HOST=mongo" >> .env.example
-    - echo "SHRUNK_DB_NAME=shrunk_test" >> .env.example
-    - echo "SHRUNK_FLASK_TESTING=1" >> .env.example
+    - cp .env.example test.env
+
+    - dotenvx set SHRUNK_DB_HOST mongo -f test.env
+    - dotenvx set SHRUNK_DB_NAME shrunk_test -f test.env
+    - dotenvx set SHRUNK_FLASK_TESTING 1 -f test.env
+    - dotenvx set SHRUNK_GOOGLE_SAFEBROWSE_ENABLED 1 -f test.env
+    - dotenvx set SHRUNK_GOOGLE_SAFEBROWSE_API_KEY "$GOOGLE_SAFE_BROWSING_API" -f test.env
 
     - cd backend
     - pip install pytest
-    - dotenvx -f .env.example -- pytest --junitxml=../pytest.xml tests
+    - dotenvx run -f ../test.env -- pytest --junitxml=../pytest.xml tests
   artifacts:
     reports:
       junit: pytest.xml
