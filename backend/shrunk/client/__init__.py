@@ -93,6 +93,8 @@ class ShrunkClient:
             [("token", pymongo.ASCENDING)], unique=True
         )
 
+        self.db.users.create_index([("netid", pymongo.ASCENDING)], unique=True)
+
     def user_exists(self, netid: str) -> bool:
         """Check whether there exist any links belonging to a user.
 
@@ -103,12 +105,17 @@ class ShrunkClient:
     def reset_database(self) -> None:
         """Delete all documents from all collections in the shrunk database."""
         for col in [
+            "access_requests",
+            "endpoint_statistics",
             "grants",
             "organizations",
+            "tickets",
+            "tracking_ids",
+            "unsafe_links",
             "urls",
+            "users",
             "visitors",
             "visits",
-            "unsafe_links",
         ]:
             self.db[col].delete_many({})
 

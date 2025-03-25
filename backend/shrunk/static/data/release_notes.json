@@ -12,6 +12,10 @@
           "text": "Alert system replaced with a new MOTD system",
           "contributors": ["ah1371"],
           "warning": true
+        },
+        {
+          "text": "Backend tests are able to be run locally on the developer's machine with hot reloading using Docker",
+          "contributors": ["ah1371"]
         }
       ],
       "improvements": [
@@ -34,6 +38,10 @@
         {
           "text":"Move to Lucide's Icon Framework from Ant Design's Icon Framework for more icon options",
           "contributors": ["ejw135"]
+        },
+        {
+          "text": "Filter settings now persist between login sessions",
+          "contributors": ["ak2399"]
         }
       ],
       "fixes": [

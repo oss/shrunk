@@ -8,6 +8,7 @@ import {
   OverallStats,
   VisitStats,
   EditLinkValues,
+  SearchQuery,
 } from '../interfaces/link';
 import { GeoipStats } from '../pages/subpages/StatsCommon';
 
@@ -224,4 +225,12 @@ export async function searchLinks(query: any) {
   });
   const data = await resp.json();
   return data;
+}
+
+export async function updateUserFilterOptions(options: SearchQuery) {
+  await fetch(`/api/v1/user/options/filter`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filterOptions: options }),
+  });
 }
