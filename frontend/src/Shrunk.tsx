@@ -36,7 +36,7 @@ import Faq from './pages/Faq';
 import Orgs from './pages/Orgs';
 
 import Login from './pages/Login';
-import ManageOrg from './pages/subpages/ManageOrg';
+import ManageOrg from './pages/organization-manage';
 import { Stats } from './pages/subpages/Stats';
 
 import { PendingRequests } from './modals/PendingRequests';
@@ -53,6 +53,7 @@ import Ticket from './pages/subpages/Ticket';
 import { lightTheme } from './theme';
 import { SearchQuery } from './interfaces/link';
 import Developer from './pages/Developer';
+import OrganizationToken from './pages/organization-tokens';
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -374,6 +375,12 @@ export default function Shrunk(props: Props) {
                     <Route exact path="/app/orgs/:id">
                       <ManageOrg
                         userNetid={netid}
+                        userPrivileges={userPrivileges}
+                      />
+                    </Route>
+                    <Route exact path="/app/orgs/:id/tokens">
+                      <OrganizationToken
+                        userNetId={netid}
                         userPrivileges={userPrivileges}
                       />
                     </Route>
