@@ -33,6 +33,23 @@ export function daysBetween(date: Date): number {
   return Math.abs(differenceInDays);
 }
 
+export function getLinkFromAlias(
+  alias: string,
+  isTrackingPixel?: boolean,
+): string {
+  const routePrefix = isTrackingPixel ? 'api/v1/t/' : '';
+  return `${document.location.host}/${routePrefix}${alias}`;
+}
+
+export function getRedirectFromAlias(
+  alias: string,
+  isTrackingPixel?: boolean,
+): string {
+  const isDev = process.env.NODE_ENV === 'development';
+  const protocol = isDev ? 'http' : 'https';
+  return `${protocol}://${getLinkFromAlias(alias, isTrackingPixel)}`;
+}
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }

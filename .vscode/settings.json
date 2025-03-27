@@ -13,5 +13,8 @@
   },
   "eslint.workingDirectories": ["./frontend"],
   "prettier.requireConfig": true,
-  "editor.formatOnSave": true
+  "editor.formatOnSave": true,
+  "python.analysis.extraPaths": [
+    "./backend/tests"
+  ]
 }

@@ -1,11 +1,5 @@
 import { Dayjs } from 'dayjs';
 
-export interface Alias {
-  alias: string;
-  description: string;
-  deleted: boolean;
-}
-
 export interface LinkDeletedBy {
   deleted_by: string;
   deleted_time: Date;
@@ -18,7 +12,7 @@ export interface LinkSharedWith {
 
 export interface Link {
   _id: string;
-  title: string;
+  description: string;
   long_url: string;
   domain: string;
   created_time: Date;
@@ -29,7 +23,7 @@ export interface Link {
   visits: number;
   unique_visits: number;
   owner: string;
-  aliases: Alias[];
+  alias: string;
   may_edit: boolean;
   is_tracking_pixel_link: boolean;
 
@@ -60,22 +54,8 @@ export interface OverallStats {
  * @interface
  */
 export interface VisitDatum {
-  /**
-   * The date, represented as year/month/day numbers
-   * @property
-   */
   _id: { year: number; month: number; day: number };
-
-  /**
-   * The total number of visits on the date
-   * @property
-   */
   all_visits: number;
-
-  /**
-   * The number of first-time visits on the date
-   * @property
-   */
   first_time_visits: number;
 }
 
@@ -138,7 +118,7 @@ export interface BrowserStats {
  * @interface
  */
 export interface EditLinkValues {
-  title: string;
+  description: string;
   long_url: string;
 
   /**
@@ -208,4 +188,45 @@ export interface SearchQuery {
   showType: 'links' | 'tracking_pixels';
 
   owner: string | null;
+}
+
+export enum StatChart {
+  Visits = 'Visits',
+  GeoIP = 'GeoIP',
+  Browser = 'Browser',
+  Platform = 'Platform',
+  Referral = 'Referral',
+}
+
+export enum StatMap {
+  World = 'World',
+  UnitedStates = 'United States',
+}
+
+export interface MapDatum {
+  /**
+   * The ISO code (country code or US state code) of the region
+   * @property
+   */
+  code: string;
+
+  /**
+   * The value of the variable in the region
+   * @property
+   */
+  value: number;
+}
+
+export interface GeoipStats {
+  /**
+   * Data for US states
+   * @property
+   */
+  us: MapDatum[];
+
+  /**
+   * Data for countries
+   * @property
+   */
+  world: MapDatum[];
 }

@@ -1,8 +1,8 @@
 stages:
-  - lint
   - build
   - package
   - test
+  - lint
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"

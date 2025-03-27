@@ -1,7 +1,7 @@
 services:
   backend-test:
     build: ./backend
-    command: watchmedo shell-command --recursive --patterns="*.py" --command='python -m pytest' .
+    command: watchmedo shell-command --recursive --patterns="*.py" --command='python -m pytest tests' .
     volumes:
       - ./test.env:/usr/shrunk/backend/.env
       - ./backend:/usr/shrunk/backend

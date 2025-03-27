@@ -15,8 +15,8 @@ from PIL import Image
 
 from shrunk.client import ShrunkClient
 from shrunk.client.exceptions import (
-    BadLongURLException,
     BadAliasException,
+    BadLongURLException,
     NoSuchObjectException,
     InvalidACL,
     NotUserOrOrg,
@@ -50,9 +50,8 @@ ACL_ENTRY_SCHEMA = {
 CREATE_LINK_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
-    "required": ["title", "long_url"],
     "properties": {
-        "title": {"type": "string", "minLength": 1},
+        "description": {"type": "string", "minLength": 1},
         "long_url": {"type": "string", "minLength": 1},
         "alias": {"type": "string", "minLength": 5},
         "expiration_time": {"type": "string", "format": "date-time"},
@@ -60,6 +59,7 @@ CREATE_LINK_SCHEMA = {
         "viewers": {"type": "array", "items": ACL_ENTRY_SCHEMA},
         "bypass_security_measures": {"type": "boolean"},
         "is_tracking_pixel_link": {"type": "boolean"},
+        "tracking_pixel_extension": {"type": "string", "enum": [".png", ".gif"]},
         "domain": {"type": "string", "minLength": 0},
     },
 }
@@ -75,7 +75,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
 
     .. code-block:: json
 
-       { "title": "string", "long_url": "string",
+       { "description": "string", "long_url": "string",
          "expiration_time": "2020-11-11T11:11:11Z",
          "editors": ["<ACL_ENTRY>"], "viewers": ["<ACL_ENTRY>"]}
 
@@ -113,6 +113,11 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
 
     if "is_tracking_pixel_link" not in req:
         req["is_tracking_pixel_link"] = False
+    elif "is_tracking_pixel_link" in req and "tracking_pixel_extension" not in req:
+        req["tracking_pixel_extension"] = ".png"
+
+    if not req["is_tracking_pixel_link"]:
+        req["tracking_pixel_extension"] = ""
 
     if "long_url" not in req and req["is_tracking_pixel_link"]:
         req["long_url"] = "http://example.com"
@@ -172,9 +177,16 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
 
     alias = req.get("alias", None)
 
+    if "alias" in req and not client.roles.has_some(["admin", "power_user"], netid):
+        abort(403)
+
     try:
-        link_id = client.links.create(
-            req["title"],
+        link_id, created_alias = client.links.create(
+            (
+                "No description provided."
+                if "description" not in req or req["description"] == ""
+                else req["description"]
+            ),
             req["long_url"],
             alias,
             expiration_time,
@@ -185,6 +197,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
             editors=req["editors"],
             bypass_security_measures=req["bypass_security_measures"],
             is_tracking_pixel_link=req["is_tracking_pixel_link"],
+            extension=req["tracking_pixel_extension"],
         )
     except BadLongURLException:
         return jsonify({"errors": ["long_url"]}), 400
@@ -216,7 +229,10 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
         )
     except NotUserOrOrg as e:
         return jsonify({"errors": [str(e)]}), 400
-    return jsonify({"id": str(link_id)})
+    except BadAliasException:
+        return jsonify({"errors": ["alias"]}), 400
+
+    return jsonify({"id": str(link_id), "alias": created_alias}), 201
 
 
 @bp.route("/validate_long_url/<b32:long_url>", methods=["GET"])
@@ -256,42 +272,25 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         info = client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
+
+    if info.get("deleted", False) and not client.roles.has("admin", netid):
+        abort(404)
+
     if not client.roles.has("admin", netid) and not client.links.may_view(
         link_id, netid
     ):
         abort(403)
-    if not client.roles.has("admin", netid):
-        if info["deleted"]:
-            abort(404)
-        aliases = [
-            {
-                "alias": alias["alias"],
-                "description": alias.get("description", ""),
-                "deleted": False,
-            }
-            for alias in info["aliases"]
-            if not alias["deleted"]
-        ]
-    else:
-        aliases = [
-            {
-                "alias": alias["alias"],
-                "description": alias.get("description", ""),
-                "deleted": alias["deleted"],
-            }
-            for alias in info["aliases"]
-        ]
 
     # Get rid of types that cannot safely be passed to jsonify
     json_info = {
         "_id": info["_id"],
-        "title": info["title"],
+        "description": info["description"],
         "long_url": info["long_url"],
         "owner": client.links.get_owner(link_id),
         "created_time": info["timeCreated"],
         "expiration_time": info.get("expiration_time", None),
         "domain": info.get("domain", None),
-        "aliases": aliases,
+        "alias": info["alias"],
         "deleted": info.get("deleted", False),
         "deletion_info": {
             "deleted_by": info.get("deleted_by", None),
@@ -302,38 +301,14 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         "is_tracking_pixel_link": info.get("is_tracking_pixel_link", False),
         "may_edit": client.links.may_edit(link_id, netid),
     }
-    return jsonify(json_info)
-
-
-@bp.route("/search_by_title/<b32:title>")
-@require_login
-def get_link_by_title(netid: str, client: ShrunkClient, title: ObjectId) -> Any:
-    """``GET /api/link/search_by_title/<title>``
-
-    Finds information of a single link by exact title. This simple method was made for
-    security unit tests. This method is NOT mean to be a comprehensive endpoint
-    called upon in production.
-
-    :param netid:
-    :param client:
-    :param link_id:
-    """
-    if not client.roles.has("admin", netid):
-        abort(403)
-
-    doc = client.links.get_link_info_by_title(title)
-
-    if doc is None:
-        return jsonify({}), 404
-
-    return jsonify(doc), 200
+    return jsonify(json_info), 200
 
 
 MODIFY_LINK_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
     "properties": {
-        "title": {"type": "string", "minLength": 1},
+        "description": {"type": "string", "minLength": 1},
         "long_url": {"type": "string", "format": "uri"},
         "expiration_time": {"type": ["string", "null"], "format": "date-time"},
         "created_time": {"type": ["string", "null"], "format": "date-time"},
@@ -352,7 +327,7 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
 
     .. code-block:: json
 
-       { "title?": "string", "long_url?": "string", "expiration_time?": "string | null" }
+       { "description?": "string", "long_url?": "string", "expiration_time?": "string | null" }
 
     Properties present in the request will be set. Properties missing from the request will not
     be modified. If ``"expiration_time"`` is present and set to ``null``, the effect is to remove
@@ -379,7 +354,7 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
     try:
         client.links.modify(
             link_id,
-            title=req.get("title"),
+            description=req.get("description"),
             long_url=req.get("long_url"),
             expiration_time=req.get("expiration_time"),
             owner=req.get("owner"),
@@ -722,82 +697,6 @@ def get_link_browser_stats(netid: str, client: ShrunkClient, link_id: ObjectId) 
     return jsonify(stats)
 
 
-CREATE_ALIAS_SCHEMA = {
-    "type": "object",
-    "additionalProperties": False,
-    "properties": {
-        "alias": {
-            "type": "string",
-            "minLength": MIN_ALIAS_LENGTH,
-            "maxLength": MAX_ALIAS_LENGTH,
-            "pattern": "^[a-zA-Z0-9_.,-]*$",
-        },
-        "description": {"type": "string"},
-        "extension": {"type": "string"},
-    },
-}
-
-
-@bp.route("/<ObjectId:link_id>/alias", methods=["POST"])
-@request_schema(CREATE_ALIAS_SCHEMA)
-@require_login
-def create_alias(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -> Any:
-    """``POST /api/link/<link_id>/alias``
-
-    Create a new alias for a link. Returns the created alias or an error. Request format:
-
-    DEPRECATED: https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/274
-
-    .. code-block:: json
-
-       { "alias?": "string", "description?": "string", "extension?" : "string" }
-
-    If the ``"alias"`` field is omitted, the server will generate a random alias. If the ``"description"`` field is
-    omitted, it will default to the empty string. Success response format:
-
-    .. code-block:: json
-
-       { "alias": "string" }
-
-    Error response format:
-
-    .. code-block:: json
-
-       { "errors": ["alias"] }
-
-    :param netid:
-    :param client:
-    :param req:
-    :param link_id:
-    """
-    # Check that netid is able to modify link_id
-    # DEPRECATED: https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/274
-    if not client.roles.has("admin", netid):
-        abort(403)
-
-    # If a custom URL is specified, check that user has power_user or admin role.
-    if "alias" in req and not client.roles.has_some(["admin", "power_user"], netid):
-        abort(403)
-    alias = None
-    print(f"REQ: {req}")
-    try:
-        if "extension" in req:
-            alias = client.links.create_or_modify_alias(
-                link_id,
-                req.get("alias"),
-                req.get("description", ""),
-                req.get("extension"),
-            )
-        else:
-            alias = client.links.create_or_modify_alias(
-                link_id, req.get("alias"), req.get("description", ""), None
-            )
-    except BadAliasException:
-        abort(400)
-
-    return jsonify({"alias": alias})
-
-
 @bp.route("/validate_reserved_alias/<b32:alias>", methods=["GET"])
 @require_login
 def validate_reserved_alias(_netid: str, client: ShrunkClient, alias: str) -> Any:
@@ -844,148 +743,10 @@ def validate_duplicate_alias(_netid: str, client: ShrunkClient, alias: str) -> A
     return jsonify(response)
 
 
-@bp.route("/<ObjectId:link_id>/alias/<alias>", methods=["DELETE"])
-@require_login
-def delete_alias(
-    netid: str, client: ShrunkClient, link_id: ObjectId, alias: str
-) -> Any:
-    """``DELETE /api/link/<link_id>/alias/<alias>``
-
-    Delete an alias. Returns 204 on success or 4xx on error.
-
-    DEPRECATED: https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/274
-
-    :param netid:
-    :param client:
-    :param link_id:
-    :param alias:
-    """
-    # DEPRECATED: https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/274
-    if not client.roles.has("admin", netid):
-        abort(403)
-
-    client.links.delete_alias(link_id, alias)
-    return "", 204
-
-
-@bp.route("/<ObjectId:link_id>/alias/<alias>/visits", methods=["GET"])
-@require_login
-def get_alias_visits(
-    netid: str, client: ShrunkClient, link_id: ObjectId, alias: str
-) -> Any:
-    """``GET /api/link/<link_id>/alias/<alias>/visits``
-
-    Get anonymized visits for an alias. For response format, see :py:func:`get_link_visits`.
-
-    :param netid:
-    :param client:
-    :param link_id:
-    :param alias:
-    """
-    if not client.roles.has("admin", netid) and not client.links.may_view(
-        link_id, netid
-    ):
-        abort(403)
-    visits = client.links.get_visits(link_id, alias)
-    anonymized_visits = [anonymize_visit(client, visit) for visit in visits]
-    return jsonify({"visits": anonymized_visits})
-
-
-@bp.route("/<ObjectId:link_id>/alias/<alias>/stats", methods=["GET"])
-@require_login
-def get_alias_overall_stats(
-    netid: str, client: ShrunkClient, link_id: ObjectId, alias: str
-) -> Any:
-    """``GET /api/link/<link_id>/alias/<alias>/stats``
-
-    Get number of total and unique visits to an alias. For response format, see :py:func:`get_link_overall_stats`.
-
-    :param netid:
-    :param client:
-    :param link_id:
-    :param alias:
-    """
-    if not client.roles.has("admin", netid) and not client.links.may_view(
-        link_id, netid
-    ):
-        abort(403)
-    stats = client.links.get_overall_visits(link_id, alias)
-    return jsonify(stats)
-
-
-@bp.route("/<ObjectId:link_id>/alias/<alias>/stats/visits", methods=["GET"])
-@require_login
-def get_alias_visit_stats(
-    netid: str, client: ShrunkClient, link_id: ObjectId, alias: str
-) -> Any:
-    """``GET /api/link/<link_id>/alias/<alias>/stats/visits``
-
-    Get visit statistics for an alias. For response format, see :py:func:`get_alias_visit_stats`.
-
-    :param netid:
-    :param client:
-    :param link_id:
-    :param alias:
-    """
-    if not client.roles.has("admin", netid) and not client.links.may_view(
-        link_id, netid
-    ):
-        abort(403)
-    visits = client.links.get_daily_visits(link_id, alias)
-    return jsonify({"visits": visits})
-
-
-@bp.route("/<ObjectId:link_id>/alias/<alias>/stats/geoip", methods=["GET"])
-@require_login
-def get_alias_geoip_stats(
-    netid: str, client: ShrunkClient, link_id: ObjectId, alias: str
-) -> Any:
-    """``GET /api/link/<link_id>/alias/<alias>/stats/geoip``
-
-    Get GeoIP statistics for an alias. For response format, see :py:func:`get_link_geoip_stats`.
-
-    :param netid:
-    :param client:
-    :param link_id:
-    :param alias:
-    """
-    if not client.roles.has("admin", netid) and not client.links.may_view(
-        link_id, netid
-    ):
-        abort(403)
-    geoip = client.links.get_geoip_stats(link_id, alias)
-    return jsonify(geoip)
-
-
-@bp.route("/<ObjectId:link_id>/alias/<alias>/stats/browser", methods=["GET"])
-@require_login
-def get_alias_browser_stats(
-    netid: str, client: ShrunkClient, link_id: ObjectId, alias: str
-) -> Any:
-    """``GET /api/link/<link_id>/alias/<alias>/stats/browser``
-
-    Get stats about browsers and referers of visitors. For response format, see :py:func:`get_link_browser_stats`.
-
-    :param netid:
-    :param client:
-    :param link_id:
-    :param alias:
-    """
-    if not client.roles.has("admin", netid) and not client.links.may_view(
-        link_id, netid
-    ):
-        abort(403)
-    visits = client.links.get_visits(link_id, alias)
-    stats = browser_stats_from_visits(visits)
-    return jsonify(stats)
-
-
 @bp.route("/qrcode", methods=["GET"])
 def generate_qrcode():
     """
     ``GET /api/v1/link/qrcode``
-
-    Check if the tracking pixel UI is enabled.
     """
     allowed_patterns = [
         r"^https?:\/\/([0-9a-z]+\.)?rutgers\.edu(?:\/.*)?$",
@@ -1042,11 +803,10 @@ def revert_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         link_id, netid
     ):
         abort(403)
-    for alias in info["aliases"]:
-        if client.links.alias_is_reserved(
-            alias["alias"]
-        ) and client.links.alias_is_duplicate(alias["alias"]):
-            abort(400)
+
+    alias = info["alias"]
+    if client.links.alias_is_reserved(alias) and client.links.alias_is_duplicate(alias):
+        abort(400)
 
     try:
         client.links.remove_expiration_time(link_id)

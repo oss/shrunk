@@ -1,4 +1,3 @@
-from ast import Str
 import time
 import base64
 from datetime import datetime, timezone, timedelta
@@ -7,57 +6,19 @@ import random
 import pytest
 from werkzeug.test import Client
 
-from util import dev_login
+from util import dev_login, create_link
 
 
-@pytest.mark.skip(
-    reason="Due to change in https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/merge_requests/271"
-)
+@pytest.fixture
 def test_link(client: Client) -> None:  # pylint: disable=too-many-statements
     """This test simulates the process of creating a link, adding two random aliases
     to it, deleting an alias, and then deleting the link."""
 
     with dev_login(client, "user"):
         # Create a link and get its ID
-        resp = client.post(
-            "/api/v1/link",
-            json={
-                "title": "title",
-                "long_url": "https://example.com",
-            },
-        )
+        resp = create_link(client, "title", "example.com")
         assert 200 <= resp.status_code < 300
         link_id = resp.json["id"]
-
-        # Add an alias
-        resp = client.post(
-            f"/api/v1/link/{link_id}/alias",
-            json={
-                "description": "alias0",
-            },
-        )
-        assert 200 <= resp.status_code < 300
-        alias0 = resp.json["alias"]
-
-        # Add a second alias
-        resp = client.post(
-            f"/api/v1/link/{link_id}/alias",
-            json={
-                "description": "alias1",
-            },
-        )
-        assert 200 <= resp.status_code < 300
-        alias1 = resp.json["alias"]
-
-        # We shouldn't be allowed to add a custom alias
-        resp = client.post(
-            f"/api/v1/link/{link_id}/alias",
-            json={
-                "alias": "abcdefg",
-                "description": "alias2",
-            },
-        )
-        assert 400 <= resp.status_code < 500
 
         # Get the link info back and make sure it's correct
         resp = client.get(f"/api/v1/link/{link_id}")
@@ -74,24 +35,6 @@ def test_link(client: Client) -> None:  # pylint: disable=too-many-statements
 
         # Check that alias0 redirects correctly
         resp = client.get(f"/{alias0}")
-        assert resp.status_code == 302
-        assert resp.headers["Location"] == "https://example.com"
-
-        # Check that alias1 redirects correctly
-        resp = client.get(f"/{alias1}")
-        assert resp.status_code == 302
-        assert resp.headers["Location"] == "https://example.com"
-
-        # Delete alias0
-        resp = client.delete(f"/api/v1/link/{link_id}/alias/{alias0}")
-        assert 200 <= resp.status_code < 300
-
-        # Check that alias0 no longer redirects
-        resp = client.get(f"/{alias0}")
-        assert resp.status_code == 404
-
-        # Check that alias1 still redirects
-        resp = client.get(f"/{alias1}")
         assert resp.status_code == 302
         assert resp.headers["Location"] == "https://example.com"
 
@@ -151,9 +94,6 @@ def test_link(client: Client) -> None:  # pylint: disable=too-many-statements
         assert resp.status_code == 404
 
 
-@pytest.mark.skip(
-    reason="Due to change in https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/merge_requests/271"
-)
 def test_create_link_expiration(client: Client) -> None:
     """
     Test that we can create a link with an expiration time.
@@ -172,22 +112,12 @@ def test_create_link_expiration(client: Client) -> None:
         resp = client.post(
             "/api/v1/link",
             json={
-                "title": "title",
                 "long_url": "https://example.com",
                 "expiration_time": expiration_time.isoformat(),
             },
         )
-        assert resp.status_code == 200
+        assert resp.status_code == 201
         link_id = resp.json["id"]
-
-        # Create a random alias
-        resp = client.post(
-            f"/api/v1/link/{link_id}/alias",
-            json={
-                "description": "alias0",
-            },
-        )
-        assert resp.status_code == 200
         alias0 = resp.json["alias"]
 
         # Check that alias0 redirects correctly
@@ -231,13 +161,14 @@ def test_create_link_bad_long_url(client: Client) -> None:
         resp = client.post(
             "/api/v1/link",
             json={
-                "title": "title",
+                "description": "description",
                 "long_url": long_url,
             },
         )
         assert resp.status_code == 400
 
 
+@pytest.mark.skip(reason="As of 3.1.0, you can no longer modify long_url links.")
 def test_modify_link_bad_long_url(client: Client) -> None:
     long_url = "https://example.com"
     long_url_b32 = str(base64.b32encode(bytes(long_url, "utf8")), "utf8")
@@ -247,14 +178,8 @@ def test_modify_link_bad_long_url(client: Client) -> None:
         assert resp.status_code == 204
 
     with dev_login(client, "user"):
-        resp = client.post(
-            "/api/v1/link",
-            json={
-                "title": "title",
-                "long_url": "https://rutgers.edu",
-            },
-        )
-        assert resp.status_code == 200
+        resp = create_link(client, "description", "https://rutgers.edu")
+        assert resp.status_code == 201
         link_id = resp.json["id"]
 
     with dev_login(client, "user"):
@@ -317,36 +242,46 @@ def test_validate_alias(client: Client, alias: str, expected: bool) -> None:
         (10, False),  # Wrong type
         ("aaa", False),  # Too short
         ("!!!!!!!!", False),  # Bad characters
+        ("!!!!32i5u!", False),  # Bad characters
+        ("asu3h@4th", False),  # Bad characters
+        ("asu3&*(%#@4", False),  # Bad characters
         ("link", False),  # Endpoint name
-        ("abcdef123", True),  # Should be valid
+        ("abcdef123", True),
+        ("abc.def123", True),
+        ("abc-d123", True),
+        ("ab___23", True),
+        ("10asodiuhadoias", True),
     ],
-)
-@pytest.mark.skip(
-    reason="Due to change in https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/merge_requests/271"
 )
 def test_create_bad_alias(client: Client, alias: str, expected: bool) -> None:
     with dev_login(client, "power"):
         resp = client.post(
             "/api/v1/link",
             json={
-                "title": "title",
+                "description": "title",
                 "long_url": "https://example.com",
-            },
-        )
-        assert resp.status_code == 200
-        link_id = resp.json["id"]
-
-        resp = client.post(
-            f"/api/v1/link/{link_id}/alias",
-            json={
                 "alias": alias,
             },
         )
 
         if expected:
-            assert resp.status_code == 200
+            assert resp.status_code == 201
         else:
             assert resp.status_code == 400
+
+
+def test_create_alias_no_power_user(client: Client) -> None:
+    with dev_login(client, "user"):
+        resp = client.post(
+            "/api/v1/link",
+            json={
+                "description": "title",
+                "long_url": "https://example.com",
+                "alias": "hitestest",
+            },
+        )
+
+        assert resp.status_code == 403
 
 
 def test_link_not_owner(client: Client) -> None:
@@ -355,25 +290,9 @@ def test_link_not_owner(client: Client) -> None:
     # Create a link as DEV_ADMIN
     with dev_login(client, "admin"):
         # Create a link and get its ID
-        resp = client.post(
-            "/api/v1/link",
-            json={
-                "title": "title",
-                "long_url": "https://example.com",
-            },
-        )
+        resp = create_link(client, "title", "example.com")
         assert 200 <= resp.status_code < 300
         link_id = resp.json["id"]
-
-        # Add an alias
-        resp = client.post(
-            f"/api/v1/link/{link_id}/alias",
-            json={
-                "description": "alias0",
-            },
-        )
-        assert 200 <= resp.status_code < 300
-        alias0 = resp.json["alias"]
 
     # Log in DEV_USER and check that we cannot view/edit the link or its alias
     with dev_login(client, "user"):
@@ -401,54 +320,12 @@ def test_link_not_owner(client: Client) -> None:
         resp = client.get(f"/api/v1/link/{link_id}/stats/browser")
         assert resp.status_code == 403
 
-        # Check that we cannot edit the link
-        resp = client.patch(
-            f"/api/v1/link/{link_id}",
-            json={
-                "title": "new title",
-            },
-        )
-        assert resp.status_code == 403
-
         # Check that we cannot clear visits
         resp = client.post(f"/api/v1/link/{link_id}/clear_visits")
         assert resp.status_code == 403
 
         # Check that we cannot delete the link
         resp = client.delete(f"/api/v1/link/{link_id}")
-        assert resp.status_code == 403
-
-        # Check that we cannot create a new alias
-        resp = client.post(
-            f"/api/v1/link/{link_id}/alias",
-            json={
-                "description": "alias",
-            },
-        )
-        assert resp.status_code == 403
-
-        # Check that we cannot get alias visits
-        resp = client.get(f"/api/v1/link/{link_id}/alias/{alias0}/visits")
-        assert resp.status_code == 403
-
-        # Check that we cannot get alias overall stats
-        resp = client.get(f"/api/v1/link/{link_id}/alias/{alias0}/stats")
-        assert resp.status_code == 403
-
-        # Check that we cannot get alias visit stats
-        resp = client.get(f"/api/v1/link/{link_id}/alias/{alias0}/stats/visits")
-        assert resp.status_code == 403
-
-        # Check that we cannot get alias GeoIP stats
-        resp = client.get(f"/api/v1/link/{link_id}/alias/{alias0}/stats/geoip")
-        assert resp.status_code == 403
-
-        # Check that we cannot get alias browser stats
-        resp = client.get(f"/api/v1/link/{link_id}/alias/{alias0}/stats/browser")
-        assert resp.status_code == 403
-
-        # Check that we cannot delete alias
-        resp = client.delete(f"/api/v1/link/{link_id}/alias/{alias0}")
         assert resp.status_code == 403
 
 
@@ -469,7 +346,7 @@ def test_modify_link_nonexistent(client: Client) -> None:
         resp = client.patch(
             "/api/v1/link/5fa30b6801cc0db00872569b",
             json={
-                "title": "new title",
+                "description": "new title",
             },
         )
         assert resp.status_code == 404
@@ -487,51 +364,19 @@ def test_clear_visits_nonexistent(client: Client) -> None:
         assert resp.status_code == 404
 
 
-@pytest.mark.skip(
-    reason="Due to change in https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/merge_requests/271"
-)
 def test_get_deleted(client: Client) -> None:
     with dev_login(client, "user"):
         resp = client.post(
             "/api/v1/link",
             json={
-                "title": "title",
+                "description": "title",
                 "long_url": "https://example.com",
             },
         )
-        assert resp.status_code == 200
+        assert resp.status_code == 201
         link_id = resp.json["id"]
-
-        # Create a random alias
-        resp = client.post(
-            f"/api/v1/link/{link_id}/alias",
-            json={
-                "description": "alias0",
-            },
-        )
-        assert resp.status_code == 200
         alias0 = resp.json["alias"]
 
-        # Delete the alias
-        resp = client.delete(f"/api/v1/link/{link_id}/alias/{alias0}")
-        assert resp.status_code == 204
-
-        # Check that the alias does not exist
-        resp = client.get(f"/api/v1/link/{link_id}")
-        assert resp.status_code == 200
-        assert resp.json["aliases"] == []
-
-    with dev_login(client, "admin"):
-        # Get the link info as admin, check that the alias exists
-        resp = client.get(f"/api/v1/link/{link_id}")
-        assert resp.status_code == 200
-        assert len(resp.json["aliases"]) == 1
-
-        info = resp.json["aliases"][0]
-        assert info["alias"] == alias0
-        assert info["deleted"] is True
-
-    with dev_login(client, "user"):
         # Delete the link
         resp = client.delete(f"/api/v1/link/{link_id}")
         assert resp.status_code == 204
@@ -541,15 +386,15 @@ def test_get_deleted(client: Client) -> None:
         assert resp.status_code == 404
 
     with dev_login(client, "admin"):
-        # Check that the link info is accessible as admin
+        # Get the link info as admin, check that the alias exists
         resp = client.get(f"/api/v1/link/{link_id}")
         assert resp.status_code == 200
-        assert resp.json["deleted"] is True
+
+        info = resp.json
+        assert info["alias"] == alias0
+        assert info["deleted"] is True
 
 
-@pytest.mark.skip(
-    reason="Due to change in https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/merge_requests/271"
-)
 def test_visits(client: Client) -> None:  # pylint: disable=too-many-statements
     def assert_visits(url: str, total_visits: int, unique_visits: int) -> None:
         resp = client.get(url)
@@ -561,71 +406,28 @@ def test_visits(client: Client) -> None:  # pylint: disable=too-many-statements
         resp = client.post(
             "/api/v1/link",
             json={
-                "title": "title",
+                "description": "title",
                 "long_url": "https://example.com",
             },
         )
-        assert resp.status_code == 200
+        assert resp.status_code == 201
         link_id = resp.json["id"]
-
-        # Create a random alias
-        resp = client.post(
-            f"/api/v1/link/{link_id}/alias",
-            json={
-                "description": "alias0",
-            },
-        )
-        assert resp.status_code == 200
         alias0 = resp.json["alias"]
 
-        # Create another random alias
-        resp = client.post(
-            f"/api/v1/link/{link_id}/alias",
-            json={
-                "description": "alias0",
-            },
-        )
-        assert resp.status_code == 200
-        alias1 = resp.json["alias"]
-
-        # Visit alias0 once
         resp = client.get(f"/{alias0}")
         assert resp.status_code == 302
-
-        # Visit alias1 twice
-        resp = client.get(f"/{alias1}")
-        assert resp.status_code == 302
-        resp = client.get(f"/{alias1}")
-        assert resp.status_code == 302
+        resp = client.get(f"/{alias0}")
+        resp = client.get(f"/{alias0}")
 
         # Get the link stats. Check that we have 3 visits and 1 unique visit
         assert_visits(f"/api/v1/link/{link_id}/stats", 3, 1)
-
-        # Get the stats for alias0. Check that we have 1 visit and 1 unique visit
-        assert_visits(f"/api/v1/link/{link_id}/alias/{alias0}/stats", 1, 1)
-
-        # Get the stats for alias1. Check that we have 2 visits and 1 unique visit
-        assert_visits(f"/api/v1/link/{link_id}/alias/{alias1}/stats", 2, 1)
 
         # Get the anonymized visits, make sure they make sense
         resp = client.get(f"/api/v1/link/{link_id}/visits")
         assert resp.status_code == 200
         assert all(visit["link_id"] == link_id for visit in resp.json["visits"])
         assert len(resp.json["visits"]) == 3
-        assert sum(1 for visit in resp.json["visits"] if visit["alias"] == alias0) == 1
-        assert sum(1 for visit in resp.json["visits"] if visit["alias"] == alias1) == 2
-
-        # Get the anonymized visits for alias0
-        resp = client.get(f"/api/v1/link/{link_id}/alias/{alias0}/visits")
-        assert resp.status_code == 200
-        assert all(visit["link_id"] == link_id for visit in resp.json["visits"])
-        assert all(visit["alias"] == alias0 for visit in resp.json["visits"])
-
-        # Get the anonymized visits for alias1
-        resp = client.get(f"/api/v1/link/{link_id}/alias/{alias1}/visits")
-        assert resp.status_code == 200
-        assert all(visit["link_id"] == link_id for visit in resp.json["visits"])
-        assert all(visit["alias"] == alias1 for visit in resp.json["visits"])
+        assert sum(1 for visit in resp.json["visits"] if visit["alias"] == alias0) == 3
 
         # Get the visit stats data
         resp = client.get(f"/api/v1/link/{link_id}/stats/visits")
@@ -640,47 +442,14 @@ def test_visits(client: Client) -> None:  # pylint: disable=too-many-statements
         resp = client.get(f"/api/v1/link/{link_id}/stats/browser")
         assert resp.status_code == 200
 
-        resp = client.get(f"/api/v1/link/{link_id}/alias/{alias0}/stats/visits")
-        assert resp.status_code == 200
-        assert len(resp.json["visits"]) == 1
-        assert resp.json["visits"][0]["first_time_visits"] == 1
-        assert resp.json["visits"][0]["all_visits"] == 1
-
-        resp = client.get(f"/api/v1/link/{link_id}/alias/{alias0}/stats/geoip")
-        assert resp.status_code == 200
-
-        resp = client.get(f"/api/v1/link/{link_id}/alias/{alias0}/stats/browser")
-        assert resp.status_code == 200
-
-        resp = client.get(f"/api/v1/link/{link_id}/alias/{alias1}/stats/visits")
-        assert resp.status_code == 200
-        assert len(resp.json["visits"]) == 1
-        assert resp.json["visits"][0]["first_time_visits"] == 1
-        assert resp.json["visits"][0]["all_visits"] == 2
-
         # Clear visits. Check that everything has gone back to 0
         resp = client.post(f"/api/v1/link/{link_id}/clear_visits")
         assert resp.status_code == 204
         assert_visits(f"/api/v1/link/{link_id}/stats", 0, 0)
-        assert_visits(f"/api/v1/link/{link_id}/alias/{alias0}/stats", 0, 0)
-        assert_visits(f"/api/v1/link/{link_id}/alias/{alias1}/stats", 0, 0)
 
         # When DNT is set, the right amount of unique visits are set
         resp = client.get(f"/{alias0}", headers={"DNT": "1"})
         assert resp.status_code == 302
-        resp = client.get(f"/{alias1}", headers={"DNT": "1"})
-        assert resp.status_code == 302
-        resp = client.get(f"/{alias1}", headers={"DNT": "1"})
-        assert resp.status_code == 302
-
-        # Get the link stats. Check that we have 3 visits and 1 unique visits
-        assert_visits(f"/api/v1/link/{link_id}/stats", 3, 1)
-
-        # Get the stats for alias0. Check that we have 1 visit and 1 unique visit
-        assert_visits(f"/api/v1/link/{link_id}/alias/{alias0}/stats", 1, 1)
-
-        # Get the stats for alias1. Check that we have 2 visits and 1 unique visits
-        assert_visits(f"/api/v1/link/{link_id}/alias/{alias1}/stats", 2, 1)
 
 
 def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-statements
@@ -700,7 +469,7 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
         # make sure Editors are viewers
         link, status = check_create(
             {
-                "title": "title",
+                "description": "title",
                 "long_url": "https://example.com",
                 "editors": [{"_id": "DEV_ADMIN", "type": "netid"}],
             }
@@ -711,7 +480,7 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
         # viewer not editor
         link, status = check_create(
             {
-                "title": "title",
+                "description": "title",
                 "long_url": "https://example.com",
                 "viewers": [{"_id": "DEV_ADMIN", "type": "netid"}],
             }
@@ -722,7 +491,7 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
         # deduplicate
         link, status = check_create(
             {
-                "title": "title",
+                "description": "title",
                 "long_url": "https://example.com",
                 "viewers": [
                     {"_id": "DEV_ADMIN", "type": "netid"},
@@ -736,7 +505,7 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
         # orgs must be objectid
         link, status = check_create(
             {
-                "title": "title",
+                "description": "title",
                 "long_url": "https://example.com",
                 "viewers": [{"_id": "DEV_ADMIN", "type": "org"}],
             }
@@ -747,7 +516,7 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
         # orgs disallows invalid org
         link, status = check_create(
             {
-                "title": "title",
+                "description": "title",
                 "long_url": "https://example.com",
                 "viewers": [{"_id": "5fbed163b7202e4c33f01a93", "type": "org"}],
             }
@@ -762,7 +531,7 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
 
         link, status = check_create(
             {
-                "title": "title",
+                "description": "title",
                 "long_url": "https://example.com",
                 "viewers": [{"_id": _id, "type": "org"}],
             }
@@ -772,15 +541,13 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
         assert len(link["editors"]) == 0
 
 
-@pytest.mark.skip(
-    reason="Due to change in https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/merge_requests/271"
-)
 def test_update_link_acl(client: Client) -> None:  # pylint: disable=too-many-statements
     """This test simulates the process of creating a link with ACL options and testing if the permissions works"""
 
     with dev_login(client, "facstaff"):
         resp = client.post(
-            "/api/v1/link", json={"title": "title", "long_url": "https://example.com"}
+            "/api/v1/link",
+            json={"description": "title", "long_url": "https://example.com"},
         )
         assert 200 <= resp.status_code <= 300
         link_id = resp.json["id"]
@@ -798,8 +565,8 @@ def test_update_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
             return resp.json, status
 
         owner = {"_id": "DEV_FACSTAFF", "type": "netid"}
-        person = {"_id": "roofus", "type": "netid"}
-        person2 = {"_id": "doofus", "type": "netid"}
+        person = {"_id": "DEV_roofus", "type": "netid"}
+        person2 = {"_id": "DEV_doofus", "type": "netid"}
         inv_org = {"_id": "not_obj_id", "type": "org"}
         inv_org2 = {"_id": "5fbed163b7202e4c33f01a93", "type": "org"}
 
@@ -887,9 +654,6 @@ def test_update_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
         assert len(link["editors"]) == 0
 
 
-@pytest.mark.skip(
-    reason="Due to change in https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/merge_requests/271"
-)
 def test_acl(client: Client) -> None:  # pylint: disable=too-many-statements
     link_id = ""
     alias = ""
@@ -908,7 +672,7 @@ def test_acl(client: Client) -> None:  # pylint: disable=too-many-statements
         resp = client.post(
             "/api/v1/link",
             json={
-                "title": "testlink2333",
+                "description": "testlink2333",
                 "long_url": "https://example.com",
                 "editors": [{"_id": "DEV_USER", "type": "netid"}],
                 "viewers": [{"_id": org_id, "type": "org"}],
@@ -916,13 +680,9 @@ def test_acl(client: Client) -> None:  # pylint: disable=too-many-statements
         )
         assert 200 <= resp.status_code <= 300
         link_id = resp.json["id"]
-
-        resp = client.post(f"/api/v1/link/{link_id}/alias", json={})
-        assert 200 <= resp.status_code <= 300
         alias = resp.json["alias"]
 
         resp = client.get(f"/api/v1/link/{link_id}")
-        print(resp.json)
 
     permissions_table = [
         {
@@ -979,9 +739,6 @@ def test_acl(client: Client) -> None:  # pylint: disable=too-many-statements
             resp = client.post(f"/api/v1/link/{link_id}/clear_visits")
             assert resp.status_code == 403
 
-            resp = client.delete(f"/api/v1/link/{link_id}/alias/{alias}")
-            assert resp.status_code == 403
-
             resp = client.patch(
                 f"/api/v1/link/{link_id}",
                 json={
@@ -995,7 +752,7 @@ def test_acl(client: Client) -> None:  # pylint: disable=too-many-statements
                 f"/api/v1/link/{link_id}/acl",
                 json={
                     "entry": {
-                        "_id": "roofus" + str(random.randrange(0, 1000)),
+                        "_id": "DEV_roofus" + str(random.randrange(0, 1000)),
                         "type": "netid",
                     },
                     "acl": "viewers",
@@ -1003,9 +760,6 @@ def test_acl(client: Client) -> None:  # pylint: disable=too-many-statements
                 },
             )
             assert_access(user["update_acl"], resp.status_code)
-
-            resp = client.post(f"/api/v1/link/{link_id}/alias", json={})
-            assert_access(user["create_alias"], resp.status_code)
 
             resp = client.get(f"/api/v1/link/{link_id}")
             assert_access(user["get"], resp.status_code)
@@ -1020,16 +774,6 @@ def test_acl(client: Client) -> None:  # pylint: disable=too-many-statements
                 resp = client.get(f"/api/v1/link/{link_id}/{endpoint}")
                 assert_access(user["view_stats"], resp.status_code)
 
-            for endpoint in [
-                "stats",
-                "stats/browser",
-                "stats/geoip",
-                "stats/visits",
-                "visits",
-            ]:
-                resp = client.get(f"/api/v1/link/{link_id}/alias/{alias}/{endpoint}")
-                assert_access(user["view_alias_stats"], resp.status_code)
-
 
 def test_case_sensitive_duplicate_aliases(client: Client) -> None:
     """
@@ -1038,64 +782,32 @@ def test_case_sensitive_duplicate_aliases(client: Client) -> None:
     """
 
     with dev_login(client, "admin"):
-        resp = client.post(
-            "/api/v1/link",
-            json={
-                "title": "valorant",
-                "long_url": "https://playvalorant.com/",
-            },
+        resp = create_link(
+            client, "title", "https://playvalorant.com/", alias="VALORANT"
         )
-        assert 200 <= resp.status_code < 300
-        link_id = resp.json["id"]
+        assert resp.status_code == 201
 
-        resp = client.post(
-            f"/api/v1/link/{link_id}/alias",
-            json={
-                "alias": "Valorant",
-                "description": "alias0",
-            },
+        resp = create_link(
+            client, "title", "https://playvalorant.com/", alias="valorant"
         )
-        assert 200 <= resp.status_code < 300
-        print(resp.json)
-        assert resp.json["alias"] == "valorant"
-
-        resp = client.post(
-            f"/api/v1/link/{link_id}/alias",
-            json={
-                "alias": "VALORANT",
-                "description": "alias0",
-            },
-        )
-
         assert resp.status_code == 400
 
 
-@pytest.mark.skip(
-    reason="Due to change in https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/merge_requests/271"
-)
-def test_revert_link(client: Client) -> None:
+def test_revert_expiration_link(client: Client) -> None:
     with dev_login(client, "user"):
         # Add link with expiration time set 500 milliseconds in the future
         expiration_time = datetime.now(timezone.utc) + timedelta(milliseconds=500)
         resp = client.post(
             "/api/v1/link",
             json={
-                "title": "title",
+                "description": "title",
                 "long_url": "https://sample.com",
                 "expiration_time": expiration_time.isoformat(),
             },
         )
 
-        assert resp.status_code == 200, "Failed to create link"
+        assert resp.status_code == 201, "Failed to create link"
         link_id = resp.json["id"]
-
-        # Create random alias
-        resp = client.post(
-            f"/api/v1/link/{link_id}/alias", json={"description": "aliasTest"}
-        )
-
-        assert resp.status_code == 200, "Failed to add alias"
-        alias = resp.json["alias"]
 
         # Restore link
         resp = client.post(f"/api/v1/link/{link_id}/revert")
@@ -1104,4 +816,4 @@ def test_revert_link(client: Client) -> None:
         # Fetch link and ensure expiration time field is set to None
         resp = client.get(f"/api/v1/link/{link_id}")
         assert resp.status_code == 200, "Failed to fetch link"
-        assert resp.json["expiration_time"] == None, "Expiration time is not None"
+        assert resp.json["expiration_time"] is None, "Expiration time is not None"

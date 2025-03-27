@@ -33,10 +33,7 @@ runappserver.py
 # pytest
 *pytest_cache*
 venv.old
-shrunk/srunk/static/shrunk_bootstrap.css
 .webassets-cache
-shrunk_css.css
-shrunk/shrunk/static/shrunk_*.js
 .sass-cache
 .#*
 \#*

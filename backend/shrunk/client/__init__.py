@@ -62,14 +62,14 @@ class ShrunkClient:
         self.users = UserClient(db=self.db)
 
     def _ensure_indexes(self) -> None:
-        self.db.urls.create_index([("aliases.alias", pymongo.ASCENDING)])
+        self.db.urls.create_index([("alias", pymongo.ASCENDING)])
         self.db.urls.create_index([("netid", pymongo.ASCENDING)])
         self.db.urls.create_index(
             [
-                ("title", pymongo.TEXT),
+                ("description", pymongo.TEXT),
                 ("long_url", pymongo.TEXT),
                 ("netid", pymongo.TEXT),
-                ("aliases.alias", pymongo.TEXT),
+                ("alias", pymongo.TEXT),
             ]
         )
 
