@@ -750,6 +750,12 @@ export function Stats(props: Props): React.ReactElement {
         <Typography.Text>
           If you are a developer and would like to incorporate it into your
           site, just add an image reference into your HTML or JavaScript file.
+          <Button
+            icon={<CopyOutlined />}
+            onClick={() => navigator.clipboard.writeText(trackingUrl)}
+          >
+            Copy
+          </Button>
           <pre>
             &lt;img src=&quot;{trackingUrl}&quot; style=&quot;display:none&quot;
             alt=&quot;&quot;/&gt;
