@@ -4,7 +4,7 @@ import { AdminStatsData, EndpointDatum, FeatureFlags } from '../interfaces/app';
 import { Release } from '../interfaces/releases';
 
 export async function getReleaseNotes(): Promise<Release[]> {
-  const resp = await fetch('/api/v1/release-notes', {
+  const resp = await fetch('/api/core/release-notes', {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
@@ -13,25 +13,25 @@ export async function getReleaseNotes(): Promise<Release[]> {
 }
 
 export async function getFeatureFlags(): Promise<FeatureFlags> {
-  const resp = await fetch('/api/v1/enabled');
+  const resp = await fetch('/api/core/enabled');
   const data = await resp.json();
   return data as FeatureFlags;
 }
 
 export async function getShrunkVersion(): Promise<string> {
-  const resp = await fetch('/api/v1/admin/app-version');
+  const resp = await fetch('/api/core/admin/app-version');
   const data = await resp.json();
   return data.version as string;
 }
 
 export async function getUserInfo() {
-  const response = await fetch('/api/v1/user/info');
+  const response = await fetch('/api/core/user/info');
   const data = await response.json();
   return data as any;
 }
 
 export async function getEndpointData() {
-  const response = await fetch('/api/v1/admin/stats/endpoint');
+  const response = await fetch('/api/core/admin/stats/endpoint');
   const data = await response.json();
   return data.stats as EndpointDatum[];
 }
@@ -48,7 +48,7 @@ export async function getAppStats(
     };
   }
 
-  const resp = await fetch('/api/v1/admin/stats/overview', {
+  const resp = await fetch('/api/core/admin/stats/overview', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(req),
@@ -59,7 +59,7 @@ export async function getAppStats(
 }
 
 export async function logout() {
-  const resp = await fetch('/api/v1/logout', {
+  const resp = await fetch('/api/core/logout', {
     method: 'POST',
   });
   const data = await resp.json();
@@ -73,7 +73,7 @@ export async function logout() {
 export async function unBlockLink(url: string) {
   const encodedUrl = base32.encode(url);
   const response = await fetch(
-    `/api/v1/role/blocked_url/entity/${encodedUrl}`,
+    `/api/core/role/blocked_url/entity/${encodedUrl}`,
     {
       method: 'DELETE',
     },
@@ -87,7 +87,7 @@ export async function unBlockLink(url: string) {
 export async function blockLink(url: string, comment?: string) {
   const encodedUrl = base32.encode(url);
   const response = await fetch(
-    `/api/v1/role/blocked_url/entity/${encodedUrl}`,
+    `/api/core/role/blocked_url/entity/${encodedUrl}`,
     {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -103,12 +103,12 @@ export async function blockLink(url: string, comment?: string) {
 }
 
 export async function getBlockedLinks() {
-  const resp = await fetch(`/api/v1/role/blocked_url/entity`);
+  const resp = await fetch(`/api/core/role/blocked_url/entity`);
   const data = resp.json();
   return data;
 }
 
 export async function getMOTD() {
-  const resp = await fetch(`/api/v1/motd`);
+  const resp = await fetch(`/api/core/motd`);
   return resp.text;
 }

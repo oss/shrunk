@@ -24,6 +24,6 @@ One example is to use their `<Flex/>` component instead of `<div className="flex
 If you are working on pages such as the landing or 404 page, Ant Design 5 is pretty unforgiving with the freedom you can do with design. If you know what you are doing design-wise, you are free to use any other
 component.
 
-## 5. Always add `/api/v1` before any backend request path
+## 5. Always add `/api/core` before any backend request path
 
-HTTPD has been configured to serve the flask application whenever the URL has `/api/v1` in it, to keep all backend routes in one place, keep any routes under `/api/v1`
+HTTPD has been configured to serve the flask application whenever the URL has `/api/core` in it, to keep all backend routes in one place, keep any routes under `/api/core`

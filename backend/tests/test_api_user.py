@@ -24,7 +24,7 @@ def test_default_options(client: Client, user: str) -> None:
         "queryString": "",
     }
     with dev_login(client, user):
-        resp = client.get("/api/v1/user/info")
+        resp = client.get("/api/core/user/info")
         assert resp.status_code == 200
         assert resp.json["filterOptions"] == defaultOptions
 
@@ -103,6 +103,6 @@ def test_update_user_options(
 ) -> None:
     with dev_login(client, user):
         resp = client.patch(
-            "/api/v1/user/options/filter", json={"filterOptions": updated_options}
+            "/api/core/user/options/filter", json={"filterOptions": updated_options}
         )
         assert resp.status_code == expected

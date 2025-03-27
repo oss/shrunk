@@ -10,7 +10,7 @@ from shrunk.util.decorators import require_login, request_schema
 
 __all__ = ["bp"]
 
-bp = Blueprint("role", __name__, url_prefix="/api/v1/role")
+bp = Blueprint("role", __name__, url_prefix="/api/core/role")
 
 
 @bp.route("", methods=["GET"])

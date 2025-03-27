@@ -13,18 +13,18 @@ def test_security_risk_client_method(client: Client) -> None:
 
     with dev_login(client, "admin"):
         # Create a link and get its message
-        resp = client.get(f"/api/v1/security/security_test/{unsafe_link_b32}")
+        resp = client.get(f"/api/core/security/security_test/{unsafe_link_b32}")
         assert resp.status_code == 200
         assert resp.json["detected"]
 
         # Creating a link with a regular link should not be forbidden
-        resp = client.get(f"/api/v1/security/security_test/{regular_link_b32}")
+        resp = client.get(f"/api/core/security/security_test/{regular_link_b32}")
         assert resp.status_code == 200
         assert not resp.json["detected"]
 
     with dev_login(client, "user"):
         # A user that is not an admin cannot use the security_test endpoint
-        resp = client.get(f"/api/v1/security/security_test/{unsafe_link_b32}")
+        resp = client.get(f"/api/core/security/security_test/{unsafe_link_b32}")
         assert resp.status_code == 403
 
 
@@ -40,7 +40,7 @@ def test_user_and_admin_security_link_abilities(
         # a user tries to shrink a link detected to be unsafe
         # this could be any user (admin, facstaff)
         resp = client.post(
-            "/api/v1/link",
+            "/api/core/link",
             json={"description": unsafe_link_title, "long_url": unsafe_link},
         )
 
@@ -52,7 +52,7 @@ def test_user_and_admin_security_link_abilities(
 
     with dev_login(client, "admin"):
         resp = client.post(
-            "/api/v1/link",
+            "/api/core/link",
             json={"description": unsafe_link_title, "long_url": unsafe_link},
         )
 
@@ -63,7 +63,7 @@ def test_user_and_admin_security_link_abilities(
         # when an admin specifies that a regular link should bypass
         # security, go through with the request
         resp = client.post(
-            "/api/v1/link",
+            "/api/core/link",
             json={
                 "description": unsafe_link_title,
                 "long_url": regular_link,
@@ -74,7 +74,7 @@ def test_user_and_admin_security_link_abilities(
         link_id = resp.json["id"]
 
         # test that the link was made successfully after forcing bypass
-        resp = client.get(f"/api/v1/link/{link_id}")
+        resp = client.get(f"/api/core/link/{link_id}")
         assert resp.status_code == 200
         assert resp.json["description"] == unsafe_link_title
 
@@ -82,7 +82,7 @@ def test_user_and_admin_security_link_abilities(
 @pytest.mark.parametrize(("permission"), ["user", "facstaff", "power"])
 def test_security_api_permissions(client: Client, permission: str) -> None:
     with dev_login(client, permission):
-        resp = client.get("/api/v1/security/pending_links")
+        resp = client.get("/api/core/security/pending_links")
 
         # regular users cannot fetch pending list
         assert resp.status_code == 403
@@ -94,19 +94,19 @@ def test_security_api_permissions(client: Client, permission: str) -> None:
         # we just need an objectID to work with in order to call endpoints
         random_link = "http://google.com"
         resp = client.post(
-            "/api/v1/link", json={"description": "random", "long_url": random_link}
+            "/api/core/link", json={"description": "random", "long_url": random_link}
         )
         link_id = resp.json["id"]
 
-        resp = client.patch(f"/api/v1/security/promote/{link_id}")
+        resp = client.patch(f"/api/core/security/promote/{link_id}")
         assert resp.status_code == 403
-        resp = client.get(f"/api/v1/security/status/{link_id}")
+        resp = client.get(f"/api/core/security/status/{link_id}")
         assert resp.status_code == 403
-        resp = client.patch(f"/api/v1/security/reject/{link_id}")
+        resp = client.patch(f"/api/core/security/reject/{link_id}")
         assert resp.status_code == 403
-        resp = client.patch(f"/api/v1/security/toggle")
+        resp = client.patch(f"/api/core/security/toggle")
         assert resp.status_code == 403
-        resp = client.get(f"/api/v1/security/status")
+        resp = client.get(f"/api/core/security/status")
         assert resp.status_code == 403
 
 
@@ -121,7 +121,7 @@ def test_verification_process(client: Client) -> None:
         assert resp.status_code == 403
 
     with dev_login(client, "admin"):
-        resp = client.get("/api/v1/security/pending_links")
+        resp = client.get("/api/core/security/pending_links")
         assert resp.status_code == 200
         assert resp.json["pendingLinks"]
         assert len(resp.json["pendingLinks"]) == 2
@@ -139,38 +139,38 @@ def test_verification_process(client: Client) -> None:
         assert second_unsafe_link_document["long_url"] == second_unsafe_link
 
         # check that default status is pending for both unsafe links
-        resp = client.get(f"/api/v1/security/status/{unsafe_link_id}")
+        resp = client.get(f"/api/core/security/status/{unsafe_link_id}")
         assert resp.status_code == 200
         assert resp.json["status"] == "pending"
-        resp = client.get(f"/api/v1/security/status/{second_unsafe_link_id}")
+        resp = client.get(f"/api/core/security/status/{second_unsafe_link_id}")
         assert resp.status_code == 200
         assert resp.json["status"] == "pending"
 
         # test that the link hasn't made through as a regular link
         # via a call to the link API
-        resp = client.get(f"/api/v1/link/{unsafe_link_id}")
+        resp = client.get(f"/api/core/link/{unsafe_link_id}")
         assert resp.status_code == 404
 
         # check that pending link status promotion works
-        resp = client.patch(f"/api/v1/security/promote/{unsafe_link_id}")
+        resp = client.patch(f"/api/core/security/promote/{unsafe_link_id}")
         assert resp.status_code == 200
-        resp = client.get(f"/api/v1/security/status/{unsafe_link_id}")
+        resp = client.get(f"/api/core/security/status/{unsafe_link_id}")
         assert resp.status_code == 200
         assert resp.json["status"] == "approved"
 
         # promoted unsafe link cannot be rejected
-        resp = client.patch(f"/api/v1/security/reject/{unsafe_link_id}")
+        resp = client.patch(f"/api/core/security/reject/{unsafe_link_id}")
         assert resp.status_code == 409
 
         # =======================Second Unsafe Link==================
 
         # test rejection of a pending link
-        resp = client.patch(f"/api/v1/security/reject/{second_unsafe_link_id}")
+        resp = client.patch(f"/api/core/security/reject/{second_unsafe_link_id}")
         assert resp.status_code == 200
-        resp = client.get(f"/api/v1/security/status/{second_unsafe_link_id}")
+        resp = client.get(f"/api/core/security/status/{second_unsafe_link_id}")
         assert resp.status_code == 200
         assert resp.json["status"] == "denied"
-        resp = client.get(f"/api/v1/link/{second_unsafe_link_id}")
+        resp = client.get(f"/api/core/link/{second_unsafe_link_id}")
         assert resp.status_code == 404
 
 
@@ -180,37 +180,37 @@ def test_toggle_security(client: Client) -> None:
 
     with dev_login(client, "admin"):
         # we can get the status of security measures
-        resp = client.get("/api/v1/security/status")
+        resp = client.get("/api/core/security/status")
         assert resp.status_code == 200
         assert resp.get_data(as_text=True) == "ON"
 
         # toggling security measures works
-        resp = client.patch("/api/v1/security/toggle")
+        resp = client.patch("/api/core/security/toggle")
         assert resp.status_code == 200
-        resp = client.get("/api/v1/security/status")
+        resp = client.get("/api/core/security/status")
         assert resp.status_code == 200
         assert resp.get_data(as_text=True) != "ON"
 
     with dev_login(client, "user"):
         # when security measures are off, users can post unsafe links
         resp = client.post(
-            "/api/v1/link",
+            "/api/core/link",
             json={"description": unsafe_link_title, "long_url": unsafe_link},
         )
         assert resp.status_code == 201
 
     with dev_login(client, "admin"):
-        resp = client.patch("/api/v1/security/toggle")
+        resp = client.patch("/api/core/security/toggle")
         assert resp.status_code == 200
 
-        resp = client.get("/api/v1/security/status")
+        resp = client.get("/api/core/security/status")
         assert resp.status_code == 200
         assert resp.get_data(as_text=True) == "ON"
 
     with dev_login(client, "user"):
         # when security measures are toggled on, users cannot post unsafe links
         resp = client.post(
-            "/api/v1/link",
+            "/api/core/link",
             json={
                 "description": "IM GOING TO HACK RUTGERS LMAO !!!!!!!!! WOOOOOOo",
                 "long_url": unsafe_link,

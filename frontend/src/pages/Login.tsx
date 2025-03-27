@@ -2,8 +2,7 @@ import { Button, Card, Col, Flex, Row, Select, Space } from 'antd/lib';
 import { LogInIcon } from 'lucide-react';
 import React, { useState } from 'react';
 import { FeatureFlags, useFeatureFlags } from '../contexts/FeatureFlags';
-import BlurFade from '../ext/components/ui/blur-fade';
-import { BorderBeam } from '../ext/components/ui/border-beam';
+import BlurFade from '../components/magicui/blur-fade';
 import Dashboard from './Dashboard';
 
 interface LoginType {
@@ -19,16 +18,16 @@ export default function Login() {
   >('default');
 
   const loginTypes: { [key: string]: LoginType } = {
-    user: { href: '/api/v1/devlogins/user', loginMessage: 'DEV_USER' },
+    user: { href: '/api/core/devlogins/user', loginMessage: 'DEV_USER' },
     facstaff: {
-      href: '/api/v1/devlogins/facstaff',
+      href: '/api/core/devlogins/facstaff',
       loginMessage: 'DEV_FACSTAFF',
     },
     powerUser: {
-      href: '/api/v1/devlogins/power',
+      href: '/api/core/devlogins/power',
       loginMessage: 'DEV_POWER',
     },
-    admin: { href: '/api/v1/devlogins/admin', loginMessage: 'DEV_ADMIN' },
+    admin: { href: '/api/core/devlogins/admin', loginMessage: 'DEV_ADMIN' },
     default: { href: '/login', loginMessage: 'PROD_SAML' },
   };
 
@@ -218,8 +217,6 @@ export default function Login() {
                 userPrivileges={new Set<string>()}
                 netid=""
               />
-
-              <BorderBeam duration={12} delay={9} />
             </Card>
           </BlurFade>
         </Col>

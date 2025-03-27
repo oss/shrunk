@@ -22,7 +22,7 @@ export const serverValidateReservedAlias = async (
     return;
   }
   const result = await fetch(
-    `/api/v1/link/validate_reserved_alias/${base32.encode(value)}`,
+    `/api/core/link/validate_reserved_alias/${base32.encode(value)}`,
   ).then((resp) => resp.json());
   if (!result.valid && value.length >= 5) {
     throw new Error(result.reason);
@@ -45,7 +45,7 @@ export const serverValidateDuplicateAlias = async (
     return;
   }
   const result = await fetch(
-    `/api/v1/link/validate_duplicate_alias/${base32.encode(value)}`,
+    `/api/core/link/validate_duplicate_alias/${base32.encode(value)}`,
   ).then((resp) => resp.json());
   if (!result.valid && value.length >= 5) {
     throw new Error(result.reason);
@@ -68,7 +68,7 @@ export const serverValidateLongUrl = async (
     return;
   }
   const result = await fetch(
-    `/api/v1/link/validate_long_url/${base32.encode(value)}`,
+    `/api/core/link/validate_long_url/${base32.encode(value)}`,
   ).then((resp) => resp.json());
   if (!result.valid) {
     throw new Error(result.reason);
@@ -90,7 +90,7 @@ export const serverValidateNetId = async (
   if (!value) {
     return;
   }
-  const result = await fetch('/api/v1/org/validate_netid', {
+  const result = await fetch('/api/core/org/validate_netid', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ netid: value }),
@@ -108,7 +108,7 @@ export const serverValidateOrgName = async (
   if (!value) {
     return;
   }
-  const result = await fetch('/api/v1/org/validate_name', {
+  const result = await fetch('/api/core/org/validate_name', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name: value }),

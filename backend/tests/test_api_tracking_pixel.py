@@ -11,7 +11,7 @@ def tracking_pixel_data(client: Client):
         assert_is_response_valid(resp)
         link_id = resp.json["id"]
 
-        resp = client.get(f"/api/v1/link/{link_id}")
+        resp = client.get(f"/api/core/link/{link_id}")
         assert resp.status_code == 200
 
         return {
@@ -34,7 +34,7 @@ def test_create_tracking_pixel_gif(client: Client):
         assert_is_response_valid(resp)
         link_id = resp.json["id"]
 
-        resp = client.get(f"/api/v1/link/{link_id}")
+        resp = client.get(f"/api/core/link/{link_id}")
         assert resp.status_code == 200
         assert resp.json["alias"].endswith(".gif")
 
@@ -42,7 +42,7 @@ def test_create_tracking_pixel_gif(client: Client):
 def test_get_tracking_pixel(client: Client, tracking_pixel_data):
     """Test that uses the created tracking pixel"""
     with dev_login(client, "user"):
-        resp = client.get(f"/api/v1/t/{tracking_pixel_data['alias']}")
+        resp = client.get(f"/api/core/t/{tracking_pixel_data['alias']}")
         assert resp.status_code == 200
         assert resp.headers["X-Image-Name"] == "pixel.png"
 

@@ -13,7 +13,7 @@ import pkg_resources
 
 __all__ = ["bp"]
 
-bp = Blueprint("admin", __name__, url_prefix="/api/v1/admin")
+bp = Blueprint("admin", __name__, url_prefix="/api/core/admin")
 
 
 @bp.route("/app-version", methods=["GET"])
