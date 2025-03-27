@@ -26,15 +26,7 @@ import {
 } from '../api/organization';
 import { Organization } from '../interfaces/organizations';
 
-/**
- * Props for the [[Orgs]] component
- * @interface
- */
 interface Props {
-  /**
-   * The user's privileges
-   * @property
-   */
   userPrivileges: Set<string>;
 }
 

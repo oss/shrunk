@@ -1,15 +1,10 @@
-/**
- * Implements the [[ManageOrg]] component
- * @packageDocumentation
- */
-
 import {
   Button,
   Col,
+  Drawer,
   Dropdown,
   Form,
   Input,
-  Modal,
   Popconfirm,
   Row,
   Space,
@@ -38,16 +33,10 @@ import {
   removeMemberFromOrganization,
   renameOrganization,
   setAdminStatusOrganization,
-} from '../../api/organization';
-import { serverValidateOrgName } from '../../api/validators';
-import {
-  Organization,
-  OrganizationMember,
-} from '../../interfaces/organizations';
-import CollaboratorModal, {
-  Collaborator,
-} from '../../modals/CollaboratorModal';
-import { Drawer } from 'antd';
+} from '../api/organization';
+import { serverValidateOrgName } from '../api/validators';
+import { Organization, OrganizationMember } from '../interfaces/organizations';
+import CollaboratorModal, { Collaborator } from '../modals/CollaboratorModal';
 
 type RouteParams = {
   id: string;
