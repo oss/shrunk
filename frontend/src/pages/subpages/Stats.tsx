@@ -689,7 +689,7 @@ export function Stats(props: Props): React.ReactElement {
   const isDev = process.env.NODE_ENV === 'development';
   const protocol = isDev ? 'http' : 'https';
   const trackingUrl = linkInfo
-    ? `${protocol}://${document.location.host}/${linkInfo.aliases[0].alias}`
+    ? `${protocol}://${document.location.host}/api/v1/t/${linkInfo.aliases[0].alias}`
     : '';
 
   const statTabs: Record<string, React.ReactNode> = {
