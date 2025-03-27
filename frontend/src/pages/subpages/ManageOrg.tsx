@@ -20,6 +20,7 @@ import {
 import type { FormInstance } from 'antd/lib/form';
 import dayjs from 'dayjs';
 import {
+  CodeIcon,
   EllipsisIcon,
   SettingsIcon,
   TrashIcon,
@@ -195,6 +196,11 @@ function ManageOrgBase({
                     icon: <SettingsIcon />,
                     onClick: onEditOrganization,
                   },
+                  {
+                    key: 'settings_developer_organization',
+                    label: 'Access Tokens',
+                    icon: <CodeIcon />,
+                  },
                   { type: 'divider' },
                   {
                     key: 'leave_organization',
@@ -278,6 +284,20 @@ function ManageOrgBase({
                   <Button type="primary" htmlType="submit">
                     Save
                   </Button>
+                </Form.Item>
+              </Col>
+              <Col span={24}>
+                <Form.Item label="Once you delete an organization, there is no going back. Please be certain.">
+                  <Popconfirm
+                    title="Are you sure you want to delete this organization?"
+                    onConfirm={onDeleteOrganization}
+                    okText="Yes"
+                    cancelText="No"
+                  >
+                    <Button danger icon={<TrashIcon />}>
+                      Delete
+                    </Button>
+                  </Popconfirm>
                 </Form.Item>
               </Col>
               <Col span={24}>
