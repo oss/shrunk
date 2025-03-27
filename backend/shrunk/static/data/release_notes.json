@@ -16,10 +16,6 @@
         {
           "text": "Backend tests are able to be run locally on the developer's machine with hot reloading using Docker",
           "contributors": ["ah1371"]
-        },
-        {
-          "text": "Expose the backend API for external programs to wield",
-          "contributors": ["ah1371"]
         }
       ],
       "improvements": [
@@ -71,6 +67,10 @@
         },
         {
           "text": "Code quality checks are now the last stage of the CI/CD pipeline",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Private API routes are now under \"core\" instead of \"v1\"",
           "contributors": ["ah1371"]
         }
       ],
