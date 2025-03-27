@@ -67,6 +67,10 @@
         {
           "text": "Private API routes are now under \"core\" instead of \"v1\"",
           "contributors": ["ah1371"]
+        },
+        {
+          "text": "Individual organization management page now has a more consistent layout with the rest of the site",
+          "contributors": ["ah1371"]
         }
       ],
       "fixes": [
