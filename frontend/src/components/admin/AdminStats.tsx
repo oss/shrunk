@@ -22,7 +22,6 @@ import DatePicker from '../date-picker';
 
 import { getAppStats, getEndpointData, getShrunkVersion } from '../../api/app';
 import { AdminStatsData, EndpointDatum } from '../../interfaces/app';
-import { MENU_ITEMS } from '../../pages/subpages/StatsCommon';
 
 const { RangePicker } = DatePicker;
 
@@ -81,7 +80,6 @@ export default function AdminStats(): React.ReactElement {
   const options = {
     chart: { type: 'bar' },
     title: { text: 'Endpoint visits' },
-    exporting: { buttons: { contextButton: { menuItems: MENU_ITEMS } } },
     xAxis: {
       categories: endpointData.map((datum) => datum.endpoint),
       title: { text: 'Endpoint' },

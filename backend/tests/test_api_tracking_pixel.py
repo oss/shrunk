@@ -1,28 +1,50 @@
 import pytest
 from werkzeug.test import Client
-from util import dev_login, create_tracking_pixel
+from util import dev_login, create_tracking_pixel, assert_is_response_valid
 
 
-def test_tracking_pixel(client: Client) -> None:
-    """
-    Creates a tracking pixel link using link creation system
-    """
-
+@pytest.fixture
+def tracking_pixel_data(client: Client):
+    """Fixture that creates tracking pixel and returns its data"""
     with dev_login(client, "user"):
-        resp = create_tracking_pixel(client, "Tracking Pixel")
-
-        assert 200 <= resp.status_code < 300
+        resp = create_tracking_pixel(client, "Tracking Pixel", ".png")
+        assert_is_response_valid(resp)
         link_id = resp.json["id"]
 
         resp = client.get(f"/api/v1/link/{link_id}")
-        alias0 = resp.json["aliases"][0]["alias"]
-
-        assert 200 <= resp.status_code < 300
-        assert resp.json["title"] == "Tracking Pixel"
-
-        resp = client.get(f"/api/v1/t/{alias0}")
         assert resp.status_code == 200
-        assert resp.headers["X-Image-Name"] == "pixel.gif"
 
-        resp = client.get(f"/{alias0}")
+        return {
+            "link_id": link_id,
+            "alias": resp.json["alias"],
+            "description": resp.json["description"],
+        }
+
+
+def test_create_tracking_pixel_png(tracking_pixel_data):
+    """Test that verifies the creation worked"""
+    assert tracking_pixel_data["description"] == "Tracking Pixel"
+    assert tracking_pixel_data["alias"].endswith(".png")
+
+
+def test_create_tracking_pixel_gif(client: Client):
+    """Test that verifies the creation worked"""
+    with dev_login(client, "user"):
+        resp = create_tracking_pixel(client, "Tracking Pixel", ".gif")
+        assert_is_response_valid(resp)
+        link_id = resp.json["id"]
+
+        resp = client.get(f"/api/v1/link/{link_id}")
+        assert resp.status_code == 200
+        assert resp.json["alias"].endswith(".gif")
+
+
+def test_get_tracking_pixel(client: Client, tracking_pixel_data):
+    """Test that uses the created tracking pixel"""
+    with dev_login(client, "user"):
+        resp = client.get(f"/api/v1/t/{tracking_pixel_data['alias']}")
+        assert resp.status_code == 200
+        assert resp.headers["X-Image-Name"] == "pixel.png"
+
+        resp = client.get(f"/{tracking_pixel_data['alias']}")
         assert resp.status_code == 404

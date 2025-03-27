@@ -90,6 +90,10 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
     const values: CreateLinkDrawerValues =
       await formRef.current!.validateFields();
 
+    if (values.title === undefined && !values.is_tracking_pixel_link) {
+      values.title = 'No description provided';
+    }
+
     setLoading(true);
     try {
       await createLink(
@@ -154,14 +158,6 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
       >
         <Row gutter={16} justify="end">
           <Col span={24}>
-            <Form.Item
-              label="Title"
-              name="title"
-              rules={[{ required: true, message: 'Please input a title.' }]}
-            >
-              <Input />
-            </Form.Item>
-
             {!isCreatingTrackingPixel && (
               <Form.Item
                 label="Original URL"
@@ -172,13 +168,13 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
                   { validator: serverValidateLongUrl },
                 ]}
               >
-                <Input />
+                <Input placeholder="https://example.rutgers.edu" />
               </Form.Item>
             )}
             {!isCreatingTrackingPixel && mayUseCustomAliases && (
               <Form.Item required label="New Shortened URL" name="alias">
                 <Input
-                  addonBefore="http://go.rutgers.edu/"
+                  addonBefore={`${document.location.host}/`}
                   placeholder="If left blank, it will be randomized"
                 />
               </Form.Item>
@@ -186,6 +182,10 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
           </Col>
           <Col span={24}>
             <Typography.Title level={4}>Advanced Options</Typography.Title>
+
+            <Form.Item label="Description" name="title">
+              <Input.TextArea />
+            </Form.Item>
           </Col>
           <Col span={12}>
             {!isCreatingTrackingPixel &&

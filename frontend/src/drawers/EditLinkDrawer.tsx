@@ -16,7 +16,7 @@ import {
   Space,
 } from 'antd/lib';
 import dayjs from 'dayjs';
-import { CircleAlertIcon, Link2Icon, SaveIcon, TrashIcon } from 'lucide-react';
+import { CircleAlertIcon, SaveIcon, TrashIcon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 import {
@@ -24,10 +24,9 @@ import {
   isValidAlias,
   reverLinkExpirationDate,
 } from '../api/links';
-import { serverValidateLongUrl, serverValidateNetId } from '../api/validators';
-import AliasesForm from '../components/AliasesForm';
+import { serverValidateNetId } from '../api/validators';
 import DatePicker from '../components/date-picker';
-import { Alias, EditLinkValues, Link } from '../interfaces/link';
+import { EditLinkValues, Link } from '../interfaces/link';
 
 /**
  * Props of the [[EditLinkDrawer]] component
@@ -84,15 +83,12 @@ export interface Props {
  */
 export const EditLinkDrawer: React.FC<Props> = (props) => {
   const [form] = Form.useForm();
-  const mayEditAliases =
-    props.userPrivileges.has('power_user') || props.userPrivileges.has('admin');
   const initialValues: any = {
     ...props.linkInfo,
     expiration_time:
       props.linkInfo.expiration_time === null
         ? null
         : dayjs(props.linkInfo.expiration_time),
-    aliases: props.linkInfo.aliases.filter((alias: Alias) => !alias.deleted),
   };
   const mayEditOwner =
     props.netid === initialValues.owner || props.userPrivileges.has('admin');
@@ -106,16 +102,13 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
     props.linkInfo.expiration_time !== null &&
     new Date(props.linkInfo.expiration_time) < new Date(currDate.toISOString());
 
-  const [aliasInUse, setAliasInUse] = useState(false);
+  const [isRestorable, setIsRestorable] = useState(false);
   useEffect(() => {
-    props.linkInfo.aliases.map(
-      async (alias: { description: string; alias: string }) => {
-        if (await isValidAlias(alias.alias!)) {
-          setAliasInUse(true);
-        }
-      },
-    );
+    isValidAlias(props.linkInfo.alias).then((value: boolean) => {
+      setIsRestorable(value);
+    });
   });
+
   const handleChange = (e: any) => {
     setOwnerInputVal(e.target.value);
   };
@@ -175,7 +168,7 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
       }}
       extra={
         <Space>
-          {isExpired && !aliasInUse && (
+          {isExpired && !isRestorable && (
             <Button onClick={handleRevert}>Restore</Button>
           )}
           <Popconfirm
@@ -204,33 +197,9 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
       >
         <Row gutter={16}>
           <Col span={24}>
-            <Form.Item
-              label="Title"
-              name="title"
-              rules={[{ required: true, message: 'Please input a title.' }]}
-            >
-              <Input placeholder="Title" />
+            <Form.Item label="Description" name="description">
+              <Input.TextArea />
             </Form.Item>
-
-            {isTrackingPixelLink ? (
-              <></>
-            ) : (
-              <Form.Item
-                label="URL"
-                name="long_url"
-                rules={[
-                  { required: true, message: 'Please input a URL.' },
-                  { type: 'url', message: 'Please enter a valid URL.' },
-                  { validator: serverValidateLongUrl },
-                ]}
-              >
-                <Input
-                  placeholder="Long URL"
-                  prefix={<Link2Icon />}
-                  disabled={isTrackingPixelLink}
-                />
-              </Form.Item>
-            )}
           </Col>
           <Col span={12}>
             <Form.Item
@@ -242,36 +211,30 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
               ]}
             >
               <Input
-                placeholder="Link owner"
+                placeholder="NetID"
                 onChange={handleChange}
                 disabled={!mayEditOwner}
               />
             </Form.Item>
-
-            <Form.Item label="Expiration time" name="expiration_time">
-              <DatePicker
-                format="YYYY-MM-DD HH:mm:ss"
-                disabledDate={(current) =>
-                  current && current < dayjs().startOf('day')
-                }
-                showTime={{
-                  defaultValue: props.linkInfo.expiration_time
-                    ? dayjs(props.linkInfo.expiration_time)
-                    : undefined,
-                }}
-              />
-            </Form.Item>
           </Col>
-          <Col span={12}>
-            {!isTrackingPixelLink && (
-              <AliasesForm
-                mayUseCustomAliases={mayEditAliases}
-                initialAliases={initialValues.aliases.map(
-                  (alias: any) => alias.alias,
-                )}
-              />
-            )}
-          </Col>
+          {!isTrackingPixelLink && (
+            <Col span={12}>
+              <Form.Item label="Expiration time" name="expiration_time">
+                <DatePicker
+                  className="tw-w-full"
+                  format="YYYY-MM-DD HH:mm:ss"
+                  disabledDate={(current) =>
+                    current && current < dayjs().startOf('day')
+                  }
+                  showTime={{
+                    defaultValue: props.linkInfo.expiration_time
+                      ? dayjs(props.linkInfo.expiration_time)
+                      : undefined,
+                  }}
+                />
+              </Form.Item>
+            </Col>
+          )}{' '}
         </Row>
       </Form>
     </Drawer>

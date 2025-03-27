@@ -101,7 +101,7 @@ class SecurityClient:
             raise InvalidStateChange
 
         args = [
-            d["title"],
+            d["description"],
             d["long_url"],
             d["expiration_time"],
             d["netid"],
@@ -115,7 +115,7 @@ class SecurityClient:
             editors=d["editors"],
             bypass_security_measures=True,
         )
-        self.other_clients.links.create_random_alias(link_id, "")
+        self.other_clients.links.create_random_alias(link_id)
 
         return link_id
 

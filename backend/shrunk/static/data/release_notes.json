@@ -42,6 +42,32 @@
         {
           "text": "Filter settings now persist between login sessions",
           "contributors": ["ak2399"]
+        },
+        {
+          "text": "All links no longer support multiple aliases, links that had multiple aliases have been sharded into having only one",
+          "contributors": ["ah1371"],
+          "warning": true
+        },
+        {
+          "text": "Title is no longer a valid nor required field for links and tracking pixels, existing records with titles have been converted to descriptions",
+          "contributors": ["ah1371"],
+          "warning": true
+        },
+        {
+          "text": "Creating a link now does not require calling two routes",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Remove route to search links by their exact title value (this route was only used during testing)",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Page dedicated for links and tracking pixels readjusted for new charts",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Code quality checks are now the last stage of the CI/CD pipeline",
+          "contributors": ["ah1371"]
         }
       ],
       "fixes": [
@@ -51,6 +77,19 @@
         },
         {
           "text": "404 page is returned when attempting to fetch an unavailable link",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Creating a new link with an alias that was previously deleted no longer resurrects old data associated with the previously deleted link",
+          "contributors": ["ah1371"],
+          "warning": true
+        },
+        {
+          "text": "Fix rare edgecase where creating a shortened link does not create an alias",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Add a couple missing test cases regarding link creation",
           "contributors": ["ah1371"]
         }
       ]

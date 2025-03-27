@@ -50,11 +50,17 @@ class SearchClient:
                                         "if": {
                                             "$or": [
                                                 {"$eq": ["$title", query["query"]]},
+                                                {
+                                                    "$eq": [
+                                                        "$description",
+                                                        query["query"],
+                                                    ]
+                                                },
                                                 {"$eq": ["$long_url", query["query"]]},
                                                 {"$eq": ["$netid", query["query"]]},
                                                 {
                                                     "$eq": [
-                                                        "$aliases.alias",
+                                                        "$alias",
                                                         query["query"],
                                                     ]
                                                 },
@@ -148,8 +154,6 @@ class SearchClient:
         sort_order = 1 if query["sort"]["order"] == "ascending" else -1
         if query["sort"]["key"] == "created_time":
             sort_key = "timeCreated"
-        elif query["sort"]["key"] == "title":
-            sort_key = "title"
         elif query["sort"]["key"] == "visits":
             sort_key = "visits"
         elif query["sort"]["key"] == "relevance":
@@ -245,7 +249,7 @@ class SearchClient:
 
             prepared = {
                 "id": res["_id"],
-                "title": res["title"],
+                "description": res["description"],
                 "long_url": res["long_url"],
                 "created_time": res["timeCreated"],
                 "expiration_time": expiration_time,
@@ -253,9 +257,7 @@ class SearchClient:
                 "domain": res.get("domain", None),
                 "unique_visits": res.get("unique_visits", 0),
                 "owner": res["netid"],
-                "aliases": [
-                    alias for alias in res["aliases"] if is_alias_visible(alias)
-                ],
+                "alias": res["alias"],
                 "is_expired": res["is_expired"],
                 "may_edit": self.client.links.may_edit(res["_id"], user_netid),
                 "is_tracking_pixel_link": (

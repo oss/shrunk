@@ -7,26 +7,25 @@ import {
   Button,
   Card,
   Col,
-  Descriptions,
   Row,
-  Select,
   Space,
-  Spin,
   Statistic,
-  Table,
   Tag,
   Typography,
   message,
+  Tooltip,
+  Select,
+  Descriptions,
+  QRCode,
+  QRCodeProps,
+  Flex,
 } from 'antd/lib';
 import dayjs from 'dayjs';
-import Highcharts from 'highcharts';
-import HighchartsReact from 'highcharts-react-official';
 import {
   CloudDownloadIcon,
   CopyIcon,
-  GlobeIcon,
+  Download,
   PencilIcon,
-  Share2Icon,
   UsersIcon,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
@@ -34,20 +33,18 @@ import { useLocation } from 'react-router-dom';
 
 import { downloadVisits } from '../../api/csv';
 import {
-  Alias,
   BrowserStats,
   Link,
   LinkSharedWith,
   OverallStats,
-  PieDatum,
-  VisitDatum,
   VisitStats,
+  EditLinkValues,
+  StatChart,
+  GeoipStats,
 } from '../../interfaces/link';
-import { GeoipChart, GeoipStats, MENU_ITEMS } from './StatsCommon';
 
 import {
   addCollaborator,
-  deleteAlias,
   editLink,
   getLink,
   getLinkBrowserStats,
@@ -55,20 +52,21 @@ import {
   getLinkStats,
   getLinkVisitsStats,
   removeCollaborator,
-  updateAlias,
 } from '../../api/links';
-import { EditLinkDrawer, EditLinkValues } from '../../drawers/EditLinkDrawer';
-import { daysBetween } from '../../lib/utils';
+import { EditLinkDrawer } from '../../drawers/EditLinkDrawer';
+import {
+  daysBetween,
+  getLinkFromAlias,
+  getRedirectFromAlias,
+} from '../../lib/utils';
 import CollaboratorModal, {
   Collaborator,
 } from '../../modals/CollaboratorModal';
-import ShareModal from '../../modals/ShareModal';
 import ErrorPage from '../ErrorPage';
+import VisitsChart from '../../components/link/visits-chart';
+import GeoipChart from '../../components/link/world-chart';
+import ShrunkPieChart, { processData } from '../../components/pie-chart';
 
-/**
- * Props for the [[Stats]] component
- * @interface
- */
 export interface Props {
   /**
    * The ID of the link
@@ -80,56 +78,7 @@ export interface Props {
   userPrivileges: Set<string>;
 }
 
-/**
- * The [[VisitsChart]] component displays a line graph of total visits and unique
- * visits over time
- * @param props The props
- */
-const VisitsChart: React.FC<{ visitStats: VisitStats | null }> = (props) => {
-  if (props.visitStats === null) {
-    return <Spin />;
-  }
-
-  const { visits } = props.visitStats;
-  const getMsSinceEpoch = (datum: VisitDatum) =>
-    Date.UTC(datum._id.year, datum._id.month - 1, datum._id.day);
-
-  const options = {
-    chart: { type: 'spline', zoomType: 'x' },
-    credits: { enabled: false },
-    plotOptions: { spline: { marker: { enabled: true } } },
-    exporting: { buttons: { contextButton: { menuItems: MENU_ITEMS } } },
-    title: { text: '' },
-    xAxis: {
-      title: { text: '' },
-      type: 'datetime',
-      dateTimeLabelFormats: {
-        day: '%b %e', // Format as "Dec 4"
-      },
-    },
-    yAxis: { title: { text: '' }, min: 0 },
-    series: [
-      {
-        name: 'Unique visits',
-        color: '#fce2cc',
-        data: visits.map((el) => [getMsSinceEpoch(el), el.first_time_visits]),
-      },
-      {
-        name: 'Total visits',
-        color: '#fc580c',
-        data: visits.map((el) => [getMsSinceEpoch(el), el.all_visits]),
-      },
-    ],
-  };
-
-  return <HighchartsReact highcharts={Highcharts} options={options} />;
-};
-
-/**
- * The colors for each browser name
- * @constant
- */
-const BROWSER_COLORS: Map<string, string> = new Map([
+const browserColors: Map<string, string> = new Map([
   ['Firefox', 'rgba(244,199,133,1.0)'],
   ['Chrome', 'rgba(200,240,97,1.0)'],
   ['Safari', 'rgba(155,186,238,1.0)'],
@@ -139,12 +88,7 @@ const BROWSER_COLORS: Map<string, string> = new Map([
   ['Unknown', 'rgba(80,80,80,0.2)'],
 ]);
 
-// TODO: iOS, *BSD, etc?
-/**
- * The colors for each platform name
- * @constant
- */
-const PLATFORM_COLORS: Map<string, string> = new Map([
+const platformColors: Map<string, string> = new Map([
   ['Linux', 'rgba(216,171,36,1.0)'],
   ['Windows', 'rgba(129,238,208,1.0)'],
   ['Mac', 'rgba(201,201,201,1.0)'],
@@ -152,11 +96,7 @@ const PLATFORM_COLORS: Map<string, string> = new Map([
   ['Unknown', 'rgba(80,80,80,0.2)'],
 ]);
 
-/**
- * The colors for each referer
- * @constant
- */
-const REFERER_COLORS: Map<string, string> = new Map([
+const referralColors: Map<string, string> = new Map([
   ['Facebook', 'rgba(0,75,150,1.0)'],
   ['Twitter', 'rgba(147,191,241,1.0)'],
   ['Instagram', 'rgba(193,131,212,1.0)'],
@@ -164,101 +104,37 @@ const REFERER_COLORS: Map<string, string> = new Map([
   ['Unknown', 'rgba(80,80,80,0.2)'],
 ]);
 
-/**
- * The [[PieChart]] component displays a pie chart given an array of [[PieDatum]]
- * @param props The props
- */
-const PieChart: React.FC<{ title: string; data: PieDatum[] }> = (props) => {
-  const options = {
-    chart: {
-      plotBackgroundColor: null,
-      plotBorderWidth: null,
-      plotShadow: false,
-      type: 'pie',
-    },
-    credits: { enabled: false },
-    exporting: { buttons: { contextButton: { menuItems: MENU_ITEMS } } },
-    title: { text: props.title },
-    tooltip: { pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>' },
-    plotOptions: {
-      pie: {
-        allowPointSelect: true,
-        cursor: 'pointer',
-        showInLegend: true,
-        dataLabels: { enabled: false },
-      },
-    },
-    series: [
-      {
-        name: props.title,
-        colorByPoint: true,
-        data: props.data,
-      },
-    ],
-  };
-
-  return <HighchartsReact highcharts={Highcharts} options={options} />;
-};
-
-/**
- * The [[BrowserCharts]] component displays a pie chart for each series of data
- * contained in the [[BrowserStats]] object
- * @param props The props
- */
-const BrowserCharts: React.FC<{ browserStats: BrowserStats | null }> = (
-  props,
-) => {
-  if (props.browserStats === null) {
-    return <Spin />;
-  }
-
-  const processData = (data: PieDatum[], colors: Map<string, string>) =>
-    data.map((datum) => ({ ...datum, color: colors.get(datum.name) }));
-
-  const browserData = processData(props.browserStats.browsers, BROWSER_COLORS);
-  const platformData = processData(
-    props.browserStats.platforms,
-    PLATFORM_COLORS,
-  );
-  const refererData = processData(props.browserStats.referers, REFERER_COLORS);
-
-  return (
-    <>
-      <Col span={8}>
-        <PieChart title="Browsers" data={browserData} />
-      </Col>
-      <Col span={8}>
-        <PieChart title="Platforms" data={platformData} />
-      </Col>
-      <Col span={8}>
-        <PieChart title="Referrers" data={refererData} />
-      </Col>
-    </>
-  );
-};
+function doDownload(url: string, fileName: string) {
+  const a = document.createElement('a');
+  a.download = fileName;
+  a.href = url;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
 
 export function Stats(props: Props): React.ReactElement {
   const [linkInfo, setLinkInfo] = useState<Link | null>(null);
-  const [allAliases, setAllAliases] = useState<Alias[]>([]);
-  const [selectedAlias, setSelectedAlias] = useState<string | null>(null);
   const [overallStats, setOverallStats] = useState<OverallStats | null>(null);
   const [visitStats, setVisitStats] = useState<VisitStats | null>(null);
-  const [geoipStats, setGeoipStats] = useState<GeoipStats | null>(null);
+  const [geoipStats, setGeoipStats] = useState<GeoipStats>();
   const [browserStats, setBrowserStats] = useState<BrowserStats | null>(null);
   const [mayEdit, setMayEdit] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [statsKey, setStatsKey] = useState<string>('alias');
+  const [loading, setLoading] = useState<boolean>(true);
+  const [statsKey, setStatsKey] = useState<StatChart>(StatChart.Visits);
+  const [qrcodeErrorLevel, setQrcodeErrorLevel] =
+    useState<QRCodeProps['errorLevel']>('H');
 
   const [editModalVisible, setEditModalVisible] = useState<boolean>(false);
   const [collabModalVisible, setCollabModalVisible] = useState<boolean>(false);
-  const [shareModalVisible, setShareModalVisible] = useState<boolean>(false);
 
-  const [entities, setEntities] = useState<Entity[]>([]);
+  const [entities, setEntities] = useState<Collaborator[]>([]);
 
   const [topReferrer, setTopReferrer] = useState<string | null>(null);
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const mode = queryParams.get('mode');
+  const size = 250;
 
   useEffect(() => {
     switch (mode) {
@@ -268,9 +144,6 @@ export function Stats(props: Props): React.ReactElement {
       case 'collaborate':
         setCollabModalVisible(true);
         break;
-      case 'share':
-        setShareModalVisible(true);
-        break;
       default:
         break;
     }
@@ -279,13 +152,7 @@ export function Stats(props: Props): React.ReactElement {
   async function updateLinkInfo() {
     const templinkInfo = await getLink(props.id);
 
-    const aliases = !templinkInfo.deleted
-      ? templinkInfo.aliases.filter((alias) => !alias.deleted)
-      : templinkInfo.aliases;
-
     setLinkInfo(templinkInfo);
-    setAllAliases(aliases);
-    setSelectedAlias(null);
     setMayEdit(templinkInfo.may_edit);
 
     const tempEntities: Collaborator[] = [];
@@ -320,10 +187,10 @@ export function Stats(props: Props): React.ReactElement {
   }
 
   async function updateStats() {
-    setOverallStats(await getLinkStats(props.id, selectedAlias));
-    setVisitStats(await getLinkVisitsStats(props.id, selectedAlias));
-    setGeoipStats(await getLinkGeoIpStats(props.id, selectedAlias));
-    setBrowserStats(await getLinkBrowserStats(props.id, selectedAlias));
+    setOverallStats(await getLinkStats(props.id));
+    setVisitStats(await getLinkVisitsStats(props.id));
+    setGeoipStats(await getLinkGeoIpStats(props.id));
+    setBrowserStats(await getLinkBrowserStats(props.id));
   }
 
   useEffect(() => {
@@ -332,8 +199,19 @@ export function Stats(props: Props): React.ReactElement {
       await updateStats();
     };
 
-    fetchData();
+    fetchData().then(() => {
+      setLoading(false);
+    });
   }, [props.id]);
+
+  if (!loading && linkInfo === null) {
+    return (
+      <ErrorPage
+        title="Link not found."
+        description="This link is either deleted or doesn't exist"
+      />
+    );
+  }
 
   useEffect(() => {
     if (browserStats !== null && browserStats.referers.length > 0) {
@@ -351,10 +229,10 @@ export function Stats(props: Props): React.ReactElement {
       throw new Error('oldLinkInfo should not be null');
     }
 
-    // Create the request to edit title, long_url, and expiration_time
+    // Create the request to edit description, long_url, and expiration_time
     const patchReq: EditLinkValues = {};
-    if (values.title !== oldLinkInfo.title) {
-      patchReq.title = values.title;
+    if (values.description !== oldLinkInfo.description) {
+      patchReq.description = values.description;
     }
     if (values.long_url !== oldLinkInfo.long_url) {
       patchReq.long_url = values.long_url;
@@ -369,7 +247,6 @@ export function Stats(props: Props): React.ReactElement {
           : values.expiration_time.format();
     }
 
-    const promises = [];
     const patchRequest = await editLink(props.id, patchReq);
 
     // //get the status and the json message
@@ -377,60 +254,29 @@ export function Stats(props: Props): React.ReactElement {
 
     if (patchRequestStatus !== 204) {
       message.error('There was an error editing the link.', 4);
-      return;
     }
-
-    const oldAliases = new Map(
-      oldLinkInfo.aliases.map((alias) => [alias.alias, alias]),
-    );
-    const newAliases = new Map(
-      values.aliases.map((alias) => [alias.alias, alias]),
-    );
-
-    // Delete aliases that no longer exist
-    Array.from(oldAliases.keys())
-      .filter((alias) => !newAliases.has(alias))
-      .forEach((alias) => {
-        promises.push(deleteAlias(props.id, alias));
-      });
-
-    // Create/update aliases
-    Array.from(newAliases.entries())
-      .filter(([alias, info]) => {
-        const isNew = !oldAliases.has(alias);
-        const isDescriptionChanged =
-          oldAliases.has(alias) &&
-          info.description !== oldAliases.get(alias)?.description;
-        return isNew || isDescriptionChanged;
-      })
-      .forEach(([alias, info]) => {
-        promises.push(updateAlias(props.id, alias, info.description));
-      });
   }
-
-  /**
-   * Set the alias and then update stats
-   * @method
-   * @param alias The name of an alias, or a number to select all aliases (stupid hack why did I even do that?)
-   */
-  const setAlias = async (alias: number | string): Promise<void> => {
-    if (typeof alias === 'number') {
-      setSelectedAlias(null);
-    } else {
-      setSelectedAlias(alias);
-    }
-
-    await updateStats();
-  };
 
   /**
    * Prompt the user to download a CSV file of visits to the selected alias
    * @method
    */
   const downloadCsv = async (): Promise<void> => {
-    setLoading(true);
-    await downloadVisits(props.id, selectedAlias);
-    setLoading(false);
+    if (linkInfo === null) {
+      return;
+    }
+
+    await downloadVisits(props.id, linkInfo.alias);
+  };
+
+  const downloadCanvasQRCode = () => {
+    const canvas = document
+      .getElementById('qrcode')
+      ?.querySelector<HTMLCanvasElement>('canvas');
+    if (canvas) {
+      const url = canvas.toDataURL();
+      doDownload(url, `${linkInfo?.alias}.png`);
+    }
   };
 
   const averageClicks = (): number => {
@@ -495,97 +341,33 @@ export function Stats(props: Props): React.ReactElement {
     );
   };
 
-  const statTabsKeys = [
-    {
-      key: 'alias',
-      tab: !linkInfo?.is_tracking_pixel_link ? 'Alias' : 'Installation',
-    },
-    { key: 'visits', tab: 'Visits' },
-    { key: 'geoip', tab: 'Location' },
-    { key: 'browser', tab: 'Metadata' },
-  ];
-
-  const isDev = process.env.NODE_ENV === 'development';
-  const protocol = isDev ? 'http' : 'https';
-  const trackingUrl = linkInfo
-    ? `${protocol}://${document.location.host}/${linkInfo.aliases[0].alias}`
-    : '';
-
-  const statTabs: Record<string, React.ReactNode> = {
-    visits: <VisitsChart visitStats={visitStats} />,
-    geoip: <GeoipChart geoipStats={geoipStats} />,
-    browser: (
-      <Row>
-        <BrowserCharts browserStats={browserStats} />
-      </Row>
-    ),
-    alias: !linkInfo?.is_tracking_pixel_link ? (
-      <Table
-        showHeader={false}
-        size="small"
-        dataSource={allAliases.map((alias) => ({
-          alias: alias.alias,
-          description: alias.description,
-        }))}
-        columns={[
-          {
-            title: 'Alias',
-            dataIndex: 'alias',
-            key: 'alias',
-            width: '25%',
-            render: (alias) => {
-              const shortUrl = `${protocol}://${document.location.host}/${alias}`;
-              return (
-                <Button
-                  type="text"
-                  onClick={() => navigator.clipboard.writeText(shortUrl)}
-                >
-                  <Space>
-                    <CopyIcon />
-                    <Typography.Text>{alias}</Typography.Text>
-                  </Space>
-                </Button>
-              );
-            },
-          },
-          {
-            title: 'Description',
-            dataIndex: 'description',
-            key: 'description',
-          },
-        ]}
-        pagination={{ pageSize: 5 }}
-        footer={() =>
-          linkInfo?.deleted
-            ? 'Since this link is deleted, these aliases are available for anyone to grab.'
-            : ''
-        }
+  const statTabs: Record<StatChart, React.ReactNode> = {
+    Visits: <VisitsChart visitStats={visitStats} />,
+    GeoIP: <GeoipChart data={geoipStats} />,
+    Browser: (
+      <ShrunkPieChart
+        data={processData(browserStats?.browsers ?? [], browserColors)}
       />
-    ) : (
-      <>
-        <Typography.Title level={3} className="tw-mt-0">
-          How to use
-        </Typography.Title>
-        <Typography.Text>
-          If you are a developer and would like to incorporate it into your
-          site, just add an image reference into your HTML or JavaScript file.
-          <pre>
-            &lt;img src=&quot;{trackingUrl}&quot; style=&quot;display:none&quot;
-            alt=&quot;&quot;/&gt;
-          </pre>
-        </Typography.Text>
-      </>
+    ),
+    Platform: (
+      <ShrunkPieChart
+        data={processData(browserStats?.platforms ?? [], platformColors)}
+      />
+    ),
+    Referral: (
+      <ShrunkPieChart
+        data={processData(browserStats?.referers ?? [], referralColors)}
+      />
     ),
   };
 
-  if (!loading && linkInfo === null) {
-    return (
-      <ErrorPage
-        title="Link not found."
-        description="This link is either deleted or doesn't exist"
-      />
-    );
-  }
+  const dateCreatedText = dayjs(linkInfo?.created_time).format('MMMM D, YYYY');
+  const dateExpiresText = linkInfo?.expiration_time
+    ? dayjs(linkInfo?.expiration_time).format('MMMM D, YYYY')
+    : 'Never';
+
+  const isTrackingPixel = linkInfo?.is_tracking_pixel_link;
+
   return (
     <>
       <Row justify="space-between" align="middle">
@@ -593,7 +375,9 @@ export function Stats(props: Props): React.ReactElement {
           <Row>
             <Space style={{ marginBottom: 19, marginTop: 19 }}>
               <Typography.Title style={{ margin: 0 }} ellipsis>
-                {linkInfo?.title}
+                {!linkInfo?.is_tracking_pixel_link
+                  ? getLinkFromAlias(linkInfo?.alias, false)
+                  : linkInfo?.alias}
               </Typography.Title>
 
               <Tag color="red">
@@ -605,6 +389,23 @@ export function Stats(props: Props): React.ReactElement {
 
         <Col>
           <Space>
+            <Tooltip title="Copy link to clipboard">
+              <Button
+                icon={<CopyIcon />}
+                onClick={() =>
+                  navigator.clipboard.writeText(
+                    linkInfo
+                      ? getRedirectFromAlias(
+                          linkInfo.alias,
+                          linkInfo.is_tracking_pixel_link,
+                        )
+                      : '',
+                  )
+                }
+              >
+                Copy
+              </Button>
+            </Tooltip>
             {mayEdit && (
               <>
                 <Button
@@ -625,19 +426,99 @@ export function Stats(props: Props): React.ReactElement {
                 </Button>
               </>
             )}
-            <Button
-              type="primary"
-              icon={<Share2Icon />}
-              onClick={() => setShareModalVisible(true)}
-              disabled={linkInfo?.is_tracking_pixel_link}
-            >
-              Share
-            </Button>
           </Space>
         </Col>
       </Row>
 
       <Row justify="space-around" gutter={[16, 16]}>
+        <Col span={24}>
+          <Card title="Details">
+            <Row gutter={[16, 16]}>
+              {!linkInfo?.is_tracking_pixel_link && (
+                <Col>
+                  <Flex vertical gap="middle" align="center">
+                    <QRCode
+                      id="qrcode"
+                      errorLevel={qrcodeErrorLevel}
+                      size={size}
+                      iconSize={size / 4}
+                      value={
+                        linkInfo
+                          ? getRedirectFromAlias(linkInfo.alias, false)
+                          : ''
+                      }
+                    />
+                    <Space>
+                      <Select
+                        className="tw-w-24"
+                        defaultValue={qrcodeErrorLevel}
+                        options={[
+                          { value: 'L', label: 'Low' },
+                          { value: 'M', label: 'Medium' },
+                          { value: 'Q', label: 'Quartile' },
+                          { value: 'H', label: 'High' },
+                        ]}
+                        onChange={(value: QRCodeProps['errorLevel']) => {
+                          setQrcodeErrorLevel(value);
+                        }}
+                      />
+                      <Button
+                        icon={<Download />}
+                        onClick={downloadCanvasQRCode}
+                      >
+                        Download
+                      </Button>
+                    </Space>
+                  </Flex>
+                </Col>
+              )}
+              <Col flex="auto">
+                <Row gutter={[16, 16]} justify="space-between">
+                  <Col>{linkInfo?.description}</Col>
+                  <Col span={24}>
+                    <Descriptions
+                      bordered
+                      items={[
+                        ...(isTrackingPixel
+                          ? []
+                          : [
+                              {
+                                key: 'original_url',
+                                label: 'Original URL',
+                                children: linkInfo?.long_url,
+                                span: 'filled',
+                              },
+                            ]),
+                        {
+                          key: 'owner',
+                          label: 'Owner',
+                          children: linkInfo?.owner,
+                          span: isTrackingPixel ? 1 : 'filled',
+                        },
+                        {
+                          key: 'date_created',
+                          label: 'Date Created',
+                          children: dateCreatedText,
+                          span: 1,
+                        },
+                        ...(isTrackingPixel
+                          ? []
+                          : [
+                              {
+                                key: 'date_expires',
+                                label: 'Date Expires',
+                                children: dateExpiresText,
+                                span: 1,
+                              },
+                            ]),
+                      ]}
+                    />
+                  </Col>
+                </Row>
+              </Col>
+            </Row>
+          </Card>
+        </Col>
         {overallStats === null || linkInfo === null ? (
           <></>
         ) : (
@@ -677,87 +558,37 @@ export function Stats(props: Props): React.ReactElement {
             </Col>
           </>
         )}
-        <Col span={12}>
+        <Col span={24}>
           <Card
-            title="Details"
-            style={{ height: '100%' }}
+            title="Statistics"
             extra={
-              allAliases.length === 1 ? (
-                <></>
-              ) : (
-                <Select
-                  onSelect={setAlias}
-                  defaultValue={0}
-                  popupMatchSelectWidth={false}
-                >
-                  <Select.Option value={0}>
-                    <GlobeIcon />
-                  </Select.Option>
-
-                  {allAliases.map((alias) => (
-                    <Select.Option key={alias.alias} value={alias.alias}>
-                      {alias.alias}&nbsp;
-                      {alias.description ? (
-                        <em>({alias.description})</em>
-                      ) : (
-                        <></>
-                      )}
-                    </Select.Option>
-                  ))}
-                </Select>
-              )
-            }
-          >
-            <Descriptions column={1} colon={false}>
-              <Descriptions.Item label="Owner">
-                {linkInfo?.owner}
-              </Descriptions.Item>
-              {linkInfo?.is_tracking_pixel_link ? (
-                <></>
-              ) : (
-                <Descriptions.Item label="Long URL">
-                  {linkInfo?.long_url}
-                </Descriptions.Item>
-              )}
-              <Descriptions.Item label="Date Created">
-                {dayjs(linkInfo?.created_time).format('MMM D, YYYY - h:mm A')}
-              </Descriptions.Item>
-              <Descriptions.Item label="Date Expires">
-                {linkInfo?.expiration_time
-                  ? dayjs(linkInfo?.expiration_time).format(
-                      'MMM D, YYYY - h:mm A',
-                    )
-                  : 'N/A'}
-              </Descriptions.Item>
-              {linkInfo?.deleted && linkInfo.deletion_info !== null && (
-                <>
-                  <Descriptions.Item label="Date Deleted">
-                    {dayjs(linkInfo.deletion_info.deleted_time).format(
-                      'MMM D, YYYY - h:mm A',
-                    )}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Deleted by">
-                    {linkInfo.deletion_info.deleted_by}
-                  </Descriptions.Item>
-                </>
-              )}
-            </Descriptions>
-          </Card>
-        </Col>
-        <Col span={12}>
-          <Card
-            tabList={statTabsKeys}
-            activeTabKey={statsKey}
-            onTabChange={(newKey) => setStatsKey(newKey)}
-            tabBarExtraContent={
               <Space>
-                <Button
-                  icon={<CloudDownloadIcon />}
-                  loading={loading}
-                  onClick={downloadCsv}
-                >
-                  Export
-                </Button>
+                <Select
+                  defaultValue={StatChart.Visits}
+                  className="tw-w-28"
+                  onChange={(value: StatChart) => {
+                    setStatsKey(value);
+                  }}
+                  options={[
+                    { value: StatChart.Visits, label: 'Visits' },
+                    { value: StatChart.GeoIP, label: 'Location' },
+                    { value: StatChart.Browser, label: 'Browser' },
+                    { value: StatChart.Platform, label: 'Platform' },
+                    {
+                      value: StatChart.Referral,
+                      label: 'Referral',
+                    },
+                  ]}
+                />
+                <Tooltip title="Export data as a CSV">
+                  <Button
+                    icon={<CloudDownloadIcon />}
+                    loading={loading}
+                    onClick={downloadCsv}
+                  >
+                    Export
+                  </Button>
+                </Tooltip>
               </Space>
             }
           >
@@ -797,14 +628,6 @@ export function Stats(props: Props): React.ReactElement {
             }}
             onCancel={() => {
               setCollabModalVisible(false);
-            }}
-          />
-
-          <ShareModal
-            linkInfo={linkInfo}
-            visible={shareModalVisible}
-            onCancel={() => {
-              setShareModalVisible(false);
             }}
           />
         </>

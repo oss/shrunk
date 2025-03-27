@@ -9,8 +9,8 @@ import {
   VisitStats,
   EditLinkValues,
   SearchQuery,
+  GeoipStats,
 } from '../interfaces/link';
-import { GeoipStats } from '../pages/subpages/StatsCommon';
 
 export async function getLink(linkId: string): Promise<Link> {
   const resp = await fetch(`/api/v1/link/${linkId}`, {
@@ -27,7 +27,7 @@ export async function getLink(linkId: string): Promise<Link> {
  */
 export async function createLink(
   isTrackingPixel: boolean,
-  title: string,
+  description: string,
   url: string,
   alias?: string,
   expirationTime?: Dayjs,
@@ -41,7 +41,7 @@ export async function createLink(
 
   const req = {
     is_tracking_pixel_link: isTrackingPixel,
-    title,
+    description,
     alias,
     long_url: url,
     expiration_time: expirationTime?.toISOString(),
@@ -124,27 +124,6 @@ export async function reverLinkExpirationDate(linkId: string) {
   });
 }
 
-export async function updateAlias(
-  linkId: string,
-  alias: string,
-  description: string,
-) {
-  await fetch(`/api/v1/link/${linkId}/alias`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      alias,
-      description,
-    }),
-  });
-}
-
-export async function deleteAlias(linkId: string, alias: string) {
-  await fetch(`/api/v1/link/${linkId}/alias/${alias}`, {
-    method: 'DELETE',
-  });
-}
-
 export async function isValidAlias(alias: string): Promise<boolean> {
   const resp = await fetch(
     `/api/v1/link/validate_duplicate_alias/${base32.encode(alias)}`,
@@ -154,52 +133,29 @@ export async function isValidAlias(alias: string): Promise<boolean> {
   return data.valid as boolean;
 }
 
-export async function getLinkStats(linkId: string, alias: string | null) {
-  const baseApiPath =
-    alias === null
-      ? `/api/v1/link/${linkId}/stats`
-      : `/api/v1/link/${linkId}/alias/${alias}/stats`;
-
-  const resp = await fetch(baseApiPath);
+export async function getLinkStats(linkId: string) {
+  const resp = await fetch(`/api/v1/link/${linkId}/stats`);
   const data = await resp.json();
 
   return data as OverallStats;
 }
 
-export async function getLinkVisitsStats(linkId: string, alias: string | null) {
-  const baseApiPath =
-    alias === null
-      ? `/api/v1/link/${linkId}/stats`
-      : `/api/v1/link/${linkId}/alias/${alias}/stats`;
-
-  const resp = await fetch(`${baseApiPath}/visits`);
+export async function getLinkVisitsStats(linkId: string) {
+  const resp = await fetch(`/api/v1/link/${linkId}/stats/visits`);
   const data = await resp.json();
 
   return data as VisitStats;
 }
 
-export async function getLinkGeoIpStats(linkId: string, alias: string | null) {
-  const baseApiPath =
-    alias === null
-      ? `/api/v1/link/${linkId}/stats`
-      : `/api/v1/link/${linkId}/alias/${alias}/stats`;
-
-  const resp = await fetch(`${baseApiPath}/geoip`);
+export async function getLinkGeoIpStats(linkId: string) {
+  const resp = await fetch(`/api/v1/link/${linkId}/stats/geoip`);
   const data = await resp.json();
 
   return data as GeoipStats;
 }
 
-export async function getLinkBrowserStats(
-  linkId: string,
-  alias: string | null,
-) {
-  const baseApiPath =
-    alias === null
-      ? `/api/v1/link/${linkId}/stats`
-      : `/api/v1/link/${linkId}/alias/${alias}/stats`;
-
-  const resp = await fetch(`${baseApiPath}/browser`);
+export async function getLinkBrowserStats(linkId: string) {
+  const resp = await fetch(`/api/v1/link/${linkId}/stats/browser`);
   const data = await resp.json();
 
   return data as BrowserStats;

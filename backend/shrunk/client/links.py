@@ -5,7 +5,7 @@ import random
 import string
 import re
 import secrets
-from typing import Optional, List, Set, Any, Dict, cast
+from typing import Optional, List, Set, Any, Dict, cast, Tuple
 
 from flask import current_app, url_for
 from flask_mailman import Mail
@@ -87,9 +87,6 @@ class LinksClient:
     def alias_is_duplicate(self, alias: str, is_tracking_pixel: bool) -> bool:
         """Check whether the given alias already exists"""
 
-        # Ban the future use of creating case-sensitive aliases
-        # (https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/205)
-
         # check to see if the alias is already being used
         result = self.db.urls.find_one(
             {
@@ -97,12 +94,8 @@ class LinksClient:
                     {"is_tracking_pixel_link": {"$exists": False}},
                     {"is_tracking_pixel_link": is_tracking_pixel},
                 ],
-                "aliases": {
-                    "$elemMatch": {
-                        "alias": {"$regex": f"^{alias}$", "$options": "i"},
-                        "deleted": False,
-                    }
-                },
+                "alias": {"$regex": f"^{alias}$", "$options": "i"},
+                "deleted": False,
             }
         )
         return True if result is not None else False
@@ -153,24 +146,19 @@ class LinksClient:
 
     def create(
         self,
-        title: str,
+        description: str,
         long_url: str,
         alias: Optional[str],
         expiration_time: Optional[datetime],
         netid: str,
         creator_ip: str,
-        domain: Optional[str] = None,
-        viewers: List[Dict[str, Any]] = None,
-        editors: List[Dict[str, Any]] = None,
+        domain: str = "",
+        viewers: List[Dict[str, Any]] = [],
+        editors: List[Dict[str, Any]] = [],
         bypass_security_measures: bool = False,
         is_tracking_pixel_link: bool = False,
-    ) -> ObjectId:
-        if viewers is None:
-            viewers = []
-        if editors is None:
-            editors = []
-        if domain is None:
-            domain = ""
+        extension: Optional[str] = None,
+    ) -> Tuple[ObjectId, str]:
         if self.long_url_is_blocked(long_url):
             raise BadLongURLException
 
@@ -182,8 +170,28 @@ class LinksClient:
             for member in members:
                 self.assert_valid_acl_entry(acl, member)
 
+        # Ban the creation of links with multiple aliases
+        # (https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/274)
+
+        if alias is None:
+            alias = self.create_random_alias(extension=extension)
+        else:
+            # Ban the future use of creating case-sensitive aliases
+            # (https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/205)
+            alias = alias.lower()
+
+            if not bool(re.fullmatch(r"^[a-zA-Z0-9_\-\.]+$", alias)):
+                raise BadAliasException
+
+            if self.alias_is_reserved(alias):
+                raise BadAliasException
+
+            if self.alias_is_duplicate(alias, False):
+                raise BadAliasException
+
         document = {
-            "title": title,
+            "description": description,
+            "alias": alias,
             "long_url": long_url,
             "timeCreated": datetime.now(timezone.utc),
             "visits": 0,
@@ -210,18 +218,13 @@ class LinksClient:
 
         result = self.db.urls.insert_one(document)
 
-        if alias is None:
-            self.create_random_alias(result.inserted_id, "!ONEALIAS")
-        else:
-            self.create_or_modify_alias(result.inserted_id, alias, "!ONEALIAS", None)
-
-        return result.inserted_id
+        return result.inserted_id, alias
 
     def modify(
         self,
         link_id: ObjectId,
         *,
-        title: Optional[str] = None,
+        description: Optional[str] = None,
         long_url: Optional[str] = None,
         expiration_time: Optional[datetime] = None,
         owner: Optional[str] = None,
@@ -230,7 +233,7 @@ class LinksClient:
             raise BadLongURLException
 
         if (
-            title is None
+            description is None
             and long_url is None
             and expiration_time is None
             and owner is None
@@ -245,8 +248,8 @@ class LinksClient:
         fields: Dict[str, Any] = {}
         update: Dict[str, Any] = {"$set": fields}
 
-        if title is not None:
-            fields["title"] = title
+        if description is not None:
+            fields["description"] = description
         if long_url is not None:
             fields["long_url"] = long_url
         if expiration_time is not None:
@@ -342,10 +345,8 @@ class LinksClient:
                     "deleted": True,
                     "deleted_by": deleted_by,
                     "deleted_time": datetime.now(timezone.utc),
-                    "aliases.$[elem].deleted": True,
                 }
             },
-            array_filters=[{"elem.deleted": False}],
         )
         if result.modified_count != 1:
             raise NoSuchObjectException
@@ -462,9 +463,7 @@ class LinksClient:
             result = self.db.visits.find({"link_id": link_id, "alias": alias})
         return list(result)
 
-    def create_random_alias(
-        self, link_id: ObjectId, description: str, extension: Optional[str] = None
-    ) -> str:
+    def create_random_alias(self, extension: Optional[str] = None) -> str:
         while True:
             alias = self._generate_unique_key()
             if extension:
@@ -473,85 +472,8 @@ class LinksClient:
                 alias = self._generate_unique_key()
                 if extension:
                     alias += extension
-            try:
-                result = self.db.urls.update_one(
-                    {"_id": link_id},
-                    {
-                        "$push": {
-                            "aliases": {
-                                "alias": alias,
-                                "description": description,
-                                "deleted": False,
-                            }
-                        }
-                    },
-                )
-                if result.matched_count == 0:
-                    raise NoSuchObjectException
-                return alias
-            except pymongo.errors.DuplicateKeyError:
-                pass
 
-    def create_or_modify_alias(
-        self,
-        link_id: ObjectId,
-        alias: Optional[str],
-        description: str,
-        extension: Optional[str],
-    ) -> str:
-        if alias is None:
-            return self.create_random_alias(link_id, description, extension)
-
-        # Ban the future use of creating case-sensitive aliases
-        # (https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/205)
-        alias = alias.lower()
-
-        # If alias is reserved word
-        if extension:
-            alias += extension
-        if self.alias_is_reserved(alias):
-            raise BadAliasException
-
-        # Try to un-delete the alias if it already exists on this link.
-        result = self.db.urls.update_one(
-            {"_id": link_id, "aliases.alias": alias},
-            {
-                "$set": {
-                    "aliases.$.deleted": False,
-                    "aliases.$.description": description,
-                }
-            },
-        )
-
-        if result.modified_count == 1:
             return alias
-
-        # Otherwise, try to insert the alias. First check whether it already exists.
-        if self.alias_is_duplicate(alias, False):
-            raise BadAliasException
-
-        # Create the alias.
-        self.db.urls.update_one(
-            {"_id": link_id},
-            {
-                "$push": {
-                    "aliases": {
-                        "alias": alias,
-                        "description": description,
-                        "deleted": False,
-                    }
-                }
-            },
-        )
-        return alias
-
-    def delete_alias(self, link_id: ObjectId, alias: str) -> None:
-        result = self.db.urls.update_one(
-            {"_id": link_id, "aliases.alias": alias},
-            {"$set": {"aliases.$.deleted": True}},
-        )
-        if result.modified_count != 1:
-            raise NoSuchObjectException
 
     def get_owner(self, link_id: ObjectId) -> str:
         result = self.db.urls.find_one({"_id": link_id}, {"netid": 1})
@@ -664,17 +586,7 @@ class LinksClient:
         return result
 
     def get_link_info_by_alias(self, alias: str) -> Any:
-        documents = self.db.urls.find({"aliases.alias": alias})
-
-        for document in documents:
-            for alias_entry in document["aliases"]:
-                if alias_entry["alias"] == alias and not alias_entry["deleted"]:
-                    return document
-
-        return None
-
-    def get_link_info_by_title(self, title: str) -> Any:
-        return self.db.urls.find_one({"title": title})
+        return self.db.urls.find_one({"alias": alias, "deleted": False})
 
     def _verify_link_alias_is_valid(self, alias):
         """
@@ -689,11 +601,6 @@ class LinksClient:
         # Fail if the link exists in the database but has been deleted
         if result.get("deleted"):
             return None
-
-        # Check that the alias through which we're accessing the link isn't deleted
-        for alias_info in result["aliases"]:
-            if alias_info["alias"] == alias and alias_info["deleted"]:
-                return None
 
         # Fail if the link exists but has expired
         expiration_time = result.get("expiration_time")
@@ -884,7 +791,7 @@ class LinksClient:
         plaintext_message = f"""Dear {owner_given_name},
 
 You are receiving this message because the user {requesting_netid} has requested
-access to edit your link "{link_info['title']}".
+access to edit your link "{link_info['description']}".
 
 You may follow the following link to accept the request:
     {accept_url}
@@ -947,7 +854,7 @@ Please do not reply to this email. You may direct any questions to oss@oit.rutge
         <p>Dear {owner_netid},</p>
 
         <p>You are receiving this message because the user <span class="requesting-user">{requesting_netid}</span>
-        has requested access to edit your link &ldquo;{link_info['title']}&rdquo;. Please use the buttons
+        has requested access to edit your link &ldquo;{link_info['description']}&rdquo;. Please use the buttons
         below to accept or deny the request.</p>
 
         <div>
@@ -962,7 +869,7 @@ Please do not reply to this email. You may direct any questions to oss@oit.rutge
 """
 
         mail.send_mail(
-            subject=f'{requesting_netid} is requesting edit access to "{link_info["title"]}"',
+            subject=f'{requesting_netid} is requesting edit access to "{link_info["description"]}"',
             body=plaintext_message,
             html_message=html_message,
             from_email="go-support@oit.rutgers.edu",

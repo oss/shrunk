@@ -1,9 +1,4 @@
 /* eslint-disable react/no-unused-state */
-/**
- * Implements the [[Dashboard]] component
- * @packageDocumentation
- */
-
 import React from 'react';
 
 import {
@@ -21,7 +16,6 @@ import {
   Select,
   Space,
   Table,
-  Tag,
   Tooltip,
   Typography,
   message,
@@ -47,11 +41,8 @@ import Input from '../components/input';
 import CreateLinkDrawer from '../drawers/CreateLinkDrawer';
 import { Link, SearchQuery, SearchSet } from '../interfaces/link';
 import { Organization } from '../interfaces/organizations';
+import { getLinkFromAlias, getRedirectFromAlias } from '../lib/utils';
 
-/**
- * Props for the [[Dashboard]] component.
- * @interface
- */
 interface Props {
   userPrivileges: Set<string>;
   // eslint-disable-next-line react/no-unused-prop-types
@@ -90,7 +81,7 @@ interface State {
    * The current search query.
    * @property
    */
-  query: onGetTickets;
+  query: SearchQuery;
 
   /**
    * The current page in the search results. Starts from `1`.
@@ -613,67 +604,50 @@ export default class Dashboard extends React.Component<Props, State> {
           </Col>
           <Col span={24}>
             <Table
+              tableLayout="fixed"
               loading={this.state.linkInfo === null}
               scroll={{ x: 'calc(700px + 50%)' }}
+              expandable={{
+                expandedRowRender: (record) => (
+                  <Typography.Paragraph className="!tw-m-0">
+                    {record.description}
+                  </Typography.Paragraph>
+                ),
+              }}
               columns={[
                 {
-                  title: 'Aliases',
-                  dataIndex: 'aliases',
-                  key: 'aliases',
+                  title: 'Alias',
+                  dataIndex: 'alias',
+                  key: 'alias',
                   width: '350px',
-                  fixed: 'left',
                   render: (_, record) => (
                     <Row gutter={[0, 8]}>
                       <Col span={24}>
-                        <Space>
-                          <Typography.Title level={5} style={{ margin: 0 }}>
-                            {record.title}
-                          </Typography.Title>
-                          {record.deletedInfo !== null && (
-                            <Tag color="red">Deleted</Tag>
-                          )}
-                          {record.isExpired && (
-                            <Tag color="yellow">Expired</Tag>
-                          )}
-                        </Space>
+                        <Tooltip title="Copy to clipboard">
+                          <Button
+                            type="text"
+                            icon={<CopyIcon />}
+                            onClick={() => {
+                              const redirectUrl = getRedirectFromAlias(
+                                record.alias,
+                                record.isTrackingPixel,
+                              );
+                              navigator.clipboard.writeText(redirectUrl);
+                            }}
+                          >
+                            <Typography>
+                              {getLinkFromAlias(
+                                record.alias,
+                                record.isTrackingPixel,
+                              )}
+                            </Typography>
+                          </Button>
+                        </Tooltip>
                       </Col>
-                      {record.aliases.map((aliasObj) => {
-                        const isDev = process.env.NODE_ENV === 'development';
-                        const protocol = isDev ? 'http' : 'https';
-                        const routePrefix = record.isTrackingPixel
-                          ? 'api/v1/t/'
-                          : '';
-
-                        const shortUrlWithoutProtocol = `${
-                          document.location.host
-                        }/${routePrefix}${aliasObj.alias.toString()}`;
-                        const shortUrl = `${protocol}://${record.domain || ''}${
-                          record.domain ? '.' : ''
-                        }${
-                          document.location.host
-                        }/${routePrefix}${aliasObj.alias.toString()}`;
-
-                        return (
-                          <Col span={24}>
-                            <Button
-                              type="text"
-                              onClick={() =>
-                                navigator.clipboard.writeText(shortUrl)
-                              }
-                            >
-                              <Space>
-                                <CopyIcon />
-                                <Typography key={aliasObj.alias}>
-                                  {shortUrlWithoutProtocol}
-                                </Typography>
-                              </Space>
-                            </Button>
-                          </Col>
-                        );
-                      })}
                     </Row>
                   ),
                 },
+                Table.EXPAND_COLUMN,
                 ...(this.state.visibleColumns.has('longUrl') &&
                 this.state.query.showType !== 'tracking_pixels'
                   ? [
@@ -682,7 +656,6 @@ export default class Dashboard extends React.Component<Props, State> {
                         dataIndex: 'longUrl',
                         key: 'longUrl',
                         width: '300px',
-                        fixed: 'left',
                         render: (_, record) => (
                           <Typography.Link href={record.longUrl} ellipsis>
                             {record.longUrl}
@@ -699,7 +672,6 @@ export default class Dashboard extends React.Component<Props, State> {
                         dataIndex: 'owner',
                         key: 'owner',
                         width: '150px',
-                        sorter: (a, b) => a.owner.localeCompare(b.owner),
                       },
                     ]
                   : []),
@@ -711,9 +683,6 @@ export default class Dashboard extends React.Component<Props, State> {
                         dataIndex: 'dateCreated',
                         key: 'dateCreated',
                         width: '150px',
-                        sorter: (a, b) =>
-                          dayjs(a.dateCreated).unix() -
-                          dayjs(b.dateCreated).unix(),
                       },
                     ]
                   : []),
@@ -728,14 +697,6 @@ export default class Dashboard extends React.Component<Props, State> {
                           record.dateExpires
                             ? dayjs(record.dateExpires).format('MMM DD, YYYY')
                             : 'Never',
-                        sorter: (a, b) => {
-                          if (!a.dateExpires) return 1;
-                          if (!b.dateExpires) return -1;
-                          return (
-                            dayjs(a.dateExpires).unix() -
-                            dayjs(b.dateExpires).unix()
-                          );
-                        },
                       },
                     ]
                   : []),
@@ -746,7 +707,6 @@ export default class Dashboard extends React.Component<Props, State> {
                         dataIndex: 'uniqueVisits',
                         key: 'uniqueVisits',
                         width: '100px',
-                        sorter: (a, b) => a.uniqueVisits - b.uniqueVisits,
                       },
                     ]
                   : []),
@@ -757,14 +717,12 @@ export default class Dashboard extends React.Component<Props, State> {
                         dataIndex: 'totalVisits',
                         key: 'totalVisits',
                         width: '100px',
-                        sorter: (a, b) => a.totalVisits - b.totalVisits,
                       },
                     ]
                   : []),
                 {
                   title: <Flex justify="flex-end">Actions</Flex>,
                   key: 'actions',
-                  fixed: 'right',
                   width: this.props.mockData === undefined ? '220px' : '100px',
                   render: (_, record) => (
                     <Flex justify="flex-end">
@@ -839,8 +797,8 @@ export default class Dashboard extends React.Component<Props, State> {
                 this.state.linkInfo !== null
                   ? this.state.linkInfo.map((link) => ({
                       key: link.id,
-                      title: link.title,
-                      aliases: link.aliases,
+                      description: link.description,
+                      alias: link.alias,
                       domain: link.domain,
                       longUrl: link.long_url,
                       owner: link.owner,

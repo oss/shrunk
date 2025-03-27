@@ -84,6 +84,10 @@ def get_human_readable_platform(platform: str) -> str:
 
 
 def get_browser_platform(user_agent: str) -> Tuple[str, str]:
+    """
+    You can get more User-Agent examples here: https://gist.github.com/pzb/b4b6f57144aea7827ae4
+    """
+
     if not user_agent:
         return "Unknown", "Unknown"
 
