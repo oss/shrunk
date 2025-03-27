@@ -4,8 +4,10 @@
  */
 
 import {
+  Bot,
   BugIcon,
   CircleHelpIcon,
+  CodeIcon,
   LayoutDashboardIcon,
   LogOutIcon,
   RocketIcon,
@@ -50,6 +52,7 @@ import ChangeLog from './pages/ChangeLog';
 import Ticket from './pages/subpages/Ticket';
 import { lightTheme } from './theme';
 import { SearchQuery } from './interfaces/link';
+import Developer from './pages/Developer';
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -186,6 +189,17 @@ export default function Shrunk(props: Props) {
       : []),
     { type: 'divider' },
     {
+      key: 'developer',
+      icon: <Bot />,
+      label: <a href="/app/automation">Automation</a>,
+    },
+    {
+      key: 'api-reference',
+      icon: <CodeIcon />,
+      label: <a href="/app/api-reference">API Reference</a>,
+    },
+    { type: 'divider' },
+    {
       key: 'releases',
       icon: <RocketIcon />,
       label: <a href="/app/releases">Release Notes</a>,
@@ -228,6 +242,11 @@ export default function Shrunk(props: Props) {
     faq: { name: 'Frequently Asked Questions', clickable: true },
     releases: { name: 'Release Notes', clickable: true },
     links: { name: 'URL Shortener', clickable: true, href: 'app/dash' },
+    automation: {
+      name: 'Getting Started with Automation',
+      clickable: false,
+    },
+    'api-reference': { name: 'API Reference', clickable: false },
   };
   const isApp = window.location.pathname.split('/').slice(1)[0] === 'app';
   const showMotd = motd !== '' && localStorage.getItem('alert-read') !== motd;
@@ -374,6 +393,12 @@ export default function Shrunk(props: Props) {
                       <ProtectedRoute requiredPrivilege="admin">
                         <Admin />
                       </ProtectedRoute>
+                    </Route>
+                    <Route exact path="/app/automation">
+                      <Developer />
+                    </Route>
+                    <Route exact path="/app/api-reference">
+                      <Typography.Text>TODO</Typography.Text>
                     </Route>
                     <Route path="*">
                       <ErrorPage

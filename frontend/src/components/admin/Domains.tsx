@@ -18,7 +18,7 @@ const Domains: React.FC = () => {
   const addDomain = async (values: DomainFormValues) => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/v1/org/domain`, {
+      const response = await fetch(`/api/core/org/domain`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -43,7 +43,7 @@ const Domains: React.FC = () => {
   const deleteDomain = async (values: DomainFormValues) => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/v1/org/domain`, {
+      const response = await fetch(`/api/core/org/domain`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -9,13 +9,13 @@ from shrunk.client import ShrunkClient
 from shrunk.util.decorators import require_login
 
 __all__ = ["bp"]
-bp = Blueprint("user", __name__, url_prefix="/api/v1/user")
+bp = Blueprint("user", __name__, url_prefix="/api/core/user")
 
 
 @bp.route("", methods=["POST"])
 @require_login
 def get_all_users(netid: str, client: ShrunkClient) -> Dict[Any, Any]:
-    """POST /api/v1/user
+    """POST /api/core/user
 
     Args:
         netid (str): the netid of the user logged in
@@ -66,7 +66,7 @@ def get_all_users(netid: str, client: ShrunkClient) -> Dict[Any, Any]:
 @bp.route("/options", methods=["GET"])
 @require_login
 def get_user_system_options(netid: str, client: ShrunkClient) -> Dict[Any, Any]:
-    """GET /api/v1/user/options
+    """GET /api/core/user/options
 
     Args:
         netid (str): the netid of the user logged in
@@ -120,7 +120,7 @@ def get_user_info():
 @bp.route("/<b32:entity>/valid", methods=["GET"])
 @require_login
 def is_valid_entity(netid: str, client: ShrunkClient, entity: str) -> Any:
-    """GET /api/v1/user/<b32:entity>/valid
+    """GET /api/core/user/<b32:entity>/valid
 
     Args:
         netid (str): the netid of the user logged in
@@ -142,7 +142,7 @@ def is_valid_entity(netid: str, client: ShrunkClient, entity: str) -> Any:
 @bp.route("/<b32:entity>/position", methods=["GET"])
 @require_login
 def get_position_info(netid: str, client: ShrunkClient, entity: str) -> Any:
-    """GET /api/v1/user/<b32:entity>/position
+    """GET /api/core/user/<b32:entity>/position
 
     Args:
         netid (str): the netid of the user logged in
@@ -170,7 +170,7 @@ def update_user_options(
     netid: str,
     client: ShrunkClient,
 ) -> Any:
-    """PATCH /api/v1/user/options/filter
+    """PATCH /api/core/user/options/filter
 
     Args:
         netid (str): the netid of the user logged in

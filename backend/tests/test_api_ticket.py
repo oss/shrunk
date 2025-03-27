@@ -35,14 +35,14 @@ def test_create_ticket(client: Client, ticket: dict):
     ticket_id = ""
     with dev_login(client, "user"):
         # Create the ticket
-        resp = client.post("/api/v1/ticket", json=ticket)
+        resp = client.post("/api/core/ticket", json=ticket)
         assert resp.status_code == 201, "Failed to create ticket"
         ticket_id = resp.json["ticket"]["_id"]
 
     with dev_login(client, "admin"):
         # Delete the ticket
         resp = client.delete(
-            f"/api/v1/ticket/"
+            f"/api/core/ticket/"
             f"{str(base64.b32encode(bytes(ticket_id, 'utf8')), 'utf8')}"
         )
         assert resp.status_code == 204, "Failed to delete ticket"
@@ -61,18 +61,18 @@ def test_create_ticket_duplicate(client: Client):
     ticket_id = ""
     with dev_login(client, "user"):
         # Create the ticket
-        resp = client.post("/api/v1/ticket", json=ticket)
+        resp = client.post("/api/core/ticket", json=ticket)
         assert resp.status_code == 201, "Failed to create ticket"
         ticket_id = resp.json["ticket"]["_id"]
 
         # Attempt to create the ticket again
-        resp = client.post("/api/v1/ticket", json=ticket)
+        resp = client.post("/api/core/ticket", json=ticket)
         assert resp.status_code == 409, "Created duplicate ticket"
 
     with dev_login(client, "admin"):
         # Delete the ticket
         resp = client.delete(
-            f"/api/v1/ticket/"
+            f"/api/core/ticket/"
             f"{str(base64.b32encode(bytes(ticket_id, 'utf8')), 'utf8')}"
         )
         assert resp.status_code == 204, "Failed to delete ticket"
@@ -91,7 +91,7 @@ def test_create_ticket_has_role(client: Client):
     }
     with dev_login(client, "power"):
         # Attempt to create the ticket
-        resp = client.post("/api/v1/ticket", json=ticket)
+        resp = client.post("/api/core/ticket", json=ticket)
         assert resp.status_code == 409, "Created ticket for user with role"
 
 
@@ -105,31 +105,33 @@ def test_get_tickets(client: Client):
     with dev_login(client, "user"):
         # Create the tickets
         for ticket in general_tickets:
-            resp = client.post("/api/v1/ticket", json=ticket)
+            resp = client.post("/api/core/ticket", json=ticket)
             assert resp.status_code == 201, "Failed to create ticket"
             ticket_ids.append(resp.json["ticket"]["_id"])
 
         # Get the tickets
-        resp = client.get("/api/v1/ticket?filter=reporter:DEV_USER")
+        resp = client.get("/api/core/ticket?filter=reporter:DEV_USER")
         assert resp.status_code == 200, "Failed to get tickets"
 
         # Get the tickets with reason power_user
-        resp = client.get("/api/v1/ticket?filter=reporter:DEV_USER,reason:power_user")
+        resp = client.get("/api/core/ticket?filter=reporter:DEV_USER,reason:power_user")
         assert resp.status_code == 200, "Failed to get tickets"
 
         # Get the tickets sorted by created_time
-        resp = client.get("/api/v1/ticket?filter=reporter:DEV_USER&sort=-created_time")
+        resp = client.get(
+            "/api/core/ticket?filter=reporter:DEV_USER&sort=-created_time"
+        )
         assert resp.status_code == 200, "Failed to get tickets"
 
         # Get the number of tickets
-        resp = client.get("/api/v1/ticket?filter=reporter:DEV_USER&count=true")
+        resp = client.get("/api/core/ticket?filter=reporter:DEV_USER&count=true")
         assert resp.json["count"] == 3, "Failed to get tickets count"
 
     with dev_login(client, "admin"):
         # Delete the tickets
         for ticket_id in ticket_ids:
             resp = client.delete(
-                f"/api/v1/ticket/"
+                f"/api/core/ticket/"
                 f"{str(base64.b32encode(bytes(ticket_id, 'utf8')), 'utf8')}"
             )
             assert resp.status_code == 204, "Failed to delete ticket"
@@ -149,13 +151,13 @@ def test_close_ticket(client: Client, ticket: dict):
     ticket_id = ""
     with dev_login(client, "user"):
         # Create the ticket
-        resp = client.post("/api/v1/ticket", json=ticket)
+        resp = client.post("/api/core/ticket", json=ticket)
         assert resp.status_code == 201, "Failed to create ticket"
         ticket_id = resp.json["ticket"]["_id"]
 
         # Close the ticket
         resp = client.patch(
-            f"/api/v1/ticket/"
+            f"/api/core/ticket/"
             f"{str(base64.b32encode(bytes(ticket_id, 'utf8')), 'utf8')}",
             json={"action": "close", "actioned_by": "DEV_USER"},
         )
@@ -164,7 +166,7 @@ def test_close_ticket(client: Client, ticket: dict):
     with dev_login(client, "admin"):
         # Delete the ticket
         resp = client.delete(
-            f"/api/v1/ticket/"
+            f"/api/core/ticket/"
             f"{str(base64.b32encode(bytes(ticket_id, 'utf8')), 'utf8')}"
         )
         assert resp.status_code == 204, "Failed to delete ticket"
@@ -184,7 +186,7 @@ def test_resolve_ticket(client: Client, ticket: dict):
     ticket_id = ""
     with dev_login(client, "user"):
         # Create the ticket
-        resp = client.post("/api/v1/ticket", json=ticket)
+        resp = client.post("/api/core/ticket", json=ticket)
         assert resp.status_code == 201, "Failed to create ticket"
         ticket_id = resp.json["ticket"]["_id"]
 
@@ -199,7 +201,7 @@ def test_resolve_ticket(client: Client, ticket: dict):
         else:
             data = {"action": "resolve", "admin_review": "I have resolved the issue"}
         resp = client.patch(
-            f"/api/v1/ticket/"
+            f"/api/core/ticket/"
             f"{str(base64.b32encode(bytes(ticket_id, 'utf8')), 'utf8')}",
             json=data,
         )
@@ -207,7 +209,7 @@ def test_resolve_ticket(client: Client, ticket: dict):
 
         # Delete the ticket
         resp = client.delete(
-            f"/api/v1/ticket/"
+            f"/api/core/ticket/"
             f"{str(base64.b32encode(bytes(ticket_id, 'utf8')), 'utf8')}"
         )
         assert resp.status_code == 204, "Failed to delete ticket"

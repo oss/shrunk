@@ -23,6 +23,7 @@ from werkzeug.routing import BaseConverter, ValidationError
 # Extensions
 # Blueprints
 from . import api, dev_logins, sso, views
+from .api import extern
 from .client import ShrunkClient
 from .util.github import pull_outlook_assets_from_github
 from .util.ldap import is_valid_netid
@@ -287,6 +288,9 @@ def create_app(**kwargs: Any) -> Flask:
     app.register_blueprint(api.ticket.bp)
     app.register_blueprint(api.user.bp)
 
+    # EXTERNAL API
+    app.register_blueprint(extern.bp)
+
     # set up extensions
     mail = Mail()
     mail.init_app(app)
@@ -297,7 +301,7 @@ def create_app(**kwargs: Any) -> Flask:
     def _redirect_to_real_index() -> Any:
         return redirect("/app")
 
-    @app.route("/api/v1/release-notes", methods=["GET"])
+    @app.route("/api/core/release-notes", methods=["GET"])
     def serve_release_notes() -> Any:
         releases = json.load(
             open(
@@ -330,7 +334,7 @@ def create_app(**kwargs: Any) -> Flask:
 
         return jsonify(releases)
 
-    @app.route("/api/v1/logout", methods=["POST"])
+    @app.route("/api/core/logout", methods=["POST"])
     def logout() -> Any:
         """Clears the user's session and sends them to Shibboleth to finish logging out.
         Redirects to index if user is not logged in."""
@@ -405,7 +409,7 @@ def create_app(**kwargs: Any) -> Flask:
         else:
             return "Bad Request. Env variable was invalid.", 400
 
-    @app.route("/api/v1/enabled", methods=["GET"])
+    @app.route("/api/core/enabled", methods=["GET"])
     def get_features_flag() -> Any:
         return jsonify(
             {
@@ -438,7 +442,7 @@ def create_app(**kwargs: Any) -> Flask:
                 # Treat legacy tracking pixels.
 
                 # TODO: Make this for the /<alias> route
-                return redirect(f"/api/v1/t/{alias}")
+                return redirect(f"/api/core/t/{alias}")
             else:
                 # We do not want to promote the use of tracking pixels used under the alias route.
                 return jsonify({"message": "Link not found"}), 404
@@ -495,9 +499,9 @@ def create_app(**kwargs: Any) -> Flask:
 
         return response
 
-    # Add "/api/v1/t/" because you're technically using an API endpoint for the websites using the tracking pixel.
+    # Add "/api/core/t/" because you're technically using an API endpoint for the websites using the tracking pixel.
     # This will also make it easier for the NGINX server in the near future.
-    @app.route("/api/v1/t/<tracking_pixel>", methods=["GET"])
+    @app.route("/api/core/t/<tracking_pixel>", methods=["GET"])
     def _serve_tracking_pixel(tracking_pixel: str) -> Any:
         client: ShrunkClient = current_app.client
         tracking_id = request.cookies.get("shrunkid") or client.tracking.get_new_id()

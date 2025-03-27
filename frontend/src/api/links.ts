@@ -13,7 +13,7 @@ import {
 } from '../interfaces/link';
 
 export async function getLink(linkId: string): Promise<Link> {
-  const resp = await fetch(`/api/v1/link/${linkId}`, {
+  const resp = await fetch(`/api/core/link/${linkId}`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
@@ -47,7 +47,7 @@ export async function createLink(
     expiration_time: expirationTime?.toISOString(),
     tracking_pixel_extension: trackingPixelImageType,
   };
-  const resp = await fetch('/api/v1/link', {
+  const resp = await fetch('/api/core/link', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(req),
@@ -60,7 +60,7 @@ export async function createLink(
 }
 
 export async function deleteLink(linkId: string) {
-  await fetch(`/api/v1/link/${linkId}`, { method: 'DELETE' });
+  await fetch(`/api/core/link/${linkId}`, { method: 'DELETE' });
 }
 
 export async function addCollaborator(
@@ -68,7 +68,7 @@ export async function addCollaborator(
   collaborator: LinkSharedWith,
   role: 'editor' | 'viewer',
 ) {
-  await fetch(`/api/v1/link/${linkId}/acl`, {
+  await fetch(`/api/core/link/${linkId}/acl`, {
     method: 'PATCH',
     headers: {
       'content-type': 'application/json',
@@ -93,7 +93,7 @@ export async function removeCollaborator(
   };
 
   if (role === 'viewer' || role === undefined) {
-    await fetch(`/api/v1/link/${linkId}/acl`, {
+    await fetch(`/api/core/link/${linkId}/acl`, {
       method: 'PATCH',
       headers: {
         'content-type': 'application/json',
@@ -105,7 +105,7 @@ export async function removeCollaborator(
   patchReq.acl = 'editors';
 
   if (role === 'editor' || role === undefined) {
-    await fetch(`/api/v1/link/${linkId}/acl`, {
+    await fetch(`/api/core/link/${linkId}/acl`, {
       method: 'PATCH',
       headers: {
         'content-type': 'application/json',
@@ -116,7 +116,7 @@ export async function removeCollaborator(
 }
 
 export async function reverLinkExpirationDate(linkId: string) {
-  await fetch(`/api/v1/link/${linkId}/revert`, {
+  await fetch(`/api/core/link/${linkId}/revert`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -126,7 +126,7 @@ export async function reverLinkExpirationDate(linkId: string) {
 
 export async function isValidAlias(alias: string): Promise<boolean> {
   const resp = await fetch(
-    `/api/v1/link/validate_duplicate_alias/${base32.encode(alias)}`,
+    `/api/core/link/validate_duplicate_alias/${base32.encode(alias)}`,
   );
   const data = await resp.json();
 
@@ -134,35 +134,35 @@ export async function isValidAlias(alias: string): Promise<boolean> {
 }
 
 export async function getLinkStats(linkId: string) {
-  const resp = await fetch(`/api/v1/link/${linkId}/stats`);
+  const resp = await fetch(`/api/core/link/${linkId}/stats`);
   const data = await resp.json();
 
   return data as OverallStats;
 }
 
 export async function getLinkVisitsStats(linkId: string) {
-  const resp = await fetch(`/api/v1/link/${linkId}/stats/visits`);
+  const resp = await fetch(`/api/core/link/${linkId}/stats/visits`);
   const data = await resp.json();
 
   return data as VisitStats;
 }
 
 export async function getLinkGeoIpStats(linkId: string) {
-  const resp = await fetch(`/api/v1/link/${linkId}/stats/geoip`);
+  const resp = await fetch(`/api/core/link/${linkId}/stats/geoip`);
   const data = await resp.json();
 
   return data as GeoipStats;
 }
 
 export async function getLinkBrowserStats(linkId: string) {
-  const resp = await fetch(`/api/v1/link/${linkId}/stats/browser`);
+  const resp = await fetch(`/api/core/link/${linkId}/stats/browser`);
   const data = await resp.json();
 
   return data as BrowserStats;
 }
 
 export async function editLink(linkId: string, values: EditLinkValues) {
-  const resp = await fetch(`/api/v1/link/${linkId}`, {
+  const resp = await fetch(`/api/core/link/${linkId}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(values),
@@ -172,7 +172,7 @@ export async function editLink(linkId: string, values: EditLinkValues) {
 }
 
 export async function searchLinks(query: any) {
-  const resp = await fetch('/api/v1/search', {
+  const resp = await fetch('/api/core/search', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -184,7 +184,7 @@ export async function searchLinks(query: any) {
 }
 
 export async function updateUserFilterOptions(options: SearchQuery) {
-  await fetch(`/api/v1/user/options/filter`, {
+  await fetch(`/api/core/user/options/filter`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ filterOptions: options }),

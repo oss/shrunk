@@ -21,7 +21,7 @@ def test_link(client: Client) -> None:  # pylint: disable=too-many-statements
         link_id = resp.json["id"]
 
         # Get the link info back and make sure it's correct
-        resp = client.get(f"/api/v1/link/{link_id}")
+        resp = client.get(f"/api/core/link/{link_id}")
         assert 200 <= resp.status_code < 300
         assert resp.json["title"] == "title"
         assert resp.json["long_url"] == "https://example.com"
@@ -41,7 +41,7 @@ def test_link(client: Client) -> None:  # pylint: disable=too-many-statements
         # Set the link to expire 200 ms in the future
         expiration_time = datetime.now(timezone.utc) + timedelta(milliseconds=200)
         resp = client.patch(
-            f"/api/v1/link/{link_id}",
+            f"/api/core/link/{link_id}",
             json={
                 "expiration_time": expiration_time.isoformat(),
             },
@@ -61,7 +61,7 @@ def test_link(client: Client) -> None:  # pylint: disable=too-many-statements
 
         # Unset the link expiration time
         resp = client.patch(
-            f"/api/v1/link/{link_id}",
+            f"/api/core/link/{link_id}",
             json={
                 "expiration_time": None,
             },
@@ -78,11 +78,11 @@ def test_link(client: Client) -> None:  # pylint: disable=too-many-statements
         assert resp.headers["Location"] == "https://example.com"
 
         # Delete the link
-        resp = client.delete(f"/api/v1/link/{link_id}")
+        resp = client.delete(f"/api/core/link/{link_id}")
         assert 200 <= resp.status_code < 300
 
         # Check that attempting to get the link info now results in a 404 error
-        resp = client.get(f"/api/v1/link/{link_id}")
+        resp = client.get(f"/api/core/link/{link_id}")
         assert resp.status_code == 404
 
         # Check that alias0 still doesn't redirect
@@ -110,7 +110,7 @@ def test_create_link_expiration(client: Client) -> None:
         # Create a link that expires 400 ms in the future
         expiration_time = datetime.now(timezone.utc) + timedelta(milliseconds=400)
         resp = client.post(
-            "/api/v1/link",
+            "/api/core/link",
             json={
                 "long_url": "https://example.com",
                 "expiration_time": expiration_time.isoformat(),
@@ -134,7 +134,7 @@ def test_create_link_expiration(client: Client) -> None:
 
         # Unset the link expiration time
         resp = client.patch(
-            f"/api/v1/link/{link_id}",
+            f"/api/core/link/{link_id}",
             json={
                 "expiration_time": None,
             },
@@ -154,12 +154,12 @@ def test_create_link_bad_long_url(client: Client) -> None:
     long_url_b32 = str(base64.b32encode(bytes(long_url, "utf8")), "utf8")
 
     with dev_login(client, "admin"):
-        resp = client.put(f"/api/v1/role/blocked_url/entity/{long_url_b32}", json={})
+        resp = client.put(f"/api/core/role/blocked_url/entity/{long_url_b32}", json={})
         assert resp.status_code == 204
 
     with dev_login(client, "user"):
         resp = client.post(
-            "/api/v1/link",
+            "/api/core/link",
             json={
                 "description": "description",
                 "long_url": long_url,
@@ -174,7 +174,7 @@ def test_modify_link_bad_long_url(client: Client) -> None:
     long_url_b32 = str(base64.b32encode(bytes(long_url, "utf8")), "utf8")
 
     with dev_login(client, "admin"):
-        resp = client.put(f"/api/v1/role/blocked_url/entity/{long_url_b32}", json={})
+        resp = client.put(f"/api/core/role/blocked_url/entity/{long_url_b32}", json={})
         assert resp.status_code == 204
 
     with dev_login(client, "user"):
@@ -184,7 +184,7 @@ def test_modify_link_bad_long_url(client: Client) -> None:
 
     with dev_login(client, "user"):
         resp = client.patch(
-            f"/api/v1/link/{link_id}",
+            f"/api/core/link/{link_id}",
             json={
                 "long_url": long_url,
             },
@@ -210,13 +210,13 @@ def test_validate_long_url(client: Client, long_url: str, expected: bool) -> Non
 
     with dev_login(client, "admin"):
         resp = client.put(
-            f"/api/v1/role/blocked_url/entity/{blocked_long_url_b32}", json={}
+            f"/api/core/role/blocked_url/entity/{blocked_long_url_b32}", json={}
         )
         assert resp.status_code == 204
 
     long_url_b32 = str(base64.b32encode(bytes(long_url, "utf8")), "utf8")
     with dev_login(client, "user"):
-        resp = client.get(f"/api/v1/link/validate_long_url/{long_url_b32}")
+        resp = client.get(f"/api/core/link/validate_long_url/{long_url_b32}")
         assert resp.status_code == 200
         assert resp.json["valid"] is expected
 
@@ -231,7 +231,7 @@ def test_validate_long_url(client: Client, long_url: str, expected: bool) -> Non
 def test_validate_alias(client: Client, alias: str, expected: bool) -> None:
     alias_b32 = str(base64.b32encode(bytes(alias, "utf8")), "utf8")
     with dev_login(client, "user"):
-        resp = client.get(f"/api/v1/link/validate_reserved_alias/{alias_b32}")
+        resp = client.get(f"/api/core/link/validate_reserved_alias/{alias_b32}")
         assert resp.status_code == 200
         assert resp.json["valid"] is expected
 
@@ -256,7 +256,7 @@ def test_validate_alias(client: Client, alias: str, expected: bool) -> None:
 def test_create_bad_alias(client: Client, alias: str, expected: bool) -> None:
     with dev_login(client, "power"):
         resp = client.post(
-            "/api/v1/link",
+            "/api/core/link",
             json={
                 "description": "title",
                 "long_url": "https://example.com",
@@ -273,7 +273,7 @@ def test_create_bad_alias(client: Client, alias: str, expected: bool) -> None:
 def test_create_alias_no_power_user(client: Client) -> None:
     with dev_login(client, "user"):
         resp = client.post(
-            "/api/v1/link",
+            "/api/core/link",
             json={
                 "description": "title",
                 "long_url": "https://example.com",
@@ -297,54 +297,54 @@ def test_link_not_owner(client: Client) -> None:
     # Log in DEV_USER and check that we cannot view/edit the link or its alias
     with dev_login(client, "user"):
         # Check that we cannot get link info
-        resp = client.get(f"/api/v1/link/{link_id}")
+        resp = client.get(f"/api/core/link/{link_id}")
         assert resp.status_code == 403
 
         # Check that we cannot get link visits
-        resp = client.get(f"/api/v1/link/{link_id}/visits")
+        resp = client.get(f"/api/core/link/{link_id}/visits")
         assert resp.status_code == 403
 
         # Check that we cannot get link overall stats
-        resp = client.get(f"/api/v1/link/{link_id}/stats")
+        resp = client.get(f"/api/core/link/{link_id}/stats")
         assert resp.status_code == 403
 
         # Check that we cannot get link visit stats
-        resp = client.get(f"/api/v1/link/{link_id}/stats/visits")
+        resp = client.get(f"/api/core/link/{link_id}/stats/visits")
         assert resp.status_code == 403
 
         # Check that we cannot get link GeoIP stats
-        resp = client.get(f"/api/v1/link/{link_id}/stats/geoip")
+        resp = client.get(f"/api/core/link/{link_id}/stats/geoip")
         assert resp.status_code == 403
 
         # Check that we cannot get link browser stats
-        resp = client.get(f"/api/v1/link/{link_id}/stats/browser")
+        resp = client.get(f"/api/core/link/{link_id}/stats/browser")
         assert resp.status_code == 403
 
         # Check that we cannot clear visits
-        resp = client.post(f"/api/v1/link/{link_id}/clear_visits")
+        resp = client.post(f"/api/core/link/{link_id}/clear_visits")
         assert resp.status_code == 403
 
         # Check that we cannot delete the link
-        resp = client.delete(f"/api/v1/link/{link_id}")
+        resp = client.delete(f"/api/core/link/{link_id}")
         assert resp.status_code == 403
 
 
 def test_get_link_info_bad_id(client: Client) -> None:
     with dev_login(client, "user"):
-        resp = client.get("/api/v1/link/not_an_id")
+        resp = client.get("/api/core/link/not_an_id")
         assert resp.status_code == 404
 
 
 def test_get_link_nonexistent(client: Client) -> None:
     with dev_login(client, "user"):
-        resp = client.get("/api/v1/link/5fa30b6801cc0db00872569b")
+        resp = client.get("/api/core/link/5fa30b6801cc0db00872569b")
         assert resp.status_code == 404
 
 
 def test_modify_link_nonexistent(client: Client) -> None:
     with dev_login(client, "user"):
         resp = client.patch(
-            "/api/v1/link/5fa30b6801cc0db00872569b",
+            "/api/core/link/5fa30b6801cc0db00872569b",
             json={
                 "description": "new title",
             },
@@ -354,20 +354,20 @@ def test_modify_link_nonexistent(client: Client) -> None:
 
 def test_delete_link_nonexistent(client: Client) -> None:
     with dev_login(client, "user"):
-        resp = client.delete("/api/v1/link/5fa30b6801cc0db00872569b")
+        resp = client.delete("/api/core/link/5fa30b6801cc0db00872569b")
         assert resp.status_code == 404
 
 
 def test_clear_visits_nonexistent(client: Client) -> None:
     with dev_login(client, "user"):
-        resp = client.post("/api/v1/link/5fa30b6801cc0db00872569b/clear_visits")
+        resp = client.post("/api/core/link/5fa30b6801cc0db00872569b/clear_visits")
         assert resp.status_code == 404
 
 
 def test_get_deleted(client: Client) -> None:
     with dev_login(client, "user"):
         resp = client.post(
-            "/api/v1/link",
+            "/api/core/link",
             json={
                 "description": "title",
                 "long_url": "https://example.com",
@@ -378,16 +378,16 @@ def test_get_deleted(client: Client) -> None:
         alias0 = resp.json["alias"]
 
         # Delete the link
-        resp = client.delete(f"/api/v1/link/{link_id}")
+        resp = client.delete(f"/api/core/link/{link_id}")
         assert resp.status_code == 204
 
         # Check that the link info is no longer accessible
-        resp = client.get(f"/api/v1/link/{link_id}")
+        resp = client.get(f"/api/core/link/{link_id}")
         assert resp.status_code == 404
 
     with dev_login(client, "admin"):
         # Get the link info as admin, check that the alias exists
-        resp = client.get(f"/api/v1/link/{link_id}")
+        resp = client.get(f"/api/core/link/{link_id}")
         assert resp.status_code == 200
 
         info = resp.json
@@ -404,7 +404,7 @@ def test_visits(client: Client) -> None:  # pylint: disable=too-many-statements
 
     with dev_login(client, "user"):
         resp = client.post(
-            "/api/v1/link",
+            "/api/core/link",
             json={
                 "description": "title",
                 "long_url": "https://example.com",
@@ -420,32 +420,32 @@ def test_visits(client: Client) -> None:  # pylint: disable=too-many-statements
         resp = client.get(f"/{alias0}")
 
         # Get the link stats. Check that we have 3 visits and 1 unique visit
-        assert_visits(f"/api/v1/link/{link_id}/stats", 3, 1)
+        assert_visits(f"/api/core/link/{link_id}/stats", 3, 1)
 
         # Get the anonymized visits, make sure they make sense
-        resp = client.get(f"/api/v1/link/{link_id}/visits")
+        resp = client.get(f"/api/core/link/{link_id}/visits")
         assert resp.status_code == 200
         assert all(visit["link_id"] == link_id for visit in resp.json["visits"])
         assert len(resp.json["visits"]) == 3
         assert sum(1 for visit in resp.json["visits"] if visit["alias"] == alias0) == 3
 
         # Get the visit stats data
-        resp = client.get(f"/api/v1/link/{link_id}/stats/visits")
+        resp = client.get(f"/api/core/link/{link_id}/stats/visits")
         assert resp.status_code == 200
         assert len(resp.json["visits"]) == 1
         assert resp.json["visits"][0]["first_time_visits"] == 1
         assert resp.json["visits"][0]["all_visits"] == 3
 
-        resp = client.get(f"/api/v1/link/{link_id}/stats/geoip")
+        resp = client.get(f"/api/core/link/{link_id}/stats/geoip")
         assert resp.status_code == 200
 
-        resp = client.get(f"/api/v1/link/{link_id}/stats/browser")
+        resp = client.get(f"/api/core/link/{link_id}/stats/browser")
         assert resp.status_code == 200
 
         # Clear visits. Check that everything has gone back to 0
-        resp = client.post(f"/api/v1/link/{link_id}/clear_visits")
+        resp = client.post(f"/api/core/link/{link_id}/clear_visits")
         assert resp.status_code == 204
-        assert_visits(f"/api/v1/link/{link_id}/stats", 0, 0)
+        assert_visits(f"/api/core/link/{link_id}/stats", 0, 0)
 
         # When DNT is set, the right amount of unique visits are set
         resp = client.get(f"/{alias0}", headers={"DNT": "1"})
@@ -458,12 +458,12 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
     with dev_login(client, "facstaff"):
 
         def check_create(body):
-            resp = client.post("/api/v1/link", json=body)
+            resp = client.post("/api/core/link", json=body)
             if "errors" in resp.json:
                 return resp.json, resp.status_code
             link_id = resp.json["id"]
             status = resp.status_code
-            resp = client.get(f"/api/v1/link/{link_id}")
+            resp = client.get(f"/api/core/link/{link_id}")
             return resp.json, status
 
         # make sure Editors are viewers
@@ -525,7 +525,7 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
         assert "errors" in link
 
         # org allows valid org
-        resp = client.post("/api/v1/org", json={"name": "testorg11"})
+        resp = client.post("/api/core/org", json={"name": "testorg11"})
         assert 200 <= resp.status_code <= 300
         _id = resp.json["id"]
 
@@ -546,7 +546,7 @@ def test_update_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
 
     with dev_login(client, "facstaff"):
         resp = client.post(
-            "/api/v1/link",
+            "/api/core/link",
             json={"description": "title", "long_url": "https://example.com"},
         )
         assert 200 <= resp.status_code <= 300
@@ -554,14 +554,14 @@ def test_update_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
 
         def mod_acl(action, entry, acl):
             resp = client.patch(
-                f"/api/v1/link/{link_id}/acl",
+                f"/api/core/link/{link_id}/acl",
                 json={"action": action, "acl": acl, "entry": entry},
             )
             print(resp.json)
             if resp.status_code >= 400:
                 return resp.json, resp.status_code
             status = resp.status_code
-            resp = client.get(f"/api/v1/link/{link_id}")
+            resp = client.get(f"/api/core/link/{link_id}")
             return resp.json, status
 
         owner = {"_id": "DEV_FACSTAFF", "type": "netid"}
@@ -633,7 +633,7 @@ def test_update_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
         assert status == 400
 
         # add valid org
-        resp = client.post("/api/v1/org", json={"name": "testorg11"})
+        resp = client.post("/api/core/org", json={"name": "testorg11"})
         assert 200 <= resp.status_code <= 300
         org_id = resp.json["id"]
         link, status = mod_acl("add", {"_id": org_id, "type": "org"}, "viewers")
@@ -659,18 +659,18 @@ def test_acl(client: Client) -> None:  # pylint: disable=too-many-statements
     alias = ""
     with dev_login(client, "admin"):
         # create org
-        resp = client.post("/api/v1/org", json={"name": "testorg12"})
+        resp = client.post("/api/core/org", json={"name": "testorg12"})
         assert 200 <= resp.status_code <= 300
         org_id = resp.json["id"]
 
         # add whitelisted to it
         netid = "DEV_FACSTAFF"  # todo, no whitelisted dev login
-        resp = client.put(f"/api/v1/org/{org_id}/member/{netid}")
+        resp = client.put(f"/api/core/org/{org_id}/member/{netid}")
         assert 200 <= resp.status_code <= 300
 
         # create link with editor: user, viewer: org
         resp = client.post(
-            "/api/v1/link",
+            "/api/core/link",
             json={
                 "description": "testlink2333",
                 "long_url": "https://example.com",
@@ -682,7 +682,7 @@ def test_acl(client: Client) -> None:  # pylint: disable=too-many-statements
         link_id = resp.json["id"]
         alias = resp.json["alias"]
 
-        resp = client.get(f"/api/v1/link/{link_id}")
+        resp = client.get(f"/api/core/link/{link_id}")
 
     permissions_table = [
         {
@@ -733,14 +733,14 @@ def test_acl(client: Client) -> None:  # pylint: disable=too-many-statements
         print(user["user"])
 
         with dev_login(client, user["user"]):
-            resp = client.delete(f"/api/v1/link/{link_id}")
+            resp = client.delete(f"/api/core/link/{link_id}")
             assert resp.status_code == 403
 
-            resp = client.post(f"/api/v1/link/{link_id}/clear_visits")
+            resp = client.post(f"/api/core/link/{link_id}/clear_visits")
             assert resp.status_code == 403
 
             resp = client.patch(
-                f"/api/v1/link/{link_id}",
+                f"/api/core/link/{link_id}",
                 json={
                     "long_url": "https://example.com?rand="
                     + str(random.randrange(0, 1000))
@@ -749,7 +749,7 @@ def test_acl(client: Client) -> None:  # pylint: disable=too-many-statements
             assert_access(user["update_url"], resp.status_code)
 
             resp = client.patch(
-                f"/api/v1/link/{link_id}/acl",
+                f"/api/core/link/{link_id}/acl",
                 json={
                     "entry": {
                         "_id": "DEV_roofus" + str(random.randrange(0, 1000)),
@@ -761,7 +761,7 @@ def test_acl(client: Client) -> None:  # pylint: disable=too-many-statements
             )
             assert_access(user["update_acl"], resp.status_code)
 
-            resp = client.get(f"/api/v1/link/{link_id}")
+            resp = client.get(f"/api/core/link/{link_id}")
             assert_access(user["get"], resp.status_code)
 
             for endpoint in [
@@ -771,7 +771,7 @@ def test_acl(client: Client) -> None:  # pylint: disable=too-many-statements
                 "stats/visits",
                 "visits",
             ]:
-                resp = client.get(f"/api/v1/link/{link_id}/{endpoint}")
+                resp = client.get(f"/api/core/link/{link_id}/{endpoint}")
                 assert_access(user["view_stats"], resp.status_code)
 
 
@@ -798,7 +798,7 @@ def test_revert_expiration_link(client: Client) -> None:
         # Add link with expiration time set 500 milliseconds in the future
         expiration_time = datetime.now(timezone.utc) + timedelta(milliseconds=500)
         resp = client.post(
-            "/api/v1/link",
+            "/api/core/link",
             json={
                 "description": "title",
                 "long_url": "https://sample.com",
@@ -810,10 +810,10 @@ def test_revert_expiration_link(client: Client) -> None:
         link_id = resp.json["id"]
 
         # Restore link
-        resp = client.post(f"/api/v1/link/{link_id}/revert")
+        resp = client.post(f"/api/core/link/{link_id}/revert")
         assert resp.status_code == 204, "Failed to restore link"
 
         # Fetch link and ensure expiration time field is set to None
-        resp = client.get(f"/api/v1/link/{link_id}")
+        resp = client.get(f"/api/core/link/{link_id}")
         assert resp.status_code == 200, "Failed to fetch link"
         assert resp.json["expiration_time"] is None, "Expiration time is not None"

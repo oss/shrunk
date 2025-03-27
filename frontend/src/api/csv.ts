@@ -26,8 +26,8 @@ export async function downloadVisits(
 ): Promise<void> {
   const apiUrl =
     alias === null
-      ? `/api/v1/link/${link_id}/visits`
-      : `/api/v1/link/${link_id}/alias/${alias}/visits`;
+      ? `/api/core/link/${link_id}/visits`
+      : `/api/core/link/${link_id}/alias/${alias}/visits`;
   const visits = await fetch(apiUrl)
     .then((resp) => resp.json())
     .then((json) => json.visits as AnonymizedVisit[]);
@@ -66,7 +66,7 @@ function createGrantedUsersCsv(users: GrantedUser[]): string {
  * @param alias The alias, or `null` to get all data for the given link ID
  */
 export async function downloadGrantedUsers(role_name: string): Promise<void> {
-  const users = await fetch(`/api/v1/role/${role_name}/entity`)
+  const users = await fetch(`/api/core/role/${role_name}/entity`)
     .then((resp) => resp.json())
     .then((json) => json.entities as GrantedUser[]);
   const filename = `${role_name}.csv`;

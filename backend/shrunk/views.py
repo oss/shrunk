@@ -15,7 +15,7 @@ from shrunk.client.exceptions import NoSuchObjectException
 
 __all__ = ["bp"]
 
-bp = Blueprint("shrunk", __name__, url_prefix="/api/v1")
+bp = Blueprint("shrunk", __name__, url_prefix="/api/core")
 
 
 @bp.route("/access_request/<hex_token:token>/accept", methods=["GET"])

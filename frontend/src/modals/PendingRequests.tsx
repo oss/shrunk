@@ -136,7 +136,7 @@ export class PendingRequests extends React.Component<Props, State> {
    * @method
    */
   updatePendingRequests = async (): Promise<void> => {
-    const pendingRequests = await fetch('/api/v1/request/pending').then(
+    const pendingRequests = await fetch('/api/core/request/pending').then(
       (resp) => resp.json(),
     );
     this.setState({
@@ -153,7 +153,7 @@ export class PendingRequests extends React.Component<Props, State> {
    * @param request_token The request token
    */
   acceptRequest = async (request_token: string): Promise<void> => {
-    await fetch(`/api/v1/request/resolve/${request_token}/accept`);
+    await fetch(`/api/core/request/resolve/${request_token}/accept`);
     await this.updatePendingRequests();
   };
 
@@ -163,7 +163,7 @@ export class PendingRequests extends React.Component<Props, State> {
    * @param request_token The request token
    */
   denyRequest = async (request_token: string): Promise<void> => {
-    await fetch(`/api/v1/request/resolve/${request_token}/deny`);
+    await fetch(`/api/core/request/resolve/${request_token}/deny`);
     await this.updatePendingRequests();
   };
 

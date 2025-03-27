@@ -16,6 +16,10 @@
         {
           "text": "Backend tests are able to be run locally on the developer's machine with hot reloading using Docker",
           "contributors": ["ah1371"]
+        },
+        {
+          "text": "Expose the backend API for external programs to wield",
+          "contributors": ["ah1371"]
         }
       ],
       "improvements": [

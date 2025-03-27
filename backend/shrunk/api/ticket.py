@@ -1,4 +1,4 @@
-"""Implement API endpoints under ``/api/v1/ticket``"""
+"""Implement API endpoints under ``/api/core/ticket``"""
 
 import time
 from typing import Any
@@ -10,7 +10,7 @@ from shrunk.util.decorators import request_schema, require_login, require_mail
 from werkzeug.exceptions import abort
 
 __all__ = ["bp"]
-bp = Blueprint("ticket", __name__, url_prefix="/api/v1/ticket")
+bp = Blueprint("ticket", __name__, url_prefix="/api/core/ticket")
 
 ROLE_REQUESTS = {"power_user", "whitelisted"}
 HELP_DESK_EMAIL_SCHEMA = {

@@ -2,21 +2,21 @@ import base32 from 'hi-base32';
 import { ResolveTicketInfo } from '../interfaces/tickets';
 
 export async function getTicket(ticketId: string): Promise<any> {
-  const response = await fetch(`/api/v1/ticket/${base32.encode(ticketId)}`);
+  const response = await fetch(`/api/core/ticket/${base32.encode(ticketId)}`);
   const body = await response.json();
   return body;
 }
 
 export async function getEntityPosition(entity: string): Promise<any> {
   const response = await fetch(
-    `/api/v1/user/${base32.encode(entity)}/position`,
+    `/api/core/user/${base32.encode(entity)}/position`,
   );
   const body = await response.json();
   return body;
 }
 
 export async function closeTicket(ticketId: string): Promise<Response> {
-  const resp = await fetch(`/api/v1/ticket/${base32.encode(ticketId)}`, {
+  const resp = await fetch(`/api/core/ticket/${base32.encode(ticketId)}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -30,14 +30,14 @@ export async function closeTicket(ticketId: string): Promise<Response> {
 }
 
 export async function getHelpDeskText(): Promise<any> {
-  const response = await fetch('/api/v1/ticket/text');
+  const response = await fetch('/api/core/ticket/text');
   const data = await response.json();
   return data;
 }
 
 // TODO: This is dangerous(?), people can exploit this and send as many emails as they want.
 export async function sendTicketEmail(ticketId: string, category: string) {
-  await fetch('/api/v1/ticket/email', {
+  await fetch('/api/core/ticket/email', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -51,7 +51,7 @@ export async function sendTicketEmail(ticketId: string, category: string) {
 
 export async function getTicketsResolvedCount(): Promise<number> {
   const response = await fetch(
-    `/api/v1/ticket?filter=status:resolved&count=true`,
+    `/api/core/ticket?filter=status:resolved&count=true`,
   );
   const data = await response.json();
   return data.count as number;
@@ -62,7 +62,7 @@ export async function createTicket(
   userComment: string,
   entity?: string,
 ) {
-  const response = await fetch('/api/v1/ticket', {
+  const response = await fetch('/api/core/ticket', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -76,7 +76,7 @@ export async function resolveTicket(
   ticketId: string,
   values: ResolveTicketInfo,
 ) {
-  const response = await fetch(`/api/v1/ticket/${base32.encode(ticketId)}`, {
+  const response = await fetch(`/api/core/ticket/${base32.encode(ticketId)}`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
@@ -93,10 +93,12 @@ export async function resolveTicket(
 export async function getTickets(userPrivileges: Set<string>, netid: string) {
   let response = null;
   if (userPrivileges.has('admin')) {
-    response = await fetch(`/api/v1/ticket?filter=status:open&sort=-timestamp`);
+    response = await fetch(
+      `/api/core/ticket?filter=status:open&sort=-timestamp`,
+    );
   } else {
     response = await fetch(
-      `/api/v1/ticket?filter=reporter:${netid},status:open&sort=-timestamp`,
+      `/api/core/ticket?filter=reporter:${netid},status:open&sort=-timestamp`,
     );
   }
   const body = await response.json();

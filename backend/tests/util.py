@@ -21,7 +21,7 @@ def create_link(
         body["alias"] = alias
 
     return client.post(
-        "/api/v1/link",
+        "/api/core/link",
         json=body,
     )
 
@@ -30,7 +30,7 @@ def create_tracking_pixel(
     client: Client, description: str, tracking_pixel_extension: str
 ) -> str:
     return client.post(
-        "/api/v1/link",
+        "/api/core/link",
         json={
             "description": description,
             "long_url": "example.com",
@@ -67,8 +67,8 @@ def assert_json(resp: Response, expected: Any) -> None:
 
 @contextlib.contextmanager
 def dev_login(client: Client, login: str) -> Generator[None, None, None]:
-    assert_status(client.post(f"/api/v1/devlogins/{login}"), 200)
+    assert_status(client.post(f"/api/core/devlogins/{login}"), 200)
     try:
         yield
     finally:
-        assert_status(client.post("/api/v1/logout"), 200)
+        assert_status(client.post("/api/core/logout"), 200)

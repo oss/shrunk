@@ -13,7 +13,7 @@ from shrunk.util.decorators import require_login, request_schema
 
 __all__ = ["bp"]
 
-bp = Blueprint("search", __name__, url_prefix="/api/v1/search")
+bp = Blueprint("search", __name__, url_prefix="/api/core/search")
 
 SEARCH_SCHEMA = {
     "type": "object",

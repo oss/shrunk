@@ -6,7 +6,7 @@ import { Organization, OrganizationMember } from '../interfaces/organizations';
 export async function getOrganizations(
   which: 'all' | 'user',
 ): Promise<Organization[]> {
-  const result = await fetch('/api/v1/org/list', {
+  const result = await fetch('/api/core/org/list', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ which }),
@@ -19,7 +19,7 @@ export async function getOrganizations(
 }
 
 export async function getOrganization(id: string): Promise<Organization> {
-  const result: any = await fetch(`/api/v1/org/${id}`).then((resp) =>
+  const result: any = await fetch(`/api/core/org/${id}`).then((resp) =>
     resp.json(),
   );
   return {
@@ -36,7 +36,7 @@ export async function getOrganization(id: string): Promise<Organization> {
 }
 
 export async function createOrg(name: string): Promise<void> {
-  await fetch('/api/v1/org', {
+  await fetch('/api/core/org', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name }),
@@ -44,11 +44,11 @@ export async function createOrg(name: string): Promise<void> {
 }
 
 export async function deleteOrganization(id: string): Promise<void> {
-  await fetch(`/api/v1/org/${id}`, { method: 'DELETE' });
+  await fetch(`/api/core/org/${id}`, { method: 'DELETE' });
 }
 
 export async function renameOrganization(id: string, newName: string) {
-  await fetch(`/api/v1/org/${id}/rename/${newName}`, {
+  await fetch(`/api/core/org/${id}/rename/${newName}`, {
     method: 'PUT',
   });
 }
@@ -57,7 +57,7 @@ export async function addMemberToOrganization(
   organizationId: string,
   netid: string,
 ) {
-  await fetch(`/api/v1/org/${organizationId}/member/${netid}`, {
+  await fetch(`/api/core/org/${organizationId}/member/${netid}`, {
     method: 'PUT',
   });
 }
@@ -70,7 +70,7 @@ export async function setAdminStatusOrganization(
   netid: string,
   isAdmin: boolean,
 ) {
-  await fetch(`/api/v1/org/${organizationId}/member/${netid}`, {
+  await fetch(`/api/core/org/${organizationId}/member/${netid}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ is_admin: isAdmin }),
@@ -81,13 +81,13 @@ export async function removeMemberFromOrganization(
   organizationId: string,
   netid: string,
 ) {
-  await fetch(`/api/v1/org/${organizationId}/member/${netid}`, {
+  await fetch(`/api/core/org/${organizationId}/member/${netid}`, {
     method: 'DELETE',
   });
 }
 
 export async function getOrganizationVisits(linkId: string) {
-  const resp = await fetch(`/api/v1/org/${linkId}/stats/visits`);
+  const resp = await fetch(`/api/core/org/${linkId}/stats/visits`);
   const data = resp.json();
 
   return data as any;

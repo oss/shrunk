@@ -9,7 +9,7 @@ def test_search_types(client: Client) -> None:
 
     with dev_login(client, "admin"):
         resp = client.post(
-            "/api/v1/search",
+            "/api/core/search",
             json={
                 "pagination": {"skip": 0, "limit": 10},
                 "query": "",
@@ -25,7 +25,7 @@ def test_search_types(client: Client) -> None:
         assert resp.json["results"][0]["description"] == "link"
 
         resp = client.post(
-            "/api/v1/search",
+            "/api/core/search",
             json={
                 "pagination": {"skip": 0, "limit": 10},
                 "query": "",

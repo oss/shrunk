@@ -10,7 +10,7 @@ from werkzeug.exceptions import abort
 
 __all__ = ["bp"]
 
-bp = Blueprint("devlogins", __name__, url_prefix="/api/v1/devlogins")
+bp = Blueprint("devlogins", __name__, url_prefix="/api/core/devlogins")
 
 
 def mk_dev_login(netid: str, display_name: str, role: Optional[str]) -> Any:

@@ -12,7 +12,7 @@ from shrunk.util.decorators import require_login, request_schema
 
 __all__ = ["bp"]
 
-bp = Blueprint("org", __name__, url_prefix="/api/v1/org")
+bp = Blueprint("org", __name__, url_prefix="/api/core/org")
 
 LIST_ORGS_SCHEMA = {
     "type": "object",
@@ -330,7 +330,7 @@ def put_org_member(
 @bp.route("/domain", methods=["PUT"])
 @require_login
 def put_domain(netid: str, client: ShrunkClient) -> Any:
-    """PUT /api/v1/org/domain
+    """PUT /api/core/org/domain
 
     Add a domain to an org. Expects JSON in the request body:
     {
@@ -366,7 +366,7 @@ def put_domain(netid: str, client: ShrunkClient) -> Any:
 @bp.route("/domain", methods=["DELETE"])
 @require_login
 def delete_domain(netid: str, client: ShrunkClient) -> Any:
-    """DELETE /api/v1/org/domain
+    """DELETE /api/core/org/domain
 
     Delete a domain from an org. Expects JSON in the request body:
     {
