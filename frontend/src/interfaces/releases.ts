@@ -10,11 +10,13 @@ export interface Contributor {
   href?: string;
 }
 
+export type Product = 'website' | 'ms-office' | 'public-api';
+
 export interface Note {
   text: string;
   contributors: Contributor[];
-  internal?: boolean;
   warning?: boolean;
+  product?: Product;
 }
 
 export interface Release {

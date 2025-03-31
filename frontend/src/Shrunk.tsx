@@ -33,7 +33,7 @@ import Markdown from 'markdown-to-jsx';
 import Admin from './pages/Admin';
 import Dashboard from './pages/Dashboard';
 import Faq from './pages/Faq';
-import Orgs from './pages/Orgs';
+import MyOrganizations from './pages/organizations';
 
 import Login from './pages/Login';
 import ManageOrg from './pages/organization-manage';
@@ -369,7 +369,7 @@ export default function Shrunk(props: Props) {
                       )}
                     />
                     <Route exact path="/app/orgs">
-                      <Orgs userPrivileges={userPrivileges} />
+                      <MyOrganizations userPrivileges={userPrivileges} />
                     </Route>
 
                     <Route exact path="/app/orgs/:id">
