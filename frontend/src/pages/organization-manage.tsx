@@ -276,20 +276,6 @@ function ManageOrgBase({
                 </Form.Item>
               </Col>
               <Col span={24}>
-                <Form.Item label="Once you delete an organization, there is no going back. Please be certain.">
-                  <Popconfirm
-                    title="Are you sure you want to delete this organization?"
-                    onConfirm={onDeleteOrganization}
-                    okText="Yes"
-                    cancelText="No"
-                  >
-                    <Button danger icon={<TrashIcon />}>
-                      Delete
-                    </Button>
-                  </Popconfirm>
-                </Form.Item>
-              </Col>
-              <Col span={24}>
                 <Typography.Title className="tw-m-0" level={3}>
                   Danger Zone
                 </Typography.Title>
