@@ -5,7 +5,7 @@
     "patch": 0,
     "projectDirector": "ah1371",
     "date": "TODO",
-    "description": "The new public API for faculty developers, real-time notifications, continued codebase cleanup update, and testing suite update.",
+    "description": "The new public API for faculty developers, real-time notifications, continued codebase cleanup, and testing suite update.",
     "categories": {
       "features": [
         {
@@ -15,6 +15,10 @@
         },
         {
           "text": "Backend tests are able to be run locally on the developer's machine with hot reloading using Docker",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "New page for creating tokens for the public API via organization management",
           "contributors": ["ah1371"]
         }
       ],
