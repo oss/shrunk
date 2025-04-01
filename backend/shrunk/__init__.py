@@ -334,7 +334,7 @@ def create_app(**kwargs: Any) -> Flask:
                         for contrib_id in change["contributors"]
                     ]
 
-                    if change["product"] not in valid_products:
+                    if change.get("product", "website") not in valid_products:
                         raise Exception("Invalid product")
 
         return jsonify(releases)
