@@ -5,7 +5,6 @@ import {
   Note,
   Contributor,
   Release,
-  Product,
   ProductDisplay,
 } from '../interfaces/releases';
 
