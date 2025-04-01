@@ -9,6 +9,12 @@ import {
   ProductDisplay,
 } from '../interfaces/releases';
 
+function getNotesLength(data: Note[], product: ProductDisplay) {
+  return product === 'everything'
+    ? data.length
+    : data.filter((obj) => obj.product === product).length;
+}
+
 const ReleaseSection = ({
   title,
   notes,
@@ -95,7 +101,7 @@ export default function ChangeLog() {
   }
 
   const onProductChange = (value: string) => {
-    setProduct(value as Product);
+    setProduct(value as ProductDisplay);
   };
 
   useEffect(() => {
@@ -129,24 +135,27 @@ export default function ChangeLog() {
         />
       </Flex>
       <Row gutter={[16, 16]}>
-        {releaseNotes.map((release: Release, releaseIndex: number) => {
-          function getLength(data: Note[]) {
-            return product === 'everything'
-              ? data.length
-              : data.filter((obj) => obj.product === product).length;
-          }
+        {releaseNotes.map((release: Release) => {
+          const featuresCount = getNotesLength(
+            release.categories.features,
+            product,
+          );
+          const improvementsCount = getNotesLength(
+            release.categories.improvements,
+            product,
+          );
+          const fixesCount = getNotesLength(release.categories.fixes, product);
 
-          const featuresCount = getLength(release.categories.features);
-          const improvementsCount = getLength(release.categories.improvements);
-          const fixesCount = getLength(release.categories.fixes);
+          const hasNoNotes =
+            featuresCount + improvementsCount + fixesCount === 0;
 
-          if (featuresCount + improvementsCount + fixesCount === 0) {
+          if (hasNoNotes) {
             return <></>;
           }
 
           return (
             <Col span={24}>
-              <Typography.Title className={releaseIndex === 0 ? 'tw-mt-2' : ''}>
+              <Typography.Title className="tw-mt-2">
                 {release.major}.{release.minor}.{release.patch}
               </Typography.Title>
               <Typography.Text>{release.description}</Typography.Text>
