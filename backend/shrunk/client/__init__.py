@@ -110,7 +110,6 @@ class ShrunkClient:
             "grants",
             "organizations",
             "tickets",
-            "tracking_ids",
             "unsafe_links",
             "urls",
             "users",

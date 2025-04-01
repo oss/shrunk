@@ -189,6 +189,9 @@ function ManageOrgBase({
                     key: 'settings_developer_organization',
                     label: 'Access Tokens',
                     icon: <CodeIcon />,
+                    onClick: () => {
+                      history.push(`/app/orgs/${match.params.id}/tokens`);
+                    },
                   },
                   { type: 'divider' },
                   {

@@ -1,5 +1,7 @@
 from werkzeug.test import Client
-from util import dev_login
+from util import dev_login, assert_is_response_valid
+from typing import List
+import pytest
 
 
 def test_rename_org(client: Client) -> None:
@@ -67,3 +69,43 @@ def test_restrict_last_admin_demotion(client: Client) -> None:
             f"/api/core/org/{org_id}/member/DEV_ADMIN", json={"is_admin": False}
         )
         assert resp.status_code == 400
+
+
+@pytest.mark.parametrize(
+    ("permissions", "expect_pass"),
+    [
+        (["read:links"], True),
+        (["read:links", "create:links"], True),
+        (["nonexist"], False),
+        (["read:links", "nonexist"], False),
+        (["nonexist", "read:links"], False),
+        ([], False),
+    ],
+)
+def test_create_access_token_permissions(
+    client: Client, permissions: List[str], expect_pass: bool
+) -> None:
+    with dev_login(client, "power"):
+        resp = client.post("/api/core/org", json={"name": "test123"})
+        org_id = resp.json["id"]
+
+        resp = client.post(
+            f"/api/core/org/{org_id}/access_token",
+            json={
+                "title": "title",
+                "description": "description",
+                "permissions": permissions,
+            },
+        )
+        if expect_pass:
+            assert resp.status_code == 201
+        else:
+            assert resp.status_code == 400
+
+
+def test_get_valid_access_permissions(client: Client) -> None:
+    with dev_login(client, "power"):
+        resp = client.post("/api/core/org/valid-permissions")
+        assert_is_response_valid(resp)
+
+        assert type(resp["permissions"]) is list

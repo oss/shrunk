@@ -1,6 +1,6 @@
 """Implements API endpoints under ``/api/org``"""
 
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from flask import Blueprint, jsonify, request
 from werkzeug.exceptions import abort
@@ -461,3 +461,34 @@ def patch_org_member(
 
         client.orgs.set_member_admin(org_id, member_netid, req["is_admin"])
     return "", 204
+
+
+@bp.route("/valid-permissions", methods=["GET"])
+@require_login
+def getValidPermissions(netid: str, client: ShrunkClient) -> Any:
+    return jsonify({"permissions": client.orgs.access_tokens_permissions})
+
+
+ACCESS_TOKEN_ORG_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["title", "description", "permissions"],
+    "properties": {
+        "title": {"type": "string"},
+        "description": {"type": "string"},
+        "permissions": {"type": "array"},
+    },
+}
+
+
+@bp.route("/<ObjectId:org_id>/access_token", methods=["POST"])
+@request_schema(ACCESS_TOKEN_ORG_SCHEMA)
+@require_login
+def create_access_token(
+    netid: str, client: ShrunkClient, req: Any, org_id: ObjectId
+) -> Any:
+    access_token = client.orgs.create_new_access_token(
+        org_id, req["title"], req["description"], netid, req["permissions"]
+    )
+
+    return jsonify({"access_token": access_token})
