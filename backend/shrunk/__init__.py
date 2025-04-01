@@ -324,6 +324,8 @@ def create_app(**kwargs: Any) -> Flask:
             )
         )
 
+        valid_products = ["website", "ms-office", "public-api"]
+
         for release in releases:
             for category, changes in release["categories"].items():
                 for change in changes:
@@ -331,6 +333,9 @@ def create_app(**kwargs: Any) -> Flask:
                         contributors.get(contrib_id, contrib_id)
                         for contrib_id in change["contributors"]
                     ]
+
+                    if change["product"] not in valid_products:
+                        raise Exception("Invalid product")
 
         return jsonify(releases)
 
