@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Col, Flex, Row, Tabs, Typography } from 'antd/lib';
 import { getReleaseNotes } from '../api/app';
-import { Note, Contributor, Release, Product } from '../interfaces/releases';
+import {
+  Note,
+  Contributor,
+  Release,
+  Product,
+  ProductDisplay,
+} from '../interfaces/releases';
 
 const ReleaseSection = ({
   title,
@@ -10,7 +16,7 @@ const ReleaseSection = ({
 }: {
   title: string;
   notes: Note[];
-  product: Product;
+  product: ProductDisplay;
 }) => (
   <>
     <Typography.Title level={2} className="!tw-mt-4">
@@ -24,7 +30,7 @@ const ReleaseSection = ({
             ? '!tw-text-red-500'
             : '!tw-text-gray-500';
 
-          if (product !== note.product && note.product) {
+          if (product !== note.product && product !== 'everything') {
             return <></>;
           }
 
@@ -63,11 +69,29 @@ const ReleaseSection = ({
 
 export default function ChangeLog() {
   const [releaseNotes, setReleaseNotes] = useState<Release[]>([]);
-  const [product, setProduct] = useState<Product>('website');
-
+  const [product, setProduct] = useState<ProductDisplay>('everything');
   async function fetchReleaseNotes() {
-    const result = await getReleaseNotes();
-    setReleaseNotes(result as Release[]);
+    const result: Release[] = await getReleaseNotes();
+
+    const normalizedReleases = result.map((release) => ({
+      ...release,
+      categories: {
+        features: release.categories.features.map((note) => ({
+          ...note,
+          product: note.product ?? 'website',
+        })),
+        improvements: release.categories.improvements.map((note) => ({
+          ...note,
+          product: note.product ?? 'website',
+        })),
+        fixes: release.categories.fixes.map((note) => ({
+          ...note,
+          product: note.product ?? 'website',
+        })),
+      },
+    }));
+
+    setReleaseNotes(normalizedReleases);
   }
 
   const onProductChange = (value: string) => {
@@ -83,8 +107,12 @@ export default function ChangeLog() {
       <Flex justify="left" className="tw-pt-4">
         <Tabs
           onChange={onProductChange}
-          defaultActiveKey="1"
+          defaultActiveKey={product}
           items={[
+            {
+              key: 'everything',
+              label: 'Everything',
+            },
             {
               key: 'website',
               label: 'Website',
@@ -101,32 +129,51 @@ export default function ChangeLog() {
         />
       </Flex>
       <Row gutter={[16, 16]}>
-        {releaseNotes.map((release: Release, releaseIndex: number) => (
-          <Col span={24}>
-            <Typography.Title className={releaseIndex === 0 ? 'tw-mt-2' : ''}>
-              {release.major}.{release.minor}.{release.patch}
-            </Typography.Title>
-            <Typography.Text>{release.description}</Typography.Text>
-            {release.categories.features.length !== 0 && (
-              <ReleaseSection
-                title="New Features"
-                notes={release.categories.features}
-              />
-            )}
-            {release.categories.improvements.length !== 0 && (
-              <ReleaseSection
-                title="Improvements"
-                notes={release.categories.improvements}
-              />
-            )}
-            {release.categories.fixes.length !== 0 && (
-              <ReleaseSection
-                title="Bug Fixes"
-                notes={release.categories.fixes}
-              />
-            )}
-          </Col>
-        ))}
+        {releaseNotes.map((release: Release, releaseIndex: number) => {
+          function getLength(data: Note[]) {
+            return product === 'everything'
+              ? data.length
+              : data.filter((obj) => obj.product === product).length;
+          }
+
+          const featuresCount = getLength(release.categories.features);
+          const improvementsCount = getLength(release.categories.improvements);
+          const fixesCount = getLength(release.categories.fixes);
+
+          if (featuresCount + improvementsCount + fixesCount === 0) {
+            return <></>;
+          }
+
+          return (
+            <Col span={24}>
+              <Typography.Title className={releaseIndex === 0 ? 'tw-mt-2' : ''}>
+                {release.major}.{release.minor}.{release.patch}
+              </Typography.Title>
+              <Typography.Text>{release.description}</Typography.Text>
+              {featuresCount !== 0 && (
+                <ReleaseSection
+                  title="New Features"
+                  notes={release.categories.features}
+                  product={product}
+                />
+              )}
+              {improvementsCount !== 0 && (
+                <ReleaseSection
+                  title="Improvements"
+                  notes={release.categories.improvements}
+                  product={product}
+                />
+              )}
+              {fixesCount !== 0 && (
+                <ReleaseSection
+                  title="Bug Fixes"
+                  notes={release.categories.fixes}
+                  product={product}
+                />
+              )}
+            </Col>
+          );
+        })}
       </Row>
     </>
   );

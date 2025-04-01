@@ -11,6 +11,7 @@ export interface Contributor {
 }
 
 export type Product = 'website' | 'ms-office' | 'public-api';
+export type ProductDisplay = Product | 'everything';
 
 export interface Note {
   text: string;
