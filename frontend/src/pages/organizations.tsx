@@ -10,13 +10,11 @@ import {
   Dropdown,
   Flex,
   Form,
-  FormInstance,
   Input,
   Popconfirm,
   Row,
   Space,
   Table,
-  Tag,
   Tooltip,
   Typography,
   message,
@@ -28,7 +26,7 @@ import {
   PlusCircleIcon,
   TrashIcon,
 } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   createOrg,
   deleteOrganization,
