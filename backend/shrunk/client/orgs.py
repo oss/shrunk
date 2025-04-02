@@ -5,6 +5,7 @@ from typing import Any, Optional, List, cast
 
 from bson import ObjectId
 import uuid
+from argon2 import PasswordHasher
 import os
 import pymongo
 import pymongo.errors
@@ -17,6 +18,7 @@ class OrgsClient:
 
     def __init__(self, *, db: pymongo.database.Database):
         self.db = db
+        self.ph = PasswordHasher()
         self.domain_enabled = bool(os.getenv("SHRUNK_DOMAINS_ENABLED", 0))
 
         self.access_tokens_permissions = [
@@ -350,11 +352,12 @@ class OrgsClient:
                 raise Exception("Invalid permissions")
 
         token = uuid.uuid4()
+        hashed_token = self.ph.hash(token)
 
         document = {
             "title": title,
             "description": description,
-            "token": "",
+            "hashed_token": hashed_token,
             "creator": creator,  # the creator's netid
             "created_date": "",
             "permissions": permissions,
@@ -363,5 +366,9 @@ class OrgsClient:
             "deleted": False,
             "deleted_by": None,
         }
+
+        self.db.organizations.update_one(
+            {"_id": 1}, {"$addToSet": {"access_tokens": document}}
+        )
 
         return str(token)
