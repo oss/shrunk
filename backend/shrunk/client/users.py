@@ -5,6 +5,8 @@ from typing import Any, Dict, List, Optional
 import pymongo
 from shrunk.util.ldap import is_valid_netid, query_position_info
 
+from .exceptions import InvalidEntity
+
 __all__ = ["UserClient"]
 
 
@@ -147,6 +149,60 @@ class UserClient:
         """Check whether an entity is valid"""
         return is_valid_netid(entity)
 
+    def grant_role(self, grantor: str, grantee: str, role: str) -> None:
+        """Grants a specific role to a user.
+
+        Args:
+            grantor (str): The netid of the user granting the role.
+            grantee (str): The netid of the user receiving the role.
+            role (str): The role to be granted.
+        """
+        roles = ["admin", "power_user", "facstaff", "whitelisted", "blacklisted"]
+        if role not in roles: # check if role is valid
+            raise ValueError(f"Invalid role: {role}")
+        
+        
+        grantee_user = self.db["users"].find_one({"netid": grantee})
+
+        if (
+            grantor == "admin"
+        ):  # netid is admin if user is created from sso or dev login
+            self.db["users"].update_one(
+                {"netid": grantee},
+                {"$set": {"roles": [{"role": role, "granted_by": grantor}]}},
+            )
+            return
+
+        if not grantee_user:
+            raise InvalidEntity(f"Grantee {grantee} does not exist in the database.")
+
+        if not self.is_admin(grantor):
+            raise InvalidEntity(f"Grantor {grantor} does not have admin privileges.")
+
+        for role in grantee_user.get("roles", []):  # check if user already has the role
+            if role.get("role") == role:
+                raise InvalidEntity(f"User {grantee} already has the role {role}.")
+        self.db["users"].update_one(
+            {"netid": grantee},
+            {"$push": {"roles": {"role": role, "granted_by": grantor}}},
+        )
+
+    def is_admin(self, netid: str) -> bool:
+        """Check if the user is an admin.
+
+        Args:
+            netid (str): Netid of user to check
+
+        Returns:
+            bool: True if the user is an admin, False otherwise.
+        """
+
+        user_roles = self.db["users"].find_one({"netid": netid}, {"roles": 1})
+        for role in user_roles:
+            if role.get("role") == "admin":
+                return True
+        return False
+
     def get_position_info(self, entity: str) -> Dict[str, List[str]]:
         """Get the position info for a user needed to make role request
         decisions.
@@ -186,13 +242,11 @@ class UserClient:
         }
         return formatted_position_info
 
-    def initialize_user(
-        self,
-        netid: str,
-    ) -> None:
+    def initialize_user(self, netid: str, role: str) -> None:
         """Initialize a user in the database
         :param entity: The entity to initialize
         :param filterOptions: The filter options for the user
+        :param role: The role to assign to the user
         """
         existing_user = self.db["users"].find_one({"netid": netid})
         if not existing_user:
@@ -200,6 +254,7 @@ class UserClient:
                 "netid": netid,
             }
             self.db["users"].insert_one(new_user)
+            self.grant_role("admin", netid, role)
 
     def get_user_filter_options(self, netid: str) -> Dict[str, Any]:
         """Get the filter options for a user
