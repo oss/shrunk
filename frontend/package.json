@@ -1,6 +1,6 @@
 {
   "name": "shrunk",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Rutgers University URL Shortener",
   "scripts": {
     "dev": "parcel --public-url=/app/ src/index.html src/linkhub-loader.html",
