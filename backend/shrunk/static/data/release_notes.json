@@ -26,6 +26,10 @@
         {
           "text": "Regression from 3.0.0; columns are no longer fixed on the left and right of the dashboard's table to avoid overflow errors",
           "contributors": ["ah1371"]
+        },
+        {
+          "text": "Delete button is disabled for deleted links",
+          "contributors": ["ah1371"]
         }
       ]
     }
