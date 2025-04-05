@@ -356,7 +356,7 @@ export function Stats(props: Props): React.ReactElement {
       case 'collaborate':
         setCollabModalVisible(true);
         break;
-      case 'share':
+      case 'qrcode':
         setShareModalVisible(true);
         break;
       default:

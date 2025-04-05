@@ -36,9 +36,9 @@ import {
   EyeOutlined,
   DeleteOutlined,
   TeamOutlined,
-  ShareAltOutlined,
   EditOutlined,
   SlidersOutlined,
+  QrcodeOutlined,
 } from '@ant-design/icons';
 
 import dayjs, { Dayjs } from 'dayjs';
@@ -893,12 +893,12 @@ export class Dashboard extends React.Component<Props, State> {
                             </Tooltip>
                           </>
                         )}
-                        <Tooltip title="Share">
+                        <Tooltip title="Download QR code">
                           <Button
                             type="text"
-                            icon={<ShareAltOutlined />}
+                            icon={<QrcodeOutlined />}
                             target="_blank"
-                            href={`/app/links/${record.key}?mode=share`}
+                            href={`/app/links/${record.key}?mode=qrcode`}
                             disabled={record.isTrackingPixel}
                           />
                         </Tooltip>
