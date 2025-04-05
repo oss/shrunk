@@ -8,7 +8,12 @@
     "description": "A few patches based on the feedback from the last release.",
     "categories": {
       "features": [],
-      "improvements": [],
+      "improvements": [
+        {
+          "text": "Font has been made smaller on tables to fit more text",
+          "contributors": ["ah1371"]
+        }
+      ],
       "fixes": [
         {
           "text": "Regression from 3.0.0; the file name for qr codes will be the name of the alias",
@@ -16,6 +21,10 @@
         },
         {
           "text": "Regression from 3.0.0; \"share\" button has been replaced with the \"qr code\" button",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Regression from 3.0.0; columns are no longer fixed on the left and right of the dashboard's table to avoid overflow errors",
           "contributors": ["ah1371"]
         }
       ]

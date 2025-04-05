@@ -718,7 +718,6 @@ export class Dashboard extends React.Component<Props, State> {
                   dataIndex: 'aliases',
                   key: 'aliases',
                   width: '350px',
-                  fixed: 'left',
                   render: (_, record) => (
                     <Row gutter={[0, 8]}>
                       <Col span={24}>
@@ -779,7 +778,6 @@ export class Dashboard extends React.Component<Props, State> {
                         dataIndex: 'longUrl',
                         key: 'longUrl',
                         width: '300px',
-                        fixed: 'left',
                         render: (_, record) => (
                           <Typography.Link href={record.longUrl} ellipsis>
                             {record.longUrl}
@@ -861,7 +859,6 @@ export class Dashboard extends React.Component<Props, State> {
                 {
                   title: <Flex justify="flex-end">Actions</Flex>,
                   key: 'actions',
-                  fixed: 'right',
                   width: this.props.mockData === undefined ? '220px' : '100px',
                   render: (_, record) => (
                     <Flex justify="flex-end">

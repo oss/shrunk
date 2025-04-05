@@ -8,6 +8,9 @@ export const lightTheme: ThemeConfig = {
     fontFamily: 'Geist',
   },
   components: {
+    Table: {
+      cellFontSize: 14,
+    },
     Layout: {
       headerBg: red[6],
       headerColor: 'fff',
