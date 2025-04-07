@@ -12,10 +12,10 @@ __all__ = ["bp"]
 bp = Blueprint("user", __name__, url_prefix="/api/core/user")
 
 
-@bp.route("", methods=["POST"])
+@bp.route("/all", methods=["POST"])
 @require_login
 def get_all_users(netid: str, client: ShrunkClient) -> Dict[Any, Any]:
-    """POST /api/core/user
+    """POST /api/core/user/all
 
     Args:
         netid (str): the netid of the user logged in
@@ -94,25 +94,17 @@ def get_user_info():
     user = session["user"]
     client = current_app.client
     netid = user.get("netid", "")
-    filterOptions = client.users.get_user_filter_options(netid)
-
-    # Get user privileges
-    privileges = []
-    if client.roles.has("admin", netid):
-        privileges.append("admin")
-    if client.roles.has("facstaff", netid):
-        privileges.append("facstaff")
-    if client.roles.has("power_user", netid):
-        privileges.append("power_user")
-    if client.roles.has("whitelisted", netid):
-        privileges.append("whitelisted")
+    user_data = client.users.get_user(netid)
 
     return jsonify(
         {
             "netid": netid,
-            "privileges": privileges,
+            "privileges": [
+                role.get("role", "")
+                for role in user_data["roles"]
+            ],
             "motd": os.getenv("SHRUNK_MOTD", None),
-            "filterOptions": filterOptions,
+            "filterOptions": user_data.get("filterOptions", {}),
         }
     )
 

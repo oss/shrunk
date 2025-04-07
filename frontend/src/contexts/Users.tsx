@@ -115,7 +115,7 @@ const UsersProvider: React.FC = ({ children }) => {
       setLoading(true);
       try {
         // eslint-disable-next-line no-restricted-globals
-        const response = await fetch('/api/core/user', {
+        const response = await fetch('/api/core/user/all', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -143,7 +143,7 @@ const UsersProvider: React.FC = ({ children }) => {
       setLoading(true);
       try {
         // eslint-disable-next-line no-restricted-globals
-        const response = await fetch('/api/core/user', {
+        const response = await fetch('/api/core/user/all', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
