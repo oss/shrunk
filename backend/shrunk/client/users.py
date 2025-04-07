@@ -275,7 +275,7 @@ class UserClient:
             bool: True if the user is an admin, False otherwise.
         """
 
-        user_roles = self.db["users"].find_one({"netid": netid}, {"roles": 1})
+        user_roles = self.get_user_roles(netid)
         for role in user_roles:
             if role.get("role") == "admin":
                 return True
