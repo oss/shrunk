@@ -20,7 +20,6 @@ def login(user_info: Any) -> Any:
     """Get the user's attributes from shibboleth, decide whether the user
     should be allowed to access Shrunk, and possibly grant roles. The
     roles system must be initialized before this function is called."""
-
     client: ShrunkClient = current_app.client
     logger = current_app.logger
     types: List[str] = user_info.get("employeeType").split(";")
@@ -57,13 +56,13 @@ def login(user_info: Any) -> Any:
     # config-whitelisted users are automatically made admins
     if is_super_admin:
         client.roles.grant("admin", "Justice League", netid)
-        client.users.initialize_user(netid)
+        client.users.initialize_user(netid, "admin")
 
     # (if not blacklisted) facstaff can always login, but we need to grant a role
     # so the rest of the app knows what privs to give the user
     if fac_staff:
         client.roles.grant("facstaff", "shibboleth", netid)
-        client.users.initialize_user(netid)
+        client.users.initialize_user(netid, "facstaff")
 
     # now determine whether to allow login
     if not (is_super_admin or fac_staff or is_whitelisted):

@@ -18,8 +18,39 @@ class UserClient:
         db: pymongo.database.Database,
     ):
         self.db = db
+        
+    def initialize_user(self, netid: str, role: str) -> None:
+        """Initialize a user in the database
+        :param entity: The entity to initialize
+        :param filterOptions: The filter options for the user
+        :param role: The role to assign to the user
+        """
+        existing_user = self.db["users"].find_one({"netid": netid})
+        if not existing_user:
+            new_user = {
+                "netid": netid,
+                "roles": [{"role": role, "granted_by": "system", "comment": ""}],
+            }
+            self.db["users"].insert_one(new_user)
+            
+    def get_user(self, netid: str) -> Optional[Dict[str, Any]]:
+        """Get a user from the database
+        :param entity: The entity to get
+        :returns: The user object
+        """
+        return self.db["users"].find_one({"netid": netid})
+    
+    def get_user_roles(self, netid: str) -> List[str]:
+        """Get the roles for a user
+        :param entity: The entity to get the roles for
+        :returns: The roles for the user
+        """
+        user = self.db["users"].find_one({"netid": netid})
+        if user:
+            return [role.get("role") for role in user.get("roles", [])]
+        return []
 
-    def get_all_users(self, operations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    # def get_all_users(self, operations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Get all users from the database"""
 
         grants_collection = self.db["grants"]
@@ -109,6 +140,30 @@ class UserClient:
             }
             for doc in grants_collection.aggregate(pipeline)
         ]
+        
+    
+    def get_all_users(self, operations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Get all users from the database
+
+        :param operations: The operations to perform on the users
+        :returns: The users in the database
+        """
+        
+        users = self.db["users"].find()
+        if not users:
+            return []
+        
+        return [
+            {
+                "netid": user["netid"],
+                "roles": [role.get("role") for role in user.get("roles", [])],
+            }
+            for user in users
+        ]
+        
+        # Apply operations to filter and sort users
+            
+        
 
     def get_user_system_options(self) -> Dict[str, Any]:
         """Get options related to the user system"""
@@ -264,19 +319,7 @@ class UserClient:
         }
         return formatted_position_info
 
-    def initialize_user(self, netid: str, role: str) -> None:
-        """Initialize a user in the database
-        :param entity: The entity to initialize
-        :param filterOptions: The filter options for the user
-        :param role: The role to assign to the user
-        """
-        existing_user = self.db["users"].find_one({"netid": netid})
-        if not existing_user:
-            new_user = {
-                "netid": netid,
-                "roles": [{"role": role, "granted_by": "system", "comment": ""}],
-            }
-            self.db["users"].insert_one(new_user)
+    
 
     def get_user_filter_options(self, netid: str) -> Dict[str, Any]:
         """Get the filter options for a user
