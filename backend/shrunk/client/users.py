@@ -18,7 +18,7 @@ class UserClient:
         db: pymongo.database.Database,
     ):
         self.db = db
-        
+
     def initialize_user(self, netid: str, role: str) -> None:
         """Initialize a user in the database
         :param entity: The entity to initialize
@@ -32,14 +32,14 @@ class UserClient:
                 "roles": [{"role": role, "granted_by": "system", "comment": ""}],
             }
             self.db["users"].insert_one(new_user)
-            
+
     def get_user(self, netid: str) -> Optional[Dict[str, Any]]:
         """Get a user from the database
         :param entity: The entity to get
         :returns: The user object
         """
         return self.db["users"].find_one({"netid": netid})
-    
+
     def get_user_roles(self, netid: str) -> List[str]:
         """Get the roles for a user
         :param entity: The entity to get the roles for
@@ -50,17 +50,33 @@ class UserClient:
             return [role.get("role") for role in user.get("roles", [])]
         return []
 
-    # def get_all_users(self, operations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Get all users from the database"""
 
-        grants_collection = self.db["grants"]
+
+    def get_all_users(self, operations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Get all users from the database
+
+        :param operations: The operations to perform on the users
+        :returns: The users in the database
+        """
 
         pipeline = [
-            # Step 1: Group by entity to get unique netids and roles
-            {"$group": {"_id": "$entity", "roles": {"$addToSet": "$role"}}},
-            # Step 2: Project the results to format the output
-            {"$project": {"_id": 0, "netid": "$_id", "roles": 1}},
-            # Step 3: Lookup to join with urls collection
+            {
+                "$match": {
+                    "netid": {"$exists": True},
+                }
+            },
+            {
+                "$project": {
+                    "netid": 1,
+                    "roles": {
+                        "$map": { # only get the role name
+                            "input": "$roles",
+                            "as": "role",
+                            "in": "$$role.role",
+                        }
+                    },
+                }
+            },
             {
                 "$lookup": {
                     "from": "urls",
@@ -69,11 +85,8 @@ class UserClient:
                     "as": "links",
                 }
             },
-            # Step 4: Add linksCreated field
             {"$addFields": {"linksCreated": {"$size": "$links"}}},
-            # Step 5: Remove the links array as it's no longer needed
             {"$project": {"links": 0}},
-            # Step 6: Lookup to join with organizations collection
             {
                 "$lookup": {
                     "from": "organizations",
@@ -90,7 +103,6 @@ class UserClient:
                     "as": "organizations",
                 }
             },
-            # Step 7: Add organizations field
             {
                 "$addFields": {
                     "organizations": {
@@ -103,7 +115,9 @@ class UserClient:
                 }
             },
         ]
-
+        
+        
+        # Apply operations to filter and sort users
         ops_pipeline = []
         for operation in operations:
             op_type = operation.get("type")
@@ -131,39 +145,17 @@ class UserClient:
                 sort_order = 1 if op_spec == "asc" else -1
                 ops_pipeline.append({"$sort": {op_field: sort_order}})
 
-        pipeline.extend(ops_pipeline)
 
         return [
             {
-                key: doc[key]
+                key: user[key]
                 for key in ["netid", "roles", "linksCreated", "organizations"]
+                if key in user
             }
-            for doc in grants_collection.aggregate(pipeline)
+            for user in self.db["users"].aggregate(pipeline)
         ]
-        
-    
-    def get_all_users(self, operations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Get all users from the database
 
-        :param operations: The operations to perform on the users
-        :returns: The users in the database
-        """
-        
-        users = self.db["users"].find()
-        if not users:
-            return []
-        
-        return [
-            {
-                "netid": user["netid"],
-                "roles": [role.get("role") for role in user.get("roles", [])],
-            }
-            for user in users
-        ]
-        
         # Apply operations to filter and sort users
-            
-        
 
     def get_user_system_options(self) -> Dict[str, Any]:
         """Get options related to the user system"""
@@ -203,13 +195,15 @@ class UserClient:
     def is_valid_entity(self, entity: str) -> bool:
         """Check whether an entity is valid"""
         return is_valid_netid(entity)
-    
+
     def is_valid_role(self, role: str) -> bool:
         """Check whether a role is valid"""
         roles = ["admin", "power_user", "facstaff", "whitelisted", "blacklisted"]
         return role in roles
 
-    def grant_role(self, grantor: str, grantee: str, role: str, comment: Optional[str]) -> None:
+    def grant_role(
+        self, grantor: str, grantee: str, role: str, comment: Optional[str]
+    ) -> None:
         """Grants a specific role to a user.
 
         Args:
@@ -221,9 +215,8 @@ class UserClient:
 
         if not self.is_valid_role(role):
             raise InvalidEntity(f"Role {role} is not valid.")
-        
-        grantee_user = self.db["users"].find_one({"netid": grantee})
 
+        grantee_user = self.db["users"].find_one({"netid": grantee})
 
         if not grantee_user:
             raise InvalidEntity(f"Grantee {grantee} does not exist in the database.")
@@ -236,9 +229,17 @@ class UserClient:
                 raise InvalidEntity(f"User {grantee} already has the role {role}.")
         self.db["users"].update_one(
             {"netid": grantee},
-            {"$push": {"roles": {"role": role, "granted_by": grantor, "comment": comment if comment is not None else ""}}},
+            {
+                "$push": {
+                    "roles": {
+                        "role": role,
+                        "granted_by": grantor,
+                        "comment": comment if comment is not None else "",
+                    }
+                }
+            },
         )
-        
+
     def revoke_role(self, grantor: str, grantee: str, role: str) -> None:
         """Revokes a specific role from a user.
 
@@ -250,10 +251,10 @@ class UserClient:
 
         if not self.is_valid_role(role):
             raise InvalidEntity(f"Role {role} is not valid.")
-        
+
         if not self.is_admin(grantor):
             raise InvalidEntity(f"Grantor {grantor} does not have admin privileges.")
-        
+
         grantee_user = self.db["users"].find_one({"netid": grantee})
 
         if not grantee_user:
@@ -318,8 +319,6 @@ class UserClient:
             ),
         }
         return formatted_position_info
-
-    
 
     def get_user_filter_options(self, netid: str) -> Dict[str, Any]:
         """Get the filter options for a user
