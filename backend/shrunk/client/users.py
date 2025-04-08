@@ -43,8 +43,81 @@ class UserClient:
         :returns: The user object if found, None otherwise
         :rtype: Optional[Dict[str, Any]]
         """
-        return self.db["users"].find_one({"netid": netid})
+    
+    
+        pipeline = [
+            {
+                "$match": {
+                    "netid": netid,
+                    
+                }
+            },
+            {
+                "$project": {
+                    "netid": 1,
+                    "roles": {
+                        "$map": { # only get the role name
+                            "input": "$roles",
+                            "as": "role",
+                            "in": "$$role.role",
+                        }
+                    },
+                    "filterOptions": 1,
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "urls",
+                    "localField": "netid",
+                    "foreignField": "netid",
+                    "as": "links",
+                }
+            },
+            {"$addFields": {"linksCreated": {"$size": "$links"}}},
+            {"$project": {"links": 0}},
+            {
+                "$lookup": {
+                    "from": "organizations",
+                    "let": {"user_netid": "$netid"},
+                    "pipeline": [
+                        {"$unwind": "$members"},
+                        {
+                            "$match": {
+                                "$expr": {"$eq": ["$members.netid", "$$user_netid"]}
+                            }
+                        },
+                        {"$project": {"name": 1, "_id": 0}},
+                    ],
+                    "as": "organizations",
+                }
+            },
+            {
+                "$addFields": {
+                    "organizations": {
+                        "$map": {
+                            "input": "$organizations",
+                            "as": "org",
+                            "in": "$$org.name",
+                        }
+                    }
+                }
+            }
+        ]
+        
+        user_cursor = self.db["users"].aggregate(pipeline)
+        user_data = list(user_cursor)[0] if user_cursor else None
+        if user_data:
+            return {
+                "netid": user_data["netid"],
+                "roles": user_data["roles"],
+                "linksCreated": user_data["linksCreated"],
+                "organizations": user_data["organizations"],
+                "filterOptions": user_data.get("filterOptions", None),
+                
+            }
+        return None
 
+    
     def get_user_roles(self, netid: str) -> List[str]:
         """Get the roles for a user
         :param entity: The entity to get the roles for

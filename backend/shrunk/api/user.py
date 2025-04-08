@@ -141,6 +141,8 @@ def remove_user_role(netid: str, client: ShrunkClient) -> Any:
     return "", 204
 
 
+
+
 @bp.route("/all", methods=["POST"])
 @require_login
 def get_all_users(netid: str, client: ShrunkClient) -> Dict[Any, Any]:
@@ -216,7 +218,9 @@ def get_user_system_options(netid: str, client: ShrunkClient) -> Dict[Any, Any]:
 
 @bp.route("/info")
 def get_user_info():
-    """Get current user info from session"""
+    """GET /api/core/user/info
+    
+    Get current user info from session"""
     if "user" not in session:
         return jsonify({"netid": "", "privileges": []})
 
@@ -228,10 +232,7 @@ def get_user_info():
     return jsonify(
         {
             "netid": netid,
-            "privileges": [
-                role.get("role", "")
-                for role in user_data["roles"]
-            ],
+            "privileges": user_data.get("roles", []),
             "motd": os.getenv("SHRUNK_MOTD", None),
             "filterOptions": user_data.get("filterOptions", {}),
         }
@@ -314,3 +315,42 @@ def update_user_options(
     except ValueError:
         abort(400)
     return "", 204
+
+@bp.route("<user>", methods=["GET"])
+@require_login
+def get_user(netid: str, client: ShrunkClient, user: str) -> Any:
+    """GET /api/core/user/<user>
+
+    Args:
+        netid (str): the netid of the user logged in
+        client (ShrunkClient): the client object
+        user (str): the netid of the user to get information for
+
+    Obtains information about a user in the system.
+
+    Response format:
+
+    .. code-block:: json
+
+        { "netid": str,
+            "organizations": [str, ...],
+            "roles": [str, ...],
+            "linksCreated": int,
+    """
+    if not client.users.has_role(netid, "admin"):
+        abort(403)
+    if not client.users.is_valid_entity(user):
+        abort(400)
+    user_data = client.users.get_user(user)
+    if user_data is None:
+        abort(404)
+    return jsonify(
+        {
+            "netid": user,
+            "organizations": user_data["organizations"],
+            "roles": user_data["roles"],
+            "linksCreated": user_data["linksCreated"],
+        }
+    )
+    
+    
