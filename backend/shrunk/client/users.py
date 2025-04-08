@@ -1,6 +1,6 @@
 """Module for the user system client"""
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import pymongo
 from shrunk.util.ldap import is_valid_netid, query_position_info
@@ -19,24 +19,29 @@ class UserClient:
     ):
         self.db = db
 
-    def initialize_user(self, netid: str, role: str) -> None:
+    def initialize_user(self, netid: str, role: Union[str, List[str]], grantor: Optional[str] = "system") -> None:
         """Initialize a user in the database
         :param entity: The entity to initialize
         :param filterOptions: The filter options for the user
-        :param role: The role to assign to the user
+        :param role: The role to assign to the user (can be a list of roles)
         """
         existing_user = self.db["users"].find_one({"netid": netid})
         if not existing_user:
+            if isinstance(role, list):
+                roles = [{"role": r, "granted_by": grantor, "comment": ""} for r in role]
+            else:
+                roles = [{"role": role, "granted_by": grantor, "comment": ""}]
             new_user = {
                 "netid": netid,
-                "roles": [{"role": role, "granted_by": "system", "comment": ""}],
+                "roles": roles,
             }
             self.db["users"].insert_one(new_user)
 
     def get_user(self, netid: str) -> Optional[Dict[str, Any]]:
         """Get a user from the database
         :param entity: The entity to get
-        :returns: The user object
+        :returns: The user object if found, None otherwise
+        :rtype: Optional[Dict[str, Any]]
         """
         return self.db["users"].find_one({"netid": netid})
 
@@ -49,6 +54,13 @@ class UserClient:
         if user:
             return [role.get("role") for role in user.get("roles", [])]
         return []
+    
+    def delete_user(self, netid: str) -> None:
+        """Delete a user from the database
+        
+        :param netid: The entity to delete
+        """
+        self.db["users"].delete_one({"netid": netid})
 
 
 
@@ -202,7 +214,7 @@ class UserClient:
         return role in roles
 
     def grant_role(
-        self, grantor: str, grantee: str, role: str, comment: Optional[str]
+        self, grantor: str, grantee: str, role: str, comment: Optional[str] 
     ) -> None:
         """Grants a specific role to a user.
 
