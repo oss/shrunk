@@ -83,7 +83,7 @@ const SearchUser: React.FC<SearchUserProps> = ({ users, onSearch }) => {
     <AutoComplete
       style={{ width: '100%', minWidth: '300px' }}
       value={value}
-      placeholder="Search for User"
+      placeholder="Search for user"
       options={options}
       onChange={handleSearch}
       onSelect={handleSelect}

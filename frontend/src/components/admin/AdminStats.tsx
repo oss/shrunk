@@ -5,24 +5,11 @@
 
 import React, { useState, useEffect } from 'react';
 
-import {
-  Spin,
-  DatePicker,
-  Form,
-  Button,
-  Card,
-  Typography,
-  Statistic,
-  Flex,
-} from 'antd/lib';
-import { ArrowRightOutlined } from '@ant-design/icons';
+import { Spin, Card, Statistic, Flex } from 'antd/lib';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
-import dayjs from 'dayjs';
 
 import { MENU_ITEMS } from '../../pages/subpages/StatsCommon';
-
-const { RangePicker } = DatePicker;
 
 /**
  * Results of an admin stats query to the backend
@@ -81,21 +68,12 @@ export default function AdminStats(): React.ReactElement {
   const [endpointData, setEndpointData] = useState<EndpointDatum[] | null>(
     null,
   );
-  const [adminDataRange, setAdminDataRange] = useState<{
-    begin: dayjs.Dayjs;
-    end: dayjs.Dayjs;
-  } | null>(null);
+
   const [adminData, setAdminData] = useState<AdminStatsData | null>(null);
   const [version, setVersion] = useState<string | null>(null);
 
   const updateAdminData = async () => {
     const req: Record<string, any> = {};
-    if (adminDataRange !== null) {
-      req.range = {
-        begin: adminDataRange.begin.format(),
-        end: adminDataRange.end.format(),
-      };
-    }
 
     const json = await fetch('/api/v1/admin/stats/overview', {
       method: 'POST',
@@ -127,23 +105,6 @@ export default function AdminStats(): React.ReactElement {
       updateShrunkVersion(),
     ]);
   }, []);
-
-  const submitRangeForm = async (values: {
-    range: dayjs.Dayjs[] | null | undefined;
-  }) => {
-    const { range } = values;
-    const newRange =
-      range === undefined || range === null
-        ? null
-        : {
-            begin: range[0],
-            end: range[1],
-          };
-
-    setAdminDataRange(newRange);
-    setAdminData(null);
-    await updateAdminData();
-  };
 
   if (endpointData === null) {
     return <></>;
@@ -186,20 +147,6 @@ export default function AdminStats(): React.ReactElement {
 
   return (
     <>
-      <Flex gap="1rem" align="baseline" justify="space-between">
-        <Typography.Title level={3} style={{ marginTop: 0, marginBottom: 16 }}>
-          Admin Statistics
-        </Typography.Title>
-        <Form layout="inline" onFinish={submitRangeForm}>
-          <Form.Item name="range">
-            <RangePicker />
-          </Form.Item>
-          <Form.Item>
-            <Button htmlType="submit" icon={<ArrowRightOutlined />} />
-          </Form.Item>
-        </Form>
-      </Flex>
-
       <Flex gap="1rem" wrap="wrap" justify="space-between" vertical>
         {adminData === null ? (
           <Spin size="small" />

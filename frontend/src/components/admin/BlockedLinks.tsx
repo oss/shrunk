@@ -11,7 +11,6 @@ import {
   Popconfirm,
   Table,
   Tooltip,
-  Typography,
   Col,
   Form,
   Input,
@@ -40,14 +39,6 @@ const renderURLs = (url: string): JSX.Element => (
     {url}
   </a>
 );
-
-/**
- * Renders the netids in bold
- * @param netids - the netids to render
- * @returns the rendered netids as bold elements
- */
-const renderNetIDs = (netIds: string[]): JSX.Element[] =>
-  netIds.map((netid) => <strong key={netid}>{netid}</strong>);
 
 /**
  * Renders the unblock button for a URL with callback handling
@@ -225,7 +216,6 @@ const BlockedLinks = () => {
       title: 'Blocked By',
       dataIndex: 'blockedBy',
       key: 'blockedBy',
-      render: (netid: string) => renderNetIDs([netid]),
     },
     {
       title: () => <Flex justify="flex-end">Actions</Flex>,
@@ -325,14 +315,6 @@ const BlockedLinks = () => {
   return (
     <>
       <Row gutter={[16, 16]}>
-        <Col span={24}>
-          <Flex gap="1rem" align="baseline">
-            <Typography.Title level={3} style={{ margin: 0 }}>
-              Link Control
-            </Typography.Title>
-          </Flex>
-        </Col>
-
         <Col span={24}>
           <Flex justify="space-between" style={{ width: '100%' }}>
             <Space direction="horizontal">

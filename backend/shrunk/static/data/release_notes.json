@@ -2,6 +2,49 @@
   {
     "major": 3,
     "minor": 0,
+    "patch": 2,
+    "projectDirector": "ah1371",
+    "date": "TODO",
+    "description": "Another day, another patch.",
+    "categories": {
+      "features": [],
+      "improvements": [
+        {
+          "text": "Remove date picker for administration statistics",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Remove repetitive words in the admin dashboard",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "User lookup renamed to user search with a slight redesign",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Add button to copy original URL to clipboard",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Replace mock dashboard with feature cards for the landing page",
+          "contributors": ["ah1371"]
+        }
+      ],
+      "fixes": [
+        {
+          "text": "Add a maximum width to the original URL column in the dashboard table to prevent overflow errors",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Fix styling for the developer environment warning banner and add link to the main site",
+          "contributors": ["ah1371"]
+        }
+      ]
+    }
+  },
+  {
+    "major": 3,
+    "minor": 0,
     "patch": 1,
     "projectDirector": "ah1371",
     "date": "4-7-2025",
@@ -133,6 +176,10 @@
           "text": "Drop Internet Explorer support",
           "contributors": ["ah1371", "kgm74"],
           "warning": true
+        },
+        {
+          "text": "Add a banner warning to users who are on the developer environment version of the site",
+          "contributors": ["pk641"]
         }
       ],
       "fixes": [

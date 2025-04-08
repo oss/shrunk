@@ -75,22 +75,14 @@ export default function Admin(): React.ReactElement {
   const items: TabsProps['items'] = [
     {
       key: 'analytics',
-      label: (
-        <Space direction="horizontal">
-          <LineChartOutlined />
-          Analytics
-        </Space>
-      ),
+      icon: <LineChartOutlined />,
+      label: 'Analytics',
       children: <AdminStats />,
     },
     {
       key: 'user-lookup',
-      label: (
-        <Space direction="horizontal">
-          <UserOutlined />
-          User Lookup
-        </Space>
-      ),
+      icon: <UserOutlined />,
+      label: 'User Search',
       children: (
         <UsersProvider>
           <UserLookup />
@@ -99,10 +91,10 @@ export default function Admin(): React.ReactElement {
     },
     {
       key: 'links',
+      icon: <SafetyOutlined />,
       label: (
         <Space direction="horizontal">
-          <SafetyOutlined />
-          Link Control{' '}
+          Link Control
           {linksToBeVerified > 0 && (
             <Badge count={linksToBeVerified} style={{ marginLeft: '8px' }} />
           )}
@@ -116,12 +108,8 @@ export default function Admin(): React.ReactElement {
     },
     {
       key: 'security',
-      label: (
-        <Space direction="horizontal">
-          <LockOutlined />
-          Security
-        </Space>
-      ),
+      icon: <LockOutlined />,
+      label: 'Security',
       children: <Security />,
     },
   ];
@@ -129,12 +117,7 @@ export default function Admin(): React.ReactElement {
   return (
     <>
       <Typography.Title>Administrator Controls</Typography.Title>
-      <Tabs
-        activeKey={activeTab}
-        onChange={handleTabChange}
-        items={items}
-        type="card"
-      />
+      <Tabs activeKey={activeTab} onChange={handleTabChange} items={items} />
     </>
   );
 }

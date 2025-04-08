@@ -123,7 +123,7 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
             icon={<PlusCircleFilled />}
             onClick={() => setShowCreateUserModal(true)}
           >
-            Add User
+            Add
           </Button>
         </Space>
       </Flex>

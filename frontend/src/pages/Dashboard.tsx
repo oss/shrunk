@@ -264,7 +264,7 @@ function CustomizeButton(props: {
 
   const columns = [
     {
-      label: 'Long URL',
+      label: 'Original URL',
       key: 'longUrl',
       disabled: props.showType === 'tracking_pixels',
     },
@@ -750,21 +750,19 @@ export class Dashboard extends React.Component<Props, State> {
                         }/${routePrefix}${aliasObj.alias.toString()}`;
 
                         return (
-                          <Col span={24}>
-                            <Button
-                              type="text"
-                              onClick={() =>
-                                navigator.clipboard.writeText(shortUrl)
-                              }
-                            >
-                              <Space>
-                                <CopyOutlined />
-                                <Typography key={aliasObj.alias}>
-                                  {shortUrlWithoutProtocol}
-                                </Typography>
-                              </Space>
-                            </Button>
-                          </Col>
+                          <Button
+                            icon={<CopyOutlined />}
+                            type="text"
+                            onClick={() =>
+                              navigator.clipboard.writeText(shortUrl)
+                            }
+                          >
+                            <Space>
+                              <Typography key={aliasObj.alias}>
+                                {shortUrlWithoutProtocol}
+                              </Typography>
+                            </Space>
+                          </Button>
                         );
                       })}
                     </Row>
@@ -774,14 +772,27 @@ export class Dashboard extends React.Component<Props, State> {
                 this.state.query.showType !== 'tracking_pixels'
                   ? [
                       {
-                        title: 'Long URL',
+                        title: 'Original URL',
                         dataIndex: 'longUrl',
                         key: 'longUrl',
                         width: '300px',
                         render: (_, record) => (
-                          <Typography.Link href={record.longUrl} ellipsis>
-                            {record.longUrl}
-                          </Typography.Link>
+                          <Space>
+                            <Tooltip title="Copy Original URL">
+                              <Button
+                                type="text"
+                                icon={<CopyOutlined />}
+                                onClick={() =>
+                                  navigator.clipboard.writeText(record.longUrl)
+                                }
+                                className="tw-max-w-96"
+                              >
+                                <Typography.Text ellipsis>
+                                  {record.longUrl}
+                                </Typography.Text>
+                              </Button>
+                            </Tooltip>
+                          </Space>
                         ),
                       },
                     ]

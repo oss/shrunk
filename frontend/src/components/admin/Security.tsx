@@ -4,7 +4,6 @@
  */
 
 import React from 'react';
-import { Typography } from 'antd';
 import LinkSecurity from './LinkSecurity';
 
 /**
@@ -13,9 +12,6 @@ import LinkSecurity from './LinkSecurity';
  */
 const Security: React.FC = () => (
   <>
-    <Typography.Title level={3} style={{ marginTop: 0, marginBottom: 16 }}>
-      Security
-    </Typography.Title>
     <LinkSecurity />
   </>
 );

@@ -255,9 +255,16 @@ export default function Shrunk(props: Props) {
           <Layout>
             {domain === 'shrunk.rutgers.edu' && (
               <Alert
-                message="This is a developer environment, any progress you make on this site is prone to deletion."
+                message={
+                  <Typography.Text>
+                    This is a developer environment, any progress you make on
+                    this site is prone to deletion. Please use the real site at{' '}
+                    <a href="https://go.rutgers.edu">go.rutgers.edu</a>.
+                  </Typography.Text>
+                }
                 type="warning"
                 showIcon
+                banner
                 closable
               />
             )}

@@ -12,7 +12,6 @@ import {
   Select,
   Space,
   Tooltip,
-  Typography,
   message,
   Flex,
 } from 'antd/lib';
@@ -21,14 +20,6 @@ import { DeleteOutlined } from '@ant-design/icons';
 import base32 from 'hi-base32';
 import { useUsers } from '../../contexts/Users';
 import LookupTableHeader from './LookupTableHeader';
-
-/**
- * Renders the netids in bold
- * @param netids - the netids to render
- * @returns the rendered netids as bold elements
- */
-const renderNetIDs = (netids: string[]): JSX.Element[] =>
-  netids.map((netid) => <strong key={netid}>{netid}</strong>);
 
 /**
  * Order of roles in the select dropdown
@@ -455,10 +446,6 @@ const UserLookup: React.FC = () => {
       title: 'NetID',
       dataIndex: 'netid',
       key: 'netid',
-      render: (netid: string) => renderNetIDs([netid]),
-      sorter: true,
-      sortDirections: ['ascend', 'descend'] as const,
-      defaultSortOrder: 'ascend' as const,
     },
     {
       title: 'Organizations',
@@ -493,9 +480,6 @@ const UserLookup: React.FC = () => {
       title: 'Links Created',
       dataIndex: 'linksCreated',
       key: 'linksCreated',
-      sorter: true,
-      sortDirections: ['ascend', 'descend'] as const,
-      defaultSortOrder: 'descend' as const,
     },
     {
       title: () => <Flex justify="flex-end">Actions</Flex>,
@@ -520,18 +504,6 @@ const UserLookup: React.FC = () => {
 
   return (
     <>
-      <Flex gap="1rem" align="baseline">
-        <Typography.Title level={3} style={{ marginTop: 0, marginBottom: 16 }}>
-          User Lookup
-        </Typography.Title>
-        <Typography.Title
-          level={5}
-          style={{ marginTop: 0, marginBottom: 16, color: '#4F4F4F' }}
-        >
-          {filteredData.length} Result{filteredData.length !== 1 && 's'} Found
-        </Typography.Title>
-      </Flex>
-
       <LookupTableHeader
         users={users}
         rehydrateData={rehydrateUsers}
