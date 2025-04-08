@@ -29,14 +29,9 @@ def create_user(netid: str, client: ShrunkClient) -> Any:
         { "netid": str,
             "roles": [str, ...],}
 
-    Response format:
-
-    .. code-block:: json
-
-        { "success": bool }
-
     """
-    if not client.users.is_admin(netid):
+    
+    if not client.users.has_role(netid, "admin"):
         abort(403)
         
     if not client.users.is_valid_entity(netid):
@@ -67,7 +62,7 @@ def delete_user(netid: str, client: ShrunkClient) -> Any:
         { "netid": str }
 
     """
-    if not client.users.is_admin(netid):
+    if not client.users.has_role(netid, "admin"):
         abort(403)
 
     data = request.get_json()
@@ -100,7 +95,7 @@ def add_user_role(netid: str, client: ShrunkClient) -> Any:
     
 
     """
-    if not client.users.is_admin(netid):
+    if not client.users.has_role(netid, "admin"):
         abort(403)
 
     data = request.get_json()
@@ -132,7 +127,7 @@ def remove_user_role(netid: str, client: ShrunkClient) -> Any:
             "role": str }
 
     """
-    if not client.users.is_admin(netid):
+    if not client.users.has_role(netid, "admin"):
         abort(403)
 
     data = request.get_json()
