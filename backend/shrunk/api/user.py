@@ -180,7 +180,7 @@ def get_all_users(netid: str, client: ShrunkClient) -> Dict[Any, Any]:
         }
 
     """
-    if not client.roles.has("admin", netid):
+    if not client.users.has_role(netid, "admin"):
         abort(403)
 
     data = request.get_json()
@@ -206,7 +206,7 @@ def get_user_system_options(netid: str, client: ShrunkClient) -> Dict[Any, Any]:
     Response format:
 
     """
-    if not client.roles.has("admin", netid):
+    if not client.users.has_role(netid, "admin"):
         abort(403)
     options = client.users.get_user_system_options()
     if options is None:
@@ -280,7 +280,7 @@ def get_position_info(netid: str, client: ShrunkClient, entity: str) -> Any:
             "employmentTypes": List[str]
         }
     """
-    if not client.roles.has("admin", netid):
+    if not client.users.has_role(netid, "admin"):
         abort(403)
     return jsonify(client.users.get_position_info(entity))
 
