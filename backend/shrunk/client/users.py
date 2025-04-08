@@ -271,6 +271,10 @@ class UserClient:
 
         if not grantee_user:
             raise InvalidEntity(f"Grantee {grantee} does not exist in the database.")
+        
+        for role in grantee_user.get("roles", []):  # check if user has the role
+            if role.get("role") != role:
+                raise InvalidEntity(f"User {grantee} does not have the role {role}.")
 
         self.db["users"].update_one(
             {"netid": grantee},
