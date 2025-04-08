@@ -65,7 +65,7 @@ def get_overview_stats(netid: str, client: ShrunkClient, req: Any) -> Any:
     :param client:
     :param req:
     """
-    if not client.roles.has("admin", netid):
+    if not client.users.has_role(netid, "admin"):
         abort(403)
     if "range" in req:
         begin = datetime.fromisoformat(req["range"]["begin"])
@@ -90,7 +90,7 @@ def get_endpoint_stats(netid: str, client: ShrunkClient) -> Any:
     :param netid:
     :param client:
     """
-    if not client.roles.has("admin", netid):
+    if not client.users.has_role(netid, "admin"):
         abort(403)
     stats = client.endpoint_stats()
     return jsonify({"stats": stats})

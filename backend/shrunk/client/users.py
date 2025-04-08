@@ -277,19 +277,20 @@ class UserClient:
             {"$pull": {"roles": {"role": role}}},
         )
 
-    def is_admin(self, netid: str) -> bool:
-        """Check if the user is an admin.
+    def has_role(self, netid: str, role: str) -> bool:
+        """Check if the user has a specific role.
 
         Args:
             netid (str): Netid of user to check
+            role (str): Role to check for
 
         Returns:
-            bool: True if the user is an admin, False otherwise.
+            bool: True if the user has the specified role, False otherwise.
         """
 
         user_roles = self.get_user_roles(netid)
-        for role in user_roles:
-            if role.get("role") == "admin":
+        for user_role in user_roles:
+            if user_role.get("role") == role:
                 return True
         return False
 
