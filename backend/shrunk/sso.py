@@ -41,8 +41,9 @@ def login(user_info: Any) -> Any:
     fac_staff = t("FACULTY") or t("STAFF")
 
     # get info from ACLs
-    is_blacklisted = client.roles.has("blacklisted", netid)
-    is_whitelisted = client.roles.has("whitelisted", netid)
+    roles = client.users.get_user_roles(netid);
+    is_whitelisted = any(role.get("role") == "whitelisted" for role in roles)
+    is_blacklisted = any(role.get("role") == "blacklisted" for role in roles)
     is_super_admin = os.getenv("SHRUNK_SUPER_ADMIN")
 
     # now make decisions regarding whether the user can login, and what privs they should get
