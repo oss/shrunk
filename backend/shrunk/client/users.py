@@ -30,8 +30,9 @@ class UserClient:
         existing_user = self.db["users"].find_one({"netid": netid})
         if not existing_user:
             if isinstance(role, list):
+                unique_roles = list(dict.fromkeys(role))
                 roles = [
-                    {"role": r, "granted_by": grantor, "comment": ""} for r in role
+                    {"role": r, "granted_by": grantor, "comment": ""} for r in unique_roles
                 ]
             else:
                 roles = [{"role": role, "granted_by": grantor, "comment": ""}]
@@ -52,6 +53,8 @@ class UserClient:
                 
             }
             self.db["users"].insert_one(new_user)
+        
+            
 
     def get_user(self, netid: str) -> Optional[Dict[str, Any]]:
         """Get a user from the database
@@ -119,15 +122,17 @@ class UserClient:
         ]
 
         user_cursor = self.db["users"].aggregate(pipeline)
-        user_data = list(user_cursor)[0] if user_cursor else None
-        if user_data:
-            return {
-                "netid": user_data["netid"],
-                "roles": user_data["roles"],
-                "linksCreated": user_data["linksCreated"],
-                "organizations": user_data["organizations"],
-                "filterOptions": user_data.get("filterOptions", None),
-            }
+        if user_cursor:
+            user_data = list(user_cursor)
+            
+            if user_data:
+                return {
+                    "netid": user_data[0]["netid"],
+                    "roles": user_data[0]["roles"],
+                    "linksCreated": user_data[0]["linksCreated"],
+                    "organizations": user_data[0]["organizations"],
+                    "filterOptions": user_data[0].get("filterOptions", None),
+                }
         return None
 
     def get_user_roles(self, netid: str) -> List[str]:

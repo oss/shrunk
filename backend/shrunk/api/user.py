@@ -34,14 +34,13 @@ def create_user(netid: str, client: ShrunkClient) -> Any:
     if not client.users.has_role(netid, "admin"):
         abort(403)
 
-    if not client.users.is_valid_entity(netid):
-        abort(400)
 
     data = request.get_json()
     new_user_netid = data.get("netid")
-    roles = data.get("roles", [])
-    if not new_user_netid:
+    if not new_user_netid or not client.users.is_valid_entity(new_user_netid):
         abort(400)
+    roles = data.get("roles", [])
+    
     client.users.initialize_user(new_user_netid, roles, netid)
     return "", 204
 
@@ -187,7 +186,6 @@ def get_all_users(netid: str, client: ShrunkClient) -> Dict[Any, Any]:
 
     data = request.get_json()
     operations = data.get("operations", [])
-    print(operations)
     users = client.users.get_all_users(operations)
     if users is None:
         abort(404)
