@@ -5,39 +5,84 @@
 
 import React, { useEffect, useState } from 'react';
 
-import {
-  Button,
-  Card,
-  Flex,
-  Form,
-  Spin,
-  Statistic,
-  Typography,
-} from 'antd/lib';
-import dayjs from 'dayjs';
+import { Spin, Card, Statistic, Flex } from 'antd/lib';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
-import { MoveRightIcon } from 'lucide-react';
-import DatePicker from '../date-picker';
 
 import { getAppStats, getEndpointData, getShrunkVersion } from '../../api/app';
 import { AdminStatsData, EndpointDatum } from '../../interfaces/app';
 
-const { RangePicker } = DatePicker;
+/**
+ * Results of an admin stats query to the backend
+ * @interface
+ */
+interface AdminStatsData {
+  /**
+   * Total number of links created during the specified time period
+   * @property
+   */
+  links: number;
 
+  /**
+   * Total number of visits occurring during the specified time period
+   * @property
+   */
+  visits: number;
+
+  /**
+   * Total number of distinct NetIDs creating links during the specified time period
+   */
+  users: number;
+}
+
+/**
+ * Statistics about visits to a single Flask endpoint
+ * @interface
+ */
+interface EndpointDatum {
+  /**
+   * Name of the Flask endpoint
+   * @property
+   */
+  endpoint: string;
+
+  /**
+   * Total number of visits
+   * @property
+   */
+  total_visits: number;
+
+  /**
+   * Total number of unique visits by NetID
+   * @property
+   */
+  unique_visits: number;
+}
+
+/**
+ * The [[AdminStats]] component allows the user to view summary statistics
+ * about the total number of links, users, and visits on Shrunk, as well
+ * as to view statistics about the number of visits to each Flask endpoint
+ * @function
+ */
 export default function AdminStats(): React.ReactElement {
   const [endpointData, setEndpointData] = useState<EndpointDatum[] | null>(
     null,
   );
-  const [adminDataRange, setAdminDataRange] = useState<{
-    begin: dayjs.Dayjs;
-    end: dayjs.Dayjs;
-  } | null>(null);
+
   const [adminData, setAdminData] = useState<AdminStatsData | null>(null);
   const [version, setVersion] = useState<string | null>(null);
 
   const updateAdminData = async () => {
-    setAdminData(await getAppStats(adminDataRange?.begin, adminDataRange?.end));
+    const req: Record<string, any> = {};
+
+    const json = await fetch('/api/v1/admin/stats/overview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req),
+    }).then((resp) => resp.json());
+
+    setAdminData(json as AdminStatsData);
   };
 
   const updateEndpointData = async () => {
@@ -55,23 +100,6 @@ export default function AdminStats(): React.ReactElement {
       updateShrunkVersion(),
     ]);
   }, []);
-
-  const submitRangeForm = async (values: {
-    range: dayjs.Dayjs[] | null | undefined;
-  }) => {
-    const { range } = values;
-    const newRange =
-      range === undefined || range === null
-        ? null
-        : {
-            begin: range[0],
-            end: range[1],
-          };
-
-    setAdminDataRange(newRange);
-    setAdminData(null);
-    await updateAdminData();
-  };
 
   if (endpointData === null) {
     return <></>;
@@ -113,20 +141,6 @@ export default function AdminStats(): React.ReactElement {
 
   return (
     <>
-      <Flex gap="1rem" align="baseline" justify="space-between">
-        <Typography.Title level={3} style={{ marginTop: 0, marginBottom: 16 }}>
-          Admin Statistics
-        </Typography.Title>
-        <Form layout="inline" onFinish={submitRangeForm}>
-          <Form.Item name="range">
-            <RangePicker />
-          </Form.Item>
-          <Form.Item>
-            <Button htmlType="submit" icon={<MoveRightIcon />} />
-          </Form.Item>
-        </Form>
-      </Flex>
-
       <Flex gap="1rem" wrap="wrap" justify="space-between" vertical>
         {adminData === null ? (
           <Spin size="small" />

@@ -101,6 +101,7 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
   const isExpired =
     props.linkInfo.expiration_time !== null &&
     new Date(props.linkInfo.expiration_time) < new Date(currDate.toISOString());
+  const isDeleted = props.linkInfo.deleted;
 
   const [isRestorable, setIsRestorable] = useState(false);
   useEffect(() => {
@@ -178,7 +179,7 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
             cancelText="No"
             okButtonProps={{ danger: true }}
           >
-            <Button danger icon={<TrashIcon />}>
+            <Button danger icon={<TrashIcon />} disabled={isDeleted || isExpired}>
               Delete
             </Button>
           </Popconfirm>

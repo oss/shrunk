@@ -252,10 +252,47 @@ export default function Shrunk(props: Props) {
   const showMotd = motd !== '' && localStorage.getItem('alert-read') !== motd;
 
   return (
-    <FeatureFlagsProvider>
-      <ConfigProvider theme={lightTheme}>
-        <App>
-          <BrowserRouter>
+    <ConfigProvider theme={lightTheme}>
+      <App>
+        <BrowserRouter>
+          <Layout>
+            {domain === 'shrunk.rutgers.edu' && (
+              <Alert
+                message={
+                  <Typography.Text>
+                    This is a developer environment, any progress you make on
+                    this site is prone to deletion. Please use the real site at{' '}
+                    <a href="https://go.rutgers.edu">go.rutgers.edu</a>.
+                  </Typography.Text>
+                }
+                type="warning"
+                showIcon
+                banner
+                closable
+              />
+            )}
+            <Header className="tw-flex tw-items-center tw-justify-between">
+              <a href={netid ? '/app/dash' : '/app/login'}>
+                <Image
+                  preview={false}
+                  alt="Rutgers"
+                  src={rutgersLogo}
+                  width="175px"
+                  srcSet={rutgersLogo}
+                />
+              </a>
+              {netid && (
+                <Dropdown menu={{ items: menuItems }}>
+                  <Button
+                    type="text"
+                    className="!tw-text-white"
+                    loading={isLoading}
+                  >
+                    {netid}
+                  </Button>
+                </Dropdown>
+              )}
+            </Header>
             <Layout>
               {domain === 'shrunk.rutgers.edu' && (
                 <Alert
