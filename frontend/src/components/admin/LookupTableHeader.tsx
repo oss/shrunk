@@ -80,11 +80,13 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
         }
         // Check if the user already exists
 
-        await createUser(netid, backendRoles, comment);
+        const response = await createUser(netid, backendRoles, comment);
 
-        setShowCreateUserModal(false);
-        message.success('User roles assigned successfully');
-        form.resetFields();
+        if(!response.ok) {
+          message.error('Failed to create user');
+          return;
+        }
+        message.success('User created successfully');
         rehydrateData();
       } catch (error) {
         message.error(`Failed to assign user roles ${error}`);
