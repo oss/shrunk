@@ -1,9 +1,13 @@
 import base32 from 'hi-base32';
 
 export async function removeRoleFromUser(netid: string, role: string) {
-  const encodedNetId = base32.encode(netid);
-  await fetch(`/api/core/role/${role}/entity/${encodedNetId}`, {
+  await fetch(`/api/core/user/roles`, {
     method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      netid,
+      role,
+    }),
   });
 }
 
@@ -12,12 +16,51 @@ export async function addRoleToUser(
   role: string,
   comment?: string,
 ) {
-  const encodedNetId = base32.encode(netid);
-  return fetch(`/api/core/role/${role}/entity/${encodedNetId}`, {
-    method: 'PUT',
+  return fetch(`/api/core/user/roles`, {
+    method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      role,
       comment,
+      netid,
+    }),
+  });
+}
+
+
+export async function getAllUsers() {
+  const response = await fetch('/api/core/user/all', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  const data = await response.json();
+  return data.users;
+}
+
+export async function createUser(
+  netid: string,
+  roles: string[],
+  comment?: string,
+) {
+  return fetch(`/api/core/user`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      netid,
+      roles,
+      comment,
+    }),
+  });
+}
+
+export async function removeUser(netid: string) {
+  return fetch(`/api/core/user`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      netid,
     }),
   });
 }

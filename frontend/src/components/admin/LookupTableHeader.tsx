@@ -15,7 +15,7 @@ import {
 } from 'antd/lib';
 import { CloudDownloadIcon, PlusCircleIcon } from 'lucide-react';
 import React from 'react';
-import { addRoleToUser } from '../../api/users';
+import { createUser } from '../../api/users';
 import { User } from '../../contexts/Users';
 import SearchUser from './SearchUser';
 
@@ -67,31 +67,21 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
       const { netid, roles, comment } = values;
 
       try {
-        const rolePromises = roles.map(async (role: string) => {
-          const roleMapping: { [key: string]: string } = {
-            whitelisted: 'whitelisted',
-            admin: 'admin',
-            powerUser: 'power_user',
-            facultyStaff: 'facstaff',
-          };
+        const roleMapping: { [key: string]: string } = {
+          whitelisted: 'whitelisted',
+          admin: 'admin',
+          powerUser: 'power_user',
+          facultyStaff: 'facstaff',
+        };
+        const backendRoles = roles.map((role: string) => roleMapping[role]);
+        if (backendRoles.length === 0) {
+          message.error('Please select at least one role');
+          return;
+        }
+        // Check if the user already exists
 
-          const backendRole = roleMapping[role];
-          if (!backendRole) {
-            throw new Error(`Invalid role mapping for ${role}`);
-          }
+        await createUser(netid, backendRoles, comment);
 
-          const response = await addRoleToUser(
-            netid,
-            backendRole,
-            comment || `Added via User Lookup interface`,
-          );
-
-          if (!response.ok) {
-            throw new Error(`Failed to grant role ${backendRole}`);
-          }
-        });
-
-        await Promise.all(rolePromises);
         setShowCreateUserModal(false);
         message.success('User roles assigned successfully');
         form.resetFields();
