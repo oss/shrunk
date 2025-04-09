@@ -179,7 +179,11 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
             cancelText="No"
             okButtonProps={{ danger: true }}
           >
-            <Button danger icon={<TrashIcon />} disabled={isDeleted || isExpired}>
+            <Button
+              danger
+              icon={<TrashIcon />}
+              disabled={isDeleted || isExpired}
+            >
               Delete
             </Button>
           </Popconfirm>

@@ -76,7 +76,9 @@ export default function AdminStats(): React.ReactElement {
   const updateAdminData = async () => {
     const req: Record<string, any> = {};
 
-    const json = await fetch('/api/v1/admin/stats/overview', {
+    // TODO: Move this.
+    // eslint-disable-next-line no-restricted-globals
+    const json = await fetch('/api/core/admin/stats/overview', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(req),

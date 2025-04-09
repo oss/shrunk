@@ -30,9 +30,6 @@ export const lightTheme: ThemeConfig = {
       itemSelectedColor: red[6],
       itemActiveColor: red[6],
     },
-    Table: {
-      cellFontSize: 8,
-    },
   },
 };
 

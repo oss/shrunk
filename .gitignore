@@ -61,3 +61,6 @@ httpd/error_log
 httpd/httpd.pid
 httpd/*.log
 *.env
+
+# Older Shrunk Builds
+backend/shrunk/config.py

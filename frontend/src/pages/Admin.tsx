@@ -74,13 +74,13 @@ export default function Admin(): React.ReactElement {
   const items: TabsProps['items'] = [
     {
       key: 'analytics',
-      icon: <LineChartOutlined />,
+      icon: <ChartLineIcon />,
       label: 'Analytics',
       children: <AdminStats />,
     },
     {
       key: 'user-lookup',
-      icon: <UserOutlined />,
+      icon: <UserIcon />,
       label: 'User Search',
       children: (
         <UsersProvider>
@@ -90,7 +90,7 @@ export default function Admin(): React.ReactElement {
     },
     {
       key: 'links',
-      icon: <SafetyOutlined />,
+      icon: <ShieldCheckIcon />,
       label: (
         <Space direction="horizontal">
           Link Control
@@ -107,7 +107,7 @@ export default function Admin(): React.ReactElement {
     },
     {
       key: 'security',
-      icon: <LockOutlined />,
+      icon: <LockKeyholeIcon />,
       label: 'Security',
       children: <Security />,
     },
