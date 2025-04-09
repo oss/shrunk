@@ -38,6 +38,18 @@ class UserClient:
             new_user = {
                 "netid": netid,
                 "roles": roles,
+                "filterOptions": {
+                "show_expired_links": False,
+                "show_deleted_links": False,
+                "sort": {"key": "relevance", "order": "descending"},
+                "showType": "links",
+                "set": {"set": "user"},
+                "begin_time": None,
+                "end_time": None,
+                "owner": None,
+                "queryString": "",
+            }
+                
             }
             self.db["users"].insert_one(new_user)
 
@@ -405,33 +417,6 @@ class UserClient:
         }
         return formatted_position_info
 
-    def get_user_filter_options(self, netid: str) -> Dict[str, Any]:
-        """Get the filter options for a user
-
-        :param netid: The netid of the user to get the filter options for
-
-        :returns Dict[str, Any]: The filter options for the user
-
-
-
-        """
-        user: Dict[str, Any] = self.db["users"].find_one({"netid": netid})
-        if "filterOptions" not in user:
-            filterOptions = {
-                "show_expired_links": False,
-                "show_deleted_links": False,
-                "sort": {"key": "relevance", "order": "descending"},
-                "showType": "links",
-                "set": {"set": "user"},
-                "begin_time": None,
-                "end_time": None,
-                "owner": None,
-                "queryString": "",
-            }
-
-            self.update_user_filter_options(netid, filterOptions)
-            return filterOptions
-        return user["filterOptions"]
 
     def update_user_filter_options(
         self, netid: str, filterOptions: Dict[str, Any]
