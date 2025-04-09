@@ -12,7 +12,7 @@ __all__ = ["bp"]
 bp = Blueprint("user", __name__, url_prefix="/api/core/user")
 
 
-@bp.route("", methods=["PUT"])
+@bp.route("", methods=["POST"])
 @require_login
 def create_user(netid: str, client: ShrunkClient) -> Any:
     """PUT /api/core/user
@@ -30,31 +30,32 @@ def create_user(netid: str, client: ShrunkClient) -> Any:
             "roles": [str, ...],}
 
     """
-    
+
     if not client.users.has_role(netid, "admin"):
         abort(403)
-        
+
     if not client.users.is_valid_entity(netid):
         abort(400)
 
     data = request.get_json()
-    netid = data.get("netid")
+    new_user_netid = data.get("netid")
     roles = data.get("roles", [])
-    if not netid:
+    if not new_user_netid:
         abort(400)
-    client.users.initialize_user(netid, roles, netid)
+    client.users.initialize_user(new_user_netid, roles, new_user_netid)
     return "", 204
+
 
 @bp.route("", methods=["DELETE"])
 @require_login
 def delete_user(netid: str, client: ShrunkClient) -> Any:
     """DELETE /api/core/user
-    
+
 
     Args:
         netid (str): _description_
         client (ShrunkClient): _description_
-        
+
     Deletes a user in the system.
     Request format:
     .. code-block:: json
@@ -72,6 +73,7 @@ def delete_user(netid: str, client: ShrunkClient) -> Any:
     client.users.delete_user(netid)
     return "", 204
 
+
 @bp.route("/roles", methods=["PATCH"])
 @require_login
 def add_user_role(netid: str, client: ShrunkClient) -> Any:
@@ -83,16 +85,16 @@ def add_user_role(netid: str, client: ShrunkClient) -> Any:
 
     Updates the roles of a user.
 
-    Request format: 
+    Request format:
     .. code-block:: json
         {
             "netid": str,
             "role" : str,
             "comment": str
-            
+
         }
 
-    
+
 
     """
     if not client.users.has_role(netid, "admin"):
@@ -102,13 +104,14 @@ def add_user_role(netid: str, client: ShrunkClient) -> Any:
     grantee = data.get("netid")
     role = data.get("role")
     comment = data.get("comment")
-    
+
     if not grantee or not role:
         abort(400)
-    
+
     client.users.grant_role(netid, grantee, role, comment)
     return "", 204
-    
+
+
 @bp.route("/roles", methods=["DELETE"])
 @require_login
 def remove_user_role(netid: str, client: ShrunkClient) -> Any:
@@ -129,18 +132,15 @@ def remove_user_role(netid: str, client: ShrunkClient) -> Any:
     """
     if not client.users.has_role(netid, "admin"):
         abort(403)
-
     data = request.get_json()
     grantee = data.get("netid")
     role = data.get("role")
-    
+
     if not grantee or not role:
         abort(400)
-    
+
     client.users.revoke_role(netid, grantee, role)
     return "", 204
-
-
 
 
 @bp.route("/all", methods=["POST"])
@@ -219,7 +219,7 @@ def get_user_system_options(netid: str, client: ShrunkClient) -> Dict[Any, Any]:
 @bp.route("/info")
 def get_user_info():
     """GET /api/core/user/info
-    
+
     Get current user info from session"""
     if "user" not in session:
         return jsonify({"netid": "", "privileges": []})
@@ -316,6 +316,7 @@ def update_user_options(
         abort(400)
     return "", 204
 
+
 @bp.route("<user>", methods=["GET"])
 @require_login
 def get_user(netid: str, client: ShrunkClient, user: str) -> Any:
@@ -352,5 +353,3 @@ def get_user(netid: str, client: ShrunkClient, user: str) -> Any:
             "linksCreated": user_data["linksCreated"],
         }
     )
-    
-    

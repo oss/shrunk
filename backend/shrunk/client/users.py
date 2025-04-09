@@ -19,7 +19,9 @@ class UserClient:
     ):
         self.db = db
 
-    def initialize_user(self, netid: str, role: Union[str, List[str]], grantor: Optional[str] = "system") -> None:
+    def initialize_user(
+        self, netid: str, role: Union[str, List[str]], grantor: Optional[str] = "system"
+    ) -> None:
         """Initialize a user in the database
         :param entity: The entity to initialize
         :param filterOptions: The filter options for the user
@@ -28,7 +30,9 @@ class UserClient:
         existing_user = self.db["users"].find_one({"netid": netid})
         if not existing_user:
             if isinstance(role, list):
-                roles = [{"role": r, "granted_by": grantor, "comment": ""} for r in role]
+                roles = [
+                    {"role": r, "granted_by": grantor, "comment": ""} for r in role
+                ]
             else:
                 roles = [{"role": role, "granted_by": grantor, "comment": ""}]
             new_user = {
@@ -43,20 +47,18 @@ class UserClient:
         :returns: The user object if found, None otherwise
         :rtype: Optional[Dict[str, Any]]
         """
-    
-    
+
         pipeline = [
             {
                 "$match": {
                     "netid": netid,
-                    
                 }
             },
             {
                 "$project": {
                     "netid": 1,
                     "roles": {
-                        "$map": { # only get the role name
+                        "$map": {  # only get the role name
                             "input": "$roles",
                             "as": "role",
                             "in": "$$role.role",
@@ -101,9 +103,9 @@ class UserClient:
                         }
                     }
                 }
-            }
+            },
         ]
-        
+
         user_cursor = self.db["users"].aggregate(pipeline)
         user_data = list(user_cursor)[0] if user_cursor else None
         if user_data:
@@ -113,11 +115,9 @@ class UserClient:
                 "linksCreated": user_data["linksCreated"],
                 "organizations": user_data["organizations"],
                 "filterOptions": user_data.get("filterOptions", None),
-                
             }
         return None
 
-    
     def get_user_roles(self, netid: str) -> List[str]:
         """Get the roles for a user
         :param entity: The entity to get the roles for
@@ -127,15 +127,13 @@ class UserClient:
         if user:
             return [role.get("role") for role in user.get("roles", [])]
         return []
-    
+
     def delete_user(self, netid: str) -> None:
         """Delete a user from the database
-        
+
         :param netid: The entity to delete
         """
         self.db["users"].delete_one({"netid": netid})
-
-
 
     def get_all_users(self, operations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Get all users from the database
@@ -154,7 +152,7 @@ class UserClient:
                 "$project": {
                     "netid": 1,
                     "roles": {
-                        "$map": { # only get the role name
+                        "$map": {  # only get the role name
                             "input": "$roles",
                             "as": "role",
                             "in": "$$role.role",
@@ -200,8 +198,7 @@ class UserClient:
                 }
             },
         ]
-        
-        
+
         # Apply operations to filter and sort users
         ops_pipeline = []
         for operation in operations:
@@ -229,7 +226,6 @@ class UserClient:
             elif op_type == "sort":
                 sort_order = 1 if op_spec == "asc" else -1
                 ops_pipeline.append({"$sort": {op_field: sort_order}})
-
 
         return [
             {
@@ -287,7 +283,7 @@ class UserClient:
         return role in roles
 
     def grant_role(
-        self, grantor: str, grantee: str, role: str, comment: Optional[str] 
+        self, grantor: str, grantee: str, role: str, comment: Optional[str]
     ) -> None:
         """Grants a specific role to a user.
 
@@ -306,11 +302,11 @@ class UserClient:
         if not grantee_user:
             raise InvalidEntity(f"Grantee {grantee} does not exist in the database.")
 
-        if not self.is_admin(grantor):
-            raise InvalidEntity(f"Grantor {grantor} does not have admin privileges.")
+        if not self.has_role(grantor, "admin"):
+            raise InvalidEntity(f"Grantor {grantor} is not an admin.")
 
-        for role in grantee_user.get("roles", []):  # check if user already has the role
-            if role.get("role") == role:
+        for user_role in grantee_user.get("roles", []):  # check if user already has the role
+            if user_role.get("role") == role:
                 raise InvalidEntity(f"User {grantee} already has the role {role}.")
         self.db["users"].update_one(
             {"netid": grantee},
@@ -337,17 +333,16 @@ class UserClient:
         if not self.is_valid_role(role):
             raise InvalidEntity(f"Role {role} is not valid.")
 
-        if not self.is_admin(grantor):
+        if not self.has_role(grantor, "admin"):
             raise InvalidEntity(f"Grantor {grantor} does not have admin privileges.")
 
         grantee_user = self.db["users"].find_one({"netid": grantee})
 
         if not grantee_user:
             raise InvalidEntity(f"Grantee {grantee} does not exist in the database.")
-        
-        for role in grantee_user.get("roles", []):  # check if user has the role
-            if role.get("role") != role:
-                raise InvalidEntity(f"User {grantee} does not have the role {role}.")
+
+        if not self.has_role(grantee, role):
+            raise InvalidEntity(f"Grantee {grantee} does not have the role {role}.")
 
         self.db["users"].update_one(
             {"netid": grantee},
@@ -367,7 +362,7 @@ class UserClient:
 
         user_roles = self.get_user_roles(netid)
         for user_role in user_roles:
-            if user_role.get("role") == role:
+            if user_role == role:
                 return True
         return False
 

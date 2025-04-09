@@ -41,7 +41,7 @@ def login(user_info: Any) -> Any:
     fac_staff = t("FACULTY") or t("STAFF")
 
     # get info from ACLs
-    roles = client.users.get_user_roles(netid);
+    roles = client.users.get_user_roles(netid)
     is_whitelisted = any(role.get("role") == "whitelisted" for role in roles)
     is_blacklisted = any(role.get("role") == "blacklisted" for role in roles)
     is_super_admin = os.getenv("SHRUNK_SUPER_ADMIN")
