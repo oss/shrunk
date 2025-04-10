@@ -366,7 +366,9 @@ class UserClient:
             role (str): The role to be revoked.
 
             Raises:
-            InvalidEntity: If the role is not valid, the grantee does not exist or user does not have role.
+            InvalidEntity: If grantor not admin
+            InvalidEntity: If the role does not exist
+            InvalidEntity: If the grantee does not have the role
             NoSuchObjectException: If the grantee does not exist in the database.
             InvalidEntity: If the grantor does not have admin privileges.
         """

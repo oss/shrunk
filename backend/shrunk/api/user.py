@@ -155,6 +155,8 @@ def remove_user_role(netid: str, client: ShrunkClient) -> Any:
         client.users.revoke_role(netid, grantee, role)
     except NoSuchObjectException:
         abort(404)
+    except InvalidEntity:
+        abort(403)
     return "", 204
 
 
@@ -201,6 +203,8 @@ def get_all_users(netid: str, client: ShrunkClient) -> Dict[Any, Any]:
         abort(403)
 
     data = request.get_json()
+    if data is None:
+        abort(400)
     operations = data.get("operations", [])
     users = client.users.get_all_users(operations)
     if users is None:
