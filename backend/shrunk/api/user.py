@@ -16,7 +16,7 @@ bp = Blueprint("user", __name__, url_prefix="/api/core/user")
 @bp.route("", methods=["POST"])
 @require_login
 def create_user(netid: str, client: ShrunkClient) -> Any:
-    """PUT /api/core/user
+    """POST /api/core/user
 
     Args:
         netid (str): the netid of the user logged in
@@ -108,14 +108,18 @@ def add_user_role(netid: str, client: ShrunkClient) -> Any:
     comment = data.get("comment")
 
     if not grantee or not role:
+        print("a")
         abort(400)
     if not client.users.is_valid_entity(grantee):
+        print("b")
         abort(400)
     try:
         client.users.grant_role(netid, grantee, role, comment)
-    except NoSuchObjectException:
+    except NoSuchObjectException as e:
+        print(e)
         abort(400)
-    except InvalidEntity:
+    except InvalidEntity as e:
+        print(e)
         abort(403)
     return "", 204
 
