@@ -173,7 +173,11 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
 
     alias = req.get("alias", None)
 
-    if "alias" in req and not client.users.has_role(netid, "admin") and not client.users.has_role(netid, "power_user"):
+    if (
+        "alias" in req
+        and not client.users.has_role(netid, "admin")
+        and not client.users.has_role(netid, "power_user")
+    ):
         abort(403)
 
     try:

@@ -98,18 +98,13 @@ def test_delete_user(client: Client, user: str, expected: int) -> None:
                 # delete the test account
                 resp = client.delete("/api/core/user", json={"netid": test_acc_name})
                 assert resp.status_code == expected
-                resp = client.get(
-                    f"/api/core/user/{test_acc_name}"
-                )
+                resp = client.get(f"/api/core/user/{test_acc_name}")
                 assert resp.status_code == 404
-        else: 
-            resp = client.delete(
-                "/api/core/user", json={"netid": test_acc_name}
-            )
+        else:
+            resp = client.delete("/api/core/user", json={"netid": test_acc_name})
             assert resp.status_code == expected
-      
-      
-      
+
+
 @pytest.mark.parametrize(
     ("user", "new_role", "expected"),
     [
@@ -121,13 +116,15 @@ def test_delete_user(client: Client, user: str, expected: int) -> None:
         ("admin", "", 400),
         ("facstaff", "power_user", 403),
         ("user", "power_user", 403),
-    ]
+    ],
 )
 def test_add_role(client: Client, user: str, new_role: str, expected: int) -> None:
-    with dev_login(client, user): 
+    with dev_login(client, user):
         test_account = f"DEV_TEST{random.randint(1000, 1000000)}"
-        if user == "admin": 
-            client.post("/api/core/user", json={"netid": test_account, "roles": ["facstaff"]})
+        if user == "admin":
+            client.post(
+                "/api/core/user", json={"netid": test_account, "roles": ["facstaff"]}
+            )
             resp = client.patch(
                 "/api/core/user/roles",
                 json={"netid": test_account, "role": new_role, "comment": "test"},
@@ -138,9 +135,11 @@ def test_add_role(client: Client, user: str, new_role: str, expected: int) -> No
                 json_data = resp.json
                 assert new_role in json_data.get("roles", [])
         else:
-            resp = client.post("/api/core/user", json={"netid": test_account, "roles": ["facstaff"]})
+            resp = client.post(
+                "/api/core/user", json={"netid": test_account, "roles": ["facstaff"]}
+            )
             assert resp.status_code == 403
-    
+
 
 @pytest.mark.parametrize(
     ("user", "remove_role", "expected"),
@@ -152,13 +151,18 @@ def test_add_role(client: Client, user: str, new_role: str, expected: int) -> No
         ("admin", "", 400),
         ("facstaff", "power_user", 403),
         ("user", "power_user", 403),
-    ]
+    ],
 )
-def test_remove_role(client: Client, user: str, remove_role: str, expected: int) -> None:
+def test_remove_role(
+    client: Client, user: str, remove_role: str, expected: int
+) -> None:
     with dev_login(client, user):
         test_account = f"DEV_TEST{random.randint(1000, 1000000)}"
         if user == "admin":
-            client.post("/api/core/user", json={"netid": test_account, "roles": ["facstaff", "power_user"]})
+            client.post(
+                "/api/core/user",
+                json={"netid": test_account, "roles": ["facstaff", "power_user"]},
+            )
             resp = client.delete(
                 "/api/core/user/roles",
                 json={"netid": test_account, "role": remove_role},
@@ -169,10 +173,13 @@ def test_remove_role(client: Client, user: str, remove_role: str, expected: int)
                 json_data = resp.json
                 assert remove_role not in json_data.get("roles", [])
         else:
-            resp = client.delete("/api/core/user/roles", json={"netid": test_account, "role": remove_role})
+            resp = client.delete(
+                "/api/core/user/roles",
+                json={"netid": test_account, "role": remove_role},
+            )
             assert resp.status_code == 403
-            
-            
+
+
 @pytest.mark.parametrize(
     ("user", "num_users"),
     [
@@ -180,24 +187,24 @@ def test_remove_role(client: Client, user: str, remove_role: str, expected: int)
         ("facstaff", 0),
         ("power", 0),
         ("user", 0),
-    ]          
+    ],
 )
 def test_get_all_users(client: Client, user: str, num_users: int) -> None:
     with dev_login(client, user):
         if user == "admin":
             for i in range(num_users):
                 test_account = f"DEV_TEST{random.randint(1000, 1000000)}"
-                client.post("/api/core/user", json={"netid": test_account, "roles": ["facstaff"]})
+                client.post(
+                    "/api/core/user",
+                    json={"netid": test_account, "roles": ["facstaff"]},
+                )
             resp = client.post("/api/core/user/all", json={})
             assert resp.status_code == 200
             assert len(resp.json["users"]) == num_users + 1  # +1 for the admin user
-        
+
         else:
             resp = client.post("/api/core/user/all", json={})
             assert resp.status_code == 403
-            
-            
-          
 
 
 @pytest.mark.parametrize(
@@ -215,7 +222,6 @@ def test_get_user_info(client: Client, user: str, expected: int) -> None:
         assert resp.status_code == expected
         if expected == 200:
             assert resp.json["netid"] == "DEV_ADMIN"
-        
 
 
 @pytest.mark.parametrize(
@@ -287,7 +293,6 @@ def test_get_user_info(client: Client, user: str, expected: int) -> None:
         ),
     ],
 )
-
 def test_update_user_options(
     client: Client, user: str, updated_options: dict, expected: int
 ) -> None:

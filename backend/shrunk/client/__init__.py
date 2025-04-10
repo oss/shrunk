@@ -132,7 +132,7 @@ class ShrunkClient:
             num_links = self.db.urls.estimated_document_count()
             num_visits = self.db.visits.estimated_document_count()
             num_users = self.db.users.estimated_document_count()
-            
+
         elif begin is not None and end is not None:
 
             def match_range(field_name: str) -> Any:

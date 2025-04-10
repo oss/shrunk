@@ -108,18 +108,14 @@ def add_user_role(netid: str, client: ShrunkClient) -> Any:
     comment = data.get("comment")
 
     if not grantee or not role:
-        print("a")
         abort(400)
     if not client.users.is_valid_entity(grantee):
-        print("b")
         abort(400)
     try:
         client.users.grant_role(netid, grantee, role, comment)
     except NoSuchObjectException as e:
-        print(e)
         abort(400)
     except InvalidEntity as e:
-        print(e)
         abort(403)
     return "", 204
 

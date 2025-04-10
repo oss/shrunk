@@ -124,8 +124,10 @@ def validate_role_entity(
     """
     if role_name != "whitelisted" and not client.users.has_role(netid, "admin"):
         abort(403)
-    if role_name == "whitelisted" and not client.users.has_role(netid, "facstaff") and not client.users.has_role(
-        netid, "admin"
+    if (
+        role_name == "whitelisted"
+        and not client.users.has_role(netid, "facstaff")
+        and not client.users.has_role(netid, "admin")
     ):
         abort(403)
     valid = client.roles.is_valid_entity_for(role_name, entity)
