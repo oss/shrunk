@@ -86,7 +86,9 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
           message.error('Failed to create user');
           return;
         }
+
         message.success('User created successfully');
+        setShowCreateUserModal(false);
         rehydrateData();
       } catch (error) {
         message.error(`Failed to assign user roles ${error}`);
