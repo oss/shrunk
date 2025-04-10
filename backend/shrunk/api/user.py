@@ -35,13 +35,12 @@ def create_user(netid: str, client: ShrunkClient) -> Any:
     if not client.users.has_role(netid, "admin"):
         abort(403)
 
-
     data = request.get_json()
     new_user_netid = data.get("netid")
     if not new_user_netid or not client.users.is_valid_entity(new_user_netid):
         abort(400)
     roles = data.get("roles", [])
-    
+
     client.users.initialize_user(new_user_netid, roles, netid)
     return "", 204
 
@@ -71,7 +70,7 @@ def delete_user(netid: str, client: ShrunkClient) -> Any:
     if not netid:
         abort(400)
     try:
-        client.users.get_user(netid)
+        client.users.delete_user(netid)
     except NoSuchObjectException:
         abort(404)
     return "", 204
