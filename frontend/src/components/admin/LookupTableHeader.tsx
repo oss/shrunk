@@ -82,7 +82,7 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
 
         const response = await createUser(netid, backendRoles, comment);
 
-        if(!response.ok) {
+        if (!response.ok) {
           message.error('Failed to create user');
           return;
         }

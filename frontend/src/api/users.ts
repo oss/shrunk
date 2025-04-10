@@ -27,7 +27,6 @@ export async function addRoleToUser(
   });
 }
 
-
 export async function getAllUsers() {
   const response = await fetch('/api/core/user/all', {
     method: 'POST',

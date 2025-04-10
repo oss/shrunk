@@ -132,14 +132,13 @@ export default function Shrunk(props: Props) {
   }, []);
 
   const showAdminTab = userPrivileges.has('admin');
-  const role =
-    userPrivileges.has('whitelisted')
-      ? 'Whitelisted User'
-      : userPrivileges.has('power_user')
-      ? 'Power User'
-      : userPrivileges.has('facstaff')
-      ? 'Faculty'
-      : 'Administrator';
+  const role = userPrivileges.has('whitelisted')
+    ? 'Whitelisted User'
+    : userPrivileges.has('power_user')
+    ? 'Power User'
+    : userPrivileges.has('facstaff')
+    ? 'Faculty'
+    : 'Administrator';
 
   const onLogout = async () => {
     window.location.href = await logout();
