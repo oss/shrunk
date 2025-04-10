@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Union
 import pymongo
 from shrunk.util.ldap import is_valid_netid, query_position_info
 
-from .exceptions import InvalidEntity
+from .exceptions import InvalidEntity, NoSuchObjectException
 
 __all__ = ["UserClient"]
 
@@ -23,9 +23,12 @@ class UserClient:
         self, netid: str, role: Union[str, List[str]], grantor: Optional[str] = "system"
     ) -> None:
         """Initialize a user in the database
+        
+        
         :param entity: The entity to initialize
         :param filterOptions: The filter options for the user
         :param role: The role to assign to the user (can be a list of roles)
+        
         """
         existing_user = self.db["users"].find_one({"netid": netid})
         if not existing_user:
@@ -149,7 +152,14 @@ class UserClient:
         """Delete a user from the database
 
         :param netid: The entity to delete
+        
+        :raises NoSuchObjectException: If the user does not exist in the database
         """
+        
+        user = self.db["users"].find_one({"netid": netid})
+        if not user:
+            raise NoSuchObjectException(f"User {netid} does not exist in the database.")
+        
         self.db["users"].delete_one({"netid": netid})
 
     def get_all_users(self, operations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -309,6 +319,10 @@ class UserClient:
             grantee (str): The netid of the user receiving the role.
             role (str): The role to be granted.
             comment (Optional[str]): An optional comment about the role grant.
+        Raises:
+            InvalidEntity: If the role is not valid, the grantee does not exist or user already has role.
+            InvalidEntity: If the grantor does not have admin privileges.
+            NoSuchObjectException: If the grantee does not exist in the database.
         """
 
         if not self.is_valid_role(role):
@@ -317,7 +331,7 @@ class UserClient:
         grantee_user = self.db["users"].find_one({"netid": grantee})
 
         if not grantee_user:
-            raise InvalidEntity(f"Grantee {grantee} does not exist in the database.")
+            raise NoSuchObjectException(f"Grantee {grantee} does not exist in the database.")
 
         if not self.has_role(grantor, "admin"):
             raise InvalidEntity(f"Grantor {grantor} is not an admin.")
@@ -345,6 +359,11 @@ class UserClient:
             grantor (str): The netid of the user revoking the role.
             grantee (str): The netid of the user who's role is being revoked.
             role (str): The role to be revoked.
+            
+            Raises:
+            InvalidEntity: If the role is not valid, the grantee does not exist or user does not have role.
+            NoSuchObjectException: If the grantee does not exist in the database.
+            InvalidEntity: If the grantor does not have admin privileges.
         """
 
         if not self.is_valid_role(role):
@@ -356,7 +375,7 @@ class UserClient:
         grantee_user = self.db["users"].find_one({"netid": grantee})
 
         if not grantee_user:
-            raise InvalidEntity(f"Grantee {grantee} does not exist in the database.")
+            raise NoSuchObjectException(f"Grantee {grantee} does not exist in the database.")
 
         if not self.has_role(grantee, role):
             raise InvalidEntity(f"Grantee {grantee} does not have the role {role}.")
@@ -429,7 +448,8 @@ class UserClient:
         """Update the filter options for a user
 
         :param netid: The netid of the user to update the filter options for
-        :param filter_options: The new filter options for the user
+        :param filterOptions: The new filter options for the user
+        :raises ValueError: If missing keys in filterOptions
         """
 
         keys = [

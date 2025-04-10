@@ -4,6 +4,7 @@ from typing import Any, Dict
 import os
 
 from flask import Blueprint, jsonify, request, session, current_app
+from shrunk.client.exceptions import InvalidEntity, NoSuchObjectException
 from werkzeug.exceptions import abort
 from shrunk.client import ShrunkClient
 from shrunk.util.decorators import require_login
@@ -69,7 +70,10 @@ def delete_user(netid: str, client: ShrunkClient) -> Any:
     netid = data.get("netid")
     if not netid:
         abort(400)
-    client.users.delete_user(netid)
+    try:
+        client.users.get_user(netid)
+    except NoSuchObjectException:
+        abort(404)
     return "", 204
 
 
@@ -106,8 +110,14 @@ def add_user_role(netid: str, client: ShrunkClient) -> Any:
 
     if not grantee or not role:
         abort(400)
-
-    client.users.grant_role(netid, grantee, role, comment)
+    if not client.users.is_valid_entity(grantee):
+        abort(400)
+    try:
+        client.users.grant_role(netid, grantee, role, comment)
+    except NoSuchObjectException:
+        abort(400)
+    except InvalidEntity:
+        abort(403)
     return "", 204
 
 
@@ -138,7 +148,10 @@ def remove_user_role(netid: str, client: ShrunkClient) -> Any:
     if not grantee or not role:
         abort(400)
 
-    client.users.revoke_role(netid, grantee, role)
+    try:
+        client.users.revoke_role(netid, grantee, role)
+    except NoSuchObjectException:
+        abort(404)
     return "", 204
 
 

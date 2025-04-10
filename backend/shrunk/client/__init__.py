@@ -96,11 +96,11 @@ class ShrunkClient:
         self.db.users.create_index([("netid", pymongo.ASCENDING)], unique=True)
 
     def user_exists(self, netid: str) -> bool:
-        """Check whether there exist any links belonging to a user.
+        """Check if user exists in database.
 
         :param netid: The user's NetID.
         """
-        return self.db.urls.find_one({"netid": netid}) is not None
+        return self.db.users.find_one({"netid": netid}) is not None
 
     def reset_database(self) -> None:
         """Delete all documents from all collections in the shrunk database."""
