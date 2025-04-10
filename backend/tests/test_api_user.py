@@ -197,6 +197,25 @@ def test_get_all_users(client: Client, user: str, num_users: int) -> None:
             
           
 
+
+@pytest.mark.parametrize(
+    ("user", "expected"),
+    [
+        ("admin", 200),
+        ("facstaff", 403),
+        ("power", 403),
+        ("user", 403),
+    ],
+)
+def test_get_user_info(client: Client, user: str, expected: int) -> None:
+    with dev_login(client, user):
+        resp = client.get(f"/api/core/user/DEV_ADMIN")
+        assert resp.status_code == expected
+        if expected == 200:
+            assert resp.json["netid"] == "DEV_ADMIN"
+        
+
+
 @pytest.mark.parametrize(
     ("user", "updated_options", "expected"),
     [
@@ -266,6 +285,7 @@ def test_get_all_users(client: Client, user: str, num_users: int) -> None:
         ),
     ],
 )
+
 def test_update_user_options(
     client: Client, user: str, updated_options: dict, expected: int
 ) -> None:
