@@ -22,7 +22,7 @@ def require_login(func: Any) -> Any:
             logger.debug("require_login: user not logged in")
             abort(401)
         netid = session["user"]["netid"]
-        if client.roles.has("blacklisted", netid):
+        if client.users.has_role(netid, "blacklisted"):
             logger.warning(f"require_login: user {netid} is blacklisted")
             abort(403)
         return func(netid, client, *args, **kwargs)

@@ -133,7 +133,7 @@ export default function Shrunk(props: Props) {
 
   const showAdminTab = userPrivileges.has('admin');
   const role =
-    userPrivileges.size === 0
+    userPrivileges.has('whitelisted')
       ? 'Whitelisted User'
       : userPrivileges.has('power_user')
       ? 'Power User'

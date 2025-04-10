@@ -22,8 +22,8 @@ bp = Blueprint("shrunk", __name__, url_prefix="/api/core")
 @require_login
 def accept_access_request(netid: str, client: ShrunkClient, token: bytes) -> Any:
     try:
-        if not client.roles.has(
-            "admin", netid
+        if not client.users.has_role(
+            netid, "admin"
         ) and not client.links.check_access_request_permission(token, netid):
             abort(403)
     except NoSuchObjectException:
@@ -41,8 +41,8 @@ def accept_access_request(netid: str, client: ShrunkClient, token: bytes) -> Any
 @require_login
 def deny_access_request(netid: str, client: ShrunkClient, token: bytes) -> Any:
     try:
-        if not client.roles.has(
-            "admin", netid
+        if not client.users.has_role(
+            netid, "admin"
         ) and not client.links.check_access_request_permission(token, netid):
             abort(403)
     except NoSuchObjectException:

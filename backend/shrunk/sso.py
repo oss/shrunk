@@ -42,8 +42,8 @@ def login(user_info: Any) -> Any:
 
     # get info from ACLs
     roles = client.users.get_user_roles(netid)
-    is_whitelisted = any(role.get("role") == "whitelisted" for role in roles)
-    is_blacklisted = any(role.get("role") == "blacklisted" for role in roles)
+    is_whitelisted = any(role == "whitelisted" for role in roles)
+    is_blacklisted = any(role == "blacklisted" for role in roles)
     is_super_admin = os.getenv("SHRUNK_SUPER_ADMIN")
 
     # now make decisions regarding whether the user can login, and what privs they should get
@@ -56,13 +56,11 @@ def login(user_info: Any) -> Any:
 
     # config-whitelisted users are automatically made admins
     if is_super_admin:
-        client.roles.grant("admin", "Justice League", netid)
         client.users.initialize_user(netid, "admin")
 
     # (if not blacklisted) facstaff can always login, but we need to grant a role
     # so the rest of the app knows what privs to give the user
     if fac_staff:
-        client.roles.grant("facstaff", "shibboleth", netid)
         client.users.initialize_user(netid, "facstaff")
 
     # now determine whether to allow login

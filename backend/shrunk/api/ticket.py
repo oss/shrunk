@@ -100,7 +100,7 @@ def send_help_desk_email(
     """
     # Disable route according to help desk configuration
     if (
-        not client.roles.has("admin", netid)
+        not client.users.has_role(netid, "admin")
         and not client.tickets.get_help_desk_enabled()
     ):
         abort(403)
@@ -137,7 +137,7 @@ def get_tickets(netid: str, client: ShrunkClient) -> Response:
     """
     # Disable route according to help desk configuration
     if (
-        not client.roles.has("admin", netid)
+        not client.users.has_role(netid, "admin")
         and not client.tickets.get_help_desk_enabled()
     ):
         abort(403)
@@ -151,8 +151,8 @@ def get_tickets(netid: str, client: ShrunkClient) -> Response:
             query[key] = value
 
     # Only admins can view tickets that are not their own
-    if ("reporter" not in query or query["reporter"] != netid) and not client.roles.has(
-        "admin", netid
+    if ("reporter" not in query or query["reporter"] != netid) and not client.users.has_role(
+        netid, "admin"
     ):
         abort(403)
 
@@ -189,7 +189,7 @@ def get_ticket(netid: str, client: ShrunkClient, id: str) -> Response:
     """
     # Disable route according to help desk configuration
     if (
-        not client.roles.has("admin", netid)
+        not client.users.has_role(netid, "admin")
         and not client.tickets.get_help_desk_enabled()
     ):
         return Response(status=403)
@@ -201,7 +201,7 @@ def get_ticket(netid: str, client: ShrunkClient, id: str) -> Response:
         abort(404)
 
     # User is not the reporter or an admin
-    if ticket["reporter"] != netid and not client.roles.has("admin", netid):
+    if ticket["reporter"] != netid and not client.users.has_role(netid, "admin"):
         abort(403)
 
     return jsonify(ticket)
@@ -224,7 +224,7 @@ def create_ticket(netid: str, client: ShrunkClient, req: Any) -> Response:
     """
     # Disable route according to help desk configuration
     if (
-        not client.roles.has("admin", netid)
+        not client.users.has_role(netid, "admin")
         and not client.tickets.get_help_desk_enabled()
     ):
         abort(403)
@@ -250,9 +250,7 @@ def create_ticket(netid: str, client: ShrunkClient, req: Any) -> Response:
         return jsonify({"message": "Duplicate ticket exists"}), 409
 
     # Entity already has the role
-    if info["reason"] in ROLE_REQUESTS and client.roles.has(
-        info["reason"], info["entity"]
-    ):
+    if info["reason"] in ROLE_REQUESTS  and client.users.has_role(info["entity"], info["reason"]):
         return jsonify({"message": "Already has the role"}), 409
 
     # Set additional ticket information
@@ -291,7 +289,7 @@ def patch_ticket(netid: str, client: ShrunkClient, req: Any, id: str) -> Respons
     """
     # Disable route according to help desk configuration
     if (
-        not client.roles.has("admin", netid)
+        not client.users.has_role(netid, "admin")
         and not client.tickets.get_help_desk_enabled()
     ):
         abort(403)
@@ -304,7 +302,7 @@ def patch_ticket(netid: str, client: ShrunkClient, req: Any, id: str) -> Respons
     # Action is close
     if req["action"] == "close":
         # Only the reporter or an admin can close the ticket
-        if ticket["reporter"] != netid and not client.roles.has("admin", netid):
+        if ticket["reporter"] != netid and not client.users.has_role(netid, "admin"):
             abort(403)
         # Ticket is not open
         if ticket["status"] != "open":
@@ -323,7 +321,7 @@ def patch_ticket(netid: str, client: ShrunkClient, req: Any, id: str) -> Respons
     # Action is resolve
     elif req["action"] == "resolve":
         # Only an admin can resolve the ticket
-        if not client.roles.has("admin", netid):
+        if not client.users.has_role(netid, "admin"):
             abort(403)
         # Ticket is not open
         if ticket["status"] != "open":
@@ -359,7 +357,7 @@ def delete_ticket(netid: str, client: ShrunkClient, id: str) -> Response:
 
     """
     # Disable route if the user is not an admin
-    if not client.roles.has("admin", netid):
+    if not client.users.has_role(netid, "admin"):
         abort(403)
 
     # Ticket does not exist

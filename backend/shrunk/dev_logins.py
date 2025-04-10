@@ -21,16 +21,17 @@ def mk_dev_login(netid: str, display_name: str, role: Optional[str]) -> Any:
 
         current_app.logger.info(f"successful dev login with netid {netid}")
         session.update({"user": {"netid": netid, "display_name": display_name}})
+        
         current_app.client.users.initialize_user(netid, role)
-        if role is not None and not current_app.client.roles.has(role, netid):
-            current_app.client.roles.grant(role, "Justice League", netid)
+    
+    
         return jsonify({"status": "success"})
 
     return view
 
 
 bp.add_url_rule(
-    "/user", "user", mk_dev_login("DEV_USER", "Dev User", None), methods=["POST"]
+    "/user", "user", mk_dev_login("DEV_USER", "Dev User", "whitelisted"), methods=["POST"]
 )
 bp.add_url_rule(
     "/facstaff",

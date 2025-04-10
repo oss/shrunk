@@ -169,7 +169,7 @@ def post_search_urls(netid: str, client: ShrunkClient, req: Any) -> Any:
     :param client:
     :param req:
     """
-    is_admin = client.roles.has("admin", netid)
+    is_admin = client.users.has_role(netid, "admin")
 
     # Must be admin to view all links.
     if req["set"]["set"] == "all" and not is_admin:
