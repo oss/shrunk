@@ -34,6 +34,9 @@ class UserClient:
         if not existing_user:
             if isinstance(role, list):
                 unique_roles = list(dict.fromkeys(role))
+                for r in unique_roles:
+                    if not self.is_valid_role(r):
+                        continue;
                 roles = [
                     {"role": r, "granted_by": grantor, "comment": ""}
                     for r in unique_roles
@@ -56,7 +59,7 @@ class UserClient:
                 },
             }
             self.db["users"].insert_one(new_user)
-
+            
     def get_user(self, netid: str) -> Optional[Dict[str, Any]]:
         """Get a user from the database
         :param entity: The entity to get
