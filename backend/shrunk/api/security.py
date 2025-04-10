@@ -21,7 +21,7 @@ def promote(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
 
     :param link_id: id of link to promote
     """
-    if not client.roles.has("admin", netid):
+    if not client.users.has_role(netid, "admin"):
         abort(403)
 
     current_app.logger.warning(f"calling link status with objectid of {link_id}")
@@ -49,7 +49,7 @@ def reject(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     :param link_id: id of link to reject
 
     """
-    if not client.roles.has("admin", netid):
+    if not client.users.has_role(netid, "admin"):
         abort(403)
 
     try:
@@ -74,7 +74,7 @@ def security_test(netid: str, client: ShrunkClient, long_url: str) -> Any:
     that the security measures do not work, this test will be the first to clearly show that.
     """
 
-    if not client.roles.has("admin", netid):
+    if not client.users.has_role(netid, "admin"):
         abort(403)
     return jsonify({"detected": client.security.security_risk_detected(long_url)})
 
@@ -86,7 +86,7 @@ def get_pending_links(netid: str, client: ShrunkClient) -> Any:
 
     Retrieves a list of pending links
     """
-    if not client.roles.has("admin", netid):
+    if not client.users.has_role(netid, "admin"):
         abort(403)
 
     return jsonify({"pendingLinks": client.security.get_pending_links()}), 200
@@ -99,7 +99,7 @@ def get_pending_link_count(netid: str, client: ShrunkClient) -> Any:
 
     Retrieves the length of the list of pending links
     """
-    if not client.roles.has("admin", netid):
+    if not client.users.has_role(netid, "admin"):
         abort(403)
     return (
         jsonify({"pending_links_count": client.security.get_number_of_pending_links()}),
@@ -115,7 +115,7 @@ def get_link_status(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     Gets the status of a pending link by id.
     :param link_id:
     """
-    if not client.roles.has("admin", netid):
+    if not client.users.has_role(netid, "admin"):
         abort(403)
     try:
         link_document = client.security.get_unsafe_link_document(link_id)
@@ -145,7 +145,7 @@ def toggle_security(netid: str, client: ShrunkClient) -> Any:
 
     Toggles whether or not security measures are on
     """
-    if not client.roles.has("admin", netid):
+    if not client.users.has_role(netid, "admin"):   
         abort(403)
     try:
         status = client.security.toggle_security()
@@ -162,7 +162,7 @@ def get_security_status(netid: str, client: ShrunkClient) -> Any:
 
     Checks the status of security measures
     """
-    if not client.roles.has("admin", netid):
+    if not client.users.has_role(netid, "admin"):
         abort(403)
     try:
         status = client.security.get_security_status()

@@ -120,7 +120,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
     elif "long_url" not in req and not req["is_tracking_pixel_link"]:
         return jsonify({"errors": ["long_url is missing"]}), 400
 
-    if not client.roles.has("admin", netid) and req["bypass_security_measures"]:
+    if not client.users.has_role(netid, "admin") and req["bypass_security_measures"]:
         abort(403)
 
     if "expiration_time" in req:
@@ -173,7 +173,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
 
     alias = req.get("alias", None)
 
-    if "alias" in req and not client.roles.has_some(["admin", "power_user"], netid):
+    if "alias" in req and not client.users.has_role(netid, "admin") and not client.users.has_role(netid, "power_user"):
         abort(403)
 
     try:
@@ -269,10 +269,10 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     except NoSuchObjectException:
         abort(404)
 
-    if info.get("deleted", False) and not client.roles.has("admin", netid):
+    if info.get("deleted", False) and not client.users.has_role(netid, "admin"):
         abort(404)
 
-    if not client.roles.has("admin", netid) and not client.links.may_view(
+    if not client.users.has_role(netid, "admin") and not client.links.may_view(
         link_id, netid
     ):
         abort(403)
@@ -341,7 +341,7 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
     except NoSuchObjectException:
         abort(404)
 
-    if not client.roles.has("admin", netid) and not client.links.may_edit(
+    if not client.users.has_role(netid, "admin") and not client.links.may_edit(
         link_id, netid
     ):
         abort(403)
@@ -408,7 +408,7 @@ def modify_acl(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) ->
         client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
-    if not client.roles.has("admin", netid) and not client.links.may_edit(
+    if not client.users.has_role(netid, "admin") and not client.links.may_edit(
         link_id, netid
     ):
         abort(403)
@@ -446,7 +446,7 @@ def delete_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
-    if not client.roles.has("admin", netid) and not client.links.is_owner(
+    if not client.users.has_role(netid, "admin") and not client.links.is_owner(
         link_id, netid
     ):
         abort(403)
@@ -469,7 +469,7 @@ def post_clear_visits(netid: str, client: ShrunkClient, link_id: ObjectId) -> An
         client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
-    if not client.roles.has("admin", netid) and not client.links.is_owner(
+    if not client.users.has_role(netid, "admin") and not client.links.is_owner(
         link_id, netid
     ):
         abort(403)
@@ -487,7 +487,7 @@ def post_request_edit(
         client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
-    if not client.roles.has("admin", netid) and not client.links.may_view(
+    if not client.users.has_role(netid, "admin") and not client.links.may_view(
         link_id, netid
     ):
         abort(403)
@@ -505,7 +505,7 @@ def cancel_request_edit(
         client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
-    if not client.roles.has("admin", netid) and not client.links.may_view(
+    if not client.users.has_role(netid, "admin") and not client.links.may_view(
         link_id, netid
     ):
         abort(403)
@@ -523,7 +523,7 @@ def request_exists(
         client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
-    if not client.roles.has("admin", netid) and not client.links.may_view(
+    if not client.users.has_role(netid, "admin") and not client.links.may_view(
         link_id, netid
     ):
         abort(403)
@@ -577,7 +577,7 @@ def get_link_visits(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     :param client:
     :param link_id:
     """
-    if not client.roles.has("admin", netid) and not client.links.may_view(
+    if not client.users.has_role(netid, "admin") and not client.links.may_view(
         link_id, netid
     ):
         abort(403)
@@ -601,7 +601,7 @@ def get_link_overall_stats(netid: str, client: ShrunkClient, link_id: ObjectId) 
     :param client:
     :param link_id:
     """
-    if not client.roles.has("admin", netid) and not client.links.may_view(
+    if not client.users.has_role(netid, "admin") and not client.links.may_view(
         link_id, netid
     ):
         abort(403)
@@ -628,7 +628,7 @@ def get_link_visit_stats(netid: str, client: ShrunkClient, link_id: ObjectId) ->
     :param client:
     :param link_id:
     """
-    if not client.roles.has("admin", netid) and not client.links.may_view(
+    if not client.users.has_role(netid, "admin") and not client.links.may_view(
         link_id, netid
     ):
         abort(403)
@@ -657,7 +657,7 @@ def get_link_geoip_stats(netid: str, client: ShrunkClient, link_id: ObjectId) ->
     :param client:
     :param link_id:
     """
-    if not client.roles.has("admin", netid) and not client.links.may_view(
+    if not client.users.has_role(netid, "admin") and not client.links.may_view(
         link_id, netid
     ):
         abort(403)
@@ -684,7 +684,7 @@ def get_link_browser_stats(netid: str, client: ShrunkClient, link_id: ObjectId) 
     :param client:
     :param link_id:
     """
-    if not client.roles.has("admin", netid) and not client.links.may_view(
+    if not client.users.has_role(netid, "admin") and not client.links.may_view(
         link_id, netid
     ):
         abort(403)
@@ -757,7 +757,7 @@ def revert_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     except NoSuchObjectException:
         abort(404)
 
-    if not client.roles.has("admin", netid) and not client.links.may_edit(
+    if not client.users.has_role(netid, "admin") and not client.links.may_edit(
         link_id, netid
     ):
         abort(403)

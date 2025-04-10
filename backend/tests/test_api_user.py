@@ -25,7 +25,7 @@ from util import dev_login
             "user",
             {
                 "netid": "DEV_USER",
-                "privileges": [None],
+                "privileges": ["whitelisted"],
             },
         ),
     ],
