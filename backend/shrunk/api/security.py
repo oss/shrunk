@@ -145,7 +145,7 @@ def toggle_security(netid: str, client: ShrunkClient) -> Any:
 
     Toggles whether or not security measures are on
     """
-    if not client.users.has_role(netid, "admin"):   
+    if not client.users.has_role(netid, "admin"):
         abort(403)
     try:
         status = client.security.toggle_security()

@@ -20,9 +20,6 @@ def test_get_roles_unauthorized(client: Client) -> None:
         assert resp.status_code == 403
 
 
-
-
-
 @pytest.mark.parametrize(
     ("user", "role", "expected"),
     [

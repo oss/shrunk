@@ -151,9 +151,9 @@ def get_tickets(netid: str, client: ShrunkClient) -> Response:
             query[key] = value
 
     # Only admins can view tickets that are not their own
-    if ("reporter" not in query or query["reporter"] != netid) and not client.users.has_role(
-        netid, "admin"
-    ):
+    if (
+        "reporter" not in query or query["reporter"] != netid
+    ) and not client.users.has_role(netid, "admin"):
         abort(403)
 
     # Add count parameter
@@ -250,7 +250,9 @@ def create_ticket(netid: str, client: ShrunkClient, req: Any) -> Response:
         return jsonify({"message": "Duplicate ticket exists"}), 409
 
     # Entity already has the role
-    if info["reason"] in ROLE_REQUESTS  and client.users.has_role(info["entity"], info["reason"]):
+    if info["reason"] in ROLE_REQUESTS and client.users.has_role(
+        info["entity"], info["reason"]
+    ):
         return jsonify({"message": "Already has the role"}), 409
 
     # Set additional ticket information

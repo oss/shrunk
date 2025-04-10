@@ -107,7 +107,9 @@ def post_org(netid: str, client: ShrunkClient, req: Any) -> Any:
     :param client:
     :param req:
     """
-    if not client.users.has_role(netid, "facstaff") and not client.users.has_role(netid, "admin"):
+    if not client.users.has_role(netid, "facstaff") and not client.users.has_role(
+        netid, "admin"
+    ):
         abort(403)
     org_id = client.orgs.create(req["name"])
     if org_id is None:
@@ -127,7 +129,9 @@ def delete_org(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
     :param client:
     :param org_id:
     """
-    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(netid, "admin"):
+    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(
+        netid, "admin"
+    ):
         abort(403)
     client.orgs.delete(org_id)
     return "", 204
@@ -282,7 +286,9 @@ def get_org_visit_stats(netid: str, client: ShrunkClient, org_id: ObjectId) -> A
     :param client:
     :param org_id:
     """
-    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(netid, "admin"):
+    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(
+        netid, "admin"
+    ):
         abort(403)
     visits = client.orgs.get_visit_stats(org_id)
     return jsonify({"visits": visits})
@@ -300,7 +306,9 @@ def get_org_geoip_stats(netid: str, client: ShrunkClient, org_id: ObjectId) -> A
     :param client:
     :param org_id:
     """
-    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(netid, "admin"):
+    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(
+        netid, "admin"
+    ):
         abort(403)
     geoip = client.orgs.get_geoip_stats(org_id)
     return jsonify({"geoip": geoip})
@@ -321,7 +329,9 @@ def put_org_member(
     :param org_id:
     :param member_netid:
     """
-    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(netid, "admin"):
+    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(
+        netid, "admin"
+    ):
         abort(403)
     client.orgs.create_member(org_id, member_netid)
     return "", 204
@@ -413,7 +423,9 @@ def delete_org_member(
     :param org_id:
     :param member_netid:
     """
-    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(netid, "admin"):
+    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(
+        netid, "admin"
+    ):
         if not netid == member_netid:
             abort(403)
     client.orgs.delete_member(org_id, member_netid)
@@ -451,7 +463,9 @@ def patch_org_member(
     :param org_id:
     :param member_netid:
     """
-    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(netid, "admin"):
+    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(
+        netid, "admin"
+    ):
         abort(403)
     if "is_admin" in req:
         # Prevent the last admin from being demoted

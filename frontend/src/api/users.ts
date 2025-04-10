@@ -1,5 +1,3 @@
-import base32 from 'hi-base32';
-
 export async function removeRoleFromUser(netid: string, role: string) {
   await fetch(`/api/core/user/roles`, {
     method: 'DELETE',
