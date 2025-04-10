@@ -661,6 +661,7 @@ export default class Dashboard extends React.Component<Props, State> {
                             <Tooltip title="Copy Original URL">
                               <Button
                                 type="text"
+                                icon={<CopyOutlined />}
                                 onClick={() =>
                                   navigator.clipboard.writeText(record.longUrl)
                                 }
