@@ -27,7 +27,7 @@ def get_roles(netid: str, client: ShrunkClient) -> Any:
     :param netid:
     :param client:
     """
-    if not client.roles.has("admin", netid):
+    if not client.users.has_role(netid, "admin"):
         abort(403)
     return jsonify({"roles": client.roles.get_role_names()})
 
@@ -49,11 +49,9 @@ def get_role_text(netid: str, client: ShrunkClient, role_name: str) -> Any:
     :param client:
     :param role_name:
     """
-    if role_name != "whitelisted" and not client.roles.has("admin", netid):
+    if role_name != "whitelisted" and not client.users.has_role(netid, "admin"):
         abort(403)
-    if role_name == "whitelisted" and not client.roles.has_some(
-        ["admin", "facstaff"], netid
-    ):
+    if role_name == "whitelisted" and not client.users.has_role(netid, "facstaff"):
         abort(403)
     text = client.roles.get_role_text(role_name)
     return jsonify({"text": text})
@@ -79,14 +77,12 @@ def get_role_entities(netid: str, client: ShrunkClient, role_name: str) -> Any:
     :param client:
     :param role_name:
     """
-    if role_name != "whitelisted" and not client.roles.has("admin", netid):
+    if role_name != "whitelisted" and not client.users.has_role(netid, "admin"):
         abort(403)
-    if role_name == "whitelisted" and not client.roles.has_some(
-        ["admin", "facstaff"], netid
-    ):
+    if role_name == "whitelisted" and not client.users.has_role(netid, "facstaff"):
         abort(403)
     entities = client.roles.get_role_entities(role_name)
-    if role_name == "whitelisted" and not client.roles.has("admin", netid):
+    if role_name == "whitelisted" and not client.users.has_role(netid, "admin"):
         entities = [entity for entity in entities if entity["granted_by"] == netid]
     return jsonify(
         {
@@ -165,11 +161,9 @@ def put_role_entity(
     :param role_name:
     :param entity:
     """
-    if role_name != "whitelisted" and not client.roles.has("admin", netid):
+    if role_name != "whitelisted" and not client.users.has_role(netid, "admin"):
         abort(403)
-    if role_name == "whitelisted" and not client.roles.has_some(
-        ["admin", "facstaff"], netid
-    ):
+    if role_name == "whitelisted" and not client.users.has_role(netid, "facstaff"):
         abort(403)
     client.roles.grant(role_name, netid, entity, comment=req.get("comment", ""))
     return "", 204
@@ -189,11 +183,9 @@ def delete_role_entity(
     :param role_name:
     :param entity:
     """
-    if role_name != "whitelisted" and not client.roles.has("admin", netid):
+    if role_name != "whitelisted" and not client.users.has_role(netid, "admin"):
         abort(403)
-    if role_name == "whitelisted" and not client.roles.has_some(
-        ["admin", "facstaff"], netid
-    ):
+    if role_name == "whitelisted" and not client.users.has_role(netid, "facstaff"):
         abort(403)
     client.roles.revoke(role_name, entity)
     return "", 204
