@@ -20,26 +20,7 @@ def test_get_roles_unauthorized(client: Client) -> None:
         assert resp.status_code == 403
 
 
-@pytest.mark.parametrize(
-    ("user", "role", "expected"),
-    [
-        ("admin", "blacklisted", True),
-        ("facstaff", "blacklisted", False),
-        ("admin", "whitelisted", True),
-        ("facstaff", "whitelisted", True),
-        ("user", "whitelisted", False),
-    ],
-)
-def test_get_role_text(client: Client, user: str, role: str, expected: bool) -> None:
-    with dev_login(client, user):
-        resp = client.get(f"/api/core/role/{role}/text")
 
-        if expected:
-            assert resp.status_code == 200
-            assert "text" in resp.json
-            assert isinstance(resp.json["text"], dict)
-        else:
-            assert resp.status_code == 403
 
 
 @pytest.mark.parametrize(

@@ -122,10 +122,10 @@ def validate_role_entity(
     :param role_name:
     :param entity:
     """
-    if role_name != "whitelisted" and not client.roles.has("admin", netid):
+    if role_name != "whitelisted" and not client.users.has_role(netid, "admin"):
         abort(403)
-    if role_name == "whitelisted" and not client.roles.has_some(
-        ["admin", "facstaff"], netid
+    if role_name == "whitelisted" and not client.users.has_role(netid, "facstaff") and not client.users.has_role(
+        netid, "admin"
     ):
         abort(403)
     valid = client.roles.is_valid_entity_for(role_name, entity)

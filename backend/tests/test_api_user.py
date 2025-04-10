@@ -114,6 +114,8 @@ def test_delete_user(client: Client, user: str, expected: int) -> None:
     ("user", "new_role", "expected"),
     [
         ("admin", "power_user", 204),
+        ("admin", "blacklisted", 204),
+        ("admin", "whitelisted", 204),
         ("admin", "randomrole", 403),
         ("admin", "facstaff", 403),
         ("admin", "", 400),
