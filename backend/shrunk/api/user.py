@@ -41,6 +41,10 @@ def create_user(netid: str, client: ShrunkClient) -> Any:
         abort(400)
     roles = data.get("roles", [])
 
+    new_user = client.users.get_user(new_user_netid)
+    if new_user is not None:
+        abort(400)
+
     client.users.initialize_user(new_user_netid, roles, netid)
     return "", 204
 
