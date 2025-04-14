@@ -39,11 +39,23 @@ class UserClient:
                     if not self.is_valid_role(r):
                         continue
                 roles = [
-                    {"role": r, "granted_by": grantor, "comment": "", "time_granted": datetime.now(timezone.utc)}
+                    {
+                        "role": r,
+                        "granted_by": grantor,
+                        "comment": "",
+                        "time_granted": datetime.now(timezone.utc),
+                    }
                     for r in unique_roles
                 ]
             else:
-                roles = [{"role": role, "granted_by": grantor, "comment": "", "time_granted": datetime.now(timezone.utc)}]
+                roles = [
+                    {
+                        "role": role,
+                        "granted_by": grantor,
+                        "comment": "",
+                        "time_granted": datetime.now(timezone.utc),
+                    }
+                ]
             new_user = {
                 "netid": netid,
                 "roles": roles,
