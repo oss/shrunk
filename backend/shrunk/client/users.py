@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import pymongo
 from shrunk.util.ldap import is_valid_netid, query_position_info
+from datetime import datetime, timezone
 
 from .exceptions import InvalidEntity, NoSuchObjectException
 
@@ -38,11 +39,11 @@ class UserClient:
                     if not self.is_valid_role(r):
                         continue
                 roles = [
-                    {"role": r, "granted_by": grantor, "comment": ""}
+                    {"role": r, "granted_by": grantor, "comment": "", "time_granted": datetime.now(timezone.utc)}
                     for r in unique_roles
                 ]
             else:
-                roles = [{"role": role, "granted_by": grantor, "comment": ""}]
+                roles = [{"role": role, "granted_by": grantor, "comment": "", "time_granted": datetime.now(timezone.utc)}]
             new_user = {
                 "netid": netid,
                 "roles": roles,
@@ -57,6 +58,7 @@ class UserClient:
                     "owner": None,
                     "queryString": "",
                 },
+                "date_created": datetime.now(timezone.utc),
             }
             self.db["users"].insert_one(new_user)
 
@@ -352,6 +354,7 @@ class UserClient:
                         "role": role,
                         "granted_by": grantor,
                         "comment": comment if comment is not None else "",
+                        "time_granted": datetime.now(timezone.utc),
                     }
                 }
             },
