@@ -4,7 +4,6 @@
  */
 
 import React from 'react';
-import base32 from 'hi-base32';
 import dayjs from 'dayjs';
 import {
   Form,
@@ -232,33 +231,24 @@ export class CreateLinkDrawer extends React.Component<Props, State> {
 
     const linkId: string = createLinkResp.id;
 
-    await Promise.all(
-      values.aliases.map(
-        async (alias: { description: string; alias?: string }) => {
-          const createAliasReq: any = { description: alias.description };
-          let result = null;
-          // Check if there are duplicate aliases
-          if (alias.alias !== undefined) {
-            result = await fetch(
-              `/api/v1/link/validate_duplicate_alias/${base32.encode(
-                alias.alias!,
-              )}`,
-            ).then((resp) => resp.json());
-          }
-          if (alias.alias !== undefined && result.valid) {
-            createAliasReq.alias = alias.alias;
-          }
-          if (this.state.tracking_pixel_enabled) {
-            createAliasReq.extension = this.state.tracking_pixel_extension;
-          }
-          await fetch(`/api/v1/link/${linkId}/alias`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(createAliasReq),
-          });
-        },
-      ),
-    );
+    // eslint-disable-next-line no-restricted-syntax
+    for (const alias of values.aliases) {
+      const createAliasReq: any = { description: alias.description };
+
+      if (alias.alias !== undefined) {
+        createAliasReq.alias = alias.alias;
+      }
+      if (this.state.tracking_pixel_enabled) {
+        createAliasReq.extension = this.state.tracking_pixel_extension;
+      }
+
+      // eslint-disable-next-line no-await-in-loop
+      await fetch(`/api/v1/link/${linkId}/alias`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(createAliasReq),
+      });
+    }
 
     this.onSubmitClick();
   };

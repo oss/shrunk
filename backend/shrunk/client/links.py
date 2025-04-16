@@ -678,6 +678,10 @@ class LinksClient:
 
         # Fail if the link does not exist
         if result is None:
+            alias = alias.lower()
+            result = self.get_link_info_by_alias(alias)
+
+        if result is None:
             return None
 
         # Fail if the link exists in the database but has been deleted

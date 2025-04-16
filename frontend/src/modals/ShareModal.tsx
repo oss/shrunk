@@ -1,5 +1,5 @@
-import React from 'react';
-import { Col, Modal, QRCode, Row, Button } from 'antd/lib';
+import React, { useState } from 'react';
+import { Col, Modal, QRCode, Row, Button, Select, Space } from 'antd/lib';
 import { LinkInfo } from '../components/LinkInfo';
 
 interface IShareModal {
@@ -13,9 +13,8 @@ export default function ShareModal(props: IShareModal) {
   const size = 250;
   const isDev = process.env.NODE_ENV === 'development';
   const protocol = isDev ? 'http' : 'https';
-  const alias = props.linkInfo?.aliases[0].alias;
+  const [alias, setAlias] = useState<string>(props.linkInfo?.aliases[0].alias);
   const shortUrl = `${protocol}://${document.location.host}/${alias}`;
-  // TODO: Support multiple aliases
 
   function doDownload(url: string, fileName: string) {
     const a = document.createElement('a');
@@ -49,7 +48,21 @@ export default function ShareModal(props: IShareModal) {
           />
         </Col>
         <Col span={24}>
-          <Button onClick={downloadCanvasQRCode}>Download</Button>
+          <Space>
+            <Select
+              defaultValue={alias}
+              options={Array.from(props.linkInfo?.aliases || []).map(
+                (value: any) => ({
+                  value: value.alias,
+                  label: value.alias,
+                }),
+              )}
+              onChange={(value: string) => {
+                setAlias(value);
+              }}
+            />
+            <Button onClick={downloadCanvasQRCode}>Download</Button>
+          </Space>
         </Col>
       </Row>
     </Modal>

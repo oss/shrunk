@@ -437,6 +437,10 @@ def create_app(config_path: str = "config.py", **kwargs: Any) -> Flask:
         # Check if the alias is a legacy tracking pixel link
         link_info = client.links.get_link_info_by_alias(alias)
         if link_info is None:
+            link_info = client.links.get_link_info_by_alias(alias.lower())
+            alias = alias.lower()
+
+        if link_info is None:
             return jsonify({"message": "Link not found"}), 404
 
         is_tracking_pixel_link = client.links.is_tracking_pixel_link(alias)

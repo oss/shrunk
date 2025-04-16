@@ -28,8 +28,8 @@ import {
   GlobalOutlined,
   EditOutlined,
   TeamOutlined,
-  ShareAltOutlined,
   CopyOutlined,
+  QrcodeOutlined,
 } from '@ant-design/icons';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
@@ -805,12 +805,11 @@ export function Stats(props: Props): React.ReactElement {
               </>
             )}
             <Button
-              type="primary"
-              icon={<ShareAltOutlined />}
+              icon={<QrcodeOutlined />}
               onClick={() => setShareModalVisible(true)}
               disabled={linkInfo?.is_tracking_pixel_link}
             >
-              Share
+              QR Code
             </Button>
           </Space>
         </Col>
