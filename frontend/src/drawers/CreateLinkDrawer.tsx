@@ -314,7 +314,7 @@ export class CreateLinkDrawer extends React.Component<Props, State> {
                 name="title"
                 rules={[{ required: true, message: 'Please input a title.' }]}
               >
-                <Input />
+                <Input placeholder="Event Marketing Video" />
               </Form.Item>
 
               {!this.state.tracking_pixel_enabled && (
@@ -327,7 +327,7 @@ export class CreateLinkDrawer extends React.Component<Props, State> {
                     { validator: serverValidateLongUrl },
                   ]}
                 >
-                  <Input />
+                  <Input placeholder="https://rutgers.edu/..." />
                 </Form.Item>
               )}
             </Col>

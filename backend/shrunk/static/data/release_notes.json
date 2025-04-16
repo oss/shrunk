@@ -2,6 +2,24 @@
   {
     "major": 3,
     "minor": 0,
+    "patch": 3,
+    "projectDirector": "ah1371",
+    "date": "TODO",
+    "description": "Adding back the card-based dashboard.",
+    "categories": {
+      "features": [
+        {
+          "text": "Add back the card-based design for the dashboard",
+          "contributors": ["ah1371"]
+        }
+      ],
+      "improvements": [],
+      "fixes": []
+    }
+  },
+  {
+    "major": 3,
+    "minor": 0,
     "patch": 2,
     "projectDirector": "ah1371",
     "date": "4-8-2025",

@@ -54,7 +54,8 @@ export interface SharingInfo {
  * @interface
  */
 export interface LinkInfo {
-  _id: string;
+  id?: string; // TODO: Make this consistently return _id
+  _id?: string; // TODO: Make this consistently return _id
   title: string;
   long_url: string;
   domain: string;
