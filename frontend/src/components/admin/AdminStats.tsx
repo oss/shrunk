@@ -9,8 +9,7 @@ import { Spin, Card, Statistic, Flex } from 'antd/lib';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 
-import { getAppStats, getEndpointData, getShrunkVersion } from '../../api/app';
-import { AdminStatsData, EndpointDatum } from '../../interfaces/app';
+import { getEndpointData, getShrunkVersion } from '../../api/app';
 
 /**
  * Results of an admin stats query to the backend

@@ -3,7 +3,6 @@ import { LogInIcon } from 'lucide-react';
 import React, { useState } from 'react';
 import { FeatureFlags, useFeatureFlags } from '../contexts/FeatureFlags';
 import BlurFade from '../components/magicui/blur-fade';
-import Dashboard from './Dashboard';
 
 interface LoginType {
   loginMessage: string;
