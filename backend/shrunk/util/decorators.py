@@ -33,7 +33,10 @@ def require_login(func: Any) -> Any:
 def require_external_token_auth(func: Any) -> Any:
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
-        return func(*args, **kwargs)
+        organization = "_"
+        client = current_app.client
+
+        return func(organization, client, *args, **kwargs)
 
     return wrapper
 
