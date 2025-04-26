@@ -7,8 +7,10 @@ import {
   Col,
   Drawer,
   Dropdown,
+  Empty,
   Flex,
   Form,
+  Pagination,
   Popconfirm,
   Radio,
   RadioChangeEvent,
@@ -42,6 +44,7 @@ import CreateLinkDrawer from '../drawers/CreateLinkDrawer';
 import { Link, SearchQuery, SearchSet } from '../interfaces/link';
 import { Organization } from '../interfaces/organizations';
 import { getLinkFromAlias, getRedirectFromAlias } from '../lib/utils';
+import LinkCard from '../components/LinkCard';
 
 interface Props {
   userPrivileges: Set<string>;
@@ -126,66 +129,6 @@ interface State {
   orgDropdownOpen: boolean;
 
   orgLoading: boolean;
-
-  visibleColumns: Set<string>;
-
-  customizeDropdownOpen: boolean;
-}
-
-function CustomizeButton(props: {
-  showType: 'links' | 'tracking_pixels';
-  visibleColumns: Set<string>;
-  setVisibleColumns: (newColumns: string[]) => void;
-}): JSX.Element {
-  const { useToken } = theme;
-  const { token } = useToken();
-
-  const columns = [
-    {
-      label: 'Original URL',
-      key: 'longUrl',
-      disabled: props.showType === 'tracking_pixels',
-    },
-    { label: 'Owner', key: 'owner' },
-    { label: 'Date Created', key: 'dateCreated' },
-    { label: 'Date Expires', key: 'dateExpires' },
-    { label: 'Unique Visits', key: 'uniqueVisits' },
-    { label: 'Total Visits', key: 'totalVisits' },
-  ];
-
-  // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
-  const bgColor = `tw-bg-[${token.colorBgBase}]`;
-
-  return (
-    <Dropdown
-      dropdownRender={() => (
-        <div className="tw-rounded-lg tw-bg-white tw-px-4 tw-py-2 tw-shadow-md">
-          {columns.map((item) => (
-            <div key={item.key}>
-              <Checkbox
-                className="tw-py-1"
-                checked={props.visibleColumns.has(item.key)}
-                onChange={(e) => {
-                  const newColumns = new Set(props.visibleColumns);
-                  if (e.target.checked) {
-                    newColumns.add(item.key);
-                  } else {
-                    newColumns.delete(item.key);
-                  }
-                  props.setVisibleColumns(Array.from(newColumns));
-                }}
-                disabled={item.disabled}
-              >
-                {item.label}
-              </Checkbox>
-            </div>
-          ))}
-        </div>
-      )}
-    >
-      <Button icon={<SlidersHorizontalIcon />}>Customize</Button>
-    </Dropdown>
-  );
 }
 
 export default class Dashboard extends React.Component<Props, State> {
@@ -229,14 +172,6 @@ export default class Dashboard extends React.Component<Props, State> {
       endTime: null,
       orgDropdownOpen: false,
       orgLoading: false,
-      visibleColumns: new Set([
-        'longUrl',
-        'owner',
-        'dateCreated',
-        'uniqueVisits',
-        'totalVisits',
-      ]),
-      customizeDropdownOpen: false,
     };
   }
 
@@ -547,10 +482,6 @@ export default class Dashboard extends React.Component<Props, State> {
     }, 300);
   };
 
-  handleColumnVisibilityChange = (selectedColumns: string[]) => {
-    this.setState({ visibleColumns: new Set(selectedColumns) });
-  };
-
   render(): React.ReactNode {
     return (
       <>
@@ -560,11 +491,6 @@ export default class Dashboard extends React.Component<Props, State> {
         <Row gutter={[16, 16]} justify="space-between">
           <Col span={12}>
             <Space>
-              <CustomizeButton
-                showType={this.state.query.showType}
-                visibleColumns={this.state.visibleColumns}
-                setVisibleColumns={this.handleColumnVisibilityChange}
-              />
               <Button
                 icon={<FilterIcon />}
                 onClick={() => {
@@ -603,236 +529,29 @@ export default class Dashboard extends React.Component<Props, State> {
             </Space>
           </Col>
           <Col span={24}>
-            <Table
-              tableLayout="fixed"
-              loading={this.state.linkInfo === null}
-              scroll={{ x: 'calc(700px + 50%)' }}
-              expandable={{
-                expandedRowRender: (record) => (
-                  <Typography.Paragraph className="!tw-m-0">
-                    {record.description}
-                  </Typography.Paragraph>
-                ),
-              }}
-              columns={[
-                {
-                  title: 'Alias',
-                  dataIndex: 'alias',
-                  key: 'alias',
-                  width: '350px',
-                  render: (_, record) => (
-                    <Row gutter={[0, 8]}>
-                      <Col span={24}>
-                        <Tooltip title="Copy to clipboard">
-                          <Button
-                            type="text"
-                            icon={<CopyIcon />}
-                            onClick={() => {
-                              const redirectUrl = getRedirectFromAlias(
-                                record.alias,
-                                record.isTrackingPixel,
-                              );
-                              navigator.clipboard.writeText(redirectUrl);
-                            }}
-                          >
-                            <Typography>
-                              {getLinkFromAlias(
-                                record.alias,
-                                record.isTrackingPixel,
-                              )}
-                            </Typography>
-                          </Button>
-                        </Tooltip>
-                      </Col>
-                    </Row>
-                  ),
-                },
-                Table.EXPAND_COLUMN,
-                ...(this.state.visibleColumns.has('longUrl') &&
-                this.state.query.showType !== 'tracking_pixels'
-                  ? [
-                      {
-                        title: 'Original URL',
-                        dataIndex: 'longUrl',
-                        key: 'longUrl',
-                        width: '300px',
-                        render: (_, record) => (
-                          <Space>
-                            <Tooltip title="Copy Original URL">
-                              <Button
-                                type="text"
-                                icon={<CopyOutlined />}
-                                onClick={() =>
-                                  navigator.clipboard.writeText(record.longUrl)
-                                }
-                                className="tw-max-w-96"
-                              >
-                                <Typography.Text ellipsis>
-                                  {record.longUrl}
-                                </Typography.Text>
-                              </Button>
-                            </Tooltip>
-                          </Space>
-                        ),
-                      },
-                    ]
-                  : []),
-                ...(this.state.visibleColumns.has('owner') &&
-                this.props.mockData === undefined
-                  ? [
-                      {
-                        title: 'Owner',
-                        dataIndex: 'owner',
-                        key: 'owner',
-                        width: '150px',
-                      },
-                    ]
-                  : []),
-                ...(this.state.visibleColumns.has('dateCreated') &&
-                this.props.mockData === undefined
-                  ? [
-                      {
-                        title: 'Date Created',
-                        dataIndex: 'dateCreated',
-                        key: 'dateCreated',
-                        width: '150px',
-                      },
-                    ]
-                  : []),
-                ...(this.state.visibleColumns.has('dateExpires')
-                  ? [
-                      {
-                        title: 'Date Expires',
-                        dataIndex: 'dateExpires',
-                        key: 'dateExpires',
-                        width: '150px',
-                        render: (_, record) =>
-                          record.dateExpires
-                            ? dayjs(record.dateExpires).format('MMM DD, YYYY')
-                            : 'Never',
-                      },
-                    ]
-                  : []),
-                ...(this.state.visibleColumns.has('uniqueVisits')
-                  ? [
-                      {
-                        title: 'Unique Visits',
-                        dataIndex: 'uniqueVisits',
-                        key: 'uniqueVisits',
-                        width: '100px',
-                      },
-                    ]
-                  : []),
-                ...(this.state.visibleColumns.has('totalVisits')
-                  ? [
-                      {
-                        title: 'Total Visits',
-                        dataIndex: 'totalVisits',
-                        key: 'totalVisits',
-                        width: '100px',
-                      },
-                    ]
-                  : []),
-                {
-                  title: <Flex justify="flex-end">Actions</Flex>,
-                  key: 'actions',
-                  width: this.props.mockData === undefined ? '220px' : '100px',
-                  render: (_, record) => (
-                    <Flex justify="flex-end">
-                      <Space>
-                        <Tooltip title="View">
-                          <Button
-                            type="text"
-                            icon={<EyeIcon />}
-                            href={`/app/links/${record.key}`}
-                          />
-                        </Tooltip>
-                        {record.canEdit && record.deletedInfo === null && (
-                          <>
-                            <Tooltip title="Edit">
-                              <Button
-                                type="text"
-                                icon={<PencilIcon />}
-                                target="_blank"
-                                href={`/app/links/${record.key}?mode=edit`}
-                              />
-                            </Tooltip>
-                            <Tooltip title="Collaborate">
-                              <Button
-                                type="text"
-                                icon={<UsersIcon />}
-                                target="_blank"
-                                href={`/app/links/${record.key}?mode=collaborate`}
-                              />
-                            </Tooltip>
-                          </>
-                        )}
-                        <Tooltip title="Download QR code">
-                          <Button
-                            type="text"
-                            icon={<QrCodeIcon />}
-                            target="_blank"
-                            href={`/app/links/${record.key}?mode=qrcode`}
-                            disabled={record.isTrackingPixel}
-                          />
-                        </Tooltip>
-
-                        <Tooltip title="Delete">
-                          <Popconfirm
-                            title="Are you sure you want to delete this link?"
-                            onConfirm={async () => {
-                              try {
-                                await deleteLink(record.key);
-                                message.success('Link deleted successfully');
-                                await this.refreshResults();
-                              } catch (error) {
-                                message.error('Failed to delete link');
-                              }
-                            }}
-                            okText="Yes"
-                            cancelText="No"
-                            okButtonProps={{ danger: true }}
-                          >
-                            <Button
-                              type="text"
-                              danger
-                              disabled={record.deletedInfo !== null}
-                              icon={<TrashIcon />}
-                            />
-                          </Popconfirm>
-                        </Tooltip>
-                      </Space>
-                    </Flex>
-                  ),
-                },
-              ].filter((col) => !col.hidden)}
-              dataSource={
-                this.state.linkInfo !== null
-                  ? this.state.linkInfo.map((link) => ({
-                      key: link.id,
-                      description: link.description,
-                      alias: link.alias,
-                      domain: link.domain,
-                      longUrl: link.long_url,
-                      owner: link.owner,
-                      dateCreated: dayjs(link.created_time).format(
-                        'MMM DD, YYYY',
-                      ),
-                      uniqueVisits: link.unique_visits,
-                      totalVisits: link.visits,
-                      dateExpires: link.expiration_time,
-                      canEdit: link.may_edit,
-                      isTrackingPixel: link.is_tracking_pixel_link,
-                      isExpired: link.is_expired,
-                      deletedInfo: link.deletion_info,
-                    }))
-                  : []
-              }
-              pagination={{
-                total: this.state.totalLinks,
-                current: this.state.currentPage,
-                onChange: (page) => this.setPage(page),
-              }}
+            <Row gutter={[16, 8]}>
+              {this.state.linkInfo === null ||
+              this.state.linkInfo.length === 0 ? (
+                <Col span={24}>
+                  <Empty />
+                </Col>
+              ) : (
+                this.state.linkInfo.map((link: Link) => (
+                  <Col span={24}>
+                    <LinkCard linkInfo={link} />
+                  </Col>
+                ))
+              )}
+            </Row>
+          </Col>
+          <Col span={24}>
+            <Pagination
+              align="center"
+              defaultCurrent={1}
+              current={this.state.currentPage}
+              showSizeChanger={false}
+              total={this.state.totalLinks}
+              onChange={this.setPage}
             />
           </Col>
         </Row>

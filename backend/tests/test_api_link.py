@@ -790,7 +790,21 @@ def test_case_sensitive_duplicate_aliases(client: Client) -> None:
         resp = create_link(
             client, "title", "https://playvalorant.com/", alias="valorant"
         )
+        link_id = resp.json["id"]
+        assert 200 <= resp.status_code < 300
+        assert resp.json["alias"] == "valorant"
+
+        resp = client.post(
+            f"/api/v1/link/{link_id}/alias",
+            json={
+                "alias": "VALORANT",
+                "description": "alias0",
+            },
+        )
         assert resp.status_code == 400
+
+        resp = client.get(f"/api/v1/link/{link_id}")
+        assert len(resp.json["aliases"]) == 1
 
 
 def test_revert_expiration_link(client: Client) -> None:
@@ -816,4 +830,32 @@ def test_revert_expiration_link(client: Client) -> None:
         # Fetch link and ensure expiration time field is set to None
         resp = client.get(f"/api/core/link/{link_id}")
         assert resp.status_code == 200, "Failed to fetch link"
-        assert resp.json["expiration_time"] is None, "Expiration time is not None"
+        assert resp.json["expiration_time"] == None, "Expiration time is not None"
+
+
+def test_visit_link_from_alias_with_caps(client: Client) -> None:
+    with dev_login(client, "admin"):
+        resp = client.post(
+            "/api/v1/link",
+            json={
+                "title": "title",
+                "long_url": "https://sample.com",
+            },
+        )
+        link_id = resp.json["id"]
+
+        resp = client.post(
+            f"/api/v1/link/{link_id}/alias",
+            json={
+                "alias": "minecraft",
+                "description": "bruh",
+            },
+        )
+        assert 200 <= resp.status_code < 300
+
+        resp = client.get("/minecraft")
+        assert resp.status_code == 302
+        resp = client.get("/Minecraft")
+        assert resp.status_code == 302
+        resp = client.get("/MiNeCraft")
+        assert resp.status_code == 302

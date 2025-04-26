@@ -102,6 +102,37 @@
   {
     "major": 3,
     "minor": 0,
+    "patch": 3,
+    "projectDirector": "ah1371",
+    "date": "4-16-2025",
+    "description": "Adding back the card-based dashboard.",
+    "categories": {
+      "features": [],
+      "improvements": [
+        {
+          "text": "Add back the card-based design for the dashboard",
+          "contributors": ["ah1371"]
+        }
+      ],
+      "fixes": [
+        {
+          "text": "Check for duplicate case-sensitive aliases in the frontend before submitting",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "When mis-capitalizing an alias that already exists, it no longer redirects to a 404",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Add back multiple alias support for qr codes",
+          "contributors": ["ah1371"]
+        }
+      ]
+    }
+  },
+  {
+    "major": 3,
+    "minor": 0,
     "patch": 2,
     "projectDirector": "ah1371",
     "date": "4-8-2025",

@@ -1,8 +1,3 @@
-/**
- * Implements the [[CreateLinkDrawer]] component.
- * @packageDocumentation
- */
-
 import {
   Button,
   Col,
