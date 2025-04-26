@@ -31,7 +31,11 @@ def require_login(func: Any) -> Any:
 
 
 def require_external_token_auth(func: Any) -> Any:
-    pass
+    @functools.wraps(func)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        return func(*args, **kwargs)
+
+    return wrapper
 
 
 def require_mail(func: Any) -> Any:
