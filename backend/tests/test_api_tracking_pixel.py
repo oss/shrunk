@@ -17,13 +17,13 @@ def tracking_pixel_data(client: Client):
         return {
             "link_id": link_id,
             "alias": resp.json["alias"],
-            "description": resp.json["description"],
+            "title": resp.json["title"],
         }
 
 
 def test_create_tracking_pixel_png(tracking_pixel_data):
     """Test that verifies the creation worked"""
-    assert tracking_pixel_data["description"] == "Tracking Pixel"
+    assert tracking_pixel_data["title"] == "Tracking Pixel"
     assert tracking_pixel_data["alias"].endswith(".png")
 
 

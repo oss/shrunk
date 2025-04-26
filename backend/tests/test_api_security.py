@@ -41,7 +41,7 @@ def test_user_and_admin_security_link_abilities(
         # this could be any user (admin, facstaff)
         resp = client.post(
             "/api/core/link",
-            json={"description": unsafe_link_title, "long_url": unsafe_link},
+            json={"title": unsafe_link_title, "long_url": unsafe_link},
         )
 
         # this is a forbidden action. the link will then
@@ -53,7 +53,7 @@ def test_user_and_admin_security_link_abilities(
     with dev_login(client, "admin"):
         resp = client.post(
             "/api/core/link",
-            json={"description": unsafe_link_title, "long_url": unsafe_link},
+            json={"title": unsafe_link_title, "long_url": unsafe_link},
         )
 
         # an admin cannot accidentally post an unsafe link
@@ -65,7 +65,7 @@ def test_user_and_admin_security_link_abilities(
         resp = client.post(
             "/api/core/link",
             json={
-                "description": unsafe_link_title,
+                "title": unsafe_link_title,
                 "long_url": regular_link,
                 "bypass_security_measures": True,
             },
@@ -76,7 +76,7 @@ def test_user_and_admin_security_link_abilities(
         # test that the link was made successfully after forcing bypass
         resp = client.get(f"/api/core/link/{link_id}")
         assert resp.status_code == 200
-        assert resp.json["description"] == unsafe_link_title
+        assert resp.json["title"] == unsafe_link_title
 
 
 @pytest.mark.parametrize(("permission"), ["user", "facstaff", "power"])
@@ -94,7 +94,7 @@ def test_security_api_permissions(client: Client, permission: str) -> None:
         # we just need an objectID to work with in order to call endpoints
         random_link = "http://google.com"
         resp = client.post(
-            "/api/core/link", json={"description": "random", "long_url": random_link}
+            "/api/core/link", json={"title": "random", "long_url": random_link}
         )
         link_id = resp.json["id"]
 
@@ -129,13 +129,13 @@ def test_verification_process(client: Client) -> None:
         # check that unsafe link document is correct
         unsafe_link_document = resp.json["pendingLinks"][0]
         unsafe_link_id = unsafe_link_document["_id"]
-        assert unsafe_link_document["description"] == "first unsafe link"
+        assert unsafe_link_document["title"] == "first unsafe link"
         assert unsafe_link_document["long_url"] == unsafe_link
 
         # check that second unsafe link document is correct
         second_unsafe_link_document = resp.json["pendingLinks"][1]
         second_unsafe_link_id = second_unsafe_link_document["_id"]
-        assert second_unsafe_link_document["description"] == "second unsafe link"
+        assert second_unsafe_link_document["title"] == "second unsafe link"
         assert second_unsafe_link_document["long_url"] == second_unsafe_link
 
         # check that default status is pending for both unsafe links
@@ -195,7 +195,7 @@ def test_toggle_security(client: Client) -> None:
         # when security measures are off, users can post unsafe links
         resp = client.post(
             "/api/core/link",
-            json={"description": unsafe_link_title, "long_url": unsafe_link},
+            json={"title": unsafe_link_title, "long_url": unsafe_link},
         )
         assert resp.status_code == 201
 
@@ -212,7 +212,7 @@ def test_toggle_security(client: Client) -> None:
         resp = client.post(
             "/api/core/link",
             json={
-                "description": "IM GOING TO HACK RUTGERS LMAO !!!!!!!!! WOOOOOOo",
+                "title": "IM GOING TO HACK RUTGERS LMAO !!!!!!!!! WOOOOOOo",
                 "long_url": unsafe_link,
             },
         )

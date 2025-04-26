@@ -12,7 +12,7 @@ export interface LinkSharedWith {
 
 export interface Link {
   _id: string;
-  description: string;
+  title: string;
   long_url: string;
   domain: string;
   created_time: Date;
@@ -118,7 +118,7 @@ export interface BrowserStats {
  * @interface
  */
 export interface EditLinkValues {
-  description: string;
+  title: string;
   long_url: string;
 
   /**
@@ -128,7 +128,7 @@ export interface EditLinkValues {
    */
   expiration_time: Dayjs | null;
   owner: string;
-  aliases: { alias: string; description: string }[];
+  alias: string;
 }
 
 /**

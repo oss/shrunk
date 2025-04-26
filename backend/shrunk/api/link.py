@@ -47,7 +47,7 @@ CREATE_LINK_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
     "properties": {
-        "description": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
         "long_url": {"type": "string", "minLength": 1},
         "alias": {"type": "string", "minLength": 5},
         "expiration_time": {"type": "string", "format": "date-time"},
@@ -179,9 +179,9 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
     try:
         link_id, created_alias = client.links.create(
             (
-                "No description provided."
-                if "description" not in req or req["description"] == ""
-                else req["description"]
+                "Untitled Link"
+                if "title" not in req or req["title"] == ""
+                else req["title"]
             ),
             req["long_url"],
             alias,
@@ -280,7 +280,7 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     # Get rid of types that cannot safely be passed to jsonify
     json_info = {
         "_id": info["_id"],
-        "description": info["description"],
+        "title": info["title"],
         "long_url": info["long_url"],
         "owner": client.links.get_owner(link_id),
         "created_time": info["timeCreated"],
@@ -304,7 +304,7 @@ MODIFY_LINK_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
     "properties": {
-        "description": {"type": "string", "minLength": 1},
+        "title": {"type": "string", "minLength": 1},
         "long_url": {"type": "string", "format": "uri"},
         "expiration_time": {"type": ["string", "null"], "format": "date-time"},
         "created_time": {"type": ["string", "null"], "format": "date-time"},
@@ -323,7 +323,7 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
 
     .. code-block:: json
 
-       { "description?": "string", "long_url?": "string", "expiration_time?": "string | null" }
+       { "title?": "string", "long_url?": "string", "expiration_time?": "string | null" }
 
     Properties present in the request will be set. Properties missing from the request will not
     be modified. If ``"expiration_time"`` is present and set to ``null``, the effect is to remove
@@ -350,7 +350,7 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
     try:
         client.links.modify(
             link_id,
-            description=req.get("description"),
+            title=req.get("title"),
             long_url=req.get("long_url"),
             expiration_time=req.get("expiration_time"),
             owner=req.get("owner"),

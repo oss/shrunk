@@ -161,7 +161,7 @@ def test_create_link_bad_long_url(client: Client) -> None:
         resp = client.post(
             "/api/core/link",
             json={
-                "description": "description",
+                "title": "title",
                 "long_url": long_url,
             },
         )
@@ -178,7 +178,7 @@ def test_modify_link_bad_long_url(client: Client) -> None:
         assert resp.status_code == 204
 
     with dev_login(client, "user"):
-        resp = create_link(client, "description", "https://rutgers.edu")
+        resp = create_link(client, "title", "https://rutgers.edu")
         assert resp.status_code == 201
         link_id = resp.json["id"]
 
@@ -258,7 +258,7 @@ def test_create_bad_alias(client: Client, alias: str, expected: bool) -> None:
         resp = client.post(
             "/api/core/link",
             json={
-                "description": "title",
+                "title": "title",
                 "long_url": "https://example.com",
                 "alias": alias,
             },
@@ -275,7 +275,7 @@ def test_create_alias_no_power_user(client: Client) -> None:
         resp = client.post(
             "/api/core/link",
             json={
-                "description": "title",
+                "title": "title",
                 "long_url": "https://example.com",
                 "alias": "hitestest",
             },
@@ -346,7 +346,7 @@ def test_modify_link_nonexistent(client: Client) -> None:
         resp = client.patch(
             "/api/core/link/5fa30b6801cc0db00872569b",
             json={
-                "description": "new title",
+                "title": "new title",
             },
         )
         assert resp.status_code == 404
@@ -369,7 +369,7 @@ def test_get_deleted(client: Client) -> None:
         resp = client.post(
             "/api/core/link",
             json={
-                "description": "title",
+                "title": "title",
                 "long_url": "https://example.com",
             },
         )
@@ -406,7 +406,7 @@ def test_visits(client: Client) -> None:  # pylint: disable=too-many-statements
         resp = client.post(
             "/api/core/link",
             json={
-                "description": "title",
+                "title": "title",
                 "long_url": "https://example.com",
             },
         )
@@ -469,7 +469,7 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
         # make sure Editors are viewers
         link, status = check_create(
             {
-                "description": "title",
+                "title": "title",
                 "long_url": "https://example.com",
                 "editors": [{"_id": "DEV_ADMIN", "type": "netid"}],
             }
@@ -480,7 +480,7 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
         # viewer not editor
         link, status = check_create(
             {
-                "description": "title",
+                "title": "title",
                 "long_url": "https://example.com",
                 "viewers": [{"_id": "DEV_ADMIN", "type": "netid"}],
             }
@@ -491,7 +491,7 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
         # deduplicate
         link, status = check_create(
             {
-                "description": "title",
+                "title": "title",
                 "long_url": "https://example.com",
                 "viewers": [
                     {"_id": "DEV_ADMIN", "type": "netid"},
@@ -505,7 +505,7 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
         # orgs must be objectid
         link, status = check_create(
             {
-                "description": "title",
+                "title": "title",
                 "long_url": "https://example.com",
                 "viewers": [{"_id": "DEV_ADMIN", "type": "org"}],
             }
@@ -516,7 +516,7 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
         # orgs disallows invalid org
         link, status = check_create(
             {
-                "description": "title",
+                "title": "title",
                 "long_url": "https://example.com",
                 "viewers": [{"_id": "5fbed163b7202e4c33f01a93", "type": "org"}],
             }
@@ -531,7 +531,7 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
 
         link, status = check_create(
             {
-                "description": "title",
+                "title": "title",
                 "long_url": "https://example.com",
                 "viewers": [{"_id": _id, "type": "org"}],
             }
@@ -547,7 +547,7 @@ def test_update_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
     with dev_login(client, "facstaff"):
         resp = client.post(
             "/api/core/link",
-            json={"description": "title", "long_url": "https://example.com"},
+            json={"title": "title", "long_url": "https://example.com"},
         )
         assert 200 <= resp.status_code <= 300
         link_id = resp.json["id"]
@@ -672,7 +672,7 @@ def test_acl(client: Client) -> None:  # pylint: disable=too-many-statements
         resp = client.post(
             "/api/core/link",
             json={
-                "description": "testlink2333",
+                "title": "testlink2333",
                 "long_url": "https://example.com",
                 "editors": [{"_id": "DEV_USER", "type": "netid"}],
                 "viewers": [{"_id": org_id, "type": "org"}],
@@ -786,25 +786,12 @@ def test_case_sensitive_duplicate_aliases(client: Client) -> None:
             client, "title", "https://playvalorant.com/", alias="VALORANT"
         )
         assert resp.status_code == 201
+        assert resp.json["alias"] == "valorant"
 
         resp = create_link(
             client, "title", "https://playvalorant.com/", alias="valorant"
         )
-        link_id = resp.json["id"]
-        assert 200 <= resp.status_code < 300
-        assert resp.json["alias"] == "valorant"
-
-        resp = client.post(
-            f"/api/v1/link/{link_id}/alias",
-            json={
-                "alias": "VALORANT",
-                "description": "alias0",
-            },
-        )
         assert resp.status_code == 400
-
-        resp = client.get(f"/api/v1/link/{link_id}")
-        assert len(resp.json["aliases"]) == 1
 
 
 def test_revert_expiration_link(client: Client) -> None:
@@ -814,7 +801,7 @@ def test_revert_expiration_link(client: Client) -> None:
         resp = client.post(
             "/api/core/link",
             json={
-                "description": "title",
+                "title": "title",
                 "long_url": "https://sample.com",
                 "expiration_time": expiration_time.isoformat(),
             },
@@ -836,22 +823,13 @@ def test_revert_expiration_link(client: Client) -> None:
 def test_visit_link_from_alias_with_caps(client: Client) -> None:
     with dev_login(client, "admin"):
         resp = client.post(
-            "/api/v1/link",
+            "/api/core/link",
             json={
                 "title": "title",
                 "long_url": "https://sample.com",
-            },
-        )
-        link_id = resp.json["id"]
-
-        resp = client.post(
-            f"/api/v1/link/{link_id}/alias",
-            json={
                 "alias": "minecraft",
-                "description": "bruh",
             },
         )
-        assert 200 <= resp.status_code < 300
 
         resp = client.get("/minecraft")
         assert resp.status_code == 302

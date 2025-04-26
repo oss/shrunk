@@ -52,7 +52,7 @@ class SearchClient:
                                                 {"$eq": ["$title", query["query"]]},
                                                 {
                                                     "$eq": [
-                                                        "$description",
+                                                        "$title",
                                                         query["query"],
                                                     ]
                                                 },
@@ -249,7 +249,7 @@ class SearchClient:
 
             prepared = {
                 "id": res["_id"],
-                "description": res["description"],
+                "title": res["title"],
                 "long_url": res["long_url"],
                 "created_time": res["timeCreated"],
                 "expiration_time": expiration_time,

@@ -202,8 +202,8 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
       >
         <Row gutter={16}>
           <Col span={24}>
-            <Form.Item label="Description" name="description">
-              <Input.TextArea />
+            <Form.Item label="Title" name="title">
+              <Input />
             </Form.Item>
           </Col>
           <Col span={12}>

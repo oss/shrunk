@@ -101,7 +101,7 @@ class SecurityClient:
             raise InvalidStateChange
 
         args = [
-            d["description"],
+            d["title"],
             d["long_url"],
             d["expiration_time"],
             d["netid"],

@@ -229,10 +229,10 @@ export function Stats(props: Props): React.ReactElement {
       throw new Error('oldLinkInfo should not be null');
     }
 
-    // Create the request to edit description, long_url, and expiration_time
+    // Create the request to edit title, long_url, and expiration_time
     const patchReq: EditLinkValues = {};
-    if (values.description !== oldLinkInfo.description) {
-      patchReq.description = values.description;
+    if (values.title !== oldLinkInfo.title) {
+      patchReq.title = values.title;
     }
     if (values.long_url !== oldLinkInfo.long_url) {
       patchReq.long_url = values.long_url;
@@ -474,7 +474,6 @@ export function Stats(props: Props): React.ReactElement {
               )}
               <Col flex="auto">
                 <Row gutter={[16, 16]} justify="space-between">
-                  <Col>{linkInfo?.description}</Col>
                   <Col span={24}>
                     <Descriptions
                       bordered

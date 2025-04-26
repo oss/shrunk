@@ -130,7 +130,7 @@ def get_link_status(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     return (
         jsonify(
             {
-                "description": link_document["description"],
+                "title": link_document["title"],
                 "status": link_document["status"],
             }
         ),

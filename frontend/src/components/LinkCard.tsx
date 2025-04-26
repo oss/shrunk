@@ -9,18 +9,18 @@ import {
   Tooltip,
 } from 'antd/lib';
 import React from 'react';
-import {
-  CopyOutlined,
-  DeleteOutlined,
-  EditOutlined,
-  EyeOutlined,
-  QrcodeOutlined,
-  TeamOutlined,
-} from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { LinkInfo } from './LinkInfo';
+import {
+  CopyIcon,
+  EditIcon,
+  EyeIcon,
+  QrCodeIcon,
+  Trash2Icon,
+  UsersIcon,
+} from 'lucide-react';
+import { Link } from '../interfaces/link';
 
-export default function LinkCard({ linkInfo }: { linkInfo: LinkInfo }) {
+export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
   const onCopyOriginalLink = () => {
     navigator.clipboard.writeText(linkInfo.long_url);
   };
@@ -32,7 +32,7 @@ export default function LinkCard({ linkInfo }: { linkInfo: LinkInfo }) {
         <Space>
           <Tooltip title="View link details">
             <Button
-              icon={<EyeOutlined />}
+              icon={<EyeIcon />}
               type="text"
               href={`/app/links/${linkInfo.id}`}
               target="_blank"
@@ -40,7 +40,7 @@ export default function LinkCard({ linkInfo }: { linkInfo: LinkInfo }) {
           </Tooltip>
           <Tooltip title="Edit link">
             <Button
-              icon={<EditOutlined />}
+              icon={<EditIcon />}
               type="text"
               href={`/app/links/${linkInfo.id}?mode=edit`}
               target="_blank"
@@ -48,7 +48,7 @@ export default function LinkCard({ linkInfo }: { linkInfo: LinkInfo }) {
           </Tooltip>
           <Tooltip title="Share link permissions">
             <Button
-              icon={<TeamOutlined />}
+              icon={<UsersIcon />}
               type="text"
               href={`/app/links/${linkInfo.id}?mode=collaborate`}
               target="_blank"
@@ -56,7 +56,7 @@ export default function LinkCard({ linkInfo }: { linkInfo: LinkInfo }) {
           </Tooltip>
           <Tooltip title="Access qr code">
             <Button
-              icon={<QrcodeOutlined />}
+              icon={<QrCodeIcon />}
               type="text"
               href={`/app/links/${linkInfo.id}?mode=qrcode`}
               target="_blank"
@@ -64,7 +64,7 @@ export default function LinkCard({ linkInfo }: { linkInfo: LinkInfo }) {
           </Tooltip>
           <Tooltip title="Delete link">
             <Button
-              icon={<DeleteOutlined />}
+              icon={<Trash2Icon />}
               type="text"
               danger
               disabled={linkInfo.deletion_info !== null}
@@ -119,30 +119,28 @@ export default function LinkCard({ linkInfo }: { linkInfo: LinkInfo }) {
         <Row gutter={16} justify="space-between" align="middle">
           <Col>
             <Row gutter={[16, 16]}>
-              {linkInfo.aliases.map((alias) => (
-                <Col span={24}>
-                  <Tooltip title="Copy to clipboard">
-                    <Button
-                      icon={<CopyOutlined />}
-                      type="dashed"
-                      onClick={() => {
-                        navigator.clipboard.writeText(
-                          `${document.location.host}/${alias.alias}`,
-                        );
-                      }}
-                    >
-                      {document.location.host}/{alias.alias}
-                    </Button>
-                  </Tooltip>
-                </Col>
-              ))}
+              <Col span={24}>
+                <Tooltip title="Copy to clipboard">
+                  <Button
+                    icon={<CopyIcon />}
+                    type="dashed"
+                    onClick={() => {
+                      navigator.clipboard.writeText(
+                        `${document.location.host}/${linkInfo.alias}`,
+                      );
+                    }}
+                  >
+                    {document.location.host}/{linkInfo.alias}
+                  </Button>
+                </Tooltip>
+              </Col>
             </Row>
           </Col>
           <Col>
             <Tooltip title="Copy to clipboard">
               <Button
                 className="tw-max-w-96"
-                icon={<CopyOutlined />}
+                icon={<CopyIcon />}
                 type="dashed"
                 onClick={onCopyOriginalLink}
               >

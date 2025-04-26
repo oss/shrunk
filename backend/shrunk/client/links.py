@@ -146,7 +146,7 @@ class LinksClient:
 
     def create(
         self,
-        description: str,
+        title: str,
         long_url: str,
         alias: Optional[str],
         expiration_time: Optional[datetime],
@@ -190,7 +190,7 @@ class LinksClient:
                 raise BadAliasException
 
         document = {
-            "description": description,
+            "title": title,
             "alias": alias,
             "long_url": long_url,
             "timeCreated": datetime.now(timezone.utc),
@@ -224,7 +224,7 @@ class LinksClient:
         self,
         link_id: ObjectId,
         *,
-        description: Optional[str] = None,
+        title: Optional[str] = None,
         long_url: Optional[str] = None,
         expiration_time: Optional[datetime] = None,
         owner: Optional[str] = None,
@@ -233,7 +233,7 @@ class LinksClient:
             raise BadLongURLException
 
         if (
-            description is None
+            title is None
             and long_url is None
             and expiration_time is None
             and owner is None
@@ -248,8 +248,8 @@ class LinksClient:
         fields: Dict[str, Any] = {}
         update: Dict[str, Any] = {"$set": fields}
 
-        if description is not None:
-            fields["description"] = description
+        if title is not None:
+            fields["title"] = title
         if long_url is not None:
             fields["long_url"] = long_url
         if expiration_time is not None:
@@ -795,7 +795,7 @@ class LinksClient:
         plaintext_message = f"""Dear {owner_given_name},
 
 You are receiving this message because the user {requesting_netid} has requested
-access to edit your link "{link_info['description']}".
+access to edit your link "{link_info['title']}".
 
 You may follow the following link to accept the request:
     {accept_url}
@@ -858,7 +858,7 @@ Please do not reply to this email. You may direct any questions to oss@oit.rutge
         <p>Dear {owner_netid},</p>
 
         <p>You are receiving this message because the user <span class="requesting-user">{requesting_netid}</span>
-        has requested access to edit your link &ldquo;{link_info['description']}&rdquo;. Please use the buttons
+        has requested access to edit your link &ldquo;{link_info['title']}&rdquo;. Please use the buttons
         below to accept or deny the request.</p>
 
         <div>
@@ -873,7 +873,7 @@ Please do not reply to this email. You may direct any questions to oss@oit.rutge
 """
 
         mail.send_mail(
-            subject=f'{requesting_netid} is requesting edit access to "{link_info["description"]}"',
+            subject=f'{requesting_netid} is requesting edit access to "{link_info["title"]}"',
             body=plaintext_message,
             html_message=html_message,
             from_email="go-support@oit.rutgers.edu",

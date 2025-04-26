@@ -22,7 +22,7 @@ def test_search_types(client: Client) -> None:
         )
         assert resp.status_code == 200
         assert len(resp.json["results"]) == 1
-        assert resp.json["results"][0]["description"] == "link"
+        assert resp.json["results"][0]["title"] == "link"
 
         resp = client.post(
             "/api/core/search",
@@ -38,4 +38,4 @@ def test_search_types(client: Client) -> None:
         )
         assert resp.status_code == 200
         assert len(resp.json["results"]) == 1
-        assert resp.json["results"][0]["description"] == "tracking_pixel"
+        assert resp.json["results"][0]["title"] == "tracking_pixel"

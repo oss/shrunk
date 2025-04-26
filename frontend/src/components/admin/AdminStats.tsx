@@ -9,55 +9,8 @@ import { Spin, Card, Statistic, Flex } from 'antd/lib';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 
-import { getAppStats, getEndpointData, getShrunkVersion } from '../../api/app';
+import { getEndpointData, getShrunkVersion } from '../../api/app';
 import { AdminStatsData, EndpointDatum } from '../../interfaces/app';
-
-/**
- * Results of an admin stats query to the backend
- * @interface
- */
-interface AdminStatsData {
-  /**
-   * Total number of links created during the specified time period
-   * @property
-   */
-  links: number;
-
-  /**
-   * Total number of visits occurring during the specified time period
-   * @property
-   */
-  visits: number;
-
-  /**
-   * Total number of distinct NetIDs creating links during the specified time period
-   */
-  users: number;
-}
-
-/**
- * Statistics about visits to a single Flask endpoint
- * @interface
- */
-interface EndpointDatum {
-  /**
-   * Name of the Flask endpoint
-   * @property
-   */
-  endpoint: string;
-
-  /**
-   * Total number of visits
-   * @property
-   */
-  total_visits: number;
-
-  /**
-   * Total number of unique visits by NetID
-   * @property
-   */
-  unique_visits: number;
-}
 
 /**
  * The [[AdminStats]] component allows the user to view summary statistics

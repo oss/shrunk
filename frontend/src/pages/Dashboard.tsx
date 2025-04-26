@@ -3,39 +3,21 @@ import React from 'react';
 
 import {
   Button,
-  Checkbox,
   Col,
   Drawer,
-  Dropdown,
   Empty,
-  Flex,
   Form,
   Pagination,
-  Popconfirm,
   Radio,
   RadioChangeEvent,
   Row,
   Select,
   Space,
-  Table,
-  Tooltip,
   Typography,
-  message,
-  theme,
 } from 'antd/lib';
 import dayjs, { Dayjs } from 'dayjs';
-import {
-  CopyIcon,
-  EyeIcon,
-  FilterIcon,
-  PencilIcon,
-  PlusCircleIcon,
-  QrCodeIcon,
-  SlidersHorizontalIcon,
-  TrashIcon,
-  UsersIcon,
-} from 'lucide-react';
-import { deleteLink, searchLinks, updateUserFilterOptions } from '../api/links';
+import { FilterIcon, PlusCircleIcon } from 'lucide-react';
+import { searchLinks, updateUserFilterOptions } from '../api/links';
 import { getOrganizations } from '../api/organization';
 import { serverValidateNetId } from '../api/validators';
 import DatePicker from '../components/date-picker';
@@ -43,7 +25,6 @@ import Input from '../components/input';
 import CreateLinkDrawer from '../drawers/CreateLinkDrawer';
 import { Link, SearchQuery, SearchSet } from '../interfaces/link';
 import { Organization } from '../interfaces/organizations';
-import { getLinkFromAlias, getRedirectFromAlias } from '../lib/utils';
 import LinkCard from '../components/LinkCard';
 
 interface Props {
@@ -524,7 +505,7 @@ export default class Dashboard extends React.Component<Props, State> {
                   this.setState({ isCreateModalOpen: true });
                 }}
               >
-                Shrink
+                Create
               </Button>
             </Space>
           </Col>

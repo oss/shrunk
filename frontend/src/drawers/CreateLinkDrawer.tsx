@@ -86,7 +86,7 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
       await formRef.current!.validateFields();
 
     if (values.title === undefined && !values.is_tracking_pixel_link) {
-      values.title = 'No description provided';
+      values.title = 'No title provided';
     }
 
     setLoading(true);
@@ -107,7 +107,7 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
     onSubmitClick();
   };
 
-  const initialValues = { aliases: [{ description: '' }] };
+  const initialValues = { aliases: [{ title: '' }] };
   const mayUseCustomAliases =
     props.userPrivileges.has('power_user') || props.userPrivileges.has('admin');
 
@@ -153,6 +153,9 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
       >
         <Row gutter={16} justify="end">
           <Col span={24}>
+            <Form.Item label="Name" name="title">
+              <Input placeholder="My awesome link that will be advertised somewhere" />
+            </Form.Item>
             {!isCreatingTrackingPixel && (
               <Form.Item
                 label="Original URL"
@@ -166,22 +169,20 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
                 <Input placeholder="https://example.rutgers.edu" />
               </Form.Item>
             )}
-            {!isCreatingTrackingPixel && mayUseCustomAliases && (
+          </Col>
+          <Col span={24}>
+            <Typography.Title level={4}>Advanced Options</Typography.Title>
+          </Col>
+          {!isCreatingTrackingPixel && mayUseCustomAliases && (
+            <Col span={24}>
               <Form.Item required label="New Shortened URL" name="alias">
                 <Input
                   addonBefore={`${document.location.host}/`}
                   placeholder="If left blank, it will be randomized"
                 />
               </Form.Item>
-            )}
-          </Col>
-          <Col span={24}>
-            <Typography.Title level={4}>Advanced Options</Typography.Title>
-
-            <Form.Item label="Description" name="title">
-              <Input.TextArea />
-            </Form.Item>
-          </Col>
+            </Col>
+          )}
           <Col span={12}>
             {!isCreatingTrackingPixel &&
               featureFlags.domains &&
@@ -200,18 +201,6 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
                   />
                 </Form.Item>
               )}
-
-            {!isCreatingTrackingPixel && (
-              <Form.Item label="Expiration time" name="expiration_time">
-                <DatePicker
-                  format="YYYY-MM-DD HH:mm:ss"
-                  disabledDate={(current) =>
-                    current && current < dayjs().startOf('day')
-                  }
-                  showTime={{ defaultValue: dayjs() }}
-                />
-              </Form.Item>
-            )}
 
             {featureFlags.trackingPixel && (
               <>
@@ -249,6 +238,19 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
                   <Radio.Button value=".png">PNG</Radio.Button>
                   <Radio.Button value=".gif">GIF</Radio.Button>
                 </Radio.Group>
+              </Form.Item>
+            )}
+
+            {!isCreatingTrackingPixel && (
+              <Form.Item label="Expiration time" name="expiration_time">
+                <DatePicker
+                  className="tw-w-full"
+                  format="YYYY-MM-DD HH:mm:ss"
+                  disabledDate={(current) =>
+                    current && current < dayjs().startOf('day')
+                  }
+                  showTime={{ defaultValue: dayjs() }}
+                />
               </Form.Item>
             )}
           </Col>

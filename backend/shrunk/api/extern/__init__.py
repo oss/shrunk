@@ -12,12 +12,12 @@ __all__ = ["link"]
 bp = Blueprint("base_extern", __name__)
 
 
-@bp.route("/api/v1/link/qrcode", methods=["GET"])
+@bp.route("/api/core/link/qrcode", methods=["GET"])
 def generate_qrcode():
     """
-    ``GET /api/v1/link/qrcode``
+    ``GET /api/core/link/qrcode``
 
-    Quick test route: http://localhost:4343/api/v1/link/qrcode?text=https://rutgers.edu
+    Quick test route: http://localhost:4343/api/core/link/qrcode?text=https://rutgers.edu
     """
     allowed_patterns = [
         r"^https?:\/\/([0-9a-z]+\.)?rutgers\.edu(?:\/.*)?$",

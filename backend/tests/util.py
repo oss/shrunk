@@ -10,10 +10,10 @@ def assert_is_response_valid(resp: Response) -> bool:
 
 
 def create_link(
-    client: Client, description: str, url: str, alias: Optional[str] = None
+    client: Client, title: str, url: str, alias: Optional[str] = None
 ) -> str:
     body = {
-        "description": description,
+        "title": title,
         "long_url": url,
     }
 
@@ -27,12 +27,12 @@ def create_link(
 
 
 def create_tracking_pixel(
-    client: Client, description: str, tracking_pixel_extension: str
+    client: Client, title: str, tracking_pixel_extension: str
 ) -> str:
     return client.post(
         "/api/core/link",
         json={
-            "description": description,
+            "title": title,
             "long_url": "example.com",
             "is_tracking_pixel_link": True,
             "tracking_pixel_extension": tracking_pixel_extension,

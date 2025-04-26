@@ -27,7 +27,7 @@ export async function getLink(linkId: string): Promise<Link> {
  */
 export async function createLink(
   isTrackingPixel: boolean,
-  description: string,
+  title: string,
   url: string,
   alias?: string,
   expirationTime?: Dayjs,
@@ -41,7 +41,7 @@ export async function createLink(
 
   const req = {
     is_tracking_pixel_link: isTrackingPixel,
-    description,
+    title,
     alias,
     long_url: url,
     expiration_time: expirationTime?.toISOString(),

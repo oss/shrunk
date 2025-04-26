@@ -66,7 +66,7 @@ class ShrunkClient:
         self.db.urls.create_index([("netid", pymongo.ASCENDING)])
         self.db.urls.create_index(
             [
-                ("description", pymongo.TEXT),
+                ("title", pymongo.TEXT),
                 ("long_url", pymongo.TEXT),
                 ("netid", pymongo.TEXT),
                 ("alias", pymongo.TEXT),
