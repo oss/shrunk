@@ -289,7 +289,7 @@ def create_app(**kwargs: Any) -> Flask:
     app.register_blueprint(api.user.bp)
 
     # EXTERNAL API
-    app.register_blueprint(extern.bp)
+    app.register_blueprint(extern.link.bp)
 
     # set up extensions
     mail = Mail()
