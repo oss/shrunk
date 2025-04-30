@@ -120,3 +120,11 @@ export async function generateAccessToken(
   const data = await resp.json();
   return data.access_token;
 }
+
+export async function getAccessTokens(organizationId: string) {
+  const resp = await fetch(`/api/core/org/${organizationId}/access_token`, {
+    method: 'GET',
+  });
+  const data = await resp.json();
+  return data.tokens;
+}

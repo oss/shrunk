@@ -15,6 +15,7 @@ from .security import SecurityClient
 from .tickets import TicketsClient
 from .tracking import TrackingClient
 from .users import UserClient
+from .access_token import AccessTokenClient
 
 __all__ = ["ShrunkClient"]
 
@@ -60,8 +61,13 @@ class ShrunkClient:
         self.security = SecurityClient(db=self.db, other_clients=self)
         self.tickets = TicketsClient(db=self.db)
         self.users = UserClient(db=self.db)
+        self.access_tokens = AccessTokenClient(db=self.db)
 
     def _ensure_indexes(self) -> None:
+        self.db.access_tokens.create_index([("token", pymongo.TEXT)], unique=True)
+        self.db.access_tokens.create_index([("owner")])
+        self.db.access_tokens.create_index([("created_by")])
+
         self.db.urls.create_index([("alias", pymongo.ASCENDING)])
         self.db.urls.create_index([("netid", pymongo.ASCENDING)])
         self.db.urls.create_index(
@@ -115,6 +121,7 @@ class ShrunkClient:
             "users",
             "visitors",
             "visits",
+            "access_tokens",
         ]:
             self.db[col].delete_many({})
 

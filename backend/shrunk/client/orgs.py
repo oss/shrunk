@@ -4,8 +4,6 @@ from datetime import datetime, timezone
 from typing import Any, Optional, List, cast
 
 from bson import ObjectId
-import uuid
-from argon2 import PasswordHasher
 import os
 import pymongo
 import pymongo.errors
@@ -18,19 +16,7 @@ class OrgsClient:
 
     def __init__(self, *, db: pymongo.database.Database):
         self.db = db
-        self.ph = PasswordHasher()
         self.domain_enabled = bool(os.getenv("SHRUNK_DOMAINS_ENABLED", 0))
-
-        self.access_tokens_permissions = [
-            "read:links",
-            "create:links",
-            "edit:links",
-            "delete:links",
-            "read:tracking-pixels",
-            "create:tracking-pixels",
-            "edit:tracking-pixels",
-            "delete:tracking-pixels",
-        ]
 
     def get_org(self, org_id: ObjectId) -> Optional[Any]:
         """Get information about a given org
@@ -338,37 +324,3 @@ class OrgsClient:
         ]
 
         return next(self.db.organizations.aggregate(aggregation))
-
-    def create_new_access_token(
-        self,
-        organization_id: ObjectId,
-        title: str,
-        description: str,
-        creator: str,
-        permissions: List[str],
-    ):
-        for permission in permissions:
-            if permission not in self.access_tokens_permissions:
-                raise Exception("Invalid permissions")
-
-        token = uuid.uuid4()
-        hashed_token = self.ph.hash(token)
-
-        document = {
-            "title": title,
-            "description": description,
-            "hashed_token": hashed_token,
-            "creator": creator,  # the creator's netid
-            "created_date": "",
-            "permissions": permissions,
-            "disabled": False,
-            "disabled_by": None,
-            "deleted": False,
-            "deleted_by": None,
-        }
-
-        self.db.organizations.update_one(
-            {"_id": 1}, {"$addToSet": {"access_tokens": document}}
-        )
-
-        return str(token)
