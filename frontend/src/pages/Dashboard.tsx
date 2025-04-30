@@ -15,7 +15,6 @@ import {
   Space,
   Typography,
 } from 'antd/lib';
-import { CopyOutlined } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import { FilterIcon, PlusCircleIcon } from 'lucide-react';
 import { searchLinks, updateUserFilterOptions } from '../api/links';
