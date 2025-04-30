@@ -487,8 +487,15 @@ ACCESS_TOKEN_ORG_SCHEMA = {
 def create_access_token(
     netid: str, client: ShrunkClient, req: Any, org_id: ObjectId
 ) -> Any:
-    access_token = client.orgs.create_new_access_token(
+    access_token = client.access_tokens.create(
         org_id, req["title"], req["description"], netid, req["permissions"]
     )
 
     return jsonify({"access_token": access_token})
+
+@bp.route("/<ObjectId:org_id>/access_token", methods=["GET"])
+@require_login
+def get_access_tokens(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
+    tokens = client.access_tokens.get_tokens_by_owner(org_id)
+
+    return jsonify({"tokens": list(tokens)})

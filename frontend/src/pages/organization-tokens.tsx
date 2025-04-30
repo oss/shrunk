@@ -9,16 +9,19 @@ import {
   Typography,
   Drawer,
   Form,
-  Tree,
-  TreeDataNode,
   Input,
   Checkbox,
-  Select,
   Alert,
 } from 'antd/lib';
 import { CirclePlusIcon, PlusCircleIcon } from 'lucide-react';
-import { generateAccessToken, getOrganization } from '../api/organization';
+import {
+  generateAccessToken,
+  getAccessTokens,
+  getOrganization,
+} from '../api/organization';
 import { Organization } from '../interfaces/organizations';
+import AccessTokenCard from '../components/access-token-card';
+import { AccessTokenData } from '../interfaces/access-token';
 
 type RouteParams = {
   id: string;
@@ -31,6 +34,7 @@ type IOrganizationToken = {
 
 function OrganizationToken(props: IOrganizationToken) {
   const [organization, setOrganization] = useState<Organization | null>(null);
+  const [accessTokens, setAccessTokens] = useState<AccessTokenData[]>([]);
   const [isGeneratorDrawerOpen, setIsGeneratorDrawerOpen] =
     useState<boolean>(false);
 
@@ -40,6 +44,11 @@ function OrganizationToken(props: IOrganizationToken) {
     const fetchOrganization = async () => {
       const data = await getOrganization(props.match.params.id);
       setOrganization(data);
+
+      const accessTokensData = (await getAccessTokens(
+        props.match.params.id,
+      )) as AccessTokenData[];
+      setAccessTokens(accessTokensData);
     };
     fetchOrganization();
   }, []);
@@ -80,7 +89,13 @@ function OrganizationToken(props: IOrganizationToken) {
           </Space>
         </Col>
         <Col span={24}>
-          <Table />
+          <Row gutter={[16, 16]}>
+            {accessTokens.map((token) => (
+              <Col key={token.token} span={24}>
+                <AccessTokenCard accessTokenData={token} />
+              </Col>
+            ))}
+          </Row>
         </Col>
       </Row>
       <Drawer

@@ -190,11 +190,6 @@ export default function Shrunk(props: Props) {
       : []),
     { type: 'divider' },
     {
-      key: 'developer',
-      icon: <Bot />,
-      label: <a href="/app/automation">Automation</a>,
-    },
-    {
       key: 'api-reference',
       icon: <CodeIcon />,
       label: <a href="/app/api-reference">API Reference</a>,
@@ -243,10 +238,6 @@ export default function Shrunk(props: Props) {
     faq: { name: 'Frequently Asked Questions', clickable: true },
     releases: { name: 'Release Notes', clickable: true },
     links: { name: 'URL Shortener', clickable: true, href: 'app/dash' },
-    automation: {
-      name: 'Getting Started with Automation',
-      clickable: false,
-    },
     'api-reference': { name: 'API Reference', clickable: false },
   };
   const isApp = window.location.pathname.split('/').slice(1)[0] === 'app';
@@ -408,11 +399,10 @@ export default function Shrunk(props: Props) {
                         <Admin />
                       </ProtectedRoute>
                     </Route>
-                    <Route exact path="/app/automation">
-                      <Developer />
-                    </Route>
                     <Route exact path="/app/api-reference">
-                      <Typography.Text>TODO</Typography.Text>
+                      <Typography.Text>
+                        This is a work-in-progress...
+                      </Typography.Text>
                     </Route>
                     <Route path="*">
                       <ErrorPage
