@@ -74,7 +74,7 @@
           "contributors": ["ah1371"]
         },
         {
-          "text": "Users are now stored in their own collection",
+          "text": "Migrate user storage into their own collection for more flexibility",
           "contributors": ["ak2399"]
         }
       ],
