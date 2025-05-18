@@ -466,7 +466,7 @@ def patch_org_member(
 @bp.route("/valid-permissions", methods=["GET"])
 @require_login
 def getValidPermissions(netid: str, client: ShrunkClient) -> Any:
-    return jsonify({"permissions": client.orgs.access_tokens_permissions})
+    return jsonify({"permissions": client.access_tokens.access_tokens_permissions})
 
 
 ACCESS_TOKEN_ORG_SCHEMA = {

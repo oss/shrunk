@@ -23,7 +23,6 @@ from werkzeug.routing import BaseConverter, ValidationError
 # Extensions
 # Blueprints
 from . import api, dev_logins, sso, views
-from .api import extern
 from .client import ShrunkClient
 from .util.github import pull_outlook_assets_from_github
 from .util.ldap import is_valid_netid
@@ -287,9 +286,6 @@ def create_app(**kwargs: Any) -> Flask:
     app.register_blueprint(api.security.bp)
     app.register_blueprint(api.ticket.bp)
     app.register_blueprint(api.user.bp)
-
-    # EXTERNAL API
-    app.register_blueprint(extern.link.bp)
 
     # set up extensions
     mail = Mail()

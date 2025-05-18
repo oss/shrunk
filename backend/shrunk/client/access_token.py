@@ -13,12 +13,6 @@ class AccessTokenClient:
         self.access_tokens_permissions = [
             "read:links",
             "create:links",
-            "edit:links",
-            "delete:links",
-            "read:tracking-pixels",
-            "create:tracking-pixels",
-            "edit:tracking-pixels",
-            "delete:tracking-pixels",
         ]
 
     def create(
@@ -47,8 +41,10 @@ class AccessTokenClient:
             "permissions": permissions,
             "disabled": False,
             "disabled_by": None,
+            "disabled_date": None,
             "deleted": False,
             "deleted_by": None,
+            "deleted_date": None,
         }
 
         self.db.access_tokens.insert_one(document)
@@ -57,5 +53,26 @@ class AccessTokenClient:
 
     def get_tokens_by_owner(self, owner: ObjectId):
         """Get all access tokens for a given owner."""
-        tokens = self.db.access_tokens.find({"owner": owner})
+        found_tokens = self.db.access_tokens.find({"owner": owner})
+
+        tokens = []
+        for token in found_tokens:
+            tokens.append(
+                {
+                    "id": str(token["_id"]),
+                    "title": token["title"],
+                    "owner": str(token["owner"]),
+                    "description": token["description"],
+                    "created_by": token["created_by"],
+                    "created_date": token["created_date"],
+                    "permissions": token["permissions"],
+                    "disabled": token["disabled"],
+                    "disabled_by": token["disabled_by"],
+                    "disabled_date": token["disabled_date"],
+                    "deleted": token["deleted"],
+                    "deleted_by": token["deleted_by"],
+                    "deleted_date": token["deleted_date"],
+                }
+            )
+
         return tokens
