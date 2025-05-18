@@ -48,13 +48,13 @@ export default function AccessTokenCard({
           {accessTokenData.description}
         </Typography.Paragraph>
         <Descriptions
-          column={3}
+          column={2}
           colon={false}
           items={[
             {
               key: 'permissions',
               label: 'Permissions',
-              span: 3,
+              span: 2,
               children: accessTokenData.permissions.map(
                 (permission: string) => (
                   <Tag key={permission}>{permission}</Tag>
@@ -64,7 +64,7 @@ export default function AccessTokenCard({
             {
               key: 'created_by',
               label: 'Creator',
-              children: accessTokenData.owner,
+              children: accessTokenData.created_by,
             },
             {
               key: 'date_created',
@@ -75,21 +75,6 @@ export default function AccessTokenCard({
             },
           ]}
         />
-      </Card.Grid>
-      <Card.Grid style={{ width: '100%' }} hoverable={false}>
-        <Space>
-          <Tooltip title="Copy access token to clipboard">
-            <Button
-              icon={<CopyIcon />}
-              type="dashed"
-              onClick={() => {
-                navigator.clipboard.writeText(accessTokenData.token);
-              }}
-            >
-              Copy access token
-            </Button>
-          </Tooltip>
-        </Space>
       </Card.Grid>
     </Card>
   );

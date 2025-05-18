@@ -97,7 +97,7 @@ export async function getValidAccessTokenPermissions() {
   const resp = await fetch(`/api/core/org/valid-permissions`);
   const data = await resp.json();
 
-  return data as string[];
+  return data.permissions as string[];
 }
 
 export async function generateAccessToken(

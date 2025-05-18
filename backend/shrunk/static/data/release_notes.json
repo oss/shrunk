@@ -122,6 +122,10 @@
         {
           "text": "Add a couple missing test cases regarding link creation",
           "contributors": ["ah1371"]
+        },
+        {
+          "text": "Phishing links can no longer be bypassed via API routes initially used for testing",
+          "contributors": ["ah1371"]
         }
       ]
     }
