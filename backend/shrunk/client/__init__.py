@@ -65,8 +65,6 @@ class ShrunkClient:
 
     def _ensure_indexes(self) -> None:
         self.db.access_tokens.create_index([("token", pymongo.TEXT)], unique=True)
-        self.db.access_tokens.create_index([("owner")])
-        self.db.access_tokens.create_index([("created_by")])
 
         self.db.urls.create_index([("alias", pymongo.ASCENDING)])
         self.db.urls.create_index([("netid", pymongo.ASCENDING)])
