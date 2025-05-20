@@ -120,6 +120,7 @@ class OrgsClient:
         :returns: Whether the org was successfully deleted
         """
         result = self.db.organizations.delete_one({"_id": org_id})
+        deleteUrlOrgs = self.db.urls.update_many({ }, {"$pull" : {"viewers": {"_id" : org_id}, "editors": {"_id" : org_id}}})
         return cast(int, result.deleted_count) == 1
 
     def get_members(self, org_id: ObjectId) -> List[Any]:
