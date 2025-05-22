@@ -98,6 +98,7 @@ class UserClient:
                         }
                     },
                     "filterOptions": 1,
+                    "date_created": 1,
                 }
             },
             {
@@ -147,6 +148,7 @@ class UserClient:
                 return {
                     "netid": user_data[0]["netid"],
                     "roles": user_data[0]["roles"],
+                    "date_created": user_data[0]["date_created"],
                     "linksCreated": user_data[0]["linksCreated"],
                     "organizations": user_data[0]["organizations"],
                     "filterOptions": user_data[0].get("filterOptions", None),

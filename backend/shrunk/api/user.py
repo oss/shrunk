@@ -366,6 +366,7 @@ def get_user(netid: str, client: ShrunkClient, user: str) -> Any:
     return jsonify(
         {
             "netid": user,
+            "date_created": user_data["date_created"],
             "organizations": user_data["organizations"],
             "roles": user_data["roles"],
             "linksCreated": user_data["linksCreated"],
