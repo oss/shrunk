@@ -86,6 +86,7 @@ class OrgsClient:
                     "timeCreated": datetime.now(timezone.utc),
                     "members": [],
                     "domains": [],
+                    "deleted": False,
                 }
             )
         except pymongo.errors.DuplicateKeyError:
@@ -112,16 +113,41 @@ class OrgsClient:
         result = self.db.organizations.update_one(matched, update)
 
         return cast(int, result.modified_count) == 1
+    
+    def has_associated_urls(self, org_id: ObjectId) -> bool:
+        """check to see if orgs have any associations with urls before deletion
 
-    def delete(self, org_id: ObjectId) -> bool:
+        :param org_id: The org ID
+
+        returns Whether there are URLs associated with the org
+        """
+        assoicatedUrls = self.db.urls.count_documents( {"$or":[{"viewers._id" : org_id}, {"editors._id" : org_id}]})
+        if(assoicatedUrls > 0):
+            return True
+        
+        return False
+        
+
+    def delete(self, org_id: ObjectId, deleted_by: str) -> bool:
         """Delete an org
 
         :param org_id: The org ID
+        :param deleted_by: The netid of the user requesting deletion
+
         :returns: Whether the org was successfully deleted
         """
-        result = self.db.organizations.delete_one({"_id": org_id})
-        deleteUrlOrgs = self.db.urls.update_many({ }, {"$pull" : {"viewers": {"_id" : org_id}, "editors": {"_id" : org_id}}})
-        return cast(int, result.deleted_count) == 1
+        self.db.urls.update_many({ }, {"$pull" : {"viewers": {"_id" : org_id}, "editors": {"_id" : org_id}}})
+        result = self.db.organizations.update_one(
+            {"_id": org_id, "deleted": False},
+            {
+                "$set": {
+                    "deleted": True,
+                    "deleted_by": deleted_by,
+                    "deleted_time": datetime.now(timezone.utc),
+                }
+            },
+        )
+        return result.modified_count == 1
 
     def get_members(self, org_id: ObjectId) -> List[Any]:
         return list(

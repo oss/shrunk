@@ -43,6 +43,14 @@ export async function createOrg(name: string): Promise<void> {
   });
 }
 
+export async function hasAssociatedUrls(id: string): Promise<boolean> {
+  const res = await fetch(`/api/core/org/${id}/hasAssociatedUrls`, {
+    method: 'GET',
+  });
+  const data = await res.json();
+  return data.hasAssociatedUrls;
+}
+
 export async function deleteOrganization(id: string): Promise<void> {
   await fetch(`/api/core/org/${id}`, { method: 'DELETE' });
 }

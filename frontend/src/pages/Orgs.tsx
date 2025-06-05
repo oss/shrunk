@@ -16,6 +16,7 @@ import {
   Tooltip,
   Typography,
   message,
+  Alert,
 } from 'antd/lib';
 import { EyeIcon, EyeOffIcon, PlusCircleIcon, TrashIcon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
@@ -23,6 +24,7 @@ import {
   createOrg,
   deleteOrganization,
   getOrganizations,
+  hasAssociatedUrls,
 } from '../api/organization';
 import { Organization } from '../interfaces/organizations';
 
@@ -45,6 +47,7 @@ export default function Orgs({ userPrivileges }: Props): React.ReactElement {
   const [showAll, setShowAll] = useState(false);
   const [orgs, setOrgs] = useState<Organization[] | null>(null);
   const [newOrgName, setNewOrgName] = useState('');
+  const [showAssociatedUrlsAlert, setShowAssociatedUrlsAlert] = useState(false);
 
   const refreshOrgs = async () => {
     const newOrgs = await getOrganizations(showAll ? 'all' : 'user');
@@ -64,6 +67,11 @@ export default function Orgs({ userPrivileges }: Props): React.ReactElement {
     await deleteOrganization(id);
     await refreshOrgs();
   };
+
+  const onCheckUrls = async (id: string): Promise<boolean> => {
+    const check = await hasAssociatedUrls(id);
+    return check;
+};
 
   const mayCreateOrg =
     userPrivileges.has('admin') || userPrivileges.has('facstaff');
@@ -109,8 +117,23 @@ export default function Orgs({ userPrivileges }: Props): React.ReactElement {
                 okText="Yes"
                 cancelText="No"
                 okButtonProps={{ danger: true }}
+                onCancel={() => setShowAssociatedUrlsAlert(false)}
               >
-                <Button type="text" danger icon={<TrashIcon />} />
+                <Button
+                  type="text"
+                  danger
+                  icon={<TrashIcon />}
+                  onClick={async () => {
+                    try {
+                      const res = await onCheckUrls(record.id);
+                      if (res) {
+                        setShowAssociatedUrlsAlert(true);
+                      }
+                    } catch (error) {
+                      message.error('Failed to search for associated urls');
+                    }
+                  }}
+                />
               </Popconfirm>
             </Tooltip>
           </Space>
@@ -168,6 +191,15 @@ export default function Orgs({ userPrivileges }: Props): React.ReactElement {
           </Space.Compact>
         </Col>
       </Row>
+      {showAssociatedUrlsAlert && (
+        <Alert
+          message="Warning! Links found to be associated with organization"
+          type="warning"
+          showIcon
+          closable
+          onClose={() => setShowAssociatedUrlsAlert(false)}
+        />
+      )}
 
       <Table
         dataSource={orgs !== null ? orgs : []}
