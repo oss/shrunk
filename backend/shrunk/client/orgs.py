@@ -44,7 +44,7 @@ class OrgsClient:
         """
         aggregation: List[Any] = []
         if only_member_orgs:
-            aggregation.append({"$match": {"members.netid": netid}})
+            aggregation.append({"$match": { "$and": [{"members.netid": netid}, {"deleted": False}]}})
         aggregation += [
             {
                 "$addFields": {
