@@ -119,11 +119,19 @@ def post_org(netid: str, client: ShrunkClient, req: Any) -> Any:
 @bp.route("/<ObjectId:org_id>/hasAssociatedUrls", methods=["GET"])
 @require_login
 def check_urls(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
-    """Checking to see if orgs are associcated with any urls before deleting"""
+    """``GET /api/org/<org_id>/hasAssociatedUrls``
+
+    Checking to see if orgs are associcated with any urls before deleting
+
+    :param netid:
+    :param client:
+    :param org_id:
+    """
+
     if not client.orgs.is_admin(org_id, netid) and not client.roles.has("admin", netid):
         abort(403)
     has_urls = client.orgs.has_associated_urls(org_id)
-    return {"hasAssociatedUrls" : has_urls}, 200
+    return {"hasAssociatedUrls": has_urls}, 200
 
 
 @bp.route("/<ObjectId:org_id>", methods=["DELETE"])

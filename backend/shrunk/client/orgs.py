@@ -44,7 +44,9 @@ class OrgsClient:
         """
         aggregation: List[Any] = []
         if only_member_orgs:
-            aggregation.append({"$match": { "$and": [{"members.netid": netid}, {"deleted": False}]}})
+            aggregation.append(
+                {"$match": {"$and": [{"members.netid": netid}, {"deleted": False}]}}
+            )
         aggregation += [
             {
                 "$addFields": {
@@ -113,7 +115,7 @@ class OrgsClient:
         result = self.db.organizations.update_one(matched, update)
 
         return cast(int, result.modified_count) == 1
-    
+
     def has_associated_urls(self, org_id: ObjectId) -> bool:
         """check to see if orgs have any associations with urls before deletion
 
@@ -121,12 +123,13 @@ class OrgsClient:
 
         returns Whether there are URLs associated with the org
         """
-        assoicatedUrls = self.db.urls.count_documents( {"$or":[{"viewers._id" : org_id}, {"editors._id" : org_id}]})
-        if(assoicatedUrls > 0):
+        assoicatedUrls = self.db.urls.count_documents(
+            {"$or": [{"viewers._id": org_id}, {"editors._id": org_id}]}
+        )
+        if assoicatedUrls > 0:
             return True
-        
+
         return False
-        
 
     def delete(self, org_id: ObjectId, deleted_by: str) -> bool:
         """Delete an org
@@ -136,7 +139,9 @@ class OrgsClient:
 
         :returns: Whether the org was successfully deleted
         """
-        self.db.urls.update_many({ }, {"$pull" : {"viewers": {"_id" : org_id}, "editors": {"_id" : org_id}}})
+        self.db.urls.update_many(
+            {}, {"$pull": {"viewers": {"_id": org_id}, "editors": {"_id": org_id}}}
+        )
         result = self.db.organizations.update_one(
             {"_id": org_id, "deleted": False},
             {

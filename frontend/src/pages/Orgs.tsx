@@ -71,7 +71,7 @@ export default function Orgs({ userPrivileges }: Props): React.ReactElement {
   const onCheckUrls = async (id: string): Promise<boolean> => {
     const check = await hasAssociatedUrls(id);
     return check;
-};
+  };
 
   const mayCreateOrg =
     userPrivileges.has('admin') || userPrivileges.has('facstaff');
