@@ -23,11 +23,13 @@ class UserClient:
         grants_collection = self.db["grants"]
 
         pipeline = [
-            # Step 1: Group by entity to get unique netids and roles
+            # Step 1: Filter out blocked URLs from grants collection
+            {"$match": {"role": {"$ne": "blocked_url"}}},
+            # Step 2: Group by entity to get unique netids and roles
             {"$group": {"_id": "$entity", "roles": {"$addToSet": "$role"}}},
-            # Step 2: Project the results to format the output
+            # Step 3: Project the results to format the output
             {"$project": {"_id": 0, "netid": "$_id", "roles": 1}},
-            # Step 3: Lookup to join with urls collection
+            # Step 4: Lookup to join with urls collection
             {
                 "$lookup": {
                     "from": "urls",
@@ -36,11 +38,11 @@ class UserClient:
                     "as": "links",
                 }
             },
-            # Step 4: Add linksCreated field
+            # Step 5: Add linksCreated field
             {"$addFields": {"linksCreated": {"$size": "$links"}}},
-            # Step 5: Remove the links array as it's no longer needed
+            # Step 6: Remove the links array as it's no longer needed
             {"$project": {"links": 0}},
-            # Step 6: Lookup to join with organizations collection
+            # Step 7: Lookup to join with organizations collection
             {
                 "$lookup": {
                     "from": "organizations",
@@ -57,7 +59,7 @@ class UserClient:
                     "as": "organizations",
                 }
             },
-            # Step 7: Add organizations field
+            # Step 8: Add organizations field
             {
                 "$addFields": {
                     "organizations": {

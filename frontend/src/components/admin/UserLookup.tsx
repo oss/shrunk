@@ -328,9 +328,6 @@ const UserLookup: React.FC = () => {
       const selectedFilters = filters[key];
       if (selectedFilters && selectedFilters.length > 0) {
         newData = newData.filter((record) => {
-          if (record.roles.includes('blocked_url')) {
-            return false;
-          }
           if (key === 'organizations' || key === 'roles') {
             return (selectedFilters as string[]).some((filter: string) =>
               record[key as 'organizations' | 'roles'].includes(filter),
