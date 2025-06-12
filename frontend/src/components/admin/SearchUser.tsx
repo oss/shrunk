@@ -3,25 +3,15 @@
  * @packageDocumentation
  */
 
-// TODO - Merge with SearchBannedLinks.tsx for code deduplication
-
 import { AutoComplete } from 'antd/lib';
-import Fuse from 'fuse.js';
 import { SearchIcon } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
-import { User } from '../../contexts/Users';
+import React, { useCallback, useState } from 'react';
 
 /**
  * Props for the [[SearchUser]] component
  * @interface
  */
 interface SearchUserProps {
-  /**
-   * The list of users to search through
-   * @property
-   */
-  users: User[];
-
   /**
    * Callback function to execute when the user searches for a user
    * @property
@@ -33,42 +23,19 @@ interface SearchUserProps {
  * The [[SearchUser]] component allows the user to search for users through NetId fuzzy searching
  * @class
  */
-const SearchUser: React.FC<SearchUserProps> = ({ users, onSearch }) => {
-  const [options, setOptions] = useState<{ value: string; label: string }[]>(
-    [],
-  );
+const SearchUser: React.FC<SearchUserProps> = ({ onSearch }) => {
   const [value, setValue] = useState('');
-
-  const fuse = useMemo(
-    () =>
-      new Fuse(users, {
-        keys: ['netid'], // fuzzy search on netid; can add optionally other fields to search over
-        threshold: 0.3,
-        distance: 100,
-      }),
-    [users],
-  );
 
   const handleSearch = useCallback(
     (searchValue: string) => {
       setValue(searchValue);
-
-      if (!searchValue) {
-        setOptions([]);
+      if (!searchValue || searchValue.length < 1) {
         onSearch('');
         return;
       }
-
-      const results = fuse.search(searchValue);
-      const newOptions = results.map(({ item }) => ({
-        value: item.netid,
-        label: item.netid,
-      }));
-
-      setOptions(newOptions);
       onSearch(searchValue);
     },
-    [fuse, onSearch],
+    [onSearch],
   );
 
   const handleSelect = useCallback(
@@ -84,7 +51,6 @@ const SearchUser: React.FC<SearchUserProps> = ({ users, onSearch }) => {
       style={{ width: '100%', minWidth: '300px' }}
       value={value}
       placeholder="Search for user"
-      options={options}
       onChange={handleSearch}
       onSelect={handleSelect}
       allowClear

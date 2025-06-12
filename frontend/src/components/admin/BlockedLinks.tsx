@@ -18,7 +18,6 @@ import {
   Table,
   Tooltip,
 } from 'antd/lib';
-import Fuse from 'fuse.js';
 import {
   CloudDownloadIcon,
   PlusCircleIcon,
@@ -28,6 +27,7 @@ import {
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { blockLink, getBlockedLinks, unBlockLink } from '../../api/app';
 import { GrantedBy } from '../../interfaces/csv';
+import { useFuzzySearch } from '../../lib/hooks/useFuzzySearch';
 
 /**
  * Renders the URLs as clickable links
@@ -80,10 +80,6 @@ const renderUnblockButton = (
  * @interface
  */
 interface SearchBannedLinksProps {
-  blockedLinks: Array<{
-    url: string;
-    blockedBy: string;
-  }>;
   onSearch: (value: string) => void;
 }
 
@@ -92,21 +88,8 @@ interface SearchBannedLinksProps {
  * Available filters include: URL, NetID
  * @class
  */
-const SearchBannedLinks: React.FC<SearchBannedLinksProps> = ({
-  blockedLinks,
-  onSearch,
-}) => {
+const SearchBannedLinks: React.FC<SearchBannedLinksProps> = ({ onSearch }) => {
   const [value, setValue] = React.useState('');
-
-  const fuse = useMemo(
-    () =>
-      new Fuse(blockedLinks, {
-        keys: ['url', 'blockedBy'],
-        threshold: 0.3,
-        distance: 100,
-      }),
-    [blockedLinks],
-  );
 
   const handleSearch = useCallback(
     (searchValue: string) => {
@@ -117,7 +100,7 @@ const SearchBannedLinks: React.FC<SearchBannedLinksProps> = ({
       }
       onSearch(searchValue);
     },
-    [fuse, onSearch],
+    [onSearch],
   );
 
   const handleSelect = useCallback(
@@ -179,20 +162,16 @@ const BlockedLinks = () => {
     setRefetchBlockedLinks((prev) => !prev);
   };
 
-  const fuse = useMemo(
-    () =>
-      new Fuse(blockedLinks, {
-        keys: ['url', 'blockedBy'],
-        threshold: 0.3, // Adjustable sensitivity for fuzzy search
-        distance: 100,
-      }),
-    [blockedLinks],
-  );
+  const { search } = useFuzzySearch(blockedLinks, {
+    keys: ['url', 'blockedBy'],
+    threshold: 0.3, // Adjustable sensitivity for fuzzy search
+    distance: 100,
+  });
 
   const filteredLinks = useMemo(() => {
     if (!searchQuery) return blockedLinks;
-    return fuse.search(searchQuery).map((result) => result.item);
-  }, [fuse, searchQuery, blockedLinks]);
+    return search(searchQuery).map((result) => result.item);
+  }, [search, searchQuery, blockedLinks]);
 
   const columns = [
     {
@@ -290,7 +269,6 @@ const BlockedLinks = () => {
           <Flex justify="space-between" style={{ width: '100%' }}>
             <Space direction="horizontal">
               <SearchBannedLinks
-                blockedLinks={blockedLinks}
                 onSearch={handleSearch}
               />
             </Space>

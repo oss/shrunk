@@ -16,7 +16,6 @@ import {
 import { CloudDownloadIcon, PlusCircleIcon } from 'lucide-react';
 import React from 'react';
 import { addRoleToUser } from '../../api/users';
-import { User } from '../../contexts/Users';
 import SearchUser from './SearchUser';
 
 /**
@@ -41,12 +40,6 @@ interface LookupTableHeaderProps {
    * @property
    */
   onSearch: (value: string) => void;
-
-  /**
-   * List of users to search through
-   * @property
-   */
-  users: User[];
 }
 
 /**
@@ -57,7 +50,6 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
   onExportClick,
   rehydrateData,
   onSearch,
-  users,
 }) => {
   const [form] = Form.useForm();
   const [showCreateUserModal, setShowCreateUserModal] = React.useState(false);
@@ -106,7 +98,7 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
     <>
       <Flex justify="space-between">
         <Space direction="horizontal">
-          <SearchUser users={users} onSearch={onSearch} />
+          <SearchUser onSearch={onSearch} />
         </Space>
         <Space direction="horizontal">
           <Button icon={<CloudDownloadIcon />} onClick={onExportClick}>

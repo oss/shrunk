@@ -15,10 +15,13 @@ import {
   Tooltip,
   message,
 } from 'antd/lib';
+import type { ColumnsType, TableProps } from 'antd/lib/table';
+import type { SorterResult } from 'antd/lib/table/interface';
 import { TrashIcon } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { addRoleToUser, removeRoleFromUser } from '../../api/users';
-import { useUsers } from '../../contexts/Users';
+import { User, useUsers } from '../../contexts/Users';
+import { useFuzzySearch } from '../../lib/hooks/useFuzzySearch';
 import LookupTableHeader from './LookupTableHeader';
 
 /**
@@ -177,58 +180,19 @@ const renderOrganizations = (organizations: string[]): JSX.Element[] =>
   organizations.map((org) => <Tag key={org}>{org}</Tag>);
 
 /**
- * User data interface
- * @interface
- */
-interface UserData {
-  /**
-   * NetID of the user
-   * @property
-   */
-  netid: string;
-
-  /**
-   * Organizations the user is a part of
-   * @property
-   */
-  organizations: string[];
-
-  /**
-   * Roles the user has
-   * @property
-   */
-  roles: string[];
-
-  /**
-   * Number of links created by the user
-   * @property
-   */
-  linksCreated: number;
-}
-
-interface TableFilters {
-  [key: string]: string[];
-}
-
-interface TableSorter {
-  field?: string;
-  order?: 'ascend' | 'descend';
-}
-
-interface TablePagination {
-  current?: number;
-  pageSize?: number;
-}
-
-/**
  * The [[UserLookup]] component allows the current user to search for users and manage their roles
  * @class
  */
 const UserLookup: React.FC = () => {
   const { users, loading: usersLoading, rehydrateUsers } = useUsers();
+  const [filteredData, setFilteredData] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
-  const [filteredData, setFilteredData] = useState<UserData[]>([]);
-  const [searchText, setSearchText] = useState('');
+
+  const { search } = useFuzzySearch(users, {
+    keys: ['netid', 'organizations', 'roles'],
+    threshold: 0.3,
+    distance: 100,
+  });
 
   // Initialize filtered data with all users when component mounts or users change
   useEffect(() => {
@@ -271,9 +235,9 @@ const UserLookup: React.FC = () => {
       user.organizations.forEach((org) =>
         distinctOrganizations.add(JSON.stringify({ text: org, value: org })),
       );
-      user.roles.forEach((org) =>
+      user.roles.forEach((role) =>
         distinctRoles.add(
-          JSON.stringify({ text: org.toString().toUpperCase(), value: org }),
+          JSON.stringify({ text: role.toString().toUpperCase(), value: role }),
         ),
       );
     });
@@ -353,10 +317,10 @@ const UserLookup: React.FC = () => {
     }
   };
 
-  const handleTableChange = (
-    pagination: TablePagination,
-    filters: TableFilters,
-    sorter: TableSorter,
+  const handleTableChange: TableProps<User>['onChange'] = (
+    pagination,
+    filters,
+    sorter,
   ) => {
     let newData = [...users];
 
@@ -364,8 +328,11 @@ const UserLookup: React.FC = () => {
       const selectedFilters = filters[key];
       if (selectedFilters && selectedFilters.length > 0) {
         newData = newData.filter((record) => {
+          if (record.roles.includes('blocked_url')) {
+            return false;
+          }
           if (key === 'organizations' || key === 'roles') {
-            return selectedFilters.some((filter: string) =>
+            return (selectedFilters as string[]).some((filter: string) =>
               record[key as 'organizations' | 'roles'].includes(filter),
             );
           }
@@ -375,11 +342,12 @@ const UserLookup: React.FC = () => {
     });
 
     // Apply sorting
-    if (sorter.field) {
+    const sortResult = sorter as SorterResult<User>;
+    if (sortResult.field && typeof sortResult.field === 'string') {
       newData.sort((a: any, b: any) => {
         let compareResult = 0;
-        const aValue = a[sorter.field!];
-        const bValue = b[sorter.field!];
+        const aValue = a[sortResult.field as string];
+        const bValue = b[sortResult.field as string];
 
         if (typeof aValue === 'string') {
           compareResult = aValue.localeCompare(bValue);
@@ -387,48 +355,22 @@ const UserLookup: React.FC = () => {
           compareResult = aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
         }
 
-        return sorter.order === 'ascend' ? compareResult : -compareResult;
+        return sortResult.order === 'ascend' ? compareResult : -compareResult;
       });
-    }
-
-    // Apply search text filter
-    if (searchText) {
-      newData = newData.filter(
-        (user) =>
-          user.netid.toLowerCase().includes(searchText.toLowerCase()) ||
-          user.organizations.some((org) =>
-            org.toLowerCase().includes(searchText.toLowerCase()),
-          ) ||
-          user.roles.some((role) =>
-            role.toLowerCase().includes(searchText.toLowerCase()),
-          ),
-      );
     }
 
     setFilteredData(newData);
   };
 
   const handleSearch = (value: string) => {
-    setSearchText(value);
-    let newData = [...users];
-
     if (value) {
-      newData = newData.filter(
-        (user) =>
-          user.netid.toLowerCase().includes(value.toLowerCase()) ||
-          user.organizations.some((org) =>
-            org.toLowerCase().includes(value.toLowerCase()),
-          ) ||
-          user.roles.some((role) =>
-            role.toLowerCase().includes(value.toLowerCase()),
-          ),
-      );
+      setFilteredData(search(value).map((result) => result.item));
+    } else {
+      setFilteredData(users);
     }
-
-    setFilteredData(newData);
   };
 
-  const columns = [
+  const columns: ColumnsType<User> = [
     {
       title: 'NetID',
       dataIndex: 'netid',
@@ -440,8 +382,8 @@ const UserLookup: React.FC = () => {
       key: 'organizations',
       render: renderOrganizations,
       filters: organizationsFilters,
-      onFilter: (value: string | number | boolean, record: any) =>
-        record.organizations.includes(value.toString()),
+      onFilter: (value, record) =>
+        record.organizations.includes(value as string),
       filterMultiple: true,
       filterOnClose: true,
     },
@@ -449,7 +391,7 @@ const UserLookup: React.FC = () => {
       title: 'Roles',
       dataIndex: 'roles',
       key: 'roles',
-      render: (roles: string[], record: any) => (
+      render: (roles: string[], record: User) => (
         <RolesSelect
           rehydrateData={rehydrateUsers}
           initialRoles={roles}
@@ -458,8 +400,7 @@ const UserLookup: React.FC = () => {
         />
       ),
       filters: rolesFilters,
-      onFilter: (value: string | number | boolean, record: any) =>
-        record.roles.includes(value.toString()),
+      onFilter: (value, record) => record.roles.includes(value as string),
       filterMultiple: true,
       filterOnClose: true,
     },
@@ -471,7 +412,7 @@ const UserLookup: React.FC = () => {
     {
       title: () => <Flex justify="flex-end">Actions</Flex>,
       key: 'actions',
-      render: (_: any, record: any) => (
+      render: (_: any, record: User) => (
         <Flex justify="flex-end">
           <Tooltip title="Ban">
             <Popconfirm
@@ -492,7 +433,6 @@ const UserLookup: React.FC = () => {
   return (
     <>
       <LookupTableHeader
-        users={users}
         rehydrateData={rehydrateUsers}
         onExportClick={exportToCSV}
         onSearch={handleSearch}
