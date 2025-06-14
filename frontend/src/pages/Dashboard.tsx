@@ -26,14 +26,16 @@ import CreateLinkDrawer from '../drawers/CreateLinkDrawer';
 import { Link, SearchQuery, SearchSet } from '../interfaces/link';
 import { Organization } from '../interfaces/organizations';
 import LinkCard from '../components/LinkCard';
+import { useFuzzySearch } from '../lib/hooks/useFuzzySearch';
 
 interface Props {
   userPrivileges: Set<string>;
   // eslint-disable-next-line react/no-unused-prop-types
-  netid: string;
-  filterOptions: SearchQuery;
-  demo?: boolean;
   mockData?: Link[];
+  // eslint-disable-next-line react/no-unused-prop-types
+  filterOptions?: SearchQuery;
+  demo?: boolean;
+  searchFunction?: (query: string) => Array<{ item: Link }>;
 }
 
 /**
@@ -53,6 +55,18 @@ interface State {
    * @property
    */
   linkInfo: Link[] | null;
+
+  /**
+   * The filtered links from server before fuzzy search is applied
+   * @property
+   */
+  serverFilteredLinks: Link[] | null;
+
+  /**
+   * The current fuzzy search query string
+   * @property
+   */
+  fuzzySearchQuery: string;
 
   /**
    * The number of links to display per page. Currently this is constant,
@@ -112,12 +126,16 @@ interface State {
   orgLoading: boolean;
 }
 
-export default class Dashboard extends React.Component<Props, State> {
+// TODO --> Migrate to functional component to remove need for wrapper component
+class Dashboard extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
       userOrgs: null,
       linkInfo: this.props.mockData === undefined ? null : this.props.mockData,
+      serverFilteredLinks:
+        this.props.mockData === undefined ? null : this.props.mockData,
+      fuzzySearchQuery: '',
       linksPerPage: 10,
       query:
         this.props.filterOptions === undefined
@@ -162,7 +180,10 @@ export default class Dashboard extends React.Component<Props, State> {
 
   componentDidUpdate(prevProps: Readonly<Props>): void {
     // update config once /info loads
-    if (this.props.filterOptions !== prevProps.filterOptions) {
+    if (
+      this.props.filterOptions !== prevProps.filterOptions &&
+      this.props.filterOptions
+    ) {
       this.setState(
         {
           query: {
@@ -185,6 +206,7 @@ export default class Dashboard extends React.Component<Props, State> {
             ? dayjs(this.props.filterOptions.end_time)
             : null,
           currentPage: 1,
+          fuzzySearchQuery: '', // Reset fuzzy search when filter options change
         },
         () => {
           this.refreshResults();
@@ -192,10 +214,6 @@ export default class Dashboard extends React.Component<Props, State> {
       );
     }
   }
-
-  onSearch = async () => {
-    this.setQuery(this.state.query);
-  };
 
   /**
    * Update filter options for user
@@ -217,25 +235,6 @@ export default class Dashboard extends React.Component<Props, State> {
     this.setState({ userOrgs });
   };
 
-  /**
-   * Updates the query string state and executes a search query
-   * @method
-   * @param newQueryString The new query string
-   */
-  updateQueryString = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    const newQueryString = e.target.value;
-    this.setState({
-      query: { ...this.state.query, queryString: newQueryString },
-    });
-  };
-
-  /**
-   * Updates the query string in the state and executes a search query
-   * @method
-   * @param orgs The organization of which links will be shown
-   */
   showByOrg = (orgs: SearchSet) => {
     this.setState({ query: { ...this.state.query, set: orgs } }, () =>
       this.setQuery(this.state.query),
@@ -282,6 +281,11 @@ export default class Dashboard extends React.Component<Props, State> {
     );
   };
 
+  /**
+   * Updates the link type in the state and executes a search query
+   * @method
+   * @param e The radio change event
+   */
   sortByType = (e: RadioChangeEvent) => {
     const key = e.target.value;
     this.setState(
@@ -310,7 +314,7 @@ export default class Dashboard extends React.Component<Props, State> {
   };
 
   showLinksInRange = (
-    dates: NoUndefinedRangeValueType<Dayjs> | null,
+    dates: [Dayjs | null, Dayjs | null] | null,
     _: [string, string],
   ) => {
     this.setState(
@@ -323,6 +327,42 @@ export default class Dashboard extends React.Component<Props, State> {
       },
       () => this.setQuery(this.state.query),
     );
+  };
+
+  /**
+   * Updates the fuzzy search query string
+   * @method
+   * @param e The input change event
+   */
+  updateFuzzySearch = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ): void => {
+    const searchQuery = e.target.value;
+    this.setState({ fuzzySearchQuery: searchQuery }, () => {
+      this.applyFuzzySearch();
+    });
+  };
+
+  /**
+   * Applies fuzzy search to the current server-filtered results
+   * @method
+   */
+  applyFuzzySearch = (): void => {
+    const { serverFilteredLinks, fuzzySearchQuery } = this.state;
+
+    if (
+      !fuzzySearchQuery.trim() ||
+      !serverFilteredLinks ||
+      !this.props.searchFunction
+    ) {
+      this.setState({ linkInfo: serverFilteredLinks });
+      return;
+    }
+
+    const results = this.props.searchFunction(fuzzySearchQuery);
+    const filteredLinks = results.map((result) => result.item);
+
+    this.setState({ linkInfo: filteredLinks });
   };
 
   /**
@@ -340,12 +380,14 @@ export default class Dashboard extends React.Component<Props, State> {
 
     const totalPages = Math.ceil(results.count / this.state.linksPerPage);
     this.setState({
+      serverFilteredLinks: results.results,
       linkInfo: results.results,
       query: newQuery,
       currentPage: 1,
       totalPages,
       currentOffset: this.state.linksPerPage,
       totalLinks: results.count,
+      fuzzySearchQuery: '', // Reset fuzzy search on new server query
     });
   };
 
@@ -374,11 +416,13 @@ export default class Dashboard extends React.Component<Props, State> {
 
     const totalPages = Math.ceil(results.count / this.state.linksPerPage);
     this.setState({
+      serverFilteredLinks: results.results,
       linkInfo: results.results,
       currentPage: newPage,
       totalPages,
       currentOffset: newPage * this.state.linksPerPage,
       totalLinks: results.count,
+      fuzzySearchQuery: '', // Reset fuzzy search on page change
     });
   };
 
@@ -405,7 +449,7 @@ export default class Dashboard extends React.Component<Props, State> {
     skip: number,
     limit: number,
   ): Promise<{ count: number; results: Link[] }> => {
-    const req: SearchQuery = {
+    const req: any = {
       query: query.queryString,
       set: query.set,
       show_expired_links: query.show_expired_links,
@@ -423,7 +467,7 @@ export default class Dashboard extends React.Component<Props, State> {
       req.end_time = query.end_time.format();
     }
 
-    if (query.owner !== null || query.owner === '') {
+    if (query.owner) {
       req.owner = query.owner;
     }
 
@@ -485,10 +529,10 @@ export default class Dashboard extends React.Component<Props, State> {
               </Button>
               <Input.Search
                 style={{ width: 500 }}
-                placeholder="Find a shortend link by its alias"
-                value={this.state.query.queryString}
-                onChange={this.updateQueryString}
-                onSearch={this.onSearch}
+                placeholder="Search links by title, alias, URL, or owner"
+                value={this.state.fuzzySearchQuery}
+                onChange={this.updateFuzzySearch}
+                allowClear
               />
             </Space>
           </Col>
@@ -533,6 +577,7 @@ export default class Dashboard extends React.Component<Props, State> {
               showSizeChanger={false}
               total={this.state.totalLinks}
               onChange={this.setPage}
+              pageSize={this.state.linksPerPage}
             />
           </Col>
         </Row>
@@ -691,3 +736,38 @@ export default class Dashboard extends React.Component<Props, State> {
     );
   }
 }
+
+// Wrapper component that uses the fuzzy search hook
+const DashboardWithFuzzySearch: React.FC<Omit<Props, 'searchFunction'>> = (
+  props,
+) => {
+  const [serverFilteredLinks, setServerFilteredLinks] = React.useState<Link[]>(
+    [],
+  );
+
+  const { search } = useFuzzySearch(serverFilteredLinks, {
+    keys: ['title', 'alias', 'long_url', 'owner'],
+    threshold: 0.3,
+    distance: 100,
+  });
+
+  const dashboardRef = React.useRef<Dashboard>(null);
+
+  // Update server filtered links when Dashboard component updates them
+  React.useEffect(() => {
+    const updateServerLinks = () => {
+      const currentServerLinks =
+        dashboardRef.current?.state.serverFilteredLinks;
+      if (currentServerLinks && currentServerLinks !== serverFilteredLinks) {
+        setServerFilteredLinks(currentServerLinks);
+      }
+    };
+
+    const interval = setInterval(updateServerLinks, 100);
+    return () => clearInterval(interval);
+  }, [serverFilteredLinks]);
+
+  return <Dashboard {...props} ref={dashboardRef} searchFunction={search} />;
+};
+
+export default DashboardWithFuzzySearch;
