@@ -89,7 +89,6 @@ class OrgsClient:
                     "timeCreated": datetime.now(timezone.utc),
                     "members": [],
                     "domains": [],
-                    "access_tokens": [],
                 }
             )
         except pymongo.errors.DuplicateKeyError:
