@@ -4,6 +4,10 @@ from typing import Any, Dict, List, Optional
 
 import pymongo
 from shrunk.util.ldap import is_valid_netid, query_position_info
+import datetime
+
+
+from .exceptions import InvalidEntity
 
 __all__ = ["UserClient"]
 
@@ -142,6 +146,21 @@ class UserClient:
             "FILTER_STRING_PLACEHOLDER": "Input filter string",
             "FILTER_NUMBER_PLACEHOLDER": "Input filter number",
         }
+        
+    def is_user_expired(self, entity: str) -> bool: 
+        """ Checks whether a guest user is expired."""
+        if not is_valid_netid(entity):
+            raise InvalidEntity("Invalid entity provided")
+
+        
+        user = self.db.grants.find_one({"role": "guest", "entity": entity})
+        if user is None:
+            raise InvalidEntity("User is not a valid guest")
+        
+        if datetime.datetime.now() > user.get("expires_on", datetime.datetime.max):
+            return True
+
+        return False
 
     def is_valid_entity(self, entity: str) -> bool:
         """Check whether an entity is valid"""
