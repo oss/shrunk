@@ -40,6 +40,7 @@ def login(user_info: Any) -> Any:
 
     # get info from shibboleth types
     fac_staff = t("FACULTY") or t("STAFF")
+    guest = t("GUEST")
 
     # get info from ACLs
     is_blacklisted = client.roles.has("blacklisted", netid)
