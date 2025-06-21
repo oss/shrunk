@@ -360,13 +360,13 @@ class Dashboard extends React.Component<Props, State> {
     }
 
     const results = this.props.searchFunction(fuzzySearchQuery);
-    
+
     // For O(1) lookups/order preservation
     const indexMap = new Map();
     serverFilteredLinks.forEach((link, index) => {
       indexMap.set(link._id, index);
     });
-    
+
     const sortedFilteredLinks = results
       .map((result) => result.item)
       .sort((a, b) => {
