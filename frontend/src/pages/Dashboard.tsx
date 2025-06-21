@@ -26,7 +26,7 @@ import CreateLinkDrawer from '../drawers/CreateLinkDrawer';
 import { Link, SearchQuery, SearchSet } from '../interfaces/link';
 import { Organization } from '../interfaces/organizations';
 import LinkCard from '../components/LinkCard';
-import { useFuzzySearch } from '../lib/hooks/useFuzzySearch';
+import useFuzzySearch from '../lib/hooks/useFuzzySearch';
 
 interface Props {
   userPrivileges: Set<string>;
@@ -780,7 +780,16 @@ const DashboardWithFuzzySearch: React.FC<Omit<Props, 'searchFunction'>> = (
     return () => clearInterval(interval);
   }, [serverFilteredLinks]);
 
-  return <Dashboard {...props} ref={dashboardRef} searchFunction={search} />;
+  return (
+    <Dashboard
+      userPrivileges={props.userPrivileges}
+      mockData={props.mockData}
+      filterOptions={props.filterOptions}
+      demo={props.demo}
+      ref={dashboardRef}
+      searchFunction={search}
+    />
+  );
 };
 
 export default DashboardWithFuzzySearch;

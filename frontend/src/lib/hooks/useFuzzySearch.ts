@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react';
+import { useMemo } from 'react';
 import Fuse, { FuseResult, FuseResultMatch, IFuseOptions } from 'fuse.js';
 
 /**
@@ -44,7 +44,7 @@ interface UseFuzzySearchReturn<T> {
  * @param config - Search configuration options
  * @returns Object with search function and Fuse instance
  */
-export function useFuzzySearch<T>(
+function useFuzzySearch<T>(
   data: T[],
   config: FuzzySearchConfig,
 ): UseFuzzySearchReturn<T> {
@@ -66,23 +66,22 @@ export function useFuzzySearch<T>(
   }, [data, keys, threshold, distance]);
 
   const search = (query: string): SearchResult<T>[] => {
-      if (!fuse || !query) {
-        return [];
-      }
+    if (!fuse || !query) {
+      return [];
+    }
 
-      try {
-        const results: FuseResult<T>[] = fuse.search(query, { limit: 50 });
+    try {
+      const results: FuseResult<T>[] = fuse.search(query, { limit: 50 });
 
-        console.log('Results: ', results);
-
-        return results.map((result) => ({
-          item: result.item,
-        }));
-      } catch (error) {
-        console.warn('Fuse.js search error:', error);
-        return [];
-      }
-    };
+      return results.map((result) => ({
+        item: result.item,
+      }));
+    } catch (error) {
+      return [];
+    }
+  };
 
   return { search, fuse };
 }
+
+export default useFuzzySearch;

@@ -27,7 +27,7 @@ import {
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { blockLink, getBlockedLinks, unBlockLink } from '../../api/app';
 import { GrantedBy } from '../../interfaces/csv';
-import { useFuzzySearch } from '../../lib/hooks/useFuzzySearch';
+import useFuzzySearch from '../../lib/hooks/useFuzzySearch';
 
 /**
  * Renders the URLs as clickable links
@@ -268,9 +268,7 @@ const BlockedLinks = () => {
         <Col span={24}>
           <Flex justify="space-between" style={{ width: '100%' }}>
             <Space direction="horizontal">
-              <SearchBannedLinks
-                onSearch={handleSearch}
-              />
+              <SearchBannedLinks onSearch={handleSearch} />
             </Space>
             <Space direction="horizontal">
               <Button icon={<CloudDownloadIcon />} onClick={exportAsCSV}>
