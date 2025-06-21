@@ -156,6 +156,8 @@ class SearchClient:
             sort_key = "timeCreated"
         elif query["sort"]["key"] == "visits":
             sort_key = "visits"
+        elif query["sort"]["key"] == "title":
+            sort_key = "title"
         elif query["sort"]["key"] == "relevance":
             sort_key = "text_search_score"
             if query["query"] == "":
