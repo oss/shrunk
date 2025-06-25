@@ -26,7 +26,7 @@ from . import api, dev_logins, sso, views
 from .api import extern
 from .client import ShrunkClient
 from .util.github import pull_outlook_assets_from_github
-from .util.ldap import is_valid_netid
+from .util.ldap import is_valid_netid, query_position_info
 from .util.string import get_domain, validate_url
 from .util.verification import verify_signature
 
@@ -116,6 +116,10 @@ def _init_roles() -> None:
 
     def is_admin(netid: str) -> bool:
         return client.roles.has("admin", netid)
+    
+    def is_uni_guest(netid: str) -> bool:
+        """Check if the user is a guest of the university."""
+        return "GUEST" in query_position_info(netid).get("employeeType", [])
 
     client.roles.create(
         "admin", is_admin, is_valid_netid, custom_text={"title": "Admins"}
@@ -234,7 +238,7 @@ def _init_roles() -> None:
             "comment_prompt": "Describe why the user has been granted access to Go.",
         },
     )
-
+    
     client.roles.create(
         "facstaff",
         is_admin,

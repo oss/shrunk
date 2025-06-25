@@ -32,6 +32,14 @@ def mk_dev_login(netid: str, display_name: str, role: Optional[str]) -> Any:
 bp.add_url_rule(
     "/user", "user", mk_dev_login("DEV_USER", "Dev User", None), methods=["POST"]
 )
+
+bp.add_url_rule(
+    "/guest",
+    "guest",
+    mk_dev_login("DEV_GUEST", "Dev Guest", "guest"),
+    methods=["POST"],
+)
+
 bp.add_url_rule(
     "/facstaff",
     "facstaff",
@@ -47,3 +55,4 @@ bp.add_url_rule(
 bp.add_url_rule(
     "/admin", "admin", mk_dev_login("DEV_ADMIN", "Dev Admin", "admin"), methods=["POST"]
 )
+
