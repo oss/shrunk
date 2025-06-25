@@ -13,7 +13,7 @@ export default function Login() {
   const featureFlags: FeatureFlags = useFeatureFlags();
 
   const [loginLink, setLoginLink] = useState<
-    'user' | 'facstaff' | 'powerUser' | 'admin' | 'default'
+    'guest' | 'user' | 'facstaff' | 'powerUser' | 'admin' | 'default'
   >('default');
 
   const loginTypes: { [key: string]: LoginType } = {
