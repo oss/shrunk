@@ -13,6 +13,7 @@ class AccessTokenClient:
         self.access_tokens_permissions = [
             "read:links",
             "create:links",
+            "read:allusers"
         ]
 
     def create(
@@ -76,3 +77,24 @@ class AccessTokenClient:
             )
 
         return tokens
+    
+    def verify_token(self, token: str):
+        found_tokens = self.db.access_tokens.find()
+        for foundToken in found_tokens:
+            
+            return self.ph.verify(foundToken["hashed_token"], token)
+        
+    def is_creator(self, token_id: ObjectId, netid: str ) -> bool:
+        result = self.db.access_tokens.find_one({"_id": token_id, "created_by": netid})
+        if result is None:
+            return False
+        if result["created_by"] == netid:
+            return True
+        return False
+        
+    
+    def delete_token(self, token_id: ObjectId, deleted_by: str):
+        self.db.access_tokens.update_one({"_id": token_id}, {"$set": {"deleted": True, "deleted_by": deleted_by }})
+
+    def disable_token(self, token_id: ObjectId, disabeld_by: str):
+        self.db.access_tokens   .update_one({"_id": token_id}, {"$set": {"disabled": True, "disabled_by": disabeld_by} })
