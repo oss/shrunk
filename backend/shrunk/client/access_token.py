@@ -42,10 +42,10 @@ class AccessTokenClient:
             "permissions": permissions,
             "disabled": False,
             "disabled_by": None,
-            "disabled_date": None,
+            "disabled_time": None,
             "deleted": False,
             "deleted_by": None,
-            "deleted_date": None,
+            "deleted_time": None,
         }
 
         self.db.access_tokens.insert_one(document)
@@ -69,10 +69,10 @@ class AccessTokenClient:
                     "permissions": token["permissions"],
                     "disabled": token["disabled"],
                     "disabled_by": token["disabled_by"],
-                    "disabled_date": token["disabled_date"],
+                    "disabled_time": token["disabled_time"],
                     "deleted": token["deleted"],
                     "deleted_by": token["deleted_by"],
-                    "deleted_date": token["deleted_date"],
+                    "deleted_time": token["deleted_time"],
                 }
             )
 
@@ -94,7 +94,7 @@ class AccessTokenClient:
         
     
     def delete_token(self, token_id: ObjectId, deleted_by: str):
-        self.db.access_tokens.update_one({"_id": token_id}, {"$set": {"deleted": True, "deleted_by": deleted_by }})
+        self.db.access_tokens.update_one({"_id": token_id}, {"$set": {"deleted": True, "deleted_by": deleted_by, "deleted_time": datetime.now(timezone.utc) }})
 
     def disable_token(self, token_id: ObjectId, disabeld_by: str):
-        self.db.access_tokens   .update_one({"_id": token_id}, {"$set": {"disabled": True, "disabled_by": disabeld_by} })
+        self.db.access_tokens   .update_one({"_id": token_id}, {"$set": {"disabled": True, "disabled_by": disabeld_by, "disabled_time": datetime.now(timezone.utc)} })
