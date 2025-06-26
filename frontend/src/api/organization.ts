@@ -128,3 +128,13 @@ export async function getAccessTokens(organizationId: string) {
   const data = await resp.json();
   return data.tokens;
 }
+
+export async function disableToken(tokenId: string): Promise<void> {
+  await fetch(`/api/core/org/access_token/${tokenId}`, { method: 'PATCH' });
+}
+
+export async function deleteToken(tokenId: string): Promise<void> {
+  await fetch(`/api/core/org/access_token/${tokenId}`, { method: 'DELETE' });
+}
+
+
