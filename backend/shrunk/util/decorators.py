@@ -69,3 +69,22 @@ def request_schema(schema: Any) -> Any:
         return wrapper
 
     return check_body
+
+
+def require_token(required_permisson: str):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            client = current_app.client
+            header = request.headers.get("Authorization")
+            if not header or not header.startswith("Bearer "):
+                abort(401)
+            token = header.split()[1]
+            token_id = client.access_tokens.verify_token(token)
+            if not token_id:
+                abort(401)
+            if not client.access_tokens.check_permissions(token_id, required_permisson):
+                abort(403)
+            return func(client, *args, **kwargs)
+        return wrapper
+    return decorator

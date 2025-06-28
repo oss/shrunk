@@ -5,6 +5,10 @@ import uuid
 from argon2 import PasswordHasher
 import pymongo
 
+from .exceptions import (
+    NoSuchObjectException
+)
+
 class AccessTokenClient:
     def __init__(self, *, db: pymongo.database.Database):
         self.db = db
@@ -79,11 +83,15 @@ class AccessTokenClient:
         return tokens
     
     def verify_token(self, token: str):
-        found_tokens = self.db.access_tokens.find()
+        found_tokens = self.db.access_tokens.find({"disabled": False, "deleted": False})
         for foundToken in found_tokens:
-            
-            return self.ph.verify(foundToken["hashed_token"], token)
-        
+            try:
+                if self.ph.verify(foundToken["hashed_token"], token):
+                    return foundToken["_id"]
+            except Exception as e:
+                continue
+        return None
+
     def is_creator(self, token_id: ObjectId, netid: str ) -> bool:
         result = self.db.access_tokens.find_one({"_id": token_id, "created_by": netid})
         if result is None:
@@ -92,9 +100,18 @@ class AccessTokenClient:
             return True
         return False
         
-    
-    def delete_token(self, token_id: ObjectId, deleted_by: str):
-        self.db.access_tokens.update_one({"_id": token_id}, {"$set": {"deleted": True, "deleted_by": deleted_by, "deleted_time": datetime.now(timezone.utc) }})
+    def delete_token(self, token_id: ObjectId, deleted_by: str) -> None:
+        result = self.db.access_tokens.update_one({"_id": token_id}, {"$set": {"deleted": True, "deleted_by": deleted_by, "deleted_time": datetime.now(timezone.utc) }})
+        if result.modified_count != 1:
+            raise NoSuchObjectException
 
-    def disable_token(self, token_id: ObjectId, disabeld_by: str):
-        self.db.access_tokens   .update_one({"_id": token_id}, {"$set": {"disabled": True, "disabled_by": disabeld_by, "disabled_time": datetime.now(timezone.utc)} })
+    def disable_token(self, token_id: ObjectId, disabeld_by: str) -> None:
+        result = self.db.access_tokens.update_one({"_id": token_id}, {"$set": {"disabled": True, "disabled_by": disabeld_by, "disabled_time": datetime.now(timezone.utc)} })
+        if result.modified_count != 1:
+            raise NoSuchObjectException
+        
+    def check_permissions(self, token_id: ObjectId, perm: str) -> bool:
+        result = self.db.access_tokens.find_one({"_id": token_id})
+        if perm in result["permissions"]:
+            return True
+        return False
