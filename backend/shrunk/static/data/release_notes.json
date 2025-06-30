@@ -97,6 +97,29 @@
   {
     "major": 3,
     "minor": 0,
+    "patch": 4,
+    "projectDirector": "ah1371",
+    "date": "4-23-2025",
+    "description": "TODO: Add later",
+    "categories": {
+      "features": [ {
+        "text": "Guest university members can be given temporary access to Shrunk by organization admins via the organization dashboard",
+        "contributors": ["ak2399"]
+      }],
+      "improvements": [
+        {
+          "text": "Organizations can now fully own links",
+          "contributors": ["ak2399"]
+        }
+      ],
+      "fixes": [
+        
+      ]
+    }
+  },
+  {
+    "major": 3,
+    "minor": 0,
     "patch": 3,
     "projectDirector": "ah1371",
     "date": "4-16-2025",
