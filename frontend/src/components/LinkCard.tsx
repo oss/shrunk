@@ -83,7 +83,7 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
             {
               key: 'created_by',
               label: 'Owner',
-              children: linkInfo.owner,
+              children: linkInfo.owner._id,
             },
             {
               key: 'unique_visits',

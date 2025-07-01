@@ -78,7 +78,7 @@ class SearchClient:
 
         # Filter the appropriate links set.
         if query["set"]["set"] == "user":  # search within `user_netid`'s links
-            pipeline.append({"$match": {"netid": user_netid}})
+            pipeline.append({"$match": {"owner._id": user_netid}})
         elif query["set"]["set"] == "shared":
             # If the set is 'shared', the pipeline will be executed against the 'organizations'
             # collection instead of the 'urls' collection.
@@ -258,8 +258,10 @@ class SearchClient:
                 "visits": res["visits"],
                 "domain": res.get("domain", None),
                 "unique_visits": res.get("unique_visits", 0),
-                "owner": res["netid"],
-                "alias": res["alias"],
+                "owner": res["owner"],
+                "aliases": [
+                    alias for alias in res["aliases"] if is_alias_visible(alias)
+                ],
                 "is_expired": res["is_expired"],
                 "may_edit": self.client.links.may_edit(res["_id"], user_netid),
                 "is_tracking_pixel_link": (
