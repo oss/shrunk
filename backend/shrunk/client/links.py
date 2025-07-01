@@ -206,7 +206,7 @@ class LinksClient:
             "deleted": False,
             "creator_ip": creator_ip,
             "expiration_time": expiration_time,
-            "netid": netid,
+            "owner": {"_id": netid, "type": "netid"},
             "domain": domain,
             "viewers": viewers,
             "editors": editors,

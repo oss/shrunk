@@ -492,6 +492,12 @@ class Dashboard extends React.Component<Props, State> {
         (output: any) =>
           ({
             ...output,
+            owner: output.owner && output.owner.type === 'org'
+              ? {
+                  ...output.owner,
+                  orgName: getOrgInfo(output.owner._id).then((org) => org.name)
+                }
+              : output.owner,
             created_time: new Date(output.created_time),
             expiration_time: !output.expiration_time
               ? null
