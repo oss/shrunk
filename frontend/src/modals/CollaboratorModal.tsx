@@ -89,6 +89,10 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
   // Determine if we can add more masters based on multipleMasters prop
   const canAddMaster = props.multipleMasters || mastersCount === 0;
 
+  const canTransferToOrg = (id: string): boolean => {
+    return organizations.find((org) => org.id === id)?.is_admin || false;
+  };
+
   // Determine if we can demote masters based on multipleMasters prop
   const canDemoteMaster = props.multipleMasters && mastersCount > 1;
 
@@ -211,6 +215,18 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                 const canChangeRole =
                   !isLastMaster && (!isMaster || canDemoteMaster);
 
+                const isDisabled = (role: { value: string; label: string }) => {
+                  if (entity.type === 'org') {
+                    return !canTransferToOrg(entity._id);
+                  } else {
+                    return (
+                      (role.value === masterRole && !canAddMaster) ||
+                      (!canChangeRole && role.value !== entity.role) ||
+                      (isLastMaster && role.value !== masterRole)
+                    );
+                  }
+                };
+
                 return (
                   <>
                     <Col span={12}>{displayName}</Col>
@@ -225,10 +241,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                           options={props.roles.map((role) => ({
                             value: role.value,
                             label: role.label,
-                            disabled:
-                              (role.value === masterRole && !canAddMaster) ||
-                              (!canChangeRole && role.value !== entity.role) ||
-                              (isLastMaster && role.value !== masterRole),
+                            disabled: isDisabled(role),
                           }))}
                         />
 
