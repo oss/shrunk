@@ -112,15 +112,12 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
     disabled: role === getHighestRole(initialRoles),
   }));
 
-  const filteredOptions = options.filter(
-    (option) => {
-      
-      if (option.value === 'guest') {
-        return option.disabled;
-      }
-      return !selectedRoles.includes(option.value) || option.disabled;
+  const filteredOptions = options.filter((option) => {
+    if (option.value === 'guest') {
+      return option.disabled;
     }
-  );
+    return !selectedRoles.includes(option.value) || option.disabled;
+  });
 
   /**
    * Handles the change in roles for the user. Updates the roles in the backend and UI.

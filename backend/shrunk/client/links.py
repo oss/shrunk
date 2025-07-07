@@ -509,11 +509,18 @@ class LinksClient:
             return alias
 
     def get_owner(self, link_id: ObjectId) -> str:
+        
         result = self.db.urls.find_one({"_id": link_id})
+        
+        
+        if result["owner"]["type"] == "org":
+            name = self.other_clients.orgs.get_org(result)["name"];
+            owner = {"_id": result["owner"]["_id"], "type": "org", "org_name": name};
+            return owner;
+
         if result is None:
             raise NoSuchObjectException
-        return cast(str, result["owner"]["_id"])
-
+        return result["owner"]
     def is_owner(self, link_id: ObjectId, netid: str) -> bool:
         result = self.db.urls.find_one({"_id": link_id, "owner._id": netid})
         return result is not None
@@ -527,7 +534,7 @@ class LinksClient:
         result = self.db.urls.find_one(
             {
                 "$or": [
-                    {"_id": link_id, "netid": netid},  # owner
+                    {"_id": link_id, "owner._id": netid},  # owner
                     {
                         "_id": link_id,
                         "editors": {"$elemMatch": {"_id": netid}},
