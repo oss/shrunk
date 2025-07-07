@@ -1,6 +1,6 @@
 """Implements API endpoints under ``/api/org``"""
 
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from flask import Blueprint, jsonify, request
 from werkzeug.exceptions import abort
@@ -460,4 +460,58 @@ def patch_org_member(
             abort(400)
 
         client.orgs.set_member_admin(org_id, member_netid, req["is_admin"])
+    return "", 204
+
+
+@bp.route("/valid-permissions", methods=["GET"])
+@require_login
+def getValidPermissions(netid: str, client: ShrunkClient) -> Any:
+    return jsonify({"permissions": client.access_tokens.access_tokens_permissions})
+
+
+ACCESS_TOKEN_ORG_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["title", "description", "permissions"],
+    "properties": {
+        "title": {"type": "string"},
+        "description": {"type": "string"},
+        "permissions": {"type": "array"},
+    },
+}
+
+
+@bp.route("/<ObjectId:org_id>/access_token", methods=["POST"])
+@request_schema(ACCESS_TOKEN_ORG_SCHEMA)
+@require_login
+def create_access_token(
+    netid: str, client: ShrunkClient, req: Any, org_id: ObjectId
+) -> Any:
+    access_token = client.access_tokens.create(
+        org_id, req["title"], req["description"], netid, req["permissions"]
+    )
+
+    return jsonify({"access_token": access_token})
+
+@bp.route("/<ObjectId:org_id>/access_token", methods=["GET"])
+@require_login
+def get_access_tokens(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
+    tokens = client.access_tokens.get_tokens_by_owner(org_id)
+
+    return jsonify({"tokens": list(tokens)})
+
+@bp.route("/access_token/<ObjectId:token_id>", methods=["PATCH"])
+@require_login
+def disable_access_token(netid: str, client: ShrunkClient, token_id: ObjectId) -> Any:
+    if not client.access_tokens.is_creator(token_id, netid) and not client.roles.has("admin", netid):
+        abort(403)
+    client.access_tokens.disable_token(token_id, netid)
+    return "", 204
+
+@bp.route("/access_token/<ObjectId:token_id>", methods=["DELETE"])
+@require_login
+def delete_access_token(netid: str, client: ShrunkClient, token_id: ObjectId) -> Any:
+    if not client.access_tokens.is_creator(token_id, netid) and not client.roles.has("admin", netid):
+        abort(403)
+    client.access_tokens.delete_token(token_id, netid)
     return "", 204

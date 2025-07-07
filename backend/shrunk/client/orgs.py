@@ -31,6 +31,9 @@ class OrgsClient:
         if org is not None and org.get("domains") is None:
             org["domains"] = []
 
+        if org.get("access_tokens") is None:
+            org["access_tokens"] = []
+
         return org
 
     def get_orgs(self, netid: str, only_member_orgs: bool) -> List[Any]:

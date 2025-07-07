@@ -1,14 +1,11 @@
-/**
- * Implements the [[ManageOrg]] component
- * @packageDocumentation
- */
-
 import {
   Button,
   Col,
+  Drawer,
+  Dropdown,
   Form,
   Input,
-  Modal,
+  Popconfirm,
   Row,
   Space,
   Spin,
@@ -18,9 +15,11 @@ import {
 import type { FormInstance } from 'antd/lib/form';
 import dayjs from 'dayjs';
 import {
-  CircleAlert,
-  PencilIcon,
-  TriangleAlertIcon,
+  CodeIcon,
+  EllipsisIcon,
+  SettingsIcon,
+  TrashIcon,
+  UserMinusIcon,
   UsersIcon,
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
@@ -34,15 +33,10 @@ import {
   removeMemberFromOrganization,
   renameOrganization,
   setAdminStatusOrganization,
-} from '../../api/organization';
-import { serverValidateOrgName } from '../../api/validators';
-import {
-  Organization,
-  OrganizationMember,
-} from '../../interfaces/organizations';
-import CollaboratorModal, {
-  Collaborator,
-} from '../../modals/CollaboratorModal';
+} from '../api/organization';
+import { serverValidateOrgName } from '../api/validators';
+import { Organization, OrganizationMember } from '../interfaces/organizations';
+import CollaboratorModal, { Collaborator } from '../modals/CollaboratorModal';
 
 type RouteParams = {
   id: string;
@@ -110,7 +104,7 @@ function ManageOrgBase({
     history.push('/app/orgs');
   };
 
-  const leaveOrg = async () => {
+  const onLeaveOrg = async () => {
     removeMemberFromOrganization(match.params.id, userNetid);
     history.push('/app/orgs');
   };
@@ -118,6 +112,10 @@ function ManageOrgBase({
   const onDeleteOrganization = async () => {
     deleteOrganization(match.params.id);
     history.push('/app/orgs');
+  };
+
+  const onEditOrganization = async () => {
+    setEditModalVisible(true);
   };
 
   if (!organization) {
@@ -168,12 +166,6 @@ function ManageOrgBase({
         </Col>
         <Col>
           <Space>
-            <Button
-              icon={<PencilIcon />}
-              onClick={() => setEditModalVisible(true)}
-            >
-              Edit
-            </Button>
             {isAdmin && (
               <Button
                 icon={<UsersIcon />}
@@ -182,6 +174,39 @@ function ManageOrgBase({
                 Collaborate
               </Button>
             )}
+
+            <Dropdown
+              placement="bottomRight"
+              menu={{
+                items: [
+                  {
+                    key: 'settings_organization',
+                    label: 'Settings',
+                    icon: <SettingsIcon />,
+                    onClick: onEditOrganization,
+                  },
+                  {
+                    key: 'settings_developer_organization',
+                    label: 'Access Tokens',
+                    icon: <CodeIcon />,
+                    onClick: () => {
+                      history.push(`/app/orgs/${match.params.id}/tokens`);
+                    },
+                  },
+                  { type: 'divider' },
+                  {
+                    key: 'leave_organization',
+                    label: 'Leave',
+                    icon: <UserMinusIcon />,
+                    disabled: userMayNotLeave && organization.is_member,
+                    onClick: onLeaveOrg,
+                    danger: true,
+                  },
+                ],
+              }}
+            >
+              <Button icon={<EllipsisIcon />} />
+            </Dropdown>
           </Space>
         </Col>
       </Row>
@@ -196,11 +221,12 @@ function ManageOrgBase({
         </Col>
       </Row>
 
-      <Modal
-        title="Edit"
+      <Drawer
+        title="Settings"
+        width={720}
         open={editModalVisible}
         footer={null}
-        onCancel={() => {
+        onClose={() => {
           formRef.current?.resetFields();
           setEditModalVisible(false);
         }}
@@ -208,6 +234,8 @@ function ManageOrgBase({
         {isAdmin && (
           <Form
             ref={formRef}
+            layout="vertical"
+            requiredMark={false}
             onFinish={() => {
               formRef.current?.validateFields().then((values) => {
                 onRenameOrg(values.newName);
@@ -216,73 +244,63 @@ function ManageOrgBase({
               });
             }}
           >
-            <Space.Compact>
-              <Form.Item
-                name="newName"
-                rules={[
-                  { required: true, message: 'Please input a new name.' },
-                  {
-                    pattern: /^[a-zA-Z0-9_.,-]*$/,
-                    message:
-                      'Name must consist of letters, numbers, and the characters "_.,-".',
-                  },
-                  {
-                    max: 60,
-                    message: 'Org names can be at most 60 characters long',
-                  },
-                  { validator: serverValidateOrgName },
-                ]}
-              >
-                <Input placeholder="Name" />
-              </Form.Item>
-              <Form.Item>
-                <Button type="primary" htmlType="submit">
-                  Rename
-                </Button>
-              </Form.Item>
-            </Space.Compact>
+            <Row gutter={16}>
+              <Col span={24}>
+                <Typography.Title className="tw-m-0" level={3}>
+                  Public Information
+                </Typography.Title>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="newName"
+                  label="Organization's name"
+                  rules={[
+                    { required: true, message: 'Please input a new name.' },
+                    {
+                      pattern: /^[a-zA-Z0-9_.,-]*$/,
+                      message:
+                        'Name must consist of letters, numbers, and the characters "_.,-".',
+                    },
+                    {
+                      max: 60,
+                      message: 'Org names can be at most 60 characters long',
+                    },
+                    { validator: serverValidateOrgName },
+                  ]}
+                >
+                  <Input placeholder={organization.name} />
+                </Form.Item>
+              </Col>
+              <Col span={24}>
+                <Form.Item>
+                  <Button type="primary" htmlType="submit">
+                    Save
+                  </Button>
+                </Form.Item>
+              </Col>
+              <Col span={24}>
+                <Typography.Title className="tw-m-0" level={3}>
+                  Danger Zone
+                </Typography.Title>
+              </Col>
+              <Col span={24}>
+                <Form.Item label="Once you delete an organization, there is no going back. Please be certain.">
+                  <Popconfirm
+                    title="Are you sure you want to delete this organization?"
+                    onConfirm={onDeleteOrganization}
+                    okText="Yes"
+                    cancelText="No"
+                  >
+                    <Button danger icon={<TrashIcon />}>
+                      Delete
+                    </Button>
+                  </Popconfirm>
+                </Form.Item>
+              </Col>
+            </Row>
           </Form>
         )}
-        <Space direction="vertical" style={{ width: '100%' }}>
-          {organization.is_member && (
-            <Button
-              block
-              danger
-              disabled={userMayNotLeave}
-              onClick={() => {
-                setEditModalVisible(false);
-                Modal.confirm({
-                  title: 'Leave Organization',
-                  icon: <CircleAlert />,
-                  content: 'Are you sure you want to leave this organization?',
-                  onOk: leaveOrg,
-                });
-              }}
-            >
-              Leave
-            </Button>
-          )}
-          {isAdmin && (
-            <Button
-              block
-              danger
-              onClick={() => {
-                setEditModalVisible(false);
-                Modal.confirm({
-                  title: 'Delete Organization',
-                  icon: <TriangleAlertIcon style={{ color: '#ff4d4f' }} />,
-                  content: 'This action cannot be undone. Are you sure?',
-                  okText: 'Delete',
-                  okType: 'danger',
-                  onOk: onDeleteOrganization,
-                });
-              }}
-            >
-              Delete
-            </Button>
-          )}
-        </Space>
-      </Modal>
+      </Drawer>
 
       <CollaboratorModal
         onlyActiveTab="netid"
