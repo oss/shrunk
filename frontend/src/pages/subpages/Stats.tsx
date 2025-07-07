@@ -159,7 +159,7 @@ export function Stats(props: Props): React.ReactElement {
     const mentionedIds = new Set<string>();
 
     tempEntities.push({
-      _id: templinkInfo.owner,
+      _id: templinkInfo.owner._id,
       type: 'netid',
       role: 'owner',
     });
@@ -237,8 +237,8 @@ export function Stats(props: Props): React.ReactElement {
     if (values.long_url !== oldLinkInfo.long_url) {
       patchReq.long_url = values.long_url;
     }
-    if (values.owner !== oldLinkInfo.owner) {
-      patchReq.owner = values.owner;
+    if (values.owner !== oldLinkInfo.owner._id) {
+      patchReq.owner._id = values.owner;
     }
     if (values.expiration_time !== oldLinkInfo.expiration_time) {
       patchReq.expiration_time =
@@ -256,6 +256,8 @@ export function Stats(props: Props): React.ReactElement {
       message.error('There was an error editing the link.', 4);
     }
   }
+  
+
 
   /**
    * Prompt the user to download a CSV file of visits to the selected alias
@@ -320,6 +322,8 @@ export function Stats(props: Props): React.ReactElement {
     onRemoveCollaborator(entity);
   };
 
+  // const changeOwnerToOrg = async (activeTab: 'netid' | 'org', entity: Entity) => {
+
   const onChangeEntity = (
     activeTab: 'netid' | 'org',
     entity: Collaborator,
@@ -327,6 +331,17 @@ export function Stats(props: Props): React.ReactElement {
   ) => {
     // Remove viewer if they're an editor
     // Search "# SHARING_ACL_REFACTOR" for the following comment
+    console.log(entity, value);
+    // if(activeTab === 'org' && entity.role === 'owner') {
+    //   await fetch(`/api/v1/link/${props.id}`, {
+    //     method: 'PATCH',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({
+    //       owner: { _id: value, type: 'org' },
+    //     }),
+    //   })
+    // }
+
     if (value === 'viewer' && entity.role === 'editor') {
       onRemoveCollaborator(entity, 'editor');
       return;
@@ -426,6 +441,13 @@ export function Stats(props: Props): React.ReactElement {
                 </Button>
               </>
             )}
+            <Button
+              icon={<QrcodeOutlined />}
+              onClick={() => setShareModalVisible(true)}
+              disabled={linkInfo?.is_tracking_pixel_link}
+            >
+              QR Code
+            </Button>
           </Space>
         </Col>
       </Row>

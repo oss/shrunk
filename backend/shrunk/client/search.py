@@ -246,7 +246,7 @@ class SearchClient:
                 expiration_time = res["expiration_time"]
             else:
                 expiration_time = None
-
+            
             prepared = {
                 "id": res["_id"],
                 "title": res["title"],
