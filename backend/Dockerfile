@@ -20,7 +20,7 @@ RUN poetry config virtualenvs.create false
 RUN poetry lock
 
 # Install backend Python dependencies
-RUN poetry install
+RUN poetry install --no-root --no-dev --no-interaction --no-ansi
 
 # Install dependencies for docker-compose.tests.yml
 RUN python3 -m pip install pytest watchdog

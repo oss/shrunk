@@ -1,4 +1,4 @@
-from .v1 import user
+from .v1 import userv1
 from . import (
     link,
     motd,
@@ -9,7 +9,7 @@ from . import (
     request,
     security,
     ticket,
-    user
+    user,
 )
 
 __all__ = [
