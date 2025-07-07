@@ -17,7 +17,7 @@ class AccessTokenClient:
         self.access_tokens_permissions = [
             "read:links",
             "create:links",
-            "read:allusers"
+            "read:users",
         ]
 
     def create(
@@ -82,7 +82,7 @@ class AccessTokenClient:
 
         return tokens
     
-    def verify_token(self, token: str):
+    def verify_token(self, token: str) -> ObjectId:
         found_tokens = self.db.access_tokens.find({"disabled": False, "deleted": False})
         for foundToken in found_tokens:
             try:

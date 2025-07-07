@@ -136,5 +136,3 @@ export async function disableToken(tokenId: string): Promise<void> {
 export async function deleteToken(tokenId: string): Promise<void> {
   await fetch(`/api/core/org/access_token/${tokenId}`, { method: 'DELETE' });
 }
-
-
