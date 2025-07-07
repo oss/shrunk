@@ -5,9 +5,8 @@ import uuid
 from argon2 import PasswordHasher
 import pymongo
 
-from .exceptions import (
-    NoSuchObjectException
-)
+from .exceptions import NoSuchObjectException
+
 
 class AccessTokenClient:
     def __init__(self, *, db: pymongo.database.Database):
@@ -81,7 +80,7 @@ class AccessTokenClient:
             )
 
         return tokens
-    
+
     def verify_token(self, token: str) -> ObjectId:
         found_tokens = self.db.access_tokens.find({"disabled": False, "deleted": False})
         for foundToken in found_tokens:
@@ -92,24 +91,42 @@ class AccessTokenClient:
                 continue
         return None
 
-    def is_creator(self, token_id: ObjectId, netid: str ) -> bool:
+    def is_creator(self, token_id: ObjectId, netid: str) -> bool:
         result = self.db.access_tokens.find_one({"_id": token_id, "created_by": netid})
         if result is None:
             return False
         if result["created_by"] == netid:
             return True
         return False
-        
+
     def delete_token(self, token_id: ObjectId, deleted_by: str) -> None:
-        result = self.db.access_tokens.update_one({"_id": token_id}, {"$set": {"deleted": True, "deleted_by": deleted_by, "deleted_time": datetime.now(timezone.utc) }})
+        result = self.db.access_tokens.update_one(
+            {"_id": token_id},
+            {
+                "$set": {
+                    "deleted": True,
+                    "deleted_by": deleted_by,
+                    "deleted_time": datetime.now(timezone.utc),
+                }
+            },
+        )
         if result.modified_count != 1:
             raise NoSuchObjectException
 
     def disable_token(self, token_id: ObjectId, disabeld_by: str) -> None:
-        result = self.db.access_tokens.update_one({"_id": token_id}, {"$set": {"disabled": True, "disabled_by": disabeld_by, "disabled_time": datetime.now(timezone.utc)} })
+        result = self.db.access_tokens.update_one(
+            {"_id": token_id},
+            {
+                "$set": {
+                    "disabled": True,
+                    "disabled_by": disabeld_by,
+                    "disabled_time": datetime.now(timezone.utc),
+                }
+            },
+        )
         if result.modified_count != 1:
             raise NoSuchObjectException
-        
+
     def check_permissions(self, token_id: ObjectId, perm: str) -> bool:
         result = self.db.access_tokens.find_one({"_id": token_id})
         if perm in result["permissions"]:

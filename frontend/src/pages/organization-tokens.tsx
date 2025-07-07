@@ -5,7 +5,6 @@ import {
   Col,
   Row,
   Space,
-  Table,
   Typography,
   Drawer,
   Form,
@@ -13,31 +12,24 @@ import {
   Checkbox,
   Alert,
   Modal,
-  Flex,
 } from 'antd/lib';
 import { CirclePlusIcon, PlusCircleIcon } from 'lucide-react';
+import { message } from 'antd';
 import {
   generateAccessToken,
   getAccessTokens,
-  getOrganization,
   getValidAccessTokenPermissions,
 } from '../api/organization';
-import { Organization } from '../interfaces/organizations';
 import AccessTokenCard from '../components/access-token-card';
 import { AccessTokenData } from '../interfaces/access-token';
-import { message } from 'antd';
 
 type RouteParams = {
   id: string;
 };
 
-type IOrganizationToken = {
-  userNetId: string;
-  userPrivileges: Set<string>;
-} & RouteComponentProps<RouteParams>;
+type IOrganizationToken = RouteComponentProps<RouteParams>;
 
 function OrganizationToken(props: IOrganizationToken) {
-  const [organization, setOrganization] = useState<Organization | null>(null);
   const [accessTokens, setAccessTokens] = useState<AccessTokenData[]>([]);
   const [validPermissions, setValidPermissions] = useState<string[]>([]);
   const [isGeneratorDrawerOpen, setIsGeneratorDrawerOpen] =
@@ -49,9 +41,6 @@ function OrganizationToken(props: IOrganizationToken) {
 
   useEffect(() => {
     const fetchOrganization = async () => {
-      const data = await getOrganization(props.match.params.id);
-      setOrganization(data);
-
       const accessTokensData = (await getAccessTokens(
         props.match.params.id,
       )) as AccessTokenData[];

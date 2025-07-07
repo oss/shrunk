@@ -1,10 +1,8 @@
 import {
   Button,
   Card,
-  Col,
   Descriptions,
   Typography,
-  Row,
   Space,
   Tooltip,
   Tag,
@@ -13,7 +11,7 @@ import {
 } from 'antd/lib';
 import React from 'react';
 import dayjs from 'dayjs';
-import { BadgeAlertIcon, CopyIcon, Trash2Icon } from 'lucide-react';
+import { BadgeAlertIcon, Trash2Icon } from 'lucide-react';
 import { AccessTokenData } from '../interfaces/access-token';
 import { deleteToken, disableToken } from '../api/organization';
 

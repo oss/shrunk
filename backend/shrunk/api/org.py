@@ -493,6 +493,7 @@ def create_access_token(
 
     return jsonify({"access_token": access_token})
 
+
 @bp.route("/<ObjectId:org_id>/access_token", methods=["GET"])
 @require_login
 def get_access_tokens(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
@@ -500,18 +501,24 @@ def get_access_tokens(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any
 
     return jsonify({"tokens": list(tokens)})
 
+
 @bp.route("/access_token/<ObjectId:token_id>", methods=["PATCH"])
 @require_login
 def disable_access_token(netid: str, client: ShrunkClient, token_id: ObjectId) -> Any:
-    if not client.access_tokens.is_creator(token_id, netid) and not client.roles.has("admin", netid):
+    if not client.access_tokens.is_creator(token_id, netid) and not client.roles.has(
+        "admin", netid
+    ):
         abort(403)
     client.access_tokens.disable_token(token_id, netid)
     return "", 204
 
+
 @bp.route("/access_token/<ObjectId:token_id>", methods=["DELETE"])
 @require_login
 def delete_access_token(netid: str, client: ShrunkClient, token_id: ObjectId) -> Any:
-    if not client.access_tokens.is_creator(token_id, netid) and not client.roles.has("admin", netid):
+    if not client.access_tokens.is_creator(token_id, netid) and not client.roles.has(
+        "admin", netid
+    ):
         abort(403)
     client.access_tokens.delete_token(token_id, netid)
     return "", 204

@@ -23,5 +23,5 @@ __all__ = [
     "security",
     "ticket",
     "user",
-    "userv1"
+    "userv1",
 ]

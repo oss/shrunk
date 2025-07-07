@@ -25,7 +25,12 @@ from shrunk.util.stats import (
     browser_stats_from_visits,
 )
 from shrunk.util.ldap import is_valid_netid
-from shrunk.util.decorators import require_login, require_mail, request_schema, external_api
+from shrunk.util.decorators import (
+    require_login,
+    require_mail,
+    request_schema,
+    external_api,
+)
 
 __all__ = ["bp"]
 
@@ -54,12 +59,16 @@ CREATE_LINK_SCHEMA = {
         "expiration_time": {"type": "string", "format": "date-time"},
         "is_tracking_pixel_link": {"type": "boolean"},
         "tracking_pixel_extension": {"type": "string", "enum": [".png", ".gif"]},
-        "domain": {"type": "string", "minLength": 0},  # TODO: Delete this by version 3.2, this is not a properly implemented feature.
+        "domain": {
+            "type": "string",
+            "minLength": 0,
+        },  # TODO: Delete this by version 3.2, this is not a properly implemented feature.
     },
 }
 
-if int(os.getenv('SHRUNK_FLASK_TESTING')):
+if int(os.getenv("SHRUNK_FLASK_TESTING")):
     CREATE_LINK_SCHEMA["properties"]["bypass_security_measures"] = {"type": "boolean"}
+
 
 @bp.route("", methods=["POST"])
 @request_schema(CREATE_LINK_SCHEMA)

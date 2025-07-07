@@ -4,7 +4,6 @@
  */
 
 import {
-  Bot,
   BugIcon,
   CircleHelpIcon,
   CodeIcon,
@@ -52,7 +51,6 @@ import ChangeLog from './pages/ChangeLog';
 import Ticket from './pages/subpages/Ticket';
 import { lightTheme } from './theme';
 import { SearchQuery } from './interfaces/link';
-import Developer from './pages/Developer';
 import OrganizationToken from './pages/organization-tokens';
 
 const { Header, Content, Footer, Sider } = Layout;

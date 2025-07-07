@@ -51,25 +51,28 @@ def get_all_users(client: ShrunkClient) -> Dict[Any, Any]:
 
     """
     operations = []
-    
 
     roles = request.args.get("roles")
-    fields =  request.args.get("fields")
+    fields = request.args.get("fields")
     if roles:
-        operations.append({
-            "field": "roles",
-            "filterString": roles,
-            "specification": "contains",
-            "type": "filter"
-        })
+        operations.append(
+            {
+                "field": "roles",
+                "filterString": roles,
+                "specification": "contains",
+                "type": "filter",
+            }
+        )
 
     if fields:
-        operations.append({
-            "field": fields,
-            "filterString": "",
-            "specification": "asc",
-            "type": "sort"
-        })
+        operations.append(
+            {
+                "field": fields,
+                "filterString": "",
+                "specification": "asc",
+                "type": "sort",
+            }
+        )
 
     users = client.users.get_all_users(operations)
     if users is None:
