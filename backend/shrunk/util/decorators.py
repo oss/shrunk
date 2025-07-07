@@ -32,6 +32,7 @@ def require_login(func: Any) -> Any:
 
 def external_api(func: Any) -> Any:
     """Decorator to allow the view function to be called with an access token."""
+
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         organization = "_"

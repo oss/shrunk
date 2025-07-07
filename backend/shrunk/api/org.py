@@ -493,6 +493,7 @@ def create_access_token(
 
     return jsonify({"access_token": access_token})
 
+
 @bp.route("/<ObjectId:org_id>/access_token", methods=["GET"])
 @require_login
 def get_access_tokens(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
