@@ -11,20 +11,6 @@ services:
       - mongodb
       - httpd
 
-  docs:
-    hostname: docs
-    build: ./backend
-    command: python3 -m mkdocs serve --dev-addr=0.0.0.0:3060
-    volumes:
-      - ./development.env:/usr/shrunk/backend/.env
-      - ./backend:/usr/shrunk/backend
-    env_file:
-      - ./development.env
-    depends_on:
-      - backend
-    ports:
-      - '3060:3060'
-
   frontend:
     build: ./frontend
     volumes:

@@ -1,4 +1,3 @@
-from .v1 import userv1
 from . import (
     link,
     motd,
@@ -23,5 +22,4 @@ __all__ = [
     "security",
     "ticket",
     "user",
-    "userv1"
 ]

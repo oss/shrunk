@@ -23,6 +23,7 @@ from werkzeug.routing import BaseConverter, ValidationError
 # Extensions
 # Blueprints
 from . import api, dev_logins, sso, views
+from .api import extern
 from .client import ShrunkClient
 from .util.github import pull_outlook_assets_from_github
 from .util.ldap import is_valid_netid
@@ -286,7 +287,9 @@ def create_app(**kwargs: Any) -> Flask:
     app.register_blueprint(api.security.bp)
     app.register_blueprint(api.ticket.bp)
     app.register_blueprint(api.user.bp)
-    app.register_blueprint(api.userv1.bp)
+
+    # EXTERNAL API
+    app.register_blueprint(extern.bp)
 
     # set up extensions
     mail = Mail()
@@ -321,8 +324,6 @@ def create_app(**kwargs: Any) -> Flask:
             )
         )
 
-        valid_products = ["website", "ms-office", "public-api"]
-
         for release in releases:
             for category, changes in release["categories"].items():
                 for change in changes:
@@ -330,9 +331,6 @@ def create_app(**kwargs: Any) -> Flask:
                         contributors.get(contrib_id, contrib_id)
                         for contrib_id in change["contributors"]
                     ]
-
-                    if change.get("product", "website") not in valid_products:
-                        raise Exception("Invalid product")
 
         return jsonify(releases)
 

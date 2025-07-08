@@ -86,53 +86,9 @@ export async function removeMemberFromOrganization(
   });
 }
 
-export async function getOrganizationVisits(organizationId: string) {
-  const resp = await fetch(`/api/core/org/${organizationId}/stats/visits`);
+export async function getOrganizationVisits(linkId: string) {
+  const resp = await fetch(`/api/core/org/${linkId}/stats/visits`);
   const data = resp.json();
 
   return data as any;
-}
-
-export async function getValidAccessTokenPermissions() {
-  const resp = await fetch(`/api/core/org/valid-permissions`);
-  const data = await resp.json();
-
-  return data.permissions as string[];
-}
-
-export async function generateAccessToken(
-  organizationId: string,
-  title: string,
-  description: string,
-  permissions: string,
-): Promise<string> {
-  const resp = await fetch(`/api/core/org/${organizationId}/access_token`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      title,
-      description,
-      permissions,
-    }),
-  });
-  const data = await resp.json();
-  return data.access_token;
-}
-
-export async function getAccessTokens(organizationId: string) {
-  const resp = await fetch(`/api/core/org/${organizationId}/access_token`, {
-    method: 'GET',
-  });
-  const data = await resp.json();
-  return data.tokens;
-}
-
-export async function disableToken(tokenId: string): Promise<void> {
-  await fetch(`/api/core/org/access_token/${tokenId}`, { method: 'PATCH' });
-}
-
-export async function deleteToken(tokenId: string): Promise<void> {
-  await fetch(`/api/core/org/access_token/${tokenId}`, { method: 'DELETE' });
 }

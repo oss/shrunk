@@ -6,7 +6,6 @@
 import type { TabsProps } from 'antd';
 import { Badge, Space, Tabs, Typography } from 'antd/lib';
 import {
-  BeanIcon,
   ChartLineIcon,
   LockKeyholeIcon,
   ShieldCheckIcon,
