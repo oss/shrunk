@@ -85,7 +85,7 @@ def test_restrict_last_admin_demotion(client: Client) -> None:
 def test_create_access_token_permissions(
     client: Client, permissions: List[str], expect_pass: bool
 ) -> None:
-    with dev_login(client, "power"):
+    with dev_login(client, "admin"):
         resp = client.post("/api/core/org", json={"name": "test123"})
         org_id = resp.json["id"]
 
@@ -104,7 +104,7 @@ def test_create_access_token_permissions(
 
 
 def test_get_valid_access_permissions(client: Client) -> None:
-    with dev_login(client, "power"):
+    with dev_login(client, "admin"):
         resp = client.post("/api/core/org/valid-permissions")
         assert_is_response_valid(resp)
 
