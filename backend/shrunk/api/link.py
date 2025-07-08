@@ -125,7 +125,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
 
     if "expiration_time" in req:
         expiration_time: Optional[datetime] = datetime.fromisoformat(
-            req["expiration_time"]
+            req["expiration_time"].replace("Z", "")
         )
     else:
         expiration_time = None
