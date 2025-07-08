@@ -29,7 +29,6 @@ from shrunk.util.decorators import (
     require_login,
     require_mail,
     request_schema,
-    external_api,
 )
 
 __all__ = ["bp"]
@@ -73,7 +72,6 @@ if int(os.getenv("SHRUNK_FLASK_TESTING")):
 @bp.route("", methods=["POST"])
 @request_schema(CREATE_LINK_SCHEMA)
 @require_login
-@external_api
 def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
     """Creates a new link."""
 
