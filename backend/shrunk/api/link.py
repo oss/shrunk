@@ -111,7 +111,9 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
 
     try:
         link_id, created_alias = client.links.create(
-            req["title"],
+            "Untitled Link"
+                if "title" not in req or req["title"] == ""
+                else req["title"],
             req["long_url"],
             alias,
             expiration_time,
