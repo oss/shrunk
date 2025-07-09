@@ -467,7 +467,7 @@ def patch_org_member(
 @require_login
 def getValidPermissions(netid: str, client: ShrunkClient) -> Any:
     return jsonify({"permissions": client.access_tokens.access_tokens_permissions})
-    
+
 
 ACCESS_TOKEN_ORG_SCHEMA = {
     "type": "object",
@@ -488,7 +488,11 @@ def create_access_token(
     netid: str, client: ShrunkClient, req: Any, org_id: ObjectId
 ) -> Any:
     if not req["permissions"]:
-         return "permissions is missing", 400 
+        return "permissions is missing", 400
+    valid_permissions = client.access_tokens.access_tokens_permissions
+    for permission in req["permissions"]:
+        if permission not in valid_permissions:
+            return "invalid permissions", 400
     access_token = client.access_tokens.create(
         org_id, req["title"], req["description"], netid, req["permissions"]
     )

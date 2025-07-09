@@ -108,4 +108,4 @@ def test_get_valid_access_permissions(client: Client) -> None:
         resp = client.get("/api/core/org/valid-permissions")
         assert_is_response_valid(resp)
 
-        assert type(resp["permissions"]) is list
+        assert type(resp.json["permissions"]) is list
