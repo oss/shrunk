@@ -100,7 +100,7 @@
     "patch": 4,
     "projectDirector": "ah1371",
     "date": "4-23-2025",
-    "description": "TODO: Add later",
+    "description": "Organization and User Improvements.",
     "categories": {
       "features": [ {
         "text": "Guest university members can be given temporary access to Shrunk by organization admins via the organization dashboard",

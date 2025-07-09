@@ -278,11 +278,12 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         abort(403)
 
     # Get rid of types that cannot safely be passed to jsonify
+
     json_info = {
         "_id": info["_id"],
         "title": info["title"],
         "long_url": info["long_url"],
-        "owner": client.links.get_owner(link_id),
+        "owner": client.links.get_owner(ObjectId(info["_id"])),
         "created_time": info["timeCreated"],
         "expiration_time": info.get("expiration_time", None),
         "domain": info.get("domain", None),
@@ -302,13 +303,12 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
 
 MODIFY_LINK_SCHEMA = {
     "type": "object",
-    "additionalProperties": False,
+    "additionalProperties": True,
     "properties": {
         "title": {"type": "string", "minLength": 1},
         "long_url": {"type": "string", "format": "uri"},
         "expiration_time": {"type": ["string", "null"], "format": "date-time"},
         "created_time": {"type": ["string", "null"], "format": "date-time"},
-        "owner": {"type": "string", "minLength": 1},
     },
 }
 
@@ -345,9 +345,16 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
         link_id, netid
     ):
         abort(403)
-    if "owner" in req and not is_valid_netid(req["owner"]):
-        abort(400)
+    if "owner" in req:
+        if req["owner"]["type"] == "netid" and not is_valid_netid(req["owner"]["_id"]):
+            abort(400)
+        elif req["owner"]["type"] == "org" and not client.orgs.get_org(
+            ObjectId(req["owner"]["_id"])
+        ):
+            abort(400)
+
     try:
+        print(req.get("owner"), flush=True)
         client.links.modify(
             link_id,
             title=req.get("title"),

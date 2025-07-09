@@ -147,7 +147,14 @@ class SearchClient:
                 ]
         elif query["set"]["set"] == "org":  # search within the given org
             pipeline.append(
-                {"$match": {"viewers.type": "org", "viewers._id": query["set"]["org"]}}
+                {
+                    "$match": {
+                        "$or": [
+                            {"viewers": {"$elemMatch": {"_id": query["set"]["org"]}}},
+                            {"owner.type": "org", "owner._id": query["set"]["org"]},
+                        ]
+                    }
+                }
             )
 
         # Sort results.
@@ -213,7 +220,7 @@ class SearchClient:
             )
 
         if "owner" in query and query["owner"]:
-            pipeline.append({"$match": {"netid": query["owner"]}})
+            pipeline.append({"$match": {"owner._id": query["owner"]}})
 
         # Pagination.
         facet = {
@@ -239,6 +246,7 @@ class SearchClient:
         def prepare_result(res: Any) -> Any:
             """Turn a result from the DB into something than can be JSON-serialized."""
 
+            
             def is_alias_visible(alias: Any) -> bool:
                 if query.get("show_deleted_links", False):
                     return True
@@ -248,7 +256,7 @@ class SearchClient:
                 expiration_time = res["expiration_time"]
             else:
                 expiration_time = None
-            
+
             prepared = {
                 "id": res["_id"],
                 "title": res["title"],
@@ -276,6 +284,7 @@ class SearchClient:
                     "deleted_by": res["deleted_by"],
                     "deleted_time": res["deleted_time"],
                 }
+
 
             return prepared
 

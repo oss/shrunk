@@ -88,7 +88,12 @@ class RolesClient:
         return role in self.oncreate_for
 
     def grant(
-        self, role: str, grantor: str, grantee: str, comment: Optional[str] = None, accountLength: Optional[int] = None
+        self,
+        role: str,
+        grantor: str,
+        grantee: str,
+        comment: Optional[str] = None,
+        accountLength: Optional[int] = None,
     ) -> None:
         """
         Gives a role to grantee and remembers who did it
@@ -108,9 +113,11 @@ class RolesClient:
 
             # guard against double insertions
             if not self.has(role, grantee):
-                
-                if role == "guest" and accountLength is not None: 
-                    expirationDate = datetime.now(timezone.utc) + timedelta(days=accountLength)
+
+                if role == "guest" and accountLength is not None:
+                    expirationDate = datetime.now(timezone.utc) + timedelta(
+                        days=accountLength
+                    )
                     self.db.grants.insert_one(
                         {
                             "role": role,
