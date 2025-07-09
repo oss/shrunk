@@ -105,7 +105,7 @@ def test_create_access_token_permissions(
 
 def test_get_valid_access_permissions(client: Client) -> None:
     with dev_login(client, "admin"):
-        resp = client.post("/api/core/org/valid-permissions")
+        resp = client.get("/api/core/org/valid-permissions")
         assert_is_response_valid(resp)
 
         assert type(resp["permissions"]) is list
