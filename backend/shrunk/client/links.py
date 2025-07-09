@@ -288,26 +288,10 @@ class LinksClient:
                                     "timestamp": datetime.now(timezone.utc),
                                 },
                             }
-                            fields["editors"] = {
-                                "$filter": {
-                                    "input": "$editors",
-                                    "as": "editor",
-                                    "cond": {
-                                        "$ne": [
-                                            "$$editor._id",
-                                            link_info["owner"]["_id"],
-                                        ]
-                                    },  
-                                }
-                            }
-                            fields["viewers"] = {
-                                "$filter": {
-                                    "input": "$viewers",
-                                    "as": "viewer",
-                                    "cond": {
-                                        "$ne": ["$$viewer._id", link_info["owner"]["_id"]]
-                                    },
-                                }
+                            # Remove the org from editors and viewers list since it is now owner
+                            update["$pull"] = {
+                                "editors": {"_id": ObjectId(owner["_id"])},
+                                "viewers": {"_id": ObjectId(owner["_id"])}
                             }
                             
                             # Remove the org from editors and viewers list
