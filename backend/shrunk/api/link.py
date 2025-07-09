@@ -128,7 +128,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
         )
 
     except BadLongURLException:
-        return "Bad long_url", 400
+        return "Bad long_url", 403
 
     except SecurityRiskDetected:
         return (

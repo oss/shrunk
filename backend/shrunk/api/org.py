@@ -497,7 +497,7 @@ def create_access_token(
         org_id, req["title"], req["description"], netid, req["permissions"]
     )
 
-    return jsonify({"access_token": access_token})
+    return jsonify({"access_token": access_token}), 201
 
 
 @bp.route("/<ObjectId:org_id>/access_token", methods=["GET"])
