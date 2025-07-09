@@ -146,17 +146,16 @@ class UserClient:
             "FILTER_STRING_PLACEHOLDER": "Input filter string",
             "FILTER_NUMBER_PLACEHOLDER": "Input filter number",
         }
-        
-    def is_user_expired(self, entity: str) -> bool: 
-        """ Checks whether a guest user is expired."""
+
+    def is_user_expired(self, entity: str) -> bool:
+        """Checks whether a guest user is expired."""
         if not is_valid_netid(entity):
             raise InvalidEntity("Invalid entity provided")
 
-        
         user = self.db.grants.find_one({"role": "guest", "entity": entity})
         if user is None:
             raise InvalidEntity("User is not a valid guest")
-        
+
         if datetime.datetime.now() > user.get("expires_on", datetime.datetime.max):
             return True
 

@@ -262,9 +262,8 @@ class LinksClient:
         if expiration_time is not None:
             fields["expiration_time"] = expiration_time
         if owner is not None:
-            
-            
-            if is_valid_netid(owner):
+
+            if owner["type"] == "netid" and is_valid_netid(owner):
                 fields["owner"] = {"_id": owner, "type": "netid"}
                 update["$push"] = {
                     "ownership_transfer_history": {
@@ -274,32 +273,62 @@ class LinksClient:
                     },
                 }
             else:
-                orgInfo = self.other_clients.orgs.get_org(owner)
-                if len(orgInfo) == 0:
-                    raise NotUserOrOrg(f"{owner} is not a valid org. can't transfer ownership")
-                
+                orgInfo = self.other_clients.orgs.get_org(ObjectId(owner["_id"]))
+                if orgInfo == None:
+                    raise NotUserOrOrg(
+                        f"{owner} is not a valid org. can't transfer ownership"
+                    )
+
                 memberFound = False
                 for member in orgInfo["members"]:
-                    if(member["netid"] == link_info["owner"]["_id"]):
+                    if member["netid"] == link_info["owner"]["_id"]:
                         memberFound = True
-                        if(member["is_admin"]):
-                            fields["owner"] = {"_id": owner, "type": "org"}
+                        if member["is_admin"]:
+                            fields["owner"] = {"_id": ObjectId(owner["_id"]), "type": "org"}
                             update["$push"] = {
                                 "ownership_transfer_history": {
-                                    "from": {"_id": link_info["owner"]["_id"], "type": link_info["owner"]["type"]},
-                                    "to": {"_id": owner, "type": "org"},
+                                    "from": {
+                                        "_id": link_info["owner"]["_id"],
+                                        "type": link_info["owner"]["type"],
+                                    },
+                                    "to": {"_id": ObjectId(owner["_id"]), "type": "org"},
                                     "timestamp": datetime.now(timezone.utc),
                                 },
                             }
+                            fields["editors"] = {
+                                "$filter": {
+                                    "input": "$editors",
+                                    "as": "editor",
+                                    "cond": {
+                                        "$ne": [
+                                            "$$editor._id",
+                                            link_info["owner"]["_id"],
+                                        ]
+                                    },  
+                                }
+                            }
+                            fields["viewers"] = {
+                                "$filter": {
+                                    "input": "$viewers",
+                                    "as": "viewer",
+                                    "cond": {
+                                        "$ne": ["$$viewer._id", link_info["owner"]["_id"]]
+                                    },
+                                }
+                            }
+                            
+                            # Remove the org from editors and viewers list
                             break
-                        
+
                         else:
                             raise NotUserOrOrg(
                                 f"{owner} is not an admin of the org. can't transfer ownership"
                             )
 
                     if not memberFound:
-                        raise NotUserOrOrg(f"{link_info['owner']['_id']} is not a member of {orgInfo['_id']}. Cannot transfer ownership")
+                        raise NotUserOrOrg(
+                            f"{link_info['owner']['_id']} is not a member of {orgInfo['_id']}. Cannot transfer ownership"
+                        )
 
         result = self.db.urls.update_one({"_id": link_id}, update)
         if result.matched_count != 1:
@@ -325,7 +354,10 @@ class LinksClient:
         info = self.get_link_info(link_id)
 
         # dont modify if they are owner
-        if entry["_id"] == info["owner"]["_id"] and entry["type"] == info["owner"]["type"]:
+        if (
+            entry["_id"] == info["owner"]["_id"]
+            and entry["type"] == info["owner"]["type"]
+        ):
             return
         # make sure we don't add a dupe if they already have the perm
         operator = "$addToSet"
@@ -375,9 +407,6 @@ class LinksClient:
             change["editors"] = entry
 
         self.db.urls.update_one({"_id": link_id}, {operator: change})
-        
-        
-    
 
     def clear_visits(self, link_id: ObjectId) -> None:
         self.db.visits.delete_many({"link_id": link_id})
@@ -524,18 +553,22 @@ class LinksClient:
             return alias
 
     def get_owner(self, link_id: ObjectId) -> str:
-        
+
         result = self.db.urls.find_one({"_id": link_id})
-        
-        
+
         if result["owner"]["type"] == "org":
-            name = self.other_clients.orgs.get_org(result)["name"];
-            owner = {"_id": result["owner"]["_id"], "type": "org", "org_name": name};
-            return owner;
+            res = self.other_clients.orgs.get_org(ObjectId(result["owner"]["_id"]))
+            owner = {
+                "_id": result["owner"]["_id"],
+                "type": "org",
+                "org_name": res["name"],
+            }
+            return owner
 
         if result is None:
             raise NoSuchObjectException
         return result["owner"]
+
     def is_owner(self, link_id: ObjectId, netid: str) -> bool:
         result = self.db.urls.find_one({"_id": link_id, "owner._id": netid})
         return result is not None

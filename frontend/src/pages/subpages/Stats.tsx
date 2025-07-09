@@ -160,7 +160,7 @@ export function Stats(props: Props): React.ReactElement {
 
     tempEntities.push({
       _id: templinkInfo.owner._id,
-      type: 'netid',
+      type: templinkInfo.owner.type,
       role: 'owner',
     });
 
@@ -322,7 +322,15 @@ export function Stats(props: Props): React.ReactElement {
     onRemoveCollaborator(entity);
   };
 
-  // const changeOwnerToOrg = async (activeTab: 'netid' | 'org', entity: Entity) => {
+  const changeOwnerToOrg = async (entity: Entity) => {
+    await fetch(`/api/v1/link/${props.id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        owner: { _id: entity._id, type: 'org' },
+      }),
+    });
+  };
 
   const onChangeEntity = (
     activeTab: 'netid' | 'org',
