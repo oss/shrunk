@@ -174,6 +174,8 @@ class Dashboard extends React.Component<Props, State> {
     };
   }
 
+  
+
   async componentDidMount(): Promise<void> {
     await this.fetchUserOrgs();
   }
@@ -491,16 +493,10 @@ class Dashboard extends React.Component<Props, State> {
       results: result.results.map(
         (output: any) =>
           ({
-            ...output,
-            owner:
-              output.owner && output.owner.type === 'org'
-                ? {
-                    ...output.owner,
-                    orgName: getOrgInfo(output.owner._id).then(
-                      (org) => org.name,
-                    ),
-                  }
-                : output.owner,
+            title: output.titl,
+            id: output.id,
+            owner: output.owner,
+            aliases: output.aliases,
             created_time: new Date(output.created_time),
             expiration_time: !output.expiration_time
               ? null
@@ -529,6 +525,7 @@ class Dashboard extends React.Component<Props, State> {
     }, 300);
   };
 
+ 
   render(): React.ReactNode {
     return (
       <>

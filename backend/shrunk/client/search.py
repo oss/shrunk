@@ -99,7 +99,12 @@ class SearchClient:
                                 {"$unwind": "$viewers"},
                                 {
                                     "$match": {
-                                        "$expr": {"$eq": ["$viewers._id", "$$org_id"]}
+                                        "$expr": {
+                                            "$or": [
+                                                {"$eq": ["$viewers._id", "$$org_id"]},
+                                                {"$eq": ["$owner._id", "$$org_id"]},
+                                            ]
+                                        }
                                     }
                                 },
                                 {"$match": {"text_search_score": {"$gt": 0.5}}},

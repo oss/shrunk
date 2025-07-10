@@ -217,7 +217,14 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
 
                 const isDisabled = (role: { value: string; label: string }) => {
                   if (entity.type === 'org') {
-                    return !canTransferToOrg(entity._id);
+                    if(entity.role === masterRole && !canAddMaster) {
+                      return true;
+                    }
+                    return (
+                      (role.value === masterRole && !canAddMaster) ||
+                      (!canChangeRole && role.value !== entity.role) ||
+                      (isLastMaster && role.value !== masterRole)
+                    );
                   } else {
                     return (
                       (role.value === masterRole && !canAddMaster) ||
