@@ -75,6 +75,12 @@ if int(os.getenv("SHRUNK_FLASK_TESTING")):
 def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
     """Creates a new link."""
 
+    if "editors" not in req:
+        req["editors"] = []
+        
+    if "viewers" not in req:
+        req["viewers"] = []
+
     if "domain" not in req:
         req["domain"] = ""
 
@@ -122,6 +128,8 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
             netid,
             request.remote_addr,
             domain=req["domain"],
+            editors=req["editors"],
+            viewers=req["viewers"],
             bypass_security_measures=req["bypass_security_measures"],
             is_tracking_pixel_link=req["is_tracking_pixel_link"],
             extension=req["tracking_pixel_extension"],

@@ -165,7 +165,7 @@ def test_create_link_bad_long_url(client: Client) -> None:
                 "long_url": long_url,
             },
         )
-        assert resp.status_code == 400
+        assert resp.status_code == 403
 
 
 @pytest.mark.skip(reason="As of 3.1.0, you can no longer modify long_url links.")
