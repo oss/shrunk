@@ -26,6 +26,8 @@ class OrgsClient:
           exists with the provided ID
         """
         org = self.db.organizations.find_one({"_id": org_id})
+        if org is None:
+            return None
 
         # Organizations created before implementations of domains key do not have the `domains` field
         if org is not None and org.get("domains") is None:
