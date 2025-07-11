@@ -459,6 +459,8 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
 
         def check_create(body):
             resp = client.post("/api/core/link", json=body)
+            if resp.json is None:
+                return None, resp.status_code
             if "errors" in resp.json:
                 return resp.json, resp.status_code
             link_id = resp.json["id"]
