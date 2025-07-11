@@ -174,8 +174,6 @@ class Dashboard extends React.Component<Props, State> {
     };
   }
 
-  
-
   async componentDidMount(): Promise<void> {
     await this.fetchUserOrgs();
   }
@@ -493,10 +491,7 @@ class Dashboard extends React.Component<Props, State> {
       results: result.results.map(
         (output: any) =>
           ({
-            title: output.titl,
-            id: output.id,
-            owner: output.owner,
-            aliases: output.aliases,
+            ...output,
             created_time: new Date(output.created_time),
             expiration_time: !output.expiration_time
               ? null
@@ -510,6 +505,20 @@ class Dashboard extends React.Component<Props, State> {
           } as Link),
       ),
     };
+  };
+  
+
+  /**
+   * Check if tracking pixel ui is enabled
+   * @method
+   */
+  trackingPixelEnabledOnUI = async () => {
+    const result = await fetch('/api/v1/config', {
+      method: 'GET',
+    }).then((resp) => resp.json());
+
+    const isEnabled = result.tracking_pixel;
+    this.setState({ trackingPixelEnabled: isEnabled });
   };
 
   updateOrg = async (value: string): Promise<void> => {
@@ -525,7 +534,6 @@ class Dashboard extends React.Component<Props, State> {
     }, 300);
   };
 
- 
   render(): React.ReactNode {
     return (
       <>

@@ -279,40 +279,36 @@ class LinksClient:
                         f"{owner} is not a valid org. can't transfer ownership"
                     )
 
-                memberFound = False
-                for member in orgInfo["members"]:
-                    if member["netid"] == link_info["owner"]["_id"]:
-                        memberFound = True
-                        if member["is_admin"]:
-                            fields["owner"] = {"_id": ObjectId(owner["_id"]), "type": "org"}
-                            update["$push"] = {
-                                "ownership_transfer_history": {
-                                    "from": {
-                                        "_id": link_info["owner"]["_id"],
-                                        "type": link_info["owner"]["type"],
-                                    },
-                                    "to": {"_id": ObjectId(owner["_id"]), "type": "org"},
-                                    "timestamp": datetime.now(timezone.utc),
-                                },
-                            }
-                            # Remove the org from editors and viewers list since it is now owner
-                            update["$pull"] = {
-                                "editors": {"_id": ObjectId(owner["_id"])},
-                                "viewers": {"_id": ObjectId(owner["_id"])}
-                            }
-                            
-                            # Remove the org from editors and viewers list
-                            break
+            
 
-                        else:
-                            raise NotUserOrOrg(
-                                f"{owner} is not an admin of the org. can't transfer ownership"
-                            )
+                if self.other_clients.orgs.is_member(ObjectId(orgInfo["_id"]), link_info["owner"]["_id"]):
+                    fields["owner"] = {"_id": ObjectId(owner["_id"]), "type": "org"}
+                    update["$push"] = {
+                        "ownership_transfer_history": {
+                            "from": {
+                                "_id": link_info["owner"]["_id"],
+                                "type": link_info["owner"]["type"],
+                            },
+                            "to": {"_id": ObjectId(owner["_id"]), "type": "org"},
+                            "timestamp": datetime.now(timezone.utc),
+                        },
+                    }
+                    # Remove the org from editors and viewers list since it is now owner
+                    update["$pull"] = {
+                        "editors": {"_id": ObjectId(owner["_id"])},
+                        "viewers": {"_id": ObjectId(owner["_id"])}
+                    }
+                    
+                    # Remove the org from editors and viewers list
+                    update["$pull"] = {
+                        "editors": {"_id": ObjectId(owner["_id"])},
+                        "viewers": {"_id": ObjectId(owner["_id"])}
+                    }
 
-                    if not memberFound:
-                        raise NotUserOrOrg(
-                            f"{link_info['owner']['_id']} is not a member of {orgInfo['_id']}. Cannot transfer ownership"
-                        )
+                else:
+                    raise NotUserOrOrg(
+                        f"{owner} is not a valid org. can't transfer ownership"
+                    )
 
         result = self.db.urls.update_one({"_id": link_id}, update)
         if result.matched_count != 1:
@@ -563,22 +559,21 @@ class LinksClient:
 
         orgs = self.other_clients.orgs.get_orgs(netid, True)
         orgs = [org["id"] for org in orgs]
-        result = self.db.urls.find_one(
-            {
-                "$or": [
-                    {"_id": link_id, "owner._id": netid},  # owner
-                    {
-                        "_id": link_id,
-                        "editors": {"$elemMatch": {"_id": netid}},
-                    },  # shared
-                    {
-                        "_id": link_id,
-                        "editors": {"$elemMatch": {"_id": {"$in": orgs}}},
-                    },  # shared with org
-                ]
-            }
-        )
-        return result is not None
+        
+        link = self.db.urls.find_one({"_id": link_id})
+        if link is not None:
+            if link["owner"]["_id"] == netid: #owner
+                return True
+            elif netid in [editor["_id"] for editor in link.get("editors", [])]: # editor
+                return True
+            elif any(ObjectId(org["_id"]) in orgs for org in link.get("editors", [])): # shared with org
+                return True
+            else: #admin of an org
+                if link["owner"]["type"] == "org":
+                    for member in self.other_clients.orgs.get_org(link["owner"]["_id"])["members"]:
+                        if member["netid"] == netid and member["is_admin"]: 
+                            return True
+        return False
 
     def may_view(self, link_id: ObjectId, netid: str) -> bool:
         orgs = self.other_clients.orgs.get_orgs(netid, True)
