@@ -134,7 +134,10 @@ export interface EditLinkValues {
    * @property
    */
   expiration_time: Dayjs | null;
-  owner: string;
+  owner: {
+    _id: string;
+    type: 'netid' | 'org';
+  }
   alias: string;
 }
 
