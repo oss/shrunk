@@ -535,8 +535,14 @@ class LinksClient:
         return result["owner"]
 
     def is_owner(self, link_id: ObjectId, netid: str) -> bool:
-        result = self.db.urls.find_one({"_id": link_id, "owner._id": netid})
-        return result is not None
+        result = self.db.urls.find_one({"_id": link_id})
+        if result is None:
+            raise NoSuchObjectException
+        if result["owner"]["_id"] == netid:
+            return True
+        elif self.other_clients.orgs.is_admin(ObjectId(result["owner"]["_id"]), netid):
+            return True
+        return False
 
     def may_edit(self, link_id: ObjectId, netid: str) -> bool:
         if self.other_clients.roles.has("admin", netid):
@@ -553,11 +559,6 @@ class LinksClient:
                 return True
             elif any(ObjectId(org["_id"]) in orgs for org in link.get("editors", [])): # shared with org
                 return True
-            else: #admin of an org
-                if link["owner"]["type"] == "org":
-                    for member in self.other_clients.orgs.get_org(link["owner"]["_id"])["members"]:
-                        if member["netid"] == netid and member["is_admin"]: 
-                            return True
         return False
 
     def may_view(self, link_id: ObjectId, netid: str) -> bool:
