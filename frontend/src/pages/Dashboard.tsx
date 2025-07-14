@@ -494,7 +494,7 @@ class Dashboard extends React.Component<Props, State> {
             ...output,
             created_time: new Date(output.created_time),
             expiration_time: !output.expiration_time
-              ? null
+            ? null
               : new Date(output.expiration_time),
             deletion_info: !output.deletion_info
               ? null

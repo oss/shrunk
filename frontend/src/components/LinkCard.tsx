@@ -35,7 +35,7 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
             <Button
               icon={<EyeIcon />}
               type="text"
-              href={`/app/links/${linkInfo.id}`}
+              href={`/app/links/${linkInfo._id}`}
               target="_blank"
             />
           </Tooltip>
@@ -43,7 +43,7 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
             <Button
               icon={<EditIcon />}
               type="text"
-              href={`/app/links/${linkInfo.id}?mode=edit`}
+              href={`/app/links/${linkInfo._id}?mode=edit`}
               target="_blank"
             />
           </Tooltip>
@@ -51,7 +51,7 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
             <Button
               icon={<UsersIcon />}
               type="text"
-              href={`/app/links/${linkInfo.id}?mode=collaborate`}
+              href={`/app/links/${linkInfo._id}?mode=collaborate`}
               target="_blank"
             />
           </Tooltip>
@@ -59,7 +59,7 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
             <Button
               icon={<QrCodeIcon />}
               type="text"
-              href={`/app/links/${linkInfo.id}?mode=qrcode`}
+              href={`/app/links/${linkInfo._id}?mode=qrcode`}
               target="_blank"
             />
           </Tooltip>
@@ -69,7 +69,7 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
               type="text"
               danger
               disabled={linkInfo.deletion_info !== null}
-              href={`/app/links/${linkInfo.id}?mode=edit`}
+              href={`/app/links/${linkInfo._id}?mode=edit`}
               target="_blank"
             />
           </Tooltip>

@@ -237,8 +237,8 @@ export function Stats(props: Props): React.ReactElement {
     if (values.long_url !== oldLinkInfo.long_url) {
       patchReq.long_url = values.long_url;
     }
-    if (values.owner !== oldLinkInfo.owner._id) {
-      patchReq.owner._id = values.owner;
+    if (values.owner._id !== oldLinkInfo.owner._id) {
+      patchReq.owner._id = values.owner._id;
     }
     if (values.expiration_time !== oldLinkInfo.expiration_time) {
       patchReq.expiration_time =
@@ -322,7 +322,7 @@ export function Stats(props: Props): React.ReactElement {
     onRemoveCollaborator(entity);
   };
 
-  const changeOwnerToOrg = async (entity: Entity) => {
+  const changeOwnerToOrg = async (entity: Link) => {
     await fetch(`/api/v1/link/${props.id}`, {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
