@@ -271,8 +271,16 @@ class LinksClient:
     def assert_valid_acl_entry(self, acl, entry):
         target = entry["_id"]
         mtype = entry["type"]
+        if mtype == "org":
+            try:
+                ObjectId(target)
+            except:
+                raise NotUserOrOrg(
+                    f"{target} is not a valid {mtype}. can't add to {acl}"
+                )
+
         if (mtype == "netid" and not is_valid_netid(target)) or (
-            mtype == "org" and not self.other_clients.orgs.get_org(target)
+            mtype == "org" and not self.other_clients.orgs.get_org(ObjectId(target))
         ):
             raise NotUserOrOrg(f"{target} is not a valid {mtype}. can't add to {acl}")
 

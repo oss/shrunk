@@ -62,6 +62,14 @@ CREATE_LINK_SCHEMA = {
             "type": "string",
             "minLength": 0,
         },  # TODO: Delete this by version 3.2, this is not a properly implemented feature.
+        "editors": {
+            "type": "array",
+            "items": ACL_ENTRY_SCHEMA,
+        },
+        "viewers": { 
+            "type": "array",
+            "items": ACL_ENTRY_SCHEMA,
+        },
     },
 }
 
@@ -110,47 +118,6 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
     else:
         expiration_time = None
 
-    # convert _id to objectid for orgs in acls
-    try:
-
-        def str2ObjectId(acl):
-            return [
-                (
-                    {"_id": ObjectId(entry["_id"]), "type": entry["type"]}
-                    if entry["type"] == "org"
-                    else entry
-                )
-                for entry in acl
-            ]
-
-        req["editors"] = str2ObjectId(req["editors"])
-        req["viewers"] = str2ObjectId(req["viewers"])
-    except bson.errors.InvalidId as e:
-        return (
-            jsonify({"errors": ["type org requires _id to be an ObjectId: " + str(e)]}),
-            400,
-        )
-
-    # deduplicate
-    def dedupe(acl):
-        ids = set()
-        result = []
-        for entry in acl:
-            if entry["_id"] not in ids:
-                result.append(entry)
-                ids.add(entry["_id"])
-        return result
-
-    req["editors"] = dedupe(req["editors"])
-    req["viewers"] = dedupe(req["viewers"])
-
-    # make sure editors also have viewer permissions
-    viewer_ids = {viewer["_id"] for viewer in req["viewers"]}
-    for editor in req["editors"]:
-        if editor["_id"] not in viewer_ids:
-            viewer_ids.add(editor["_id"])
-            req["viewers"].append(editor)
-
     alias = req.get("alias", None)
 
     if "alias" in req and not client.roles.has_some(["admin", "power_user"], netid):
@@ -192,7 +159,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
         )
 
     except NotUserOrOrg as e:
-        return str(e), 400
+        return jsonify({"error": str(e)}), 400
 
     except BadAliasException:
         return "Bad alias", 400
