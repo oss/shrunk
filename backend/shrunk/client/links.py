@@ -165,6 +165,13 @@ class LinksClient:
         if self.redirects_to_blocked_url(long_url):
             raise BadLongURLException
 
+        for member in viewers + editors:
+            if member["type"] == "org":
+                try:
+                    member["_id"] = ObjectId(member["_id"])
+                except:
+                    raise NotUserOrOrg
+
         for acl in ["viewers", "editors"]:
             members = {"viewers": viewers, "editors": editors}[acl]
             for member in members:
@@ -523,10 +530,14 @@ class LinksClient:
             {
                 "$or": [
                     {"_id": link_id, "netid": netid},  # owner
+                    {  # editor
+                        "_id": link_id,
+                        "editors": {"$elemMatch": {"_id": netid}},
+                    },
                     {
                         "_id": link_id,
                         "viewers": {"$elemMatch": {"_id": netid}},
-                    },  # shared
+                    },  # viewer
                     {
                         "_id": link_id,
                         "viewers": {"$elemMatch": {"_id": {"$in": orgs}}},

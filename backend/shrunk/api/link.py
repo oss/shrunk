@@ -66,7 +66,7 @@ CREATE_LINK_SCHEMA = {
             "type": "array",
             "items": ACL_ENTRY_SCHEMA,
         },
-        "viewers": { 
+        "viewers": {
             "type": "array",
             "items": ACL_ENTRY_SCHEMA,
         },
