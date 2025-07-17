@@ -89,7 +89,7 @@ export async function removeCollaborator(
   const patchReq = {
     acl: `viewers`,
     action: 'remove',
-    entry: { _id: collaborator._id, type: collaborator._id },
+    entry: { _id: collaborator._id, type: collaborator.type },
   };
 
   if (role === 'viewer' || role === undefined) {
