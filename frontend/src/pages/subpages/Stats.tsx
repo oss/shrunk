@@ -66,6 +66,7 @@ import ErrorPage from '../ErrorPage';
 import VisitsChart from '../../components/link/visits-chart';
 import GeoipChart from '../../components/link/world-chart';
 import ShrunkPieChart, { processData } from '../../components/pie-chart';
+import { Link as RouterLink } from 'react-router-dom';
 
 export interface Props {
   /**
@@ -135,6 +136,7 @@ export function Stats(props: Props): React.ReactElement {
   const queryParams = new URLSearchParams(location.search);
   const mode = queryParams.get('mode');
   const size = 250;
+
 
   useEffect(() => {
     switch (mode) {
@@ -322,15 +324,21 @@ export function Stats(props: Props): React.ReactElement {
     onRemoveCollaborator(entity);
   };
 
-  const changeOwnerToOrg = async (entity: Link) => {
-    await fetch(`/api/v1/link/${props.id}`, {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        owner: { _id: entity._id, type: 'org' },
-      }),
+  const transferOwnershipToOrg = (activeTab: 'netid' | 'org', entity: Collaborator) => {
+    editLink(props.id, {
+      owner: {
+        _id: entity._id,
+        type: activeTab,
+      },
+    }).then(() => {
+      message.success('Ownership transferred successfully');
+      updateLinkInfo();
+    }).catch(() => {
+      message.error('Failed to transfer ownership');
     });
   };
+
+
 
   const onChangeEntity = (
     activeTab: 'netid' | 'org',
@@ -339,16 +347,14 @@ export function Stats(props: Props): React.ReactElement {
   ) => {
     // Remove viewer if they're an editor
     // Search "# SHARING_ACL_REFACTOR" for the following comment
-    console.log(entity, value);
-    // if(activeTab === 'org' && entity.role === 'owner') {
-    //   await fetch(`/api/v1/link/${props.id}`, {
-    //     method: 'PATCH',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify({
-    //       owner: { _id: value, type: 'org' },
-    //     }),
-    //   })
-    // }
+
+    if (activeTab === 'org' && value === 'owner') {
+      transferOwnershipToOrg(activeTab, entity);
+      return;
+    }
+   
+
+    
 
     if (value === 'viewer' && entity.role === 'editor') {
       onRemoveCollaborator(entity, 'editor');
@@ -449,13 +455,6 @@ export function Stats(props: Props): React.ReactElement {
                 </Button>
               </>
             )}
-            <Button
-              icon={<QrcodeOutlined />}
-              onClick={() => setShareModalVisible(true)}
-              disabled={linkInfo?.is_tracking_pixel_link}
-            >
-              QR Code
-            </Button>
           </Space>
         </Col>
       </Row>
@@ -521,7 +520,13 @@ export function Stats(props: Props): React.ReactElement {
                         {
                           key: 'owner',
                           label: 'Owner',
-                          children: linkInfo?.owner,
+                          children: (
+                            linkInfo?.owner.type === 'org' ? (
+                              <RouterLink to={`/app/orgs/${linkInfo.owner._id}`}>
+                                {linkInfo.owner.org_name}
+                              </RouterLink>) : 
+                              linkInfo?.owner._id
+                          ),
                           span: isTrackingPixel ? 1 : 'filled',
                         },
                         {

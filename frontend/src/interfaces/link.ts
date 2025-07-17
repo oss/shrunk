@@ -11,7 +11,7 @@ export interface LinkSharedWith {
 }
 
 export interface Link {
-  _id: string;
+  id: string;
   title: string;
   long_url: string;
   domain: string;

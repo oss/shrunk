@@ -574,6 +574,10 @@ class LinksClient:
                 return True
             elif any(ObjectId(org["_id"]) in orgs for org in link.get("editors", [])): # shared with org
                 return True
+            elif self.other_clients.orgs.is_member( # member of org with ownership
+                ObjectId(link["owner"]["_id"]), netid
+            ):
+                return True
         return False
 
     def may_view(self, link_id: ObjectId, netid: str) -> bool:

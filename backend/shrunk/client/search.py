@@ -284,9 +284,7 @@ class SearchClient:
                 "domain": res.get("domain", None),
                 "unique_visits": res.get("unique_visits", 0),
                 "owner": res["owner"],
-                "aliases": [
-                    alias for alias in res["aliases"] if is_alias_visible(alias)
-                ],
+                "alias": res["alias"],
                 "is_expired": res["is_expired"],
                 "may_edit": self.client.links.may_edit(res["_id"], user_netid),
                 "is_tracking_pixel_link": (
