@@ -14,7 +14,9 @@ import {
   Spin,
   Table,
   Typography,
+  Tabs,
 } from 'antd/lib';
+import type { TabsProps } from 'antd/lib/tabs';
 import type { FormInstance } from 'antd/lib/form';
 import dayjs from 'dayjs';
 import {
@@ -22,6 +24,7 @@ import {
   PencilIcon,
   TriangleAlertIcon,
   UsersIcon,
+  Link2
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
@@ -43,6 +46,7 @@ import {
 import CollaboratorModal, {
   Collaborator,
 } from '../../modals/CollaboratorModal';
+import CompactLinkTable from '../../components/orgs/CompactLinkTable';
 
 type RouteParams = {
   id: string;
@@ -59,6 +63,9 @@ interface VisitDatum {
   unique_visits: number;
 }
 
+const VALID_TABS = ['members', 'links'];
+const DEFAULT_TAB = 'analytics';
+
 function ManageOrgBase({
   userNetid,
   userPrivileges,
@@ -71,6 +78,9 @@ function ManageOrgBase({
   const [editModalVisible, setEditModalVisible] = useState(false);
   const formRef = useRef<FormInstance>(null);
   const [visitStats, setVisitStats] = useState<VisitDatum[] | null>(null);
+  const [activeTab, setActiveTab] = useState<string>(DEFAULT_TAB)
+
+  
   const refreshOrganization = async () => {
     const [info, visitData] = await Promise.all([
       getOrganization(match.params.id),
@@ -120,12 +130,22 @@ function ManageOrgBase({
     history.push('/app/orgs');
   };
 
+  const handleTabChange = (key: string) => {
+    if (VALID_TABS.includes(key)) {
+      setActiveTab(key);
+    }
+  }
+
   if (!organization) {
     return <Spin size="large" />;
   }
 
   const isAdmin = organization.is_admin || userPrivileges.has('admin');
   const userMayNotLeave = organization.is_admin && adminsCount === 1;
+
+
+  
+
 
   const columns = [
     {
@@ -160,6 +180,28 @@ function ManageOrgBase({
     },
   ];
 
+  const items: TabsProps['items'] = [
+    {
+      key: 'members',
+      icon: <UsersIcon />,
+      label: 'Members',
+      children: (
+        <Table
+            dataSource={organization.members}
+            columns={columns}
+            rowKey="netid"
+            pagination={false}
+          />
+      )
+    },
+    {
+      key: 'links',
+      icon: <Link2 />,
+      label: 'Links',
+      children: <CompactLinkTable />
+    },
+  ]
+
   return (
     <>
       <Row gutter={16} justify="space-between" align="middle">
@@ -187,11 +229,10 @@ function ManageOrgBase({
       </Row>
       <Row gutter={[16, 16]}>
         <Col span={24}>
-          <Table
-            dataSource={organization.members}
-            columns={columns}
-            rowKey="netid"
-            pagination={false}
+          <Tabs
+            defaultActiveKey="members"
+            items={items}
+            onChange={handleTabChange}
           />
         </Col>
       </Row>
