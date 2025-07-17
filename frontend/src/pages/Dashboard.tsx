@@ -389,6 +389,7 @@ class Dashboard extends React.Component<Props, State> {
     }
 
     const results = await this.doQuery(newQuery, 0, this.state.linksPerPage);
+   
     await this.updateFilterOptions();
 
     const totalPages = Math.ceil(results.count / this.state.linksPerPage);
@@ -485,13 +486,13 @@ class Dashboard extends React.Component<Props, State> {
     }
 
     const result = await searchLinks(req);
-
     return {
       count: result.count,
       results: result.results.map(
         (output: any) =>
           ({
             ...output,
+            
             created_time: new Date(output.created_time),
             expiration_time: !output.expiration_time
             ? null
@@ -535,6 +536,7 @@ class Dashboard extends React.Component<Props, State> {
   };
 
   render(): React.ReactNode {
+
     return (
       <>
         <Row>

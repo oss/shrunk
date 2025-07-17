@@ -217,7 +217,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                       return true;
                     }
                     return (
-                      (isLastMaster && role.value !== masterRole) || (role.value === masterRole && !canAddMaster)
+                      !(canChangeRole || (role.value === masterRole && !canAddMaster))
                     );
                   } else {
                     return (
