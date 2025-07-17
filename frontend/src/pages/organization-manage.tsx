@@ -11,7 +11,9 @@ import {
   Spin,
   Table,
   Typography,
+  Tabs,
 } from 'antd/lib';
+import type { TabsProps } from 'antd/lib/tabs';
 import type { FormInstance } from 'antd/lib/form';
 import dayjs from 'dayjs';
 import {
@@ -21,6 +23,7 @@ import {
   TrashIcon,
   UserMinusIcon,
   UsersIcon,
+  Link2
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
@@ -37,6 +40,7 @@ import {
 import { serverValidateOrgName } from '../api/validators';
 import { Organization, OrganizationMember } from '../interfaces/organizations';
 import CollaboratorModal, { Collaborator } from '../modals/CollaboratorModal';
+import CompactLinkTable from '../../components/orgs/CompactLinkTable';
 
 type RouteParams = {
   id: string;
@@ -53,6 +57,9 @@ interface VisitDatum {
   unique_visits: number;
 }
 
+const VALID_TABS = ['members', 'links'];
+const DEFAULT_TAB = 'analytics';
+
 function ManageOrgBase({
   userNetid,
   userPrivileges,
@@ -65,6 +72,9 @@ function ManageOrgBase({
   const [editModalVisible, setEditModalVisible] = useState(false);
   const formRef = useRef<FormInstance>(null);
   const [visitStats, setVisitStats] = useState<VisitDatum[] | null>(null);
+  const [activeTab, setActiveTab] = useState<string>(DEFAULT_TAB)
+
+  
   const refreshOrganization = async () => {
     const [info, visitData] = await Promise.all([
       getOrganization(match.params.id),
@@ -114,6 +124,12 @@ function ManageOrgBase({
     history.push('/app/orgs');
   };
 
+  const handleTabChange = (key: string) => {
+    if (VALID_TABS.includes(key)) {
+      setActiveTab(key);
+    }
+  }
+
   const onEditOrganization = async () => {
     setEditModalVisible(true);
   };
@@ -124,6 +140,10 @@ function ManageOrgBase({
 
   const isAdmin = organization.is_admin || userPrivileges.has('admin');
   const userMayNotLeave = organization.is_admin && adminsCount === 1;
+
+
+  
+
 
   const columns = [
     {
@@ -157,6 +177,28 @@ function ManageOrgBase({
       render: (date: string) => dayjs(date).format('MMM D, YYYY'),
     },
   ];
+
+  const items: TabsProps['items'] = [
+    {
+      key: 'members',
+      icon: <UsersIcon />,
+      label: 'Members',
+      children: (
+        <Table
+            dataSource={organization.members}
+            columns={columns}
+            rowKey="netid"
+            pagination={false}
+          />
+      )
+    },
+    {
+      key: 'links',
+      icon: <Link2 />,
+      label: 'Links',
+      children: <CompactLinkTable />
+    },
+  ]
 
   return (
     <>
@@ -212,11 +254,10 @@ function ManageOrgBase({
       </Row>
       <Row gutter={[16, 16]}>
         <Col span={24}>
-          <Table
-            dataSource={organization.members}
-            columns={columns}
-            rowKey="netid"
-            pagination={false}
+          <Tabs
+            defaultActiveKey="members"
+            items={items}
+            onChange={handleTabChange}
           />
         </Col>
       </Row>
