@@ -553,9 +553,9 @@ class LinksClient:
         result = self.db.urls.find_one({"_id": link_id})
         if result is None:
             raise NoSuchObjectException
-        if result["owner"]["_id"] == netid:
-            return True
-        elif self.other_clients.orgs.is_admin(ObjectId(result["owner"]["_id"]), netid):
+        if result["owner"]["type"] == "netid":
+            return result["owner"]["_id"] == netid
+        elif self.other_clients.orgs.is_admin(ObjectId(result["owner"]["_id"]), netid): #Org admins have "owner" permissions
             return True
         return False
 
@@ -566,19 +566,20 @@ class LinksClient:
         orgs = self.other_clients.orgs.get_orgs(netid, True)
         orgs = [org["id"] for org in orgs]
         
-        link = self.db.urls.find_one({"_id": link_id})
-        if link is not None:
-            if link["owner"]["_id"] == netid: #owner
-                return True
-            elif netid in [editor["_id"] for editor in link.get("editors", [])]: # editor
-                return True
-            elif any(ObjectId(org["_id"]) in orgs for org in link.get("editors", [])): # shared with org
-                return True
-            elif self.other_clients.orgs.is_member( # member of org with ownership
-                ObjectId(link["owner"]["_id"]), netid
-            ):
-                return True
-        return False
+        result = self.db.urls.find_one({
+            "$or": [
+                {"_id": link_id, "owner._id": netid},  # owner
+                {
+                    "_id": link_id,
+                    "editors": {"$elemMatch": {"_id": netid}},
+                },  # shared
+                {
+                    "_id": link_id,
+                    "editors": {"$elemMatch": {"_id": {"$in": orgs}}},
+                },  # shared with org
+            ]
+        })
+        return result is not None
 
     def may_view(self, link_id: ObjectId, netid: str) -> bool:
         orgs = self.other_clients.orgs.get_orgs(netid, True)

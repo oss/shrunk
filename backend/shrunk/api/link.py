@@ -290,7 +290,6 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
             abort(400)
 
     try:
-        print(req.get("owner"), flush=True)
         client.links.modify(
             link_id,
             title=req.get("title"),
@@ -523,6 +522,7 @@ def get_link_visits(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     if not client.roles.has("admin", netid) and not client.links.may_view(
         link_id, netid
     ):
+        
         abort(403)
     visits = client.links.get_visits(link_id)
     anonymized_visits = [anonymize_visit(client, visit) for visit in visits]
