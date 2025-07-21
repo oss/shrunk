@@ -116,6 +116,7 @@ def test_create_link_expiration(client: Client) -> None:
                 "expiration_time": expiration_time.isoformat(),
             },
         )
+        
         assert resp.status_code == 201
         link_id = resp.json["id"]
         alias0 = resp.json["alias"]
@@ -126,7 +127,7 @@ def test_create_link_expiration(client: Client) -> None:
         assert resp.headers["Location"] == "https://example.com"
 
         # Sleep 5 seconds
-        time.sleep(10)
+        time.sleep(5)
 
         # Check that alias0 no longer exists
         resp = client.get(f"/{alias0}")
