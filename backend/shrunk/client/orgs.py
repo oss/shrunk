@@ -269,7 +269,18 @@ class OrgsClient:
         ]
 
         return list(self.db.organizations.aggregate(pipeline))
+    
+    def get_org_links(self, org_id: ObjectId) -> List[Any]:
+        """Get all links associated with an org
 
+        :param org_id: The org ID
+        :returns: A list of links associated with the org
+        """
+        
+        pipeline = [
+            {"$match": {"_id": org_id}},
+        ]
+        
     def get_geoip_stats(self, org_id: ObjectId) -> Any:
         def not_null(field: str) -> Any:
             return [{"$match": {field: {"$exists": True, "$ne": None}}}]

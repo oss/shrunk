@@ -231,6 +231,7 @@ export function Stats(props: Props): React.ReactElement {
       throw new Error('oldLinkInfo should not be null');
     }
 
+
     // Create the request to edit title, long_url, and expiration_time
     const patchReq: EditLinkValues = {};
     if (values.title !== oldLinkInfo.title) {
@@ -239,8 +240,11 @@ export function Stats(props: Props): React.ReactElement {
     if (values.long_url !== oldLinkInfo.long_url) {
       patchReq.long_url = values.long_url;
     }
-    if (values.owner._id !== oldLinkInfo.owner._id) {
-      patchReq.owner._id = values.owner._id;
+    if (values.owner !== oldLinkInfo.owner._id) {
+      patchReq.owner = {
+        _id: values.owner,
+        type: "netid"
+      };
     }
     if (values.expiration_time !== oldLinkInfo.expiration_time) {
       patchReq.expiration_time =

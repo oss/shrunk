@@ -14,6 +14,7 @@ import {
   Popconfirm,
   Row,
   Space,
+  Tooltip
 } from 'antd/lib';
 import dayjs from 'dayjs';
 import { CircleAlertIcon, SaveIcon, TrashIcon } from 'lucide-react';
@@ -85,13 +86,14 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
   const [form] = Form.useForm();
   const initialValues: any = {
     ...props.linkInfo,
+    owner: props.linkInfo.owner.type === 'netid' ? props.linkInfo.owner._id : props.linkInfo.owner.org_name,
     expiration_time:
       props.linkInfo.expiration_time === null
         ? null
         : dayjs(props.linkInfo.expiration_time),
   };
   const mayEditOwner =
-    props.netid === initialValues.owner || props.userPrivileges.has('admin');
+    (props.netid === initialValues.owner || props.userPrivileges.has('admin')) && props.linkInfo.owner.type !== 'org';
 
   const isTrackingPixelLink = props.linkInfo.is_tracking_pixel_link;
 
@@ -122,7 +124,7 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
 
   const handleDelete = async () => {
     try {
-      deleteLink(props.linkInfo._id);
+      deleteLink(props.linkInfo.id);
       message.success('Link deleted successfully');
       setTimeout(() => {
         window.location.href = '/app/dash';
@@ -134,7 +136,7 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
 
   const handleRevert = async () => {
     try {
-      reverLinkExpirationDate(props.linkInfo._id);
+      reverLinkExpirationDate(props.linkInfo.id);
       message.success('Link restored successfully');
     } catch (error) {
       message.error('Failed to restore link');
@@ -215,11 +217,21 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
                 { validator: serverValidateNetId },
               ]}
             >
-              <Input
-                placeholder="NetID"
-                onChange={handleChange}
-                disabled={!mayEditOwner}
-              />
+              {mayEditOwner ? (
+                <Input
+                  placeholder="NetID"
+                  value={ownerInputVal}
+                  onChange={handleChange}
+                />
+              ) : (
+                <Tooltip title="This link is owned by an organization, please go to the organization's dashboard to edit it.">
+                  <Input
+                    placeholder="NetID"
+                    value={initialValues.owner}
+                    disabled
+                  />
+                </Tooltip>
+              )}
             </Form.Item>
           </Col>
           {!isTrackingPixelLink && (
