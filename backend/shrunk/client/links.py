@@ -263,12 +263,12 @@ class LinksClient:
             fields["expiration_time"] = expiration_time
         if owner is not None:
 
-            if owner["type"] == "netid" and is_valid_netid(owner):
-                fields["owner"] = {"_id": owner, "type": "netid"}
+            if owner["type"] == "netid" and is_valid_netid(owner["_id"]):
+                fields["owner"] = {"_id": owner["_id"], "type": "netid"}
                 update["$push"] = {
                     "ownership_transfer_history": {
                         "from": link_info["owner"]["_id"],
-                        "to": {"_id": owner, "type": "netid"},
+                        "to": {"_id": owner["_id"], "type": "netid"},
                         "timestamp": datetime.now(timezone.utc),
                     },
                 }
@@ -577,6 +577,10 @@ class LinksClient:
                     "_id": link_id,
                     "editors": {"$elemMatch": {"_id": {"$in": orgs}}},
                 },  # shared with org
+                {
+                    "_id": link_id,
+                    "owner._id": {"$in": orgs},  # user is in org that owns the link
+                }
             ]
         })
         return result is not None
@@ -600,6 +604,10 @@ class LinksClient:
                         "_id": link_id,
                         "viewers": {"$elemMatch": {"_id": {"$in": orgs}}},
                     },  # shared with org
+                    {
+                        "_id": link_id,
+                        "owner._id": {"$in": orgs},  # user is in org that owns the link
+                    }
                 ]
             }
         )
