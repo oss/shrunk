@@ -7,6 +7,7 @@ from flask import Blueprint, jsonify, request
 from flask_mailman import Mail
 from bson import ObjectId
 import bson
+import os
 from werkzeug.exceptions import abort
 
 from shrunk.client import ShrunkClient
@@ -24,7 +25,11 @@ from shrunk.util.stats import (
     browser_stats_from_visits,
 )
 from shrunk.util.ldap import is_valid_netid
-from shrunk.util.decorators import require_login, require_mail, request_schema
+from shrunk.util.decorators import (
+    require_login,
+    require_mail,
+    request_schema,
+)
 
 __all__ = ["bp"]
 
@@ -51,56 +56,39 @@ CREATE_LINK_SCHEMA = {
         "long_url": {"type": "string", "minLength": 1},
         "alias": {"type": "string", "minLength": 5},
         "expiration_time": {"type": "string", "format": "date-time"},
-        "editors": {"type": "array", "items": ACL_ENTRY_SCHEMA},
-        "viewers": {"type": "array", "items": ACL_ENTRY_SCHEMA},
-        "bypass_security_measures": {"type": "boolean"},
         "is_tracking_pixel_link": {"type": "boolean"},
         "tracking_pixel_extension": {"type": "string", "enum": [".png", ".gif"]},
-        "domain": {"type": "string", "minLength": 0},
+        "domain": {
+            "type": "string",
+            "minLength": 0,
+        },  # TODO: Delete this by version 3.2, this is not a properly implemented feature.
+        "editors": {
+            "type": "array",
+            "items": ACL_ENTRY_SCHEMA,
+        },
+        "viewers": {
+            "type": "array",
+            "items": ACL_ENTRY_SCHEMA,
+        },
     },
 }
+
+if int(os.getenv("SHRUNK_FLASK_TESTING")):
+    CREATE_LINK_SCHEMA["properties"]["bypass_security_measures"] = {"type": "boolean"}
 
 
 @bp.route("", methods=["POST"])
 @request_schema(CREATE_LINK_SCHEMA)
 @require_login
 def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
-    """``POST /api/link``
+    """Creates a new link."""
 
-    Create a new link. Returns id of created link or errors. Request format:
-
-    .. code-block:: json
-
-       { "description": "string", "long_url": "string",
-         "expiration_time": "2020-11-11T11:11:11Z",
-         "editors": ["<ACL_ENTRY>"], "viewers": ["<ACL_ENTRY>"]}
-
-    an ACL entry looks like. for orgs the id must be a valid bson ObjectId
-
-    .. code-block:: json
-
-       {"_id": "netid|org_id", "type": "org|user"}
-
-    Success response format:
-
-    .. code-block:: json
-
-       { "id": "string" }
-
-    Error response format:
-
-    .. code-block:: json
-
-       { "errors": ["long_url"] }
-
-    :param netid:
-    :param client:
-    :param req:
-    """
     if "editors" not in req:
         req["editors"] = []
+
     if "viewers" not in req:
         req["viewers"] = []
+
     if "domain" not in req:
         req["domain"] = ""
 
@@ -118,7 +106,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
     if "long_url" not in req and req["is_tracking_pixel_link"]:
         req["long_url"] = "http://example.com"
     elif "long_url" not in req and not req["is_tracking_pixel_link"]:
-        return jsonify({"errors": ["long_url is missing"]}), 400
+        return "long_url is missing", 400
 
     if not client.roles.has("admin", netid) and req["bypass_security_measures"]:
         abort(403)
@@ -130,51 +118,10 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
     else:
         expiration_time = None
 
-    # convert _id to objectid for orgs in acls
-    try:
-
-        def str2ObjectId(acl):
-            return [
-                (
-                    {"_id": ObjectId(entry["_id"]), "type": entry["type"]}
-                    if entry["type"] == "org"
-                    else entry
-                )
-                for entry in acl
-            ]
-
-        req["editors"] = str2ObjectId(req["editors"])
-        req["viewers"] = str2ObjectId(req["viewers"])
-    except bson.errors.InvalidId as e:
-        return (
-            jsonify({"errors": ["type org requires _id to be an ObjectId: " + str(e)]}),
-            400,
-        )
-
-    # deduplicate
-    def dedupe(acl):
-        ids = set()
-        result = []
-        for entry in acl:
-            if entry["_id"] not in ids:
-                result.append(entry)
-                ids.add(entry["_id"])
-        return result
-
-    req["editors"] = dedupe(req["editors"])
-    req["viewers"] = dedupe(req["viewers"])
-
-    # make sure editors also have viewer permissions
-    viewer_ids = {viewer["_id"] for viewer in req["viewers"]}
-    for editor in req["editors"]:
-        if editor["_id"] not in viewer_ids:
-            viewer_ids.add(editor["_id"])
-            req["viewers"].append(editor)
-
     alias = req.get("alias", None)
 
     if "alias" in req and not client.roles.has_some(["admin", "power_user"], netid):
-        abort(403)
+        return "No permission to create a link with a custom alias", 403
 
     try:
         link_id, created_alias = client.links.create(
@@ -189,44 +136,33 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
             netid,
             request.remote_addr,
             domain=req["domain"],
-            viewers=req["viewers"],
             editors=req["editors"],
+            viewers=req["viewers"],
             bypass_security_measures=req["bypass_security_measures"],
             is_tracking_pixel_link=req["is_tracking_pixel_link"],
             extension=req["tracking_pixel_extension"],
         )
+
     except BadLongURLException:
-        return jsonify({"errors": ["long_url"]}), 400
+        return "Bad long_url", 403
+
     except SecurityRiskDetected:
         return (
-            jsonify(
-                {
-                    "errors": [
-                        "This url has been detected to be a potential security \
-            risk and requires manual verification. We apologize for the inconvenience and we'll\
-            verify the link as soon as possible. For more information, contact us at oss@oit.rutgers.edu"
-                    ]
-                }
-            ),
+            "Link is detected as a potential security risk. Please contact system administration.",
             403,
         )
+
     except LinkIsPendingOrRejected:
         return (
-            jsonify(
-                {
-                    "errors": [
-                        "This url was previously detected to be a potential security risk. \
-            The url either is pending verification or has been rejected. For more information, contact us at \
-            oss@oit.rutgers.edu"
-                    ]
-                }
-            ),
+            "Link is detected as a potential security risk. Please contact system administration.",
             403,
         )
+
     except NotUserOrOrg as e:
-        return jsonify({"errors": [str(e)]}), 400
+        return jsonify({"error": str(e)}), 400
+
     except BadAliasException:
-        return jsonify({"errors": ["alias"]}), 400
+        return "Bad alias", 400
 
     return jsonify({"id": str(link_id), "alias": created_alias}), 201
 

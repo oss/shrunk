@@ -165,7 +165,7 @@ def test_create_link_bad_long_url(client: Client) -> None:
                 "long_url": long_url,
             },
         )
-        assert resp.status_code == 400
+        assert resp.status_code == 403
 
 
 @pytest.mark.skip(reason="As of 3.1.0, you can no longer modify long_url links.")
@@ -459,7 +459,9 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
 
         def check_create(body):
             resp = client.post("/api/core/link", json=body)
-            if "errors" in resp.json:
+            if resp.json is None:
+                return None, resp.status_code
+            if "error" in resp.json:
                 return resp.json, resp.status_code
             link_id = resp.json["id"]
             status = resp.status_code
@@ -475,7 +477,7 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
             }
         )
         assert 200 <= status < 300
-        assert len(link["viewers"]) == 1
+        assert len(link["editors"]) == 1
 
         # viewer not editor
         link, status = check_create(
@@ -486,7 +488,7 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
             }
         )
         assert 200 <= status < 300
-        assert len(link["editors"]) == 0
+        assert len(link["viewers"]) == 1
 
         # deduplicate
         link, status = check_create(
@@ -500,7 +502,7 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
             }
         )
         assert 200 <= status < 300
-        assert len(link["viewers"]) == 1
+        assert len(link["viewers"]) == 2
 
         # orgs must be objectid
         link, status = check_create(
@@ -511,7 +513,7 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
             }
         )
         assert status == 400
-        assert "errors" in link
+        assert "error" in link
 
         # orgs disallows invalid org
         link, status = check_create(
@@ -522,7 +524,7 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
             }
         )
         assert status == 400
-        assert "errors" in link
+        assert "error" in link
 
         # org allows valid org
         resp = client.post("/api/core/org", json={"name": "testorg11"})

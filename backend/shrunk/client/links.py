@@ -165,6 +165,13 @@ class LinksClient:
         if self.redirects_to_blocked_url(long_url):
             raise BadLongURLException
 
+        for member in viewers + editors:
+            if member["type"] == "org":
+                try:
+                    member["_id"] = ObjectId(member["_id"])
+                except:
+                    raise NotUserOrOrg
+
         for acl in ["viewers", "editors"]:
             members = {"viewers": viewers, "editors": editors}[acl]
             for member in members:
@@ -271,8 +278,16 @@ class LinksClient:
     def assert_valid_acl_entry(self, acl, entry):
         target = entry["_id"]
         mtype = entry["type"]
+        if mtype == "org":
+            try:
+                ObjectId(target)
+            except:
+                raise NotUserOrOrg(
+                    f"{target} is not a valid {mtype}. can't add to {acl}"
+                )
+
         if (mtype == "netid" and not is_valid_netid(target)) or (
-            mtype == "org" and not self.other_clients.orgs.get_org(target)
+            mtype == "org" and not self.other_clients.orgs.get_org(ObjectId(target))
         ):
             raise NotUserOrOrg(f"{target} is not a valid {mtype}. can't add to {acl}")
 
@@ -515,10 +530,14 @@ class LinksClient:
             {
                 "$or": [
                     {"_id": link_id, "netid": netid},  # owner
+                    {  # editor
+                        "_id": link_id,
+                        "editors": {"$elemMatch": {"_id": netid}},
+                    },
                     {
                         "_id": link_id,
                         "viewers": {"$elemMatch": {"_id": netid}},
-                    },  # shared
+                    },  # viewer
                     {
                         "_id": link_id,
                         "viewers": {"$elemMatch": {"_id": {"$in": orgs}}},

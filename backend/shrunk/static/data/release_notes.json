@@ -5,7 +5,7 @@
     "patch": 0,
     "projectDirector": "ah1371",
     "date": "TODO",
-    "description": "The new public API for faculty developers, real-time notifications, continued codebase cleanup update, and testing suite update.",
+    "description": "The new public API for faculty developers, real-time notifications, continued codebase cleanup, and testing suite update.",
     "categories": {
       "features": [
         {
@@ -16,6 +16,25 @@
         {
           "text": "Backend tests are able to be run locally on the developer's machine with hot reloading using Docker",
           "contributors": ["ah1371"]
+        },
+        {
+          "text": "New page for creating tokens for the public API via organization management",
+          "contributors": ["ah1371"],
+          "product": "public-api"
+        },
+        {
+          "text": "Organizations can now own a link or tracking pixel",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Organizations can access our public API to create links and tracking pixels",
+          "contributors": ["ah1371"],
+          "product": "public-api"
+        },
+        {
+          "text": "New page containing an API Reference for the public API",
+          "contributors": ["ah1371"],
+          "product": "public-api"
         }
       ],
       "improvements": [
@@ -66,6 +85,19 @@
         },
         {
           "text": "Private API routes are now under \"core\" instead of \"v1\"",
+          "contributors": ["ah1371"],
+          "warning": true
+        },
+        {
+          "text": "Individual organization management page now has a more consistent layout with the rest of the site",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Three version of release notes, the web app, the public API, and the Outlook add-in",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Table fonts are now 14px instead of 16px",
           "contributors": ["ah1371"]
         }
       ],
@@ -89,6 +121,10 @@
         },
         {
           "text": "Add a couple missing test cases regarding link creation",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Phishing links can no longer be bypassed via API routes initially used for testing",
           "contributors": ["ah1371"]
         }
       ]
@@ -352,6 +388,11 @@
         {
           "text": "Add user lookup to the admin dashboard",
           "contributors": ["ejw135"]
+        },
+        {
+          "text": "Microsoft Outlook Add-in created for uploading tracking pixels",
+          "contributors": ["av782", "kgm74"],
+          "product": "ms-office"
         }
       ],
       "improvements": [

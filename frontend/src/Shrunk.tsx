@@ -4,7 +4,6 @@
  */
 
 import {
-  Bot,
   BugIcon,
   CircleHelpIcon,
   CodeIcon,
@@ -33,10 +32,11 @@ import Markdown from 'markdown-to-jsx';
 import Admin from './pages/Admin';
 import Dashboard from './pages/Dashboard';
 import Faq from './pages/Faq';
-import Orgs from './pages/Orgs';
+import ApiReference from './pages/ApiReference';
+import MyOrganizations from './pages/organizations';
 
 import Login from './pages/Login';
-import ManageOrg from './pages/subpages/ManageOrg';
+import ManageOrg from './pages/organization-manage';
 import { Stats } from './pages/subpages/Stats';
 
 import { PendingRequests } from './modals/PendingRequests';
@@ -52,7 +52,7 @@ import ChangeLog from './pages/ChangeLog';
 import Ticket from './pages/subpages/Ticket';
 import { lightTheme } from './theme';
 import { SearchQuery } from './interfaces/link';
-import Developer from './pages/Developer';
+import OrganizationToken from './pages/organization-tokens';
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -189,11 +189,6 @@ export default function Shrunk(props: Props) {
       : []),
     { type: 'divider' },
     {
-      key: 'developer',
-      icon: <Bot />,
-      label: <a href="/app/automation">Automation</a>,
-    },
-    {
       key: 'api-reference',
       icon: <CodeIcon />,
       label: <a href="/app/api-reference">API Reference</a>,
@@ -242,10 +237,6 @@ export default function Shrunk(props: Props) {
     faq: { name: 'Frequently Asked Questions', clickable: true },
     releases: { name: 'Release Notes', clickable: true },
     links: { name: 'URL Shortener', clickable: true, href: 'app/dash' },
-    automation: {
-      name: 'Getting Started with Automation',
-      clickable: false,
-    },
     'api-reference': { name: 'API Reference', clickable: false },
   };
   const isApp = window.location.pathname.split('/').slice(1)[0] === 'app';
@@ -368,12 +359,18 @@ export default function Shrunk(props: Props) {
                       )}
                     />
                     <Route exact path="/app/orgs">
-                      <Orgs userPrivileges={userPrivileges} />
+                      <MyOrganizations userPrivileges={userPrivileges} />
                     </Route>
 
                     <Route exact path="/app/orgs/:id">
                       <ManageOrg
                         userNetid={netid}
+                        userPrivileges={userPrivileges}
+                      />
+                    </Route>
+                    <Route exact path="/app/orgs/:id/tokens">
+                      <OrganizationToken
+                        userNetId={netid}
                         userPrivileges={userPrivileges}
                       />
                     </Route>
@@ -401,11 +398,8 @@ export default function Shrunk(props: Props) {
                         <Admin />
                       </ProtectedRoute>
                     </Route>
-                    <Route exact path="/app/automation">
-                      <Developer />
-                    </Route>
                     <Route exact path="/app/api-reference">
-                      <Typography.Text>TODO</Typography.Text>
+                      <ApiReference />
                     </Route>
                     <Route path="*">
                       <ErrorPage

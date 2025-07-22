@@ -3,7 +3,7 @@
 from typing import Any
 import functools
 
-from flask import current_app, redirect, url_for, request, session
+from flask import current_app, request, session
 from flask_mailman import Mail
 from werkzeug.exceptions import abort
 import jsonschema
@@ -12,7 +12,7 @@ __all__ = ["require_login", "request_schema"]
 
 
 def require_login(func: Any) -> Any:
-    """decorator to check if user is logged in"""
+    """Decorator to require login via SSO."""
 
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -57,3 +57,24 @@ def request_schema(schema: Any) -> Any:
         return wrapper
 
     return check_body
+
+
+def require_token(required_permisson: str):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            client = current_app.client
+            header = request.headers.get("Authorization")
+            if not header or not header.startswith("Bearer "):
+                abort(401)
+            token = header.split()[1]
+            token_id = client.access_tokens.verify_token(token)
+            if not token_id:
+                abort(401)
+            if not client.access_tokens.check_permissions(token_id, required_permisson):
+                abort(403)
+            return func(client, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
