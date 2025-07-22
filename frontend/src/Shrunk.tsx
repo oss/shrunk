@@ -32,6 +32,7 @@ import Markdown from 'markdown-to-jsx';
 import Admin from './pages/Admin';
 import Dashboard from './pages/Dashboard';
 import Faq from './pages/Faq';
+import ApiReference from './pages/ApiReference';
 import MyOrganizations from './pages/organizations';
 
 import Login from './pages/Login';
@@ -398,9 +399,7 @@ export default function Shrunk(props: Props) {
                       </ProtectedRoute>
                     </Route>
                     <Route exact path="/app/api-reference">
-                      <Typography.Text>
-                        This is a work-in-progress...
-                      </Typography.Text>
+                      <ApiReference />
                     </Route>
                     <Route path="*">
                       <ErrorPage
