@@ -73,7 +73,7 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
           }
 
           const response = await addRoleToUser(
-            netid,
+            netid.toLowerCase(),
             backendRole,
             comment || `Added via User Lookup interface`,
           );
