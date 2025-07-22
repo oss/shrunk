@@ -65,7 +65,7 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
   const handleConfirm = () => {
     form.validateFields().then(async (values) => {
       const { netid, roles, comment } = values;
-      const encodedNetId = base32.encode(netid);
+      const encodedNetId = base32.encode(netid.toLowerCase());
 
       try {
         const rolePromises = roles.map(async (role: string) => {
