@@ -116,6 +116,24 @@ def post_org(netid: str, client: ShrunkClient, req: Any) -> Any:
     return jsonify({"id": org_id, "name": req["name"]})
 
 
+@bp.route("/<ObjectId:org_id>/hasAssociatedUrls", methods=["GET"])
+@require_login
+def check_urls(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
+    """``GET /api/org/<org_id>/hasAssociatedUrls``
+
+    Checking to see if orgs are associcated with any urls before deleting
+
+    :param netid:
+    :param client:
+    :param org_id:
+    """
+
+    if not client.orgs.is_admin(org_id, netid) and not client.roles.has("admin", netid):
+        abort(403)
+    has_urls = client.orgs.has_associated_urls(org_id)
+    return {"hasAssociatedUrls": has_urls}, 200
+
+
 @bp.route("/<ObjectId:org_id>", methods=["DELETE"])
 @require_login
 def delete_org(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
@@ -129,7 +147,7 @@ def delete_org(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
     """
     if not client.orgs.is_admin(org_id, netid) and not client.roles.has("admin", netid):
         abort(403)
-    client.orgs.delete(org_id)
+    client.orgs.delete(org_id, netid)
     return "", 204
 
 

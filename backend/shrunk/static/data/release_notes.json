@@ -38,6 +38,10 @@
         }
       ],
       "improvements": [
+         {
+          "text": "Warning popup appears before deleting an organization that has associated URLs",
+          "contributors": ["ys973"]
+        },
         {
           "text": "Feature flags are stored using React context hooks",
           "contributors": ["ah1371"]
@@ -102,6 +106,10 @@
         }
       ],
       "fixes": [
+        {
+          "text": "Deleted organizations are removed from viewers/editors list in assoicated URL's",
+          "contributors": ["ys973"]
+        },
         {
           "text": "403 page no longer flickers before loading the actual page",
           "contributors": ["ejw135"]
