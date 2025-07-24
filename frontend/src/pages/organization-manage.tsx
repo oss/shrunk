@@ -36,15 +36,15 @@ import {
   removeMemberFromOrganization,
   renameOrganization,
   setAdminStatusOrganization,
-} from '../../api/organization';
-import { serverValidateOrgName } from '../../api/validators';
+} from '../api/organization';
+import { serverValidateOrgName } from '../api/validators';
 import {
   Organization,
   OrganizationMember,
-} from '../../interfaces/organizations';
+} from '../interfaces/organizations';
 import CollaboratorModal, {
   Collaborator,
-} from '../../modals/CollaboratorModal';
+} from '../modals/CollaboratorModal';
 import CompactLinkTable from '../components/orgs/CompactLinkTable';
 
 type RouteParams = {
