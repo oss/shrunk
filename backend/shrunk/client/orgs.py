@@ -307,7 +307,7 @@ class OrgsClient:
 
         return list(self.db.organizations.aggregate(pipeline))
     
-    def get_org_links(self, org_id: ObjectId) -> List[Any]:
+    def get_links(self, org_id: ObjectId) -> List[Any]:
         """Get all links associated with an org
 
         :param org_id: The org ID
@@ -315,8 +315,58 @@ class OrgsClient:
         """
         
         pipeline = [
-            {"$match": {"_id": org_id}},
+            {"$match": {
+                "$or": [
+                    {"$and": [
+                        {"owner.type": "org"},
+                        {"owner._id": org_id}
+                    ],
+                    },
+                    {"viewers._id": org_id},
+                ]
+            }},
+            {
+                "$addFields": {
+                    "canEdit": {
+                        "$cond": {
+                            "if": {
+                                "$or": [
+                                    {"$eq": ["$owner._id", org_id]},
+                                    {"$in": [org_id, "$editors._id"]}
+                                ]
+                            },
+                            "then": True,
+                            "else": False
+                        }
+                    },
+                    "role" : {
+                        "$cond": {
+                            "if": {"$eq": ["$owner._id", org_id]},
+                            "then": "owner",
+                            "else": {
+                                "$cond": {
+                                    "if": {"$in": [org_id, "$editors._id"]},
+                                    "then": "editor",
+                                    "else" : "viewer"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "$project": {
+                    "_id": 1,
+                    "title": 1,
+                    "alias": 1,
+                    "canEdit": 1,
+                    "owner": 1,
+                    "long_url": 1,
+                    "role": 1,
+                }
+            }
         ]
+        return list(self.db.urls.aggregate(pipeline))
         
     def get_geoip_stats(self, org_id: ObjectId) -> Any:
         def not_null(field: str) -> Any:
