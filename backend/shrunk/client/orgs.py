@@ -326,6 +326,14 @@ class OrgsClient:
                 ]
             }},
             {
+                "$lookup": {
+                    "from": "organizations",
+                    "localField": "owner._id",
+                    "foreignField": "_id",
+                    "as": "owner_org",
+                }
+            },
+            {
                 "$addFields": {
                     "canEdit": {
                         "$cond": {
@@ -351,6 +359,13 @@ class OrgsClient:
                                 }
                             }
                         }
+                    },
+                    "owner.org_name": {
+                        "$cond": [
+                            {"$eq": ["$owner.type", "org"]},
+                            {"$first": "$owner_org.name"},
+                            "$owner._id"
+                        ]
                     }
                 }
             },

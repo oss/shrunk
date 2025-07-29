@@ -1,4 +1,4 @@
-import { Organization, OrganizationMember } from '../interfaces/organizations';
+import { Organization, OrganizationLink, OrganizationMember } from '../interfaces/organizations';
 
 /**
  * @param which Whether to list all orgs or orgs of which the user is a member
@@ -34,6 +34,15 @@ export async function getOrganization(id: string): Promise<Organization> {
     ),
   };
 }
+
+export async function getOrganizationLinks(id: string): 
+Promise<OrganizationLink[]> {
+  const result: any = await fetch(`/api/core/org/${id}/links`).then((resp) =>
+    resp.json(),
+  );
+  return result as OrganizationLink[];
+}
+
 
 export async function createOrg(name: string): Promise<void> {
   await fetch('/api/core/org', {

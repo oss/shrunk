@@ -201,7 +201,7 @@ function ManageOrgBase({
       key: 'links',
       icon: <Link2 />,
       label: 'Links',
-      children: <CompactLinkTable />
+      children: <CompactLinkTable org_id={organization.id} />
     },
   ]
 

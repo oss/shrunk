@@ -32,3 +32,13 @@ export interface Organization {
 
   domains: string[];
 }
+
+
+export interface OrganizationLink {
+  _id: string;
+  title: string;
+  alias: string;
+  canEdit: boolean;
+  owner: { _id: string; type: string, org_name: string };
+  role: "viewer" | "editor" | "owner";
+}
