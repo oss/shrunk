@@ -82,7 +82,8 @@ class UserClient:
                 if op_field == "netid" and op_spec == "matches":
                     ops_pipeline.append({"$match": {op_field: op_fs}})
                 elif op_field in ["organizations", "roles"] and op_spec == "contains":
-                    ops_pipeline.append({"$match": {op_field: {"$in": [op_fs]}}})
+                    filter_values = [val.strip() for val in op_fs.split(",")]
+                    ops_pipeline.append({"$match": {op_field: {"$in": filter_values}}})
                 elif op_field == "linksCreated":
                     if op_spec == "lt":
                         ops_pipeline.append(
