@@ -251,6 +251,16 @@ def create_app(**kwargs: Any) -> Flask:
     app.secret_key = os.getenv("SHRUNK_SECRET_KEY")
     app.testing = bool(int(os.getenv("SHRUNK_FLASK_TESTING", 0)))
 
+    app.config["SSO_LOGIN_URL"] = os.getenv("SSO_LOGIN_URL", "/login")
+    # Maybe move to env?
+    SSO_ATTRIBUTE_MAP = {
+        "SHIB_UID_1": (True, "netid"),
+        # "SHIB_UID_2": (True, "uid2"),
+        "SHIB_UID_3": (True, "employeeType"),
+        "SHIB_twoFactorAuth": (False, "twoFactorAuth"),
+    }
+    app.config["SSO_ATTRIBUTE_MAP"] = SSO_ATTRIBUTE_MAP
+
     app.json_encoder = ShrunkEncoder
 
     formatter = RequestFormatter(

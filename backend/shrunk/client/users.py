@@ -213,7 +213,7 @@ class UserClient:
 
         """
         user: Dict[str, Any] = self.db["users"].find_one({"netid": netid})
-        if "filterOptions" not in user:
+        if not user or "filterOptions" not in user:
             filterOptions = {
                 "show_expired_links": False,
                 "show_deleted_links": False,
