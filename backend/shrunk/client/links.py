@@ -73,7 +73,7 @@ class LinksClient:
             re.compile(regex, re.IGNORECASE) for regex in BANNED_REGEXES
         ]
         self.tracking_pixel_ui_enabled = bool(
-            os.getenv("SHRUNK_TRACKING_PIXELS_ENABLED", 0)
+            int(os.getenv("SHRUNK_TRACKING_PIXELS_ENABLED", 0))
         )
         self.other_clients = other_clients
 

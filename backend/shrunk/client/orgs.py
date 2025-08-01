@@ -16,7 +16,7 @@ class OrgsClient:
 
     def __init__(self, *, db: pymongo.database.Database):
         self.db = db
-        self.domain_enabled = bool(os.getenv("SHRUNK_DOMAINS_ENABLED", 0))
+        self.domain_enabled = bool(int(os.getenv("SHRUNK_DOMAINS_ENABLED", 0)))
 
     def get_org(self, org_id: ObjectId) -> Optional[Any]:
         """Get information about a given org

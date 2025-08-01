@@ -26,7 +26,7 @@ def login(user_info: Any) -> Any:
     types: List[str] = user_info.get("employeeType").split(";")
     netid: str = user_info.get("netid")
     twoFactorAuth = user_info.get("twoFactorAuth")
-    if not twoFactorAuth and bool(os.getenv("SHRUNK_REQUIRE_2FA"), False):
+    if not twoFactorAuth and bool(int(os.getenv("SHRUNK_REQUIRE_2FA"), 0)):
         return redirect("/app")
 
     def t(typ: str) -> bool:  # pylint: disable=invalid-name
@@ -44,7 +44,7 @@ def login(user_info: Any) -> Any:
     # get info from ACLs
     is_blacklisted = client.roles.has("blacklisted", netid)
     is_whitelisted = client.roles.has("whitelisted", netid)
-    is_super_admin = os.getenv("SHRUNK_SUPER_ADMIN")
+    is_super_admin = os.getenv("SHRUNK_SUPER_ADMIN") == netid
 
     # now make decisions regarding whether the user can login, and what privs they should get
 

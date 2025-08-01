@@ -38,7 +38,7 @@ class SecurityClient:
         self.db = db
         self.other_clients = other_clients
         self.security_measures_on = bool(
-            os.getenv("SHRUNK_GOOGLE_SAFEBROWSE_ENABLED", 0)
+            int(os.getenv("SHRUNK_GOOGLE_SAFEBROWSE_ENABLED", 0))
         )
         self.google_safe_browsing_api = os.getenv(
             "SHRUNK_GOOGLE_SAFEBROWSE_API_KEY", None

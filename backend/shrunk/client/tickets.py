@@ -29,7 +29,7 @@ class TicketsClient:
 
         :return: True if the help desk is enabled, False otherwise
         """
-        return bool(os.getenv("SHRUNK_HELP_DESK_ENABLED", 0))
+        return bool(int(os.getenv("SHRUNK_HELP_DESK_ENABLED", 0)))
 
     def get_help_desk_text(self) -> Dict[str, str]:
         """Get the text-related attributes needed for messages, emails, and
