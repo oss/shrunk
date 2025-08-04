@@ -3,7 +3,7 @@
 from typing import Any
 import functools
 
-from flask import current_app, request, session
+from flask import current_app, request, session, jsonify
 from flask_mailman import Mail
 from werkzeug.exceptions import abort
 import jsonschema
@@ -65,14 +65,66 @@ def require_token(required_permisson: str):
         def wrapper(*args, **kwargs):
             client = current_app.client
             header = request.headers.get("Authorization")
-            if not header or not header.startswith("Bearer "):
-                abort(401)
+            if not header:
+                return (
+                    jsonify(
+                        {
+                            "error": {
+                                "code": "MISSING_AUTHORIZATION",
+                                "message": "Authorization header is required",
+                                "details": "Please provide a valid Bearer token",
+                            }
+                        }
+                    ),
+                    401,
+                )
+
+            if not header.startswith("Bearer "):
+                return (
+                    jsonify(
+                        {
+                            "error": {
+                                "code": "INVALID_AUTHORIZATION_FORMAT",
+                                "message": "Invalid authorization format",
+                                "details": "Authorization header must start with 'Bearer '",
+                            }
+                        }
+                    ),
+                    401,
+                )
+
+            # Extract and validate token
             token = header.split()[1]
             token_id = client.access_tokens.verify_token(token)
             if not token_id:
-                abort(401)
+                return (
+                    jsonify(
+                        {
+                            "error": {
+                                "code": "INVALID_TOKEN",
+                                "message": "Invalid or disabled token",
+                                "details": "Please provide a valid access token",
+                            }
+                        }
+                    ),
+                    401,
+                )
+
+            # Check permissions
             if not client.access_tokens.check_permissions(token_id, required_permisson):
-                abort(403)
+                return (
+                    jsonify(
+                        {
+                            "error": {
+                                "code": "INSUFFICIENT_PERMISSIONS",
+                                "message": "Insufficient permissions",
+                                "details": f"Token requires '{required_permisson}' permission",
+                            }
+                        }
+                    ),
+                    403,
+                )
+
             return func(client, *args, **kwargs)
 
         return wrapper

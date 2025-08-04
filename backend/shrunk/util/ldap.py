@@ -34,7 +34,7 @@ def _query_netid(netid: str) -> Optional[List[Tuple[str, Dict[str, List[bytes]]]
 
 
 def is_valid_netid(netid: str) -> bool:
-    if bool(os.getenv("SHRUNK_DEV_LOGINS", 0)) and netid.startswith("DEV_"):
+    if bool(int(os.getenv("SHRUNK_DEV_LOGINS", 0))) and netid.startswith("DEV_"):
         return True
 
     if current_app.client.user_exists(netid):

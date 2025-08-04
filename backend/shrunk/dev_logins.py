@@ -21,7 +21,7 @@ def mk_dev_login(netid: str, display_name: str, role: Optional[str]) -> Any:
     """
 
     def view() -> Any:
-        if not bool(os.getenv("SHRUNK_DEV_LOGINS", 0)):
+        if not bool(int(os.getenv("SHRUNK_DEV_LOGINS", 0))):
             current_app.logger.warning(f"failed dev login with {netid}")
             abort(403)
 

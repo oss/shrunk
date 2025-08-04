@@ -253,7 +253,17 @@ def create_app(**kwargs: Any) -> Flask:
 
     app = Flask(__name__, static_url_path="/static")
     app.secret_key = os.getenv("SHRUNK_SECRET_KEY")
-    app.testing = bool(os.getenv("SHRUNK_FLASK_TESTING", 0))
+    app.testing = bool(int(os.getenv("SHRUNK_FLASK_TESTING", 0)))
+
+    app.config["SSO_LOGIN_URL"] = os.getenv("SSO_LOGIN_URL", "/login")
+    # Maybe move to env?
+    SSO_ATTRIBUTE_MAP = {
+        "SHIB_UID_1": (True, "netid"),
+        # "SHIB_UID_2": (True, "uid2"),
+        "SHIB_UID_3": (True, "employeeType"),
+        "SHIB_twoFactorAuth": (False, "twoFactorAuth"),
+    }
+    app.config["SSO_ATTRIBUTE_MAP"] = SSO_ATTRIBUTE_MAP
 
     app.json_encoder = ShrunkEncoder
 
@@ -278,7 +288,7 @@ def create_app(**kwargs: Any) -> Flask:
 
     # set up blueprints
     app.register_blueprint(views.bp)
-    if bool(os.getenv("SHRUNK_DEV_LOGINS", 0)):
+    if bool(int(os.getenv("SHRUNK_DEV_LOGINS", 0))):
         app.register_blueprint(dev_logins.bp)
     app.register_blueprint(api.link.bp)
     app.register_blueprint(api.org.bp)
@@ -353,7 +363,7 @@ def create_app(**kwargs: Any) -> Flask:
 
         # If the user is a dev user, all we need to do to log out is to clear the session,
         # which we did above.
-        if bool(os.getenv("SHRUNK_DEV_LOGINS", 0)) and netid in {
+        if bool(int(os.getenv("SHRUNK_DEV_LOGINS", 0))) and netid in {
             "DEV_USER",
             "DEV_FACSTAFF",
             "DEV_PWR_USER",
@@ -419,13 +429,15 @@ def create_app(**kwargs: Any) -> Flask:
     def get_features_flag() -> Any:
         return jsonify(
             {
-                "devLogins": bool(os.getenv("SHRUNK_DEV_LOGINS", 0)),
-                "trackingPixel": bool(os.getenv("SHRUNK_TRACKING_PIXELS_ENABLED", 0)),
-                "domains": bool(os.getenv("SHRUNK_DOMAINS_ENABLED", 0)),
-                "googleSafeBrowsing": bool(
-                    os.getenv("SHRUNK_GOOGLE_SAFEBROWSE_ENABLED", 0)
+                "devLogins": bool(int(os.getenv("SHRUNK_DEV_LOGINS", 0))),
+                "trackingPixel": bool(
+                    int(os.getenv("SHRUNK_TRACKING_PIXELS_ENABLED", 0))
                 ),
-                "helpDesk": bool(os.getenv("SHRUNK_HELP_DESK_ENABLED", 0)),
+                "domains": bool(int(os.getenv("SHRUNK_DOMAINS_ENABLED", 0))),
+                "googleSafeBrowsing": bool(
+                    int(os.getenv("SHRUNK_GOOGLE_SAFEBROWSE_ENABLED", 0))
+                ),
+                "helpDesk": bool(int(os.getenv("SHRUNK_HELP_DESK_ENABLED", 0))),
             }
         )
 
