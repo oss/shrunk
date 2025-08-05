@@ -61,11 +61,18 @@ export default function MyOrganizations({
   }, [showAll]);
 
   const onCreate = async () => {
-    await createOrg(form.getFieldValue('organization_name'));
-    message.success('Organization created successfully');
-    setIsCreateDrawerOpen(false);
-    form.resetFields();
-    await refreshOrgs();
+    try {
+      const rawName = form.getFieldValue('organization_name');
+      const cleanedName = rawName.trim().replace(/\s+/g, ' ');
+
+      await createOrg(cleanedName);
+      message.success('Organization created successfully');
+      setIsCreateDrawerOpen(false);
+      form.resetFields();
+      await refreshOrgs();
+    } catch (error) {
+      message.error('Failed to create organization.');
+    }
   };
 
   const onDeleteOrg = async (id: string) => {
