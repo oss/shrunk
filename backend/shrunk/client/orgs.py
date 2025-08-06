@@ -183,7 +183,7 @@ class OrgsClient:
                 {"$match": {"_id": org_id}},
                 {"$unwind": "$members"},
                 {"$match": {"members.is_admin": True}},
-                {"$count": "count"},
+                {"$count": "admin_count"},
             ]
         )
 
@@ -378,8 +378,9 @@ class OrgsClient:
                     "owner": 1,
                     "long_url": 1,
                     "role": 1,
+                    "deleted": 1,
                 }
-            }
+            },  
         ]
         return list(self.db.urls.aggregate(pipeline))
         

@@ -494,7 +494,8 @@ def patch_org_member(
     if "is_admin" in req:
         # Prevent the last admin from being demoted
         admin_count = client.orgs.get_admin_count(org_id)
-        if admin_count <= 1:
+
+        if req["is_admin"] == False and admin_count <= 1:
             abort(400)
 
         client.orgs.set_member_admin(org_id, member_netid, req["is_admin"])
