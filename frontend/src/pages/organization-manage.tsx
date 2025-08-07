@@ -25,6 +25,7 @@ import {
   UsersIcon,
   Link2,
   PlusCircleIcon,
+  ChartLineIcon,
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
@@ -43,6 +44,7 @@ import { Organization, OrganizationMember } from '../interfaces/organizations';
 import CollaboratorModal, { Collaborator } from '../modals/CollaboratorModal';
 import CompactLinkTable from '../components/orgs/CompactLinkTable';
 import CreateLinkDrawer from '../drawers/CreateLinkDrawer';
+import { OrgOverview } from '../components/orgs/OrgOverview';
 
 type RouteParams = {
   id: string;
@@ -59,8 +61,8 @@ interface VisitDatum {
   unique_visits: number;
 }
 
-const VALID_TABS = ['members', 'links'];
-const DEFAULT_TAB = 'analytics';
+const VALID_TABS = ['members', 'links', 'overview'];
+const DEFAULT_TAB = 'overview';
 
 function ManageOrgBase({
   userNetid,
@@ -190,6 +192,12 @@ function ManageOrgBase({
 
   const items: TabsProps['items'] = [
     {
+      key: 'overview',
+      icon: <ChartLineIcon />,
+      label: 'Overview',
+      children: <OrgOverview />,
+    },
+    {
       key: 'members',
       icon: <UsersIcon />,
       label: 'Members',
@@ -269,7 +277,7 @@ function ManageOrgBase({
       <Row gutter={[16, 16]}>
         <Col span={24}>
           <Tabs
-            defaultActiveKey="members"
+            defaultActiveKey={DEFAULT_TAB}
             items={items}
             onChange={handleTabChange}
           />

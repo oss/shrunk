@@ -300,6 +300,34 @@ def validate_netid(_netid: str, _client: ShrunkClient, req: Any) -> Any:
     return jsonify(response)
 
 
+
+@bp.route("/<ObjectId:org_id>/stats", methods=["GET"])
+@require_login
+def get_org_stats(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
+    """``GET /api/org/<org_id>/stats``
+    
+    
+    
+    Response format:
+    .. code-block:: json
+
+       { 
+         "total_links": "number",
+         "total_visits": "number",
+         "total_users": "number",
+       }
+
+    """
+    if not client.orgs.is_member(org_id, netid) and not client.roles.has("admin", netid):
+        abort(403)
+    stats = client.orgs.get_org_overall_stats(org_id)
+    if stats is None:
+        abort(404)
+    return jsonify(stats)
+    
+    
+
+
 @bp.route("/<ObjectId:org_id>/stats/visits", methods=["GET"])
 @require_login
 def get_org_visit_stats(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
@@ -309,11 +337,11 @@ def get_org_visit_stats(netid: str, client: ShrunkClient, org_id: ObjectId) -> A
 
     .. code-block:: json
 
-       { "visits": [ {
+       {
          "netid": "string",
          "total_visits": "number",
          "unique_visits": "number"
-         } ]
+         } 
        }
 
     :param netid:

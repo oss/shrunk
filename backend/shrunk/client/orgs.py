@@ -383,6 +383,41 @@ class OrgsClient:
             },  
         ]
         return list(self.db.urls.aggregate(pipeline))
+    
+    def get_org_overall_stats(self, org_id: ObjectId) -> List[Any]:
+        """Get overall stats for an org
+
+        :param org_id: The org ID
+        :returns: A list of stats for the org
+        """
+        pipeline = [
+            {"$match": {
+                "$or": [
+                    {"$and": [
+                        {"owner.type": "org"},
+                        {"owner._id": org_id}
+                    ],
+                    },
+                    {"viewers._id": org_id},
+                ]
+            }},
+            {
+                "$group": {
+                    "_id": None,
+                    "total_links": {"$sum": 1},
+                    "total_visits": {"$sum": "$visits"},
+                    "unique_visits": {"$sum": "$unique_visits"},
+                }
+            },
+            { "$project": {
+                "_id": 0,
+            }}
+        ]
+    
+        results = list(self.db.urls.aggregate(pipeline))
+        if not results or len(results) == 0:
+            return None;
+        return results[0]
         
     def get_geoip_stats(self, org_id: ObjectId) -> Any:
         def not_null(field: str) -> Any:
