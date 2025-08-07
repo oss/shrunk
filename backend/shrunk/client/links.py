@@ -158,6 +158,7 @@ class LinksClient:
         bypass_security_measures: bool = False,
         is_tracking_pixel_link: bool = False,
         extension: Optional[str] = None,
+        org_id: Optional[ObjectId] = None,
     ) -> Tuple[ObjectId, str]:
         if self.long_url_is_blocked(long_url):
             raise BadLongURLException
@@ -195,6 +196,18 @@ class LinksClient:
 
             if self.alias_is_duplicate(alias, False):
                 raise BadAliasException
+        owner = {};   
+        if org_id is not None:
+            owner = {
+                "_id": org_id,
+                "type": "org"
+            }
+        else:
+            owner = {
+                "_id": netid,
+                "type": "netid"
+            }
+            
 
         document = {
             "title": title,
@@ -206,7 +219,7 @@ class LinksClient:
             "deleted": False,
             "creator_ip": creator_ip,
             "expiration_time": expiration_time,
-            "owner": {"_id": netid, "type": "netid"},
+            "owner": owner,
             "domain": domain,
             "viewers": viewers,
             "editors": editors,

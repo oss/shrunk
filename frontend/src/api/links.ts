@@ -32,6 +32,7 @@ export async function createLink(
   alias?: string,
   expirationTime?: Dayjs,
   trackingPixelImageType?: '.png' | '.gif',
+  org_id?: string,
 ): Promise<string> {
   if (trackingPixelImageType && !isTrackingPixel) {
     throw new Error(
@@ -46,6 +47,7 @@ export async function createLink(
     long_url: url,
     expiration_time: expirationTime?.toISOString(),
     tracking_pixel_extension: trackingPixelImageType,
+    org_id: org_id,
   };
   const resp = await fetch('/api/core/link', {
     method: 'POST',

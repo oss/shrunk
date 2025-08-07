@@ -9,7 +9,15 @@ import { getLinkFromAlias } from '@/src/lib/utils';
 /**
  * Compact table for displaying organization links.
  */
-const CompactLinkTable: React.FC<{ org_id: string }> = ({ org_id }) => {
+
+interface CompactLinkTableProps {
+  org_id: string;
+  /**
+   * Pass this prop so that when a link is created the table will update
+   */
+  forceRefresh: boolean; 
+}
+const CompactLinkTable = ({ org_id, forceRefresh }: CompactLinkTableProps) => {
   const [links, setLinks] = React.useState<OrganizationLink[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -20,7 +28,7 @@ const CompactLinkTable: React.FC<{ org_id: string }> = ({ org_id }) => {
       setLoading(false);
     };
     fetchLinks();
-  }, [org_id]);
+  }, [org_id, forceRefresh]);
 
 
   const sortLinks = (links: OrganizationLink[]) => {

@@ -70,6 +70,9 @@ CREATE_LINK_SCHEMA = {
             "type": "array",
             "items": ACL_ENTRY_SCHEMA,
         },
+        "org_id": {
+            "type": "string",
+        }
     },
 }
 
@@ -117,6 +120,17 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
         )
     else:
         expiration_time = None
+        
+    if "org_id" in req:
+        try:
+            req["org_id"] = ObjectId(req["org_id"])
+        except bson.errors.InvalidId:
+            return "Invalid org id", 400
+
+        if client.orgs.get_org(req["org_id"]) is None:
+            return "No such org", 400
+        if not client.orgs.is_member(ObjectId(req["org_id"]), netid):
+            return "Not a member of the specified org", 403
 
     alias = req.get("alias", None)
 
@@ -141,6 +155,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
             bypass_security_measures=req["bypass_security_measures"],
             is_tracking_pixel_link=req["is_tracking_pixel_link"],
             extension=req["tracking_pixel_extension"],
+            org_id=req.get("org_id", None),
         )
 
     except BadLongURLException:

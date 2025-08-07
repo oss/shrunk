@@ -42,6 +42,7 @@ import { serverValidateOrgName } from '../api/validators';
 import { Organization, OrganizationMember } from '../interfaces/organizations';
 import CollaboratorModal, { Collaborator } from '../modals/CollaboratorModal';
 import CompactLinkTable from '../components/orgs/CompactLinkTable';
+import CreateLinkDrawer from '../drawers/CreateLinkDrawer';
 
 type RouteParams = {
   id: string;
@@ -74,6 +75,9 @@ function ManageOrgBase({
   const formRef = useRef<FormInstance>(null);
   const [visitStats, setVisitStats] = useState<VisitDatum[] | null>(null);
   const [activeTab, setActiveTab] = useState<string>(DEFAULT_TAB);
+  const [showCreateLinkDrawer, setShowCreateLinkDrawer] = useState(false);
+  const [forceRefresh, setForceRefresh] = useState(false);
+
 
   const refreshOrganization = async () => {
     const [info, visitData] = await Promise.all([
@@ -202,7 +206,7 @@ function ManageOrgBase({
       key: 'links',
       icon: <Link2 />,
       label: 'Links',
-      children: <CompactLinkTable org_id={organization.id} />,
+      children: <CompactLinkTable org_id={organization.id} forceRefresh={forceRefresh} />,
     },
   ];
 
@@ -222,7 +226,9 @@ function ManageOrgBase({
                 Collaborate
               </Button>
             )}
-            <Button type="primary" icon={<PlusCircleIcon />}>
+            <Button type="primary" icon={<PlusCircleIcon />}
+              onClick={() => setShowCreateLinkDrawer(true)}
+            >
               Create
             </Button>
             <Dropdown
@@ -381,6 +387,18 @@ function ManageOrgBase({
         onCancel={() => setShareModalVisible(false)}
         onOk={() => setShareModalVisible(false)}
       />
+      <CreateLinkDrawer onCancel={() => setShowCreateLinkDrawer(false)}
+      visible={showCreateLinkDrawer}
+      title="Create a link"
+      userOrgs={[]} // Im not sure what this is used for but it doesn't seem to be used in the drawer
+      onFinish={async() => {
+        setShowCreateLinkDrawer(false);
+        setForceRefresh(!forceRefresh);
+      }}
+      userPrivileges={userPrivileges}
+      org_id={match.params.id}
+      />
+
     </>
   );
 }
