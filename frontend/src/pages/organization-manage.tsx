@@ -214,7 +214,7 @@ function ManageOrgBase({
       key: 'links',
       icon: <Link2 />,
       label: 'Links',
-      children: <CompactLinkTable org_id={organization.id} forceRefresh={forceRefresh} />,
+      children: <CompactLinkTable org_id={organization.id} forceRefresh={forceRefresh} isAdmin={organization.is_admin} />,
     },
   ];
 

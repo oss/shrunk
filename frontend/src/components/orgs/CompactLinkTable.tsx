@@ -1,5 +1,5 @@
 import type { ColumnsType } from 'antd/lib/table';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Table, Flex, Tooltip, Button, message } from 'antd/lib';
 import {
   EditIcon,
@@ -8,10 +8,14 @@ import {
   Trash2Icon,
   Copy,
   UsersIcon,
+  UserRoundCheckIcon,
+  UserPlusIcon,
 } from 'lucide-react';
 import { OrganizationLink } from '../../interfaces/organizations';
 import { getOrganizationLinks } from '../../api/organization';
 import { getLinkFromAlias } from '@/src/lib/utils';
+import TransferToNetIdModal from '@/src/modals/TransferToNetIdModal';
+import { editLink } from '@/src/api/links';
 
 /**
  * Compact table for displaying organization links.
@@ -23,20 +27,36 @@ interface CompactLinkTableProps {
    * Pass this prop so that when a link is created the table will update
    */
   forceRefresh: boolean;
+  isAdmin?: boolean;
 }
-const CompactLinkTable = ({ org_id, forceRefresh }: CompactLinkTableProps) => {
-  const [links, setLinks] = React.useState<OrganizationLink[]>([]);
-  const [loading, setLoading] = React.useState(true);
-
+const CompactLinkTable = ({ org_id, forceRefresh, isAdmin }: CompactLinkTableProps) => {
+  const [links, setLinks] = useState<OrganizationLink[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [transferModalVisible, setTransferModalVisible] = useState(false);
+  const [selectedLinkId, setSelectedLinkId] = useState<string>('');
+  const fetchLinks = async () => {
+    const resp = await getOrganizationLinks(org_id);
+    setLinks(resp);
+    setLoading(false);
+  };
   useEffect(() => {
-    const fetchLinks = async () => {
-      const resp = await getOrganizationLinks(org_id);
-      setLinks(resp);
-      setLoading(false);
-    };
     fetchLinks();
   }, [org_id, forceRefresh]);
 
+
+  const transferLinkOwnership = async (netid: string, link_id: string) => {
+
+    try{
+      await editLink(link_id, { owner: {type: "netid", _id: netid} });
+      message.success('Link ownership transferred successfully');
+    } catch (error) {
+      message.error('Error transferring link ownership');
+    }
+    setTransferModalVisible(false);
+    setLoading(true);
+    await fetchLinks();
+    
+  }
   const sortLinks = (links: OrganizationLink[]) => {
     const roleOrder = ['owner', 'editor', 'viewer'];
     const nonDeleted = links.filter((link) => !link.deleted);
@@ -130,7 +150,18 @@ const CompactLinkTable = ({ org_id, forceRefresh }: CompactLinkTableProps) => {
               </Tooltip>
             </>
           )}
-
+          {link.owner._id === org_id && !link.deleted && isAdmin && (
+            <Tooltip title="Transfer ownership">
+              <Button
+                icon={<UserPlusIcon />}
+                type="text"
+                onClick={() => {
+                  setTransferModalVisible(true);
+                  setSelectedLinkId(link._id);
+                }}
+              />
+            </Tooltip>
+          )}
           <Tooltip title={link.deleted ? 'Link is deleted' : 'Delete link'}>
             <Button
               icon={<Trash2Icon />}
@@ -158,6 +189,15 @@ const CompactLinkTable = ({ org_id, forceRefresh }: CompactLinkTableProps) => {
         }}
         scroll={{ x: 'max-content' }}
         size="small"
+      />
+      <TransferToNetIdModal
+        visible={transferModalVisible}
+        onCancel={() => {
+          setTransferModalVisible(false);
+          setSelectedLinkId('');
+        }}
+        onOk={transferLinkOwnership}
+        link_id={selectedLinkId}
       />
     </>
   );

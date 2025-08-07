@@ -285,6 +285,12 @@ class LinksClient:
                         "timestamp": datetime.now(timezone.utc),
                     },
                 }
+                if link_info["owner"]["type"] == "org":
+                    # Push org to editors since it is no longer owner
+                    update["$push"] = {
+                        "editors": {"_id": link_info["owner"]["_id"], "type": "org"},
+                        "viewers": {"_id": link_info["owner"]["_id"], "type": "org"},
+                    }
             else:
                 orgInfo = self.other_clients.orgs.get_org(ObjectId(owner["_id"]))
                 if orgInfo == None:
@@ -311,12 +317,7 @@ class LinksClient:
                         "editors": {"_id": ObjectId(owner["_id"])},
                         "viewers": {"_id": ObjectId(owner["_id"])}
                     }
-                    
-                    # Remove the org from editors and viewers list
-                    update["$pull"] = {
-                        "editors": {"_id": ObjectId(owner["_id"])},
-                        "viewers": {"_id": ObjectId(owner["_id"])}
-                    }
+
 
                 else:
                     raise NotUserOrOrg(
