@@ -195,7 +195,7 @@ function ManageOrgBase({
       key: 'overview',
       icon: <ChartLineIcon />,
       label: 'Overview',
-      children: <OrgOverview />,
+      children: <OrgOverview totalMembers={organization.members.length} orgId={organization.id} />,
     },
     {
       key: 'members',

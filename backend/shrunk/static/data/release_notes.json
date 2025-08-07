@@ -5,7 +5,7 @@
     "patch": 0,
     "projectDirector": "ah1371",
     "date": "TODO",
-    "description": "The new public API for faculty developers, real-time notifications, continued codebase cleanup, and testing suite update.",
+    "description": "The new public API for faculty developers, real-time notifications, continued codebase cleanup, testing suite update and organization page updates.",
     "categories": {
       "features": [
         {
@@ -35,6 +35,9 @@
           "text": "New page containing an API Reference for the public API",
           "contributors": ["ah1371"],
           "product": "public-api"
+        },
+        {
+          "text": "New pages in an organization's dashboard: Overview and Links allows organizations to quickly view and manage their links and tracking pixels"
         }
       ],
       "improvements": [
@@ -135,29 +138,6 @@
           "text": "Phishing links can no longer be bypassed via API routes initially used for testing",
           "contributors": ["ah1371"]
         }
-      ]
-    }
-  },
-  {
-    "major": 3,
-    "minor": 0,
-    "patch": 4,
-    "projectDirector": "ah1371",
-    "date": "4-23-2025",
-    "description": "Organization and User Improvements.",
-    "categories": {
-      "features": [ {
-        "text": "Guest university members can be given temporary access to Shrunk by organization admins via the organization dashboard",
-        "contributors": ["ak2399"]
-      }],
-      "improvements": [
-        {
-          "text": "Organizations can now fully own links",
-          "contributors": ["ak2399"]
-        }
-      ],
-      "fixes": [
-        
       ]
     }
   },

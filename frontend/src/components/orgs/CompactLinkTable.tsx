@@ -1,7 +1,14 @@
 import type { ColumnsType } from 'antd/lib/table';
 import React, { useEffect, useMemo } from 'react';
 import { Table, Flex, Tooltip, Button, message } from 'antd/lib';
-import { EditIcon, EyeIcon, QrCodeIcon, Trash2Icon, Copy } from 'lucide-react';
+import {
+  EditIcon,
+  EyeIcon,
+  QrCodeIcon,
+  Trash2Icon,
+  Copy,
+  UsersIcon,
+} from 'lucide-react';
 import { OrganizationLink } from '../../interfaces/organizations';
 import { getOrganizationLinks } from '../../api/organization';
 import { getLinkFromAlias } from '@/src/lib/utils';
@@ -15,7 +22,7 @@ interface CompactLinkTableProps {
   /**
    * Pass this prop so that when a link is created the table will update
    */
-  forceRefresh: boolean; 
+  forceRefresh: boolean;
 }
 const CompactLinkTable = ({ org_id, forceRefresh }: CompactLinkTableProps) => {
   const [links, setLinks] = React.useState<OrganizationLink[]>([]);
@@ -30,11 +37,10 @@ const CompactLinkTable = ({ org_id, forceRefresh }: CompactLinkTableProps) => {
     fetchLinks();
   }, [org_id, forceRefresh]);
 
-
   const sortLinks = (links: OrganizationLink[]) => {
-    const roleOrder = ["owner", "editor", "viewer"];
-    const nonDeleted = links.filter(link => !link.deleted);
-    const deleted = links.filter(link => link.deleted);
+    const roleOrder = ['owner', 'editor', 'viewer'];
+    const nonDeleted = links.filter((link) => !link.deleted);
+    const deleted = links.filter((link) => link.deleted);
     nonDeleted.sort((a, b) => {
       return roleOrder.indexOf(a.role) - roleOrder.indexOf(b.role);
     });
@@ -42,7 +48,7 @@ const CompactLinkTable = ({ org_id, forceRefresh }: CompactLinkTableProps) => {
       return roleOrder.indexOf(a.role) - roleOrder.indexOf(b.role);
     });
     return [...nonDeleted, ...deleted];
-  }
+  };
   const sortedLinks = useMemo(() => sortLinks(links), [links]);
 
   const columns: ColumnsType<OrganizationLink> = [
@@ -104,16 +110,28 @@ const CompactLinkTable = ({ org_id, forceRefresh }: CompactLinkTableProps) => {
               </Tooltip>
             </>
           )}
-          <Tooltip title="Edit link">
-            <Button
-              icon={<EditIcon />}
-              type="text"
-              href={`/app/links/${link._id}?mode=edit`}
-              target="_blank"
-              disabled={!link.canEdit}
-            />
-          </Tooltip>
-          <Tooltip title={link.deleted ? "Link is deleted" : "Delete link"}>
+          {link.canEdit && (
+            <>
+              <Tooltip title="Edit link">
+                <Button
+                  icon={<EditIcon />}
+                  type="text"
+                  href={`/app/links/${link._id}?mode=edit`}
+                  target="_blank"
+                />
+              </Tooltip>
+              <Tooltip title="Share link permissions">
+                <Button
+                  icon={<UsersIcon />}
+                  type="text"
+                  href={`/app/links/${link._id}?mode=collaborate`}
+                  target="_blank"
+                />
+              </Tooltip>
+            </>
+          )}
+
+          <Tooltip title={link.deleted ? 'Link is deleted' : 'Delete link'}>
             <Button
               icon={<Trash2Icon />}
               type="text"

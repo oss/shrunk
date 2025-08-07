@@ -43,3 +43,9 @@ export interface OrganizationLink {
   role: "viewer" | "editor" | "owner";
   deleted: boolean;
 }
+
+export interface OrganizationStats {
+  total_links: number;
+  total_visits: number;
+  unique_visits: number;
+}

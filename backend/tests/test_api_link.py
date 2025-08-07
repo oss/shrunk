@@ -148,6 +148,35 @@ def test_create_link_expiration(client: Client) -> None:
         assert resp.headers["Location"] == "https://example.com"
 
 
+def test_create_link_org(client: Client) -> None:
+
+    with dev_login(client, "admin"):
+        resp = client.post("/api/core/org", json={"name": "testorg10"})
+        assert resp.status_code == 201
+        org_id = resp.json["id"]
+        
+        resp = client.post(
+            "/api/core/link",
+            json={
+                "long_url": "https://example.com",
+                "org_id": org_id,
+            },
+        )
+        assert resp.status_code == 201
+        link_id = resp.json["id"]
+        alias = resp.json["alias"]
+
+        # Check that the link redirects correctly
+        resp = client.get(f"/{alias}")
+        assert resp.status_code == 302
+        assert resp.headers["Location"] == "https://example.com"
+
+        resp = client.get(f"/api/core/link/{link_id}")
+        assert resp.status_code == 200
+        assert resp.json["owner"]["id"] == org_id
+        assert resp.json["owner"]["type"] == "org"
+        assert resp.json["org_name"] == "testorg10"
+
 def test_create_link_bad_long_url(client: Client) -> None:
     """Test that we cannot create a link with a banned long url."""
 
