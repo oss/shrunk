@@ -41,4 +41,5 @@ export interface OrganizationLink {
   canEdit: boolean;
   owner: { _id: string; type: string, org_name: string };
   role: "viewer" | "editor" | "owner";
+  deleted: boolean;
 }

@@ -23,7 +23,8 @@ import {
   TrashIcon,
   UserMinusIcon,
   UsersIcon,
-  Link2
+  Link2,
+  PlusCircleIcon,
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
@@ -38,13 +39,8 @@ import {
   setAdminStatusOrganization,
 } from '../api/organization';
 import { serverValidateOrgName } from '../api/validators';
-import {
-  Organization,
-  OrganizationMember,
-} from '../interfaces/organizations';
-import CollaboratorModal, {
-  Collaborator,
-} from '../modals/CollaboratorModal';
+import { Organization, OrganizationMember } from '../interfaces/organizations';
+import CollaboratorModal, { Collaborator } from '../modals/CollaboratorModal';
 import CompactLinkTable from '../components/orgs/CompactLinkTable';
 
 type RouteParams = {
@@ -77,9 +73,8 @@ function ManageOrgBase({
   const [editModalVisible, setEditModalVisible] = useState(false);
   const formRef = useRef<FormInstance>(null);
   const [visitStats, setVisitStats] = useState<VisitDatum[] | null>(null);
-  const [activeTab, setActiveTab] = useState<string>(DEFAULT_TAB)
+  const [activeTab, setActiveTab] = useState<string>(DEFAULT_TAB);
 
-  
   const refreshOrganization = async () => {
     const [info, visitData] = await Promise.all([
       getOrganization(match.params.id),
@@ -133,7 +128,7 @@ function ManageOrgBase({
     if (VALID_TABS.includes(key)) {
       setActiveTab(key);
     }
-  }
+  };
 
   const onEditOrganization = async () => {
     setEditModalVisible(true);
@@ -145,10 +140,6 @@ function ManageOrgBase({
 
   const isAdmin = organization.is_admin || userPrivileges.has('admin');
   const userMayNotLeave = organization.is_admin && adminsCount === 1;
-
-
-  
-
 
   const columns = [
     {
@@ -175,6 +166,16 @@ function ManageOrgBase({
       },
     },
     {
+      title: 'Role',
+      key: 'role',
+      render: (record: OrganizationMember) => (
+        <Typography.Text>
+          {record.is_admin ? 'Admin' : 'Member'}
+        </Typography.Text>
+      ),
+      width: '10%',
+    },
+    {
       title: 'Date Added',
       dataIndex: 'timeCreated',
       key: 'timeCreated',
@@ -190,20 +191,20 @@ function ManageOrgBase({
       label: 'Members',
       children: (
         <Table
-            dataSource={organization.members}
-            columns={columns}
-            rowKey="netid"
-            pagination={false}
-          />
-      )
+          dataSource={organization.members}
+          columns={columns}
+          rowKey="netid"
+          pagination={false}
+        />
+      ),
     },
     {
       key: 'links',
       icon: <Link2 />,
       label: 'Links',
-      children: <CompactLinkTable org_id={organization.id} />
+      children: <CompactLinkTable org_id={organization.id} />,
     },
-  ]
+  ];
 
   return (
     <>
@@ -221,7 +222,9 @@ function ManageOrgBase({
                 Collaborate
               </Button>
             )}
-
+            <Button type="primary" icon={<PlusCircleIcon />}>
+              Create
+            </Button>
             <Dropdown
               placement="bottomRight"
               menu={{

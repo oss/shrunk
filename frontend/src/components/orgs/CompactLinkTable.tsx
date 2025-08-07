@@ -1,10 +1,14 @@
 import type { ColumnsType } from 'antd/lib/table';
-import React, { useEffect } from 'react';
-import { Table, Flex, Tooltip, Button } from 'antd/lib';
-import { EyeIcon } from 'lucide-react';
+import React, { useEffect, useMemo } from 'react';
+import { Table, Flex, Tooltip, Button, message } from 'antd/lib';
+import { EditIcon, EyeIcon, QrCodeIcon, Trash2Icon, Copy } from 'lucide-react';
 import { OrganizationLink } from '../../interfaces/organizations';
 import { getOrganizationLinks } from '../../api/organization';
+import { getLinkFromAlias } from '@/src/lib/utils';
 
+/**
+ * Compact table for displaying organization links.
+ */
 const CompactLinkTable: React.FC<{ org_id: string }> = ({ org_id }) => {
   const [links, setLinks] = React.useState<OrganizationLink[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -17,6 +21,21 @@ const CompactLinkTable: React.FC<{ org_id: string }> = ({ org_id }) => {
     };
     fetchLinks();
   }, [org_id]);
+
+
+  const sortLinks = (links: OrganizationLink[]) => {
+    const roleOrder = ["owner", "editor", "viewer"];
+    const nonDeleted = links.filter(link => !link.deleted);
+    const deleted = links.filter(link => link.deleted);
+    nonDeleted.sort((a, b) => {
+      return roleOrder.indexOf(a.role) - roleOrder.indexOf(b.role);
+    });
+    deleted.sort((a, b) => {
+      return roleOrder.indexOf(a.role) - roleOrder.indexOf(b.role);
+    });
+    return [...nonDeleted, ...deleted];
+  }
+  const sortedLinks = useMemo(() => sortLinks(links), [links]);
 
   const columns: ColumnsType<OrganizationLink> = [
     {
@@ -41,7 +60,7 @@ const CompactLinkTable: React.FC<{ org_id: string }> = ({ org_id }) => {
       render: (role: string) => role.charAt(0).toUpperCase() + role.slice(1),
     },
     {
-      title: 'Actions',
+      title: () => <Flex justify="flex-end">Actions</Flex>,
       key: 'actions',
       render: (text: string, link: OrganizationLink) => (
         <Flex justify="flex-end">
@@ -51,6 +70,49 @@ const CompactLinkTable: React.FC<{ org_id: string }> = ({ org_id }) => {
               type="text"
               href={`/app/links/${link._id}`}
               target="_blank"
+            />
+          </Tooltip>
+          {link.deleted ? (
+            ''
+          ) : (
+            <>
+              <Tooltip title="Copy link">
+                <Button
+                  icon={<Copy />}
+                  type="text"
+                  onClick={() => {
+                    navigator.clipboard.writeText(getLinkFromAlias(link.alias));
+                    message.success('Link copied to clipboard');
+                  }}
+                />
+              </Tooltip>
+              <Tooltip title="Access qr code">
+                <Button
+                  icon={<QrCodeIcon />}
+                  type="text"
+                  href={`/app/links/${link._id}?mode=qrcode`}
+                  target="_blank"
+                />
+              </Tooltip>
+            </>
+          )}
+          <Tooltip title="Edit link">
+            <Button
+              icon={<EditIcon />}
+              type="text"
+              href={`/app/links/${link._id}?mode=edit`}
+              target="_blank"
+              disabled={!link.canEdit}
+            />
+          </Tooltip>
+          <Tooltip title={link.deleted ? "Link is deleted" : "Delete link"}>
+            <Button
+              icon={<Trash2Icon />}
+              type="text"
+              danger
+              href={`/app/links/${link._id}?mode=edit`}
+              target="_blank"
+              disabled={link.owner._id !== org_id || link.deleted}
             />
           </Tooltip>
         </Flex>
@@ -63,7 +125,7 @@ const CompactLinkTable: React.FC<{ org_id: string }> = ({ org_id }) => {
       <Table
         loading={loading}
         columns={columns}
-        dataSource={links}
+        dataSource={sortedLinks}
         pagination={{
           position: ['bottomCenter'],
           pageSize: 10,
