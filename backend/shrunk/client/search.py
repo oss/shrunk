@@ -275,7 +275,7 @@ class SearchClient:
                 expiration_time = None
 
             prepared = {
-                "id": res["_id"],
+                "_id": res["_id"],
                 "title": res["title"],
                 "long_url": res["long_url"],
                 "created_time": res["timeCreated"],
@@ -308,7 +308,7 @@ class SearchClient:
         results = [prepare_result(res) for res in result["result"]]
 
         # Remove possible duplicates in results and update total count
-        unique = {each["id"]: each for each in results}.values()
+        unique = {each["_id"]: each for each in results}.values()
         unique_results = list(unique)
         diff = len(results) - len(unique_results)
         count = count - diff

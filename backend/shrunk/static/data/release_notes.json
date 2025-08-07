@@ -23,10 +23,6 @@
           "product": "public-api"
         },
         {
-          "text": "Organizations can now own a link or tracking pixel",
-          "contributors": ["ah1371"]
-        },
-        {
           "text": "Organizations can access our public API to create links and tracking pixels",
           "contributors": ["ah1371"],
           "product": "public-api"
@@ -37,8 +33,14 @@
           "product": "public-api"
         },
         {
-          "text": "New pages in an organization's dashboard: Overview and Links allows organizations to quickly view and manage their links and tracking pixels"
+          "text": "New pages in an organization's dashboard: Overview and Links allows organizations to quickly view and manage their links and tracking pixels",
+          "contributors": ["ak2399"]
+        },
+        {
+          "text": "Organizations can now own a link or tracking pixel",
+          "contributors": ["ak2399"]
         }
+
       ],
       "improvements": [
          {
