@@ -288,7 +288,7 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
     if "expiration_time" in req and req["expiration_time"] is not None:
         req["expiration_time"] = datetime.fromisoformat(req["expiration_time"])
     try:
-        client.links.get_link_info(link_id)
+        link = client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
 
@@ -297,13 +297,16 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
     ):
         abort(403)
     if "owner" in req:
-        if req["owner"]["type"] == "netid" and not is_valid_netid(req["owner"]["_id"]):
-            abort(400)
+        if req["owner"]["type"] == "netid":
+            if not is_valid_netid(req["owner"]["_id"]):
+                abort(400)
+            if link["owner"]["type"] == "org" and not client.orgs.is_admin(link["owner"]["_id"], netid):
+                abort(403)
         elif req["owner"]["type"] == "org" and not client.orgs.get_org(
             ObjectId(req["owner"]["_id"])
         ):
             abort(400)
-
+    
     try:
         client.links.modify(
             link_id,
