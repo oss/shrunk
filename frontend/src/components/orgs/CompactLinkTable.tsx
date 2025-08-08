@@ -162,16 +162,20 @@ const CompactLinkTable = ({
               />
             </Tooltip>
           )}
-          <Tooltip title={link.deleted ? 'Link is deleted' : 'Delete link'}>
-            <Button
-              icon={<Trash2Icon />}
-              type="text"
-              danger
-              href={`/app/links/${link._id}?mode=edit`}
-              target="_blank"
-              disabled={link.owner._id !== org_id || link.deleted}
-            />
-          </Tooltip>
+          {isAdmin && (
+            <>
+              <Tooltip title={link.deleted ? 'Link is deleted' : 'Delete link'}>
+                <Button
+                  icon={<Trash2Icon />}
+                  type="text"
+                  danger
+                  href={`/app/links/${link._id}?mode=edit`}
+                  target="_blank"
+                  disabled={link.owner._id !== org_id || link.deleted}
+                />
+              </Tooltip>
+            </>
+          )}
         </Flex>
       ),
     },
