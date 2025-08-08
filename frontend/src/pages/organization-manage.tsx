@@ -81,15 +81,15 @@ function ManageOrgBase({
   const [forceRefresh, setForceRefresh] = useState(false);
 
   const refreshOrganization = async () => {
-    const [info, visitData] = await Promise.all([
-      getOrganization(match.params.id),
-      getOrganizationVisits(match.params.id),
-    ]);
+    const info = await getOrganization(match.params.id);
+    if (info.is_admin || userPrivileges.has('admin')) {
+      const visitData = await getOrganizationVisits(match.params.id);
+      setVisitStats(visitData.visits);
+    }
 
     const adminCount = info.members.filter((member) => member.is_admin).length;
     setOrganization(info);
     setAdminsCount(adminCount);
-    setVisitStats(visitData.visits);
   };
 
   useEffect(() => {
@@ -208,7 +208,7 @@ function ManageOrgBase({
       children: (
         <Table
           dataSource={organization.members}
-          columns={columns}
+          columns={columns.filter((col, index) => index !== 1 && index !== 2)}
           rowKey="netid"
           pagination={false}
         />
