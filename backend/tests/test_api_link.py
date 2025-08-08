@@ -94,58 +94,58 @@ def test_link(client: Client) -> None:  # pylint: disable=too-many-statements
         assert resp.status_code == 404
 
 
-# def test_create_link_expiration(client: Client) -> None:
-#     """
-#     Test that we can create a link with an expiration time.
+def test_create_link_expiration(client: Client) -> None:
+    """
+    Test that we can create a link with an expiration time.
 
-#     With the implementation of verifying links with Google Safe Browsing API,
-#     this test would fail due to the fact that the link expired too fast
-#     because the API needed time to respond. If there were recent changes to
-#     the link creation pipeline and this test fails, try increasing the link
-#     expiration time so that links don't expire before they are tested.
+    With the implementation of verifying links with Google Safe Browsing API,
+    this test would fail due to the fact that the link expired too fast
+    because the API needed time to respond. If there were recent changes to
+    the link creation pipeline and this test fails, try increasing the link
+    expiration time so that links don't expire before they are tested.
 
-#     """
+    """
 
-#     with dev_login(client, "admin"):
-#         # Create a link that expires 400 ms in the future
-#         expiration_time = datetime.now(timezone.utc) + timedelta(milliseconds=400)
-#         resp = client.post(
-#             "/api/core/link",
-#             json={
-#                 "long_url": "https://example.com",
-#                 "expiration_time": expiration_time.isoformat(),
-#             },
-#         )
+    with dev_login(client, "admin"):
+        # Create a link that expires 400 ms in the future
+        expiration_time = datetime.now(timezone.utc) + timedelta(milliseconds=400)
+        resp = client.post(
+            "/api/core/link",
+            json={
+                "long_url": "https://example.com",
+                "expiration_time": expiration_time.isoformat(),
+            },
+        )
 
-#         assert resp.status_code == 201
-#         link_id = resp.json["id"]
-#         alias0 = resp.json["alias"]
+        assert resp.status_code == 201
+        link_id = resp.json["id"]
+        alias0 = resp.json["alias"]
 
-#         # Check that alias0 redirects correctly
-#         resp = client.get(f"/{alias0}")
-#         assert resp.status_code == 302
-#         assert resp.headers["Location"] == "https://example.com"
+        # Check that alias0 redirects correctly
+        resp = client.get(f"/{alias0}")
+        assert resp.status_code == 302
+        assert resp.headers["Location"] == "https://example.com"
 
-#         # Sleep 5 seconds
-#         time.sleep(5)
+        # Sleep 5 seconds
+        time.sleep(5)
 
-#         # Check that alias0 no longer exists
-#         resp = client.get(f"/{alias0}")
-#         assert resp.status_code == 404
+        # Check that alias0 no longer exists
+        resp = client.get(f"/{alias0}")
+        assert resp.status_code == 404
 
-#         # Unset the link expiration time
-#         resp = client.patch(
-#             f"/api/core/link/{link_id}",
-#             json={
-#                 "expiration_time": None,
-#             },
-#         )
-#         assert resp.status_code == 204
+        # Unset the link expiration time
+        resp = client.patch(
+            f"/api/core/link/{link_id}",
+            json={
+                "expiration_time": None,
+            },
+        )
+        assert resp.status_code == 204
 
-#         # Check that alias0 redirects correctly
-#         resp = client.get(f"/{alias0}")
-#         assert resp.status_code == 302
-#         assert resp.headers["Location"] == "https://example.com"
+        # Check that alias0 redirects correctly
+        resp = client.get(f"/{alias0}")
+        assert resp.status_code == 302
+        assert resp.headers["Location"] == "https://example.com"
 
 
 def test_create_link_org(client: Client) -> None:
