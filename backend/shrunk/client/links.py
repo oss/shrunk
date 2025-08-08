@@ -280,7 +280,7 @@ class LinksClient:
                 fields["owner"] = {"_id": owner["_id"], "type": "netid"}
                 update["$push"] = {
                     "ownership_transfer_history": {
-                        "from": link_info["owner"]["_id"],
+                        "from": link_info["owner"],
                         "to": {"_id": owner["_id"], "type": "netid"},
                         "timestamp": datetime.now(timezone.utc),
                     },
@@ -605,7 +605,7 @@ class LinksClient:
         result = self.db.urls.find_one(
             {
                 "$or": [
-                    {"_id": link_id, "netid": netid},  # owner
+                    {"_id": link_id, "owner._id": netid},  # owner
                     {  # editor
                         "_id": link_id,
                         "editors": {"$elemMatch": {"_id": netid}},
