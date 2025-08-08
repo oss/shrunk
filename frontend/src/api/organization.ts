@@ -59,11 +59,15 @@ export async function getOrganizationLinks(
 }
 
 export async function createOrg(name: string): Promise<void> {
-  await fetch('/api/core/org', {
+  const res = await fetch('/api/core/org', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name }),
   });
+
+  if (!res.ok) {
+    throw new Error('Failed to create organization');
+  }
 }
 
 export async function hasAssociatedUrls(id: string): Promise<boolean> {

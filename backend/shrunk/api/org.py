@@ -78,7 +78,7 @@ CREATE_ORG_SCHEMA = {
     "properties": {
         "name": {
             "type": "string",
-            "pattern": "^[a-zA-Z0-9_.,-]*$",
+            "pattern": r"^[a-zA-Z0-9_.,\- ]*$",
             "minLength": 1,
         },
     },
