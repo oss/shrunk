@@ -149,7 +149,6 @@ def test_create_link_expiration(client: Client) -> None:
 
 
 def test_create_link_org(client: Client) -> None:
-
     """
     Test that we can create a link with an organization as the owner.
     """
