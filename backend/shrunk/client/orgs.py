@@ -306,25 +306,25 @@ class OrgsClient:
         ]
 
         return list(self.db.organizations.aggregate(pipeline))
-    
+
     def get_links(self, org_id: ObjectId) -> List[Any]:
         """Get all links associated with an org
 
         :param org_id: The org ID
         :returns: A list of links associated with the org
         """
-        
+
         pipeline = [
-            {"$match": {
-                "$or": [
-                    {"$and": [
-                        {"owner.type": "org"},
-                        {"owner._id": org_id}
-                    ],
-                    },
-                    {"viewers._id": org_id},
-                ]
-            }},
+            {
+                "$match": {
+                    "$or": [
+                        {
+                            "$and": [{"owner.type": "org"}, {"owner._id": org_id}],
+                        },
+                        {"viewers._id": org_id},
+                    ]
+                }
+            },
             {
                 "$lookup": {
                     "from": "organizations",
@@ -340,14 +340,14 @@ class OrgsClient:
                             "if": {
                                 "$or": [
                                     {"$eq": ["$owner._id", org_id]},
-                                    {"$in": [org_id, "$editors._id"]}
+                                    {"$in": [org_id, "$editors._id"]},
                                 ]
                             },
                             "then": True,
-                            "else": False
+                            "else": False,
                         }
                     },
-                    "role" : {
+                    "role": {
                         "$cond": {
                             "if": {"$eq": ["$owner._id", org_id]},
                             "then": "owner",
@@ -355,18 +355,18 @@ class OrgsClient:
                                 "$cond": {
                                     "if": {"$in": [org_id, "$editors._id"]},
                                     "then": "editor",
-                                    "else" : "viewer"
+                                    "else": "viewer",
                                 }
-                            }
+                            },
                         }
                     },
                     "owner.org_name": {
                         "$cond": [
                             {"$eq": ["$owner.type", "org"]},
                             {"$first": "$owner_org.name"},
-                            "$owner._id"
+                            "$owner._id",
                         ]
-                    }
+                    },
                 }
             },
             {
@@ -380,10 +380,10 @@ class OrgsClient:
                     "role": 1,
                     "deleted": 1,
                 }
-            },  
+            },
         ]
         return list(self.db.urls.aggregate(pipeline))
-    
+
     def get_org_overall_stats(self, org_id: ObjectId) -> List[Any]:
         """Get overall stats for an org
 
@@ -391,16 +391,16 @@ class OrgsClient:
         :returns: A list of stats for the org
         """
         pipeline = [
-            {"$match": {
-                "$or": [
-                    {"$and": [
-                        {"owner.type": "org"},
-                        {"owner._id": org_id}
-                    ],
-                    },
-                    {"viewers._id": org_id},
-                ]
-            }},
+            {
+                "$match": {
+                    "$or": [
+                        {
+                            "$and": [{"owner.type": "org"}, {"owner._id": org_id}],
+                        },
+                        {"viewers._id": org_id},
+                    ]
+                }
+            },
             {
                 "$group": {
                     "_id": None,
@@ -409,16 +409,18 @@ class OrgsClient:
                     "unique_visits": {"$sum": "$unique_visits"},
                 }
             },
-            { "$project": {
-                "_id": 0,
-            }}
+            {
+                "$project": {
+                    "_id": 0,
+                }
+            },
         ]
-    
+
         results = list(self.db.urls.aggregate(pipeline))
         if not results or len(results) == 0:
-            return None;
+            return None
         return results[0]
-        
+
     def get_geoip_stats(self, org_id: ObjectId) -> Any:
         def not_null(field: str) -> Any:
             return [{"$match": {field: {"$exists": True, "$ne": None}}}]

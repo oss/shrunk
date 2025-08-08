@@ -196,18 +196,11 @@ class LinksClient:
 
             if self.alias_is_duplicate(alias, False):
                 raise BadAliasException
-        owner = {};   
+        owner = {}
         if org_id is not None:
-            owner = {
-                "_id": org_id,
-                "type": "org"
-            }
+            owner = {"_id": org_id, "type": "org"}
         else:
-            owner = {
-                "_id": netid,
-                "type": "netid"
-            }
-            
+            owner = {"_id": netid, "type": "netid"}
 
         document = {
             "title": title,
@@ -298,9 +291,9 @@ class LinksClient:
                         f"{owner} is not a valid org. can't transfer ownership"
                     )
 
-            
-
-                if self.other_clients.orgs.is_member(ObjectId(orgInfo["_id"]), link_info["owner"]["_id"]):
+                if self.other_clients.orgs.is_member(
+                    ObjectId(orgInfo["_id"]), link_info["owner"]["_id"]
+                ):
                     fields["owner"] = {"_id": ObjectId(owner["_id"]), "type": "org"}
                     update["$push"] = {
                         "ownership_transfer_history": {
@@ -315,9 +308,8 @@ class LinksClient:
                     # Remove the org from editors and viewers list since it is now owner
                     update["$pull"] = {
                         "editors": {"_id": ObjectId(owner["_id"])},
-                        "viewers": {"_id": ObjectId(owner["_id"])}
+                        "viewers": {"_id": ObjectId(owner["_id"])},
                     }
-
 
                 else:
                     raise NotUserOrOrg(
@@ -569,7 +561,9 @@ class LinksClient:
             raise NoSuchObjectException
         if result["owner"]["type"] == "netid":
             return result["owner"]["_id"] == netid
-        elif self.other_clients.orgs.is_admin(ObjectId(result["owner"]["_id"]), netid): #Org admins have "owner" permissions
+        elif self.other_clients.orgs.is_admin(
+            ObjectId(result["owner"]["_id"]), netid
+        ):  # Org admins have "owner" permissions
             return True
         return False
 
@@ -579,24 +573,26 @@ class LinksClient:
 
         orgs = self.other_clients.orgs.get_orgs(netid, True)
         orgs = [org["id"] for org in orgs]
-        
-        result = self.db.urls.find_one({
-            "$or": [
-                {"_id": link_id, "owner._id": netid},  # owner
-                {
-                    "_id": link_id,
-                    "editors": {"$elemMatch": {"_id": netid}},
-                },  # shared
-                {
-                    "_id": link_id,
-                    "editors": {"$elemMatch": {"_id": {"$in": orgs}}},
-                },  # shared with org
-                {
-                    "_id": link_id,
-                    "owner._id": {"$in": orgs},  # user is in org that owns the link
-                }
-            ]
-        })
+
+        result = self.db.urls.find_one(
+            {
+                "$or": [
+                    {"_id": link_id, "owner._id": netid},  # owner
+                    {
+                        "_id": link_id,
+                        "editors": {"$elemMatch": {"_id": netid}},
+                    },  # shared
+                    {
+                        "_id": link_id,
+                        "editors": {"$elemMatch": {"_id": {"$in": orgs}}},
+                    },  # shared with org
+                    {
+                        "_id": link_id,
+                        "owner._id": {"$in": orgs},  # user is in org that owns the link
+                    },
+                ]
+            }
+        )
         return result is not None
 
     def may_view(self, link_id: ObjectId, netid: str) -> bool:
@@ -621,7 +617,7 @@ class LinksClient:
                     {
                         "_id": link_id,
                         "owner._id": {"$in": orgs},  # user is in org that owns the link
-                    }
+                    },
                 ]
             }
         )

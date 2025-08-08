@@ -18,8 +18,8 @@ import {
   Trash2Icon,
   UsersIcon,
 } from 'lucide-react';
+
 import { Link } from '../interfaces/link';
-import { Link as RouterLink } from 'react-router-dom';
 
 export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
   const onCopyOriginalLink = () => {
@@ -84,7 +84,14 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
             {
               key: 'created_by',
               label: 'Owner',
-              children: linkInfo.owner.type === "netid" ? linkInfo.owner._id : <RouterLink to={`/app/orgs/${linkInfo.owner._id}`}>{linkInfo.owner.org_name}</RouterLink>,
+              children:
+                linkInfo.owner.type === 'netid' ? (
+                  linkInfo.owner._id
+                ) : (
+                  <a href={`/app/orgs/${linkInfo.owner._id}`}>
+                    {linkInfo.owner.org_name}
+                  </a>
+                ),
             },
             {
               key: 'unique_visits',

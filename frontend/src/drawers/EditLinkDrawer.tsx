@@ -14,7 +14,7 @@ import {
   Popconfirm,
   Row,
   Space,
-  Tooltip
+  Tooltip,
 } from 'antd/lib';
 import dayjs from 'dayjs';
 import { CircleAlertIcon, SaveIcon, TrashIcon } from 'lucide-react';
@@ -86,14 +86,19 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
   const [form] = Form.useForm();
   const initialValues: any = {
     ...props.linkInfo,
-    owner: props.linkInfo.owner.type === 'netid' ? props.linkInfo.owner._id : props.linkInfo.owner.org_name,
+    owner:
+      props.linkInfo.owner.type === 'netid'
+        ? props.linkInfo.owner._id
+        : props.linkInfo.owner.org_name,
     expiration_time:
       props.linkInfo.expiration_time === null
         ? null
         : dayjs(props.linkInfo.expiration_time),
   };
   const mayEditOwner =
-    (props.netid === initialValues.owner || props.userPrivileges.has('admin')) && props.linkInfo.owner.type !== 'org';
+    (props.netid === initialValues.owner ||
+      props.userPrivileges.has('admin')) &&
+    props.linkInfo.owner.type !== 'org';
 
   const isTrackingPixelLink = props.linkInfo.is_tracking_pixel_link;
 

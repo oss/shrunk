@@ -29,8 +29,8 @@ import {
   UsersIcon,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 
+import { useLocation } from 'react-router-dom';
 import { downloadVisits } from '../../api/csv';
 import {
   BrowserStats,
@@ -66,7 +66,6 @@ import ErrorPage from '../ErrorPage';
 import VisitsChart from '../../components/link/visits-chart';
 import GeoipChart from '../../components/link/world-chart';
 import ShrunkPieChart, { processData } from '../../components/pie-chart';
-import { Link as RouterLink } from 'react-router-dom';
 
 export interface Props {
   /**
@@ -136,7 +135,6 @@ export function Stats(props: Props): React.ReactElement {
   const queryParams = new URLSearchParams(location.search);
   const mode = queryParams.get('mode');
   const size = 250;
-
 
   useEffect(() => {
     switch (mode) {
@@ -231,7 +229,6 @@ export function Stats(props: Props): React.ReactElement {
       throw new Error('oldLinkInfo should not be null');
     }
 
-
     // Create the request to edit title, long_url, and expiration_time
     const patchReq: EditLinkValues = {};
     if (values.title !== oldLinkInfo.title) {
@@ -243,7 +240,7 @@ export function Stats(props: Props): React.ReactElement {
     if (values.owner !== oldLinkInfo.owner._id) {
       patchReq.owner = {
         _id: values.owner,
-        type: "netid"
+        type: 'netid',
       };
     }
     if (values.expiration_time !== oldLinkInfo.expiration_time) {
@@ -262,8 +259,6 @@ export function Stats(props: Props): React.ReactElement {
       message.error('There was an error editing the link.', 4);
     }
   }
-  
-
 
   /**
    * Prompt the user to download a CSV file of visits to the selected alias
@@ -328,21 +323,24 @@ export function Stats(props: Props): React.ReactElement {
     onRemoveCollaborator(entity);
   };
 
-  const transferOwnershipToOrg = (activeTab: 'netid' | 'org', entity: Collaborator) => {
+  const transferOwnershipToOrg = (
+    activeTab: 'netid' | 'org',
+    entity: Collaborator,
+  ) => {
     editLink(props.id, {
       owner: {
         _id: entity._id,
         type: activeTab,
       },
-    }).then(() => {
-      message.success('Ownership transferred successfully');
-      updateLinkInfo();
-    }).catch(() => {
-      message.error('Failed to transfer ownership');
-    });
+    })
+      .then(() => {
+        message.success('Ownership transferred successfully');
+        updateLinkInfo();
+      })
+      .catch(() => {
+        message.error('Failed to transfer ownership');
+      });
   };
-
-
 
   const onChangeEntity = (
     activeTab: 'netid' | 'org',
@@ -356,9 +354,6 @@ export function Stats(props: Props): React.ReactElement {
       transferOwnershipToOrg(activeTab, entity);
       return;
     }
-   
-
-    
 
     if (value === 'viewer' && entity.role === 'editor') {
       onRemoveCollaborator(entity, 'editor');
@@ -524,13 +519,14 @@ export function Stats(props: Props): React.ReactElement {
                         {
                           key: 'owner',
                           label: 'Owner',
-                          children: (
+                          children:
                             linkInfo?.owner.type === 'org' ? (
-                              <RouterLink to={`/app/orgs/${linkInfo.owner._id}`}>
+                              <a href={`/app/orgs/${linkInfo.owner._id}`}>
                                 {linkInfo.owner.org_name}
-                              </RouterLink>) : 
+                              </a>
+                            ) : (
                               linkInfo?.owner._id
-                          ),
+                            ),
                           span: isTrackingPixel ? 1 : 'filled',
                         },
                         {

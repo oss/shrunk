@@ -116,7 +116,7 @@ def test_create_link_expiration(client: Client) -> None:
                 "expiration_time": expiration_time.isoformat(),
             },
         )
-        
+
         assert resp.status_code == 201
         link_id = resp.json["id"]
         alias0 = resp.json["alias"]
@@ -149,16 +149,16 @@ def test_create_link_expiration(client: Client) -> None:
 
 
 def test_create_link_org(client: Client) -> None:
-    
+
     """
-        Test that we can create a link with an organization as the owner.
+    Test that we can create a link with an organization as the owner.
     """
 
     with dev_login(client, "admin"):
         resp = client.post("/api/core/org", json={"name": "testorg10"})
         assert resp.status_code == 200
         org_id = resp.json["id"]
-        
+
         resp = client.post(
             "/api/core/link",
             json={
@@ -180,11 +180,11 @@ def test_create_link_org(client: Client) -> None:
         assert resp.json["owner"]["_id"] == org_id
         assert resp.json["owner"]["type"] == "org"
         assert resp.json["owner"]["org_name"] == "testorg10"
-        
+
 
 def test_remove_acl_on_transfer_to_org(client: Client) -> None:
     """Test that org is removed from viewers/editors when transferring link ownership from a user to an org."""
-    
+
     with dev_login(client, "admin"):
         resp = client.post("/api/core/org", json={"name": "mycoolorg"})
         assert resp.status_code == 200
@@ -194,19 +194,24 @@ def test_remove_acl_on_transfer_to_org(client: Client) -> None:
             json={
                 "title": "title",
                 "long_url": "https://example.com",
-                "viewers": [{"_id": org_id, "type": "org"}, {"_id": "DEV_test_user", "type": "netid"}],
+                "viewers": [
+                    {"_id": org_id, "type": "org"},
+                    {"_id": "DEV_test_user", "type": "netid"},
+                ],
                 "editors": [{"_id": org_id, "type": "org"}],
-            },)
+            },
+        )
         assert resp.status_code == 201
         link_id = resp.json["id"]
-        
-        resp = client.patch(f"/api/core/link/{link_id}", json={"owner": {"_id": org_id, "type": "org"}})
+
+        resp = client.patch(
+            f"/api/core/link/{link_id}", json={"owner": {"_id": org_id, "type": "org"}}
+        )
         assert resp.status_code == 204
         resp = client.get(f"/api/core/link/{link_id}")
         assert len(resp.json["editors"]) == 0
         assert len(resp.json["viewers"]) == 1
         assert resp.json["viewers"][0]["_id"] == "DEV_test_user"
-        
 
 
 def test_transfer_from_org_to_user(client: Client) -> None:
@@ -214,7 +219,9 @@ def test_transfer_from_org_to_user(client: Client) -> None:
         resp = client.post("/api/core/org", json={"name": "testorg"})
         org_id = resp.json["id"]
 
-        resp = client.put(f"/api/core/org/{org_id}/member/DEV_USER",)
+        resp = client.put(
+            f"/api/core/org/{org_id}/member/DEV_USER",
+        )
 
         resp = client.post(
             "/api/core/link",
@@ -223,22 +230,26 @@ def test_transfer_from_org_to_user(client: Client) -> None:
                 "org_id": org_id,
             },
         )
-        
+
         assert resp.status_code == 201
         link_id = resp.json["id"]
-        
+
     with dev_login(client, "user"):
-        resp = client.patch(f"/api/core/link/{link_id}", json={"owner": {"_id": "DEV_USER", "type": "netid"}})
+        resp = client.patch(
+            f"/api/core/link/{link_id}",
+            json={"owner": {"_id": "DEV_USER", "type": "netid"}},
+        )
         assert resp.status_code == 403
-        
+
     with dev_login(client, "admin"):
-        resp = client.patch(f"/api/core/link/{link_id}", json={"owner": {"_id": "DEV_USER", "type": "netid"}})
+        resp = client.patch(
+            f"/api/core/link/{link_id}",
+            json={"owner": {"_id": "DEV_USER", "type": "netid"}},
+        )
         assert resp.status_code == 204
         resp = client.get(f"/api/core/link/{link_id}")
         assert resp.json["owner"]["_id"] == "DEV_USER"
         assert resp.json["owner"]["type"] == "netid"
-        
-        
 
 
 def test_create_link_bad_long_url(client: Client) -> None:
@@ -544,16 +555,11 @@ def test_visits(client: Client) -> None:  # pylint: disable=too-many-statements
         # When DNT is set, the right amount of unique visits are set
         resp = client.get(f"/{alias0}", headers={"DNT": "1"})
         assert resp.status_code == 302
-        
-        
-
 
 
 def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-statements
     """This test simulates the process of creating a link with ACL options and testing if the permissions works"""
 
-    
-    
     with dev_login(client, "facstaff"):
 
         def check_create(body):
@@ -874,27 +880,29 @@ def test_acl(client: Client) -> None:  # pylint: disable=too-many-statements
             ]:
                 resp = client.get(f"/api/core/link/{link_id}/{endpoint}")
                 assert_access(user["view_stats"], resp.status_code)
-                
+
     with dev_login(client, "admin"):
-        client.post("/api/core/link", json={
-            "owner": {"_id": org_id, "type": "org"},
-        })
-    with dev_login(client, "user"): #test user org member permissions
+        client.post(
+            "/api/core/link",
+            json={
+                "owner": {"_id": org_id, "type": "org"},
+            },
+        )
+    with dev_login(client, "user"):  # test user org member permissions
         resp = client.delete(f"/api/core/link/{link_id}")
         assert resp.status_code == 403
-        
+
         resp = client.post(f"/api/core/link/{link_id}/clear_visits")
         assert resp.status_code == 403
-        
+
         resp = client.patch(
             f"/api/core/link/{link_id}",
             json={
-                "long_url": "https://example.com?rand="
-                + str(random.randrange(0, 1000))
+                "long_url": "https://example.com?rand=" + str(random.randrange(0, 1000))
             },
         )
         assert_access(True, resp.status_code)
-        
+
         resp = client.patch(
             f"/api/core/link/{link_id}/acl",
             json={

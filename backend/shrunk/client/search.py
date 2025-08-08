@@ -223,17 +223,19 @@ class SearchClient:
 
         if "owner" in query and query["owner"]:
             pipeline.append({"$match": {"owner._id": query["owner"]}})
-            
+
         # Get org names if owner is an org
-        
-        pipeline.append({
-            "$lookup": {
-                "from": "organizations",
-                "localField": "owner._id",
-                "foreignField": "_id",
-                "as": "owner_org",
-            }   
-        })
+
+        pipeline.append(
+            {
+                "$lookup": {
+                    "from": "organizations",
+                    "localField": "owner._id",
+                    "foreignField": "_id",
+                    "as": "owner_org",
+                }
+            }
+        )
 
         # Pagination.
         facet = {
@@ -259,7 +261,6 @@ class SearchClient:
         def prepare_result(res: Any) -> Any:
             """Turn a result from the DB into something than can be JSON-serialized."""
 
-            
             def is_alias_visible(alias: Any) -> bool:
                 if query.get("show_deleted_links", False):
                     return True
@@ -267,7 +268,9 @@ class SearchClient:
 
             if res["owner"]["type"] == "org":
                 # If the owner is an organization, get the organization name
-                res["owner"]["org_name"] = self.client.orgs.get_org(res["owner"]["_id"])["name"]
+                res["owner"]["org_name"] = self.client.orgs.get_org(
+                    res["owner"]["_id"]
+                )["name"]
 
             if res.get("expiration_time"):
                 expiration_time = res["expiration_time"]
@@ -299,7 +302,6 @@ class SearchClient:
                     "deleted_by": res["deleted_by"],
                     "deleted_time": res["deleted_time"],
                 }
-
 
             return prepared
 

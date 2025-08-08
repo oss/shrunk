@@ -47,7 +47,7 @@ export async function createLink(
     long_url: url,
     expiration_time: expirationTime?.toISOString(),
     tracking_pixel_extension: trackingPixelImageType,
-    org_id: org_id,
+    org_id,
   };
   const resp = await fetch('/api/core/link', {
     method: 'POST',
@@ -163,7 +163,10 @@ export async function getLinkBrowserStats(linkId: string) {
   return data as BrowserStats;
 }
 
-export async function editLink(linkId: string, values: Partial<EditLinkValues>) {
+export async function editLink(
+  linkId: string,
+  values: Partial<EditLinkValues>,
+) {
   const resp = await fetch(`/api/core/link/${linkId}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },

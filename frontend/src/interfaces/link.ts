@@ -22,14 +22,16 @@ export interface Link {
   deleted?: boolean;
   visits: number;
   unique_visits: number;
-  owner: {
-    _id: string,
-    type: 'netid'
-  } | {
-    _id: string,
-    type: 'org',
-    org_name: string 
-  }
+  owner:
+    | {
+        _id: string;
+        type: 'netid';
+      }
+    | {
+        _id: string;
+        type: 'org';
+        org_name: string;
+      };
   alias: string;
   may_edit: boolean;
   is_tracking_pixel_link: boolean;
@@ -137,7 +139,7 @@ export interface EditLinkValues {
   owner: {
     _id: string;
     type: 'netid' | 'org';
-  }
+  };
   alias: string;
 }
 

@@ -72,7 +72,7 @@ CREATE_LINK_SCHEMA = {
         },
         "org_id": {
             "type": "string",
-        }
+        },
     },
 }
 
@@ -120,7 +120,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
         )
     else:
         expiration_time = None
-        
+
     if "org_id" in req:
         try:
             req["org_id"] = ObjectId(req["org_id"])
@@ -300,13 +300,15 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
         if req["owner"]["type"] == "netid":
             if not is_valid_netid(req["owner"]["_id"]):
                 abort(400)
-            if link["owner"]["type"] == "org" and not client.orgs.is_admin(link["owner"]["_id"], netid):
+            if link["owner"]["type"] == "org" and not client.orgs.is_admin(
+                link["owner"]["_id"], netid
+            ):
                 abort(403)
         elif req["owner"]["type"] == "org" and not client.orgs.get_org(
             ObjectId(req["owner"]["_id"])
         ):
             abort(400)
-    
+
     try:
         client.links.modify(
             link_id,
@@ -540,7 +542,7 @@ def get_link_visits(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     if not client.roles.has("admin", netid) and not client.links.may_view(
         link_id, netid
     ):
-        
+
         abort(403)
     visits = client.links.get_visits(link_id)
     anonymized_visits = [anonymize_visit(client, visit) for visit in visits]

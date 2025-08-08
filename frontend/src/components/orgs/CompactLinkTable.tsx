@@ -8,14 +8,13 @@ import {
   Trash2Icon,
   Copy,
   UsersIcon,
-  UserRoundCheckIcon,
   UserPlusIcon,
 } from 'lucide-react';
 import { OrganizationLink } from '../../interfaces/organizations';
 import { getOrganizationLinks } from '../../api/organization';
-import { getLinkFromAlias } from '@/src/lib/utils';
-import TransferToNetIdModal from '@/src/modals/TransferToNetIdModal';
-import { editLink } from '@/src/api/links';
+import { getLinkFromAlias } from '../../lib/utils';
+import TransferToNetIdModal from '../../modals/TransferToNetIdModal';
+import { editLink } from '../../api/links';
 
 /**
  * Compact table for displaying organization links.
@@ -29,7 +28,11 @@ interface CompactLinkTableProps {
   forceRefresh: boolean;
   isAdmin?: boolean;
 }
-const CompactLinkTable = ({ org_id, forceRefresh, isAdmin }: CompactLinkTableProps) => {
+const CompactLinkTable = ({
+  org_id,
+  forceRefresh,
+  isAdmin,
+}: CompactLinkTableProps) => {
   const [links, setLinks] = useState<OrganizationLink[]>([]);
   const [loading, setLoading] = useState(true);
   const [transferModalVisible, setTransferModalVisible] = useState(false);
@@ -43,11 +46,9 @@ const CompactLinkTable = ({ org_id, forceRefresh, isAdmin }: CompactLinkTablePro
     fetchLinks();
   }, [org_id, forceRefresh]);
 
-
   const transferLinkOwnership = async (netid: string, link_id: string) => {
-
-    try{
-      await editLink(link_id, { owner: {type: "netid", _id: netid} });
+    try {
+      await editLink(link_id, { owner: { type: 'netid', _id: netid } });
       message.success('Link ownership transferred successfully');
     } catch (error) {
       message.error('Error transferring link ownership');
@@ -55,18 +56,17 @@ const CompactLinkTable = ({ org_id, forceRefresh, isAdmin }: CompactLinkTablePro
     setTransferModalVisible(false);
     setLoading(true);
     await fetchLinks();
-    
-  }
-  const sortLinks = (links: OrganizationLink[]) => {
+  };
+  const sortLinks = (unsortedLinks: OrganizationLink[]) => {
     const roleOrder = ['owner', 'editor', 'viewer'];
-    const nonDeleted = links.filter((link) => !link.deleted);
-    const deleted = links.filter((link) => link.deleted);
-    nonDeleted.sort((a, b) => {
-      return roleOrder.indexOf(a.role) - roleOrder.indexOf(b.role);
-    });
-    deleted.sort((a, b) => {
-      return roleOrder.indexOf(a.role) - roleOrder.indexOf(b.role);
-    });
+    const nonDeleted = unsortedLinks.filter((link) => !link.deleted);
+    const deleted = unsortedLinks.filter((link) => link.deleted);
+    nonDeleted.sort(
+      (a, b) => roleOrder.indexOf(a.role) - roleOrder.indexOf(b.role),
+    );
+    deleted.sort(
+      (a, b) => roleOrder.indexOf(a.role) - roleOrder.indexOf(b.role),
+    );
     return [...nonDeleted, ...deleted];
   };
   const sortedLinks = useMemo(() => sortLinks(links), [links]);

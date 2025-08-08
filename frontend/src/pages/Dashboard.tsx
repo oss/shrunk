@@ -389,7 +389,7 @@ class Dashboard extends React.Component<Props, State> {
     }
 
     const results = await this.doQuery(newQuery, 0, this.state.linksPerPage);
-   
+
     await this.updateFilterOptions();
 
     const totalPages = Math.ceil(results.count / this.state.linksPerPage);
@@ -492,10 +492,10 @@ class Dashboard extends React.Component<Props, State> {
         (output: any) =>
           ({
             ...output,
-            
+
             created_time: new Date(output.created_time),
             expiration_time: !output.expiration_time
-            ? null
+              ? null
               : new Date(output.expiration_time),
             deletion_info: !output.deletion_info
               ? null
@@ -506,20 +506,6 @@ class Dashboard extends React.Component<Props, State> {
           } as Link),
       ),
     };
-  };
-  
-
-  /**
-   * Check if tracking pixel ui is enabled
-   * @method
-   */
-  trackingPixelEnabledOnUI = async () => {
-    const result = await fetch('/api/v1/config', {
-      method: 'GET',
-    }).then((resp) => resp.json());
-
-    const isEnabled = result.tracking_pixel;
-    this.setState({ trackingPixelEnabled: isEnabled });
   };
 
   updateOrg = async (value: string): Promise<void> => {
@@ -536,7 +522,6 @@ class Dashboard extends React.Component<Props, State> {
   };
 
   render(): React.ReactNode {
-
     return (
       <>
         <Row>

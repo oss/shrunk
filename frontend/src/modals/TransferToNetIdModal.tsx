@@ -1,5 +1,6 @@
 import { Button, Form, Input, Modal, Popconfirm } from 'antd/lib';
 import React, { useState } from 'react';
+import { message } from 'antd';
 import { serverValidateNetId } from '../api/validators';
 
 interface ITransferModal {
@@ -10,26 +11,26 @@ interface ITransferModal {
 }
 
 const TransferToNetIdModal = (props: ITransferModal) => {
-    const [loading, setLoading] = useState(false);
-    const [form] = Form.useForm();
-    const [disableSubmit, setDisabledSubmit] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [form] = Form.useForm();
+  const [disableSubmit, setDisabledSubmit] = useState(true);
 
-    const handleFormChange = () => {
-      const hasErrors = form.getFieldsError().some(({ errors }) => errors.length);
-      setDisabledSubmit(hasErrors || form.getFieldsValue().netId === '');
+  const handleFormChange = () => {
+    const hasErrors = form.getFieldsError().some(({ errors }) => errors.length);
+    setDisabledSubmit(hasErrors || form.getFieldsValue().netId === '');
+  };
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    try {
+      await props.onOk(form.getFieldValue('netId'), props.link_id);
+      form.resetFields();
+    } catch (error) {
+      message.error('Failed to transfer ownership: ');
+    } finally {
+      setLoading(false);
     }
-
-    const handleSubmit = async () => {
-        setLoading(true);
-        try {
-            await props.onOk(form.getFieldValue('netId'), props.link_id);
-            form.resetFields();
-        } catch (error) {
-        } finally {
-            setLoading(false);
-
-        }
-    }
+  };
   return (
     <Modal
       title="Transfer to Net ID"
