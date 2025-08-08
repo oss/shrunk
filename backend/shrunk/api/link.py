@@ -297,10 +297,10 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
     ):
         abort(403)
     if "owner" in req:
-        
-        
-        
-        if not client.links.is_owner(link_id, netid) and not client.roles.has("admin", netid):
+
+        if not client.links.is_owner(link_id, netid) and not client.roles.has(
+            "admin", netid
+        ):
             abort(403)
         if req["owner"]["type"] == "netid":
             if not is_valid_netid(req["owner"]["_id"]):
@@ -308,7 +308,9 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
         elif req["owner"]["type"] == "org":
             if not client.orgs.get_org(ObjectId(req["owner"]["_id"])):
                 abort(400)
-            if not client.orgs.is_member(ObjectId(req["owner"]["_id"]), netid) and not client.roles.has("admin", netid):
+            if not client.orgs.is_member(
+                ObjectId(req["owner"]["_id"]), netid
+            ) and not client.roles.has("admin", netid):
                 abort(403)
 
     try:

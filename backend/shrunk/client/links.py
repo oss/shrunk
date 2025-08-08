@@ -286,22 +286,22 @@ class LinksClient:
                     }
             else:
 
-                    fields["owner"] = {"_id": ObjectId(owner["_id"]), "type": "org"}
-                    update["$push"] = {
-                        "ownership_transfer_history": {
-                            "from": {
-                                "_id": link_info["owner"]["_id"],
-                                "type": link_info["owner"]["type"],
-                            },
-                            "to": {"_id": ObjectId(owner["_id"]), "type": "org"},
-                            "timestamp": datetime.now(timezone.utc),
+                fields["owner"] = {"_id": ObjectId(owner["_id"]), "type": "org"}
+                update["$push"] = {
+                    "ownership_transfer_history": {
+                        "from": {
+                            "_id": link_info["owner"]["_id"],
+                            "type": link_info["owner"]["type"],
                         },
-                    }
-                    # Remove the org from editors and viewers list since it is now 
-                    update["$pull"] = {
-                        "editors": {"_id": ObjectId(owner["_id"])},
-                        "viewers": {"_id": ObjectId(owner["_id"])},
-                    }
+                        "to": {"_id": ObjectId(owner["_id"]), "type": "org"},
+                        "timestamp": datetime.now(timezone.utc),
+                    },
+                }
+                # Remove the org from editors and viewers list since it is now
+                update["$pull"] = {
+                    "editors": {"_id": ObjectId(owner["_id"])},
+                    "viewers": {"_id": ObjectId(owner["_id"])},
+                }
 
         result = self.db.urls.update_one({"_id": link_id}, update)
         if result.matched_count != 1:

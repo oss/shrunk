@@ -979,8 +979,8 @@ def test_visit_link_from_alias_with_caps(client: Client) -> None:
         assert resp.status_code == 302
         resp = client.get("/MiNeCraft")
         assert resp.status_code == 302
-        
-        
+
+
 def test_org_to_org_transfer(client: Client) -> None:
     with dev_login(client, "admin"):
         # Create two organizations
@@ -1015,7 +1015,7 @@ def test_org_to_org_transfer(client: Client) -> None:
         assert resp.status_code == 200
         assert resp.json["owner"]["_id"] == org2_id
         assert resp.json["owner"]["type"] == "org"
-        
+
 
 def test_owner_transfer(client: Client) -> None:
     with dev_login(client, "admin"):
@@ -1039,7 +1039,7 @@ def test_owner_transfer(client: Client) -> None:
         link_id = resp.json["id"]
 
         client.post(f"/api/core/org/{org_id}/member/DEV_USER")
-        
+
     with dev_login(client, "user"):
         # Attempt to transfer ownership to a user
         resp = client.patch(
@@ -1047,14 +1047,14 @@ def test_owner_transfer(client: Client) -> None:
             json={"owner": {"_id": "DEV_USER", "type": "netid"}},
         )
         assert resp.status_code == 403
-        
-        #test transfer to org that user is not a member of
-        resp = client.post("/api/core/link", json={
-            "title": "title",
-            "long_url": "https://example.com"})
+
+        # test transfer to org that user is not a member of
+        resp = client.post(
+            "/api/core/link", json={"title": "title", "long_url": "https://example.com"}
+        )
         assert resp.status_code == 201
         link_id2 = resp.json["id"]
-        
+
         resp = client.patch(
             f"/api/core/link/{link_id2}",
             json={"owner": {"_id": org2_id, "type": "org"}},
