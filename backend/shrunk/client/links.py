@@ -285,15 +285,7 @@ class LinksClient:
                         "viewers": {"_id": link_info["owner"]["_id"], "type": "org"},
                     }
             else:
-                orgInfo = self.other_clients.orgs.get_org(ObjectId(owner["_id"]))
-                if orgInfo == None:
-                    raise NotUserOrOrg(
-                        f"{owner} is not a valid org. can't transfer ownership"
-                    )
 
-                if self.other_clients.orgs.is_member(
-                    ObjectId(orgInfo["_id"]), link_info["owner"]["_id"]
-                ):
                     fields["owner"] = {"_id": ObjectId(owner["_id"]), "type": "org"}
                     update["$push"] = {
                         "ownership_transfer_history": {
@@ -305,16 +297,11 @@ class LinksClient:
                             "timestamp": datetime.now(timezone.utc),
                         },
                     }
-                    # Remove the org from editors and viewers list since it is now owner
+                    # Remove the org from editors and viewers list since it is now 
                     update["$pull"] = {
                         "editors": {"_id": ObjectId(owner["_id"])},
                         "viewers": {"_id": ObjectId(owner["_id"])},
                     }
-
-                else:
-                    raise NotUserOrOrg(
-                        f"{owner} is not a valid org. can't transfer ownership"
-                    )
 
         result = self.db.urls.update_one({"_id": link_id}, update)
         if result.matched_count != 1:
