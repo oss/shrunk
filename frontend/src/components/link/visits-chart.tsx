@@ -18,7 +18,7 @@ const VisitsChart: React.FC<{ visitStats: VisitStats | null }> = (props) => {
     plotOptions: {
       areaspline: {
         marker: {
-	  enabled: (visits.length == 1),
+	  enabled: visits.length === 1,
           symbol: 'circle',
           lineColor: null,
         },
