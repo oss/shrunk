@@ -91,11 +91,44 @@ const CompactLinkTable = ({
       title: 'Role',
       dataIndex: 'role',
       key: 'role',
+      filters: [
+        {
+          text: 'Owner',
+          value: 'owner',
+        },
+        {
+          text: 'Editor',
+          value: 'editor',
+        },
+        {
+          text: 'Viewer',
+          value: 'viewer',
+        },
+      ],
+      onFilter: (value, record) => record.role === value,
       render: (role: string) => role.charAt(0).toUpperCase() + role.slice(1),
+    },
+    {
+      title: "Deleted",
+      dataIndex: 'deleted',
+      key: 'deleted',
+      filters: [
+        {
+          text: 'Yes',
+          value: true,
+        },
+        {
+          text: 'No',
+          value: false,
+        },
+      ],
+      onFilter: (value, record) => record.deleted === value,
+      render: (deleted: boolean) => (deleted ? 'Yes' : 'No'),
     },
     {
       title: () => <Flex justify="flex-end">Actions</Flex>,
       key: 'actions',
+      width: 100,
       render: (text: string, link: OrganizationLink) => (
         <Flex justify="flex-end">
           <Tooltip title="View link details">
