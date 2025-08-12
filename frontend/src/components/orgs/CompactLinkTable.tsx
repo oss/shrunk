@@ -109,7 +109,7 @@ const CompactLinkTable = ({
       render: (role: string) => role.charAt(0).toUpperCase() + role.slice(1),
     },
     {
-      title: "Deleted",
+      title: 'Deleted',
       dataIndex: 'deleted',
       key: 'deleted',
       filters: [
