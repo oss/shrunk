@@ -14,9 +14,11 @@ class AccessTokenClient:
         self.ph = PasswordHasher()
 
         self.access_tokens_permissions = [
+            "read:users",
             "read:links",
             "create:links",
-            "read:users",
+            "read:tracking-pixels",
+            "create:tracking-pixels",
         ]
 
     def create(

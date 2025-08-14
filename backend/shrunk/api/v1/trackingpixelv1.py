@@ -39,7 +39,7 @@ CREATE_LINK_SCHEMA = {
 
 @bp.route("", methods=["POST"])
 @request_schema(CREATE_LINK_SCHEMA)
-@require_token(required_permisson="create:links")
+@require_token(required_permisson="create:tracking-pixels")
 def create_tracking_pixel(
     token_owner: str, client: ShrunkClient, req: Any
 ) -> Dict[Any, Any]:
@@ -164,7 +164,7 @@ def create_tracking_pixel(
 
 
 @bp.route("/<ObjectId:org_id>/<ObjectId:link_id>", methods=["GET"])
-@require_token(required_permisson="read:links")
+@require_token(required_permisson="read:tracking-pixels")
 def get_tracking_pixel(
     token_owner: str, client: ShrunkClient, org_id: ObjectId, link_id: ObjectId
 ) -> Any:
@@ -241,7 +241,7 @@ def get_tracking_pixel(
 
 
 @bp.route("/<ObjectId:org_id>", methods=["GET"])
-@require_token(required_permisson="read:links")
+@require_token(required_permisson="read:tracking-pixels")
 def get_org_tracking_pixels(
     token_owner: str, client: ShrunkClient, org_id: ObjectId, get_tracking_pixel=True
 ) -> Any:

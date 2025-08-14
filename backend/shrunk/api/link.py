@@ -135,10 +135,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
         if not client.orgs.is_member(ObjectId(req["org_id"]), netid):
             return "Not a member of the specified org", 403
     else:
-         owner = {"_id": netid, "type": "netid"}
-           
-    
-   
+        owner = {"_id": netid, "type": "netid"}
 
     alias = req.get("alias", None)
 

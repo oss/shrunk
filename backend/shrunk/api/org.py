@@ -558,6 +558,8 @@ ACCESS_TOKEN_ORG_SCHEMA = {
 def create_access_token(
     netid: str, client: ShrunkClient, req: Any, org_id: ObjectId
 ) -> Any:
+    if not client.roles.has("admin", netid):
+        abort(403)
     if not req["permissions"]:
         return "permissions is missing", 400
     valid_permissions = client.access_tokens.access_tokens_permissions
@@ -574,6 +576,8 @@ def create_access_token(
 @bp.route("/<ObjectId:org_id>/access_token", methods=["GET"])
 @require_login
 def get_access_tokens(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
+    if not client.roles.has("admin", netid):
+        abort(403)
     tokens = client.access_tokens.get_tokens_by_owner(org_id)
 
     return jsonify({"tokens": list(tokens)})

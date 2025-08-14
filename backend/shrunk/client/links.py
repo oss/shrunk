@@ -548,7 +548,7 @@ class LinksClient:
                 "org_name": res["name"],
             }
             return owner
-        
+
         return result["owner"]
 
     def is_owner(self, link_id: ObjectId, netid: str) -> bool:
