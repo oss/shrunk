@@ -5,7 +5,7 @@
     "patch": 0,
     "projectDirector": "ah1371",
     "date": "TODO",
-    "description": "The new public API for faculty developers, real-time notifications, continued codebase cleanup, and testing suite update.",
+    "description": "The new public API for faculty developers, real-time notifications, continued codebase cleanup, testing suite update and organization page updates.",
     "categories": {
       "features": [
         {
@@ -19,25 +19,34 @@
         },
         {
           "text": "New page for creating tokens for the public API via organization management",
-          "contributors": ["ah1371"],
+          "contributors": ["ah1371", "ys973"],
           "product": "public-api"
         },
         {
-          "text": "Organizations can now own a link or tracking pixel",
-          "contributors": ["ah1371"]
-        },
-        {
-          "text": "Organizations can access our public API to create links and tracking pixels",
-          "contributors": ["ah1371"],
+          "text": "Organizations can access our public API to fetch users",
+          "contributors": ["ys973"],
           "product": "public-api"
         },
         {
           "text": "New page containing an API Reference for the public API",
-          "contributors": ["ah1371"],
+          "contributors": ["ys973"],
           "product": "public-api"
+        },
+        {
+          "text": "New pages in an organization's dashboard: Overview and Links allows organizations to quickly view and manage their links and tracking pixels",
+          "contributors": ["ak2399"]
+        },
+        {
+          "text": "Organizations can now own a link or tracking pixel",
+          "contributors": ["ak2399"]
         }
+
       ],
       "improvements": [
+         {
+          "text": "Allow spaces in organization names with automatic cleanup",
+          "contributors": ["ys973"]
+        },
          {
           "text": "Warning popup appears before deleting an organization that has associated URLs",
           "contributors": ["ys973"]
@@ -106,6 +115,10 @@
         }
       ],
       "fixes": [
+        {
+          "text": "Fix organization creation showing false success messages when validation fails",
+          "contributors": ["ys973"]
+        },
         {
           "text": "Deleted organizations are removed from viewers/editors list in assoicated URL's",
           "contributors": ["ys973"]

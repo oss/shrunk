@@ -11,7 +11,9 @@ import {
   Spin,
   Table,
   Typography,
+  Tabs,
 } from 'antd/lib';
+import type { TabsProps } from 'antd/lib/tabs';
 import type { FormInstance } from 'antd/lib/form';
 import dayjs from 'dayjs';
 import {
@@ -21,6 +23,9 @@ import {
   TrashIcon,
   UserMinusIcon,
   UsersIcon,
+  Link2,
+  PlusCircleIcon,
+  ChartLineIcon,
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
@@ -37,6 +42,9 @@ import {
 import { serverValidateOrgName } from '../api/validators';
 import { Organization, OrganizationMember } from '../interfaces/organizations';
 import CollaboratorModal, { Collaborator } from '../modals/CollaboratorModal';
+import CompactLinkTable from '../components/orgs/CompactLinkTable';
+import CreateLinkDrawer from '../drawers/CreateLinkDrawer';
+import OrgOverview from '../components/orgs/OrgOverview';
 
 type RouteParams = {
   id: string;
@@ -53,6 +61,9 @@ interface VisitDatum {
   unique_visits: number;
 }
 
+const VALID_TABS = ['members', 'links', 'overview'];
+const DEFAULT_TAB = 'overview';
+
 function ManageOrgBase({
   userNetid,
   userPrivileges,
@@ -65,16 +76,20 @@ function ManageOrgBase({
   const [editModalVisible, setEditModalVisible] = useState(false);
   const formRef = useRef<FormInstance>(null);
   const [visitStats, setVisitStats] = useState<VisitDatum[] | null>(null);
+  const [activeTab, setActiveTab] = useState<string>(DEFAULT_TAB);
+  const [showCreateLinkDrawer, setShowCreateLinkDrawer] = useState(false);
+  const [forceRefresh, setForceRefresh] = useState(false);
+
   const refreshOrganization = async () => {
-    const [info, visitData] = await Promise.all([
-      getOrganization(match.params.id),
-      getOrganizationVisits(match.params.id),
-    ]);
+    const info = await getOrganization(match.params.id);
+    if (info.is_admin || userPrivileges.has('admin')) {
+      const visitData = await getOrganizationVisits(match.params.id);
+      setVisitStats(visitData.visits);
+    }
 
     const adminCount = info.members.filter((member) => member.is_admin).length;
     setOrganization(info);
     setAdminsCount(adminCount);
-    setVisitStats(visitData.visits);
   };
 
   useEffect(() => {
@@ -114,6 +129,12 @@ function ManageOrgBase({
     history.push('/app/orgs');
   };
 
+  const handleTabChange = (key: string) => {
+    if (VALID_TABS.includes(key)) {
+      setActiveTab(key);
+    }
+  };
+
   const onEditOrganization = async () => {
     setEditModalVisible(true);
   };
@@ -150,11 +171,60 @@ function ManageOrgBase({
       },
     },
     {
+      title: 'Role',
+      key: 'role',
+      render: (record: OrganizationMember) => (
+        <Typography.Text>
+          {record.is_admin ? 'Admin' : 'Member'}
+        </Typography.Text>
+      ),
+      width: '10%',
+    },
+    {
       title: 'Date Added',
       dataIndex: 'timeCreated',
       key: 'timeCreated',
       width: '15%',
       render: (date: string) => dayjs(date).format('MMM D, YYYY'),
+    },
+  ];
+
+  const items: TabsProps['items'] = [
+    {
+      key: 'overview',
+      icon: <ChartLineIcon />,
+      label: 'Overview',
+      children: (
+        <OrgOverview
+          totalMembers={organization.members.length}
+          orgId={organization.id}
+        />
+      ),
+    },
+    {
+      key: 'members',
+      icon: <UsersIcon />,
+      label: 'Members',
+      children: (
+        <Table
+          dataSource={organization.members}
+          columns={columns.filter((col, index) => index !== 1 && index !== 2)}
+          rowKey="netid"
+          pagination={false}
+        />
+      ),
+    },
+    {
+      key: 'links',
+      icon: <Link2 />,
+      label: 'Links',
+      children: (
+        <CompactLinkTable
+          org_id={organization.id}
+          forceRefresh={forceRefresh}
+          isAdmin={organization.is_admin}
+        />
+      ),
     },
   ];
 
@@ -174,7 +244,13 @@ function ManageOrgBase({
                 Collaborate
               </Button>
             )}
-
+            <Button
+              type="primary"
+              icon={<PlusCircleIcon />}
+              onClick={() => setShowCreateLinkDrawer(true)}
+            >
+              Create
+            </Button>
             <Dropdown
               placement="bottomRight"
               menu={{
@@ -212,11 +288,11 @@ function ManageOrgBase({
       </Row>
       <Row gutter={[16, 16]}>
         <Col span={24}>
-          <Table
-            dataSource={organization.members}
-            columns={columns}
-            rowKey="netid"
-            pagination={false}
+          <Tabs
+            defaultActiveKey={DEFAULT_TAB}
+            activeKey={activeTab}
+            items={items}
+            onChange={handleTabChange}
           />
         </Col>
       </Row>
@@ -331,6 +407,18 @@ function ManageOrgBase({
         }}
         onCancel={() => setShareModalVisible(false)}
         onOk={() => setShareModalVisible(false)}
+      />
+      <CreateLinkDrawer
+        onCancel={() => setShowCreateLinkDrawer(false)}
+        visible={showCreateLinkDrawer}
+        title="Create a link"
+        userOrgs={[]} // Im not sure what this is used for but it doesn't seem to be used in the drawer
+        onFinish={async () => {
+          setShowCreateLinkDrawer(false);
+          setForceRefresh(!forceRefresh);
+        }}
+        userPrivileges={userPrivileges}
+        org_id={match.params.id}
       />
     </>
   );

@@ -67,12 +67,12 @@ class ShrunkClient:
         self.db.access_tokens.create_index([("token", pymongo.TEXT)], unique=True)
 
         self.db.urls.create_index([("alias", pymongo.ASCENDING)])
-        self.db.urls.create_index([("netid", pymongo.ASCENDING)])
+        self.db.urls.create_index([("owner._id", pymongo.ASCENDING)])
         self.db.urls.create_index(
             [
                 ("title", pymongo.TEXT),
                 ("long_url", pymongo.TEXT),
-                ("netid", pymongo.TEXT),
+                ("owner._id", pymongo.TEXT),
                 ("alias", pymongo.TEXT),
             ]
         )

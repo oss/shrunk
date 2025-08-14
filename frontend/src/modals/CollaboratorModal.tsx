@@ -211,6 +211,24 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                 const canChangeRole =
                   !isLastMaster && (!isMaster || canDemoteMaster);
 
+                const isDisabled = (role: { value: string; label: string }) => {
+                  if (entity.type === 'org') {
+                    if (entity.role === masterRole && !canAddMaster) {
+                      // if the org is already the owner
+                      return true;
+                    }
+                    return !(
+                      canChangeRole ||
+                      (role.value === masterRole && !canAddMaster)
+                    );
+                  }
+                  return (
+                    (role.value === masterRole && !canAddMaster) ||
+                    (!canChangeRole && role.value !== entity.role) ||
+                    (isLastMaster && role.value !== masterRole)
+                  );
+                };
+
                 return (
                   <>
                     <Col span={12}>{displayName}</Col>
@@ -225,10 +243,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                           options={props.roles.map((role) => ({
                             value: role.value,
                             label: role.label,
-                            disabled:
-                              (role.value === masterRole && !canAddMaster) ||
-                              (!canChangeRole && role.value !== entity.role) ||
-                              (isLastMaster && role.value !== masterRole),
+                            disabled: isDisabled(role),
                           }))}
                         />
 

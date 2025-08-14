@@ -29,7 +29,7 @@ export default function ApiReference() {
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
             <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono">
-              {`curl https://shrunk.rutgers.edu/v1/users \\
+              {`curl https://shrunk.rutgers.edu/api/v1/users \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $SHRUNK_API_KEY"`}
             </Flex>
@@ -138,8 +138,11 @@ export default function ApiReference() {
           Authorization: Bearer SHRUNK_API_KEY
         </Typography.Paragraph>
         <Typography.Paragraph>API Base URL:</Typography.Paragraph>
-        <Typography.Link href="https://shrunk.rutgers.edu/v1" target="_blank">
-          https://shrunk.rutgers.edu/v1
+        <Typography.Link
+          href="https://shrunk.rutgers.edu/api/v1"
+          target="_blank"
+        >
+          https://shrunk.rutgers.edu/api/v1
         </Typography.Link>
         .
         <Collapse className="!tw-mt-4" items={items} />

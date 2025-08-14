@@ -25,7 +25,7 @@ from werkzeug.routing import BaseConverter, ValidationError
 from . import api, dev_logins, sso, views
 from .client import ShrunkClient
 from .util.github import pull_outlook_assets_from_github
-from .util.ldap import is_valid_netid
+from .util.ldap import is_valid_netid, query_position_info
 from .util.string import get_domain, validate_url
 from .util.verification import verify_signature
 
@@ -115,6 +115,10 @@ def _init_roles() -> None:
 
     def is_admin(netid: str) -> bool:
         return client.roles.has("admin", netid)
+
+    def is_uni_guest(netid: str) -> bool:
+        """Check if the user is a guest of the university."""
+        return "GUEST" in query_position_info(netid).get("employeeType", [])
 
     client.roles.create(
         "admin", is_admin, is_valid_netid, custom_text={"title": "Admins"}
@@ -451,7 +455,7 @@ def create_app(**kwargs: Any) -> Flask:
             alias = alias.lower()
 
         if link_info is None:
-            return jsonify({"message": "Link not found"}), 404
+            return jsonify({"message": "Link not found1"}), 404
 
         is_tracking_pixel_link = client.links.is_tracking_pixel_link(alias)
         if is_tracking_pixel_link:
@@ -465,11 +469,11 @@ def create_app(**kwargs: Any) -> Flask:
                 return redirect(f"/api/core/t/{alias}")
             else:
                 # We do not want to promote the use of tracking pixels used under the alias route.
-                return jsonify({"message": "Link not found"}), 404
+                return jsonify({"message": "Link not found2"}), 404
 
         long_url = client.links.get_long_url(alias)
         if long_url is None:
-            return jsonify({"message": "Link not found"}), 404
+            return jsonify({"message": "Link not found3"}), 404
 
         # Get or generate a tracking id
         tracking_id = request.cookies.get("shrunkid") or client.tracking.get_new_id()
@@ -491,7 +495,7 @@ def create_app(**kwargs: Any) -> Flask:
                 return jsonify({"message": "Domain not found"}), 404
 
         if long_url is None and not is_tracking_pixel_link:
-            return jsonify({"message": "Link not found"}), 404
+            return jsonify({"message": "Link not found4"}), 404
 
         # Get or generate a tracking id
         tracking_id = request.cookies.get("shrunkid") or client.tracking.get_new_id()

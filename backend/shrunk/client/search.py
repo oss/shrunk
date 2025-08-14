@@ -78,7 +78,7 @@ class SearchClient:
 
         # Filter the appropriate links set.
         if query["set"]["set"] == "user":  # search within `user_netid`'s links
-            pipeline.append({"$match": {"netid": user_netid}})
+            pipeline.append({"$match": {"owner._id": user_netid}})
         elif query["set"]["set"] == "shared":
             # If the set is 'shared', the pipeline will be executed against the 'organizations'
             # collection instead of the 'urls' collection.
@@ -99,7 +99,12 @@ class SearchClient:
                                 {"$unwind": "$viewers"},
                                 {
                                     "$match": {
-                                        "$expr": {"$eq": ["$viewers._id", "$$org_id"]}
+                                        "$expr": {
+                                            "$or": [
+                                                {"$eq": ["$viewers._id", "$$org_id"]},
+                                                {"$eq": ["$owner._id", "$$org_id"]},
+                                            ]
+                                        }
                                     }
                                 },
                                 {"$match": {"text_search_score": {"$gt": 0.5}}},
@@ -147,9 +152,15 @@ class SearchClient:
                 ]
         elif query["set"]["set"] == "org":  # search within the given org
             pipeline.append(
-                {"$match": {"viewers.type": "org", "viewers._id": query["set"]["org"]}}
+                {
+                    "$match": {
+                        "$or": [
+                            {"viewers": {"$elemMatch": {"_id": query["set"]["org"]}}},
+                            {"owner.type": "org", "owner._id": query["set"]["org"]},
+                        ]
+                    }
+                }
             )
-
         # Sort results.
         sort_order = 1 if query["sort"]["order"] == "ascending" else -1
         if query["sort"]["key"] == "created_time":
@@ -211,7 +222,20 @@ class SearchClient:
             )
 
         if "owner" in query and query["owner"]:
-            pipeline.append({"$match": {"netid": query["owner"]}})
+            pipeline.append({"$match": {"owner._id": query["owner"]}})
+
+        # Get org names if owner is an org
+
+        pipeline.append(
+            {
+                "$lookup": {
+                    "from": "organizations",
+                    "localField": "owner._id",
+                    "foreignField": "_id",
+                    "as": "owner_org",
+                }
+            }
+        )
 
         # Pagination.
         facet = {
@@ -242,13 +266,19 @@ class SearchClient:
                     return True
                 return not alias["deleted"]
 
+            if res["owner"]["type"] == "org":
+                # If the owner is an organization, get the organization name
+                res["owner"]["org_name"] = self.client.orgs.get_org(
+                    res["owner"]["_id"]
+                )["name"]
+
             if res.get("expiration_time"):
                 expiration_time = res["expiration_time"]
             else:
                 expiration_time = None
 
             prepared = {
-                "id": res["_id"],
+                "_id": res["_id"],
                 "title": res["title"],
                 "long_url": res["long_url"],
                 "created_time": res["timeCreated"],
@@ -256,7 +286,7 @@ class SearchClient:
                 "visits": res["visits"],
                 "domain": res.get("domain", None),
                 "unique_visits": res.get("unique_visits", 0),
-                "owner": res["netid"],
+                "owner": res["owner"],
                 "alias": res["alias"],
                 "is_expired": res["is_expired"],
                 "may_edit": self.client.links.may_edit(res["_id"], user_netid),
@@ -280,7 +310,7 @@ class SearchClient:
         results = [prepare_result(res) for res in result["result"]]
 
         # Remove possible duplicates in results and update total count
-        unique = {each["id"]: each for each in results}.values()
+        unique = {each["_id"]: each for each in results}.values()
         unique_results = list(unique)
         diff = len(results) - len(unique_results)
         count = count - diff

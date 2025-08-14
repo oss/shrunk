@@ -1,6 +1,6 @@
 """Implements the :py:class:`RolesClient` class."""
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Callable, Optional, List, Dict, Any
 
 from flask import current_app, has_app_context
@@ -88,7 +88,12 @@ class RolesClient:
         return role in self.oncreate_for
 
     def grant(
-        self, role: str, grantor: str, grantee: str, comment: Optional[str] = None
+        self,
+        role: str,
+        grantor: str,
+        grantee: str,
+        comment: Optional[str] = None,
+        accountLength: Optional[int] = None,
     ) -> None:
         """
         Gives a role to grantee and remembers who did it
@@ -97,6 +102,7 @@ class RolesClient:
         :param grantor: Identifier of entity granting role
         :param grantee: Entity to which role should be granted
         :param comment: Comment, if required
+        :param accountLength: Number of days until the account expires, only applicable for guest role
 
         :raises InvalidEntity: If the entity fails validation
         """
@@ -107,15 +113,31 @@ class RolesClient:
 
             # guard against double insertions
             if not self.has(role, grantee):
-                self.db.grants.insert_one(
-                    {
-                        "role": role,
-                        "entity": grantee,
-                        "granted_by": grantor,
-                        "comment": comment if comment is not None else "",
-                        "time_granted": datetime.now(timezone.utc),
-                    }
-                )
+
+                if role == "guest" and accountLength is not None:
+                    expirationDate = datetime.now(timezone.utc) + timedelta(
+                        days=accountLength
+                    )
+                    self.db.grants.insert_one(
+                        {
+                            "role": role,
+                            "entity": grantee,
+                            "granted_by": grantor,
+                            "comment": comment if comment is not None else "",
+                            "time_granted": datetime.now(timezone.utc),
+                            "expiration_date": expirationDate,
+                        }
+                    )
+                else:
+                    self.db.grants.insert_one(
+                        {
+                            "role": role,
+                            "entity": grantee,
+                            "granted_by": grantor,
+                            "comment": comment if comment is not None else "",
+                            "time_granted": datetime.now(timezone.utc),
+                        }
+                    )
                 if role in self.oncreate_for:
                     self.oncreate_for[role](grantee)
         else:

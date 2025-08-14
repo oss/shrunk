@@ -170,8 +170,7 @@ def get_tracking_pixel(
 ) -> Any:
     """``GET /api/v1/link/<org_id>/<link_id>``
 
-    Get information about a link. Basically just returns the Mongo document.
-    do we want to get info only on links owned by the org
+    Get information about a trackingpixel. Basically just returns the Mongo document.
     :param netid:
     :param client:
     :param link_id:
@@ -248,8 +247,7 @@ def get_org_tracking_pixels(
 ) -> Any:
     """``GET /api/v1/link/<org_id>``
 
-    Get information about a link. Basically just returns the Mongo document.
-    do we want to get info only on links owned by the org
+    Get information about trackingpixels owned by a org. Basically just returns the Mongo document.
     :param netid:
     :param client:
     :param org_id:

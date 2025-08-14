@@ -104,7 +104,7 @@ class SecurityClient:
             d["title"],
             d["long_url"],
             d["expiration_time"],
-            d["netid"],
+            d["owner"]["_id"],
             d["creator_ip"],
         ]
 

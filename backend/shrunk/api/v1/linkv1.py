@@ -109,7 +109,7 @@ def create_link(token_owner: str, client: ShrunkClient, req: Any) -> Dict[Any, A
             viewers=[],
             bypass_security_measures=False,
             is_tracking_pixel_link=False,
-            extension=req["tracking_pixel_extension"],
+            extension=None,
             created_using_api=True,
         )
 
@@ -193,7 +193,6 @@ def get_link(
     """``GET /api/v1/link/<org_id>/<link_id>``
 
     Get information about a link. Basically just returns the Mongo document.
-    do we want to get info only on links owned by the org
     :param netid:
     :param client:
     :param link_id:
@@ -268,8 +267,7 @@ def get_link(
 def get_org_links(token_owner: str, client: ShrunkClient, org_id: ObjectId) -> Any:
     """``GET /api/v1/link/<org_id>``
 
-    Get information about a link. Basically just returns the Mongo document.
-    do we want to get info only on links owned by the org
+    Get information about links owned by a org. Basically just returns the Mongo document.
     :param netid:
     :param client:
     :param org_id:

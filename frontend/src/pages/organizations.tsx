@@ -61,11 +61,18 @@ export default function MyOrganizations({
   }, [showAll]);
 
   const onCreate = async () => {
-    await createOrg(form.getFieldValue('organization_name'));
-    message.success('Organization created successfully');
-    setIsCreateDrawerOpen(false);
-    form.resetFields();
-    await refreshOrgs();
+    try {
+      const rawName = form.getFieldValue('organization_name');
+      const cleanedName = rawName.trim().replace(/\s+/g, ' ');
+
+      await createOrg(cleanedName);
+      message.success('Organization created successfully');
+      setIsCreateDrawerOpen(false);
+      form.resetFields();
+      await refreshOrgs();
+    } catch (error) {
+      message.error('Failed to create organization.');
+    }
   };
 
   const onDeleteOrg = async (id: string) => {
@@ -115,39 +122,41 @@ export default function MyOrganizations({
                 href={`/app/orgs/${record.id}`}
               />
             </Tooltip>
-            <Tooltip title="Delete">
-              <Popconfirm
-                title="Are you sure you want to delete this organization?"
-                onConfirm={async () => {
-                  try {
-                    await onDeleteOrg(record.id);
-                    message.success('Organization deleted successfully');
-                  } catch (error) {
-                    message.error('Failed to delete organization');
-                  }
-                }}
-                okText="Yes"
-                cancelText="No"
-                okButtonProps={{ danger: true }}
-                onCancel={() => setShowAssociatedUrlsAlert(false)}
-              >
-                <Button
-                  type="text"
-                  danger
-                  icon={<TrashIcon />}
-                  onClick={async () => {
+            {record.is_admin && (
+              <Tooltip title="Delete">
+                <Popconfirm
+                  title="Are you sure you want to delete this organization?"
+                  onConfirm={async () => {
                     try {
-                      const res = await onCheckUrls(record.id);
-                      if (res) {
-                        setShowAssociatedUrlsAlert(true);
-                      }
+                      await onDeleteOrg(record.id);
+                      message.success('Organization deleted successfully');
                     } catch (error) {
-                      message.error('Failed to search for associated urls');
+                      message.error('Failed to delete organization');
                     }
                   }}
-                />
-              </Popconfirm>
-            </Tooltip>
+                  okText="Yes"
+                  cancelText="No"
+                  okButtonProps={{ danger: true }}
+                  onCancel={() => setShowAssociatedUrlsAlert(false)}
+                >
+                  <Button
+                    type="text"
+                    danger
+                    icon={<TrashIcon />}
+                    onClick={async () => {
+                      try {
+                        const res = await onCheckUrls(record.id);
+                        if (res) {
+                          setShowAssociatedUrlsAlert(true);
+                        }
+                      } catch (error) {
+                        message.error('Failed to search for associated urls');
+                      }
+                    }}
+                  />
+                </Popconfirm>
+              </Tooltip>
+            )}
           </Space>
         </Flex>
       ),

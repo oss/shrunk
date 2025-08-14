@@ -139,6 +139,8 @@ export default function Shrunk(props: Props) {
       ? 'Power User'
       : userPrivileges.has('facstaff')
       ? 'Faculty'
+      : userPrivileges.has('guest')
+      ? 'Guest User'
       : 'Administrator';
 
   const onLogout = async () => {

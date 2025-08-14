@@ -2,6 +2,7 @@
 
 from typing import Any, Dict, List
 
+import bson
 from flask import Blueprint, jsonify, request
 from werkzeug.exceptions import abort
 from bson import ObjectId
@@ -77,7 +78,7 @@ CREATE_ORG_SCHEMA = {
     "properties": {
         "name": {
             "type": "string",
-            "pattern": "^[a-zA-Z0-9_.,-]*$",
+            "pattern": r"^[a-zA-Z0-9_.,\- ]*$",
             "minLength": 1,
         },
     },
@@ -176,6 +177,30 @@ def get_org(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
         member["netid"] == netid and member["is_admin"] for member in org["members"]
     )
     return jsonify(org)
+
+
+@bp.route("/<ObjectId:org_id>/links", methods=["GET"])
+@require_login
+def get_org_links(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
+    """``GET /api/org/<org_id>/links``
+
+    Get a list of all links associated with an organization.
+
+    :param netid:
+    :param client:
+    :param org_id:
+    """
+
+    resp = client.orgs.get_org(org_id)
+    if resp is None:
+        abort(404)
+
+    if not client.orgs.is_member(org_id, netid) and not client.roles.has(
+        "admin", netid
+    ):
+        abort(403)
+    links = client.orgs.get_links(org_id)
+    return jsonify(links)
 
 
 @bp.route("/<ObjectId:org_id>/rename/<string:new_org_name>", methods=["PUT"])
@@ -280,6 +305,33 @@ def validate_netid(_netid: str, _client: ShrunkClient, req: Any) -> Any:
     return jsonify(response)
 
 
+@bp.route("/<ObjectId:org_id>/stats", methods=["GET"])
+@require_login
+def get_org_stats(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
+    """``GET /api/org/<org_id>/stats``
+
+
+
+    Response format:
+    .. code-block:: json
+
+       {
+         "total_links": "number",
+         "total_visits": "number",
+         "total_users": "number",
+       }
+
+    """
+    if not client.orgs.is_member(org_id, netid) and not client.roles.has(
+        "admin", netid
+    ):
+        abort(403)
+    stats = client.orgs.get_org_overall_stats(org_id)
+    if stats is None:
+        abort(404)
+    return jsonify(stats)
+
+
 @bp.route("/<ObjectId:org_id>/stats/visits", methods=["GET"])
 @require_login
 def get_org_visit_stats(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
@@ -289,11 +341,11 @@ def get_org_visit_stats(netid: str, client: ShrunkClient, org_id: ObjectId) -> A
 
     .. code-block:: json
 
-       { "visits": [ {
+       {
          "netid": "string",
          "total_visits": "number",
          "unique_visits": "number"
-         } ]
+         }
        }
 
     :param netid:
@@ -474,7 +526,8 @@ def patch_org_member(
     if "is_admin" in req:
         # Prevent the last admin from being demoted
         admin_count = client.orgs.get_admin_count(org_id)
-        if admin_count <= 1:
+
+        if req["is_admin"] == False and admin_count <= 1:
             abort(400)
 
         client.orgs.set_member_admin(org_id, member_netid, req["is_admin"])
