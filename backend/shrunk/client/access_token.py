@@ -132,3 +132,7 @@ class AccessTokenClient:
         if perm in result["permissions"]:
             return True
         return False
+
+    def get_owner(self, token_id: ObjectId) -> str:
+        result = self.db.access_tokens.find_one({"_id": token_id})
+        return str(result["owner"])

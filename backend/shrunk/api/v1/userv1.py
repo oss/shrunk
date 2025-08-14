@@ -4,7 +4,6 @@ from typing import Any, Dict
 import os
 
 from flask import Blueprint, jsonify, request
-from werkzeug.exceptions import abort
 from shrunk.client import ShrunkClient
 from shrunk.util.decorators import require_token
 

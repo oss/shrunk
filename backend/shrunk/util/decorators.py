@@ -124,8 +124,9 @@ def require_token(required_permisson: str):
                     ),
                     403,
                 )
+            token_owner = client.access_tokens.get_owner(token_id)
 
-            return func(client, *args, **kwargs)
+            return func(token_owner, client, *args, **kwargs)
 
         return wrapper
 

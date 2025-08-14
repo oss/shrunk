@@ -150,7 +150,7 @@ class LinksClient:
         long_url: str,
         alias: Optional[str],
         expiration_time: Optional[datetime],
-        netid: str,
+        owner: Dict[str, Any],
         creator_ip: str,
         domain: str = "",
         viewers: List[Dict[str, Any]] = [],
@@ -158,12 +158,18 @@ class LinksClient:
         bypass_security_measures: bool = False,
         is_tracking_pixel_link: bool = False,
         extension: Optional[str] = None,
+        created_using_api: bool = False,
     ) -> Tuple[ObjectId, str]:
         if self.long_url_is_blocked(long_url):
             raise BadLongURLException
 
         if self.redirects_to_blocked_url(long_url):
             raise BadLongURLException
+
+        self.assert_valid_acl_entry("owner", owner)
+
+        if created_using_api:
+            org = self.other_clients.orgs.get_org(owner["_id"])
 
         for member in viewers + editors:
             if member["type"] == "org":
@@ -181,11 +187,18 @@ class LinksClient:
         # (https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/274)
 
         if alias is None:
-            alias = self.create_random_alias(extension=extension)
+            if created_using_api:
+                alias = self.create_random_alias(
+                    extension=extension, orgAlias=org["name"]
+                )
+            else:
+                alias = self.create_random_alias(extension=extension, orgAlias=None)
         else:
             # Ban the future use of creating case-sensitive aliases
             # (https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/205)
             alias = alias.lower()
+            if created_using_api:
+                alias = org["name"] + "-" + alias
 
             if not bool(re.fullmatch(r"^[a-zA-Z0-9_\-\.]+$", alias)):
                 raise BadAliasException
@@ -206,11 +219,12 @@ class LinksClient:
             "deleted": False,
             "creator_ip": creator_ip,
             "expiration_time": expiration_time,
-            "netid": netid,
+            "owner": owner,
             "domain": domain,
             "viewers": viewers,
             "editors": editors,
             "is_tracking_pixel_link": is_tracking_pixel_link,
+            "created_using_api": created_using_api,
         }
 
         if is_tracking_pixel_link:
@@ -478,23 +492,23 @@ class LinksClient:
             result = self.db.visits.find({"link_id": link_id, "alias": alias})
         return list(result)
 
-    def create_random_alias(self, extension: Optional[str] = None) -> str:
+    def create_random_alias(
+        self, extension: Optional[str] = None, orgAlias: Optional[str] = None
+    ) -> str:
         while True:
             alias = self._generate_unique_key()
+            if orgAlias:
+                alias = orgAlias + "-" + alias
             if extension:
                 alias += extension
-            while self.alias_is_reserved(alias):
-                alias = self._generate_unique_key()
-                if extension:
-                    alias += extension
-
-            return alias
+            if not self.alias_is_reserved(alias):
+                return alias
 
     def get_owner(self, link_id: ObjectId) -> str:
-        result = self.db.urls.find_one({"_id": link_id}, {"netid": 1})
+        result = self.db.urls.find_one({"_id": link_id}, {"owner": 1})
         if result is None:
             raise NoSuchObjectException
-        return cast(str, result["netid"])
+        return cast(str, result["owner"]["_id"])
 
     def is_owner(self, link_id: ObjectId, netid: str) -> bool:
         result = self.db.urls.find_one({"_id": link_id, "netid": netid})
@@ -598,14 +612,34 @@ class LinksClient:
             )
         )
 
-    def get_link_info(self, link_id: ObjectId) -> Any:
-        result = self.db.urls.find_one({"_id": link_id})
+    def get_link_info(
+        self, link_id: ObjectId, is_tracking_pixel: Optional[bool] = None
+    ) -> Any:
+        if is_tracking_pixel:
+            result = self.db.urls.find_one(
+                {"_id": link_id, "is_tracking_pixel_link": is_tracking_pixel}
+            )
+        else:
+            result = self.db.urls.find_one({"_id": link_id})
         if result is None:
             raise NoSuchObjectException
         return result
 
     def get_link_info_by_alias(self, alias: str) -> Any:
         return self.db.urls.find_one({"alias": alias, "deleted": False})
+
+    def get_org_links(
+        self, org_id: ObjectId, is_tracking_pixel: Optional[bool] = None
+    ) -> Any:
+        if is_tracking_pixel:
+            result = self.db.urls.find(
+                {"owner._id": org_id, "is_tracking_pixel_link": is_tracking_pixel}
+            )
+        else:
+            result = self.db.urls.find({"owner._id": org_id})
+        if result is None:
+            raise NoSuchObjectException
+        return result
 
     def _verify_link_alias_is_valid(self, alias):
         """
