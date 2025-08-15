@@ -70,6 +70,9 @@ CREATE_LINK_SCHEMA = {
             "type": "array",
             "items": ACL_ENTRY_SCHEMA,
         },
+        "org_id": {
+            "type": "string",
+        },
     },
 }
 
@@ -118,6 +121,19 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
     else:
         expiration_time = None
 
+    if "org_id" in req:
+        try:
+            req["org_id"] = ObjectId(req["org_id"])
+        except bson.errors.InvalidId:
+            return "Invalid org id", 400
+
+        if client.orgs.get_org(req["org_id"]) is None:
+            return "No such org", 400
+        if not client.orgs.is_member(
+            ObjectId(req["org_id"]), netid
+        ) and not client.roles.has("admin", netid):
+            return "Not a member of the specified org", 403
+
     alias = req.get("alias", None)
 
     if "alias" in req and not client.roles.has_some(["admin", "power_user"], netid):
@@ -141,6 +157,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
             bypass_security_measures=req["bypass_security_measures"],
             is_tracking_pixel_link=req["is_tracking_pixel_link"],
             extension=req["tracking_pixel_extension"],
+            org_id=req.get("org_id", None),
         )
 
     except BadLongURLException:
@@ -214,11 +231,12 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         abort(403)
 
     # Get rid of types that cannot safely be passed to jsonify
+
     json_info = {
         "_id": info["_id"],
         "title": info["title"],
         "long_url": info["long_url"],
-        "owner": client.links.get_owner(link_id),
+        "owner": client.links.get_owner(ObjectId(info["_id"])),
         "created_time": info["timeCreated"],
         "expiration_time": info.get("expiration_time", None),
         "domain": info.get("domain", None),
@@ -238,13 +256,12 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
 
 MODIFY_LINK_SCHEMA = {
     "type": "object",
-    "additionalProperties": False,
+    "additionalProperties": True,
     "properties": {
         "title": {"type": "string", "minLength": 1},
         "long_url": {"type": "string", "format": "uri"},
         "expiration_time": {"type": ["string", "null"], "format": "date-time"},
         "created_time": {"type": ["string", "null"], "format": "date-time"},
-        "owner": {"type": "string", "minLength": 1},
     },
 }
 
@@ -273,7 +290,7 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
     if "expiration_time" in req and req["expiration_time"] is not None:
         req["expiration_time"] = datetime.fromisoformat(req["expiration_time"])
     try:
-        client.links.get_link_info(link_id)
+        link = client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
 
@@ -281,8 +298,23 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
         link_id, netid
     ):
         abort(403)
-    if "owner" in req and not is_valid_netid(req["owner"]):
-        abort(400)
+    if "owner" in req:
+
+        if not client.links.is_owner(link_id, netid) and not client.roles.has(
+            "admin", netid
+        ):
+            abort(403)
+        if req["owner"]["type"] == "netid":
+            if not is_valid_netid(req["owner"]["_id"]):
+                abort(400)
+        elif req["owner"]["type"] == "org":
+            if not client.orgs.get_org(ObjectId(req["owner"]["_id"])):
+                abort(400)
+            if not client.orgs.is_member(
+                ObjectId(req["owner"]["_id"]), netid
+            ) and not client.roles.has("admin", netid):
+                abort(403)
+
     try:
         client.links.modify(
             link_id,
@@ -516,6 +548,7 @@ def get_link_visits(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     if not client.roles.has("admin", netid) and not client.links.may_view(
         link_id, netid
     ):
+
         abort(403)
     visits = client.links.get_visits(link_id)
     anonymized_visits = [anonymize_visit(client, visit) for visit in visits]

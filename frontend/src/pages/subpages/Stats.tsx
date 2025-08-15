@@ -29,8 +29,8 @@ import {
   UsersIcon,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 
+import { useLocation } from 'react-router-dom';
 import { downloadVisits } from '../../api/csv';
 import {
   BrowserStats,
@@ -159,8 +159,8 @@ export function Stats(props: Props): React.ReactElement {
     const mentionedIds = new Set<string>();
 
     tempEntities.push({
-      _id: templinkInfo.owner,
-      type: 'netid',
+      _id: templinkInfo.owner._id,
+      type: templinkInfo.owner.type,
       role: 'owner',
     });
 
@@ -237,8 +237,11 @@ export function Stats(props: Props): React.ReactElement {
     if (values.long_url !== oldLinkInfo.long_url) {
       patchReq.long_url = values.long_url;
     }
-    if (values.owner !== oldLinkInfo.owner) {
-      patchReq.owner = values.owner;
+    if (values.owner !== oldLinkInfo.owner._id) {
+      patchReq.owner = {
+        _id: values.owner,
+        type: 'netid',
+      };
     }
     if (values.expiration_time !== oldLinkInfo.expiration_time) {
       patchReq.expiration_time =
@@ -320,6 +323,25 @@ export function Stats(props: Props): React.ReactElement {
     onRemoveCollaborator(entity);
   };
 
+  const transferOwnershipToOrg = (
+    activeTab: 'netid' | 'org',
+    entity: Collaborator,
+  ) => {
+    editLink(props.id, {
+      owner: {
+        _id: entity._id,
+        type: activeTab,
+      },
+    })
+      .then(() => {
+        message.success('Ownership transferred successfully');
+        updateLinkInfo();
+      })
+      .catch(() => {
+        message.error('Failed to transfer ownership');
+      });
+  };
+
   const onChangeEntity = (
     activeTab: 'netid' | 'org',
     entity: Collaborator,
@@ -327,6 +349,12 @@ export function Stats(props: Props): React.ReactElement {
   ) => {
     // Remove viewer if they're an editor
     // Search "# SHARING_ACL_REFACTOR" for the following comment
+
+    if (activeTab === 'org' && value === 'owner') {
+      transferOwnershipToOrg(activeTab, entity);
+      return;
+    }
+
     if (value === 'viewer' && entity.role === 'editor') {
       onRemoveCollaborator(entity, 'editor');
       return;
@@ -491,7 +519,14 @@ export function Stats(props: Props): React.ReactElement {
                         {
                           key: 'owner',
                           label: 'Owner',
-                          children: linkInfo?.owner,
+                          children:
+                            linkInfo?.owner.type === 'org' ? (
+                              <a href={`/app/orgs/${linkInfo.owner._id}`}>
+                                {linkInfo.owner.org_name}
+                              </a>
+                            ) : (
+                              linkInfo?.owner._id
+                            ),
                           span: isTrackingPixel ? 1 : 'filled',
                         },
                         {

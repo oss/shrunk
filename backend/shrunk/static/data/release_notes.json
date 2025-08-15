@@ -5,7 +5,7 @@
     "patch": 0,
     "projectDirector": "ah1371",
     "date": "TODO",
-    "description": "The new public API for faculty developers, real-time notifications, continued codebase cleanup, and testing suite update.",
+    "description": "The new public API for faculty developers, real-time notifications, continued codebase cleanup, testing suite update and organization page updates.",
     "categories": {
       "features": [
         {
@@ -31,7 +31,16 @@
           "text": "New page containing an API Reference for the public API",
           "contributors": ["ys973"],
           "product": "public-api"
+        },
+        {
+          "text": "New pages in an organization's dashboard: Overview and Links allows organizations to quickly view and manage their links and tracking pixels",
+          "contributors": ["ak2399"]
+        },
+        {
+          "text": "Organizations can now own a link or tracking pixel",
+          "contributors": ["ak2399"]
         }
+
       ],
       "improvements": [
          {

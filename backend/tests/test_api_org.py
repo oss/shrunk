@@ -64,6 +64,17 @@ def test_restrict_last_admin_demotion(client: Client) -> None:
         assert 200 <= resp.status_code <= 300
         org_id = resp.json["id"]
 
+        resp = client.put(f"/api/core/org/{org_id}/member/DEV_TEST")
+        assert resp.status_code == 204
+
+        resp = client.patch(
+            f"/api/core/org/{org_id}/member/DEV_TEST", json={"is_admin": True}
+        )
+        assert resp.status_code == 204
+
+        resp = client.delete(f"/api/core/org/{org_id}/member/DEV_TEST")
+        assert resp.status_code == 204
+
         # Attempt to demote the last admin
         resp = client.patch(
             f"/api/core/org/{org_id}/member/DEV_ADMIN", json={"is_admin": False}
@@ -109,3 +120,35 @@ def test_get_valid_access_permissions(client: Client) -> None:
         assert_is_response_valid(resp)
 
         assert type(resp.json["permissions"]) is list
+
+
+def test_org_get_link_permissions(client: Client) -> None:
+    with dev_login(client, "admin"):
+        resp = client.post("/api/core/org", json={"name": "testorg12"})
+        assert 200 <= resp.status_code <= 300
+        org_id = resp.json["id"]
+        resp = client.get("/api/core/org/random/links")
+        assert resp.status_code == 404
+
+        resp = client.get("/api/core/org/689540400d104ea00674e39a/links")
+        assert resp.status_code == 404
+
+        resp = client.get(f"/api/core/org/{org_id}/links")
+        assert resp.status_code == 200
+    with dev_login(client, "user"):
+        resp = client.get(f"/api/core/org/{org_id}/links")
+        assert resp.status_code == 403
+
+
+def test_org_get_overall_stats_no_links(client: Client) -> None:
+    """Tests that the overall stats endpoint returns 0s when there are no links."""
+    with dev_login(client, "admin"):
+        resp = client.post("/api/core/org", json={"name": "testorg12"})
+        assert 200 <= resp.status_code <= 300
+        org_id = resp.json["id"]
+
+        resp = client.get(f"/api/core/org/{org_id}/stats")
+        assert resp.status_code == 200
+        assert resp.json["total_links"] == 0
+        assert resp.json["total_visits"] == 0
+        assert resp.json["total_users"] == 0

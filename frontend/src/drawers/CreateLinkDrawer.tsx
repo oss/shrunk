@@ -59,6 +59,10 @@ export interface Props {
   onFinish: () => Promise<void>;
 
   userOrgs: Organization[];
+  /**
+   * Pass org id as prop if creating a link for an org
+   */
+  org_id?: string;
 }
 
 export default function CreateLinkDrawer(props: Props): JSX.Element {
@@ -98,6 +102,7 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
         values.alias,
         values.expiration_time,
         values.tracking_pixel_extension as '.png' | '.gif',
+        props.org_id,
       );
     } catch (e: any) {
       message.error(e.message);

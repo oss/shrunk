@@ -4,6 +4,10 @@ from typing import Any, Dict, List, Optional
 
 import pymongo
 from shrunk.util.ldap import is_valid_netid, query_position_info
+import datetime
+
+
+from .exceptions import InvalidEntity
 
 __all__ = ["UserClient"]
 

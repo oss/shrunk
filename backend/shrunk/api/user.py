@@ -98,6 +98,7 @@ def get_user_info():
 
     # Get user privileges
     privileges = []
+
     if client.roles.has("admin", netid):
         privileges.append("admin")
     if client.roles.has("facstaff", netid):

@@ -14,6 +14,8 @@ bp = Blueprint("devlogins", __name__, url_prefix="/api/core/devlogins")
 
 
 def mk_dev_login(netid: str, display_name: str, role: Optional[str]) -> Any:
+    """ """
+
     def view() -> Any:
         if not bool(int(os.getenv("SHRUNK_DEV_LOGINS", 0))):
             current_app.logger.warning(f"failed dev login with {netid}")
@@ -32,6 +34,8 @@ def mk_dev_login(netid: str, display_name: str, role: Optional[str]) -> Any:
 bp.add_url_rule(
     "/user", "user", mk_dev_login("DEV_USER", "Dev User", None), methods=["POST"]
 )
+
+
 bp.add_url_rule(
     "/facstaff",
     "facstaff",

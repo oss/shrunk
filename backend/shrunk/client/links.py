@@ -158,6 +158,7 @@ class LinksClient:
         bypass_security_measures: bool = False,
         is_tracking_pixel_link: bool = False,
         extension: Optional[str] = None,
+        org_id: Optional[ObjectId] = None,
     ) -> Tuple[ObjectId, str]:
         if self.long_url_is_blocked(long_url):
             raise BadLongURLException
@@ -195,6 +196,11 @@ class LinksClient:
 
             if self.alias_is_duplicate(alias, False):
                 raise BadAliasException
+        owner = {}
+        if org_id is not None:
+            owner = {"_id": org_id, "type": "org"}
+        else:
+            owner = {"_id": netid, "type": "netid"}
 
         document = {
             "title": title,
@@ -206,7 +212,7 @@ class LinksClient:
             "deleted": False,
             "creator_ip": creator_ip,
             "expiration_time": expiration_time,
-            "netid": netid,
+            "owner": owner,
             "domain": domain,
             "viewers": viewers,
             "editors": editors,
@@ -262,14 +268,40 @@ class LinksClient:
         if expiration_time is not None:
             fields["expiration_time"] = expiration_time
         if owner is not None:
-            fields["netid"] = owner
-            update["$push"] = {
-                "ownership_transfer_history": {
-                    "from": link_info["netid"],
-                    "to": owner,
-                    "timestamp": datetime.now(timezone.utc),
-                },
-            }
+
+            if owner["type"] == "netid" and is_valid_netid(owner["_id"]):
+                fields["owner"] = {"_id": owner["_id"], "type": "netid"}
+                update["$push"] = {
+                    "ownership_transfer_history": {
+                        "from": link_info["owner"],
+                        "to": {"_id": owner["_id"], "type": "netid"},
+                        "timestamp": datetime.now(timezone.utc),
+                    },
+                }
+                if link_info["owner"]["type"] == "org":
+                    # Push org to editors since it is no longer owner
+                    update["$push"] = {
+                        "editors": {"_id": link_info["owner"]["_id"], "type": "org"},
+                        "viewers": {"_id": link_info["owner"]["_id"], "type": "org"},
+                    }
+            else:
+
+                fields["owner"] = {"_id": ObjectId(owner["_id"]), "type": "org"}
+                update["$push"] = {
+                    "ownership_transfer_history": {
+                        "from": {
+                            "_id": link_info["owner"]["_id"],
+                            "type": link_info["owner"]["type"],
+                        },
+                        "to": {"_id": ObjectId(owner["_id"]), "type": "org"},
+                        "timestamp": datetime.now(timezone.utc),
+                    },
+                }
+                # Remove the org from editors and viewers list since it is now
+                update["$pull"] = {
+                    "editors": {"_id": ObjectId(owner["_id"])},
+                    "viewers": {"_id": ObjectId(owner["_id"])},
+                }
 
         result = self.db.urls.update_one({"_id": link_id}, update)
         if result.matched_count != 1:
@@ -295,7 +327,10 @@ class LinksClient:
         info = self.get_link_info(link_id)
 
         # dont modify if they are owner
-        if entry["_id"] == info["netid"]:
+        if (
+            entry["_id"] == info["owner"]["_id"]
+            and entry["type"] == info["owner"]["type"]
+        ):
             return
         # make sure we don't add a dupe if they already have the perm
         operator = "$addToSet"
@@ -491,14 +526,33 @@ class LinksClient:
             return alias
 
     def get_owner(self, link_id: ObjectId) -> str:
-        result = self.db.urls.find_one({"_id": link_id}, {"netid": 1})
+
+        result = self.db.urls.find_one({"_id": link_id})
+
+        if result["owner"]["type"] == "org":
+            res = self.other_clients.orgs.get_org(ObjectId(result["owner"]["_id"]))
+            owner = {
+                "_id": result["owner"]["_id"],
+                "type": "org",
+                "org_name": res["name"],
+            }
+            return owner
+
         if result is None:
             raise NoSuchObjectException
-        return cast(str, result["netid"])
+        return result["owner"]
 
     def is_owner(self, link_id: ObjectId, netid: str) -> bool:
-        result = self.db.urls.find_one({"_id": link_id, "netid": netid})
-        return result is not None
+        result = self.db.urls.find_one({"_id": link_id})
+        if result is None:
+            raise NoSuchObjectException
+        if result["owner"]["type"] == "netid":
+            return result["owner"]["_id"] == netid
+        elif self.other_clients.orgs.is_admin(
+            ObjectId(result["owner"]["_id"]), netid
+        ):  # Org admins have "owner" permissions
+            return True
+        return False
 
     def may_edit(self, link_id: ObjectId, netid: str) -> bool:
         if self.other_clients.roles.has("admin", netid):
@@ -506,10 +560,11 @@ class LinksClient:
 
         orgs = self.other_clients.orgs.get_orgs(netid, True)
         orgs = [org["id"] for org in orgs]
+
         result = self.db.urls.find_one(
             {
                 "$or": [
-                    {"_id": link_id, "netid": netid},  # owner
+                    {"_id": link_id, "owner._id": netid},  # owner
                     {
                         "_id": link_id,
                         "editors": {"$elemMatch": {"_id": netid}},
@@ -518,6 +573,10 @@ class LinksClient:
                         "_id": link_id,
                         "editors": {"$elemMatch": {"_id": {"$in": orgs}}},
                     },  # shared with org
+                    {
+                        "_id": link_id,
+                        "owner._id": {"$in": orgs},  # user is in org that owns the link
+                    },
                 ]
             }
         )
@@ -529,7 +588,7 @@ class LinksClient:
         result = self.db.urls.find_one(
             {
                 "$or": [
-                    {"_id": link_id, "netid": netid},  # owner
+                    {"_id": link_id, "owner._id": netid},  # owner
                     {  # editor
                         "_id": link_id,
                         "editors": {"$elemMatch": {"_id": netid}},
@@ -542,6 +601,10 @@ class LinksClient:
                         "_id": link_id,
                         "viewers": {"$elemMatch": {"_id": {"$in": orgs}}},
                     },  # shared with org
+                    {
+                        "_id": link_id,
+                        "owner._id": {"$in": orgs},  # user is in org that owns the link
+                    },
                 ]
             }
         )

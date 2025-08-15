@@ -1,6 +1,6 @@
 """Implements the :py:class:`RolesClient` class."""
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Callable, Optional, List, Dict, Any
 
 from flask import current_app, has_app_context
@@ -88,7 +88,11 @@ class RolesClient:
         return role in self.oncreate_for
 
     def grant(
-        self, role: str, grantor: str, grantee: str, comment: Optional[str] = None
+        self,
+        role: str,
+        grantor: str,
+        grantee: str,
+        comment: Optional[str] = None,
     ) -> None:
         """
         Gives a role to grantee and remembers who did it
@@ -97,6 +101,7 @@ class RolesClient:
         :param grantor: Identifier of entity granting role
         :param grantee: Entity to which role should be granted
         :param comment: Comment, if required
+
 
         :raises InvalidEntity: If the entity fails validation
         """
@@ -107,6 +112,7 @@ class RolesClient:
 
             # guard against double insertions
             if not self.has(role, grantee):
+
                 self.db.grants.insert_one(
                     {
                         "role": role,
@@ -116,8 +122,8 @@ class RolesClient:
                         "time_granted": datetime.now(timezone.utc),
                     }
                 )
-                if role in self.oncreate_for:
-                    self.oncreate_for[role](grantee)
+            if role in self.oncreate_for:
+                self.oncreate_for[role](grantee)
         else:
             raise InvalidEntity
 
