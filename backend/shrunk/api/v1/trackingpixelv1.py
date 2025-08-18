@@ -204,7 +204,7 @@ def get_tracking_pixel(
             404,
         )
 
-    if not client.links.get_owner(link_id) == org_id:
+    if not client.links.get_owner(link_id)["_id"] == org_id:
         return (
             jsonify(
                 {
