@@ -129,24 +129,19 @@ def test_external_api_endpoints(client: Client) -> None:
         resp = client.post("/api/core/org", json={"name": "test123"})
         org_id = resp.json["id"]
 
-        #attempt endpoint with missing permissions
+        # attempt endpoint with missing permissions
 
         resp = client.post(
             f"/api/core/org/{org_id}/access_token",
             json={
                 "title": "title",
                 "description": "description",
-                "permissions": [
-                    "read:links",
-                    "create:links"
-                ],
+                "permissions": ["read:links", "create:links"],
             },
         )
         token = resp.json["access_token"]
 
-        resp = client.get(
-            "/api/v1/users", headers={"Authorization": f"Bearer {token}"}
-        )
+        resp = client.get("/api/v1/users", headers={"Authorization": f"Bearer {token}"})
         assert resp.status_code == 403
 
         resp = client.post(
@@ -167,17 +162,17 @@ def test_external_api_endpoints(client: Client) -> None:
         invalid_token = "9b598e36-839c-4f94-8a72-38892b0d74dc"
         invalid_org_id = "68a2815eabba3cb0f5b85ceb"
 
-        #attempt invalid token
+        # attempt invalid token
         resp = client.get(
             "/api/v1/users", headers={"Authorization": f"Bearer {invalid_token}"}
         )
         assert resp.status_code == 401
 
-        #users endpoint
+        # users endpoint
         resp = client.get("/api/v1/users", headers={"Authorization": f"Bearer {token}"})
         assert resp.status_code == 200
 
-        #attempt invalid org_id assoicated with token
+        # attempt invalid org_id assoicated with token
 
         create_link_payload_invalid = {
             "title": "My API Link",
@@ -192,7 +187,7 @@ def test_external_api_endpoints(client: Client) -> None:
         )
         assert resp.status_code == 403
 
-        #create link endpoint
+        # create link endpoint
         create_link_payload = {
             "title": "My API Link",
             "long_url": "https://example.com",
@@ -206,7 +201,7 @@ def test_external_api_endpoints(client: Client) -> None:
         )
         assert resp.status_code == 201
         link_id = resp.json["id"]
-        #get link by id endpoint
+        # get link by id endpoint
         resp = client.get(
             f"/api/v1/links/{org_id}/{link_id}",
             headers={"Authorization": f"Bearer {token}"},
@@ -216,14 +211,14 @@ def test_external_api_endpoints(client: Client) -> None:
         assert resp.json["_id"] == link_id
         assert resp.json["owner"]["_id"] == org_id
 
-        #get org links endpoint
+        # get org links endpoint
         resp = client.get(
             f"/api/v1/links/{org_id}",
             headers={"Authorization": f"Bearer {token}"},
         )
         assert resp.status_code == 200
 
-        #create tracking pixel endpoint
+        # create tracking pixel endpoint
         create_tp_payload = {
             "title": "My Tracking Pixel",
             "organization_id": org_id,
@@ -236,7 +231,7 @@ def test_external_api_endpoints(client: Client) -> None:
         assert resp.status_code == 201
         tp_link_id = resp.json["id"]
 
-        #get tracking pixel by id endpoint
+        # get tracking pixel by id endpoint
         resp = client.get(
             f"/api/v1/tracking-pixels/{org_id}/{tp_link_id}",
             headers={"Authorization": f"Bearer {token}"},
@@ -245,7 +240,7 @@ def test_external_api_endpoints(client: Client) -> None:
         assert resp.json["_id"] == tp_link_id
         assert resp.json["owner"]["_id"] == org_id
 
-        #get org tracking pixels endpoint
+        # get org tracking pixels endpoint
         resp = client.get(
             f"/api/v1/tracking-pixels/{org_id}",
             headers={"Authorization": f"Bearer {token}"},
