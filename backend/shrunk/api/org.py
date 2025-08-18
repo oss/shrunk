@@ -322,13 +322,14 @@ def get_org_stats(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
        }
 
     """
+
+    if client.orgs.get_org(org_id) is None:
+        abort(404)
     if not client.orgs.is_member(org_id, netid) and not client.roles.has(
         "admin", netid
     ):
         abort(403)
     stats = client.orgs.get_org_overall_stats(org_id)
-    if stats is None:
-        abort(404)
     return jsonify(stats)
 
 

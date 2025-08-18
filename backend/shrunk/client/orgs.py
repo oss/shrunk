@@ -418,7 +418,7 @@ class OrgsClient:
 
         results = list(self.db.urls.aggregate(pipeline))
         if not results or len(results) == 0:
-            return None
+            return {"total_links": 0, "total_visits": 0, "total_users": 0}
         return results[0]
 
     def get_geoip_stats(self, org_id: ObjectId) -> Any:

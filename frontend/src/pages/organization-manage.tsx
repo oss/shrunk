@@ -80,6 +80,25 @@ function ManageOrgBase({
   const [showCreateLinkDrawer, setShowCreateLinkDrawer] = useState(false);
   const [forceRefresh, setForceRefresh] = useState(false);
 
+  useEffect(() => {
+    const handleLocationChange = () => {
+      const locationParam = new URLSearchParams(window.location.search);
+      const tab = locationParam.get('tab');
+      if (tab && VALID_TABS.includes(tab)) {
+        setActiveTab(tab);
+        const baseUrl = window.location.pathname;
+        window.history.replaceState({}, '', `${baseUrl}?tab=${tab}`);
+      } else {
+        const baseUrl = window.location.pathname;
+        window.history.pushState({}, '', `${baseUrl}?tab=${DEFAULT_TAB}`);
+        setActiveTab(DEFAULT_TAB);
+      }
+    };
+    window.addEventListener('hashchange', handleLocationChange);
+    handleLocationChange(); // Handle initial URL
+    return () => window.removeEventListener('hashchange', handleLocationChange);
+  }, []);
+
   const refreshOrganization = async () => {
     const info = await getOrganization(match.params.id);
     if (info.is_admin || userPrivileges.has('admin')) {
@@ -132,6 +151,8 @@ function ManageOrgBase({
   const handleTabChange = (key: string) => {
     if (VALID_TABS.includes(key)) {
       setActiveTab(key);
+      const baseUrl = window.location.pathname;
+      window.history.pushState({}, '', `${baseUrl}?tab=${key}`);
     }
   };
 
@@ -208,7 +229,9 @@ function ManageOrgBase({
       children: (
         <Table
           dataSource={organization.members}
-          columns={columns.filter((col, index) => index !== 1 && index !== 2)}
+          columns={columns.filter((col, index) =>
+            organization.is_admin ? true : index !== 1 && index !== 2,
+          )}
           rowKey="netid"
           pagination={false}
         />

@@ -14,11 +14,7 @@ bp = Blueprint("devlogins", __name__, url_prefix="/api/core/devlogins")
 
 
 def mk_dev_login(netid: str, display_name: str, role: Optional[str]) -> Any:
-    """
-
-    expirationDate: Number of days until the login expires. Only applicable for guest role
-
-    """
+    """ """
 
     def view() -> Any:
         if not bool(int(os.getenv("SHRUNK_DEV_LOGINS", 0))):
@@ -44,12 +40,6 @@ bp.add_url_rule(
     "/user", "user", mk_dev_login("DEV_USER", "Dev User", None), methods=["POST"]
 )
 
-bp.add_url_rule(
-    "/guest",
-    "guest",
-    mk_dev_login("DEV_GUEST", "Dev Guest", "guest"),
-    methods=["POST"],
-)
 
 bp.add_url_rule(
     "/facstaff",
