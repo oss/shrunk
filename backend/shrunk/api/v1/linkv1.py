@@ -69,9 +69,7 @@ def create_link(token_owner: str, client: ShrunkClient, req: Any) -> Dict[Any, A
             403,
         )
 
-    if "long_url" not in req and req["is_tracking_pixel_link"]:
-        req["long_url"] = "http://example.com"
-    elif "long_url" not in req and not req["is_tracking_pixel_link"]:
+    if "long_url" not in req:
         return (
             jsonify(
                 {
