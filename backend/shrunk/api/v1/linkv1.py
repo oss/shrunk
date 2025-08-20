@@ -15,6 +15,9 @@ from shrunk.client.exceptions import (
     SecurityRiskDetected,
 )
 
+from shrunk.util.string import validate_url
+
+
 __all__ = ["bp"]
 bp = Blueprint("linkv1", __name__, url_prefix="/api/v1/links")
 
@@ -76,6 +79,20 @@ def create_link(token_owner: str, client: ShrunkClient, req: Any) -> Dict[Any, A
                         "code": "MISSING_FIELD",
                         "message": "Missing required field: long_url",
                         "details": "Provide long_url for non-tracking links.",
+                    }
+                }
+            ),
+            400,
+        )
+
+    if not validate_url(req["long_url"]):
+        return (
+            jsonify(
+                {
+                    "error": {
+                        "code": "BAD_LONG_URL",
+                        "message": "Invalid long_url",
+                        "details": "The provided URL is not valid.",
                     }
                 }
             ),
@@ -287,7 +304,7 @@ def get_org_links(token_owner: str, client: ShrunkClient, org_id: ObjectId) -> A
         )
 
     try:
-        info = client.links.get_org_links(org_id)
+        info = client.orgs.get_links(org_id, is_tracking_pixel=False)
     except NoSuchObjectException:
         return (
             jsonify(

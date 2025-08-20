@@ -101,7 +101,6 @@ class RolesClient:
         :param grantor: Identifier of entity granting role
         :param grantee: Entity to which role should be granted
         :param comment: Comment, if required
-        :param accountLength: Number of days until the account expires, only applicable for guest role
 
 
         :raises InvalidEntity: If the entity fails validation

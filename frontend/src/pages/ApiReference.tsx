@@ -14,6 +14,7 @@ import {
 } from 'antd/lib';
 
 export default function ApiReference() {
+  const apiUrl = `${window.location.origin}/api/v1`;
   const items: CollapseProps['items'] = [
     {
       key: '1',
@@ -29,7 +30,7 @@ export default function ApiReference() {
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
             <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono">
-              {`curl https://shrunk.rutgers.edu/api/v1/users \\
+              {`curl ${apiUrl}/users \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $SHRUNK_API_KEY"`}
             </Flex>
@@ -110,7 +111,7 @@ export default function ApiReference() {
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
             <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono">
-              {`curl https://shrunk.rutgers.edu/api/v1/links \\
+              {`curl ${apiUrl}/links \\
   -X POST \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $SHRUNK_API_KEY" \\
@@ -267,7 +268,7 @@ export default function ApiReference() {
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
             <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono">
-              {`curl https://shrunk.rutgers.edu/api/v1/links/<org_id>/<link_id> \\
+              {`curl ${apiUrl}/links/<org_id>/<link_id> \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $SHRUNK_API_KEY"`}
             </Flex>
@@ -357,7 +358,7 @@ export default function ApiReference() {
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
             <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono">
-              {`curl https://shrunk.rutgers.edu/api/v1/links/<org_id> \\
+              {`curl ${apiUrl}/links/<org_id> \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $SHRUNK_API_KEY"`}
             </Flex>
@@ -430,7 +431,7 @@ export default function ApiReference() {
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
             <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono">
-              {`curl https://shrunk.rutgers.edu/api/v1/tracking-pixels \\
+              {`curl ${apiUrl}/tracking-pixels \\
   -X POST \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $SHRUNK_API_KEY" \\
@@ -543,7 +544,7 @@ export default function ApiReference() {
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
             <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono">
-              {`curl https://shrunk.rutgers.edu/api/v1/tracking-pixels/<org_id>/<link_id> \\
+              {`curl ${apiUrl}/tracking-pixels/<org_id>/<link_id> \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $SHRUNK_API_KEY"`}
             </Flex>
@@ -635,7 +636,7 @@ export default function ApiReference() {
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
             <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono">
-              {`curl https://shrunk.rutgers.edu/api/v1/tracking-pixels/<org_id> \\
+              {`curl ${apiUrl}/tracking-pixels/<org_id> \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $SHRUNK_API_KEY"`}
             </Flex>
@@ -721,7 +722,7 @@ export default function ApiReference() {
           learn more about API keys in your{' '}
           <Typography.Link
             className="!tw-underline"
-            href="https://shrunk.rutgers.edu/app/orgs"
+            href={`${window.location.origin}/app/orgs`}
             target="_blank"
           >
             organization managment page
@@ -736,11 +737,8 @@ export default function ApiReference() {
           Authorization: Bearer SHRUNK_API_KEY
         </Typography.Paragraph>
         <Typography.Paragraph>API Base URL:</Typography.Paragraph>
-        <Typography.Link
-          href="https://shrunk.rutgers.edu/api/v1"
-          target="_blank"
-        >
-          https://shrunk.rutgers.edu/api/v1
+        <Typography.Link href={apiUrl} target="_blank">
+          {`${window.location.origin}/api/v1`}
         </Typography.Link>
         .
         <Collapse className="!tw-mt-4" items={items} />

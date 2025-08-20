@@ -267,7 +267,7 @@ def get_org_tracking_pixels(
         )
 
     try:
-        info = client.links.get_org_links(org_id, is_tracking_pixel=True)
+        info = client.orgs.get_links(org_id, is_tracking_pixel=True)
     except NoSuchObjectException:
         return (
             jsonify(

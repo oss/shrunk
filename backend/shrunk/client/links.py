@@ -189,7 +189,7 @@ class LinksClient:
         if alias is None:
             if created_using_api:
                 alias = self.create_random_alias(
-                    extension=extension, orgAlias=org["name"]
+                    extension=extension, orgAlias=org["name"].replace(" ", "")
                 )
             else:
                 alias = self.create_random_alias(extension=extension, orgAlias=None)
@@ -198,7 +198,7 @@ class LinksClient:
             # (https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/205)
             alias = alias.lower()
             if created_using_api:
-                alias = org["name"] + "-" + alias
+                alias = org["name"].replace(" ", "") + "-" + alias
 
             if not bool(re.fullmatch(r"^[a-zA-Z0-9_\-\.]+$", alias)):
                 raise BadAliasException
@@ -685,19 +685,6 @@ class LinksClient:
 
     def get_link_info_by_alias(self, alias: str) -> Any:
         return self.db.urls.find_one({"alias": alias, "deleted": False})
-
-    def get_org_links(
-        self, org_id: ObjectId, is_tracking_pixel: Optional[bool] = None
-    ) -> Any:
-        if is_tracking_pixel:
-            result = self.db.urls.find(
-                {"owner._id": org_id, "is_tracking_pixel_link": is_tracking_pixel}
-            )
-        else:
-            result = self.db.urls.find({"owner._id": org_id})
-        if result is None:
-            raise NoSuchObjectException
-        return result
 
     def _verify_link_alias_is_valid(self, alias):
         """

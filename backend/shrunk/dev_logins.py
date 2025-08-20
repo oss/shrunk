@@ -25,12 +25,7 @@ def mk_dev_login(netid: str, display_name: str, role: Optional[str]) -> Any:
         session.update({"user": {"netid": netid, "display_name": display_name}})
         current_app.client.users.initialize_user(netid)
         if role is not None and not current_app.client.roles.has(role, netid):
-            if role == "guest":
-                current_app.client.roles.grant(
-                    role, "Justice League", netid, accountLength=30
-                )
-            else:
-                current_app.client.roles.grant(role, "Justice League", netid)
+            current_app.client.roles.grant(role, "Justice League", netid)
         return jsonify({"status": "success"})
 
     return view

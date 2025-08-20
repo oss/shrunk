@@ -116,10 +116,6 @@ def _init_roles() -> None:
     def is_admin(netid: str) -> bool:
         return client.roles.has("admin", netid)
 
-    def is_uni_guest(netid: str) -> bool:
-        """Check if the user is a guest of the university."""
-        return "GUEST" in query_position_info(netid).get("employeeType", [])
-
     client.roles.create(
         "admin", is_admin, is_valid_netid, custom_text={"title": "Admins"}
     )
