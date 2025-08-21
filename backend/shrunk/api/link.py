@@ -121,18 +121,21 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
     else:
         expiration_time = None
 
+    owner = {}
+
     if "org_id" in req:
         try:
             req["org_id"] = ObjectId(req["org_id"])
+            owner = {"_id": ObjectId(req["org_id"]), "type": "org"}
         except bson.errors.InvalidId:
             return "Invalid org id", 400
 
         if client.orgs.get_org(req["org_id"]) is None:
             return "No such org", 400
-        if not client.orgs.is_member(
-            ObjectId(req["org_id"]), netid
-        ) and not client.roles.has("admin", netid):
+        if not client.orgs.is_member(ObjectId(req["org_id"]), netid):
             return "Not a member of the specified org", 403
+    else:
+        owner = {"_id": netid, "type": "netid"}
 
     alias = req.get("alias", None)
 
@@ -149,7 +152,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
             req["long_url"],
             alias,
             expiration_time,
-            netid,
+            owner,
             request.remote_addr,
             domain=req["domain"],
             editors=req["editors"],
@@ -157,7 +160,6 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
             bypass_security_measures=req["bypass_security_measures"],
             is_tracking_pixel_link=req["is_tracking_pixel_link"],
             extension=req["tracking_pixel_extension"],
-            org_id=req.get("org_id", None),
         )
 
     except BadLongURLException:

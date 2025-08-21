@@ -8,6 +8,10 @@ import os
 import pymongo
 import pymongo.errors
 
+from .exceptions import (
+    NoSuchObjectException,
+)
+
 __all__ = ["OrgsClient"]
 
 
@@ -307,12 +311,22 @@ class OrgsClient:
 
         return list(self.db.organizations.aggregate(pipeline))
 
-    def get_links(self, org_id: ObjectId) -> List[Any]:
+    def get_links(
+        self, org_id: ObjectId, is_tracking_pixel: Optional[bool] = None
+    ) -> List[Any]:
         """Get all links associated with an org
 
         :param org_id: The org ID
         :returns: A list of links associated with the org
         """
+        if is_tracking_pixel is not None:
+            result = self.db.urls.find(
+                {"owner._id": org_id, "is_tracking_pixel_link": is_tracking_pixel}
+            )
+
+            if result is None:
+                raise NoSuchObjectException
+            return result
 
         pipeline = [
             {

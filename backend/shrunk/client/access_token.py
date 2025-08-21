@@ -14,9 +14,11 @@ class AccessTokenClient:
         self.ph = PasswordHasher()
 
         self.access_tokens_permissions = [
+            "read:users",
             "read:links",
             "create:links",
-            "read:users",
+            "read:tracking-pixels",
+            "create:tracking-pixels",
         ]
 
     def create(
@@ -132,3 +134,7 @@ class AccessTokenClient:
         if perm in result["permissions"]:
             return True
         return False
+
+    def get_owner(self, token_id: ObjectId) -> str:
+        result = self.db.access_tokens.find_one({"_id": token_id})
+        return str(result["owner"])

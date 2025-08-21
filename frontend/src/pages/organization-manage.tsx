@@ -284,14 +284,18 @@ function ManageOrgBase({
                     icon: <SettingsIcon />,
                     onClick: onEditOrganization,
                   },
-                  {
-                    key: 'settings_developer_organization',
-                    label: 'Access Tokens',
-                    icon: <CodeIcon />,
-                    onClick: () => {
-                      history.push(`/app/orgs/${match.params.id}/tokens`);
-                    },
-                  },
+                  ...(userPrivileges.has('admin')
+                    ? [
+                        {
+                          key: 'settings_developer_organization',
+                          label: 'Access Tokens',
+                          icon: <CodeIcon />,
+                          onClick: () => {
+                            history.push(`/app/orgs/${match.params.id}/tokens`);
+                          },
+                        },
+                      ]
+                    : []),
                   { type: 'divider' },
                   {
                     key: 'leave_organization',

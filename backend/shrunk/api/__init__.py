@@ -1,4 +1,4 @@
-from .v1 import userv1
+from .v1 import userv1, linkv1, trackingpixelv1
 from . import (
     link,
     motd,
@@ -24,4 +24,6 @@ __all__ = [
     "ticket",
     "user",
     "userv1",
+    "linkv1",
+    "trackingpixelv1",
 ]

@@ -85,6 +85,13 @@ function OrganizationToken(props: IOrganizationToken) {
     });
   };
 
+  const refreshAccessTokens = async () => {
+    const accessTokensData = (await getAccessTokens(
+      props.match.params.id,
+    )) as AccessTokenData[];
+    setAccessTokens(accessTokensData);
+  };
+
   return (
     <>
       <Row gutter={16} justify="space-between" align="middle">
@@ -186,6 +193,7 @@ function OrganizationToken(props: IOrganizationToken) {
             type="primary"
             onClick={() => {
               navigator.clipboard.writeText(newAccessToken as string);
+              refreshAccessTokens();
               message.success('Access token copied to clipboard');
               setNewAccessToken(null);
             }}

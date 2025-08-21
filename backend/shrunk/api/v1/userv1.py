@@ -4,7 +4,6 @@ from typing import Any, Dict
 import os
 
 from flask import Blueprint, jsonify, request
-from werkzeug.exceptions import abort
 from shrunk.client import ShrunkClient
 from shrunk.util.decorators import require_token
 
@@ -14,7 +13,7 @@ bp = Blueprint("userv1", __name__, url_prefix="/api/v1/users")
 
 @bp.route("", methods=["GET"])
 @require_token(required_permisson="read:users")
-def get_all_users(client: ShrunkClient) -> Dict[Any, Any]:
+def get_all_users(token_owner: str, client: ShrunkClient) -> Dict[Any, Any]:
     """GET /api/v1/users
 
     Args:
@@ -168,4 +167,4 @@ def get_all_users(client: ShrunkClient) -> Dict[Any, Any]:
 
         users = filtered_users
 
-    return jsonify({"users": users})
+    return jsonify({"users": users}), 200
