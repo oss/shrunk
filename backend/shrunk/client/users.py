@@ -36,7 +36,7 @@ class UserClient:
                 "$lookup": {
                     "from": "urls",
                     "localField": "netid",
-                    "foreignField": "netid",
+                    "foreignField": "owner._id",
                     "as": "links",
                 }
             },

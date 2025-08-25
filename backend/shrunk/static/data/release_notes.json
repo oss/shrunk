@@ -147,6 +147,10 @@
         {
           "text": "Phishing links can no longer be bypassed via API routes initially used for testing",
           "contributors": ["ah1371"]
+        },
+        {
+          "text": "Fix server crash when querying users on admin dashboard.",
+          "contributors": ["ak2399"]
         }
       ]
     }

@@ -131,22 +131,23 @@ class ShrunkClient:
         :param begin:
         :param end:
         """
+
+        num_users = next(
+            self.db.grants.aggregate(
+                [
+                    {"$match": {"role": {"$nin": ["blacklisted", "blocked_url"]}}},
+                    {"$group": {"_id": "$entity", "total": {"$sum": 1}}},
+                    {"$count": "count"},
+                ]
+            ),
+            {"count": 0},
+        )["count"]
+
         if begin is None and end is None:
             # estimated_document_count() is MUCH faster than count_documents({})
             num_links = self.db.urls.estimated_document_count()
             num_visits = self.db.visits.estimated_document_count()
-            try:
-                num_users = next(
-                    self.db.urls.aggregate(
-                        [
-                            {"$project": {"netid": 1}},
-                            {"$group": {"_id": "$netid"}},
-                            {"$count": "count"},
-                        ]
-                    )
-                )["count"]
-            except StopIteration:
-                num_users = 0
+
         elif begin is not None and end is not None:
 
             def match_range(field_name: str) -> Any:
@@ -159,19 +160,7 @@ class ShrunkClient:
 
             num_links = self.db.urls.count_documents(match_range("timeCreated"))
             num_visits = self.db.visits.count_documents(match_range("time"))
-            try:
-                num_users = next(
-                    self.db.urls.aggregate(
-                        [
-                            {"$match": match_range("timeCreated")},
-                            {"$project": {"netid": 1}},
-                            {"$group": {"_id": "$netid"}},
-                            {"$count": "count"},
-                        ]
-                    )
-                )["count"]
-            except StopIteration:
-                num_users = 0
+
         else:
             raise ValueError(f"Invalid input begin={begin} end={end}")
 
