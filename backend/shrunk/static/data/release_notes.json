@@ -116,6 +116,10 @@
       ],
       "fixes": [
         {
+          "text": "Resolves incorrect link card URL/clipboard behavior for tracking pixel links; hides long URL",
+          "contributors": ["ys973"]
+        },
+        {
           "text": "Fix organization creation showing false success messages when validation fails",
           "contributors": ["ys973"]
         },

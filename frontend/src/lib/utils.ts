@@ -37,7 +37,7 @@ export function getLinkFromAlias(
   alias: string,
   isTrackingPixel?: boolean,
 ): string {
-  const routePrefix = isTrackingPixel ? 'api/v1/t/' : '';
+  const routePrefix = isTrackingPixel ? 'api/core/t/' : '';
   return `${document.location.host}/${routePrefix}${alias}`;
 }
 

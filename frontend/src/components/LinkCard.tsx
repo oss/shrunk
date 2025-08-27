@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 
 import { Link } from '../interfaces/link';
+import { getRedirectFromAlias } from '../lib/utils';
 
 export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
   const onCopyOriginalLink = () => {
@@ -134,27 +135,37 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
                     type="dashed"
                     onClick={() => {
                       navigator.clipboard.writeText(
-                        `${document.location.host}/${linkInfo.alias}`,
+                        getRedirectFromAlias(
+                          linkInfo.alias,
+                          linkInfo.is_tracking_pixel_link,
+                        ),
                       );
                     }}
                   >
-                    {document.location.host}/{linkInfo.alias}
+                    {getRedirectFromAlias(
+                      linkInfo.alias,
+                      linkInfo.is_tracking_pixel_link,
+                    )}
                   </Button>
                 </Tooltip>
               </Col>
             </Row>
           </Col>
           <Col>
-            <Tooltip title="Copy to clipboard">
-              <Button
-                className="tw-max-w-96"
-                icon={<CopyIcon />}
-                type="dashed"
-                onClick={onCopyOriginalLink}
-              >
-                <Typography.Text ellipsis>{linkInfo.long_url}</Typography.Text>
-              </Button>
-            </Tooltip>
+            {!linkInfo.is_tracking_pixel_link && (
+              <Tooltip title="Copy to clipboard">
+                <Button
+                  className="tw-max-w-96"
+                  icon={<CopyIcon />}
+                  type="dashed"
+                  onClick={onCopyOriginalLink}
+                >
+                  <Typography.Text ellipsis>
+                    {linkInfo.long_url}
+                  </Typography.Text>
+                </Button>
+              </Tooltip>
+            )}
           </Col>
         </Row>
       </Card.Grid>
