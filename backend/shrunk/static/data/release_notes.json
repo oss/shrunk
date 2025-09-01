@@ -9,6 +9,11 @@
     "categories": {
       "features": [
         {
+          "text": "Add Super Access Tokens for the public API, managabale via admin dashboard",
+          "contributors": ["ys973"],
+          "product": "public-api"
+        },
+        {
           "text": "Alert system replaced with a new MOTD system",
           "contributors": ["ah1371"],
           "warning": true

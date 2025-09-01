@@ -110,7 +110,21 @@ def test_create_access_token_permissions(
         org_id = resp.json["id"]
 
         resp = client.post(
-            f"/api/core/org/{org_id}/access_token",
+            f"/api/core/org/access_token",
+            json={
+                "title": "title",
+                "description": "description",
+                "permissions": permissions,
+                "organizationId": org_id,
+            },
+        )
+        if expect_pass:
+            assert resp.status_code == 201
+        else:
+            assert resp.status_code == 400
+
+        resp = client.post(
+            f"/api/core/org/access_token",
             json={
                 "title": "title",
                 "description": "description",
@@ -129,14 +143,18 @@ def test_external_api_endpoints(client: Client) -> None:
         resp = client.post("/api/core/org", json={"name": "test123"})
         org_id = resp.json["id"]
 
+        resp = client.post("/api/core/org", json={"name": "test345"})
+        invalid_org_id = resp.json["id"]
+
         # attempt endpoint with missing permissions
 
         resp = client.post(
-            f"/api/core/org/{org_id}/access_token",
+            f"/api/core/org/access_token",
             json={
                 "title": "title",
                 "description": "description",
                 "permissions": ["read:links", "create:links"],
+                "organizationId": org_id,
             },
         )
         token = resp.json["access_token"]
@@ -145,7 +163,7 @@ def test_external_api_endpoints(client: Client) -> None:
         assert resp.status_code == 403
 
         resp = client.post(
-            f"/api/core/org/{org_id}/access_token",
+            f"/api/core/org/access_token",
             json={
                 "title": "title",
                 "description": "description",
@@ -156,11 +174,12 @@ def test_external_api_endpoints(client: Client) -> None:
                     "read:tracking-pixels",
                     "create:tracking-pixels",
                 ],
+                "organizationId": org_id,
             },
         )
         token = resp.json["access_token"]
         invalid_token = "9b598e36-839c-4f94-8a72-38892b0d74dc"
-        invalid_org_id = "68a2815eabba3cb0f5b85ceb"
+        invalid_org_id = invalid_org_id
 
         # attempt invalid token
         resp = client.get(
@@ -245,6 +264,64 @@ def test_external_api_endpoints(client: Client) -> None:
             f"/api/v1/tracking-pixels/{org_id}",
             headers={"Authorization": f"Bearer {token}"},
         )
+        assert resp.status_code == 200
+
+        # with super token test endpoints
+        resp = client.post(
+            f"/api/core/org/access_token",
+            json={
+                "title": "title",
+                "description": "description",
+                "permissions": [
+                    "read:links",
+                    "create:links",
+                    "read:tracking-pixels",
+                    "create:tracking-pixels",
+                ],
+            },
+        )
+        token = resp.json["access_token"]
+
+        resp = client.post(
+            "/api/v1/links",
+            json=create_link_payload,
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert resp.status_code == 201
+
+        resp = client.get(
+            f"/api/v1/links/{org_id}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert resp.status_code == 200
+
+        resp = client.get(
+            f"/api/v1/links/{org_id}/{link_id}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert resp.status_code == 200
+
+        resp = client.post(
+            "/api/v1/tracking-pixels",
+            json=create_tp_payload,
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert resp.status_code == 201
+
+        resp = client.get(
+            f"/api/v1/tracking-pixels/{org_id}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        assert resp.status_code == 200
+
+        resp = client.get(
+            f"/api/v1/tracking-pixels/{org_id}/{tp_link_id}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
         assert resp.status_code == 200
 
 

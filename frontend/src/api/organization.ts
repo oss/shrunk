@@ -136,12 +136,12 @@ export async function getValidAccessTokenPermissions() {
 }
 
 export async function generateAccessToken(
-  organizationId: string,
   title: string,
   description: string,
   permissions: string,
+  organizationId?: string,
 ): Promise<string> {
-  const resp = await fetch(`/api/core/org/${organizationId}/access_token`, {
+  const resp = await fetch(`/api/core/org/access_token`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -150,10 +150,19 @@ export async function generateAccessToken(
       title,
       description,
       permissions,
+      organizationId,
     }),
   });
   const data = await resp.json();
   return data.access_token;
+}
+
+export async function getSuperTokens() {
+  const resp = await fetch(`/api/core/org/super_token`, {
+    method: 'GET',
+  });
+  const data = await resp.json();
+  return data.tokens;
 }
 
 export async function getAccessTokens(organizationId: string) {
@@ -162,10 +171,6 @@ export async function getAccessTokens(organizationId: string) {
   });
   const data = await resp.json();
   return data.tokens;
-}
-
-export async function disableToken(tokenId: string): Promise<void> {
-  await fetch(`/api/core/org/access_token/${tokenId}`, { method: 'PATCH' });
 }
 
 export async function deleteToken(tokenId: string): Promise<void> {

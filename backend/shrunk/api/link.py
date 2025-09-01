@@ -132,7 +132,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
 
         if client.orgs.get_org(req["org_id"]) is None:
             return "No such org", 400
-        if not client.orgs.is_member(ObjectId(req["org_id"]), netid):
+        if not client.orgs.is_member(req["org_id"], netid):
             return "Not a member of the specified org", 403
     else:
         owner = {"_id": netid, "type": "netid"}

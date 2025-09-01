@@ -6,6 +6,7 @@ from datetime import datetime
 from flask import Blueprint, jsonify, request
 from shrunk.client import ShrunkClient
 from bson.objectid import ObjectId
+import bson.errors
 from shrunk.util.decorators import require_token, request_schema
 from shrunk.client.exceptions import (
     BadAliasException,
@@ -37,37 +38,61 @@ CREATE_LINK_SCHEMA = {
 
 @bp.route("", methods=["POST"])
 @request_schema(CREATE_LINK_SCHEMA)
-@require_token(required_permisson="create:links")
-def create_link(token_owner: str, client: ShrunkClient, req: Any) -> Dict[Any, Any]:
+@require_token(required_permission="create:links")
+def create_link(
+    token_owner: Dict[str, Any], client: ShrunkClient, req: Any
+) -> Dict[Any, Any]:
     """Creates a new link"""
 
-    if "organization_id" not in req:
-        return (
-            jsonify(
-                {
-                    "error": {
-                        "code": "MISSING_FIELD",
-                        "message": "Missing required field: organization_id",
-                        "details": "Provide organization_id in the request body.",
+    org_id = req.get("organization_id")
+    if org_id is not None:
+        try:
+            ObjectId(org_id)
+        except bson.errors.InvalidId:
+            return (
+                jsonify(
+                    {
+                        "error": {
+                            "code": "INVALID_ORG_ID_FORMAT",
+                            "message": "Organization_id is not a valid ObjectId",
+                            "details": "The provided organization_id is not a valid ObjectId",
+                        }
                     }
-                }
-            ),
-            400,
-        )
+                ),
+                403,
+            )
 
-    if token_owner != req["organization_id"]:
-        return (
-            jsonify(
-                {
-                    "error": {
-                        "code": "ORG_TOKEN_MISMATCH",
-                        "message": "Organization mismatch",
-                        "details": "The provided organization_id does not match the organization associated with your access token",
+    if token_owner["type"] == "netid":
+
+        if org_id is None:
+            return (
+                jsonify(
+                    {
+                        "error": {
+                            "code": "MISSING_FIELD",
+                            "message": "Missing required field: organization_id",
+                            "details": "Provide organization_id in the request body.",
+                        }
                     }
-                }
-            ),
-            403,
-        )
+                ),
+                400,
+            )
+    else:
+        if org_id is None:
+            org_id = token_owner["_id"]
+        elif ObjectId(org_id) != token_owner["_id"]:
+            return (
+                jsonify(
+                    {
+                        "error": {
+                            "code": "ORG_TOKEN_MISMATCH",
+                            "message": "Organization mismatch",
+                            "details": "The provided organization_id does not match the organization associated with your access token",
+                        }
+                    }
+                ),
+                403,
+            )
 
     if "long_url" not in req:
         return (
@@ -105,7 +130,8 @@ def create_link(token_owner: str, client: ShrunkClient, req: Any) -> Dict[Any, A
         expiration_time = None
 
     alias = req.get("alias", None)
-    owner = {"_id": ObjectId(req["organization_id"]), "type": "org"}
+    owner = {"_id": ObjectId(org_id), "type": "org"}
+    created_with_superToken = token_owner["type"] == "netid"
 
     try:
         link_id, created_alias = client.links.create(
@@ -126,6 +152,7 @@ def create_link(token_owner: str, client: ShrunkClient, req: Any) -> Dict[Any, A
             is_tracking_pixel_link=False,
             extension=None,
             created_using_api=True,
+            created_with_superToken=created_with_superToken,
         )
 
     except BadLongURLException:
@@ -201,7 +228,7 @@ def create_link(token_owner: str, client: ShrunkClient, req: Any) -> Dict[Any, A
 
 
 @bp.route("/<ObjectId:org_id>/<ObjectId:link_id>", methods=["GET"])
-@require_token(required_permisson="read:links")
+@require_token(required_permission="read:links")
 def get_link(
     token_owner: str, client: ShrunkClient, org_id: ObjectId, link_id: ObjectId
 ) -> Any:
@@ -212,19 +239,22 @@ def get_link(
     :param client:
     :param link_id:
     """
-    if token_owner != str(org_id):
-        return (
-            jsonify(
-                {
-                    "error": {
-                        "code": "ORG_TOKEN_MISMATCH",
-                        "message": "Organization mismatch",
-                        "details": "The provided organization_id does not match the organization associated with your access token",
+
+    if token_owner["type"] == "org":
+        if org_id != token_owner["_id"]:
+            return (
+                jsonify(
+                    {
+                        "error": {
+                            "code": "ORG_TOKEN_MISMATCH",
+                            "message": "Organization mismatch",
+                            "details": "The provided organization_id does not match the organization associated with your access token",
+                        }
                     }
-                }
-            ),
-            403,
-        )
+                ),
+                403,
+            )
+
     try:
         info = client.links.get_link_info(link_id, is_tracking_pixel=False)
     except NoSuchObjectException:
@@ -278,7 +308,7 @@ def get_link(
 
 
 @bp.route("/<ObjectId:org_id>", methods=["GET"])
-@require_token(required_permisson="read:links")
+@require_token(required_permission="read:links")
 def get_org_links(token_owner: str, client: ShrunkClient, org_id: ObjectId) -> Any:
     """``GET /api/v1/link/<org_id>``
 
@@ -287,19 +317,20 @@ def get_org_links(token_owner: str, client: ShrunkClient, org_id: ObjectId) -> A
     :param client:
     :param org_id:
     """
-    if token_owner != str(org_id):
-        return (
-            jsonify(
-                {
-                    "error": {
-                        "code": "ORG_TOKEN_MISMATCH",
-                        "message": "Organization mismatch",
-                        "details": "The provided organization_id does not match the organization associated with your access token",
+    if token_owner["type"] == "org":
+        if org_id != token_owner["_id"]:
+            return (
+                jsonify(
+                    {
+                        "error": {
+                            "code": "ORG_TOKEN_MISMATCH",
+                            "message": "Organization mismatch",
+                            "details": "The provided organization_id does not match the organization associated with your access token",
+                        }
                     }
-                }
-            ),
-            403,
-        )
+                ),
+                403,
+            )
 
     try:
         info = client.orgs.get_links(org_id, is_tracking_pixel=False)

@@ -1,68 +1,59 @@
+/**
+ * Implements the [[SuperTokens]] component
+ * @packageDocumentation
+ */
+
 import React, { useEffect, useState } from 'react';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
 import {
-  Button,
-  Col,
   Row,
-  Space,
+  Col,
+  Button,
   Typography,
+  Space,
   Drawer,
   Form,
   Input,
   Checkbox,
   Alert,
   Modal,
+  message,
+  List,
 } from 'antd/lib';
 import { CirclePlusIcon, PlusCircleIcon } from 'lucide-react';
-import { message } from 'antd';
+import { AccessTokenData } from '../../interfaces/access-token';
 import {
+  getSuperTokens,
   generateAccessToken,
-  getAccessTokens,
   getValidAccessTokenPermissions,
-} from '../api/organization';
-import AccessTokenCard from '../components/access-token-card';
-import { AccessTokenData } from '../interfaces/access-token';
+} from '../../api/organization';
+import AccessTokenCard from '../access-token-card';
 
-type RouteParams = {
-  id: string;
-};
-
-type IOrganizationToken = RouteComponentProps<RouteParams>;
-
-function OrganizationToken(props: IOrganizationToken) {
+export default function SuperTokens(): JSX.Element {
   const [accessTokens, setAccessTokens] = useState<AccessTokenData[]>([]);
   const [validPermissions, setValidPermissions] = useState<string[]>([]);
   const [isGeneratorDrawerOpen, setIsGeneratorDrawerOpen] =
     useState<boolean>(false);
-
   const [newAccessToken, setNewAccessToken] = useState<string | null>(null);
 
   const [form] = Form.useForm();
 
   useEffect(() => {
-    const fetchOrganization = async () => {
-      const accessTokensData = (await getAccessTokens(
-        props.match.params.id,
-      )) as AccessTokenData[];
-      setAccessTokens(accessTokensData);
+    const fetchTokens = async () => {
+      const tokens = await getSuperTokens();
+      setAccessTokens(tokens);
     };
 
     const fetchValidPermissions = async () => {
-      const data = await getValidAccessTokenPermissions();
-      setValidPermissions(data);
+      const perms = await getValidAccessTokenPermissions();
+      setValidPermissions(perms);
     };
-    fetchValidPermissions();
 
-    fetchOrganization();
+    fetchTokens();
+    fetchValidPermissions();
   }, []);
 
-  const onOpenGeneratorDrawer = () => {
-    setIsGeneratorDrawerOpen(true);
-  };
-
-  const onCloseGeneratorDrawer = () => {
-    setIsGeneratorDrawerOpen(false);
-  };
+  const onOpenGeneratorDrawer = () => setIsGeneratorDrawerOpen(true);
+  const onCloseGeneratorDrawer = () => setIsGeneratorDrawerOpen(false);
 
   const onGenerate = async () => {
     form.validateFields().then(() => {
@@ -71,7 +62,6 @@ function OrganizationToken(props: IOrganizationToken) {
           form.getFieldValue('title'),
           form.getFieldValue('description'),
           form.getFieldValue('permissions'),
-          props.match.params.id,
         ).then((token) => {
           setNewAccessToken(token);
         });
@@ -79,24 +69,22 @@ function OrganizationToken(props: IOrganizationToken) {
         onCloseGeneratorDrawer();
       } catch (error) {
         message.error(
-          'There was an error generating your access token. Please try again.',
+          'There was an error generating your super access token. Please try again.',
         );
       }
     });
   };
 
   const refreshAccessTokens = async () => {
-    const accessTokensData = (await getAccessTokens(
-      props.match.params.id,
-    )) as AccessTokenData[];
-    setAccessTokens(accessTokensData);
+    const tokens = await getSuperTokens();
+    setAccessTokens(tokens);
   };
 
   return (
     <>
       <Row gutter={16} justify="space-between" align="middle">
         <Col>
-          <Typography.Title>Access Tokens</Typography.Title>
+          <Typography.Title>Super Access Tokens</Typography.Title>
         </Col>
         <Col>
           <Space>
@@ -110,17 +98,24 @@ function OrganizationToken(props: IOrganizationToken) {
           </Space>
         </Col>
         <Col span={24}>
-          <Row gutter={[16, 16]}>
-            {accessTokens.map((token) => (
-              <Col key={token.token} span={24}>
+          <List
+            dataSource={accessTokens}
+            renderItem={(token) => (
+              <List.Item>
                 <AccessTokenCard accessTokenData={token} />
-              </Col>
-            ))}
-          </Row>
+              </List.Item>
+            )}
+            pagination={{
+              pageSize: 3,
+              position: 'bottom',
+              align: 'center',
+            }}
+          />
         </Col>
       </Row>
+
       <Drawer
-        title="Access Token"
+        title="Super Access Token"
         placement="right"
         onClose={onCloseGeneratorDrawer}
         width={720}
@@ -142,7 +137,7 @@ function OrganizationToken(props: IOrganizationToken) {
             <Col span={24} className="tw-mb-4">
               <Alert
                 message="Secure your data."
-                description="Keeping your access token private is your responsibility. We salt and use Argon2, a quantum-safe and award-winning key derivation function, to encrypt your access token and store it in our database."
+                description="Keeping your access token private is your responsibility. We salt and use Argon2, a quantum-safe and award-winning key derivation function, to encrypt your super token and store it in our database."
                 type="warning"
               />
             </Col>
@@ -173,8 +168,8 @@ function OrganizationToken(props: IOrganizationToken) {
               <Form.Item label="Permissions" name="permissions">
                 <Checkbox.Group className="tw-w-full">
                   <Row gutter={16}>
-                    {validPermissions.map((permission: string) => (
-                      <Col span={24}>
+                    {validPermissions.map((permission) => (
+                      <Col span={24} key={permission}>
                         <Checkbox value={permission}>{permission}</Checkbox>
                       </Col>
                     ))}
@@ -185,8 +180,9 @@ function OrganizationToken(props: IOrganizationToken) {
           </Row>
         </Form>
       </Drawer>
+
       <Modal
-        title="Access Token Generated"
+        title="Super Access Token Generated"
         open={newAccessToken !== null}
         footer={
           <Button
@@ -194,7 +190,7 @@ function OrganizationToken(props: IOrganizationToken) {
             onClick={() => {
               navigator.clipboard.writeText(newAccessToken as string);
               refreshAccessTokens();
-              message.success('Access token copied to clipboard');
+              message.success('Super access token copied to clipboard');
               setNewAccessToken(null);
             }}
           >
@@ -204,12 +200,11 @@ function OrganizationToken(props: IOrganizationToken) {
         closable={false}
       >
         <Typography.Paragraph>
-          Your access token has been generated. Please copy it and store it
-          securely. It is impossible to retrieve it again through this website.
+          Your super access token has been generated. Please copy it and store
+          it securely. It is impossible to retrieve it again through this
+          website.
         </Typography.Paragraph>
       </Modal>
     </>
   );
 }
-
-export default withRouter(OrganizationToken);

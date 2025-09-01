@@ -41,10 +41,14 @@ export default function ApiReference() {
           <Typography className="!tw-mt-4">
             <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-border tw-bg-[#f5f5f5] tw-p-8 tw-font-mono">
               {`{
-    "netid": str,
-    "organizations": [str, ...],
-    "roles": [str, ...],
-    "linksCreated": int,
+    "users": [
+      {
+        "netid": str,
+        "organizations": [str, ...],
+        "roles": [str, ...],
+        "linksCreated": int,
+      }
+    ]
 }`}
             </Flex>
             <Typography.Title className="!tw-mt-4" level={5}>
@@ -647,7 +651,7 @@ export default function ApiReference() {
           <Typography className="!tw-mt-4">
             <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-border tw-bg-[#f5f5f5] tw-p-8 tw-font-mono">
               {`{
-  "links": [
+  "tracking-pixels": [
     {
       "_id": str,
       "title": str,

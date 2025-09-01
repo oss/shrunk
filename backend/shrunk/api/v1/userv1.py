@@ -1,7 +1,6 @@
 """Implement API endpoints under ``/api/v1``"""
 
 from typing import Any, Dict
-import os
 
 from flask import Blueprint, jsonify, request
 from shrunk.client import ShrunkClient
@@ -12,8 +11,8 @@ bp = Blueprint("userv1", __name__, url_prefix="/api/v1/users")
 
 
 @bp.route("", methods=["GET"])
-@require_token(required_permisson="read:users")
-def get_all_users(token_owner: str, client: ShrunkClient) -> Dict[Any, Any]:
+@require_token(required_permission="read:users")
+def get_all_users(token_owner: Dict[str, Any], client: ShrunkClient) -> Dict[Any, Any]:
     """GET /api/v1/users
 
     Args:

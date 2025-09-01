@@ -59,7 +59,7 @@ def request_schema(schema: Any) -> Any:
     return check_body
 
 
-def require_token(required_permisson: str):
+def require_token(required_permission: str):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -111,14 +111,16 @@ def require_token(required_permisson: str):
                 )
 
             # Check permissions
-            if not client.access_tokens.check_permissions(token_id, required_permisson):
+            if not client.access_tokens.check_permissions(
+                token_id, required_permission
+            ):
                 return (
                     jsonify(
                         {
                             "error": {
                                 "code": "INSUFFICIENT_PERMISSIONS",
                                 "message": "Insufficient permissions",
-                                "details": f"Token requires '{required_permisson}' permission",
+                                "details": f"Token requires '{required_permission}' permission",
                             }
                         }
                     ),

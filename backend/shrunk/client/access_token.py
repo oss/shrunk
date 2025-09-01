@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Dict, Any, Optional
 from bson import ObjectId
 import uuid
 from argon2 import PasswordHasher
@@ -23,7 +23,7 @@ class AccessTokenClient:
 
     def create(
         self,
-        organization_id: ObjectId,
+        owner: Dict[str, Any],
         title: str,
         description: str,
         creator: str,
@@ -38,7 +38,7 @@ class AccessTokenClient:
         hashed_token = self.ph.hash(str(token))
 
         document = {
-            "owner": organization_id,  # the organization's id
+            "owner": owner,
             "title": title,
             "description": description,
             "hashed_token": hashed_token,
@@ -57,24 +57,23 @@ class AccessTokenClient:
 
         return str(token)
 
-    def get_tokens_by_owner(self, owner: ObjectId):
+    def get_tokens(self, owner: Optional[Dict[str, Any]] = None):
         """Get all access tokens for a given owner."""
-        found_tokens = self.db.access_tokens.find({"owner": owner})
-
+        if owner:
+            found_tokens = self.db.access_tokens.find({"owner._id": owner["_id"]})
+        else:
+            found_tokens = self.db.access_tokens.find({"owner.type": "netid"})
         tokens = []
         for token in found_tokens:
             tokens.append(
                 {
                     "id": str(token["_id"]),
                     "title": token["title"],
-                    "owner": str(token["owner"]),
+                    "owner": str(token["owner"]["_id"]),
                     "description": token["description"],
                     "created_by": token["created_by"],
                     "created_date": token["created_date"],
                     "permissions": token["permissions"],
-                    "disabled": token["disabled"],
-                    "disabled_by": token["disabled_by"],
-                    "disabled_time": token["disabled_time"],
                     "deleted": token["deleted"],
                     "deleted_by": token["deleted_by"],
                     "deleted_time": token["deleted_time"],
@@ -115,20 +114,6 @@ class AccessTokenClient:
         if result.modified_count != 1:
             raise NoSuchObjectException
 
-    def disable_token(self, token_id: ObjectId, disabeld_by: str) -> None:
-        result = self.db.access_tokens.update_one(
-            {"_id": token_id},
-            {
-                "$set": {
-                    "disabled": True,
-                    "disabled_by": disabeld_by,
-                    "disabled_time": datetime.now(timezone.utc),
-                }
-            },
-        )
-        if result.modified_count != 1:
-            raise NoSuchObjectException
-
     def check_permissions(self, token_id: ObjectId, perm: str) -> bool:
         result = self.db.access_tokens.find_one({"_id": token_id})
         if perm in result["permissions"]:
@@ -137,4 +122,4 @@ class AccessTokenClient:
 
     def get_owner(self, token_id: ObjectId) -> str:
         result = self.db.access_tokens.find_one({"_id": token_id})
-        return str(result["owner"])
+        return result["owner"]

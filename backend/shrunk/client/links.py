@@ -159,6 +159,7 @@ class LinksClient:
         is_tracking_pixel_link: bool = False,
         extension: Optional[str] = None,
         created_using_api: bool = False,
+        created_with_superToken: bool = False,
     ) -> Tuple[ObjectId, str]:
         if self.long_url_is_blocked(long_url):
             raise BadLongURLException
@@ -188,9 +189,12 @@ class LinksClient:
 
         if alias is None:
             if created_using_api:
-                alias = self.create_random_alias(
-                    extension=extension, orgAlias=org["name"].replace(" ", "")
-                )
+                if created_with_superToken:
+                    alias = self.create_random_alias(extension=extension, orgAlias=None)
+                else:
+                    alias = self.create_random_alias(
+                        extension=extension, orgAlias=org["name"].replace(" ", "")
+                    )
             else:
                 alias = self.create_random_alias(extension=extension, orgAlias=None)
         else:
@@ -198,7 +202,8 @@ class LinksClient:
             # (https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/205)
             alias = alias.lower()
             if created_using_api:
-                alias = org["name"].replace(" ", "") + "-" + alias
+                if not created_with_superToken:
+                    alias = org["name"].replace(" ", "") + "-" + alias
 
             if not bool(re.fullmatch(r"^[a-zA-Z0-9_\-\.]+$", alias)):
                 raise BadAliasException

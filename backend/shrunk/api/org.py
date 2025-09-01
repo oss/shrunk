@@ -546,6 +546,7 @@ ACCESS_TOKEN_ORG_SCHEMA = {
     "additionalProperties": False,
     "required": ["title", "description", "permissions"],
     "properties": {
+        "organizationId": {"type": "string"},
         "title": {"type": "string"},
         "description": {"type": "string"},
         "permissions": {"type": "array"},
@@ -553,22 +554,35 @@ ACCESS_TOKEN_ORG_SCHEMA = {
 }
 
 
-@bp.route("/<ObjectId:org_id>/access_token", methods=["POST"])
+@bp.route("/access_token", methods=["POST"])
 @request_schema(ACCESS_TOKEN_ORG_SCHEMA)
 @require_login
-def create_access_token(
-    netid: str, client: ShrunkClient, req: Any, org_id: ObjectId
-) -> Any:
+def create_access_token(netid: str, client: ShrunkClient, req: Any) -> Any:
     if not client.roles.has("admin", netid):
         abort(403)
     if not req["permissions"]:
         return "permissions is missing", 400
     valid_permissions = client.access_tokens.access_tokens_permissions
+
+    owner = {}
+
+    if "organizationId" in req:
+        try:
+            req["organizationId"] = ObjectId(req["organizationId"])
+            owner = {"_id": ObjectId(req["organizationId"]), "type": "org"}
+        except bson.errors.InvalidId:
+            return "Invalid org id", 400
+
+        if client.orgs.get_org(req["organizationId"]) is None:
+            return "No such org", 400
+    else:
+        owner = {"_id": netid, "type": "netid"}
+
     for permission in req["permissions"]:
         if permission not in valid_permissions:
             return "invalid permissions", 400
     access_token = client.access_tokens.create(
-        org_id, req["title"], req["description"], netid, req["permissions"]
+        owner, req["title"], req["description"], netid, req["permissions"]
     )
 
     return jsonify({"access_token": access_token}), 201
@@ -579,28 +593,40 @@ def create_access_token(
 def get_access_tokens(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
     if not client.roles.has("admin", netid):
         abort(403)
-    tokens = client.access_tokens.get_tokens_by_owner(org_id)
+
+    owner = {}
+
+    try:
+        org_id = ObjectId(org_id)
+        owner = {"_id": ObjectId(org_id), "type": "org"}
+    except bson.errors.InvalidId:
+        return "Invalid org id", 400
+
+    if client.orgs.get_org(org_id) is None:
+        return "No such org", 400
+
+    if not client.orgs.is_member(org_id, netid):
+        return "Not a member of the specified org", 403
+
+    tokens = client.access_tokens.get_tokens(owner)
 
     return jsonify({"tokens": list(tokens)})
 
 
-@bp.route("/access_token/<ObjectId:token_id>", methods=["PATCH"])
+@bp.route("/super_token", methods=["GET"])
 @require_login
-def disable_access_token(netid: str, client: ShrunkClient, token_id: ObjectId) -> Any:
-    if not client.access_tokens.is_creator(token_id, netid) and not client.roles.has(
-        "admin", netid
-    ):
+def get_super_tokens(netid: str, client: ShrunkClient) -> Any:
+    if not client.roles.has("admin", netid):
         abort(403)
-    client.access_tokens.disable_token(token_id, netid)
-    return "", 204
+    tokens = client.access_tokens.get_tokens()
+
+    return jsonify({"tokens": list(tokens)})
 
 
 @bp.route("/access_token/<ObjectId:token_id>", methods=["DELETE"])
 @require_login
 def delete_access_token(netid: str, client: ShrunkClient, token_id: ObjectId) -> Any:
-    if not client.access_tokens.is_creator(token_id, netid) and not client.roles.has(
-        "admin", netid
-    ):
+    if not client.roles.has("admin", netid):
         abort(403)
     client.access_tokens.delete_token(token_id, netid)
     return "", 204

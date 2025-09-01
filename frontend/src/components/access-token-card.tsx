@@ -11,9 +11,9 @@ import {
 } from 'antd/lib';
 import React from 'react';
 import dayjs from 'dayjs';
-import { BadgeAlertIcon, Trash2Icon } from 'lucide-react';
+import { Trash2Icon } from 'lucide-react';
 import { AccessTokenData } from '../interfaces/access-token';
-import { deleteToken, disableToken } from '../api/organization';
+import { deleteToken } from '../api/organization';
 
 export default function AccessTokenCard({
   accessTokenData,
@@ -24,38 +24,11 @@ export default function AccessTokenCard({
     await deleteToken(id);
   };
 
-  const onDisableToken = async (id: string) => {
-    await disableToken(id);
-  };
-
   return (
     <Card
       title={accessTokenData.title}
       extra={
         <Space>
-          <Tooltip title="Disable">
-            <Popconfirm
-              title="Are you sure you want to disable this token?"
-              onConfirm={async () => {
-                try {
-                  await onDisableToken(accessTokenData.id);
-                  message.success('Token disabled successfully');
-                } catch (error) {
-                  message.error('Failed to disable Token');
-                }
-              }}
-              okText="Yes"
-              cancelText="No"
-              okButtonProps={{ danger: true }}
-            >
-              <Button
-                icon={<BadgeAlertIcon />}
-                type="text"
-                danger
-                disabled={accessTokenData.disabled}
-              />
-            </Popconfirm>
-          </Tooltip>
           <Tooltip title="Delete">
             <Popconfirm
               title="Are you sure you want to delete this organization?"
