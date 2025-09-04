@@ -699,6 +699,107 @@ export default function ApiReference() {
         </Typography>
       ),
     },
+    {
+      key: 'orgs-list',
+      label: 'GET /organizations',
+      children: (
+        <Typography>
+          <Typography.Title level={4}>List All Organizations</Typography.Title>
+          <Typography.Title className="!tw-mt-4" level={5}>
+            Returns all organizations
+          </Typography.Title>
+          <Typography.Paragraph className="!tw-mt-4">
+            Request
+          </Typography.Paragraph>
+          <Typography className="!tw-mt-4">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono">
+              {`curl ${apiUrl}/organizations \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer $SHRUNK_API_KEY"`}
+            </Flex>
+          </Typography>
+          <Typography.Paragraph className="!tw-mt-4">
+            Response
+          </Typography.Paragraph>
+          <Typography className="!tw-mt-4">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-border tw-bg-[#f5f5f5] tw-p-8 tw-font-mono">
+              {`{
+  "organizations": [
+    {
+      "_id": str,
+      "name": str,
+      "members": [str, ...]
+    }
+  ]
+}`}
+            </Flex>
+          </Typography>
+        </Typography>
+      ),
+    },
+    {
+      key: 'orgs-get-netid',
+      label: 'GET /organizations/<netid>',
+      children: (
+        <Typography>
+          <Typography.Title level={4}>
+            List Organizations By NetID
+          </Typography.Title>
+          <Typography.Title className="!tw-mt-4" level={5}>
+            Returns all organizations a user is a member of
+          </Typography.Title>
+          <Typography.Paragraph className="!tw-mt-4">
+            Request
+          </Typography.Paragraph>
+          <Typography className="!tw-mt-4">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono">
+              {`curl ${apiUrl}/organizations/<netid> \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer $SHRUNK_API_KEY"`}
+            </Flex>
+          </Typography>
+          <Typography.Paragraph className="!tw-mt-4">
+            Response
+          </Typography.Paragraph>
+          <Typography className="!tw-mt-4">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-border tw-bg-[#f5f5f5] tw-p-8 tw-font-mono">
+              {`{
+  "organizations": [
+    {
+      "_id": str,
+      "name": str,
+    }
+  ]
+}`}
+            </Flex>
+            <Typography.Title className="!tw-mt-4" level={5}>
+              Path Parameters
+            </Typography.Title>
+            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+              <Descriptions.Item
+                label={
+                  <Row gutter={8} align="middle" wrap={false}>
+                    <Col>
+                      <Typography.Text code>netid</Typography.Text>
+                    </Col>
+                    <Col>
+                      <Typography.Text type="secondary">string</Typography.Text>
+                    </Col>
+                    <Col>
+                      <Typography.Text type="secondary">
+                        Required
+                      </Typography.Text>
+                    </Col>
+                  </Row>
+                }
+              >
+                NetID of the user whose organizations to list.
+              </Descriptions.Item>
+            </Descriptions>
+          </Typography>
+        </Typography>
+      ),
+    },
   ];
   return (
     <>

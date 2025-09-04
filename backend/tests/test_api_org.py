@@ -169,6 +169,7 @@ def test_external_api_endpoints(client: Client) -> None:
                 "description": "description",
                 "permissions": [
                     "read:users",
+                    "read:organizations",
                     "read:links",
                     "create:links",
                     "read:tracking-pixels",
@@ -266,6 +267,20 @@ def test_external_api_endpoints(client: Client) -> None:
         )
         assert resp.status_code == 200
 
+        # get all organizations
+        resp = client.get(
+            f"/api/v1/organizations",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert resp.status_code == 403
+
+        # get all organizations of a user
+        resp = client.get(
+            f"/api/v1/organizations/DEV_ADMIN",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert resp.status_code == 403
+
         # with super token test endpoints
         resp = client.post(
             f"/api/core/org/access_token",
@@ -277,6 +292,7 @@ def test_external_api_endpoints(client: Client) -> None:
                     "create:links",
                     "read:tracking-pixels",
                     "create:tracking-pixels",
+                    "read:organizations",
                 ],
             },
         )
@@ -322,6 +338,18 @@ def test_external_api_endpoints(client: Client) -> None:
             headers={"Authorization": f"Bearer {token}"},
         )
 
+        assert resp.status_code == 200
+
+        resp = client.get(
+            f"/api/v1/organizations",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert resp.status_code == 200
+
+        resp = client.get(
+            f"/api/v1/organizations/DEV_ADMIN",
+            headers={"Authorization": f"Bearer {token}"},
+        )
         assert resp.status_code == 200
 
 

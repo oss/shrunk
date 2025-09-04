@@ -28,7 +28,7 @@
           "product": "public-api"
         },
         {
-          "text": "Organizations can use our public API to fetch users, create links and tracking pixels, and retrieve existing links and pixels",
+          "text": "Organizations can use our public API to interact with users, links, tracking pixels, and organizations",
           "contributors": ["ys973"],
           "product": "public-api"
         },

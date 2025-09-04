@@ -299,6 +299,7 @@ def create_app(**kwargs: Any) -> Flask:
     app.register_blueprint(api.userv1.bp)
     app.register_blueprint(api.linkv1.bp)
     app.register_blueprint(api.trackingpixelv1.bp)
+    app.register_blueprint(api.orgv1.bp)
 
     # set up extensions
     mail = Mail()
