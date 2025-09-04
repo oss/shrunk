@@ -254,8 +254,8 @@ def get_tracking_pixel(
             "deleted_by": info.get("deleted_by", None),
             "delete_time": info.get("deleted_time", None),
         },
-        "editors": info["editors"] if "editors" in info else [],
-        "viewers": info["viewers"] if "viewers" in info else [],
+        "editors": info.get("editors", []),
+        "viewers": info.get("viewers", []),
         "is_tracking_pixel_link": info.get("is_tracking_pixel_link", False),
     }
 
@@ -291,6 +291,27 @@ def get_org_tracking_pixels(
 
     try:
         info = client.orgs.get_links(org_id, is_tracking_pixel=True)
+        info = [
+            {
+                "_id": link["_id"],
+                "title": link["title"],
+                "long_url": link["long_url"],
+                "owner": client.links.get_owner(link["_id"]),
+                "created_time": link["timeCreated"],
+                "expiration_time": link.get("expiration_time"),
+                "domain": link.get("domain"),
+                "alias": link["alias"],
+                "deleted": link.get("deleted", False),
+                "deletion_info": {
+                    "deleted_by": link.get("deleted_by"),
+                    "delete_time": link.get("deleted_time"),
+                },
+                "editors": link.get("editors", []),
+                "viewers": link.get("viewers", []),
+                "is_tracking_pixel_link": link.get("is_tracking_pixel_link", False),
+            }
+            for link in info
+        ]
     except NoSuchObjectException:
         return (
             jsonify(
@@ -305,4 +326,4 @@ def get_org_tracking_pixels(
             404,
         )
 
-    return jsonify({"links": list(info)}), 200
+    return jsonify({"links": info}), 200

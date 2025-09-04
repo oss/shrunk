@@ -286,7 +286,7 @@ export default function ApiReference() {
   "_id": str,
   "title": str,
   "long_url": str,
-  "owner": str,
+  "owner": { "_id": str, "org_name": str, "type": "org" },
   "created_time": str,
   "expiration_time": str | null,
   "domain": str | null,
@@ -378,7 +378,7 @@ export default function ApiReference() {
       "_id": str,
       "title": str,
       "long_url": str,
-      "owner": str,
+      "owner": { "_id": str, "org_name": str, "type": "org" },
       "created_time": str,
       "expiration_time": str | null,
       "domain": str | null,
@@ -562,7 +562,7 @@ export default function ApiReference() {
   "_id": str,
   "title": str,
   "long_url": str,
-  "owner": str,
+  "owner": { "_id": str, "org_name": str, "type": "org" },
   "created_time": str,
   "expiration_time": str | null,
   "domain": str | null,
@@ -656,7 +656,7 @@ export default function ApiReference() {
       "_id": str,
       "title": str,
       "long_url": str,
-      "owner": str,
+      "owner": { "_id": str, "org_name": str, "type": "org" },
       "created_time": str,
       "expiration_time": str | null,
       "domain": str | null,
@@ -831,6 +831,14 @@ export default function ApiReference() {
             target="_blank"
           >
             organization managment page
+          </Typography.Link>{' '}
+          or the{' '}
+          <Typography.Link
+            className="!tw-underline"
+            href={`${window.location.origin}/app/admin?tab=super-tokens`}
+            target="_blank"
+          >
+            admin dashboard
           </Typography.Link>
           .
         </Typography.Paragraph>

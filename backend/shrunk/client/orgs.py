@@ -326,7 +326,7 @@ class OrgsClient:
 
             if result is None:
                 raise NoSuchObjectException
-            return result
+            return list(result)
 
         pipeline = [
             {
