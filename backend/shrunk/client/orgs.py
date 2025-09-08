@@ -134,7 +134,13 @@ class OrgsClient:
         returns Whether there are URLs associated with the org
         """
         assoicatedUrls = self.db.urls.count_documents(
-            {"$or": [{"viewers._id": org_id}, {"editors._id": org_id}]}
+            {
+                "$or": [
+                    {"viewers._id": org_id},
+                    {"editors._id": org_id},
+                    {"owner._id": org_id},
+                ]
+            }
         )
         if assoicatedUrls > 0:
             return True
@@ -150,7 +156,18 @@ class OrgsClient:
         :returns: Whether the org was successfully deleted
         """
         self.db.urls.update_many(
-            {}, {"$pull": {"viewers": {"_id": org_id}, "editors": {"_id": org_id}}}
+            {"$or": [{"viewers._id": org_id}, {"editors._id": org_id}]},
+            {"$pull": {"viewers": {"_id": org_id}, "editors": {"_id": org_id}}},
+        )
+        self.db.urls.update_many(
+            {"owner._id": org_id},
+            {
+                "$set": {
+                    "deleted": True,
+                    "deleted_by": deleted_by,
+                    "deleted_time": datetime.now(timezone.utc),
+                }
+            },
         )
         result = self.db.organizations.update_one(
             {"_id": org_id, "deleted": False},

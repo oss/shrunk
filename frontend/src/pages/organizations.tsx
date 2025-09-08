@@ -133,6 +133,7 @@ export default function MyOrganizations({
                     } catch (error) {
                       message.error('Failed to delete organization');
                     }
+                    setShowAssociatedUrlsAlert(false);
                   }}
                   okText="Yes"
                   cancelText="No"
