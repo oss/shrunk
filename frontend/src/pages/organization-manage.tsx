@@ -420,7 +420,7 @@ function ManageOrgBase({
           role: member.is_admin ? 'admin' : 'member',
         }))}
         onAddEntity={(_activeTab: 'netid' | 'org', value: Collaborator) => {
-          onAddMember(value._id, false);
+          onAddMember(value._id, value.role === 'admin');
         }}
         onRemoveEntity={(_activeTab: 'netid' | 'org', value: Collaborator) => {
           onDeleteMember(value._id);
