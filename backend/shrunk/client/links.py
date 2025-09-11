@@ -5,7 +5,7 @@ import random
 import string
 import re
 import secrets
-from typing import Optional, List, Set, Any, Dict, cast, Tuple
+from typing import Optional, List, Set, Any, Dict, Union, cast, Tuple
 
 from flask import current_app, url_for
 from flask_mailman import Mail
@@ -519,11 +519,27 @@ class LinksClient:
             "unique_visits": result["unique_visits"][0]["count"],
         }
 
-    def get_visits(self, link_id: ObjectId, alias: Optional[str] = None) -> List[Any]:
-        if alias is None:
-            result = self.db.visits.find({"link_id": link_id})
-        else:
-            result = self.db.visits.find({"link_id": link_id, "alias": alias})
+    def get_visits(
+        self,
+        link_id: ObjectId,
+        alias: Optional[str] = None,
+        mid: Optional[Union[str, List[str]]] = None,
+        uid: Optional[Union[str, List[str]]] = None,
+    ) -> List[Any]:
+        query = {"link_id": link_id}
+        if alias is not None:
+            query["alias"] = alias
+        if mid is not None:
+            if isinstance(mid, list):
+                query["mid"] = {"$in": mid}
+            else:
+                query["mid"] = mid
+        if uid is not None:
+            if isinstance(uid, list):
+                query["uid"] = {"$in": uid}
+            else:
+                query["uid"] = uid
+        result = self.db.visits.find(query)
         return list(result)
 
     def create_random_alias(
@@ -767,6 +783,8 @@ class LinksClient:
         source_ip: str,
         user_agent: Optional[str],
         referer: Optional[str],
+        uid: Optional[str] = None,
+        mid: Optional[str] = None,
     ) -> None:
         """Visits the given URL and logs visit information.
 
@@ -783,6 +801,8 @@ class LinksClient:
         :param source_ip: The client's IP address
         :param user_agent: The client's user agent
         :param referer: The client's referer
+        :param uid: The user's unique identifier, if available
+        :param mid: The mail ID, if available
 
         """
         resp = self.get_link_info_by_alias(alias)
@@ -798,19 +818,26 @@ class LinksClient:
             self.db.urls.update_one({"_id": resp["_id"]}, {"$inc": {"visits": 1}})
 
         state_code, country_code = self.geoip.get_location_codes(source_ip)
-        self.db.visits.insert_one(
-            {
-                "link_id": resp["_id"],
-                "alias": alias,
-                "tracking_id": tracking_id,
-                "source_ip": source_ip,
-                "time": datetime.now(timezone.utc),
-                "user_agent": user_agent,
-                "referer": referer,
-                "state_code": state_code,
-                "country_code": country_code,
-            }
-        )
+
+        doc = {
+            "link_id": resp["_id"],
+            "alias": alias,
+            "tracking_id": tracking_id,
+            "source_ip": source_ip,
+            "time": datetime.now(timezone.utc),
+            "user_agent": user_agent,
+            "referer": referer,
+            "state_code": state_code,
+            "country_code": country_code,
+        }
+
+        if mid:
+            doc["mid"] = mid
+
+        if uid:
+            doc["uid"] = uid
+
+        self.db.visits.insert_one(doc)
 
     def get_visitor_id(self, ipaddr: str) -> str:
         """Gets a unique, opaque identifier for an IP address.

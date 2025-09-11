@@ -497,12 +497,17 @@ def create_app(**kwargs: Any) -> Flask:
         # Get or generate a tracking id
         tracking_id = request.cookies.get("shrunkid") or client.tracking.get_new_id()
 
+        mid = request.args.get("mid", None)
+        uid = request.args.get("uid", None)
+
         client.links.visit(
             alias,
             tracking_id,
             request.remote_addr,
             request.headers.get("User-Agent"),
             request.headers.get("Referer"),
+            uid,
+            mid,
         )
 
         if "://" not in long_url:
@@ -530,12 +535,17 @@ def create_app(**kwargs: Any) -> Flask:
         if client.links.get_link_info_by_alias(tracking_pixel) is None:
             return "There was an error trying to find your tracking pixel.", 404
 
+        mid = request.args.get("mid", None)
+        uid = request.args.get("uid", None)
+
         client.links.visit(
             tracking_pixel,
             tracking_id,
             request.remote_addr,
             request.headers.get("User-Agent"),
             request.headers.get("Referer"),
+            uid,
+            mid,
         )
 
         extension = None

@@ -422,6 +422,107 @@ export default function ApiReference() {
       ),
     },
     {
+      key: 'visits-post',
+      label: 'POST /links/<org_id>/link_id/visits',
+      children: (
+        <Typography>
+          <Typography.Title level={4}>
+            Fetch visits data with optional query
+          </Typography.Title>
+          <Typography.Title className="!tw-mt-4" level={5}>
+            Fetch visits of a link
+          </Typography.Title>
+          <Typography.Paragraph className="!tw-mt-4">
+            Request
+          </Typography.Paragraph>
+          <Typography className="!tw-mt-4">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono">
+              {`curl ${apiUrl}/links/<org_id>/<link_id>/visits \\
+  -X POST \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer $SHRUNK_API_KEY" \\
+  -d '{
+    "mid": "foo",
+    "uid": "bar",
+  }'`}
+            </Flex>
+          </Typography>
+          <Typography.Paragraph className="!tw-mt-4">
+            Response
+          </Typography.Paragraph>
+          <Typography className="!tw-mt-4">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-border tw-bg-[#f5f5f5] tw-p-8 tw-font-mono">
+              {`{
+  "_id": str,
+  "alias": str,
+  "country_code": str,
+  "link_id": str,
+  "mid": str,
+  "referer": str | null,
+  "source_ip": str,
+  "state_code": str,
+  "time": str,
+  "tracking_id": str,
+  "user_agent": str,
+  "uid": str
+}`}
+            </Flex>
+            <Typography.Title className="!tw-mt-4" level={5}>
+              Body Parameters
+            </Typography.Title>
+            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+              <Descriptions.Item
+                label={
+                  <Row gutter={8} align="middle" wrap={false}>
+                    <Col>
+                      <Typography.Text code>mid</Typography.Text>
+                    </Col>
+                    <Col>
+                      <Typography.Text type="secondary">
+                        string | string[]
+                      </Typography.Text>
+                    </Col>
+                    <Col>
+                      <Typography.Text type="secondary">
+                        Optional
+                      </Typography.Text>
+                    </Col>
+                  </Row>
+                }
+              >
+                Pass in a Mail ID or an array of Mail IDs to fetch visits for.
+              </Descriptions.Item>
+            </Descriptions>
+            <Divider className="tw-my-2 !tw-mt-4" />
+            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+              <Descriptions.Item
+                label={
+                  <Row gutter={8} align="middle" wrap={false}>
+                    <Col>
+                      <Typography.Text code>uid</Typography.Text>
+                    </Col>
+                    <Col>
+                      <Typography.Text type="secondary">
+                        string | string[]
+                      </Typography.Text>
+                    </Col>
+                    <Col>
+                      <Typography.Text type="secondary">
+                        Optional
+                      </Typography.Text>
+                    </Col>
+                  </Row>
+                }
+              >
+                Pass in a unique id or an array of User IDs to fetch visits for.
+              </Descriptions.Item>
+            </Descriptions>
+            <Divider className="tw-my-2 !tw-mt-4" />
+          </Typography>
+        </Typography>
+      ),
+    },
+    {
       key: 'pixels-post',
       label: 'POST /tracking-pixels',
       children: (

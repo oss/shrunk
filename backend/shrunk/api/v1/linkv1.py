@@ -232,7 +232,7 @@ def create_link(
 def get_link(
     token_owner: str, client: ShrunkClient, org_id: ObjectId, link_id: ObjectId
 ) -> Any:
-    """``GET /api/v1/link/<org_id>/<link_id>``
+    """``GET /api/v1/links/<org_id>/<link_id>``
 
     Get information about a link. Basically just returns the Mongo document.
     :param netid:
@@ -310,7 +310,7 @@ def get_link(
 @bp.route("/<ObjectId:org_id>", methods=["GET"])
 @require_token(required_permission="read:links")
 def get_org_links(token_owner: str, client: ShrunkClient, org_id: ObjectId) -> Any:
-    """``GET /api/v1/link/<org_id>``
+    """``GET /api/v1/links/<org_id>``
 
     Get information about links owned by a org. Basically just returns the Mongo document.
     :param netid:
@@ -371,3 +371,67 @@ def get_org_links(token_owner: str, client: ShrunkClient, org_id: ObjectId) -> A
         )
 
     return jsonify({"links": info}), 200
+
+
+@bp.route("/<ObjectId:org_id>/<ObjectId:link_id>/visits", methods=["POST"])
+@require_token(required_permission="read:links")
+def get_link_visits(
+    token_owner: str, client: ShrunkClient, org_id: ObjectId, link_id: ObjectId
+) -> Any:
+    """``POST /api/v1/links/<org_id>/<link_id>/visits``
+
+    Get advanced information about visits to a link.
+    :param netid:
+    :param client:
+    :param link_id:
+
+    ```query: {
+        "mid": str | list[str] | None,
+        "uid": str | list[str] | None,
+    }
+    ```
+    """
+
+    try:
+        data = request.get_json()
+    except Exception:
+        data = {}
+
+    if data is None:
+        data = {}
+
+    mid = data.get("mid", None)
+    uid = data.get("uid", None)
+
+    if token_owner["type"] == "org":
+        if org_id != token_owner["_id"]:
+            return (
+                jsonify(
+                    {
+                        "error": {
+                            "code": "LINK_TOKEN_MISMATCH",
+                            "message": "Link mismatch",
+                            "details": "The provided link_id does not match the link associated with your access token",
+                        }
+                    }
+                ),
+                403,
+            )
+
+    try:
+        info = client.links.get_visits(link_id, mid=mid, uid=uid)
+    except NoSuchObjectException:
+        return (
+            jsonify(
+                {
+                    "error": {
+                        "code": "NO_SUCH_OBJECT",
+                        "message": "Link not found",
+                        "details": "This link does not exist or the id is invalid.",
+                    }
+                }
+            ),
+            404,
+        )
+
+    return jsonify({"visits": list(info)}), 200
