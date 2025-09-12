@@ -50,12 +50,6 @@ class SearchClient:
                                         "if": {
                                             "$or": [
                                                 {"$eq": ["$title", query["query"]]},
-                                                {
-                                                    "$eq": [
-                                                        "$title",
-                                                        query["query"],
-                                                    ]
-                                                },
                                                 {"$eq": ["$long_url", query["query"]]},
                                                 {"$eq": ["$netid", query["query"]]},
                                                 {
@@ -223,19 +217,6 @@ class SearchClient:
 
         if "owner" in query and query["owner"]:
             pipeline.append({"$match": {"owner._id": query["owner"]}})
-
-        # Get org names if owner is an org
-
-        pipeline.append(
-            {
-                "$lookup": {
-                    "from": "organizations",
-                    "localField": "owner._id",
-                    "foreignField": "_id",
-                    "as": "owner_org",
-                }
-            }
-        )
 
         # Pagination.
         facet = {
