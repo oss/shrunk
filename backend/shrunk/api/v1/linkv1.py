@@ -3,7 +3,9 @@
 from typing import Any, Dict, Optional
 from datetime import datetime
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, Response
+import segno
+from io import BytesIO
 from shrunk.client import ShrunkClient
 from bson.objectid import ObjectId
 import bson.errors
@@ -237,6 +239,7 @@ def get_link(
     Get information about a link. Basically just returns the Mongo document.
     :param netid:
     :param client:
+    :param org_id:
     :param link_id:
     """
 
@@ -435,3 +438,64 @@ def get_link_visits(
         )
 
     return jsonify({"visits": list(info)}), 200
+
+
+@bp.route("/<ObjectId:link_id>/qrcode", methods=["GET"])
+@require_token(required_permission="read:links")
+def generate_qrcode(token_owner: str, client: ShrunkClient, link_id: ObjectId) -> Any:
+    """``GET /api/v1/link/qrcode``
+
+    Get qr codes from links owned by a org.
+    :param netid:
+    :param client:
+    :param link_id:
+    """
+
+    try:
+        info = client.links.get_link_info(link_id, is_tracking_pixel=False)
+    except NoSuchObjectException:
+        return (
+            jsonify(
+                {
+                    "error": {
+                        "code": "NO_SUCH_OBJECT",
+                        "message": "Link not found",
+                        "details": "This link does not exist or the id is invalid.",
+                    }
+                }
+            ),
+            404,
+        )
+
+    if token_owner["type"] == "org":
+        if not client.links.get_owner(link_id)["_id"] == token_owner["_id"]:
+            return (
+                jsonify(
+                    {
+                        "error": {
+                            "code": "ORG_ISNT_OWNER",
+                            "message": "Organization is not the owner",
+                            "details": "The specified organization does not own this link or the id is invalid.",
+                        }
+                    }
+                ),
+                403,
+            )
+    base_url = request.url_root
+    alias = info["alias"]
+    link = f"{base_url}" + alias
+
+    qr = segno.make(link)
+
+    buf = BytesIO()
+    qr.save(buf, kind="png", scale=10)
+    buf.seek(0)
+
+    return (
+        Response(
+            buf,
+            mimetype="image/png",
+            headers={"Content-Disposition": f"attachment; filename={alias}-qrcode.png"},
+        ),
+        200,
+    )

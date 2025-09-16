@@ -901,6 +901,36 @@ export default function ApiReference() {
         </Typography>
       ),
     },
+    {
+      key: 'links-get-qrcode',
+      label: 'GET /links/<link_id>/qrcode',
+      children: (
+        <Typography>
+          <Typography.Title level={4}>Generate QRCode</Typography.Title>
+          <Typography.Title className="!tw-mt-4" level={5}>
+            Generates and returns a downloadable QR code image by link ID
+          </Typography.Title>
+          <Typography.Paragraph className="!tw-mt-4">
+            Request
+          </Typography.Paragraph>
+          <Typography className="!tw-mt-4">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono">
+              {`curl -O -J ${apiUrl}/links/<link_id>/qrcode \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer $SHRUNK_API_KEY"`}
+            </Flex>
+          </Typography>
+          <Typography.Paragraph className="!tw-mt-4">
+            Response
+          </Typography.Paragraph>
+          <Typography className="!tw-mt-4">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-border tw-bg-[#f5f5f5] tw-p-8 tw-font-mono">
+              PNG Image: alias-qrcode.png
+            </Flex>
+          </Typography>
+        </Typography>
+      ),
+    },
   ];
   return (
     <>

@@ -281,6 +281,13 @@ def test_external_api_endpoints(client: Client) -> None:
         )
         assert resp.status_code == 403
 
+        # get qr code of a link
+        resp = client.get(
+            f"/api/v1/links/{link_id}/qrcode",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert resp.status_code == 200
+
         # with super token test endpoints
         resp = client.post(
             f"/api/core/org/access_token",
@@ -348,6 +355,12 @@ def test_external_api_endpoints(client: Client) -> None:
 
         resp = client.get(
             f"/api/v1/organizations/DEV_ADMIN",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert resp.status_code == 200
+
+        resp = client.get(
+            f"/api/v1/links/{link_id}/qrcode",
             headers={"Authorization": f"Bearer {token}"},
         )
         assert resp.status_code == 200
