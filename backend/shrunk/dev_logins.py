@@ -35,6 +35,13 @@ bp.add_url_rule(
     "/user", "user", mk_dev_login("DEV_USER", "Dev User", None), methods=["POST"]
 )
 
+bp.add_url_rule(
+    "/whitelisted",
+    "whitelisted",
+    mk_dev_login("DEV_WHITELISTED", "Dev Whitelisted", "whitelisted"),
+    methods=["POST"],
+)
+
 
 bp.add_url_rule(
     "/facstaff",

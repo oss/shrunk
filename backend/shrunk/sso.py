@@ -65,6 +65,9 @@ def login(user_info: Any) -> Any:
         client.roles.grant("facstaff", "shibboleth", netid)
         client.users.initialize_user(netid)
 
+    if is_whitelisted:
+        client.users.initialize_user(netid)
+
     # now determine whether to allow login
     if not (is_super_admin or fac_staff or is_whitelisted):
         log_failed("unauthorized")

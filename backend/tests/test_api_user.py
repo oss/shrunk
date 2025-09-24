@@ -8,6 +8,7 @@ from util import dev_login
     [
         ("admin"),
         ("facstaff"),
+        ("whitelisted"),
         ("user"),
     ],
 )
