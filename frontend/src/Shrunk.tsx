@@ -371,12 +371,10 @@ export default function Shrunk(props: Props) {
                       />
                     </Route>
                     <Route exact path="/app/orgs/:id/tokens">
-                      <ProtectedRoute requiredPrivilege="admin">
-                        <OrganizationToken
-                          userNetId={netid}
-                          userPrivileges={userPrivileges}
-                        />
-                      </ProtectedRoute>
+                      <OrganizationToken
+                        userNetId={netid}
+                        userPrivileges={userPrivileges}
+                      />
                     </Route>
                     <Route exact path="/app/tickets">
                       <HelpDesk netid={netid} userPrivileges={userPrivileges} />

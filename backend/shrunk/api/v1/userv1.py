@@ -48,6 +48,21 @@ def get_all_users(token_owner: Dict[str, Any], client: ShrunkClient) -> Dict[Any
         }
 
     """
+
+    if token_owner["type"] != "netid":
+        return (
+            jsonify(
+                {
+                    "error": {
+                        "code": "INSUFFICIENT_PERMISSIONS",
+                        "message": "You do not have permission to view users",
+                        "details": "This operation requires a Super Token",
+                    }
+                }
+            ),
+            403,
+        )
+
     ALLOWED_QUERY_PARAMS = {"roles", "filter"}
     VALID_ROLES = {"admin", "facstaff", "power_user", "whitelisted"}
     VALID_FIELDS = {"netid", "organizations", "roles", "linksCreated"}

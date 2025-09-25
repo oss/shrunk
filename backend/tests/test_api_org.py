@@ -188,9 +188,9 @@ def test_external_api_endpoints(client: Client) -> None:
         )
         assert resp.status_code == 401
 
-        # users endpoint
+        # attempt users with regular access token
         resp = client.get("/api/v1/users", headers={"Authorization": f"Bearer {token}"})
-        assert resp.status_code == 200
+        assert resp.status_code == 403
 
         # attempt invalid org_id assoicated with token
 
@@ -295,6 +295,7 @@ def test_external_api_endpoints(client: Client) -> None:
                 "title": "title",
                 "description": "description",
                 "permissions": [
+                    "read:users",
                     "read:links",
                     "create:links",
                     "read:tracking-pixels",
@@ -304,6 +305,9 @@ def test_external_api_endpoints(client: Client) -> None:
             },
         )
         token = resp.json["access_token"]
+
+        resp = client.get("/api/v1/users", headers={"Authorization": f"Bearer {token}"})
+        assert resp.status_code == 200
 
         resp = client.post(
             "/api/v1/links",

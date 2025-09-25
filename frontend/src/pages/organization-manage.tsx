@@ -284,7 +284,7 @@ function ManageOrgBase({
                     icon: <SettingsIcon />,
                     onClick: onEditOrganization,
                   },
-                  ...(userPrivileges.has('admin')
+                  ...(isAdmin
                     ? [
                         {
                           key: 'settings_developer_organization',

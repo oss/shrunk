@@ -558,8 +558,6 @@ ACCESS_TOKEN_ORG_SCHEMA = {
 @request_schema(ACCESS_TOKEN_ORG_SCHEMA)
 @require_login
 def create_access_token(netid: str, client: ShrunkClient, req: Any) -> Any:
-    if not client.roles.has("admin", netid):
-        abort(403)
     if not req["permissions"]:
         return "permissions is missing", 400
     valid_permissions = client.access_tokens.access_tokens_permissions
@@ -575,7 +573,14 @@ def create_access_token(netid: str, client: ShrunkClient, req: Any) -> Any:
 
         if client.orgs.get_org(req["organizationId"]) is None:
             return "No such org", 400
+
+        if not client.orgs.is_admin(
+            req["organizationId"], netid
+        ) and not client.roles.has("admin", netid):
+            abort(403)
     else:
+        if not client.roles.has("admin", netid):
+            abort(403)
         owner = {"_id": netid, "type": "netid"}
 
     for permission in req["permissions"]:
@@ -591,7 +596,7 @@ def create_access_token(netid: str, client: ShrunkClient, req: Any) -> Any:
 @bp.route("/<ObjectId:org_id>/access_token", methods=["GET"])
 @require_login
 def get_access_tokens(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
-    if not client.roles.has("admin", netid):
+    if not client.orgs.is_admin(org_id, netid) and not client.roles.has("admin", netid):
         abort(403)
 
     owner = {}
@@ -604,9 +609,6 @@ def get_access_tokens(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any
 
     if client.orgs.get_org(org_id) is None:
         return "No such org", 400
-
-    if not client.orgs.is_member(org_id, netid):
-        return "Not a member of the specified org", 403
 
     tokens = client.access_tokens.get_tokens(owner)
 
@@ -626,7 +628,14 @@ def get_super_tokens(netid: str, client: ShrunkClient) -> Any:
 @bp.route("/access_token/<ObjectId:token_id>", methods=["DELETE"])
 @require_login
 def delete_access_token(netid: str, client: ShrunkClient, token_id: ObjectId) -> Any:
-    if not client.roles.has("admin", netid):
-        abort(403)
+    token_owner = client.access_tokens.get_owner(token_id)
+    if token_owner["type"] == "org":
+        if not client.orgs.is_admin(token_owner["_id"], netid) and not client.roles.has(
+            "admin", netid
+        ):
+            abort(403)
+    else:
+        if not client.roles.has("admin", netid):
+            abort(403)
     client.access_tokens.delete_token(token_id, netid)
     return "", 204
