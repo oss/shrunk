@@ -85,6 +85,8 @@ class ShrunkClient:
 
         self.db.visits.create_index([("link_id", pymongo.ASCENDING)])
         self.db.visits.create_index([("source_ip", pymongo.ASCENDING)])
+        self.db.visits.create_index([("mid", pymongo.ASCENDING)])
+        self.db.visits.create_index([("uid", pymongo.ASCENDING)])
         self.db.visitors.create_index([("ip", pymongo.ASCENDING)], unique=True)
         self.db.organizations.create_index([("name", pymongo.ASCENDING)], unique=True)
         self.db.organizations.create_index(
