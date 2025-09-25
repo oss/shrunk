@@ -3,6 +3,7 @@ from typing import List, Dict, Any, Optional
 from bson import ObjectId
 import uuid
 from argon2 import PasswordHasher
+import hashlib
 import pymongo
 
 from .exceptions import NoSuchObjectException
@@ -36,6 +37,8 @@ class AccessTokenClient:
                 raise Exception("Invalid permissions")
 
         token = uuid.uuid4()
+        lookup_key = hashlib.sha256(str(token).encode()).hexdigest()[:16]
+        user_token = f"{lookup_key}.{token}"
         hashed_token = self.ph.hash(str(token))
 
         document = {
@@ -43,6 +46,7 @@ class AccessTokenClient:
             "title": title,
             "description": description,
             "hashed_token": hashed_token,
+            "lookup_key": lookup_key,
             "created_by": creator,  # the creator's netid
             "created_date": datetime.now(timezone.utc),
             "permissions": permissions,
@@ -56,7 +60,7 @@ class AccessTokenClient:
 
         self.db.access_tokens.insert_one(document)
 
-        return str(token)
+        return str(user_token)
 
     def get_tokens(self, owner: Optional[Dict[str, Any]] = None):
         """Get all access tokens for a given owner."""
@@ -84,13 +88,20 @@ class AccessTokenClient:
         return tokens
 
     def verify_token(self, token: str) -> ObjectId:
-        found_tokens = self.db.access_tokens.find({"disabled": False, "deleted": False})
-        for foundToken in found_tokens:
+        try:
+            lookup_key, user_token = token.split(".", 1)
+        except ValueError:
+            return None
+
+        found_token = self.db.access_tokens.find_one(
+            {"lookup_key": lookup_key, "deleted": False}
+        )
+        if found_token:
             try:
-                if self.ph.verify(foundToken["hashed_token"], token):
-                    return foundToken["_id"]
+                if self.ph.verify(found_token["hashed_token"], user_token):
+                    return found_token["_id"]
             except Exception as e:
-                continue
+                return None
         return None
 
     def is_creator(self, token_id: ObjectId, netid: str) -> bool:
