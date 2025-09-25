@@ -20,20 +20,13 @@ function createVisitsCsv(visits: AnonymizedVisit[]): string {
     csvStringifier.getHeaderString() + csvStringifier.stringifyRecords(visits)
   );
 }
-export async function downloadVisits(
-  link_id: string,
-  alias: string | null,
-): Promise<void> {
-  const apiUrl =
-    alias === null
-      ? `/api/core/link/${link_id}/visits`
-      : `/api/core/link/${link_id}/alias/${alias}/visits`;
+export async function downloadVisits(link_id: string): Promise<void> {
+  const apiUrl = `/api/core/link/${link_id}/visits`;
   const visits = await fetch(apiUrl)
     .then((resp) => resp.json())
     .then((json) => json.visits as AnonymizedVisit[]);
 
-  const filename =
-    alias === null ? `${link_id}.csv` : `${link_id}-${alias}.csv`;
+  const filename = `${link_id}.csv`;
   const csvString = createVisitsCsv(visits);
   doDownload(filename, csvString);
 }

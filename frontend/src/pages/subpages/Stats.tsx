@@ -269,7 +269,7 @@ export function Stats(props: Props): React.ReactElement {
       return;
     }
 
-    await downloadVisits(props.id, linkInfo.alias);
+    await downloadVisits(props.id);
   };
 
   const downloadCanvasQRCode = () => {
