@@ -400,18 +400,7 @@ class OrgsClient:
                     },
                 }
             },
-            {
-                "$project": {
-                    "_id": 1,
-                    "title": 1,
-                    "alias": 1,
-                    "canEdit": 1,
-                    "owner": 1,
-                    "long_url": 1,
-                    "role": 1,
-                    "deleted": 1,
-                }
-            },
+            {"$project": {"owner_org": 0}},
         ]
         return list(self.db.urls.aggregate(pipeline))
 

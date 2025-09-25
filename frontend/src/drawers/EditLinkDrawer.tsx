@@ -86,10 +86,6 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
   const [form] = Form.useForm();
   const initialValues: any = {
     ...props.linkInfo,
-    owner:
-      props.linkInfo.owner.type === 'netid'
-        ? props.linkInfo.owner._id
-        : props.linkInfo.owner.org_name,
     expiration_time:
       props.linkInfo.expiration_time === null
         ? null
@@ -101,8 +97,7 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
     props.linkInfo.owner.type !== 'org';
 
   const isTrackingPixelLink = props.linkInfo.is_tracking_pixel_link;
-
-  const [ownerInputVal, setOwnerInputVal] = useState(initialValues.owner);
+  const [ownerInputVal, setOwnerInputVal] = useState(initialValues.owner._id);
 
   const currDate = new Date();
   const isExpired =
@@ -149,7 +144,7 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
   };
 
   const onSave = () => {
-    if (ownerInputVal !== initialValues.owner) {
+    if (ownerInputVal !== initialValues.owner._id) {
       Modal.confirm({
         title: 'Link owner modification',
         icon: <CircleAlertIcon />,
@@ -164,7 +159,6 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
       handleSubmit();
     }
   };
-
   return (
     <Drawer
       open={props.visible}
@@ -216,11 +210,15 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
           <Col span={12}>
             <Form.Item
               label="Owner"
-              name="owner"
-              rules={[
-                { required: true, message: 'Please input a NetID.' },
-                { validator: serverValidateNetId },
-              ]}
+              name={['owner', '_id']}
+              rules={
+                mayEditOwner
+                  ? [
+                      { required: true, message: 'Please input a NetID.' },
+                      { validator: serverValidateNetId },
+                    ]
+                  : []
+              }
             >
               {mayEditOwner ? (
                 <Input
@@ -232,7 +230,11 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
                 <Tooltip title="This link is owned by an organization, please go to the organization's dashboard to edit it.">
                   <Input
                     placeholder="NetID"
-                    value={initialValues.owner}
+                    value={
+                      props.linkInfo.owner.type === 'org'
+                        ? props.linkInfo.owner.org_name
+                        : props.linkInfo.owner._id
+                    }
                     disabled
                   />
                 </Tooltip>

@@ -237,9 +237,9 @@ export function Stats(props: Props): React.ReactElement {
     if (values.long_url !== oldLinkInfo.long_url) {
       patchReq.long_url = values.long_url;
     }
-    if (values.owner !== oldLinkInfo.owner._id) {
+    if (values.owner._id !== oldLinkInfo.owner._id) {
       patchReq.owner = {
-        _id: values.owner,
+        _id: values.owner._id,
         type: 'netid',
       };
     }

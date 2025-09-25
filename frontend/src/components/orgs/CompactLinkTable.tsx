@@ -148,7 +148,9 @@ const CompactLinkTable = ({
                   icon={<Copy />}
                   type="text"
                   onClick={() => {
-                    navigator.clipboard.writeText(getLinkFromAlias(link.alias));
+                    navigator.clipboard.writeText(
+                      getLinkFromAlias(link.alias, link.is_tracking_pixel_link),
+                    );
                     message.success('Link copied to clipboard');
                   }}
                 />
