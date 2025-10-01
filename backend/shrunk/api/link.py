@@ -264,6 +264,7 @@ MODIFY_LINK_SCHEMA = {
         "long_url": {"type": "string", "format": "uri"},
         "expiration_time": {"type": ["string", "null"], "format": "date-time"},
         "created_time": {"type": ["string", "null"], "format": "date-time"},
+        "alias": {"type": "string", "minLength": 5},
     },
 }
 
@@ -300,8 +301,15 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
         link_id, netid
     ):
         abort(403)
-    if "owner" in req:
+    if "alias" in req:
+        if client.links.alias_is_duplicate(
+            req["alias"], link["is_tracking_pixel_link"]
+        ):
+            abort(400)
+        if client.links.alias_is_reserved(req["alias"]):
+            abort(400)
 
+    if "owner" in req:
         if not client.links.is_owner(link_id, netid) and not client.roles.has(
             "admin", netid
         ):
@@ -318,12 +326,14 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
                 abort(403)
 
     try:
+
         client.links.modify(
             link_id,
             title=req.get("title"),
             long_url=req.get("long_url"),
             expiration_time=req.get("expiration_time"),
             owner=req.get("owner"),
+            alias=req.get("alias"),
         )
         if "expiration_time" in req and req["expiration_time"] is None:
             client.links.remove_expiration_time(link_id)

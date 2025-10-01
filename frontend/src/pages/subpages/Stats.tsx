@@ -252,6 +252,9 @@ export function Stats(props: Props): React.ReactElement {
         type: 'netid',
       };
     }
+    if (values.alias !== oldLinkInfo.alias) {
+      patchReq.alias = values.alias;
+    }
     if (values.expiration_time !== oldLinkInfo.expiration_time) {
       patchReq.expiration_time =
         values.expiration_time === null
@@ -266,6 +269,10 @@ export function Stats(props: Props): React.ReactElement {
 
     if (patchRequestStatus !== 204) {
       message.error('There was an error editing the link.', 4);
+    } else {
+      await updateLinkInfo();
+      message.success('Link edited successfully', 4);
+      await updateStats();
     }
   }
 

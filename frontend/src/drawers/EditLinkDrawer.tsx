@@ -25,7 +25,11 @@ import {
   isValidAlias,
   reverLinkExpirationDate,
 } from '../api/links';
-import { serverValidateNetId } from '../api/validators';
+import {
+  serverValidateDuplicateAlias,
+  serverValidateLongUrl,
+  serverValidateNetId,
+} from '../api/validators';
 import DatePicker from '../components/date-picker';
 import { EditLinkValues, Link } from '../interfaces/link';
 
@@ -159,6 +163,7 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
       handleSubmit();
     }
   };
+
   return (
     <Drawer
       open={props.visible}
@@ -202,11 +207,42 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
         requiredMark={false}
       >
         <Row gutter={16}>
-          <Col span={24}>
+          <Col span={12}>
             <Form.Item label="Title" name="title">
               <Input />
             </Form.Item>
           </Col>
+          <Col span={12}>
+            <Form.Item
+              label="Alias"
+              name="alias"
+              rules={[
+                { required: true, message: 'Please input an alias.' },
+                { validator: serverValidateDuplicateAlias },
+                {
+                  min: 5,
+                  message: 'Aliases may be no shorter than 5 characters.',
+                },
+              ]}
+            >
+              <Input />
+            </Form.Item>
+          </Col>
+          {!isTrackingPixelLink && (
+            <Col span={24}>
+              <Form.Item
+                label="Long URL"
+                name="long_url"
+                rules={[
+                  { required: true, message: 'Please input a long URL.' },
+                  { type: 'url', message: 'Please enter a valid URL.' },
+                  { validator: serverValidateLongUrl },
+                ]}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
+          )}
           <Col span={12}>
             <Form.Item
               label="Owner"

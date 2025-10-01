@@ -17,7 +17,10 @@ import dayjs from 'dayjs';
 import { SendHorizontalIcon } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 import { createLink } from '../api/links';
-import { serverValidateLongUrl } from '../api/validators';
+import {
+  serverValidateDuplicateAlias,
+  serverValidateLongUrl,
+} from '../api/validators';
 import DatePicker from '../components/date-picker';
 import { useFeatureFlags } from '../contexts/FeatureFlags';
 import { FeatureFlags } from '../interfaces/app';
@@ -99,7 +102,7 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
         values.is_tracking_pixel_link as boolean,
         values.title,
         values.long_url,
-        values.alias,
+        values.alias === '' ? undefined : values.alias,
         values.expiration_time,
         values.tracking_pixel_extension as '.png' | '.gif',
         props.org_id,
@@ -112,7 +115,7 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
     onSubmitClick();
   };
 
-  const initialValues = { aliases: [{ title: '' }] };
+  const initialValues = { alias: '' };
   const mayUseCustomAliases =
     props.userPrivileges.has('power_user') || props.userPrivileges.has('admin');
 
@@ -180,7 +183,19 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
           </Col>
           {!isCreatingTrackingPixel && mayUseCustomAliases && (
             <Col span={24}>
-              <Form.Item required label="New Shortened URL" name="alias">
+              <Form.Item
+                required
+                label="New Shortened URL"
+                name="alias"
+                rules={[
+                  { required: false, message: 'Please input an alias.' },
+                  { validator: serverValidateDuplicateAlias },
+                  {
+                    min: 5,
+                    message: 'Aliases may be no shorter than 5 characters.',
+                  },
+                ]}
+              >
                 <Input
                   addonBefore={`${document.location.host}/`}
                   placeholder="If left blank, it will be randomized"
