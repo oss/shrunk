@@ -16,13 +16,21 @@
         {
           "text": "Allow users to select a custom date range in the visits graph",
           "contributors": ["iz80"]
+        },
+        {
+          "text": "Show comments and time blocked for links",
+          "contributors": ["iz80"]
         }
       ],
       "fixes": [
         {
           "text": "Re-add ability to edit alias and long url of a shortened link",
           "contributors": ["ak2399"]
-        }
+        },
+	{
+	  "text": "Show BlockedLinked and Blacklisted state in user view instead of a blank",
+          "contributors": ["iz80"]
+	}
       ]
     }
   },
@@ -144,14 +152,6 @@
         {
           "text": "Table fonts are now 14px instead of 16px",
           "contributors": ["ah1371"]
-        },
-        {
-          "text": "Allow users to select a custom date range in the visits graph",
-          "contributors": ["iz80"]
-        },
-        {
-          "text": "Show comments and time blocked for links",
-          "contributors": ["iz80"]
         }
       ],
       "fixes": [

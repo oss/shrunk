@@ -102,6 +102,8 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
     whitelisted: 'Whitelisted',
     power_user: 'Power User',
     facstaff: 'Faculty',
+    blacklisted: 'Blacklisted',
+    blocked_url: 'Blocked URL',
   };
 
   const options = roleOrder.map((role) => ({
