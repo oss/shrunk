@@ -2,6 +2,33 @@
   {
     "major": 3,
     "minor": 1,
+    "patch": 1,
+    "projectDirector": "ah1371",
+    "date": "TODO",
+    "description": "A small patch to fix some bugs from the last release.",
+    "categories": {
+      "features": [],
+      "improvements": [
+        {
+          "text": "Add validation before submitting aliases",
+          "contributors": ["ak2399"]
+        },
+        {
+          "text": "Allow users to select a custom date range in the visits graph",
+          "contributors": ["iz80"]
+        }
+      ],
+      "fixes": [
+        {
+          "text": "Re-add ability to edit alias and long url of a shortened link",
+          "contributors": ["ak2399"]
+        }
+      ]
+    }
+  },
+  {
+    "major": 3,
+    "minor": 1,
     "patch": 0,
     "projectDirector": "ah1371",
     "date": "TODO",
@@ -117,10 +144,6 @@
         {
           "text": "Table fonts are now 14px instead of 16px",
           "contributors": ["ah1371"]
-        },
-        {
-          "text": "Allow users to select a custom date range in the visits graph",
-          "contributors": ["iz80"]
         }
       ],
       "fixes": [

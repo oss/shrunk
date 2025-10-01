@@ -254,15 +254,16 @@ class LinksClient:
         long_url: Optional[str] = None,
         expiration_time: Optional[datetime] = None,
         owner: Optional[str] = None,
+        alias: Optional[str] = None,
     ) -> None:
         if long_url is not None and self.long_url_is_blocked(long_url):
             raise BadLongURLException
-
         if (
             title is None
             and long_url is None
             and expiration_time is None
             and owner is None
+            and alias is None
         ):
             return
 
@@ -273,13 +274,14 @@ class LinksClient:
 
         fields: Dict[str, Any] = {}
         update: Dict[str, Any] = {"$set": fields}
-
         if title is not None:
             fields["title"] = title
         if long_url is not None:
             fields["long_url"] = long_url
         if expiration_time is not None:
             fields["expiration_time"] = expiration_time
+        if alias is not None:
+            fields["alias"] = alias
         if owner is not None:
 
             if owner["type"] == "netid" and is_valid_netid(owner["_id"]):

@@ -272,7 +272,36 @@ def test_create_link_bad_long_url(client: Client) -> None:
         assert resp.status_code == 403
 
 
-@pytest.mark.skip(reason="As of 3.1.0, you can no longer modify long_url links.")
+def test_modify_link_bad_alias(client: Client) -> None:
+    # test short alias
+    alias = "test"
+    with dev_login(client, "user"):
+        resp = create_link(client, "title", "https://rutgers.edu")
+        assert resp.status_code == 201
+        link_id = resp.json["id"]
+        linkAlias = resp.json["alias"]
+
+        resp = client.patch(
+            f"/api/core/link/{link_id}",
+            json={
+                "alias": alias,
+            },
+        )
+
+        assert resp.status_code == 400
+
+        # test existing alias
+
+        resp = client.patch(
+            f"/api/core/link/{link_id}",
+            json={
+                "alias": linkAlias,
+            },
+        )
+
+        assert resp.status_code == 400
+
+
 def test_modify_link_bad_long_url(client: Client) -> None:
     long_url = "https://example.com"
     long_url_b32 = str(base64.b32encode(bytes(long_url, "utf8")), "utf8")
