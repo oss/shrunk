@@ -7,7 +7,12 @@
     "date": "TODO",
     "description": "A small patch to fix some bugs from the last release.",
     "categories": {
-      "features": [],
+      "features": [
+	{
+          "text": "Add quick access to stats of a link by appending /manage to it",
+          "contributors": ["iz80"]
+	}
+      ],
       "improvements": [
         {
           "text": "Add validation before submitting aliases",

@@ -525,6 +525,21 @@ def create_app(**kwargs: Any) -> Flask:
 
         return response
 
+    # Redirect to the alias stats page if "/manage" is appended to the alias
+    @app.route("/<alias>/manage", methods=["GET"])
+    def _serve_shortened_links_manage(alias: str) -> Any:
+        client: ShrunkClient = current_app.client
+        link_info = client.links.get_link_info_by_alias(alias)
+        # might be legacy alias
+        if link_info is None:
+            link_info = client.links.get_link_info_by_alias(alias.lower())
+            alias = alias.lower()
+
+        if link_info is None:
+            return jsonify({"message": "Link not found"}), 404
+
+        return redirect(f'/app/links/{str(link_info["_id"])}')
+
     # Add "/api/core/t/" because you're technically using an API endpoint for the websites using the tracking pixel.
     # This will also make it easier for the NGINX server in the near future.
     @app.route("/api/core/t/<tracking_pixel>", methods=["GET"])
