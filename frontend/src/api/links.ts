@@ -1,6 +1,6 @@
 import base32 from 'hi-base32';
 
-import { Dayjs } from 'dayjs';
+import { Dayjs, dayjs } from 'dayjs';
 import {
   BrowserStats,
   Link,
@@ -142,8 +142,23 @@ export async function getLinkStats(linkId: string) {
   return data as OverallStats;
 }
 
-export async function getLinkVisitsStats(linkId: string) {
-  const resp = await fetch(`/api/core/link/${linkId}/stats/visits`);
+export async function getLinkVisitsStats(
+  linkId: string,
+  start_date: dayjs,
+  end_date: dayjs,
+) {
+  const params = new URLSearchParams();
+  // The endpoint defaults to one year from today if we don't set
+  // these parameters
+  if (start_date) {
+    params.append('start_date', start_date.format());
+  }
+  if (end_date) {
+    params.append('end_date', end_date.format());
+  }
+
+  const url = `/api/core/link/${linkId}/stats/visits?${params.toString()}`;
+  const resp = await fetch(url);
   const data = await resp.json();
 
   return data as VisitStats;

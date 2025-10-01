@@ -1,19 +1,45 @@
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import React from 'react';
+import type { TimeRangePickerProps, GetProps } from 'antd';
+import { DatePicker, Row, Col, Flex } from 'antd/lib';
+import dayjs from 'dayjs';
 import { VisitDatum, VisitStats } from '../../interfaces/link';
 
-const VisitsChart: React.FC<{ visitStats: VisitStats | null }> = (props) => {
+type RangePickerProps = GetProps<typeof DatePicker.RangePicker>;
+type Props = {
+  visitStats: VisitStats | null;
+  onRangeChange: (dates: [dayjs, dayjs], dateStrings: [string, string]) => void;
+};
+
+const { RangePicker } = DatePicker;
+const rangePresets: TimeRangePickerProps['presets'] = [
+  { label: 'Last week', value: [dayjs().add(-7, 'd'), dayjs()] },
+  { label: 'Last month', value: [dayjs().add(-30, 'd'), dayjs()] },
+  { label: 'Last three months', value: [dayjs().add(-90, 'd'), dayjs()] },
+  { label: 'Last year', value: [dayjs().add(-365, 'd'), dayjs()] },
+];
+// Can not select days after today
+const disabledDate: RangePickerProps['disabledDate'] = (current) =>
+  current && current > dayjs().endOf('day');
+
+const VisitsChart: React.FC<Props> = (props) => {
   if (props.visitStats === null) {
     return <></>;
   }
 
+  const { onRangeChange } = props;
   const { visits } = props.visitStats;
   const getMsSinceEpoch = (datum: VisitDatum) =>
     Date.UTC(datum._id.year, datum._id.month - 1, datum._id.day);
 
   const options = {
-    chart: { type: 'areaspline' },
+    chart: {
+      type: 'areaspline',
+      zooming: {
+        type: 'x',
+      },
+    },
     credits: { enabled: false },
     plotOptions: {
       areaspline: {
@@ -68,7 +94,22 @@ const VisitsChart: React.FC<{ visitStats: VisitStats | null }> = (props) => {
     ],
   };
 
-  return <HighchartsReact highcharts={Highcharts} options={options} />;
+  return (
+    <Row gutter={[16, 16]}>
+      <Col span={24}>
+        <Flex justify="center">
+          <RangePicker
+            presets={rangePresets}
+            onChange={onRangeChange}
+            disabledDate={disabledDate}
+          />
+        </Flex>
+      </Col>
+      <Col span={24}>
+        <HighchartsReact highcharts={Highcharts} options={options} />
+      </Col>
+    </Row>
+  );
 };
 
 export default VisitsChart;

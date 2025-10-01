@@ -430,10 +430,15 @@ class LinksClient:
             raise NoSuchObjectException
 
     def get_daily_visits(
-        self, link_id: ObjectId, alias: Optional[str] = None
+        self,
+        link_id: ObjectId,
+        alias: Optional[str] = None,
+        date_range: Optional[Tuple[datetime, datetime]] = None,
     ) -> List[Any]:
-        """Given a short URL, return how many visits and new unique visitors it gets per day.
+        """Given a short URL, return how many visits and new unique
+           visitors it gets per day for the given date range.
         :param short_url: A shortened URL
+        :param date_range: Date range to consider, defaults to one year from today
         """
 
         if alias is None:
@@ -441,7 +446,22 @@ class LinksClient:
         else:
             match = {"$match": {"link_id": link_id, "alias": alias}}
 
-        aggregation = [match] + cast(List[Any], aggregations.daily_visits_aggregation)
+        if date_range is None:
+            date_match = {
+                "$match": {
+                    "time": {
+                        "$gte": datetime.datetime.now() - datetime.timedelta(days=365)
+                    }
+                }
+            }
+        else:
+            date_match = {
+                "$match": {"time": {"$gte": date_range[0], "$lte": date_range[1]}}
+            }
+
+        aggregation = (
+            [match] + [date_match] + cast(List[Any], aggregations.visits_aggregation)
+        )
         return list(self.db.visits.aggregate(aggregation))
 
     def get_geoip_stats(

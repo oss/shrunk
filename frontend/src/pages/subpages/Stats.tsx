@@ -193,6 +193,15 @@ export function Stats(props: Props): React.ReactElement {
     setBrowserStats(await getLinkBrowserStats(props.id));
   }
 
+  const onVisitStateRangeChanged = async (
+    dates: null | (Dayjs | null)[],
+    _dateStrings: string[],
+  ): void => {
+    setVisitStats(
+      await getLinkVisitsStats(props.id, dates?.[0], dates?.[1].endOf('day')),
+    );
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       await updateLinkInfo();
@@ -370,7 +379,12 @@ export function Stats(props: Props): React.ReactElement {
   };
 
   const statTabs: Record<StatChart, React.ReactNode> = {
-    Visits: <VisitsChart visitStats={visitStats} />,
+    Visits: (
+      <VisitsChart
+        visitStats={visitStats}
+        onRangeChange={onVisitStateRangeChanged}
+      />
+    ),
     GeoIP: <GeoipChart data={geoipStats} />,
     Browser: (
       <ShrunkPieChart

@@ -7,13 +7,6 @@ def match_link_id(link_id: str) -> Any:
     return {"$match": {"link_id": link_id}}
 
 
-# daily visits aggregations phases
-
-get_visits_from_date_range = {
-    "$match": {"time": {"$gte": datetime.datetime.now() - datetime.timedelta(days=365)}}
-}
-
-
 group_tracking_ids = {
     "$group": {
         "_id": "$tracking_id",
@@ -134,8 +127,7 @@ clean_results = {
 }
 
 
-daily_visits_aggregation = [
-    get_visits_from_date_range,
+visits_aggregation = [
     # mark the first_time_visits
     group_tracking_ids,
     find_first,

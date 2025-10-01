@@ -1,6 +1,6 @@
 """Implements API endpoints under ``/api/link``"""
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Optional, Dict
 
 from flask import Blueprint, jsonify, request
@@ -595,6 +595,18 @@ def get_link_visit_stats(netid: str, client: ShrunkClient, link_id: ObjectId) ->
            "first_time_visits": "number"
        } ] }
 
+    This endpoint supports passing start_date and end_date via url
+    parameters, the dates must be in ISO format. The start date must
+    be before the end date, the parameters are optional, the default
+    behavior is the following:
+
+    - If start date exists but not end date, the range goes from the
+      start date to today's date.
+    - If end date exists but not start date, the range goes from the
+      one year from the end date to the end date
+    - If neither exists, then the range is from one year from today,
+      to today's date
+
     :param netid:
     :param client:
     :param link_id:
@@ -603,7 +615,21 @@ def get_link_visit_stats(netid: str, client: ShrunkClient, link_id: ObjectId) ->
         link_id, netid
     ):
         abort(403)
-    visits = client.links.get_daily_visits(link_id)
+
+    # If start_date exists but not end_date, we default to <start_date, today>
+    # If end_date exists but not start_date, we default to <year from end_date, end_date>
+    # If neither exists, then it is just, <year from today, today>
+    end_date = datetime.fromisoformat(
+        request.args.get("end_date", datetime.now().isoformat())
+    )
+    start_date = datetime.fromisoformat(
+        request.args.get("start_date", (end_date - timedelta(days=365)).isoformat())
+    )
+
+    if start_date > end_date:
+        return jsonify({"error": "start_date must be before end_date"})
+
+    visits = client.links.get_daily_visits(link_id, date_range=(start_date, end_date))
     return jsonify({"visits": visits})
 
 
