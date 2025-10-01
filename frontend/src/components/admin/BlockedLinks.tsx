@@ -17,6 +17,7 @@ import {
   Space,
   Table,
   Tooltip,
+  Typography,
 } from 'antd/lib';
 import {
   CloudDownloadIcon,
@@ -24,6 +25,7 @@ import {
   SearchIcon,
   TrashIcon,
 } from 'lucide-react';
+import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { blockLink, getBlockedLinks, unBlockLink } from '../../api/app';
 import { GrantedBy } from '../../interfaces/csv';
@@ -186,6 +188,16 @@ const BlockedLinks = () => {
       key: 'blockedBy',
     },
     {
+      title: 'Time Blocked',
+      key: 'timeBlocked',
+      dataIndex: 'timeBlocked',
+      render: (_, record) => (
+        <Typography.Text>
+          {dayjs(record.timeBlocked).format('MMM D, YYYY - h:mm A')}
+        </Typography.Text>
+      ),
+    },
+    {
       title: () => <Flex justify="flex-end">Actions</Flex>,
       key: 'actions',
       render: (_: any, record: BlockedLink) => (
@@ -231,7 +243,7 @@ const BlockedLinks = () => {
           url: entity.entity,
           comment: entity.comment ?? '',
           blockedBy: entity.granted_by ?? '',
-          timeBlocked: entity.time_granted ?? '',
+          timeBlocked: entity.time_granted ?? dayjs.unix(0).format(),
         })),
       );
     };
@@ -293,6 +305,13 @@ const BlockedLinks = () => {
             rowKey="url"
             pagination={{ position: ['bottomCenter'], pageSize: 10 }}
             scroll={{ x: 'max-content' }}
+            expandable={{
+              expandedRowRender: (record) => (
+                <Typography.Text>
+                  {`Comment: ${record.comment}`}
+                </Typography.Text>
+              ),
+            }}
           />
         </Col>
       </Row>

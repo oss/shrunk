@@ -144,6 +144,14 @@
         {
           "text": "Table fonts are now 14px instead of 16px",
           "contributors": ["ah1371"]
+        },
+        {
+          "text": "Allow users to select a custom date range in the visits graph",
+          "contributors": ["iz80"]
+        },
+        {
+          "text": "Show comments and time blocked for links",
+          "contributors": ["iz80"]
         }
       ],
       "fixes": [
