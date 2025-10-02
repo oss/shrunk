@@ -15,10 +15,6 @@
       ],
       "improvements": [
         {
-          "text": "Add validation before submitting aliases",
-          "contributors": ["ak2399"]
-        },
-        {
           "text": "Allow users to select a custom date range in the visits graph",
           "contributors": ["iz80"]
         },

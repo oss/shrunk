@@ -25,11 +25,7 @@ import {
   isValidAlias,
   reverLinkExpirationDate,
 } from '../api/links';
-import {
-  serverValidateDuplicateAlias,
-  serverValidateLongUrl,
-  serverValidateNetId,
-} from '../api/validators';
+import { serverValidateLongUrl, serverValidateNetId } from '../api/validators';
 import DatePicker from '../components/date-picker';
 import { EditLinkValues, Link } from '../interfaces/link';
 
@@ -218,7 +214,6 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
               name="alias"
               rules={[
                 { required: true, message: 'Please input an alias.' },
-                { validator: serverValidateDuplicateAlias },
                 {
                   min: 5,
                   message: 'Aliases may be no shorter than 5 characters.',

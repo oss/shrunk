@@ -190,10 +190,6 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
                 rules={[
                   { required: false, message: 'Please input an alias.' },
                   { validator: serverValidateDuplicateAlias },
-                  {
-                    min: 5,
-                    message: 'Aliases may be no shorter than 5 characters.',
-                  },
                 ]}
               >
                 <Input
