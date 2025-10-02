@@ -255,7 +255,10 @@ export function Stats(props: Props): React.ReactElement {
     if (values.alias !== oldLinkInfo.alias) {
       patchReq.alias = values.alias;
     }
-    if (values.expiration_time !== oldLinkInfo.expiration_time) {
+    if (
+      typeof values.expiration_time !== 'undefined' &&
+      values.expiration_time !== oldLinkInfo.expiration_time
+    ) {
       patchReq.expiration_time =
         values.expiration_time === null
           ? null

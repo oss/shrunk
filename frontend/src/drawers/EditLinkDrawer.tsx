@@ -220,7 +220,7 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
                 },
               ]}
             >
-              <Input />
+              <Input disabled={isTrackingPixelLink} />
             </Form.Item>
           </Col>
           {!isTrackingPixelLink && (
