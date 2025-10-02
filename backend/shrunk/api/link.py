@@ -303,7 +303,7 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
         abort(403)
     if "alias" in req:
         if client.links.alias_is_duplicate(
-            req["alias"], link["is_tracking_pixel_link"]
+            req["alias"], link.get("is_tracking_pixel_link", False)
         ):
             abort(400)
         if client.links.alias_is_reserved(req["alias"]):
