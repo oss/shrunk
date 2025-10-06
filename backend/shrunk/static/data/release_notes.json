@@ -2,6 +2,24 @@
   {
     "major": 3,
     "minor": 1,
+    "patch": 2,
+    "projectDirector": "ah1371",
+    "date": "10-06-2025",
+    "description": "Various bug fixes",
+    "categories": {
+      "features": [],
+      "improvements": [],
+      "fixes": [
+        {
+            "text": "Resolve infinite loading issue in visit graph for links with high visit counts",
+          "contributors": ["ak2399"]
+        }
+      ]
+    }
+  },
+  {
+    "major": 3,
+    "minor": 1,
     "patch": 1,
     "projectDirector": "ah1371",
     "date": "TODO",
