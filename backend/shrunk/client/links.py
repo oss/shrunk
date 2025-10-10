@@ -464,7 +464,7 @@ class LinksClient:
         aggregation = (
             [match] + [date_match] + cast(List[Any], aggregations.visits_aggregation)
         )
-        return list(self.db.visits.aggregate(aggregation))
+        return list(self.db.visits.aggregate(aggregation, allowDiskUse=True))
 
     def get_geoip_stats(
         self, link_id: Optional[ObjectId] = None, alias: Optional[str] = None
