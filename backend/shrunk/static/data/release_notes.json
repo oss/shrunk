@@ -13,6 +13,10 @@
         {
             "text": "Resolve infinite loading issue in visit graph for links with high visit counts",
           "contributors": ["ak2399"]
+        },
+        {
+          "text": "Revert broken code from the dashboard preventing users from searching links",
+          "contributors": ["ah1371"]
         }
       ]
     }
