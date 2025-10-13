@@ -20,6 +20,7 @@ function createVisitsCsv(visits: AnonymizedVisit[]): string {
     csvStringifier.getHeaderString() + csvStringifier.stringifyRecords(visits)
   );
 }
+
 export async function downloadVisits(link_id: string): Promise<void> {
   const apiUrl = `/api/core/link/${link_id}/visits`;
   const visits = await fetch(apiUrl)
