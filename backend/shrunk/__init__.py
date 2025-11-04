@@ -25,7 +25,7 @@ from werkzeug.routing import BaseConverter, ValidationError
 from . import api, dev_logins, sso, views
 from .client import ShrunkClient
 from .util.github import pull_outlook_assets_from_github
-from .util.ldap import is_valid_netid, query_position_info
+from .util.ldap import is_university_guest, is_valid_netid, query_position_info
 from .util.string import get_domain, validate_url
 from .util.verification import verify_signature
 
@@ -156,6 +156,7 @@ def _init_roles() -> None:
         oncreate=onblacklist,
         onrevoke=unblacklist,
     )
+    
 
     def onblock(url: str) -> None:
         domain = get_domain(url)
@@ -232,6 +233,15 @@ def _init_roles() -> None:
             "allow_comment": True,
             "comment_prompt": "Describe why the user has been granted access to Go.",
         },
+    )
+    
+    client.roles.create(
+        "guest",
+        lambda netid: client.roles.has_some(["admin", "facstaff", "power_user"], netid),
+        is_university_guest,
+        custom_text={
+            "title": "University Guests",
+        }
     )
 
     client.roles.create(
