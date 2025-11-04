@@ -4,7 +4,7 @@ import os
 import ldap
 from flask import current_app
 
-__all__ = ["is_valid_netid", "query_given_name"]
+__all__ = ["is_valid_netid", "query_given_name", "is)university_guest"]
 
 
 def _validate_netid_chars(netid: str) -> bool:
@@ -43,6 +43,19 @@ def is_valid_netid(netid: str) -> bool:
 
     res = _query_netid(netid)
     return res is not None and res != []
+
+
+def is_university_guest(netid: str) -> bool:
+    if bool(int(os.getenv("SHRUNK_DEV_LOGINS", 0))) and netid.startswith("DEV_"):
+        return True
+    
+    if not is_valid_netid(netid):
+        return False
+    
+    user_info = query_position_info(netid)
+    employee_types = user_info.get("employeeType", [])
+    
+    return "GUEST" in employee_types
 
 
 def query_given_name(netid: str) -> str:
