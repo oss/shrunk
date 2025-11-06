@@ -14,7 +14,7 @@ import {
 import { PlusCircleIcon, XIcon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { getOrganizations } from '../api/organization';
-import { serverValidateNetId } from '../api/validators';
+import { serverValidateGuest, serverValidateNetId } from '../api/validators';
 import { Organization } from '../interfaces/organizations';
 
 export interface Collaborator {
@@ -62,6 +62,13 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
 
   function refreshOrganizations() {
     getOrganizations('user').then((orgs) => setOrganizations(orgs));
+  }
+
+  function validator(_rule: any, value: string) {
+    if(collaboratorRole === 'guest') {
+      return serverValidateGuest(_rule, value);
+    }
+    return serverValidateNetId(_rule, value);
   }
 
   const masterRole = props.roles[0].value;
@@ -119,7 +126,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                       required: true,
                       message: 'Please enter a valid NetID.',
                     },
-                    { validator: serverValidateNetId },
+                    { validator: validator },
                   ]}
                 >
                   <Input

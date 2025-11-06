@@ -8,7 +8,7 @@ from werkzeug.exceptions import abort
 from bson import ObjectId
 
 from shrunk.client import ShrunkClient
-from shrunk.util.ldap import is_valid_netid
+from shrunk.util.ldap import is_valid_netid, is_university_guest
 from shrunk.util.decorators import require_login, request_schema
 
 __all__ = ["bp"]
@@ -302,6 +302,35 @@ def validate_netid(_netid: str, _client: ShrunkClient, req: Any) -> Any:
     response: Dict[str, Any] = {"valid": valid}
     if not valid:
         response["reason"] = "That NetID is not valid."
+    return jsonify(response)
+
+@bp.route("/validate_guest", methods=["POST"])
+@request_schema(VALIDATE_NETID_SCHEMA)
+@require_login
+def validate_guest(_netid: str, _client: ShrunkClient, req: Any) -> Any:
+    """``POST /api/org/validate_guest``
+
+    Check that a guest NetID is valid. This endpoint is used for form validation in the frontend. Request format:
+
+    .. code-block:: json
+
+       { "netid": "string" }
+
+    Response format:
+
+    .. code-block:: json
+
+       { "valid": "boolean", "reason?": "string" }
+
+    :param netid:
+    :param client:
+    :param req:
+    """
+    
+    valid = is_university_guest(req["netid"])
+    response: Dict[str, Any] = {"valid": valid}
+    if not valid:
+        response["reason"] = "That NetID does not have the guest role."
     return jsonify(response)
 
 

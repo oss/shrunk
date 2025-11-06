@@ -26,6 +26,7 @@ import {
   Link2,
   PlusCircleIcon,
   ChartLineIcon,
+  UserRoundPlusIcon,
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
@@ -260,12 +261,14 @@ function ManageOrgBase({
         <Col>
           <Space>
             {isAdmin && (
+              <>
               <Button
                 icon={<UsersIcon />}
                 onClick={() => setShareModalVisible(true)}
               >
                 Collaborate
               </Button>
+              </>
             )}
             <Button
               type="primary"
@@ -413,6 +416,7 @@ function ManageOrgBase({
         roles={[
           { label: 'Admin', value: 'admin' },
           { label: 'Member', value: 'member' },
+          { label: 'Guest', value: 'guest' }
         ]}
         people={organization.members.map((member) => ({
           _id: member.netid,

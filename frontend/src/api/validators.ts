@@ -100,6 +100,33 @@ export const serverValidateNetId = async (
   }
 };
 
+
+/**
+ * Check whether a NetID is a university guest
+ * @function
+ * @param _rule The rule
+ * @param value The NetID
+ * @returns [[Error]] if the user is not a university guest
+ */
+
+
+export const serverValidateGuest = async (
+  _rule: any,
+  value: string,
+): Promise<void> => {
+  if (!value) {
+    return;
+  }
+  const result = await fetch('/api/core/org/validate_guest', {
+    method: 'POST', 
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ netid: value }),
+  }).then((resp) => resp.json());
+  if (!result.valid) {
+    throw new Error(result.reason);
+  }
+};
+
 // checks if an organization name is used
 export const serverValidateOrgName = async (
   _rule: any,
