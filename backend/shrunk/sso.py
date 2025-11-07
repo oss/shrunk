@@ -40,8 +40,6 @@ def login(user_info: Any) -> Any:
 
     # get info from shibboleth types
     fac_staff = t("FACULTY") or t("STAFF")
-    
-    
 
     # get info from ACLs
     is_blacklisted = client.roles.has("blacklisted", netid)
@@ -72,7 +70,7 @@ def login(user_info: Any) -> Any:
         client.users.initialize_user(netid)
 
     # now determine whether to allow login
-    if not (is_super_admin or fac_staff or is_whitelisted):
+    if not (is_super_admin or fac_staff or is_whitelisted or is_guest):
         log_failed("unauthorized")
         abort(403)
 

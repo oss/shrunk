@@ -304,6 +304,7 @@ def validate_netid(_netid: str, _client: ShrunkClient, req: Any) -> Any:
         response["reason"] = "That NetID is not valid."
     return jsonify(response)
 
+
 @bp.route("/validate_guest", methods=["POST"])
 @request_schema(VALIDATE_NETID_SCHEMA)
 @require_login
@@ -326,7 +327,7 @@ def validate_guest(_netid: str, _client: ShrunkClient, req: Any) -> Any:
     :param client:
     :param req:
     """
-    
+
     valid = is_university_guest(req["netid"])
     response: Dict[str, Any] = {"valid": valid}
     if not valid:
@@ -443,7 +444,7 @@ def put_org_guest(
     """
     if not client.orgs.is_admin(org_id, netid) and not client.roles.has("admin", netid):
         abort(403)
-        
+
     if not is_university_guest(member_netid):
         return "That NetID does not have the guest role.", 400
 
@@ -451,12 +452,10 @@ def put_org_guest(
 
         return "Guest user already belongs to an organization", 400
 
-
     if client.orgs.create_guest(org_id, member_netid):
-        client.roles.grant("guest", netid, member_netid,  f"Added to org: {org_id}")
-        
-    return "", 204
+        client.roles.grant("guest", netid, member_netid, f"Added to org: {org_id}")
 
+    return "", 204
 
 
 @bp.route("/domain", methods=["PUT"])
@@ -549,6 +548,28 @@ def delete_org_member(
         if not netid == member_netid:
             abort(403)
     client.orgs.delete_member(org_id, member_netid)
+    return "", 204
+
+
+@bp.route("/<ObjectId:org_id>/guest/<guest_netid>", methods=["DELETE"])
+@require_login
+def delete_org_guest(
+    netid: str, client: ShrunkClient, org_id: ObjectId, guest_netid: str
+) -> Any:
+    """``DELETE /api/org/<org_id>/guest/<netid>``
+
+    Remove a guest from an org. Returns 204 on success.
+
+    :param netid:
+    :param client:
+    :param org_id:
+    :param guest_netid:
+    """
+    if not client.orgs.is_admin(org_id, netid) and not client.roles.has("admin", netid):
+        abort(403)
+    mod_count = client.orgs.delete_guest(org_id, guest_netid)
+    if mod_count > 0:
+        client.roles.revoke("guest", guest_netid)
     return "", 204
 
 

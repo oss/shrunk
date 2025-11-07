@@ -122,8 +122,8 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
         expiration_time = None
 
     owner = {}
-    
-    if client.roles.has("guest", netid): # force org link ownership for guest
+
+    if client.roles.has("guest", netid):  # force org link ownership for guest
         org = client.orgs.get_orgs(netid, True)[0]
         req["org_id"] = str(org["id"])
 
@@ -306,14 +306,14 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
     ):
         abort(403)
     if "alias" in req:
-        if client.roles.has_some(["admin", "power_user"], netid) is False:
-            abort(403)
         if client.links.alias_is_duplicate(
             req["alias"], link.get("is_tracking_pixel_link", False)
         ):
             abort(400)
         if client.links.alias_is_reserved(req["alias"]):
             abort(400)
+        if client.roles.has_some(["admin", "power_user"], netid) == False:
+            abort(403)
 
     if "owner" in req:
         if not client.links.is_owner(link_id, netid) and not client.roles.has(

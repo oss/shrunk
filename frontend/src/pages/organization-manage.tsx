@@ -26,7 +26,6 @@ import {
   Link2,
   PlusCircleIcon,
   ChartLineIcon,
-  UserRoundPlusIcon,
 } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
@@ -110,9 +109,10 @@ function ManageOrgBase({
 
     const adminCount = info.members.filter((member) => member.is_admin).length;
 
-
-    info.members = [...info.members, ...info.guests.map((guest) => ({...guest, is_guest: true}))];
-    
+    info.members = [
+      ...info.members,
+      ...info.guests.map((guest) => ({ ...guest, is_guest: true })),
+    ];
 
     setOrganization(info);
     setAdminsCount(adminCount);
@@ -123,14 +123,12 @@ function ManageOrgBase({
   }, [match.params.id]);
 
   const onAddMember = async (netid: string, role: string) => {
-
-    if (role === "guest") {
+    if (role === 'guest') {
       await addGuestToOrganization(match.params.id, netid);
-    }
-    else if (role === "member") {
+    } else if (role === 'member') {
       await addMemberToOrganization(match.params.id, netid);
     }
-    if (role === "admin") {
+    if (role === 'admin') {
       await setAdminStatusOrganization(match.params.id, netid, true);
     }
     await refreshOrganization();
@@ -274,12 +272,12 @@ function ManageOrgBase({
           <Space>
             {isAdmin && (
               <>
-              <Button
-                icon={<UsersIcon />}
-                onClick={() => setShareModalVisible(true)}
-              >
-                Collaborate
-              </Button>
+                <Button
+                  icon={<UsersIcon />}
+                  onClick={() => setShareModalVisible(true)}
+                >
+                  Collaborate
+                </Button>
               </>
             )}
             <Button
@@ -428,12 +426,16 @@ function ManageOrgBase({
         roles={[
           { label: 'Admin', value: 'admin' },
           { label: 'Member', value: 'member' },
-          { label: 'Guest', value: 'guest' }
+          { label: 'Guest', value: 'guest' },
         ]}
         people={organization.members.map((member) => ({
           _id: member.netid,
           type: 'netid',
-          role: member.is_admin ? 'admin' : member.is_guest ? 'guest' : 'member',
+          role: member.is_admin
+            ? 'admin'
+            : member.is_guest
+            ? 'guest'
+            : 'member',
         }))}
         onAddEntity={(_activeTab: 'netid' | 'org', value: Collaborator) => {
           onAddMember(value._id, value.role!);

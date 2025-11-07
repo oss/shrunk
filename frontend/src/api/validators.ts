@@ -100,7 +100,6 @@ export const serverValidateNetId = async (
   }
 };
 
-
 /**
  * Check whether a NetID is a university guest
  * @function
@@ -108,7 +107,6 @@ export const serverValidateNetId = async (
  * @param value The NetID
  * @returns [[Error]] if the user is not a university guest
  */
-
 
 export const serverValidateGuest = async (
   _rule: any,
@@ -118,7 +116,7 @@ export const serverValidateGuest = async (
     return;
   }
   const result = await fetch('/api/core/org/validate_guest', {
-    method: 'POST', 
+    method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ netid: value }),
   }).then((resp) => resp.json());

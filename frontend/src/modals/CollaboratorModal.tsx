@@ -65,7 +65,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
   }
 
   function validator(_rule: any, value: string) {
-    if(collaboratorRole === 'guest') {
+    if (collaboratorRole === 'guest') {
       return serverValidateGuest(_rule, value);
     }
     return serverValidateNetId(_rule, value);
@@ -126,7 +126,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                       required: true,
                       message: 'Please enter a valid NetID.',
                     },
-                    { validator: validator },
+                    { validator },
                   ]}
                 >
                   <Input
@@ -204,7 +204,6 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
             </Tabs>
             <Row gutter={[2, 16]} justify="space-between" align="middle">
               {props.people.map((entity) => {
-                
                 if (entity.type !== activeTab) {
                   return <></>;
                 }
@@ -251,7 +250,10 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                           options={props.roles.map((role) => ({
                             value: role.value,
                             label: role.label,
-                            disabled: isDisabled(role) || role.value === "guest" || entity.role === "guest",
+                            disabled:
+                              isDisabled(role) ||
+                              role.value === 'guest' ||
+                              entity.role === 'guest',
                           }))}
                         />
 
