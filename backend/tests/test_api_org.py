@@ -430,6 +430,20 @@ def test_add_guest_user_to_org(
         assert resp.status_code == expected_status_code
 
 
+def test_add_guest_to_multiple_org(client: Client) -> None:
+    with dev_login(client, "admin"):
+        resp = client.post("/api/core/org", json={"name": "Test Org"})
+        org_id = resp.json["id"]
+
+        resp = client.put(f"/api/core/org/{org_id}/guest/DEV_GUEST")
+        assert resp.status_code == 204
+
+        resp = client.post("/api/core/org", json={"name": "Test Org 2"})
+        org_id = resp.json["id"]
+        resp = client.put(f"/api/core/org/{org_id}/guest/DEV_GUEST")
+        assert resp.status_code == 400
+
+
 def delete_guest_user_from_org(client: Client) -> None:
     """Tests deleting a guest user from an organization."""
 
