@@ -48,13 +48,13 @@ def is_valid_netid(netid: str) -> bool:
 def is_university_guest(netid: str) -> bool:
     if bool(int(os.getenv("SHRUNK_DEV_LOGINS", 0))) and netid.startswith("DEV_"):
         return True
-    
+
     if not is_valid_netid(netid):
         return False
-    
+
     user_info = query_position_info(netid)
     employee_types = user_info.get("employeeType", [])
-    
+
     return "GUEST" in employee_types
 
 

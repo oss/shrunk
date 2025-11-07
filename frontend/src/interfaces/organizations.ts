@@ -7,7 +7,6 @@ export interface OrganizationMember {
    */
   is_admin: boolean;
 
-
   is_guest?: boolean;
 
   /**

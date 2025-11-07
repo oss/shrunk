@@ -55,10 +55,14 @@ class OrgsClient:
         aggregation: List[Any] = []
         if only_member_orgs:
             aggregation.append(
-                {"$match": {"$or": [
-                    {"guests.netid": netid},
-                    {"$and": [{"members.netid": netid}, {"deleted": False}]}
-                ]}}
+                {
+                    "$match": {
+                        "$or": [
+                            {"guests.netid": netid},
+                            {"$and": [{"members.netid": netid}, {"deleted": False}]},
+                        ]
+                    }
+                }
             )
         aggregation += [
             {
@@ -80,7 +84,7 @@ class OrgsClient:
                 "$addFields": {
                     "id": "$_id",
                     "is_member": {"$in": [netid, "$members.netid"]},
-                    "is_guest": {"$in": [netid, "$guests.netid"]}, 
+                    "is_guest": {"$in": [netid, "$guests.netid"]},
                     "is_admin": {"$ne": [0, {"$size": "$matching_admins"}]},
                 },
             },
@@ -236,16 +240,13 @@ class OrgsClient:
 
         result = self.db.organizations.update_one(match, update)
         return cast(int, result.modified_count) == 1
-    
-    
-    def create_guest(
-        self, org_id: ObjectId, netid: str
-    ) -> bool:
+
+    def create_guest(self, org_id: ObjectId, netid: str) -> bool:
         match = {
             "_id": org_id,
             "guests": {"$not": {"$elemMatch": {"netid": netid}}},
         }
-        
+
         update = {
             "$addToSet": {
                 "guests": {
@@ -255,17 +256,19 @@ class OrgsClient:
             },
         }
         result = self.db.organizations.update_one(match, update)
-        
-        
+
         return cast(int, result.modified_count) == 1
 
     def delete_member(self, org_id: ObjectId, netid: str) -> bool:
         result = self.db.organizations.update_one(
-            {"_id": org_id}, 
-            {"$pull": {
-            "members": {"netid": netid},
-            "guests": {"netid": netid}
-            }}
+            {"_id": org_id},
+            {"$pull": {"members": {"netid": netid}, "guests": {"netid": netid}}},
+        )
+        return cast(int, result.modified_count) == 1
+
+    def delete_guest(self, org_id: ObjectId, netid: str) -> bool:
+        result = self.db.organizations.update_one(
+            {"_id": org_id}, {"$pull": {"guests": {"netid": netid}}}
         )
         return cast(int, result.modified_count) == 1
 
@@ -279,13 +282,12 @@ class OrgsClient:
 
     def is_member(self, org_id: ObjectId, netid: str) -> bool:
         return (
-            self.db.organizations.find_one({
-            "_id": org_id, 
-            "$or": [
-                {"members.netid": netid},
-                {"guests.netid": netid}
-            ]
-            })
+            self.db.organizations.find_one(
+                {
+                    "_id": org_id,
+                    "$or": [{"members.netid": netid}, {"guests.netid": netid}],
+                }
+            )
             is not None
         )
 

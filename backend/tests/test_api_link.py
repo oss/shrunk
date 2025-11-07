@@ -6,7 +6,7 @@ import random
 import pytest
 from werkzeug.test import Client
 
-from util import dev_login, create_link
+from util import dev_login, create_link, setup_guest_user
 
 
 @pytest.fixture
@@ -1088,4 +1088,46 @@ def test_owner_transfer(client: Client) -> None:
             f"/api/core/link/{link_id2}",
             json={"owner": {"_id": org2_id, "type": "org"}},
         )
+        assert resp.status_code == 403
+
+
+def test_create_link_as_guest(client: Client) -> None:
+    """Test that a guest link is automatically owned by the guest user's org."""
+
+    org_id = setup_guest_user(client)
+    with dev_login(client, "guest"):
+        resp = client.post(
+            "/api/core/link",
+            json={
+                "title": "title",
+                "long_url": "https://example.com",
+            },
+        )
+
+        assert resp.status_code == 201
+
+        link_id = resp.json["id"]
+        resp = client.get(f"/api/core/link/{link_id}")
+        assert resp.status_code == 200
+        assert resp.json["owner"]["_id"] == org_id
+        assert resp.json["owner"]["type"] == "org"
+
+
+def attempt_to_transfer_link_ownership_guest(client: Client) -> int:
+    setup_guest_user(client)
+    with dev_login(client, "guest"):
+        resp = client.post(
+            "/api/core/link",
+            json={
+                "title": "title",
+                "long_url": "https://example.com",
+            },
+        )
+        assert resp.status_code == 201
+        link_id = resp.json["id"]
+        resp = client.patch(
+            f"/api/core/link/{link_id}",
+            json={"owner": {"_id": "DEV_GUEST", "type": "netid"}},
+        )
+
         assert resp.status_code == 403

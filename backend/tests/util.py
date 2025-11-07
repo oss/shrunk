@@ -65,6 +65,17 @@ def assert_json(resp: Response, expected: Any) -> None:
     assert resp.get_json() == expected
 
 
+def setup_guest_user(client: Client) -> None:
+    with dev_login(client, "admin"):
+        resp = client.post("/api/core/org", json={"name": "Test Org"})
+        org_id = resp.json["id"]
+
+        resp = client.put(f"/api/core/org/{org_id}/guest/DEV_GUEST")
+        assert resp.status_code == 204
+
+        return org_id
+
+
 @contextlib.contextmanager
 def dev_login(client: Client, login: str) -> Generator[None, None, None]:
     assert_status(client.post(f"/api/core/devlogins/{login}"), 200)

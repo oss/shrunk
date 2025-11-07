@@ -111,7 +111,7 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
   const options = roleOrder.map((role) => ({
     label: role,
     value: role,
-    disabled: role === getHighestRole(initialRoles) || role === "guest",
+    disabled: role === getHighestRole(initialRoles) || role === 'guest',
   }));
 
   const filteredOptions = options.filter(

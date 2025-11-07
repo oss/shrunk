@@ -156,7 +156,6 @@ def _init_roles() -> None:
         oncreate=onblacklist,
         onrevoke=unblacklist,
     )
-    
 
     def onblock(url: str) -> None:
         domain = get_domain(url)
@@ -234,14 +233,14 @@ def _init_roles() -> None:
             "comment_prompt": "Describe why the user has been granted access to Go.",
         },
     )
-    
+
     client.roles.create(
         "guest",
         lambda netid: client.roles.has_some(["admin", "facstaff", "power_user"], netid),
         is_valid_netid,
         custom_text={
             "title": "University Guests",
-        }
+        },
     )
 
     client.roles.create(

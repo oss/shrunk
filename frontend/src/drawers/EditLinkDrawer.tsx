@@ -220,7 +220,13 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
                 },
               ]}
             >
-              <Input disabled={isTrackingPixelLink || (!props.userPrivileges.has("admin") && !props.userPrivileges.has("power_user"))}/>
+              <Input
+                disabled={
+                  isTrackingPixelLink ||
+                  (!props.userPrivileges.has('admin') &&
+                    !props.userPrivileges.has('power_user'))
+                }
+              />
             </Form.Item>
           </Col>
           {!isTrackingPixelLink && (
