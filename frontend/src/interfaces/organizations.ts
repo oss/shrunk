@@ -7,6 +7,9 @@ export interface OrganizationMember {
    */
   is_admin: boolean;
 
+
+  is_guest?: boolean;
+
   /**
    * The NetID of the member
    * @property
@@ -24,6 +27,7 @@ export interface Organization {
   id: string;
   name: string;
   members: OrganizationMember[];
+  guests: OrganizationMember[];
   timeCreated: Date;
 
   // Whether the user who performed the API request is a member of the org

@@ -427,6 +427,38 @@ def put_org_member(
     return "", 204
 
 
+@bp.route("/<ObjectId:org_id>/guest/<member_netid>", methods=["PUT"])
+@require_login
+def put_org_guest(
+    netid: str, client: ShrunkClient, org_id: ObjectId, member_netid: str
+) -> Any:
+    """``PUT /api/org/<org_id>/guest/<netid>``
+
+    Add a guest user to an org. Can only add users designated as guests in the university LDAP. A guest may only be apart of one org at a time.
+
+    :param netid:
+    :param client:
+    :param org_id:
+    :param member_netid:
+    """
+    if not client.orgs.is_admin(org_id, netid) and not client.roles.has("admin", netid):
+        abort(403)
+        
+    if not is_university_guest(member_netid):
+        return "That NetID does not have the guest role.", 400
+
+    if len(client.orgs.get_orgs(member_netid, True)) > 0:
+
+        return "Guest user already belongs to an organization", 400
+
+
+    if client.orgs.create_guest(org_id, member_netid):
+        client.roles.grant("guest", netid, member_netid,  f"Added to org: {org_id}")
+        
+    return "", 204
+
+
+
 @bp.route("/domain", methods=["PUT"])
 @require_login
 def put_domain(netid: str, client: ShrunkClient) -> Any:

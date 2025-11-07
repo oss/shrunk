@@ -204,6 +204,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
             </Tabs>
             <Row gutter={[2, 16]} justify="space-between" align="middle">
               {props.people.map((entity) => {
+                
                 if (entity.type !== activeTab) {
                   return <></>;
                 }
@@ -250,7 +251,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                           options={props.roles.map((role) => ({
                             value: role.value,
                             label: role.label,
-                            disabled: isDisabled(role),
+                            disabled: isDisabled(role) || role.value === "guest" || entity.role === "guest",
                           }))}
                         />
 

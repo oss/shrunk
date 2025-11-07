@@ -92,7 +92,7 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
         : dayjs(props.linkInfo.expiration_time),
   };
   const mayEditOwner =
-    (props.netid === initialValues.owner ||
+    (props.netid === initialValues.owner._id ||
       props.userPrivileges.has('admin')) &&
     props.linkInfo.owner.type !== 'org';
 
@@ -220,7 +220,7 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
                 },
               ]}
             >
-              <Input disabled={isTrackingPixelLink} />
+              <Input disabled={isTrackingPixelLink || (!props.userPrivileges.has("admin") && !props.userPrivileges.has("power_user"))}/>
             </Form.Item>
           </Col>
           {!isTrackingPixelLink && (
