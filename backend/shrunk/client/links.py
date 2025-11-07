@@ -322,6 +322,32 @@ class LinksClient:
         if result.matched_count != 1:
             raise NoSuchObjectException
 
+    def check_link_exists(
+        self, long_url: str, owner: Dict[str, Any]
+    ) -> Tuple[ObjectId, str]:
+        self.assert_valid_acl_entry("owner", owner)
+
+        query = {
+            "long_url": long_url,
+            "deleted": False,
+            "is_tracking_pixel_link": False,
+            "$or": [
+                {"expiration_time": {"$gt": datetime.now(timezone.utc)}},
+                {"expiration_time": None},
+            ],
+        }
+
+        if owner["type"] == "org":
+            query["owner._id"] = owner["_id"]
+            result = self.db.urls.find_one(query)
+        else:
+            result = self.db.urls.find_one(query)
+
+        if result:
+            return result["_id"], result["alias"]
+        else:
+            raise NoSuchObjectException
+
     def assert_valid_acl_entry(self, acl, entry):
         target = entry["_id"]
         mtype = entry["type"]

@@ -124,7 +124,8 @@ export default function ApiReference() {
     "long_url": "https://example.com",
     "alias": "exampl",
     "expiration_time": "2025-12-31T23:59:59Z",
-    "organization_id": "<org_id>"
+    "organization_id": "<org_id>",
+    "check_existing": true
   }'`}
             </Flex>
           </Typography>
@@ -252,6 +253,31 @@ export default function ApiReference() {
                 }
               >
                 When the link should expire. Example: 2025-12-31T23:59:59Z
+              </Descriptions.Item>
+            </Descriptions>
+            <Divider className="tw-my-2 !tw-mt-4" />
+            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+              <Descriptions.Item
+                label={
+                  <Row gutter={8} align="middle" wrap={false}>
+                    <Col>
+                      <Typography.Text code>check_existing</Typography.Text>
+                    </Col>
+                    <Col>
+                      <Typography.Text type="secondary">
+                        boolean
+                      </Typography.Text>
+                    </Col>
+                    <Col>
+                      <Typography.Text type="secondary">
+                        Optional
+                      </Typography.Text>
+                    </Col>
+                  </Row>
+                }
+              >
+                If true, returns an existing link for the given long_url (within
+                the same organization) otherwise creates a new one.
               </Descriptions.Item>
             </Descriptions>
           </Typography>

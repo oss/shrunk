@@ -2,6 +2,25 @@
   {
     "major": 3,
     "minor": 1,
+    "patch": 3,
+    "projectDirector": "ah1371",
+    "date": "11-07-2025",
+    "description": "Small improvement to the public API",
+    "categories": {
+      "features": [],
+      "improvements": [
+        {
+          "text": "Add option to return an existing link for the same long URL when creating a new link",
+          "contributors": ["ys973"],
+          "product": "public-api"
+        }
+      ],
+      "fixes": []
+    }
+  },
+  {
+    "major": 3,
+    "minor": 1,
     "patch": 2,
     "projectDirector": "ah1371",
     "date": "10-06-2025",
