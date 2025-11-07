@@ -28,7 +28,7 @@ import LookupTableHeader from './LookupTableHeader';
  * Order of roles in the select dropdown
  * @constant
  */
-const roleOrder = ['whitelisted', 'facstaff', 'power_user', 'admin'];
+const roleOrder = ['guest', 'whitelisted', 'facstaff', 'power_user', 'admin'];
 
 /**
  * Colors for each role in the select dropdown
@@ -39,6 +39,7 @@ const roleColors: Record<string, string> = {
   whitelisted: 'green',
   power_user: 'geekblue',
   facstaff: 'purple',
+  guest: 'orange',
 };
 
 /**
@@ -100,6 +101,7 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
   const labelCase = {
     admin: 'Admin',
     whitelisted: 'Whitelisted',
+    guest: 'Guest',
     power_user: 'Power User',
     facstaff: 'Faculty',
     blacklisted: 'Blacklisted',
@@ -109,7 +111,7 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
   const options = roleOrder.map((role) => ({
     label: role,
     value: role,
-    disabled: role === getHighestRole(initialRoles),
+    disabled: role === getHighestRole(initialRoles) || role === "guest",
   }));
 
   const filteredOptions = options.filter(

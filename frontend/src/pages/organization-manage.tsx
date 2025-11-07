@@ -32,6 +32,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 
 import {
+  addGuestToOrganization,
   addMemberToOrganization,
   deleteOrganization,
   getOrganization,
@@ -108,6 +109,11 @@ function ManageOrgBase({
     }
 
     const adminCount = info.members.filter((member) => member.is_admin).length;
+
+
+    info.members = [...info.members, ...info.guests.map((guest) => ({...guest, is_guest: true}))];
+    
+
     setOrganization(info);
     setAdminsCount(adminCount);
   };
@@ -116,10 +122,16 @@ function ManageOrgBase({
     refreshOrganization();
   }, [match.params.id]);
 
-  const onAddMember = async (netid: string, isAdmin: boolean) => {
-    await addMemberToOrganization(match.params.id, netid);
-    if (isAdmin) {
-      await setAdminStatusOrganization(match.params.id, netid, isAdmin);
+  const onAddMember = async (netid: string, role: string) => {
+
+    if (role === "guest") {
+      await addGuestToOrganization(match.params.id, netid);
+    }
+    else if (role === "member") {
+      await addMemberToOrganization(match.params.id, netid);
+    }
+    if (role === "admin") {
+      await setAdminStatusOrganization(match.params.id, netid, true);
     }
     await refreshOrganization();
   };
@@ -197,7 +209,7 @@ function ManageOrgBase({
       key: 'role',
       render: (record: OrganizationMember) => (
         <Typography.Text>
-          {record.is_admin ? 'Admin' : 'Member'}
+          {record.is_admin ? 'Admin' : record.is_guest ? 'Guest' : 'Member'}
         </Typography.Text>
       ),
       width: '10%',
@@ -421,10 +433,10 @@ function ManageOrgBase({
         people={organization.members.map((member) => ({
           _id: member.netid,
           type: 'netid',
-          role: member.is_admin ? 'admin' : 'member',
+          role: member.is_admin ? 'admin' : member.is_guest ? 'guest' : 'member',
         }))}
         onAddEntity={(_activeTab: 'netid' | 'org', value: Collaborator) => {
-          onAddMember(value._id, value.role === 'admin');
+          onAddMember(value._id, value.role!);
         }}
         onRemoveEntity={(_activeTab: 'netid' | 'org', value: Collaborator) => {
           onDeleteMember(value._id);

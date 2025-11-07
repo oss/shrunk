@@ -97,6 +97,15 @@ export async function addMemberToOrganization(
   });
 }
 
+export async function addGuestToOrganization(
+  organizationId: string,
+  netid: string,
+) {
+  await fetch(`/api/core/org/${organizationId}/guest/${netid}`, {
+    method: 'PUT',
+  });
+}
+
 /**
  * Make someone an admin or not.
  */
