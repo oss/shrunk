@@ -102,17 +102,14 @@ function ManageOrgBase({
 
   const refreshOrganization = async () => {
     const info = await getOrganization(match.params.id);
-    if (info.is_admin || userPrivileges.has('admin')) {
+    if (info.role === 'admin' || userPrivileges.has('admin')) {
       const visitData = await getOrganizationVisits(match.params.id);
       setVisitStats(visitData.visits);
     }
 
-    const adminCount = info.members.filter((member) => member.is_admin).length;
-
-    info.members = [
-      ...info.members,
-      ...info.guests.map((guest) => ({ ...guest, is_guest: true })),
-    ];
+    const adminCount = info.members.filter(
+      (member) => member.role === 'admin',
+    ).length;
 
     setOrganization(info);
     setAdminsCount(adminCount);
@@ -129,7 +126,7 @@ function ManageOrgBase({
       await addMemberToOrganization(match.params.id, netid);
     }
     if (role === 'admin') {
-      await setAdminStatusOrganization(match.params.id, netid, true);
+      await setAdminStatusOrganization(match.params.id, netid, 'admin');
     }
     await refreshOrganization();
   };
@@ -139,8 +136,8 @@ function ManageOrgBase({
     await refreshOrganization();
   };
 
-  const onChangeAdmin = async (netid: string, admin: boolean) => {
-    await setAdminStatusOrganization(match.params.id, netid, admin);
+  const onChangeAdmin = async (netid: string, role: string) => {
+    await setAdminStatusOrganization(match.params.id, netid, role);
     await refreshOrganization();
   };
 
@@ -175,8 +172,8 @@ function ManageOrgBase({
     return <Spin size="large" />;
   }
 
-  const isAdmin = organization.is_admin || userPrivileges.has('admin');
-  const userMayNotLeave = organization.is_admin && adminsCount === 1;
+  const isAdmin = organization.role === 'admin' || userPrivileges.has('admin');
+  const userMayNotLeave = organization.role === 'admin' && adminsCount === 1;
 
   const columns = [
     {
@@ -207,7 +204,11 @@ function ManageOrgBase({
       key: 'role',
       render: (record: OrganizationMember) => (
         <Typography.Text>
-          {record.is_admin ? 'Admin' : record.is_guest ? 'Guest' : 'Member'}
+          {record.role === 'admin'
+            ? 'Admin'
+            : record.role === 'guest'
+            ? 'Guest'
+            : 'Member'}
         </Typography.Text>
       ),
       width: '10%',
@@ -241,7 +242,7 @@ function ManageOrgBase({
         <Table
           dataSource={organization.members}
           columns={columns.filter((col, index) =>
-            organization.is_admin ? true : index !== 1 && index !== 2,
+            organization.role === 'admin' ? true : index !== 1 && index !== 2,
           )}
           rowKey="netid"
           pagination={false}
@@ -256,7 +257,7 @@ function ManageOrgBase({
         <CompactLinkTable
           org_id={organization.id}
           forceRefresh={forceRefresh}
-          isAdmin={organization.is_admin}
+          isAdmin={organization.role === 'admin' || userPrivileges.has('admin')}
         />
       ),
     },
@@ -314,7 +315,7 @@ function ManageOrgBase({
                     key: 'leave_organization',
                     label: 'Leave',
                     icon: <UserMinusIcon />,
-                    disabled: userMayNotLeave && organization.is_member,
+                    disabled: userMayNotLeave && organization.role === 'member',
                     onClick: onLeaveOrg,
                     danger: true,
                   },
@@ -431,11 +432,7 @@ function ManageOrgBase({
         people={organization.members.map((member) => ({
           _id: member.netid,
           type: 'netid',
-          role: member.is_admin
-            ? 'admin'
-            : member.is_guest
-            ? 'guest'
-            : 'member',
+          role: member.role,
         }))}
         onAddEntity={(_activeTab: 'netid' | 'org', value: Collaborator) => {
           onAddMember(value._id, value.role!);
@@ -448,7 +445,7 @@ function ManageOrgBase({
           value: Collaborator,
           newRole: string,
         ) => {
-          onChangeAdmin(value._id, newRole === 'admin');
+          onChangeAdmin(value._id, newRole);
         }}
         onCancel={() => setShareModalVisible(false)}
         onOk={() => setShareModalVisible(false)}

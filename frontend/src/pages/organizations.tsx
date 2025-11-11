@@ -89,6 +89,12 @@ export default function MyOrganizations({
     setShowAll(!showAll);
   };
 
+    const orgRoleFormat = {
+      admin: 'Admin',
+      member: 'Member',
+      guest: 'Guest',
+    }
+
   const mayCreateOrg =
     userPrivileges.has('admin') || userPrivileges.has('facstaff');
   const isAdmin = userPrivileges.has('admin');
@@ -104,7 +110,7 @@ export default function MyOrganizations({
       key: 'role',
       render: (record: Organization) => (
         <Typography.Text>
-          {record.is_admin ? 'Admin' : showAll ? 'None' : 'Member'}
+          {record.role ? orgRoleFormat[record.role] : 'None'}
         </Typography.Text>
       ),
     },
@@ -122,7 +128,7 @@ export default function MyOrganizations({
                 href={`/app/orgs/${record.id}`}
               />
             </Tooltip>
-            {record.is_admin && (
+            {record.role === "admin" && (
               <Tooltip title="Delete">
                 <Popconfirm
                   title="Are you sure you want to delete this organization?"

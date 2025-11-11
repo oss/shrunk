@@ -67,29 +67,37 @@ class OrgsClient:
         aggregation += [
             {
                 "$addFields": {
-                    "matching_admins": {
-                        "$filter": {
-                            "input": "$members",
-                            "cond": {
-                                "$and": [
-                                    {"$eq": ["$$this.netid", netid]},
-                                    {"$eq": ["$$this.is_admin", True]},
-                                ]
+                    "member": {
+                        "$arrayElemAt": [
+                            {
+                                "$filter": {
+                                    "input": "$members",
+                                    "as": "member",
+                                    "cond": {"$eq": ["$$member.netid", netid]},
+                                }
                             },
-                        },
-                    },
-                },
+                            0,
+                        ]
+                    }
+                }, 
             },
             {
                 "$addFields": {
                     "id": "$_id",
-                    "is_member": {"$in": [netid, "$members.netid"]},
-                    "is_guest": {"$in": [netid, "$guests.netid"]},
-                    "is_admin": {"$ne": [0, {"$size": "$matching_admins"}]},
+                    "role": {
+                        "$cond": {
+                            "if": {"$ne": ["$member", None]},
+                            "then": "$member.role",
+                            "else": None,
+                        }
+                    }
                 },
             },
-            {"$project": {"_id": 0, "matching_admins": 0}},
+            {
+                "$project": {"_id": 0, "member": 0, },
+            },
         ]
+        print(list(self.db.organizations.aggregate(aggregation[:-1])), flush=True)
         return list(self.db.organizations.aggregate(aggregation))
 
     def create(self, org_name: str) -> Optional[ObjectId]:
@@ -212,7 +220,7 @@ class OrgsClient:
             [
                 {"$match": {"_id": org_id}},
                 {"$unwind": "$members"},
-                {"$match": {"members.is_admin": True}},
+                {"$match": {"members.role": "admin"}},
                 {"$count": "admin_count"},
             ]
         )
@@ -221,7 +229,7 @@ class OrgsClient:
         return admin_count
 
     def create_member(
-        self, org_id: ObjectId, netid: str, is_admin: bool = False
+        self, org_id: ObjectId, netid: str, role: str = "member"
     ) -> bool:
         match = {
             "_id": org_id,
@@ -232,7 +240,7 @@ class OrgsClient:
             "$addToSet": {
                 "members": {
                     "netid": netid,
-                    "is_admin": is_admin,
+                    "role": role,
                     "timeCreated": datetime.now(timezone.utc),
                 },
             },
@@ -241,41 +249,18 @@ class OrgsClient:
         result = self.db.organizations.update_one(match, update)
         return cast(int, result.modified_count) == 1
 
-    def create_guest(self, org_id: ObjectId, netid: str) -> bool:
-        match = {
-            "_id": org_id,
-            "guests": {"$not": {"$elemMatch": {"netid": netid}}},
-        }
-
-        update = {
-            "$addToSet": {
-                "guests": {
-                    "netid": netid,
-                    "timeCreated": datetime.now(timezone.utc),
-                },
-            },
-        }
-        result = self.db.organizations.update_one(match, update)
-
-        return cast(int, result.modified_count) == 1
 
     def delete_member(self, org_id: ObjectId, netid: str) -> bool:
         result = self.db.organizations.update_one(
             {"_id": org_id},
-            {"$pull": {"members": {"netid": netid}, "guests": {"netid": netid}}},
+            {"$pull": {"members": {"netid": netid}}},
         )
         return cast(int, result.modified_count) == 1
 
-    def delete_guest(self, org_id: ObjectId, netid: str) -> bool:
-        result = self.db.organizations.update_one(
-            {"_id": org_id}, {"$pull": {"guests": {"netid": netid}}}
-        )
-        return cast(int, result.modified_count) == 1
-
-    def set_member_admin(self, org_id: ObjectId, netid: str, is_admin: bool) -> bool:
+    def set_member_role(self, org_id: ObjectId, netid: str, role: str) -> bool:
         result = self.db.organizations.update_one(
             {"_id": org_id},
-            {"$set": {"members.$[elem].is_admin": is_admin}},
+            {"$set": {"members.$[elem].role": role}},
             array_filters=[{"elem.netid": netid}],
         )
         return cast(int, result.modified_count) == 1
@@ -285,7 +270,7 @@ class OrgsClient:
             self.db.organizations.find_one(
                 {
                     "_id": org_id,
-                    "$or": [{"members.netid": netid}, {"guests.netid": netid}],
+                    "members": {"$elemMatch": {"netid": netid}},
                 }
             )
             is not None
@@ -296,7 +281,7 @@ class OrgsClient:
         if result is None:
             return False
         for member in result["members"]:
-            if member["netid"] == netid and member["is_admin"]:
+            if member["netid"] == netid and member["role"] == "admin":
                 return True
         return False
 

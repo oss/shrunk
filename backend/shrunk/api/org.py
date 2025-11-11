@@ -113,7 +113,7 @@ def post_org(netid: str, client: ShrunkClient, req: Any) -> Any:
     org_id = client.orgs.create(req["name"])
     if org_id is None:
         abort(409)
-    client.orgs.create_member(org_id, netid, is_admin=True)
+    client.orgs.create_member(org_id, netid, "admin")
     return jsonify({"id": org_id, "name": req["name"]})
 
 
@@ -172,10 +172,6 @@ def get_org(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
         abort(404)
     org["id"] = org["_id"]
     del org["_id"]
-    org["is_member"] = any(member["netid"] == netid for member in org["members"])
-    org["is_admin"] = any(
-        member["netid"] == netid and member["is_admin"] for member in org["members"]
-    )
     return jsonify(org)
 
 
@@ -412,7 +408,7 @@ def get_org_geoip_stats(netid: str, client: ShrunkClient, org_id: ObjectId) -> A
 def put_org_member(
     netid: str, client: ShrunkClient, org_id: ObjectId, member_netid: str
 ) -> Any:
-    """``PUT /api/org/<org_id>/member/<netid>``
+    """``PUT /api/org/<org_id>/member/<member_netid>``
 
     Add a user to an org. Performs no action if the user is already a member of the org. Returns 204
     on success.
@@ -452,7 +448,7 @@ def put_org_guest(
 
         return "Guest user already belongs to an organization", 400
 
-    if client.orgs.create_guest(org_id, member_netid):
+    if client.orgs.create_member(org_id, member_netid, "guest"):
         client.roles.grant("guest", netid, member_netid, f"Added to org: {org_id}")
 
     return "", 204
@@ -551,33 +547,11 @@ def delete_org_member(
     return "", 204
 
 
-@bp.route("/<ObjectId:org_id>/guest/<guest_netid>", methods=["DELETE"])
-@require_login
-def delete_org_guest(
-    netid: str, client: ShrunkClient, org_id: ObjectId, guest_netid: str
-) -> Any:
-    """``DELETE /api/org/<org_id>/guest/<netid>``
-
-    Remove a guest from an org. Returns 204 on success.
-
-    :param netid:
-    :param client:
-    :param org_id:
-    :param guest_netid:
-    """
-    if not client.orgs.is_admin(org_id, netid) and not client.roles.has("admin", netid):
-        abort(403)
-    mod_count = client.orgs.delete_guest(org_id, guest_netid)
-    if mod_count > 0:
-        client.roles.revoke("guest", guest_netid)
-    return "", 204
-
-
 MODIFY_ORG_MEMBER_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
     "properties": {
-        "is_admin": {"type": "boolean"},
+        "role": {"type": "string", "enum": ["admin", "member", "guest"]},
     },
 }
 
@@ -594,7 +568,7 @@ def patch_org_member(
 
     .. code-block:: json
 
-       { "is_admin?": "boolean" }
+       { "role": "admin" | "member" | "guest" }
 
     Properties present in the request will be updated. Properties missing from the request will not be modified.
 
@@ -606,14 +580,14 @@ def patch_org_member(
     """
     if not client.orgs.is_admin(org_id, netid) and not client.roles.has("admin", netid):
         abort(403)
-    if "is_admin" in req:
+    if req["role"] is not None:
         # Prevent the last admin from being demoted
         admin_count = client.orgs.get_admin_count(org_id)
 
-        if req["is_admin"] == False and admin_count <= 1:
+        if req["role"] == "member" and netid == member_netid and admin_count <= 1:
             abort(400)
 
-        client.orgs.set_member_admin(org_id, member_netid, req["is_admin"])
+        client.orgs.set_member_role(org_id, member_netid, req["role"])
     return "", 204
 
 

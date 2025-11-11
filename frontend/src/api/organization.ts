@@ -112,12 +112,12 @@ export async function addGuestToOrganization(
 export async function setAdminStatusOrganization(
   organizationId: string,
   netid: string,
-  isAdmin: boolean,
+  role: string,
 ) {
   await fetch(`/api/core/org/${organizationId}/member/${netid}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ is_admin: isAdmin }),
+    body: JSON.stringify({ role }),
   });
 }
 
