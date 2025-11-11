@@ -89,11 +89,11 @@ export default function MyOrganizations({
     setShowAll(!showAll);
   };
 
-    const orgRoleFormat = {
-      admin: 'Admin',
-      member: 'Member',
-      guest: 'Guest',
-    }
+  const orgRoleFormat = {
+    admin: 'Admin',
+    member: 'Member',
+    guest: 'Guest',
+  };
 
   const mayCreateOrg =
     userPrivileges.has('admin') || userPrivileges.has('facstaff');
@@ -128,7 +128,7 @@ export default function MyOrganizations({
                 href={`/app/orgs/${record.id}`}
               />
             </Tooltip>
-            {record.role === "admin" && (
+            {record.role === 'admin' && (
               <Tooltip title="Delete">
                 <Popconfirm
                   title="Are you sure you want to delete this organization?"

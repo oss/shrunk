@@ -79,7 +79,7 @@ class OrgsClient:
                             0,
                         ]
                     }
-                }, 
+                },
             },
             {
                 "$addFields": {
@@ -90,14 +90,16 @@ class OrgsClient:
                             "then": "$member.role",
                             "else": None,
                         }
-                    }
+                    },
                 },
             },
             {
-                "$project": {"_id": 0, "member": 0, },
+                "$project": {
+                    "_id": 0,
+                    "member": 0,
+                },
             },
         ]
-        print(list(self.db.organizations.aggregate(aggregation[:-1])), flush=True)
         return list(self.db.organizations.aggregate(aggregation))
 
     def create(self, org_name: str) -> Optional[ObjectId]:
@@ -228,9 +230,7 @@ class OrgsClient:
         admin_count = next(result, {"admin_count": 0}).get("admin_count", 0)
         return admin_count
 
-    def create_member(
-        self, org_id: ObjectId, netid: str, role: str = "member"
-    ) -> bool:
+    def create_member(self, org_id: ObjectId, netid: str, role: str = "member") -> bool:
         match = {
             "_id": org_id,
             "members": {"$not": {"$elemMatch": {"netid": netid}}},
@@ -248,7 +248,6 @@ class OrgsClient:
 
         result = self.db.organizations.update_one(match, update)
         return cast(int, result.modified_count) == 1
-
 
     def delete_member(self, org_id: ObjectId, netid: str) -> bool:
         result = self.db.organizations.update_one(

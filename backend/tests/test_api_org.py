@@ -68,7 +68,7 @@ def test_restrict_last_admin_demotion(client: Client) -> None:
         assert resp.status_code == 204
 
         resp = client.patch(
-            f"/api/core/org/{org_id}/member/DEV_TEST", json={"is_admin": True}
+            f"/api/core/org/{org_id}/member/DEV_TEST", json={"role": "admin"}
         )
         assert resp.status_code == 204
 
@@ -77,7 +77,7 @@ def test_restrict_last_admin_demotion(client: Client) -> None:
 
         # Attempt to demote the last admin
         resp = client.patch(
-            f"/api/core/org/{org_id}/member/DEV_ADMIN", json={"is_admin": False}
+            f"/api/core/org/{org_id}/member/DEV_ADMIN", json={"role": "member"}
         )
         assert resp.status_code == 400
 
