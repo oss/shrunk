@@ -188,6 +188,15 @@ class OrgsClient:
                 }
             },
         )
+
+        for member in self.db.organizations.find_one({"_id": org_id})["members"]:
+            if member["role"] == "guest":
+                self.db.grants.delete_many({"entity": member["netid"]})
+                self.db.organizations.update_one(
+                    {"_id": org_id},
+                    {"$pull": {"members": {"netid": member["netid"]}}},
+                )
+
         result = self.db.organizations.update_one(
             {"_id": org_id, "deleted": False},
             {
@@ -250,10 +259,13 @@ class OrgsClient:
         return cast(int, result.modified_count) == 1
 
     def delete_member(self, org_id: ObjectId, netid: str) -> bool:
+        if self.is_guest(org_id, netid):  # remove access to guest
+            self.db.grants.delete_many({"entity": netid})
         result = self.db.organizations.update_one(
             {"_id": org_id},
             {"$pull": {"members": {"netid": netid}}},
         )
+
         return cast(int, result.modified_count) == 1
 
     def set_member_role(self, org_id: ObjectId, netid: str, role: str) -> bool:
@@ -281,6 +293,15 @@ class OrgsClient:
             return False
         for member in result["members"]:
             if member["netid"] == netid and member["role"] == "admin":
+                return True
+        return False
+
+    def is_guest(self, org_id: ObjectId, netid: str) -> bool:
+        result = self.db.organizations.find_one({"_id": org_id, "members.netid": netid})
+        if result is None:
+            return False
+        for member in result["members"]:
+            if member["netid"] == netid and member["role"] == "guest":
                 return True
         return False
 
