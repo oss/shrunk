@@ -7,7 +7,12 @@
     "date": "11-07-2025",
     "description": "Small improvement to the public API",
     "categories": {
-      "features": [],
+      "features": [
+        {
+          "text": "Organizations can now add guest users to their organizations. Guest users must be classified as university guests, all links created by guests will be owned by the organization they are apart of.",
+          "contributors": ["ak2399"]
+        }
+      ],
       "improvements": [
         {
           "text": "Add option to return an existing link for the same long URL when creating a new link",
