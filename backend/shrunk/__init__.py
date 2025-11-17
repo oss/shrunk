@@ -237,7 +237,7 @@ def _init_roles() -> None:
     client.roles.create(
         "guest",
         lambda netid: client.roles.has_some(["admin", "facstaff", "power_user"], netid),
-        is_valid_netid,
+        is_university_guest,
         custom_text={
             "title": "University Guests",
         },
@@ -246,7 +246,7 @@ def _init_roles() -> None:
     client.roles.create(
         "facstaff",
         is_admin,
-        is_university_guest,
+        is_valid_netid,
         custom_text={"title": "Faculty or Staff Member"},
     )
 
