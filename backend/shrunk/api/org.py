@@ -170,7 +170,16 @@ def get_org(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
     org = client.orgs.get_org(org_id)
     if org is None:
         abort(404)
+
+    if client.orgs.is_admin(org_id, netid):
+        org["role"] = "admin"
+    elif client.orgs.is_guest(org_id, netid):
+        org["role"] = "guest"
+    else:
+        org["role"] = "member"
+
     org["id"] = org["_id"]
+
     del org["_id"]
     return jsonify(org)
 
