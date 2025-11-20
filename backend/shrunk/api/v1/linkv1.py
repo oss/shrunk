@@ -250,7 +250,10 @@ def create_link(
             400,
         )
 
-    return jsonify({"id": str(link_id), "alias": created_alias}), 201
+    base_url = request.url_root
+    link = f"{base_url}" + created_alias
+
+    return jsonify({"link": link, "id": str(link_id), "alias": created_alias}), 201
 
 
 @bp.route("/<ObjectId:org_id>/<ObjectId:link_id>", methods=["GET"])

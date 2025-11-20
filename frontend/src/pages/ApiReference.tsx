@@ -137,6 +137,7 @@ export default function ApiReference() {
               {`{
   "id": str,
   "alias": str
+  "link": str
 }`}
             </Flex>
             <Typography.Title className="!tw-mt-4" level={5}>

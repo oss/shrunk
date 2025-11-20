@@ -5,7 +5,7 @@
     "patch": 3,
     "projectDirector": "ah1371",
     "date": "11-07-2025",
-    "description": "Small improvement to the public API",
+    "description": "Guest User access and small improvements to the public API",
     "categories": {
       "features": [
         {
@@ -14,6 +14,11 @@
         }
       ],
       "improvements": [
+         {
+          "text": "Update response payload for create link endpoint to include the newly generated link",
+          "contributors": ["ys973"],
+          "product": "public-api"
+        },
         {
           "text": "Add option to return an existing link for the same long URL when creating a new link",
           "contributors": ["ys973"],
