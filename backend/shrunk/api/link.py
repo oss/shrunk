@@ -3,11 +3,13 @@
 from datetime import datetime, timedelta
 from typing import Any, Optional, Dict
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, Response
 from flask_mailman import Mail
 from bson import ObjectId
 import bson
 import os
+import csv
+from io import StringIO
 from werkzeug.exceptions import abort
 
 from shrunk.client import ShrunkClient
@@ -525,12 +527,13 @@ def anonymize_visit(client: ShrunkClient, visit: Any) -> Any:
     :param client:
     :param visit:
     """
-    return {
+
+    visit_anonymized = {
         "link_id": visit["link_id"],
         "alias": visit["alias"],
         "visitor_id": client.links.get_visitor_id(visit["source_ip"]),
         "user_agent": visit.get("user_agent", "Unknown"),
-        "referer": get_human_readable_referer_domain(visit),
+        "referer": get_human_readable_referer_domain(visit.get("referer", "Unknown")),
         "state_code": (
             visit.get("state_code", "Unknown")
             if visit.get("country_code") == "US"
@@ -539,6 +542,13 @@ def anonymize_visit(client: ShrunkClient, visit: Any) -> Any:
         "country_code": visit.get("country_code", "Unknown"),
         "time": visit["time"],
     }
+
+    if "mid" in visit:
+        visit_anonymized["mid"] = visit["mid"]
+    if "uid" in visit:
+        visit_anonymized["uid"] = visit["uid"]
+
+    return visit_anonymized
 
 
 @bp.route("/<ObjectId:link_id>/visits", methods=["GET"])
@@ -571,8 +581,55 @@ def get_link_visits(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
 
         abort(403)
     visits = client.links.get_visits(link_id)
-    anonymized_visits = [anonymize_visit(client, visit) for visit in visits]
-    return jsonify({"visits": anonymized_visits})
+
+    def generate():
+        output = StringIO()
+        writer = csv.writer(output)
+        writer.writerow(
+            [
+                "link_id",
+                "alias",
+                "visitor_id",
+                "mid",
+                "uid",
+                "user_agent",
+                "referer",
+                "state_code",
+                "country_code",
+                "time",
+            ]
+        )
+        yield output.getvalue()
+        output.seek(0)
+        output.truncate(0)
+
+        for visit in visits:
+            anon_visit = anonymize_visit(client, visit)
+            writer.writerow(
+                [
+                    anon_visit["link_id"],
+                    anon_visit["alias"],
+                    anon_visit.get("visitor_id", ""),
+                    anon_visit.get("mid", ""),
+                    anon_visit.get("uid", ""),
+                    anon_visit["user_agent"],
+                    anon_visit["referer"],
+                    anon_visit["state_code"],
+                    anon_visit["country_code"],
+                    anon_visit["time"].isoformat(),
+                ]
+            )
+            yield output.getvalue()
+            output.seek(0)
+            output.truncate(0)
+
+    return Response(
+        generate(),
+        headers={
+            "content-disposition": f"attachment; filename={link_id}.csv",
+            "Content-Type": "text/csv",
+        },
+    )
 
 
 @bp.route("/<ObjectId:link_id>/stats", methods=["GET"])

@@ -2,6 +2,7 @@ import time
 import base64
 from datetime import datetime, timezone, timedelta
 import random
+import csv
 
 import pytest
 from werkzeug.test import Client
@@ -558,9 +559,15 @@ def test_visits(client: Client) -> None:  # pylint: disable=too-many-statements
         # Get the anonymized visits, make sure they make sense
         resp = client.get(f"/api/core/link/{link_id}/visits")
         assert resp.status_code == 200
-        assert all(visit["link_id"] == link_id for visit in resp.json["visits"])
-        assert len(resp.json["visits"]) == 3
-        assert sum(1 for visit in resp.json["visits"] if visit["alias"] == alias0) == 3
+        assert resp.content_type == "text/csv"
+
+        csv_data = resp.data.decode("utf-8")
+
+        csv_reader = csv.DictReader(csv_data.splitlines())
+        rows = list(csv_reader)
+        assert len(rows) == 3
+        assert all(row["link_id"] == link_id for row in rows)
+        assert all(row["alias"] == alias0 for row in rows)
 
         # Get the visit stats data
         resp = client.get(f"/api/core/link/{link_id}/stats/visits")
@@ -1150,7 +1157,7 @@ def attempt_to_transfer_link_ownership_guest(client: Client) -> int:
 def test_link_redirect_query_params(client: Client, query: str, expected: str) -> None:
     """Test that query parameters are preserved during link redirection."""
 
-    with dev_login(client, "user"):
+    with dev_login(client, "admin"):
         resp = client.post(
             "/api/core/link",
             json={

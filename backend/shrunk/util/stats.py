@@ -1,8 +1,10 @@
 from typing import Tuple, Optional, Any, Dict, List, cast
 import urllib.parse
 import collections
+from functools import lru_cache
 
 import httpagentparser
+
 
 __all__ = ["get_human_readable_referer_domain", "browser_stats_from_visits"]
 
@@ -25,8 +27,9 @@ REFERER_MAPPING = {
 }
 
 
-def get_human_readable_referer_domain(visit: Any) -> str:
-    referer = visit.get("referer")
+@lru_cache(maxsize=4096)
+def get_human_readable_referer_domain(referer: str) -> str:
+
     if referer:
         try:
             hostname = urllib.parse.urlparse(referer).hostname.lower()
@@ -83,6 +86,7 @@ def get_human_readable_platform(platform: str) -> str:
     return mapping.get(platform.title(), platform)
 
 
+@lru_cache(maxsize=4096)
 def get_browser_platform(user_agent: str) -> Tuple[str, str]:
     """
     You can get more User-Agent examples here: https://gist.github.com/pzb/b4b6f57144aea7827ae4
@@ -122,9 +126,10 @@ def get_browser_platform(user_agent: str) -> Tuple[str, str]:
 
 def top_n(stats: Dict[str, int], *, n: int) -> Dict[str, int]:
     if len(stats) >= n:
-        freqs = sorted(stats.values())
-        cutoff = freqs[-n]
-        stats = {key: value for key, value in stats.items() if value >= cutoff}
+        freqs = dict(sorted(stats.items(), key=lambda kv: kv[1], reverse=True))
+        stats = dict(list(freqs.items())[:n])
+        # stats = {key: value for key, value in stats.items() if value >= cutoff}
+        # stats = {}
     return stats
 
 
@@ -137,7 +142,9 @@ def browser_stats_from_visits(visits: List[Any]) -> Any:
         browser, platform = get_browser_platform(user_agent)
         browsers[browser] += 1
         platforms[platform] += 1
-        referers[get_human_readable_referer_domain(visit)] += 1
+        referers[
+            get_human_readable_referer_domain(visit.get("referer", "Unknown"))
+        ] += 1
     return {
         "browsers": [{"name": b, "y": n} for (b, n) in top_n(browsers, n=5).items()],
         "platforms": [{"name": p, "y": n} for (p, n) in top_n(platforms, n=5).items()],

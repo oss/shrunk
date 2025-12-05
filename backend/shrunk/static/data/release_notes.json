@@ -23,11 +23,19 @@
           "text": "Add option to return an existing link for the same long URL when creating a new link",
           "contributors": ["ys973"],
           "product": "public-api"
+        },
+        {
+          "text": "CSV generation moved to server side for better performance on large links.",
+          "contributors": ["ak2399"]
         }
       ],
       "fixes": [
         {
           "text": "Fix bug to parse mid and uid correctly",
+          "contributors": ["ak2399"]
+        },
+        {
+          "text": "Fix calculation of top most referrer",
           "contributors": ["ak2399"]
         }
       ]

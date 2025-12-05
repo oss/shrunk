@@ -6,6 +6,7 @@ import string
 import re
 import secrets
 from typing import Optional, List, Set, Any, Dict, Union, cast, Tuple
+from functools import lru_cache
 
 from flask import current_app, url_for
 from flask_mailman import Mail
@@ -887,6 +888,7 @@ class LinksClient:
 
         self.db.visits.insert_one(doc)
 
+    @lru_cache(maxsize=2048)
     def get_visitor_id(self, ipaddr: str) -> str:
         """Gets a unique, opaque identifier for an IP address.
 
