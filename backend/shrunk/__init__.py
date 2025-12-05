@@ -17,6 +17,7 @@ from bson import ObjectId
 from flask.json import JSONEncoder
 from flask.logging import default_handler
 from flask_mailman import Mail
+import urllib
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.routing import BaseConverter, ValidationError
 
@@ -506,8 +507,25 @@ def create_app(**kwargs: Any) -> Flask:
         # Get or generate a tracking id
         tracking_id = request.cookies.get("shrunkid") or client.tracking.get_new_id()
 
-        mid = request.args.get("mid", None)
-        uid = request.args.get("uid", None)
+        q_strings = {}
+        mid = None
+        uid = None
+
+        # Preserve URL parameters from the original request
+        if request.query_string:
+            print("true", request.query_string, flush=True)
+            separator = "&" if "?" in long_url else "?"
+
+            decoded = request.query_string.decode("utf-8").replace("&amp;", "&")
+            q_strings = dict(urllib.parse.parse_qsl(decoded))
+            mid = q_strings.get("mid", None)
+            uid = q_strings.get("uid", None)
+            q_strings.pop("mid", None)
+            q_strings.pop("uid", None)
+
+            if len(q_strings) == 0:
+                separator = ""
+            long_url = f"{long_url}{separator}{urllib.parse.urlencode(q_strings)}"
 
         client.links.visit(
             alias,
@@ -521,11 +539,6 @@ def create_app(**kwargs: Any) -> Flask:
 
         if "://" not in long_url:
             long_url = f"http://{long_url}"
-
-        # Preserve URL parameters from the original request
-        if request.query_string:
-            separator = "&" if "?" in long_url else "?"
-            long_url = f"{long_url}{separator}{request.query_string.decode('utf-8')}"
 
         response = redirect(long_url)
 

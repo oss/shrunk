@@ -25,7 +25,12 @@
           "product": "public-api"
         }
       ],
-      "fixes": []
+      "fixes": [
+        {
+          "text": "Fix bug to parse mid and uid correctly",
+          "contributors": ["ak2399"]
+        }
+      ]
     }
   },
   {

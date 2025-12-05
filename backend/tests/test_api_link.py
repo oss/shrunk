@@ -1131,3 +1131,37 @@ def attempt_to_transfer_link_ownership_guest(client: Client) -> int:
         )
 
         assert resp.status_code == 403
+
+
+@pytest.mark.parametrize(
+    ("query", "expected"),
+    [
+        ("?param1=value1", "https://example.com?param1=value1"),
+        (
+            "?param1=value1&param2=value2",
+            "https://example.com?param1=value1&param2=value2",
+        ),
+        ("", "https://example.com"),
+        ("?mid=1&uid=2", "https://example.com"),
+        ("?uid=1&amp;hello=123", "https://example.com?hello=123"),
+        ("?mid=12345", "https://example.com"),
+    ],
+)
+def test_link_redirect_query_params(client: Client, query: str, expected: str) -> None:
+    """Test that query parameters are preserved during link redirection."""
+
+    with dev_login(client, "user"):
+        resp = client.post(
+            "/api/core/link",
+            json={
+                "title": "title",
+                "long_url": "https://example.com",
+            },
+        )
+        assert resp.status_code == 201
+        alias = resp.json["alias"]
+
+    resp = client.get(f"/{alias}{query}")
+    assert resp.status_code == 302
+    redirected_url = resp.headers["Location"]
+    assert redirected_url == expected
