@@ -552,28 +552,20 @@ class LinksClient:
             info = self.get_link_info(link_id)
 
             if source:
-                info = next(
-                    self.db.visits.aggregate(
-                        [
-                            {"$match": {"link_id": link_id, "source": source}},
-                            {
-                                "$facet": {
-                                    "visits": [{"$count": "count"}],
-                                    "unique_visits": [
-                                        {"$group": {"_id": "$tracking_id"}},
-                                        {"$count": "count"},
-                                    ],
-                                }
-                            },
-                        ]
-                    )
+                filter = {"link_id": link_id, "source": source}
+                total_visits = self.db.visits.count_documents(filter)
+                visits = self.db.visits.aggregate(
+                    [
+                        {"$match": filter},
+                        {"$group": {"_id": "$tracking_id"}},
+                        {"$count": "count"},
+                    ],
+                    allowDiskUse=True,
                 )
-
-                if not info["visits"] or not info["unique_visits"]:
-                    return {"total_visits": 0, "unique_visits": 0}
+                unique_visits = next(visits, {"count": 0})
                 return {
-                    "total_visits": info["visits"][0]["count"],
-                    "unique_visits": info["unique_visits"][0]["count"],
+                    "total_visits": total_visits,
+                    "unique_visits": unique_visits["count"],
                 }
 
             return {
