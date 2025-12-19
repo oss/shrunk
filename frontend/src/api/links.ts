@@ -135,8 +135,16 @@ export async function isValidAlias(alias: string): Promise<boolean> {
   return data.valid as boolean;
 }
 
-export async function getLinkStats(linkId: string) {
-  const resp = await fetch(`/api/core/link/${linkId}/stats`);
+export async function getLinkStats(linkId: string, source?: string) {
+  const params = new URLSearchParams();
+
+  if (source) {
+    params.append('source', source);
+  }
+
+  const resp = await fetch(
+    `/api/core/link/${linkId}/stats?${params.toString()}`,
+  );
   const data = await resp.json();
 
   return data as OverallStats;
@@ -144,8 +152,9 @@ export async function getLinkStats(linkId: string) {
 
 export async function getLinkVisitsStats(
   linkId: string,
-  start_date: dayjs,
-  end_date: dayjs,
+  source?: string,
+  start_date?: dayjs,
+  end_date?: dayjs,
 ) {
   const params = new URLSearchParams();
   // The endpoint defaults to one year from today if we don't set
@@ -156,6 +165,9 @@ export async function getLinkVisitsStats(
   if (end_date) {
     params.append('end_date', end_date.format());
   }
+  if (source) {
+    params.append('source', source);
+  }
 
   const url = `/api/core/link/${linkId}/stats/visits?${params.toString()}`;
   const resp = await fetch(url);
@@ -164,15 +176,27 @@ export async function getLinkVisitsStats(
   return data as VisitStats;
 }
 
-export async function getLinkGeoIpStats(linkId: string) {
-  const resp = await fetch(`/api/core/link/${linkId}/stats/geoip`);
+export async function getLinkGeoIpStats(linkId: string, source?: string) {
+  const params = new URLSearchParams();
+  if (source) {
+    params.append('source', source);
+  }
+  const resp = await fetch(
+    `/api/core/link/${linkId}/stats/geoip?${params.toString()}`,
+  );
   const data = await resp.json();
 
   return data as GeoipStats;
 }
 
-export async function getLinkBrowserStats(linkId: string) {
-  const resp = await fetch(`/api/core/link/${linkId}/stats/browser`);
+export async function getLinkBrowserStats(linkId: string, source?: string) {
+  const params = new URLSearchParams();
+  if (source) {
+    params.append('source', source);
+  }
+  const resp = await fetch(
+    `/api/core/link/${linkId}/stats/browser?${params.toString()}`,
+  );
   const data = await resp.json();
 
   return data as BrowserStats;

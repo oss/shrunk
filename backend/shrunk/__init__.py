@@ -510,6 +510,7 @@ def create_app(**kwargs: Any) -> Flask:
         q_strings = {}
         mid = None
         uid = None
+        source = None
 
         # Preserve URL parameters from the original request
         if request.query_string:
@@ -520,12 +521,19 @@ def create_app(**kwargs: Any) -> Flask:
             q_strings = dict(urllib.parse.parse_qsl(decoded))
             mid = q_strings.get("mid", None)
             uid = q_strings.get("uid", None)
+            source = q_strings.get("source", None)
             q_strings.pop("mid", None)
             q_strings.pop("uid", None)
+            q_strings.pop("source", None)
 
             if len(q_strings) == 0:
                 separator = ""
             long_url = f"{long_url}{separator}{urllib.parse.urlencode(q_strings)}"
+
+        allowed_sources = ["qr"]
+
+        if source not in allowed_sources:
+            source = None
 
         client.links.visit(
             alias,
@@ -535,6 +543,7 @@ def create_app(**kwargs: Any) -> Flask:
             request.headers.get("Referer"),
             uid,
             mid,
+            source,
         )
 
         if "://" not in long_url:

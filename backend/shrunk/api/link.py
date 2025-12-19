@@ -651,7 +651,10 @@ def get_link_overall_stats(netid: str, client: ShrunkClient, link_id: ObjectId) 
         link_id, netid
     ):
         abort(403)
-    stats = client.links.get_overall_visits(link_id)
+
+    source = request.args.get("source")
+
+    stats = client.links.get_overall_visits(link_id, None, source)
     return jsonify(stats)
 
 
@@ -704,7 +707,11 @@ def get_link_visit_stats(netid: str, client: ShrunkClient, link_id: ObjectId) ->
     if start_date > end_date:
         return jsonify({"error": "start_date must be before end_date"})
 
-    visits = client.links.get_daily_visits(link_id, date_range=(start_date, end_date))
+    source = request.args.get("source")
+
+    visits = client.links.get_daily_visits(
+        link_id, date_range=(start_date, end_date), source=source
+    )
     return jsonify({"visits": visits})
 
 
@@ -733,7 +740,10 @@ def get_link_geoip_stats(netid: str, client: ShrunkClient, link_id: ObjectId) ->
         link_id, netid
     ):
         abort(403)
-    geoip = client.links.get_geoip_stats(link_id)
+
+    source = request.args.get("source")
+
+    geoip = client.links.get_geoip_stats(link_id, source=source)
     return jsonify(geoip)
 
 
@@ -760,7 +770,10 @@ def get_link_browser_stats(netid: str, client: ShrunkClient, link_id: ObjectId) 
         link_id, netid
     ):
         abort(403)
-    visits = client.links.get_visits(link_id)
+
+    source = request.args.get("source")
+
+    visits = client.links.get_visits(link_id, source=source)
     stats = browser_stats_from_visits(visits)
     return jsonify(stats)
 

@@ -11,6 +11,10 @@
         {
           "text": "Organizations can now add guest users to their organizations. Guest users must be classified as university guests, all links created by guests will be owned by the organization they are apart of.",
           "contributors": ["ak2399"]
+        },
+        {
+          "text": "Link analytics now supports filtering by QR Code traffic source",
+          "contributors": ["ys973"]
         }
       ],
       "improvements": [

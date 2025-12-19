@@ -463,6 +463,7 @@ class LinksClient:
         link_id: ObjectId,
         alias: Optional[str] = None,
         date_range: Optional[Tuple[datetime, datetime]] = None,
+        source: Optional[str] = None,
     ) -> List[Any]:
         """Given a short URL, return how many visits and new unique
            visitors it gets per day for the given date range.
@@ -474,6 +475,9 @@ class LinksClient:
             match = {"$match": {"link_id": link_id}}
         else:
             match = {"$match": {"link_id": link_id, "alias": alias}}
+
+        if source:
+            match["$match"]["source"] = source
 
         if date_range is None:
             date_match = {
@@ -494,7 +498,10 @@ class LinksClient:
         return list(self.db.visits.aggregate(aggregation, allowDiskUse=True))
 
     def get_geoip_stats(
-        self, link_id: Optional[ObjectId] = None, alias: Optional[str] = None
+        self,
+        link_id: Optional[ObjectId] = None,
+        alias: Optional[str] = None,
+        source: Optional[str] = None,
     ) -> Any:
         if alias is not None:
             assert link_id is not None
@@ -505,6 +512,10 @@ class LinksClient:
                 match = {"$match": {"link_id": link_id}}
             else:
                 match = {"$match": {"link_id": link_id, "alias": alias}}
+
+            if source:
+                match["$match"]["source"] = source
+
             aggregation.append(match)
         aggregation.append(
             {
@@ -531,9 +542,40 @@ class LinksClient:
         )
         return next(self.db.visits.aggregate(aggregation))
 
-    def get_overall_visits(self, link_id: ObjectId, alias: Optional[str] = None) -> Any:
+    def get_overall_visits(
+        self,
+        link_id: ObjectId,
+        alias: Optional[str] = None,
+        source: Optional[str] = None,
+    ) -> Any:
         if alias is None:
             info = self.get_link_info(link_id)
+
+            if source:
+                info = next(
+                    self.db.visits.aggregate(
+                        [
+                            {"$match": {"link_id": link_id, "source": source}},
+                            {
+                                "$facet": {
+                                    "visits": [{"$count": "count"}],
+                                    "unique_visits": [
+                                        {"$group": {"_id": "$tracking_id"}},
+                                        {"$count": "count"},
+                                    ],
+                                }
+                            },
+                        ]
+                    )
+                )
+
+                if not info["visits"] or not info["unique_visits"]:
+                    return {"total_visits": 0, "unique_visits": 0}
+                return {
+                    "total_visits": info["visits"][0]["count"],
+                    "unique_visits": info["unique_visits"][0]["count"],
+                }
+
             return {
                 "total_visits": info["visits"],
                 "unique_visits": info.get("unique_visits", 0),
@@ -574,6 +616,7 @@ class LinksClient:
         alias: Optional[str] = None,
         mid: Optional[Union[str, List[str]]] = None,
         uid: Optional[Union[str, List[str]]] = None,
+        source: Optional[str] = None,
     ) -> List[Any]:
         query = {"link_id": link_id}
         if alias is not None:
@@ -588,6 +631,8 @@ class LinksClient:
                 query["uid"] = {"$in": uid}
             else:
                 query["uid"] = uid
+        if source is not None:
+            query["source"] = source
         result = self.db.visits.find(query)
         return list(result)
 
@@ -834,6 +879,7 @@ class LinksClient:
         referer: Optional[str],
         uid: Optional[str] = None,
         mid: Optional[str] = None,
+        source: Optional[str] = None,
     ) -> None:
         """Visits the given URL and logs visit information.
 
@@ -885,6 +931,9 @@ class LinksClient:
 
         if uid:
             doc["uid"] = uid
+
+        if source:
+            doc["source"] = source
 
         self.db.visits.insert_one(doc)
 

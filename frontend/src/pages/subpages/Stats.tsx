@@ -131,6 +131,9 @@ export function Stats(props: Props): React.ReactElement {
   const [entities, setEntities] = useState<Collaborator[]>([]);
 
   const [topReferrer, setTopReferrer] = useState<string | null>(null);
+  const [currentSource, setCurrentSource] = useState<string | undefined>(
+    undefined,
+  );
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const mode = queryParams.get('mode');
@@ -186,11 +189,12 @@ export function Stats(props: Props): React.ReactElement {
     setEntities(tempEntities);
   }
 
-  async function updateStats() {
-    setOverallStats(await getLinkStats(props.id));
-    setVisitStats(await getLinkVisitsStats(props.id));
-    setGeoipStats(await getLinkGeoIpStats(props.id));
-    setBrowserStats(await getLinkBrowserStats(props.id));
+  async function updateStats(source?: string) {
+    setOverallStats(await getLinkStats(props.id, source));
+    setVisitStats(await getLinkVisitsStats(props.id, source));
+    setGeoipStats(await getLinkGeoIpStats(props.id, source));
+    setBrowserStats(await getLinkBrowserStats(props.id, source));
+    setCurrentSource(source);
   }
 
   const onVisitStateRangeChanged = async (
@@ -198,7 +202,12 @@ export function Stats(props: Props): React.ReactElement {
     _dateStrings: string[],
   ): void => {
     setVisitStats(
-      await getLinkVisitsStats(props.id, dates?.[0], dates?.[1].endOf('day')),
+      await getLinkVisitsStats(
+        props.id,
+        currentSource,
+        dates?.[0],
+        dates?.[1].endOf('day'),
+      ),
     );
   };
 
@@ -496,7 +505,10 @@ export function Stats(props: Props): React.ReactElement {
                       iconSize={size / 4}
                       value={
                         linkInfo
-                          ? getRedirectFromAlias(linkInfo.alias, false)
+                          ? getRedirectFromAlias(
+                              `${linkInfo.alias}?source=qr`,
+                              false,
+                            )
                           : ''
                       }
                     />
@@ -576,6 +588,21 @@ export function Stats(props: Props): React.ReactElement {
               </Col>
             </Row>
           </Card>
+        </Col>
+        <Col span={24}>
+          <Row justify="start" style={{ marginTop: 16 }}>
+            <Select
+              value={currentSource ?? 'All'}
+              className="tw-w-40"
+              onChange={(value) =>
+                updateStats(value === 'All' ? undefined : value)
+              }
+              options={[
+                { value: 'All', label: 'All sources' },
+                { value: 'qr', label: 'QR code' },
+              ]}
+            />
+          </Row>
         </Col>
         {overallStats === null || linkInfo === null ? (
           <></>
