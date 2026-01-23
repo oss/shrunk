@@ -9,8 +9,13 @@ services:
     env_file:
       - ./development.env
     depends_on:
-      - mongodb
+      - mongodb0
+      - mongodb1
+      - mongodb2
       - httpd
+    networks:
+      - mongo-net
+      - proxy-net
 
   frontend:
     build: ./frontend
@@ -21,6 +26,8 @@ services:
       - ./development.env
     depends_on:
       - httpd
+    networks:
+      - proxy-net
 
   httpd:
     image: httpd:2.4
@@ -31,14 +38,30 @@ services:
     volumes:
       - ./httpd/httpd.conf:/usr/local/apache2/conf/httpd.conf
       - ./httpd:/usr/local/apache2/logs
+    networks:
+      - proxy-net
 
-  mongodb:
-    hostname: mongodb
-    container_name: shrunk-mongo
-    image: mongo:latest
-    attach: false  # We don't care.
-    ports:
-      - '27017:27017'
+  mongodb0:
+    build: ./database
+    environment:
+      - PRIMARY=1
+    networks:
+      - mongo-net
 
-volumes:
-  backend_venv:
+  mongodb1:
+    build: ./database
+    networks:
+      - mongo-net
+
+  mongodb2:
+    build: ./database
+    networks:
+      - mongo-net
+
+networks:
+  mongo-net:
+    driver: bridge
+    attachable: true
+  proxy-net:
+    driver: bridge
+    attachable: true
