@@ -452,7 +452,7 @@ const UserLookup: React.FC = () => {
         rowKey="netid"
         pagination={{
           position: ['bottomCenter'],
-          pageSize: pageSize,
+          pageSize,
         }}
         scroll={{ x: 'max-content' }}
         onChange={handleTableChange}
