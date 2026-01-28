@@ -1,5 +1,5 @@
 /* eslint-disable react/no-unused-state */
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 import {
   Button,
@@ -36,392 +36,74 @@ interface Props {
   demo?: boolean;
 }
 
-/**
- * State of the [[Dashboard]] component.
- * @interface
- */
-interface State {
-  /**
-   * The organizations of which the user is a member. This is used in the
-   * advanced search settings menu.
-   * @property
-   */
-  userOrgs: Organization[] | null;
+const DEFAULT_QUERY: SearchQuery = {
+  queryString: '',
+  set: { set: 'user' },
+  show_expired_links: false,
+  show_deleted_links: false,
+  sort: { key: 'relevance', order: 'descending' },
+  begin_time: null,
+  end_time: null,
+  showType: 'links',
+  owner: null,
+};
 
-  /**
-   * An array of [[LinkInfo]] objects for the current search results.
-   * @property
-   */
-  linkInfo: Link[] | null;
+export default function Dashboard({
+  userPrivileges,
+  mockData,
+  filterOptions,
+  demo,
+}: Props) {
+  const [prevFilterOptions, setPrevFilterOptions] = useState<
+    SearchQuery | undefined
+  >(filterOptions);
+  const [userOrgs, setUserOrgs] = useState<Organization[] | null>(null);
+  const [linkInfo, setLinkInfo] = useState<Link[] | null>(
+    mockData === undefined ? null : mockData,
+  );
+  const [linksPerPage] = useState<number>(10);
+  const [query, setQuery] = useState<SearchQuery>(
+    filterOptions ?? DEFAULT_QUERY,
+  );
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalLinks, setTotalLinks] = useState<number>(0);
+  const [isCreateModalOpen, setCreateModalOpen] = useState<boolean>(false);
+  const [filterModalVisible, setFilterModalVisible] = useState<boolean>(false);
+  const [showExpired, setShowExpired] = useState<boolean>(
+    filterOptions === undefined ? false : filterOptions.show_expired_links,
+  );
+  const [showDeleted, setShowDeleted] = useState<boolean>(
+    filterOptions === undefined ? false : filterOptions.show_deleted_links,
+  );
+  const [sortKey, setSortKey] = useState<string>('relevance');
+  const [beginTime, setBeginTime] = useState<dayjs.Dayjs | null>(null);
+  const [endTime, setEndTime] = useState<dayjs.Dayjs | null>(null);
 
-  /**
-   * The filtered links from server before search is applied
-   * @property
-   */
-  serverFilteredLinks: Link[] | null;
-
-  /**
-   * The number of links to display per page. Currently this is constant,
-   * but that may change in the future.
-   * @property
-   */
-  linksPerPage: number;
-
-  /**
-   * The current search query.
-   * @property
-   */
-  query: SearchQuery;
-
-  /**
-   * The current page in the search results. Starts from `1`.
-   * @property
-   */
-  currentPage: number;
-
-  /**
-   * The total number of pages of results for the current query.
-   * @property
-   */
-  totalPages: number;
-
-  /**
-   * The current offset in the search result, in terms of number of links.
-   * @property
-   */
-  currentOffset: number;
-
-  /**
-   * The total number of links returned by the current query.
-   * @property
-   */
-  totalLinks: number;
-
-  isCreateModalOpen: boolean;
-
-  filterModalVisible: boolean;
-
-  showExpired: boolean;
-
-  showDeleted: boolean;
-
-  sortKey: string;
-
-  sortOrder: string;
-
-  beginTime: dayjs.Dayjs | null;
-
-  endTime: dayjs.Dayjs | null;
-
-  orgDropdownOpen: boolean;
-
-  orgLoading: boolean;
-}
-
-// TODO --> Migrate to functional component to remove need for wrapper component
-class Dashboard extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      userOrgs: null,
-      linkInfo: this.props.mockData === undefined ? null : this.props.mockData,
-      serverFilteredLinks:
-        this.props.mockData === undefined ? null : this.props.mockData,
-      linksPerPage: 10,
-      query:
-        this.props.filterOptions === undefined
-          ? {
-              queryString: '',
-              set: { set: 'user' },
-              show_expired_links: false,
-              show_deleted_links: false,
-              sort: { key: 'relevance', order: 'descending' },
-              begin_time: null,
-              end_time: null,
-              showType: 'links',
-              owner: null,
-            }
-          : this.props.filterOptions,
-      totalPages: 0,
-      totalLinks: 0,
-      currentPage: 1,
-      currentOffset: 0,
-      isCreateModalOpen: false,
-      filterModalVisible: false,
-      showExpired:
-        this.props.filterOptions === undefined
-          ? false
-          : this.props.filterOptions.show_expired_links,
-      showDeleted:
-        this.props.filterOptions === undefined
-          ? false
-          : this.props.filterOptions.show_deleted_links,
-      sortKey: 'relevance',
-      sortOrder: 'descending',
-      beginTime: null,
-      endTime: null,
-      orgDropdownOpen: false,
-      orgLoading: false,
-    };
-  }
-
-  async componentDidMount(): Promise<void> {
-    await this.fetchUserOrgs();
-  }
-
-  componentDidUpdate(prevProps: Readonly<Props>): void {
-    // update config once /info loads
-    if (
-      this.props.filterOptions !== prevProps.filterOptions &&
-      this.props.filterOptions
-    ) {
-      this.setState(
-        {
-          query: {
-            ...this.props.filterOptions,
-            begin_time: this.props.filterOptions.begin_time
-              ? dayjs(this.props.filterOptions.begin_time)
-              : null,
-            end_time: this.props.filterOptions.end_time
-              ? dayjs(this.props.filterOptions.end_time)
-              : null,
-          },
-          showExpired: this.props.filterOptions.show_expired_links,
-          showDeleted: this.props.filterOptions.show_deleted_links,
-          sortKey: this.props.filterOptions.sort.key,
-          sortOrder: this.props.filterOptions.sort.order,
-          beginTime: this.props.filterOptions.begin_time
-            ? dayjs(this.props.filterOptions.begin_time)
-            : null,
-          endTime: this.props.filterOptions.end_time
-            ? dayjs(this.props.filterOptions.end_time)
-            : null,
-          currentPage: 1,
-        },
-        () => {
-          this.refreshResults();
-        },
-      );
-    }
-  }
-
-  /**
-   * Update filter options for user
-   */
-  updateFilterOptions = async () => {
-    await updateUserFilterOptions(this.state.query);
-  };
-
-  /**
-   * Fetch the organizations of which the user is a member.
-   * @method
-   */
-  fetchUserOrgs = async (): Promise<void> => {
-    if (this.props.demo) {
-      return;
-    }
-
-    const userOrgs = await getOrganizations('user');
-    this.setState({ userOrgs });
-  };
-
-  showByOrg = (orgs: SearchSet) => {
-    this.setState({ query: { ...this.state.query, set: orgs } }, () =>
-      this.setQuery(this.state.query),
-    );
-  };
-
-  /**
-   * Updates expired links being shown/not shown in the state and executes a search query
-   */
-  showExpiredLinks = (show_expired_links: boolean) => {
-    this.setState(
-      {
-        showExpired: show_expired_links,
-        query: { ...this.state.query, show_expired_links },
-      },
-      () => this.setQuery(this.state.query),
-    );
-  };
-
-  /**
-   * Updates deleted links being shown/not shown in the state and executes a search query
-   */
-  showDeletedLinks = (show_deleted_links: boolean) => {
-    this.setState(
-      {
-        showDeleted: show_deleted_links,
-        query: { ...this.state.query, show_deleted_links },
-      },
-      () => this.setQuery(this.state.query),
-    );
-  };
-
-  /**
-   * Updates the sort category in the state and executes a search query
-   * @method
-   * @param key Category that links can be sorted by
-   */
-  sortLinksByKey = (key: string) => {
-    this.setState(
-      {
-        query: { ...this.state.query, sort: { ...this.state.query.sort, key } },
-      },
-      () => this.setQuery(this.state.query),
-    );
-  };
-
-  /**
-   * Updates the link type in the state and executes a search query
-   * @method
-   * @param e The radio change event
-   */
-  sortByType = (e: RadioChangeEvent) => {
-    const key = e.target.value;
-    this.setState(
-      {
-        query: { ...this.state.query, showType: key },
-      },
-      () => this.setQuery(this.state.query),
-    );
-  };
-
-  /**
-   * Updates the sort order in the state and executes a search query
-   * @method
-   * @param order Ascending or descending order
-   */
-  sortLinksByOrder = (order: string) => {
-    this.setState(
-      {
-        query: {
-          ...this.state.query,
-          sort: { ...this.state.query.sort, order },
-        },
-      },
-      () => this.setQuery(this.state.query),
-    );
-  };
-
-  showLinksInRange = (
-    dates: [Dayjs | null, Dayjs | null] | null,
-    _: [string, string],
-  ) => {
-    this.setState(
-      {
-        query: {
-          ...this.state.query,
-          begin_time: dates?.[0] ?? null,
-          end_time: dates?.[1] ?? null,
-        },
-      },
-      () => this.setQuery(this.state.query),
-    );
-  };
-
-  /**
-   * Executes a search query and updates component state with the results
-   * @method
-   * @param newQuery The new query
-   */
-  setQuery = async (newQuery: SearchQuery): Promise<void> => {
-    if (this.props.demo) {
-      return;
-    }
-
-    const results = await this.doQuery(newQuery, 0, this.state.linksPerPage);
-
-    await this.updateFilterOptions();
-
-    const totalPages = Math.ceil(results.count / this.state.linksPerPage);
-    this.setState({
-      serverFilteredLinks: results.results,
-      linkInfo: results.results,
-      query: newQuery,
-      currentPage: 1,
-      totalPages,
-      currentOffset: this.state.linksPerPage,
-      totalLinks: results.count,
-    });
-  };
-
-  /**
-   * Updates the current page of search results.
-   * @method
-   * @throws Error if the current query is `null`
-   * @param newPage The new page
-   */
-  setPage = async (newPage: number): Promise<void> => {
-    if (this.props.demo) {
-      this.setState({ currentPage: newPage });
-      return;
-    }
-
-    if (this.state.query === null) {
-      throw new Error('attempted to set page with this.state.query === null');
-    }
-
-    const skip = (newPage - 1) * this.state.linksPerPage;
-    const results = await this.doQuery(
-      this.state.query,
-      skip,
-      this.state.linksPerPage,
-    );
-
-    const totalPages = Math.ceil(results.count / this.state.linksPerPage);
-    this.setState({
-      serverFilteredLinks: results.results,
-      linkInfo: results.results,
-      currentPage: newPage,
-      totalPages,
-      currentOffset: newPage * this.state.linksPerPage,
-      totalLinks: results.count,
-    });
-  };
-
-  /**
-   * Re-execute the currently active query.
-   * @method
-   */
-  refreshResults = async (): Promise<void> => {
-    await this.setPage(this.state.currentPage);
-  };
-
-  /**
-   * Sends a search request to the server. Does not update component state.
-   * Use [[setQuery]] or [[setPage]] if you want to update the current state
-   * of the search results.
-   * @method
-   * @param query The query to execute
-   * @param skip  The number of results to skip
-   * @param limit The number of results to return
-   * @returns The search results
-   */
-  doQuery = async (
-    query: SearchQuery,
+  const doQuery = async (
+    newQuery: SearchQuery,
     skip: number,
     limit: number,
   ): Promise<{ count: number; results: Link[] }> => {
     const req: any = {
-      query: query.queryString,
-      set: query.set,
-      show_expired_links: query.show_expired_links,
-      show_deleted_links: query.show_deleted_links,
-      sort: query.sort,
+      query: newQuery.queryString,
+      set: newQuery.set,
+      show_expired_links: newQuery.show_expired_links,
+      show_deleted_links: newQuery.show_deleted_links,
+      sort: newQuery.sort,
       pagination: { skip, limit },
-      show_type: query.showType,
+      show_type: newQuery.showType,
     };
 
-    if (query.begin_time !== null) {
-      req.begin_time = query.begin_time.format();
+    if (newQuery.begin_time !== null) {
+      req.begin_time = newQuery.begin_time.format();
     }
 
-    if (query.end_time !== null) {
-      req.end_time = query.end_time.format();
+    if (newQuery.end_time !== null) {
+      req.end_time = newQuery.end_time.format();
     }
 
-    if (query.owner !== null || query.owner === '') {
-      req.owner = query.owner;
+    if (newQuery.owner !== null || newQuery.owner === '') {
+      req.owner = newQuery.owner;
     }
 
     const result = await searchLinks(req);
@@ -446,209 +128,329 @@ class Dashboard extends React.Component<Props, State> {
       ),
     };
   };
+  const setNewQuery = async (newQuery: SearchQuery): Promise<void> => {
+    if (demo) {
+      return;
+    }
 
-  updateOrg = async (value: string): Promise<void> => {
-    this.setState({ orgLoading: true });
+    // only search for new owners if the netid is valid
+    // if (newQuery.owner && newQuery.owner !== query.owner) {
+    //   try {
+    //     await serverValidateNetId({}, newQuery.owner);
+    //   } catch (err) {
+    //     return;
+    //   }
+    // }
+
+    const results = await doQuery(newQuery, 0, linksPerPage);
+
+    await updateUserFilterOptions(newQuery);
+
+    setLinkInfo(results.results);
+    setQuery(newQuery);
+    setCurrentPage(1);
+    setTotalLinks(results.count);
+  };
+
+  const setPage = async (newPage: number): Promise<void> => {
+    if (demo) {
+      setCurrentPage(newPage);
+      return;
+    }
+
+    if (query === null) {
+      throw new Error('attempted to set page with this.state.query === null');
+    }
+
+    const skip = (newPage - 1) * linksPerPage;
+    const results = await doQuery(query, skip, linksPerPage);
+
+    setLinkInfo(results.results);
+    setCurrentPage(newPage);
+    setTotalLinks(results.count);
+  };
+
+  const showByOrg = (orgs: SearchSet) => {
+    const newQuery = { ...query, set: orgs };
+    setNewQuery(newQuery);
+  };
+  const updateOrg = async (value: string): Promise<void> => {
     setTimeout(() => {
       if (value.startsWith('org_')) {
         const orgId = value.slice(4);
-        this.showByOrg({ set: 'org', org: orgId });
+        showByOrg({ set: 'org', org: orgId });
       } else {
-        this.showByOrg({ set: value as 'user' | 'shared' | 'all' });
+        showByOrg({ set: value as 'user' | 'shared' | 'all' });
       }
-      this.setState({ orgLoading: false });
     }, 300);
   };
 
-  onSearch = async () => {
-    this.setQuery(this.state.query);
-  };
-
-  updateQueryString = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  const showLinksInRange = (
+    dates: [Dayjs | null, Dayjs | null] | null,
+    _: [string, string],
   ) => {
-    const newQueryString = e.target.value;
-    this.setState({
-      query: { ...this.state.query, queryString: newQueryString },
-    });
+    const newQuery = {
+      ...query,
+      begin_time: dates?.[0] ?? null,
+      end_time: dates?.[1] ?? null,
+    };
+    setNewQuery(newQuery);
   };
 
-  render(): React.ReactNode {
-    return (
-      <>
-        <Row>
-          <Typography.Title>URL Shortener</Typography.Title>
-        </Row>
-        <Row gutter={[16, 16]} justify="space-between">
-          <Col span={12}>
-            <Space>
-              <Button
-                icon={<FilterIcon />}
-                onClick={() => {
-                  if (this.props.demo) {
-                    return;
-                  }
-                  this.setState({ filterModalVisible: true });
-                }}
-              >
-                Filter
-              </Button>
-              <Input.Search
-                style={{ width: 500 }}
-                placeholder="Search links by title, alias, URL, or owner"
-                value={this.state.query.queryString}
-                onChange={this.updateQueryString}
-                onSearch={this.onSearch}
-              />
-            </Space>
-          </Col>
-          <Col style={{ textAlign: 'right' }}>
-            <Space>
-              <Button
-                type="primary"
-                icon={<PlusCircleIcon />}
-                onClick={() => {
-                  if (this.props.demo) {
-                    return;
-                  }
+  const onSearch = async () => {
+    setNewQuery(query);
+  };
 
-                  this.setState({ isCreateModalOpen: true });
-                }}
-              >
-                Create
-              </Button>
-            </Space>
-          </Col>
-          <Col span={24}>
-            <Row gutter={[16, 8]}>
-              {this.state.linkInfo === null ||
-              this.state.linkInfo.length === 0 ? (
-                <Col span={24}>
-                  <Empty />
-                </Col>
-              ) : (
-                this.state.linkInfo.map((link: Link) => (
-                  <Col span={24}>
-                    <LinkCard linkInfo={link} />
-                  </Col>
-                ))
-              )}
-            </Row>
-          </Col>
-          <Col span={24}>
-            <Pagination
-              align="center"
-              defaultCurrent={1}
-              current={this.state.currentPage}
-              showSizeChanger={false}
-              total={this.state.totalLinks}
-              onChange={this.setPage}
-              pageSize={this.state.linksPerPage}
+  const showExpiredLinks = (show_expired_links: boolean) => {
+    const newQuery = { ...query, show_expired_links };
+    setShowExpired(show_expired_links);
+    setNewQuery(newQuery);
+  };
+
+  const showDeletedLinks = (show_deleted_links: boolean) => {
+    const newQuery = { ...query, show_deleted_links };
+    setShowDeleted(show_deleted_links);
+    setNewQuery(newQuery);
+  };
+
+  const sortLinksByKey = (key: string) => {
+    const newQuery = { ...query, sort: { ...query.sort, key } };
+    setNewQuery(newQuery);
+  };
+
+  const sortByType = (e: RadioChangeEvent) => {
+    const key = e.target.value;
+    const newQuery = { ...query, showType: key };
+    setNewQuery(newQuery);
+  };
+
+  const refreshResults = async (): Promise<void> => {
+    await setPage(currentPage);
+  };
+
+  // functional component equivalent of componentDidMount
+  useEffect(() => {
+    const fetchUserOrgs = async (): Promise<void> => {
+      if (demo) {
+        return;
+      }
+      try {
+        const getUserOrgs = await getOrganizations('user');
+        setUserOrgs(getUserOrgs);
+      } catch (error) {
+        throw new Error(`Failed to set user orgs: ${error}`);
+      }
+    };
+
+    fetchUserOrgs();
+  }, []);
+
+  if (filterOptions !== prevFilterOptions) {
+    setPrevFilterOptions(filterOptions);
+
+    if (filterOptions) {
+      setNewQuery({
+        ...filterOptions,
+        begin_time: filterOptions.begin_time,
+        end_time: filterOptions.end_time,
+      });
+      setShowExpired(filterOptions.show_expired_links);
+      setShowDeleted(filterOptions.show_deleted_links);
+      setSortKey(filterOptions.sort.key);
+      setBeginTime(
+        filterOptions.begin_time ? dayjs(filterOptions.begin_time) : null,
+      );
+      setEndTime(filterOptions.end_time ? dayjs(filterOptions.end_time) : null);
+      setCurrentPage(1);
+    }
+  }
+
+  return (
+    <>
+      <Row>
+        <Typography.Title>URL Shortener</Typography.Title>
+      </Row>
+      <Row gutter={[16, 16]} justify="space-between">
+        <Col span={12}>
+          <Space>
+            <Button
+              icon={<FilterIcon />}
+              onClick={() => {
+                if (demo) {
+                  return;
+                }
+                setFilterModalVisible(true);
+              }}
+            >
+              Filter
+            </Button>
+            <Input.Search
+              style={{ width: 500 }}
+              placeholder="Search links by title, alias, URL, or owner"
+              value={query.queryString}
+              onChange={(
+                e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+              ) => setNewQuery({ ...query, queryString: e.target.value })}
+              onSearch={onSearch}
             />
-          </Col>
-        </Row>
+          </Space>
+        </Col>
+        <Col style={{ textAlign: 'right' }}>
+          <Space>
+            <Button
+              type="primary"
+              icon={<PlusCircleIcon />}
+              onClick={() => {
+                if (demo) {
+                  return;
+                }
 
-        <CreateLinkDrawer
-          title="Create Link"
-          visible={this.state.isCreateModalOpen}
-          onCancel={() => this.setState({ isCreateModalOpen: false })}
-          onFinish={async () => {
-            await this.refreshResults();
-            this.setState({ isCreateModalOpen: false });
+                setCreateModalOpen(true);
+              }}
+            >
+              Create
+            </Button>
+          </Space>
+        </Col>
+        <Col span={24}>
+          <Row gutter={[16, 8]}>
+            {linkInfo === null || linkInfo.length === 0 ? (
+              <Col span={24}>
+                <Empty />
+              </Col>
+            ) : (
+              linkInfo.map((link: Link) => (
+                <Col span={24}>
+                  <LinkCard linkInfo={link} />
+                </Col>
+              ))
+            )}
+          </Row>
+        </Col>
+        <Col span={24}>
+          <Pagination
+            align="center"
+            defaultCurrent={1}
+            current={currentPage}
+            showSizeChanger={false}
+            total={totalLinks}
+            onChange={setPage}
+            pageSize={linksPerPage}
+          />
+        </Col>
+      </Row>
+
+      <CreateLinkDrawer
+        title="Create Link"
+        visible={isCreateModalOpen}
+        onCancel={() => setCreateModalOpen(false)}
+        onFinish={async () => {
+          setCurrentPage(currentPage);
+          setCreateModalOpen(false);
+          refreshResults();
+        }}
+        userPrivileges={userPrivileges}
+        userOrgs={userOrgs ?? []}
+      />
+
+      <Drawer
+        title="Filter Links"
+        width={720}
+        open={filterModalVisible}
+        onClose={() => setFilterModalVisible(false)}
+        placement="left"
+      >
+        <Form
+          layout="vertical"
+          initialValues={{
+            orgSelect: query.set.set,
+            owner: query.owner,
+            sortKey: query.sort.key,
+            show_expired: showExpired ? 'show' : 'hide',
+            show_deleted: showDeleted ? 'show' : 'hide',
+            links_vs_pixels: query.showType,
+            dateRange: [beginTime, endTime],
           }}
-          userPrivileges={this.props.userPrivileges}
-          userOrgs={this.state.userOrgs ? this.state.userOrgs : []}
-        />
-
-        <Drawer
-          title="Filter Links"
-          width={720}
-          open={this.state.filterModalVisible}
-          onClose={() => this.setState({ filterModalVisible: false })}
-          placement="left"
         >
-          <Form
-            layout="vertical"
-            initialValues={{
-              orgSelect: this.state.query.set.set,
-              owner: this.state.query.owner,
-              sortKey: this.state.query.sort.key,
-              show_expired: this.state.showExpired ? 'show' : 'hide',
-              show_deleted: this.state.showDeleted ? 'show' : 'hide',
-              links_vs_pixels: this.state.query.showType,
-              dateRange: [this.state.beginTime, this.state.endTime],
-            }}
-          >
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item name="orgSelect" label="Links">
-                  <Select onChange={this.updateOrg}>
-                    <Select.Option value="user">My Links</Select.Option>
-                    <Select.Option value="shared">Shared with Me</Select.Option>
-                    {this.props.userPrivileges.has('admin') && (
-                      <Select.Option value="all">All Links</Select.Option>
-                    )}
-                    {this.state.userOrgs?.length && (
-                      <Select.OptGroup label="My Organizations">
-                        {this.state.userOrgs.map((info) => (
-                          <Select.Option key={info.id} value={`org_${info.id}`}>
-                            <em>{info.name}</em>
-                          </Select.Option>
-                        ))}
-                      </Select.OptGroup>
-                    )}
-                  </Select>
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="owner"
-                  label="Owner"
-                  rules={[{ validator: serverValidateNetId }]}
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="orgSelect" label="Links">
+                <Select onChange={updateOrg}>
+                  <Select.Option value="user">My Links</Select.Option>
+                  <Select.Option value="shared">Shared with Me</Select.Option>
+                  {userPrivileges.has('admin') && (
+                    <Select.Option value="all">All Links</Select.Option>
+                  )}
+                  {userOrgs?.length && (
+                    <Select.OptGroup label="My Organizations">
+                      {userOrgs.map((info) => (
+                        <Select.Option key={info.id} value={`org_${info.id}`}>
+                          <em>{info.name}</em>
+                        </Select.Option>
+                      ))}
+                    </Select.OptGroup>
+                  )}
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="owner"
+                label="Owner"
+                rules={[{ validator: serverValidateNetId }]}
+              >
+                <Input
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    // setNewQuery({ ...query, owner: e.target.value });
+                    setQuery({ ...query, owner: e.target.value });
+                  }}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="sortKey" label="Sort by">
+                <Select
+                  value={sortKey}
+                  onChange={sortLinksByKey}
+                  style={{ width: '100%' }}
                 >
-                  <Input
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      this.setState({
-                        query: { ...this.state.query, owner: e.target.value },
-                      });
-                    }}
-                  />
-                </Form.Item>
-              </Col>
+                  <Select.Option value="relevance">Relevance</Select.Option>
+                  <Select.Option value="created_time">
+                    Time created
+                  </Select.Option>
+                  <Select.Option value="title">Title</Select.Option>
+                  <Select.Option value="visits">Number of visits</Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="dateRange" label="Creation Date">
+                <DatePicker.RangePicker
+                  format="YYYY-MM-DD"
+                  onChange={showLinksInRange}
+                  style={{ width: '100%' }}
+                  value={[dayjs(beginTime), dayjs(endTime)]}
+                  allowEmpty={[false, true]} // Allow the second date to be empty
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="show_expired" label="Expired Links">
+                <Radio.Group
+                  optionType="button"
+                  buttonStyle="solid"
+                  options={[
+                    { label: 'Show', value: 'show' },
+                    { label: 'Hide', value: 'hide' },
+                  ]}
+                  defaultValue="hide"
+                  onChange={(e) => showExpiredLinks(e.target.value === 'show')}
+                />
+              </Form.Item>
+            </Col>
+            {userPrivileges.has('admin') && (
               <Col span={12}>
-                <Form.Item name="sortKey" label="Sort by">
-                  <Select
-                    value={this.state.sortKey}
-                    onChange={this.sortLinksByKey}
-                    style={{ width: '100%' }}
-                  >
-                    <Select.Option value="relevance">Relevance</Select.Option>
-                    <Select.Option value="created_time">
-                      Time created
-                    </Select.Option>
-                    <Select.Option value="title">Title</Select.Option>
-                    <Select.Option value="visits">
-                      Number of visits
-                    </Select.Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item name="dateRange" label="Creation Date">
-                  <DatePicker.RangePicker
-                    format="YYYY-MM-DD"
-                    onChange={this.showLinksInRange}
-                    style={{ width: '100%' }}
-                    value={[
-                      dayjs(this.state.beginTime),
-                      dayjs(this.state.endTime),
-                    ]}
-                    allowEmpty={[false, true]} // Allow the second date to be empty
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item name="show_expired" label="Expired Links">
+                <Form.Item name="show_deleted" label="Deleted Links">
                   <Radio.Group
                     optionType="button"
                     buttonStyle="solid"
@@ -657,50 +459,30 @@ class Dashboard extends React.Component<Props, State> {
                       { label: 'Hide', value: 'hide' },
                     ]}
                     defaultValue="hide"
-                    onChange={(e) =>
-                      this.showExpiredLinks(e.target.value === 'show')
-                    }
+                    onChange={(e) => {
+                      showDeletedLinks(e.target.value === 'show');
+                    }}
                   />
                 </Form.Item>
               </Col>
-              {this.props.userPrivileges.has('admin') && (
-                <Col span={12}>
-                  <Form.Item name="show_deleted" label="Deleted Links">
-                    <Radio.Group
-                      optionType="button"
-                      buttonStyle="solid"
-                      options={[
-                        { label: 'Show', value: 'show' },
-                        { label: 'Hide', value: 'hide' },
-                      ]}
-                      defaultValue="hide"
-                      onChange={(e) =>
-                        this.showDeletedLinks(e.target.value === 'show')
-                      }
-                    />
-                  </Form.Item>
-                </Col>
-              )}
-              <Col span={12}>
-                <Form.Item name="links_vs_pixels" label="Link Type">
-                  <Radio.Group
-                    optionType="button"
-                    buttonStyle="solid"
-                    options={[
-                      { label: 'Links', value: 'links' },
-                      { label: 'Tracking Pixels', value: 'tracking_pixels' },
-                    ]}
-                    defaultValue={this.state.query.showType}
-                    onChange={this.sortByType}
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
-          </Form>
-        </Drawer>
-      </>
-    );
-  }
+            )}
+            <Col span={12}>
+              <Form.Item name="links_vs_pixels" label="Link Type">
+                <Radio.Group
+                  optionType="button"
+                  buttonStyle="solid"
+                  options={[
+                    { label: 'Links', value: 'links' },
+                    { label: 'Tracking Pixels', value: 'tracking_pixels' },
+                  ]}
+                  defaultValue={query.showType}
+                  onChange={sortByType}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Drawer>
+    </>
+  );
 }
-
-export default Dashboard;
