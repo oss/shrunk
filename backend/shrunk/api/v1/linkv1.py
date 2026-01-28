@@ -34,6 +34,7 @@ CREATE_LINK_SCHEMA = {
         "alias": {"type": "string", "minLength": 5},
         "expiration_time": {"type": "string", "format": "date-time"},
         "organization_id": {"type": "string", "minLength": 24},
+        "check_existing": {"type": "boolean"},
     },
 }
 
@@ -135,6 +136,29 @@ def create_link(
     owner = {"_id": ObjectId(org_id), "type": "org"}
     created_with_superToken = token_owner["type"] == "netid"
 
+    if "check_existing" in req:
+        if req["check_existing"]:
+            try:
+                link_id, created_alias = client.links.check_link_exists(
+                    req["long_url"], owner
+                )
+                return jsonify({"id": str(link_id), "alias": created_alias}), 201
+            except NoSuchObjectException:
+                pass
+            except NotUserOrOrg:
+                return (
+                    jsonify(
+                        {
+                            "error": {
+                                "code": "INVALID_ORG_ID",
+                                "message": "Invalid organization_id",
+                                "details": "The provided organization_id does not correspond to a valid organization.",
+                            }
+                        }
+                    ),
+                    400,
+                )
+
     try:
         link_id, created_alias = client.links.create(
             (
@@ -226,7 +250,10 @@ def create_link(
             400,
         )
 
-    return jsonify({"id": str(link_id), "alias": created_alias}), 201
+    base_url = request.url_root
+    link = f"{base_url}" + created_alias
+
+    return jsonify({"link": link, "id": str(link_id), "alias": created_alias}), 201
 
 
 @bp.route("/<ObjectId:org_id>/<ObjectId:link_id>", methods=["GET"])

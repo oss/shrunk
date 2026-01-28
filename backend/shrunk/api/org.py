@@ -8,7 +8,7 @@ from werkzeug.exceptions import abort
 from bson import ObjectId
 
 from shrunk.client import ShrunkClient
-from shrunk.util.ldap import is_valid_netid
+from shrunk.util.ldap import is_valid_netid, is_university_guest
 from shrunk.util.decorators import require_login, request_schema
 
 __all__ = ["bp"]
@@ -113,7 +113,7 @@ def post_org(netid: str, client: ShrunkClient, req: Any) -> Any:
     org_id = client.orgs.create(req["name"])
     if org_id is None:
         abort(409)
-    client.orgs.create_member(org_id, netid, is_admin=True)
+    client.orgs.create_member(org_id, netid, "admin")
     return jsonify({"id": org_id, "name": req["name"]})
 
 
@@ -170,12 +170,17 @@ def get_org(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
     org = client.orgs.get_org(org_id)
     if org is None:
         abort(404)
+
+    if client.orgs.is_admin(org_id, netid):
+        org["role"] = "admin"
+    elif client.orgs.is_guest(org_id, netid):
+        org["role"] = "guest"
+    else:
+        org["role"] = "member"
+
     org["id"] = org["_id"]
+
     del org["_id"]
-    org["is_member"] = any(member["netid"] == netid for member in org["members"])
-    org["is_admin"] = any(
-        member["netid"] == netid and member["is_admin"] for member in org["members"]
-    )
     return jsonify(org)
 
 
@@ -305,6 +310,36 @@ def validate_netid(_netid: str, _client: ShrunkClient, req: Any) -> Any:
     return jsonify(response)
 
 
+@bp.route("/validate_guest", methods=["POST"])
+@request_schema(VALIDATE_NETID_SCHEMA)
+@require_login
+def validate_guest(_netid: str, _client: ShrunkClient, req: Any) -> Any:
+    """``POST /api/org/validate_guest``
+
+    Check that a guest NetID is valid. This endpoint is used for form validation in the frontend. Request format:
+
+    .. code-block:: json
+
+       { "netid": "string" }
+
+    Response format:
+
+    .. code-block:: json
+
+       { "valid": "boolean", "reason?": "string" }
+
+    :param netid:
+    :param client:
+    :param req:
+    """
+
+    valid = is_university_guest(req["netid"])
+    response: Dict[str, Any] = {"valid": valid}
+    if not valid:
+        response["reason"] = "That NetID does not have the guest role."
+    return jsonify(response)
+
+
 @bp.route("/<ObjectId:org_id>/stats", methods=["GET"])
 @require_login
 def get_org_stats(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
@@ -382,7 +417,7 @@ def get_org_geoip_stats(netid: str, client: ShrunkClient, org_id: ObjectId) -> A
 def put_org_member(
     netid: str, client: ShrunkClient, org_id: ObjectId, member_netid: str
 ) -> Any:
-    """``PUT /api/org/<org_id>/member/<netid>``
+    """``PUT /api/org/<org_id>/member/<member_netid>``
 
     Add a user to an org. Performs no action if the user is already a member of the org. Returns 204
     on success.
@@ -395,6 +430,36 @@ def put_org_member(
     if not client.orgs.is_admin(org_id, netid) and not client.roles.has("admin", netid):
         abort(403)
     client.orgs.create_member(org_id, member_netid)
+    return "", 204
+
+
+@bp.route("/<ObjectId:org_id>/guest/<member_netid>", methods=["PUT"])
+@require_login
+def put_org_guest(
+    netid: str, client: ShrunkClient, org_id: ObjectId, member_netid: str
+) -> Any:
+    """``PUT /api/org/<org_id>/guest/<netid>``
+
+    Add a guest user to an org. Can only add users designated as guests in the university LDAP. A guest may only be apart of one org at a time.
+
+    :param netid:
+    :param client:
+    :param org_id:
+    :param member_netid:
+    """
+    if not client.orgs.is_admin(org_id, netid) and not client.roles.has("admin", netid):
+        abort(403)
+
+    if not is_university_guest(member_netid):
+        return "That NetID does not have the guest role.", 400
+
+    if len(client.orgs.get_orgs(member_netid, True)) > 0:
+
+        return "Guest user already belongs to an organization", 400
+
+    if client.orgs.create_member(org_id, member_netid, "guest"):
+        client.roles.grant("guest", netid, member_netid, f"Added to org: {org_id}")
+
     return "", 204
 
 
@@ -495,7 +560,7 @@ MODIFY_ORG_MEMBER_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
     "properties": {
-        "is_admin": {"type": "boolean"},
+        "role": {"type": "string", "enum": ["admin", "member", "guest"]},
     },
 }
 
@@ -512,7 +577,7 @@ def patch_org_member(
 
     .. code-block:: json
 
-       { "is_admin?": "boolean" }
+       { "role": "admin" | "member" | "guest" }
 
     Properties present in the request will be updated. Properties missing from the request will not be modified.
 
@@ -524,14 +589,14 @@ def patch_org_member(
     """
     if not client.orgs.is_admin(org_id, netid) and not client.roles.has("admin", netid):
         abort(403)
-    if "is_admin" in req:
+    if req["role"] is not None:
         # Prevent the last admin from being demoted
         admin_count = client.orgs.get_admin_count(org_id)
 
-        if req["is_admin"] == False and admin_count <= 1:
+        if req["role"] == "member" and netid == member_netid and admin_count <= 1:
             abort(400)
 
-        client.orgs.set_member_admin(org_id, member_netid, req["is_admin"])
+        client.orgs.set_member_role(org_id, member_netid, req["role"])
     return "", 204
 
 

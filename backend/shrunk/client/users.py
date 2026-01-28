@@ -50,10 +50,24 @@ class UserClient:
                     "from": "organizations",
                     "let": {"user_netid": "$netid"},
                     "pipeline": [
-                        {"$unwind": "$members"},
                         {
                             "$match": {
-                                "$expr": {"$eq": ["$members.netid", "$$user_netid"]}
+                                "$expr": {
+                                    "$or": [
+                                        {
+                                            "$in": [
+                                                "$$user_netid",
+                                                {"$ifNull": ["$members.netid", []]},
+                                            ]
+                                        },
+                                        {
+                                            "$in": [
+                                                "$$user_netid",
+                                                {"$ifNull": ["$guests.netid", []]},
+                                            ]
+                                        },
+                                    ]
+                                }
                             }
                         },
                         {"$project": {"name": 1, "_id": 0}},

@@ -6,6 +6,7 @@ import string
 import re
 import secrets
 from typing import Optional, List, Set, Any, Dict, Union, cast, Tuple
+from functools import lru_cache
 
 from flask import current_app, url_for
 from flask_mailman import Mail
@@ -322,6 +323,32 @@ class LinksClient:
         if result.matched_count != 1:
             raise NoSuchObjectException
 
+    def check_link_exists(
+        self, long_url: str, owner: Dict[str, Any]
+    ) -> Tuple[ObjectId, str]:
+        self.assert_valid_acl_entry("owner", owner)
+
+        query = {
+            "long_url": long_url,
+            "deleted": False,
+            "is_tracking_pixel_link": False,
+            "$or": [
+                {"expiration_time": {"$gt": datetime.now(timezone.utc)}},
+                {"expiration_time": None},
+            ],
+        }
+
+        if owner["type"] == "org":
+            query["owner._id"] = owner["_id"]
+            result = self.db.urls.find_one(query)
+        else:
+            result = self.db.urls.find_one(query)
+
+        if result:
+            return result["_id"], result["alias"]
+        else:
+            raise NoSuchObjectException
+
     def assert_valid_acl_entry(self, acl, entry):
         target = entry["_id"]
         mtype = entry["type"]
@@ -436,6 +463,7 @@ class LinksClient:
         link_id: ObjectId,
         alias: Optional[str] = None,
         date_range: Optional[Tuple[datetime, datetime]] = None,
+        source: Optional[str] = None,
     ) -> List[Any]:
         """Given a short URL, return how many visits and new unique
            visitors it gets per day for the given date range.
@@ -447,6 +475,9 @@ class LinksClient:
             match = {"$match": {"link_id": link_id}}
         else:
             match = {"$match": {"link_id": link_id, "alias": alias}}
+
+        if source:
+            match["$match"]["source"] = source
 
         if date_range is None:
             date_match = {
@@ -467,7 +498,10 @@ class LinksClient:
         return list(self.db.visits.aggregate(aggregation, allowDiskUse=True))
 
     def get_geoip_stats(
-        self, link_id: Optional[ObjectId] = None, alias: Optional[str] = None
+        self,
+        link_id: Optional[ObjectId] = None,
+        alias: Optional[str] = None,
+        source: Optional[str] = None,
     ) -> Any:
         if alias is not None:
             assert link_id is not None
@@ -478,6 +512,10 @@ class LinksClient:
                 match = {"$match": {"link_id": link_id}}
             else:
                 match = {"$match": {"link_id": link_id, "alias": alias}}
+
+            if source:
+                match["$match"]["source"] = source
+
             aggregation.append(match)
         aggregation.append(
             {
@@ -504,9 +542,32 @@ class LinksClient:
         )
         return next(self.db.visits.aggregate(aggregation))
 
-    def get_overall_visits(self, link_id: ObjectId, alias: Optional[str] = None) -> Any:
+    def get_overall_visits(
+        self,
+        link_id: ObjectId,
+        alias: Optional[str] = None,
+        source: Optional[str] = None,
+    ) -> Any:
         if alias is None:
             info = self.get_link_info(link_id)
+
+            if source:
+                filter = {"link_id": link_id, "source": source}
+                total_visits = self.db.visits.count_documents(filter)
+                visits = self.db.visits.aggregate(
+                    [
+                        {"$match": filter},
+                        {"$group": {"_id": "$tracking_id"}},
+                        {"$count": "count"},
+                    ],
+                    allowDiskUse=True,
+                )
+                unique_visits = next(visits, {"count": 0})
+                return {
+                    "total_visits": total_visits,
+                    "unique_visits": unique_visits["count"],
+                }
+
             return {
                 "total_visits": info["visits"],
                 "unique_visits": info.get("unique_visits", 0),
@@ -547,6 +608,7 @@ class LinksClient:
         alias: Optional[str] = None,
         mid: Optional[Union[str, List[str]]] = None,
         uid: Optional[Union[str, List[str]]] = None,
+        source: Optional[str] = None,
     ) -> List[Any]:
         query = {"link_id": link_id}
         if alias is not None:
@@ -561,6 +623,8 @@ class LinksClient:
                 query["uid"] = {"$in": uid}
             else:
                 query["uid"] = uid
+        if source is not None:
+            query["source"] = source
         result = self.db.visits.find(query)
         return list(result)
 
@@ -807,6 +871,7 @@ class LinksClient:
         referer: Optional[str],
         uid: Optional[str] = None,
         mid: Optional[str] = None,
+        source: Optional[str] = None,
     ) -> None:
         """Visits the given URL and logs visit information.
 
@@ -859,8 +924,12 @@ class LinksClient:
         if uid:
             doc["uid"] = uid
 
+        if source:
+            doc["source"] = source
+
         self.db.visits.insert_one(doc)
 
+    @lru_cache(maxsize=2048)
     def get_visitor_id(self, ipaddr: str) -> str:
         """Gets a unique, opaque identifier for an IP address.
 

@@ -1,5 +1,5 @@
 from werkzeug.test import Client
-from util import dev_login, assert_is_response_valid
+from util import dev_login, assert_is_response_valid, setup_guest_user
 from typing import List
 import pytest
 
@@ -68,7 +68,7 @@ def test_restrict_last_admin_demotion(client: Client) -> None:
         assert resp.status_code == 204
 
         resp = client.patch(
-            f"/api/core/org/{org_id}/member/DEV_TEST", json={"is_admin": True}
+            f"/api/core/org/{org_id}/member/DEV_TEST", json={"role": "admin"}
         )
         assert resp.status_code == 204
 
@@ -77,7 +77,7 @@ def test_restrict_last_admin_demotion(client: Client) -> None:
 
         # Attempt to demote the last admin
         resp = client.patch(
-            f"/api/core/org/{org_id}/member/DEV_ADMIN", json={"is_admin": False}
+            f"/api/core/org/{org_id}/member/DEV_ADMIN", json={"role": "member"}
         )
         assert resp.status_code == 400
 
@@ -408,3 +408,49 @@ def test_org_get_overall_stats_no_links(client: Client) -> None:
         assert resp.json["total_links"] == 0
         assert resp.json["total_visits"] == 0
         assert resp.json["total_users"] == 0
+
+
+@pytest.mark.parametrize(
+    ("guest_netid", "expected_status_code"),
+    [
+        ("DEV_GUEST", 204),
+        ("hello", 400),
+    ],
+)
+def test_add_guest_user_to_org(
+    client: Client, guest_netid: str, expected_status_code: int
+) -> None:
+    """Tests adding a guest user to an organization."""
+
+    with dev_login(client, "admin"):
+        resp = client.post("/api/core/org", json={"name": "Test Org"})
+        org_id = resp.json["id"]
+
+        resp = client.put(f"/api/core/org/{org_id}/guest/{guest_netid}")
+        assert resp.status_code == expected_status_code
+
+
+def test_add_guest_to_multiple_org(client: Client) -> None:
+    with dev_login(client, "admin"):
+        resp = client.post("/api/core/org", json={"name": "Test Org"})
+        org_id = resp.json["id"]
+
+        resp = client.put(f"/api/core/org/{org_id}/guest/DEV_GUEST")
+        assert resp.status_code == 204
+
+        resp = client.post("/api/core/org", json={"name": "Test Org 2"})
+        org_id = resp.json["id"]
+        resp = client.put(f"/api/core/org/{org_id}/guest/DEV_GUEST")
+        assert resp.status_code == 400
+
+
+def delete_guest_user_from_org(client: Client) -> None:
+    """Tests deleting a guest user from an organization."""
+
+    org_id = setup_guest_user(client)
+    with dev_login(client, "admin"):
+        resp = client.delete(f"/api/core/org/{org_id}/guest/DEV_GUEST")
+        assert resp.status_code == 204
+        resp = client.get(f"/api/core/org/{org_id}")
+        assert resp.status_code == 200
+        assert "DEV_GUEST" not in [guest["netid"] for guest in resp.json["guests"]]

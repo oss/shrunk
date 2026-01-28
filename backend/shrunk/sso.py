@@ -44,6 +44,7 @@ def login(user_info: Any) -> Any:
     # get info from ACLs
     is_blacklisted = client.roles.has("blacklisted", netid)
     is_whitelisted = client.roles.has("whitelisted", netid)
+    is_guest = client.roles.has("guest", netid)
     is_super_admin = os.getenv("SHRUNK_SUPER_ADMIN") == netid
 
     # now make decisions regarding whether the user can login, and what privs they should get
@@ -65,11 +66,11 @@ def login(user_info: Any) -> Any:
         client.roles.grant("facstaff", "shibboleth", netid)
         client.users.initialize_user(netid)
 
-    if is_whitelisted:
+    if is_whitelisted or is_guest:
         client.users.initialize_user(netid)
 
     # now determine whether to allow login
-    if not (is_super_admin or fac_staff or is_whitelisted):
+    if not (is_super_admin or fac_staff or is_whitelisted or is_guest):
         log_failed("unauthorized")
         abort(403)
 

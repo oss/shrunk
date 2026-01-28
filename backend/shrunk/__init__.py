@@ -17,6 +17,7 @@ from bson import ObjectId
 from flask.json import JSONEncoder
 from flask.logging import default_handler
 from flask_mailman import Mail
+import urllib
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.routing import BaseConverter, ValidationError
 
@@ -25,7 +26,7 @@ from werkzeug.routing import BaseConverter, ValidationError
 from . import api, dev_logins, sso, views
 from .client import ShrunkClient
 from .util.github import pull_outlook_assets_from_github
-from .util.ldap import is_valid_netid, query_position_info
+from .util.ldap import is_university_guest, is_valid_netid, query_position_info
 from .util.string import get_domain, validate_url
 from .util.verification import verify_signature
 
@@ -231,6 +232,15 @@ def _init_roles() -> None:
             "granted_by": "Whitelisted by",
             "allow_comment": True,
             "comment_prompt": "Describe why the user has been granted access to Go.",
+        },
+    )
+
+    client.roles.create(
+        "guest",
+        lambda netid: client.roles.has_some(["admin", "facstaff", "power_user"], netid),
+        is_university_guest,
+        custom_text={
+            "title": "University Guests",
         },
     )
 
@@ -497,8 +507,33 @@ def create_app(**kwargs: Any) -> Flask:
         # Get or generate a tracking id
         tracking_id = request.cookies.get("shrunkid") or client.tracking.get_new_id()
 
-        mid = request.args.get("mid", None)
-        uid = request.args.get("uid", None)
+        q_strings = {}
+        mid = None
+        uid = None
+        source = None
+
+        # Preserve URL parameters from the original request
+        if request.query_string:
+            print("true", request.query_string, flush=True)
+            separator = "&" if "?" in long_url else "?"
+
+            decoded = request.query_string.decode("utf-8").replace("&amp;", "&")
+            q_strings = dict(urllib.parse.parse_qsl(decoded))
+            mid = q_strings.get("mid", None)
+            uid = q_strings.get("uid", None)
+            source = q_strings.get("source", None)
+            q_strings.pop("mid", None)
+            q_strings.pop("uid", None)
+            q_strings.pop("source", None)
+
+            if len(q_strings) == 0:
+                separator = ""
+            long_url = f"{long_url}{separator}{urllib.parse.urlencode(q_strings)}"
+
+        allowed_sources = ["qr"]
+
+        if source not in allowed_sources:
+            source = None
 
         client.links.visit(
             alias,
@@ -508,15 +543,11 @@ def create_app(**kwargs: Any) -> Flask:
             request.headers.get("Referer"),
             uid,
             mid,
+            source,
         )
 
         if "://" not in long_url:
             long_url = f"http://{long_url}"
-
-        # Preserve URL parameters from the original request
-        if request.query_string:
-            separator = "&" if "?" in long_url else "?"
-            long_url = f"{long_url}{separator}{request.query_string.decode('utf-8')}"
 
         response = redirect(long_url)
 

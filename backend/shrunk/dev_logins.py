@@ -36,6 +36,13 @@ bp.add_url_rule(
 )
 
 bp.add_url_rule(
+    "/guest",
+    "guest",
+    mk_dev_login("DEV_GUEST", "Dev Guest", "guest"),
+    methods=["POST"],
+)
+
+bp.add_url_rule(
     "/whitelisted",
     "whitelisted",
     mk_dev_login("DEV_WHITELISTED", "Dev Whitelisted", "whitelisted"),

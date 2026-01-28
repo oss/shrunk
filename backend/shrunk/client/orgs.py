@@ -55,32 +55,50 @@ class OrgsClient:
         aggregation: List[Any] = []
         if only_member_orgs:
             aggregation.append(
-                {"$match": {"$and": [{"members.netid": netid}, {"deleted": False}]}}
+                {
+                    "$match": {
+                        "$or": [
+                            {"guests.netid": netid},
+                            {"$and": [{"members.netid": netid}, {"deleted": False}]},
+                        ]
+                    }
+                }
             )
         aggregation += [
             {
                 "$addFields": {
-                    "matching_admins": {
-                        "$filter": {
-                            "input": "$members",
-                            "cond": {
-                                "$and": [
-                                    {"$eq": ["$$this.netid", netid]},
-                                    {"$eq": ["$$this.is_admin", True]},
-                                ]
+                    "member": {
+                        "$arrayElemAt": [
+                            {
+                                "$filter": {
+                                    "input": "$members",
+                                    "as": "member",
+                                    "cond": {"$eq": ["$$member.netid", netid]},
+                                }
                             },
-                        },
-                    },
+                            0,
+                        ]
+                    }
                 },
             },
             {
                 "$addFields": {
                     "id": "$_id",
-                    "is_member": {"$in": [netid, "$members.netid"]},
-                    "is_admin": {"$ne": [0, {"$size": "$matching_admins"}]},
+                    "role": {
+                        "$cond": {
+                            "if": {"$ne": ["$member", None]},
+                            "then": "$member.role",
+                            "else": None,
+                        }
+                    },
                 },
             },
-            {"$project": {"_id": 0, "matching_admins": 0}},
+            {
+                "$project": {
+                    "_id": 0,
+                    "member": 0,
+                },
+            },
         ]
         return list(self.db.organizations.aggregate(aggregation))
 
@@ -97,6 +115,7 @@ class OrgsClient:
                     "name": org_name,
                     "timeCreated": datetime.now(timezone.utc),
                     "members": [],
+                    "guests": [],
                     "domains": [],
                     "deleted": False,
                 }
@@ -169,6 +188,15 @@ class OrgsClient:
                 }
             },
         )
+
+        for member in self.db.organizations.find_one({"_id": org_id})["members"]:
+            if member["role"] == "guest":
+                self.db.grants.delete_many({"entity": member["netid"]})
+                self.db.organizations.update_one(
+                    {"_id": org_id},
+                    {"$pull": {"members": {"netid": member["netid"]}}},
+                )
+
         result = self.db.organizations.update_one(
             {"_id": org_id, "deleted": False},
             {
@@ -203,7 +231,7 @@ class OrgsClient:
             [
                 {"$match": {"_id": org_id}},
                 {"$unwind": "$members"},
-                {"$match": {"members.is_admin": True}},
+                {"$match": {"members.role": "admin"}},
                 {"$count": "admin_count"},
             ]
         )
@@ -211,9 +239,7 @@ class OrgsClient:
         admin_count = next(result, {"admin_count": 0}).get("admin_count", 0)
         return admin_count
 
-    def create_member(
-        self, org_id: ObjectId, netid: str, is_admin: bool = False
-    ) -> bool:
+    def create_member(self, org_id: ObjectId, netid: str, role: str = "member") -> bool:
         match = {
             "_id": org_id,
             "members": {"$not": {"$elemMatch": {"netid": netid}}},
@@ -223,7 +249,7 @@ class OrgsClient:
             "$addToSet": {
                 "members": {
                     "netid": netid,
-                    "is_admin": is_admin,
+                    "role": role,
                     "timeCreated": datetime.now(timezone.utc),
                 },
             },
@@ -233,22 +259,31 @@ class OrgsClient:
         return cast(int, result.modified_count) == 1
 
     def delete_member(self, org_id: ObjectId, netid: str) -> bool:
-        result = self.db.organizations.update_one(
-            {"_id": org_id}, {"$pull": {"members": {"netid": netid}}}
-        )
-        return cast(int, result.modified_count) == 1
-
-    def set_member_admin(self, org_id: ObjectId, netid: str, is_admin: bool) -> bool:
+        if self.is_guest(org_id, netid):  # remove access to guest
+            self.db.grants.delete_many({"entity": netid})
         result = self.db.organizations.update_one(
             {"_id": org_id},
-            {"$set": {"members.$[elem].is_admin": is_admin}},
+            {"$pull": {"members": {"netid": netid}}},
+        )
+
+        return cast(int, result.modified_count) == 1
+
+    def set_member_role(self, org_id: ObjectId, netid: str, role: str) -> bool:
+        result = self.db.organizations.update_one(
+            {"_id": org_id},
+            {"$set": {"members.$[elem].role": role}},
             array_filters=[{"elem.netid": netid}],
         )
         return cast(int, result.modified_count) == 1
 
     def is_member(self, org_id: ObjectId, netid: str) -> bool:
         return (
-            self.db.organizations.find_one({"_id": org_id, "members.netid": netid})
+            self.db.organizations.find_one(
+                {
+                    "_id": org_id,
+                    "members": {"$elemMatch": {"netid": netid}},
+                }
+            )
             is not None
         )
 
@@ -257,7 +292,16 @@ class OrgsClient:
         if result is None:
             return False
         for member in result["members"]:
-            if member["netid"] == netid and member["is_admin"]:
+            if member["netid"] == netid and member["role"] == "admin":
+                return True
+        return False
+
+    def is_guest(self, org_id: ObjectId, netid: str) -> bool:
+        result = self.db.organizations.find_one({"_id": org_id, "members.netid": netid})
+        if result is None:
+            return False
+        for member in result["members"]:
+            if member["netid"] == netid and member["role"] == "guest":
                 return True
         return False
 

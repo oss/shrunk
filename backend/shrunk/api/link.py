@@ -3,11 +3,13 @@
 from datetime import datetime, timedelta
 from typing import Any, Optional, Dict
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, Response
 from flask_mailman import Mail
 from bson import ObjectId
 import bson
 import os
+import csv
+from io import StringIO
 from werkzeug.exceptions import abort
 
 from shrunk.client import ShrunkClient
@@ -122,6 +124,10 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
         expiration_time = None
 
     owner = {}
+
+    if client.roles.has("guest", netid):  # force org link ownership for guest
+        org = client.orgs.get_orgs(netid, True)[0]
+        req["org_id"] = str(org["id"])
 
     if "org_id" in req:
         try:
@@ -308,6 +314,8 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
             abort(400)
         if client.links.alias_is_reserved(req["alias"]):
             abort(400)
+        if client.roles.has_some(["admin", "power_user"], netid) == False:
+            abort(403)
 
     if "owner" in req:
         if not client.links.is_owner(link_id, netid) and not client.roles.has(
@@ -315,7 +323,9 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
         ):
             abort(403)
         if req["owner"]["type"] == "netid":
-            if not is_valid_netid(req["owner"]["_id"]):
+            if not is_valid_netid(req["owner"]["_id"]) or client.roles.has(
+                "guest", req["owner"]["_id"]
+            ):
                 abort(400)
         elif req["owner"]["type"] == "org":
             if not client.orgs.get_org(ObjectId(req["owner"]["_id"])):
@@ -517,12 +527,13 @@ def anonymize_visit(client: ShrunkClient, visit: Any) -> Any:
     :param client:
     :param visit:
     """
-    return {
+
+    visit_anonymized = {
         "link_id": visit["link_id"],
         "alias": visit["alias"],
         "visitor_id": client.links.get_visitor_id(visit["source_ip"]),
         "user_agent": visit.get("user_agent", "Unknown"),
-        "referer": get_human_readable_referer_domain(visit),
+        "referer": get_human_readable_referer_domain(visit.get("referer", "Unknown")),
         "state_code": (
             visit.get("state_code", "Unknown")
             if visit.get("country_code") == "US"
@@ -531,6 +542,13 @@ def anonymize_visit(client: ShrunkClient, visit: Any) -> Any:
         "country_code": visit.get("country_code", "Unknown"),
         "time": visit["time"],
     }
+
+    if "mid" in visit:
+        visit_anonymized["mid"] = visit["mid"]
+    if "uid" in visit:
+        visit_anonymized["uid"] = visit["uid"]
+
+    return visit_anonymized
 
 
 @bp.route("/<ObjectId:link_id>/visits", methods=["GET"])
@@ -563,8 +581,55 @@ def get_link_visits(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
 
         abort(403)
     visits = client.links.get_visits(link_id)
-    anonymized_visits = [anonymize_visit(client, visit) for visit in visits]
-    return jsonify({"visits": anonymized_visits})
+
+    def generate():
+        output = StringIO()
+        writer = csv.writer(output)
+        writer.writerow(
+            [
+                "link_id",
+                "alias",
+                "visitor_id",
+                "mid",
+                "uid",
+                "user_agent",
+                "referer",
+                "state_code",
+                "country_code",
+                "time",
+            ]
+        )
+        yield output.getvalue()
+        output.seek(0)
+        output.truncate(0)
+
+        for visit in visits:
+            anon_visit = anonymize_visit(client, visit)
+            writer.writerow(
+                [
+                    anon_visit["link_id"],
+                    anon_visit["alias"],
+                    anon_visit.get("visitor_id", ""),
+                    anon_visit.get("mid", ""),
+                    anon_visit.get("uid", ""),
+                    anon_visit["user_agent"],
+                    anon_visit["referer"],
+                    anon_visit["state_code"],
+                    anon_visit["country_code"],
+                    anon_visit["time"].isoformat(),
+                ]
+            )
+            yield output.getvalue()
+            output.seek(0)
+            output.truncate(0)
+
+    return Response(
+        generate(),
+        headers={
+            "content-disposition": f"attachment; filename={link_id}.csv",
+            "Content-Type": "text/csv",
+        },
+    )
 
 
 @bp.route("/<ObjectId:link_id>/stats", methods=["GET"])
@@ -586,7 +651,10 @@ def get_link_overall_stats(netid: str, client: ShrunkClient, link_id: ObjectId) 
         link_id, netid
     ):
         abort(403)
-    stats = client.links.get_overall_visits(link_id)
+
+    source = request.args.get("source")
+
+    stats = client.links.get_overall_visits(link_id, None, source)
     return jsonify(stats)
 
 
@@ -639,7 +707,11 @@ def get_link_visit_stats(netid: str, client: ShrunkClient, link_id: ObjectId) ->
     if start_date > end_date:
         return jsonify({"error": "start_date must be before end_date"})
 
-    visits = client.links.get_daily_visits(link_id, date_range=(start_date, end_date))
+    source = request.args.get("source")
+
+    visits = client.links.get_daily_visits(
+        link_id, date_range=(start_date, end_date), source=source
+    )
     return jsonify({"visits": visits})
 
 
@@ -668,7 +740,10 @@ def get_link_geoip_stats(netid: str, client: ShrunkClient, link_id: ObjectId) ->
         link_id, netid
     ):
         abort(403)
-    geoip = client.links.get_geoip_stats(link_id)
+
+    source = request.args.get("source")
+
+    geoip = client.links.get_geoip_stats(link_id, source=source)
     return jsonify(geoip)
 
 
@@ -695,7 +770,10 @@ def get_link_browser_stats(netid: str, client: ShrunkClient, link_id: ObjectId) 
         link_id, netid
     ):
         abort(403)
-    visits = client.links.get_visits(link_id)
+
+    source = request.args.get("source")
+
+    visits = client.links.get_visits(link_id, source=source)
     stats = browser_stats_from_visits(visits)
     return jsonify(stats)
 

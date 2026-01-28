@@ -2,11 +2,12 @@ import time
 import base64
 from datetime import datetime, timezone, timedelta
 import random
+import csv
 
 import pytest
 from werkzeug.test import Client
 
-from util import dev_login, create_link
+from util import dev_login, create_link, setup_guest_user
 
 
 @pytest.fixture
@@ -558,9 +559,15 @@ def test_visits(client: Client) -> None:  # pylint: disable=too-many-statements
         # Get the anonymized visits, make sure they make sense
         resp = client.get(f"/api/core/link/{link_id}/visits")
         assert resp.status_code == 200
-        assert all(visit["link_id"] == link_id for visit in resp.json["visits"])
-        assert len(resp.json["visits"]) == 3
-        assert sum(1 for visit in resp.json["visits"] if visit["alias"] == alias0) == 3
+        assert resp.content_type == "text/csv"
+
+        csv_data = resp.data.decode("utf-8")
+
+        csv_reader = csv.DictReader(csv_data.splitlines())
+        rows = list(csv_reader)
+        assert len(rows) == 3
+        assert all(row["link_id"] == link_id for row in rows)
+        assert all(row["alias"] == alias0 for row in rows)
 
         # Get the visit stats data
         resp = client.get(f"/api/core/link/{link_id}/stats/visits")
@@ -1089,3 +1096,79 @@ def test_owner_transfer(client: Client) -> None:
             json={"owner": {"_id": org2_id, "type": "org"}},
         )
         assert resp.status_code == 403
+
+
+def test_create_link_as_guest(client: Client) -> None:
+    """Test that a guest link is automatically owned by the guest user's org."""
+
+    org_id = setup_guest_user(client)
+    with dev_login(client, "guest"):
+        resp = client.post(
+            "/api/core/link",
+            json={
+                "title": "title",
+                "long_url": "https://example.com",
+            },
+        )
+
+        assert resp.status_code == 201
+
+        link_id = resp.json["id"]
+        resp = client.get(f"/api/core/link/{link_id}")
+        assert resp.status_code == 200
+        assert resp.json["owner"]["_id"] == org_id
+        assert resp.json["owner"]["type"] == "org"
+
+
+def attempt_to_transfer_link_ownership_guest(client: Client) -> int:
+    setup_guest_user(client)
+    with dev_login(client, "guest"):
+        resp = client.post(
+            "/api/core/link",
+            json={
+                "title": "title",
+                "long_url": "https://example.com",
+            },
+        )
+        assert resp.status_code == 201
+        link_id = resp.json["id"]
+        resp = client.patch(
+            f"/api/core/link/{link_id}",
+            json={"owner": {"_id": "DEV_GUEST", "type": "netid"}},
+        )
+
+        assert resp.status_code == 403
+
+
+@pytest.mark.parametrize(
+    ("query", "expected"),
+    [
+        ("?param1=value1", "https://example.com?param1=value1"),
+        (
+            "?param1=value1&param2=value2",
+            "https://example.com?param1=value1&param2=value2",
+        ),
+        ("", "https://example.com"),
+        ("?mid=1&uid=2", "https://example.com"),
+        ("?uid=1&amp;hello=123", "https://example.com?hello=123"),
+        ("?mid=12345", "https://example.com"),
+    ],
+)
+def test_link_redirect_query_params(client: Client, query: str, expected: str) -> None:
+    """Test that query parameters are preserved during link redirection."""
+
+    with dev_login(client, "admin"):
+        resp = client.post(
+            "/api/core/link",
+            json={
+                "title": "title",
+                "long_url": "https://example.com",
+            },
+        )
+        assert resp.status_code == 201
+        alias = resp.json["alias"]
+
+    resp = client.get(f"/{alias}{query}")
+    assert resp.status_code == 302
+    redirected_url = resp.headers["Location"]
+    assert redirected_url == expected

@@ -31,6 +31,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 
 import {
+  addGuestToOrganization,
   addMemberToOrganization,
   deleteOrganization,
   getOrganization,
@@ -101,12 +102,15 @@ function ManageOrgBase({
 
   const refreshOrganization = async () => {
     const info = await getOrganization(match.params.id);
-    if (info.is_admin || userPrivileges.has('admin')) {
+    if (info.role === 'admin' || userPrivileges.has('admin')) {
       const visitData = await getOrganizationVisits(match.params.id);
       setVisitStats(visitData.visits);
     }
 
-    const adminCount = info.members.filter((member) => member.is_admin).length;
+    const adminCount = info.members.filter(
+      (member) => member.role === 'admin',
+    ).length;
+
     setOrganization(info);
     setAdminsCount(adminCount);
   };
@@ -115,10 +119,14 @@ function ManageOrgBase({
     refreshOrganization();
   }, [match.params.id]);
 
-  const onAddMember = async (netid: string, isAdmin: boolean) => {
-    await addMemberToOrganization(match.params.id, netid);
-    if (isAdmin) {
-      await setAdminStatusOrganization(match.params.id, netid, isAdmin);
+  const onAddMember = async (netid: string, role: string) => {
+    if (role === 'guest') {
+      await addGuestToOrganization(match.params.id, netid);
+    } else if (role === 'member') {
+      await addMemberToOrganization(match.params.id, netid);
+    }
+    if (role === 'admin') {
+      await setAdminStatusOrganization(match.params.id, netid, 'admin');
     }
     await refreshOrganization();
   };
@@ -128,8 +136,8 @@ function ManageOrgBase({
     await refreshOrganization();
   };
 
-  const onChangeAdmin = async (netid: string, admin: boolean) => {
-    await setAdminStatusOrganization(match.params.id, netid, admin);
+  const onChangeAdmin = async (netid: string, role: string) => {
+    await setAdminStatusOrganization(match.params.id, netid, role);
     await refreshOrganization();
   };
 
@@ -164,8 +172,8 @@ function ManageOrgBase({
     return <Spin size="large" />;
   }
 
-  const isAdmin = organization.is_admin || userPrivileges.has('admin');
-  const userMayNotLeave = organization.is_admin && adminsCount === 1;
+  const isAdmin = organization.role === 'admin' || userPrivileges.has('admin');
+  const userMayNotLeave = organization.role === 'admin' && adminsCount === 1;
 
   const columns = [
     {
@@ -196,7 +204,11 @@ function ManageOrgBase({
       key: 'role',
       render: (record: OrganizationMember) => (
         <Typography.Text>
-          {record.is_admin ? 'Admin' : 'Member'}
+          {record.role === 'admin'
+            ? 'Admin'
+            : record.role === 'guest'
+            ? 'Guest'
+            : 'Member'}
         </Typography.Text>
       ),
       width: '10%',
@@ -230,7 +242,7 @@ function ManageOrgBase({
         <Table
           dataSource={organization.members}
           columns={columns.filter((col, index) =>
-            organization.is_admin ? true : index !== 1 && index !== 2,
+            organization.role === 'admin' ? true : index !== 1 && index !== 2,
           )}
           rowKey="netid"
           pagination={false}
@@ -245,7 +257,7 @@ function ManageOrgBase({
         <CompactLinkTable
           org_id={organization.id}
           forceRefresh={forceRefresh}
-          isAdmin={organization.is_admin}
+          isAdmin={organization.role === 'admin' || userPrivileges.has('admin')}
         />
       ),
     },
@@ -260,12 +272,14 @@ function ManageOrgBase({
         <Col>
           <Space>
             {isAdmin && (
-              <Button
-                icon={<UsersIcon />}
-                onClick={() => setShareModalVisible(true)}
-              >
-                Collaborate
-              </Button>
+              <>
+                <Button
+                  icon={<UsersIcon />}
+                  onClick={() => setShareModalVisible(true)}
+                >
+                  Collaborate
+                </Button>
+              </>
             )}
             <Button
               type="primary"
@@ -301,7 +315,7 @@ function ManageOrgBase({
                     key: 'leave_organization',
                     label: 'Leave',
                     icon: <UserMinusIcon />,
-                    disabled: userMayNotLeave && organization.is_member,
+                    disabled: userMayNotLeave && organization.role === 'member',
                     onClick: onLeaveOrg,
                     danger: true,
                   },
@@ -413,14 +427,15 @@ function ManageOrgBase({
         roles={[
           { label: 'Admin', value: 'admin' },
           { label: 'Member', value: 'member' },
+          { label: 'Guest', value: 'guest' },
         ]}
         people={organization.members.map((member) => ({
           _id: member.netid,
           type: 'netid',
-          role: member.is_admin ? 'admin' : 'member',
+          role: member.role,
         }))}
         onAddEntity={(_activeTab: 'netid' | 'org', value: Collaborator) => {
-          onAddMember(value._id, value.role === 'admin');
+          onAddMember(value._id, value.role!);
         }}
         onRemoveEntity={(_activeTab: 'netid' | 'org', value: Collaborator) => {
           onDeleteMember(value._id);
@@ -430,7 +445,7 @@ function ManageOrgBase({
           value: Collaborator,
           newRole: string,
         ) => {
-          onChangeAdmin(value._id, newRole === 'admin');
+          onChangeAdmin(value._id, newRole);
         }}
         onCancel={() => setShareModalVisible(false)}
         onOk={() => setShareModalVisible(false)}

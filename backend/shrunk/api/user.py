@@ -105,6 +105,8 @@ def get_user_info():
         privileges.append("facstaff")
     if client.roles.has("power_user", netid):
         privileges.append("power_user")
+    if client.roles.has("guest", netid):
+        privileges.append("guest")
     if client.roles.has("whitelisted", netid):
         privileges.append("whitelisted")
 

@@ -2,6 +2,52 @@
   {
     "major": 3,
     "minor": 1,
+    "patch": 3,
+    "projectDirector": "ah1371",
+    "date": "11-07-2025",
+    "description": "Guest User access and small improvements to the public API",
+    "categories": {
+      "features": [
+        {
+          "text": "Organizations can now add guest users to their organizations. Guest users must be classified as university guests, all links created by guests will be owned by the organization they are apart of.",
+          "contributors": ["ak2399"]
+        },
+        {
+          "text": "Link analytics now supports filtering by QR Code traffic source",
+          "contributors": ["ys973"]
+        }
+      ],
+      "improvements": [
+         {
+          "text": "Update response payload for create link endpoint to include the newly generated link",
+          "contributors": ["ys973"],
+          "product": "public-api"
+        },
+        {
+          "text": "Add option to return an existing link for the same long URL when creating a new link",
+          "contributors": ["ys973"],
+          "product": "public-api"
+        },
+        {
+          "text": "CSV generation moved to server side for better performance on large links.",
+          "contributors": ["ak2399"]
+        }
+      ],
+      "fixes": [
+        {
+          "text": "Fix bug to parse mid and uid correctly",
+          "contributors": ["ak2399"]
+        },
+        {
+          "text": "Fix calculation of top most referrer",
+          "contributors": ["ak2399"]
+        }
+      ]
+    }
+  },
+  {
+    "major": 3,
+    "minor": 1,
     "patch": 2,
     "projectDirector": "ah1371",
     "date": "10-06-2025",

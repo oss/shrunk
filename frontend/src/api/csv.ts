@@ -1,35 +1,15 @@
 import { createObjectCsvStringifier } from 'csv-writer';
 import { doDownload } from '../lib/utils';
-import { GrantedUser, AnonymizedVisit } from '../interfaces/stats';
+import { GrantedUser } from '../interfaces/stats';
 
-function createVisitsCsv(visits: AnonymizedVisit[]): string {
-  const csvStringifier = createObjectCsvStringifier({
-    header: [
-      { id: 'link_id', title: 'Link ID' },
-      { id: 'alias', title: 'Alias' },
-      { id: 'visitor_id', title: 'IP Address ID' },
-      { id: 'user_agent', title: 'User Agent' },
-      { id: 'referer', title: 'Referrer' },
-      { id: 'state_code', title: 'State' },
-      { id: 'country_code', title: 'Country' },
-      { id: 'time', title: 'Time' },
-    ],
-  });
-
-  return (
-    csvStringifier.getHeaderString() + csvStringifier.stringifyRecords(visits)
-  );
-}
-
-export async function downloadVisits(link_id: string): Promise<void> {
-  const apiUrl = `/api/core/link/${link_id}/visits`;
-  const visits = await fetch(apiUrl)
-    .then((resp) => resp.json())
-    .then((json) => json.visits as AnonymizedVisit[]);
-
-  const filename = `${link_id}.csv`;
-  const csvString = createVisitsCsv(visits);
-  doDownload(filename, csvString);
+export function downloadVisits(link_id: string): void {
+  const url = `/api/core/link/${link_id}/visits`;
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${link_id}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
 }
 
 /**
