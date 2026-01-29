@@ -2,6 +2,24 @@
   {
     "major": 3,
     "minor": 1,
+    "patch": 4,
+    "projectDirector": "ah1371",
+    "date": "01-29-2026",
+    "description": "Bug fixes and improvements",
+    "categories": {
+      "features": [],
+      "improvements": [],
+      "fixes": [
+        {
+          "text": "Fix admin user search pagination issue",
+          "contributors": ["sb2789"]
+        }
+      ]
+    }
+  },
+  {
+    "major": 3,
+    "minor": 1,
     "patch": 3,
     "projectDirector": "ah1371",
     "date": "11-07-2025",
