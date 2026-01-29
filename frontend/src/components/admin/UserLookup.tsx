@@ -191,7 +191,6 @@ const UserLookup: React.FC = () => {
   const { users, loading: usersLoading, rehydrateUsers } = useUsers();
   const [filteredData, setFilteredData] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
-  const [pageSize, setPageSize] = useState(1);
 
   const { search } = useFuzzySearch(users, {
     keys: ['netid', 'organizations', 'roles'],
@@ -327,9 +326,6 @@ const UserLookup: React.FC = () => {
     filters,
     sorter,
   ) => {
-    if (pagination.pageSize) {
-      setPageSize(pagination.pageSize);
-    }
     let newData = [...users];
 
     Object.keys(filters).forEach((key) => {
@@ -450,10 +446,7 @@ const UserLookup: React.FC = () => {
         columns={columns}
         dataSource={filteredData}
         rowKey="netid"
-        pagination={{
-          position: ['bottomCenter'],
-          pageSize,
-        }}
+        pagination={{ position: ['bottomCenter'], pageSize: 10 }}
         scroll={{ x: 'max-content' }}
         onChange={handleTableChange}
       />
