@@ -12,27 +12,20 @@ services:
       - mongodb0
       - mongodb1
       - mongodb2
-      - httpd
+      - frontend
     networks:
       - mongo-net
       - proxy-net
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      target: dev
     volumes:
       - ./development.env:/usr/shrunk/frontend/.env
       - ./frontend:/usr/shrunk/frontend
     env_file:
       - ./development.env
-    depends_on:
-      - httpd
-    networks:
-      - proxy-net
-
-  httpd:
-    image: httpd:2.4
-    stdin_open: true
-    tty: true
     ports:
       - "4343:4343"
     volumes:
