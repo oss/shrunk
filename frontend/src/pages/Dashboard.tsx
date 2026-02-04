@@ -1,22 +1,25 @@
 /* eslint-disable react/no-unused-state */
-import React, { useState, useEffect } from 'react';
-
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Flex, Layout, Space, Affix, Tooltip, Tree } from 'antd';
 import {
   Button,
   Col,
-  Drawer,
   Empty,
   Form,
   Pagination,
   Radio,
   RadioChangeEvent,
-  Row,
   Select,
-  Space,
   Typography,
 } from 'antd/lib';
 import dayjs, { Dayjs } from 'dayjs';
-import { FilterIcon, PlusCircleIcon } from 'lucide-react';
+import {
+  PlusIcon,
+  PlusCircleIcon,
+  ArrowUpAZIcon,
+  ArrowDownAZIcon,
+} from 'lucide-react';
+import type { TreeDataNode, TreeProps } from 'antd';
 import { searchLinks, updateUserFilterOptions } from '../api/links';
 import { getOrganizations } from '../api/organization';
 import { serverValidateNetId } from '../api/validators';
@@ -27,18 +30,22 @@ import { Link, SearchQuery, SearchSet } from '../interfaces/link';
 import { Organization } from '../interfaces/organizations';
 import LinkCard from '../components/LinkCard';
 
+interface DataNode {
+  title: string;
+  key: string;
+  value?: string;
+}
+
 interface Props {
   userPrivileges: Set<string>;
-  // eslint-disable-next-line react/no-unused-prop-types
   mockData?: Link[];
-  // eslint-disable-next-line react/no-unused-prop-types
   filterOptions?: SearchQuery;
   demo?: boolean;
 }
 
 const DEFAULT_QUERY: SearchQuery = {
   queryString: '',
-  set: { set: 'user' },
+  set: [{ set: 'user' }],
   show_expired_links: false,
   show_deleted_links: false,
   sort: { key: 'relevance', order: 'descending' },
@@ -48,15 +55,37 @@ const DEFAULT_QUERY: SearchQuery = {
   owner: null,
 };
 
+const findByValue = (
+  nodes: (TreeDataNode & { value?: string })[],
+  value: string,
+): (TreeDataNode & { value?: string }) | undefined => {
+  const directMatch = nodes.find((node) => node.value === value);
+  if (directMatch) {
+    return directMatch;
+  }
+
+  return nodes.reduce<(TreeDataNode & { value?: string }) | undefined>(
+    (found, node) => {
+      if (found) return found;
+      return node.children ? findByValue(node.children, value) : undefined;
+    },
+    undefined,
+  );
+};
+
+const getValueFromSearchSet = (search: SearchSet): string => {
+  if (search.set === 'org') {
+    return `org_${search.org}`;
+  }
+  return search.set;
+};
+
 export default function Dashboard({
   userPrivileges,
   mockData,
   filterOptions,
   demo,
 }: Props) {
-  const [prevFilterOptions, setPrevFilterOptions] = useState<
-    SearchQuery | undefined
-  >(filterOptions);
   const [userOrgs, setUserOrgs] = useState<Organization[] | null>(null);
   const [linkInfo, setLinkInfo] = useState<Link[] | null>(
     mockData === undefined ? null : mockData,
@@ -65,10 +94,15 @@ export default function Dashboard({
   const [query, setQuery] = useState<SearchQuery>(
     filterOptions ?? DEFAULT_QUERY,
   );
+
+  const [searchInput, setSearchInput] = useState<string>(
+    filterOptions?.queryString ?? '',
+  );
+
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalLinks, setTotalLinks] = useState<number>(0);
   const [isCreateModalOpen, setCreateModalOpen] = useState<boolean>(false);
-  const [filterModalVisible, setFilterModalVisible] = useState<boolean>(false);
+  const [isVisible, setIsVisible] = useState<boolean>(false);
   const [showExpired, setShowExpired] = useState<boolean>(
     filterOptions === undefined ? false : filterOptions.show_expired_links,
   );
@@ -76,157 +110,258 @@ export default function Dashboard({
     filterOptions === undefined ? false : filterOptions.show_deleted_links,
   );
   const [sortKey, setSortKey] = useState<string>('relevance');
+  const [sortOrder, setSortOrder] = useState<'ascending' | 'descending'>(
+    'descending',
+  );
   const [beginTime, setBeginTime] = useState<dayjs.Dayjs | null>(null);
   const [endTime, setEndTime] = useState<dayjs.Dayjs | null>(null);
 
-  const doQuery = async (
-    newQuery: SearchQuery,
-    skip: number,
-    limit: number,
-  ): Promise<{ count: number; results: Link[] }> => {
-    const req: any = {
-      query: newQuery.queryString,
-      set: newQuery.set,
-      show_expired_links: newQuery.show_expired_links,
-      show_deleted_links: newQuery.show_deleted_links,
-      sort: newQuery.sort,
-      pagination: { skip, limit },
-      show_type: newQuery.showType,
-    };
+  const [checkedKeys, setCheckedKeys] = useState<React.Key[]>();
+  const [expandedKeys, setExpandedKeys] = useState<React.Key[]>();
 
-    if (newQuery.begin_time !== null) {
-      req.begin_time = newQuery.begin_time.format();
-    }
+  const componentRef = useRef(null);
 
-    if (newQuery.end_time !== null) {
-      req.end_time = newQuery.end_time.format();
-    }
+  const { Header, Footer, Sider, Content } = Layout;
 
-    if (newQuery.owner !== null || newQuery.owner === '') {
-      req.owner = newQuery.owner;
-    }
+  const treeData: (TreeDataNode & { value?: string })[] = [
+    {
+      title: 'My Links',
+      key: '0-0',
+      value: 'user',
+    },
+    {
+      title: 'Shared with Me',
+      key: '0-1',
+      value: 'shared',
+    },
+    ...(userOrgs?.length === 0 || userOrgs === null
+      ? [
+          {
+            title: 'Organization Links',
+            key: '0-2',
+            disabled: true,
+          },
+        ]
+      : [
+          {
+            title: 'Organization Links',
+            key: '0-2',
+            children:
+              userOrgs?.map(
+                (organization: Organization, idx: number): DataNode => ({
+                  title: organization.name,
+                  key: `0-2-${idx}`,
+                  value: `org_${organization.id}`,
+                }),
+              ) ?? [],
+          },
+        ]),
+    ...(userPrivileges.has('admin')
+      ? [
+          {
+            title: 'All Links',
+            key: '0-3',
+            value: 'all',
+          },
+        ]
+      : []),
+  ];
 
-    const result = await searchLinks(req);
-    return {
-      count: result.count,
-      results: result.results.map(
-        (output: any) =>
-          ({
-            ...output,
+  const doQuery = useCallback(
+    async (
+      newQuery: SearchQuery,
+      skip: number,
+      limit: number,
+    ): Promise<{ count: number; results: Link[] }> => {
+      const req: any = {
+        query: newQuery.queryString,
+        set: newQuery.set,
+        show_expired_links: newQuery.show_expired_links,
+        show_deleted_links: newQuery.show_deleted_links,
+        sort: newQuery.sort,
+        pagination: { skip, limit },
+        show_type: newQuery.showType,
+      };
 
-            created_time: new Date(output.created_time),
-            expiration_time: !output.expiration_time
-              ? null
-              : new Date(output.expiration_time),
-            deletion_info: !output.deletion_info
-              ? null
-              : {
-                  deleted_by: output.deletion_info.deleted_by,
-                  deleted_time: new Date(output.deletion_info.deleted_time),
-                },
-          } as Link),
-      ),
-    };
-  };
-  const setNewQuery = async (newQuery: SearchQuery): Promise<void> => {
-    if (demo) {
-      return;
-    }
-
-    // only search for new owners if the netid is valid
-    // if (newQuery.owner && newQuery.owner !== query.owner) {
-    //   try {
-    //     await serverValidateNetId({}, newQuery.owner);
-    //   } catch (err) {
-    //     return;
-    //   }
-    // }
-
-    const results = await doQuery(newQuery, 0, linksPerPage);
-
-    await updateUserFilterOptions(newQuery);
-
-    setLinkInfo(results.results);
-    setQuery(newQuery);
-    setCurrentPage(1);
-    setTotalLinks(results.count);
-  };
-
-  const setPage = async (newPage: number): Promise<void> => {
-    if (demo) {
-      setCurrentPage(newPage);
-      return;
-    }
-
-    if (query === null) {
-      throw new Error('attempted to set page with this.state.query === null');
-    }
-
-    const skip = (newPage - 1) * linksPerPage;
-    const results = await doQuery(query, skip, linksPerPage);
-
-    setLinkInfo(results.results);
-    setCurrentPage(newPage);
-    setTotalLinks(results.count);
-  };
-
-  const showByOrg = (orgs: SearchSet) => {
-    const newQuery = { ...query, set: orgs };
-    setNewQuery(newQuery);
-  };
-  const updateOrg = async (value: string): Promise<void> => {
-    setTimeout(() => {
-      if (value.startsWith('org_')) {
-        const orgId = value.slice(4);
-        showByOrg({ set: 'org', org: orgId });
-      } else {
-        showByOrg({ set: value as 'user' | 'shared' | 'all' });
+      if (newQuery.begin_time !== null) {
+        req.begin_time = newQuery.begin_time.format();
       }
-    }, 300);
-  };
 
-  const showLinksInRange = (
-    dates: [Dayjs | null, Dayjs | null] | null,
-    _: [string, string],
-  ) => {
-    const newQuery = {
-      ...query,
-      begin_time: dates?.[0] ?? null,
-      end_time: dates?.[1] ?? null,
-    };
+      if (newQuery.end_time !== null) {
+        req.end_time = newQuery.end_time.format();
+      }
+
+      if (newQuery.owner !== null || newQuery.owner === '') {
+        req.owner = newQuery.owner;
+      }
+
+      const result = await searchLinks(req);
+      return {
+        count: result.count,
+        results: result.results.map(
+          (output: any) =>
+            ({
+              ...output,
+
+              created_time: new Date(output.created_time),
+              expiration_time: !output.expiration_time
+                ? null
+                : new Date(output.expiration_time),
+              deletion_info: !output.deletion_info
+                ? null
+                : {
+                    deleted_by: output.deletion_info.deleted_by,
+                    deleted_time: new Date(output.deletion_info.deleted_time),
+                  },
+            } as Link),
+        ),
+      };
+    },
+    [],
+  );
+
+  const setNewQuery = useCallback(
+    async (newQuery: SearchQuery): Promise<void> => {
+      if (demo) {
+        return;
+      }
+
+      // only search for new owners if the netid is valid
+      if (newQuery.owner && newQuery.owner !== query.owner) {
+        try {
+          await serverValidateNetId({}, newQuery.owner);
+        } catch (err) {
+          return;
+        }
+      }
+
+      const results = await doQuery(newQuery, 0, linksPerPage);
+
+      await updateUserFilterOptions(newQuery);
+
+      setLinkInfo(results.results);
+      setQuery(newQuery);
+      setCurrentPage(1);
+      setTotalLinks(results.count);
+    },
+    [demo, query.owner, doQuery, linksPerPage],
+  );
+
+  const setPage = useCallback(
+    async (newPage: number): Promise<void> => {
+      if (demo) {
+        setCurrentPage(newPage);
+        return;
+      }
+
+      if (query === null) {
+        throw new Error('attempted to set page with this.state.query === null');
+      }
+
+      const skip = (newPage - 1) * linksPerPage;
+      const results = await doQuery(query, skip, linksPerPage);
+
+      setLinkInfo(results.results);
+      setCurrentPage(newPage);
+      setTotalLinks(results.count);
+    },
+    [demo, query, linksPerPage, doQuery],
+  );
+
+  const showByOrg = useCallback(
+    (orgs: SearchSet[]) => {
+      const newQuery = { ...query, set: orgs };
+      setNewQuery(newQuery);
+    },
+    [query, setNewQuery],
+  );
+
+  const onExpand: TreeProps['onExpand'] = useCallback((expandedKeysValue) => {
+    setExpandedKeys(expandedKeysValue);
+  }, []);
+
+  const onCheck: TreeProps['onCheck'] = useCallback(
+    (checkedKeysValue, info) => {
+      setCheckedKeys(checkedKeysValue as React.Key[]);
+      setTimeout(() => {
+        const search: SearchSet[] = [];
+        for (let i = 0; i < info.checkedNodes.length; i++) {
+          const node: DataNode = info.checkedNodes[i] as DataNode;
+          if (node.value && node.value.startsWith('org_')) {
+            const orgId = node.value.slice(4);
+            search.push({ set: 'org', org: orgId });
+          } else if (node.value) {
+            search.push({ set: node.value as 'user' | 'shared' | 'all' });
+          }
+        }
+        showByOrg(search);
+      }, 300);
+    },
+    [showByOrg],
+  );
+
+  const showLinksInRange = useCallback(
+    (dates: [Dayjs | null, Dayjs | null] | null, _: [string, string]) => {
+      const newQuery = {
+        ...query,
+        begin_time: dates?.[0] ?? null,
+        end_time: dates?.[1] ?? null,
+      };
+      setNewQuery(newQuery);
+    },
+    [query, setNewQuery],
+  );
+
+  const onSearch = useCallback(async () => {
+    const newQuery = { ...query, queryString: searchInput };
     setNewQuery(newQuery);
-  };
+  }, [query, searchInput, setNewQuery]);
 
-  const onSearch = async () => {
-    setNewQuery(query);
-  };
+  const showExpiredLinks = useCallback(
+    (show_expired_links: boolean) => {
+      const newQuery = { ...query, show_expired_links };
+      setShowExpired(show_expired_links);
+      setNewQuery(newQuery);
+    },
+    [query, setNewQuery],
+  );
 
-  const showExpiredLinks = (show_expired_links: boolean) => {
-    const newQuery = { ...query, show_expired_links };
-    setShowExpired(show_expired_links);
+  const showDeletedLinks = useCallback(
+    (show_deleted_links: boolean) => {
+      const newQuery = { ...query, show_deleted_links };
+      setShowDeleted(show_deleted_links);
+      setNewQuery(newQuery);
+    },
+    [query, setNewQuery],
+  );
+
+  const sortLinksByKey = useCallback(
+    (key: string) => {
+      const newQuery = { ...query, sort: { ...query.sort, key } };
+      setNewQuery(newQuery);
+    },
+    [query, setNewQuery],
+  );
+
+  const sortLinkOrder = useCallback(() => {
+    const order = sortOrder === 'ascending' ? 'descending' : 'ascending';
+    setSortOrder(order);
+    const newQuery = { ...query, sort: { ...query.sort, order } };
     setNewQuery(newQuery);
-  };
+  }, [sortOrder, query, setNewQuery]);
 
-  const showDeletedLinks = (show_deleted_links: boolean) => {
-    const newQuery = { ...query, show_deleted_links };
-    setShowDeleted(show_deleted_links);
-    setNewQuery(newQuery);
-  };
+  const sortByType = useCallback(
+    (e: RadioChangeEvent) => {
+      const key = e.target.value;
+      const newQuery = { ...query, showType: key };
+      setNewQuery(newQuery);
+    },
+    [query, setNewQuery],
+  );
 
-  const sortLinksByKey = (key: string) => {
-    const newQuery = { ...query, sort: { ...query.sort, key } };
-    setNewQuery(newQuery);
-  };
-
-  const sortByType = (e: RadioChangeEvent) => {
-    const key = e.target.value;
-    const newQuery = { ...query, showType: key };
-    setNewQuery(newQuery);
-  };
-
-  const refreshResults = async (): Promise<void> => {
+  const refreshResults = useCallback(async (): Promise<void> => {
     await setPage(currentPage);
-  };
+  }, [currentPage, setPage]);
 
   // functional component equivalent of componentDidMount
   useEffect(() => {
@@ -243,11 +378,31 @@ export default function Dashboard({
     };
 
     fetchUserOrgs();
+  }, [demo]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      {
+        threshold: 0.1,
+        rootMargin: '0px',
+      },
+    );
+
+    if (componentRef.current) {
+      observer.observe(componentRef.current);
+    }
+
+    return () => {
+      if (componentRef.current) {
+        observer.unobserve(componentRef.current);
+      }
+    };
   }, []);
 
-  if (filterOptions !== prevFilterOptions) {
-    setPrevFilterOptions(filterOptions);
-
+  useEffect(() => {
     if (filterOptions) {
       setNewQuery({
         ...filterOptions,
@@ -262,42 +417,26 @@ export default function Dashboard({
       );
       setEndTime(filterOptions.end_time ? dayjs(filterOptions.end_time) : null);
       setCurrentPage(1);
+
+      setSearchInput(filterOptions.queryString);
+
+      const checked = filterOptions.set
+        .map(
+          (search) => findByValue(treeData, getValueFromSearchSet(search))?.key,
+        )
+        .filter((key): key is string => key !== undefined);
+      setCheckedKeys(checked as React.Key[]);
     }
-  }
+  }, [filterOptions]);
 
   return (
     <>
-      <Row>
-        <Typography.Title>URL Shortener</Typography.Title>
-      </Row>
-      <Row gutter={[16, 16]} justify="space-between">
-        <Col span={12}>
-          <Space>
+      <Layout>
+        <Header className="tw-mb-4 tw-bg-white tw-p-0">
+          <Flex className="tw-bg-white" align="center" justify="space-between">
+            <Typography.Title>URL Shortener</Typography.Title>
             <Button
-              icon={<FilterIcon />}
-              onClick={() => {
-                if (demo) {
-                  return;
-                }
-                setFilterModalVisible(true);
-              }}
-            >
-              Filter
-            </Button>
-            <Input.Search
-              style={{ width: 500 }}
-              placeholder="Search links by title, alias, URL, or owner"
-              value={query.queryString}
-              onChange={(
-                e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-              ) => setNewQuery({ ...query, queryString: e.target.value })}
-              onSearch={onSearch}
-            />
-          </Space>
-        </Col>
-        <Col style={{ textAlign: 'right' }}>
-          <Space>
-            <Button
+              ref={componentRef}
               type="primary"
               icon={<PlusCircleIcon />}
               onClick={() => {
@@ -310,24 +449,157 @@ export default function Dashboard({
             >
               Create
             </Button>
-          </Space>
-        </Col>
-        <Col span={24}>
-          <Row gutter={[16, 8]}>
-            {linkInfo === null || linkInfo.length === 0 ? (
-              <Col span={24}>
+          </Flex>
+        </Header>
+        <Content className="tw-bg-white">
+          <Layout className="tw-bg-white">
+            <Sider className="tw-mt-[4px] tw-bg-white tw-pr-4" width="25%">
+              <Affix offsetTop={50}>
+                <Input.Search
+                  className="tw-pb-2"
+                  placeholder="Search by title, alias, URL, or owner"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onSearch={onSearch}
+                />
+                <Form
+                  layout="vertical"
+                  initialValues={{
+                    owner: query.owner,
+                    sortKey: query.sort.key,
+                    show_expired: showExpired ? 'show' : 'hide',
+                    show_deleted: showDeleted ? 'show' : 'hide',
+                    links_vs_pixels: query.showType,
+                    dateRange: [beginTime, endTime],
+                  }}
+                >
+                  <Col>
+                    <Form.Item name="orgSelect" label="Links">
+                      <Tree
+                        checkable
+                        autoExpandParent
+                        selectable={false}
+                        onCheck={onCheck}
+                        onExpand={onExpand}
+                        expandedKeys={expandedKeys}
+                        treeData={treeData}
+                        checkedKeys={checkedKeys}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col>
+                    <Form.Item name="sortKey" label="Sort by">
+                      <Select
+                        value={sortKey}
+                        onChange={sortLinksByKey}
+                        style={{ width: '100%' }}
+                      >
+                        <Select.Option value="relevance">
+                          Relevance
+                        </Select.Option>
+                        <Select.Option value="created_time">
+                          Time created
+                        </Select.Option>
+                        <Select.Option value="title">Title</Select.Option>
+                        <Select.Option value="visits">
+                          Number of visits
+                        </Select.Option>
+                      </Select>
+                    </Form.Item>
+                    <Form.Item name="sortOrder" label="Sort Order">
+                      <Button
+                        onClick={sortLinkOrder}
+                        icon={
+                          sortOrder === 'ascending' ? (
+                            <ArrowUpAZIcon />
+                          ) : (
+                            <ArrowDownAZIcon />
+                          )
+                        }
+                      >
+                        {sortOrder.charAt(0).toUpperCase() + sortOrder.slice(1)}
+                      </Button>
+                    </Form.Item>
+                  </Col>
+                  <Col>
+                    <Form.Item name="dateRange" label="Creation Date">
+                      <DatePicker.RangePicker
+                        format="YYYY-MM-DD"
+                        onChange={showLinksInRange}
+                        style={{ width: '100%' }}
+                        value={[dayjs(beginTime), dayjs(endTime)]}
+                        allowEmpty={[false, true]}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col>
+                    <Form.Item name="show_expired" label="Expired Links">
+                      <Radio.Group
+                        optionType="button"
+                        buttonStyle="solid"
+                        options={[
+                          { label: 'Show', value: 'show' },
+                          { label: 'Hide', value: 'hide' },
+                        ]}
+                        defaultValue="hide"
+                        onChange={(e) =>
+                          showExpiredLinks(e.target.value === 'show')
+                        }
+                      />
+                    </Form.Item>
+                  </Col>
+                  {userPrivileges.has('admin') && (
+                    <Col>
+                      <Form.Item name="show_deleted" label="Deleted Links">
+                        <Radio.Group
+                          optionType="button"
+                          buttonStyle="solid"
+                          options={[
+                            { label: 'Show', value: 'show' },
+                            { label: 'Hide', value: 'hide' },
+                          ]}
+                          defaultValue="hide"
+                          onChange={(e) => {
+                            showDeletedLinks(e.target.value === 'show');
+                          }}
+                        />
+                      </Form.Item>
+                    </Col>
+                  )}
+                  <Col>
+                    <Form.Item name="links_vs_pixels" label="Link Type">
+                      <Radio.Group
+                        optionType="button"
+                        buttonStyle="solid"
+                        options={[
+                          { label: 'Links', value: 'links' },
+                          {
+                            label: 'Tracking Pixels',
+                            value: 'tracking_pixels',
+                          },
+                        ]}
+                        defaultValue={query.showType}
+                        onChange={sortByType}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Form>
+              </Affix>
+            </Sider>
+            <Content className="tw-bg-white">
+              {linkInfo === null || linkInfo.length === 0 ? (
                 <Empty />
-              </Col>
-            ) : (
-              linkInfo.map((link: Link) => (
-                <Col span={24}>
-                  <LinkCard linkInfo={link} />
-                </Col>
-              ))
-            )}
-          </Row>
-        </Col>
-        <Col span={24}>
+              ) : (
+                <Space direction="vertical">
+                  {linkInfo.map((link: Link) => (
+                    <LinkCard key={link._id || link.alias} linkInfo={link} />
+                  ))}
+                </Space>
+              )}
+            </Content>
+          </Layout>
+        </Content>
+        <Footer className="tw-bg-white">
           <Pagination
             align="center"
             defaultCurrent={1}
@@ -337,9 +609,8 @@ export default function Dashboard({
             onChange={setPage}
             pageSize={linksPerPage}
           />
-        </Col>
-      </Row>
-
+        </Footer>
+      </Layout>
       <CreateLinkDrawer
         title="Create Link"
         visible={isCreateModalOpen}
@@ -352,137 +623,22 @@ export default function Dashboard({
         userPrivileges={userPrivileges}
         userOrgs={userOrgs ?? []}
       />
-
-      <Drawer
-        title="Filter Links"
-        width={720}
-        open={filterModalVisible}
-        onClose={() => setFilterModalVisible(false)}
-        placement="left"
-      >
-        <Form
-          layout="vertical"
-          initialValues={{
-            orgSelect: query.set.set,
-            owner: query.owner,
-            sortKey: query.sort.key,
-            show_expired: showExpired ? 'show' : 'hide',
-            show_deleted: showDeleted ? 'show' : 'hide',
-            links_vs_pixels: query.showType,
-            dateRange: [beginTime, endTime],
-          }}
-        >
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item name="orgSelect" label="Links">
-                <Select onChange={updateOrg}>
-                  <Select.Option value="user">My Links</Select.Option>
-                  <Select.Option value="shared">Shared with Me</Select.Option>
-                  {userPrivileges.has('admin') && (
-                    <Select.Option value="all">All Links</Select.Option>
-                  )}
-                  {userOrgs?.length && (
-                    <Select.OptGroup label="My Organizations">
-                      {userOrgs.map((info) => (
-                        <Select.Option key={info.id} value={`org_${info.id}`}>
-                          <em>{info.name}</em>
-                        </Select.Option>
-                      ))}
-                    </Select.OptGroup>
-                  )}
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="owner"
-                label="Owner"
-                rules={[{ validator: serverValidateNetId }]}
-              >
-                <Input
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    // setNewQuery({ ...query, owner: e.target.value });
-                    setQuery({ ...query, owner: e.target.value });
-                  }}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item name="sortKey" label="Sort by">
-                <Select
-                  value={sortKey}
-                  onChange={sortLinksByKey}
-                  style={{ width: '100%' }}
-                >
-                  <Select.Option value="relevance">Relevance</Select.Option>
-                  <Select.Option value="created_time">
-                    Time created
-                  </Select.Option>
-                  <Select.Option value="title">Title</Select.Option>
-                  <Select.Option value="visits">Number of visits</Select.Option>
-                </Select>
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item name="dateRange" label="Creation Date">
-                <DatePicker.RangePicker
-                  format="YYYY-MM-DD"
-                  onChange={showLinksInRange}
-                  style={{ width: '100%' }}
-                  value={[dayjs(beginTime), dayjs(endTime)]}
-                  allowEmpty={[false, true]} // Allow the second date to be empty
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item name="show_expired" label="Expired Links">
-                <Radio.Group
-                  optionType="button"
-                  buttonStyle="solid"
-                  options={[
-                    { label: 'Show', value: 'show' },
-                    { label: 'Hide', value: 'hide' },
-                  ]}
-                  defaultValue="hide"
-                  onChange={(e) => showExpiredLinks(e.target.value === 'show')}
-                />
-              </Form.Item>
-            </Col>
-            {userPrivileges.has('admin') && (
-              <Col span={12}>
-                <Form.Item name="show_deleted" label="Deleted Links">
-                  <Radio.Group
-                    optionType="button"
-                    buttonStyle="solid"
-                    options={[
-                      { label: 'Show', value: 'show' },
-                      { label: 'Hide', value: 'hide' },
-                    ]}
-                    defaultValue="hide"
-                    onChange={(e) => {
-                      showDeletedLinks(e.target.value === 'show');
-                    }}
-                  />
-                </Form.Item>
-              </Col>
-            )}
-            <Col span={12}>
-              <Form.Item name="links_vs_pixels" label="Link Type">
-                <Radio.Group
-                  optionType="button"
-                  buttonStyle="solid"
-                  options={[
-                    { label: 'Links', value: 'links' },
-                    { label: 'Tracking Pixels', value: 'tracking_pixels' },
-                  ]}
-                  defaultValue={query.showType}
-                  onChange={sortByType}
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-        </Form>
-      </Drawer>
+      {!isVisible && (
+        <Tooltip title="Create">
+          <button
+            type="button"
+            className="tw-fixed tw-bottom-10 tw-right-10 tw-z-[1000] tw-flex tw-size-10 tw-cursor-pointer tw-items-center tw-justify-center tw-rounded-full tw-border-none tw-bg-red-600 tw-text-2xl tw-text-white tw-shadow-lg hover:tw-bg-red-700"
+            onClick={() => {
+              if (demo) {
+                return;
+              }
+              setCreateModalOpen(true);
+            }}
+          >
+            <PlusIcon className="tw-h-8 tw-w-8" />
+          </button>
+        </Tooltip>
+      )}
     </>
   );
 }

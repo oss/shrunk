@@ -26,17 +26,12 @@ class SearchClient:
           the search query format
         """
 
+        sets = [item["set"] for item in query["set"]]
+
         # We're going to build up an aggregation pipeline based on the submitted query.
-        # This pipeline will be executed on the organizations collection if set.set == 'org',
-        # or on the urls collection otherwise.
         pipeline: List[Any] = []
 
-        # Filter based on search string, if provided.
-        if (
-            "query" in query
-            and query["query"] != ""
-            and query["set"]["set"] != "shared"
-        ):
+        if "query" in query and query["query"] != "" and "shared" not in sets:
             pipeline += [
                 {"$match": {"$text": {"$search": query["query"]}}},
                 {
@@ -70,91 +65,51 @@ class SearchClient:
                 },
             ]
 
-        # Filter the appropriate links set.
-        if query["set"]["set"] == "user":  # search within `user_netid`'s links
-            pipeline.append({"$match": {"owner._id": user_netid}})
-        elif query["set"]["set"] == "shared":
-            # If the set is 'shared', the pipeline will be executed against the 'organizations'
-            # collection instead of the 'urls' collection.
-            if "query" in query and query["query"] != "":
-                pipeline += [
-                    {"$match": {"members.netid": user_netid}},
+        set_filters = []
+
+        if "user" in sets:
+            set_filters.append({"owner._id": user_netid})
+
+        org_ids = []
+        for item in query["set"]:
+            if item["set"] == "org":
+                org_ids.append(item["org"])
+
+        if org_ids:
+            org_filter = {
+                "$or": [
+                    {"viewers": {"$elemMatch": {"_id": {"$in": org_ids}}}},
                     {
-                        "$lookup": {
-                            "from": "urls",
-                            "let": {"org_id": "$_id"},
-                            "pipeline": [
-                                {"$match": {"$text": {"$search": query["query"]}}},
-                                {
-                                    "$addFields": {
-                                        "text_search_score": {"$meta": "textScore"}
-                                    }
-                                },
-                                {"$unwind": "$viewers"},
-                                {
-                                    "$match": {
-                                        "$expr": {
-                                            "$or": [
-                                                {"$eq": ["$viewers._id", "$$org_id"]},
-                                                {"$eq": ["$owner._id", "$$org_id"]},
-                                            ]
-                                        }
-                                    }
-                                },
-                                {"$match": {"text_search_score": {"$gt": 0.5}}},
-                            ],
-                            "as": "shared_urls",
-                        }
-                    },
-                    {"$unwind": "$shared_urls"},
-                    {"$replaceRoot": {"newRoot": "$shared_urls"}},
-                    {
-                        "$unionWith": {
-                            "coll": "urls",
-                            "pipeline": [
-                                {"$match": {"$text": {"$search": query["query"]}}},
-                                {
-                                    "$addFields": {
-                                        "text_search_score": {"$meta": "textScore"}
-                                    }
-                                },
-                                {"$match": {"viewers._id": user_netid}},
-                                {"$match": {"text_search_score": {"$gt": 0.5}}},
-                            ],
-                        }
-                    },
-                ]
-            else:
-                pipeline += [
-                    {"$match": {"members.netid": user_netid}},
-                    {
-                        "$lookup": {
-                            "from": "urls",
-                            "localField": "_id",
-                            "foreignField": "viewers._id",
-                            "as": "shared_urls",
-                        }
-                    },
-                    {"$unwind": "$shared_urls"},
-                    {"$replaceRoot": {"newRoot": "$shared_urls"}},
-                    {
-                        "$unionWith": {
-                            "coll": "urls",
-                            "pipeline": [{"$match": {"viewers._id": user_netid}}],
-                        }
-                    },
-                ]
-        elif query["set"]["set"] == "org":  # search within the given org
-            pipeline.append(
-                {
-                    "$match": {
-                        "$or": [
-                            {"viewers": {"$elemMatch": {"_id": query["set"]["org"]}}},
-                            {"owner.type": "org", "owner._id": query["set"]["org"]},
+                        "$and": [
+                            {"owner.type": "org"},
+                            {"owner._id": {"$in": org_ids}},
                         ]
+                    },
+                ]
+            }
+            set_filters.append(org_filter)
+
+        if "all" not in sets and set_filters:
+            if len(set_filters) > 1:
+                pipeline.append({"$match": {"$or": set_filters}})
+            else:
+                pipeline.append({"$match": set_filters[0]})
+
+        if "shared" in sets:
+            shared_pipeline = self._build_shared_pipeline(user_netid, query)
+
+            if len(pipeline) > 0:
+                pipeline.append(
+                    {
+                        "$unionWith": {
+                            "coll": "urls",  # Query urls collection for shared
+                            "pipeline": shared_pipeline,
+                        }
                     }
-                }
-            )
+                )
+            else:
+                pipeline = shared_pipeline
+
         # Sort results.
         sort_order = 1 if query["sort"]["order"] == "ascending" else -1
         if query["sort"]["key"] == "created_time":
@@ -165,7 +120,7 @@ class SearchClient:
             sort_key = "title"
         elif query["sort"]["key"] == "relevance":
             sort_key = "text_search_score"
-            if query["query"] == "":
+            if query.get("query", "") == "":
                 sort_key = "timeCreated"
         else:
             # This should never happen
@@ -232,14 +187,9 @@ class SearchClient:
             ]
         pipeline.append({"$facet": facet})
 
-        # Execute the query. Make sure we use the 'en' collation so strings
-        # are sorted properly (e.g. wrt case and punctuation).
-        if query["set"]["set"] == "shared":
-            cursor = self.db.organizations.aggregate(
-                pipeline, collation=Collation("en")
-            )
-        else:
-            cursor = self.db.urls.aggregate(pipeline, collation=Collation("en"))
+        # Execute the query on the urls collection
+        # Always use urls collection since shared pipeline also queries urls
+        cursor = self.db.urls.aggregate(pipeline, collation=Collation("en"))
 
         def prepare_result(res: Any) -> Any:
             """Turn a result from the DB into something than can be JSON-serialized."""
@@ -302,3 +252,40 @@ class SearchClient:
             "count": count,
             "results": unique_results,
         }
+
+    def _build_shared_pipeline(self, user_netid: str, query: Any) -> List[Any]:
+        """Build a pipeline for searching shared links.
+
+        This pipeline finds links that are shared with the user through organizations
+        they are a member of, OR links directly shared with the user.
+
+        :param user_netid: The NetID of the user performing the search
+        :param query: The search query
+        :return: MongoDB aggregation pipeline stages (to be added to main pipeline)
+        """
+        pipeline: List[Any] = []
+
+        orgs_cursor = self.db.organizations.find(
+            {"members.netid": user_netid}, {"_id": 1}
+        )
+        org_ids = [org["_id"] for org in orgs_cursor]
+
+        # Build filter for shared links
+        shared_filter = {
+            "$or": [
+                {"viewers._id": user_netid},
+            ]
+        }
+
+        if org_ids:
+            shared_filter["$or"].append({"viewers._id": {"$in": org_ids}})
+
+        if "query" in query and query["query"] != "":
+            pipeline.append({"$match": {"$text": {"$search": query["query"]}}})
+            pipeline.append(
+                {"$addFields": {"text_search_score": {"$meta": "textScore"}}}
+            )
+
+        pipeline.append({"$match": shared_filter})
+
+        return pipeline

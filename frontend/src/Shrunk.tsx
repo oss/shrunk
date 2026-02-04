@@ -66,7 +66,7 @@ export default function Shrunk(props: Props) {
   const [netid, setNetid] = useState<string>('');
   const [filterOptions, setFilterOptions] = useState<SearchQuery>({
     queryString: '',
-    set: { set: 'user' },
+    set: [{ set: 'user' }],
     show_expired_links: false,
     show_deleted_links: false,
     sort: { key: 'relevance', order: 'descending' },

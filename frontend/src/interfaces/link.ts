@@ -166,7 +166,7 @@ export interface SearchQuery {
    * The set of links to search (c.f. [[SearchSet]])
    * @property
    */
-  set: SearchSet;
+  set: SearchSet[];
 
   /**
    * Whether to show expired links
