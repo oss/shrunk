@@ -1,0 +1,18 @@
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: shrunk
+  namespace: oit-eas-macs-shrunk
+spec:
+  # host: wiki-new.oss.rutgers.edu
+  host: oss-shrunk-new.apps.ocp.ei.rutgers.edu
+  to:
+    kind: Service
+    name: frontend
+    weight: 100
+  port:
+    targetPort: 4343
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None

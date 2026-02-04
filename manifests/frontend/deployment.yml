@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: oit-eas-macs-shrunk
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: shrunk
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: shrunk
+        tier: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: ei-quay-quay-quay-enterprise.apps.ocp.ei.rutgers.edu/openshift_oit-eas-macs-shrunk/frontend:latest
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: configfile
+              mountPath: /usr/shrunk/frontend/.env
+          ports:
+          - containerPort: 4343
+            protocol: TCP
+      volumes:
+        - name: configfile
+          configMap:
+            name: configfile
