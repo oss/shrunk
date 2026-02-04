@@ -38,7 +38,7 @@ class ShrunkClient:
             int(os.getenv("SHRUNK_DB_PORT")),
             replicaSet=os.getenv("SRHUNK_REPLICA_SET_NAME"),
             readPreference="secondaryPreferred",
-            # NOTE: this is default false in pymongo 4.x, we are on pymong 3.x
+            # NOTE: this is default false in pymongo 4.x, we are on pymongo 3.x
             directConnection=False,
             username=DB_USERNAME,
             password=DB_PASSWORD,

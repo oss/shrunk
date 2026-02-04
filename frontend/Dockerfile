@@ -29,8 +29,8 @@ FROM httpd:2.4 as prod
 
 EXPOSE 4343
 
-COPY --from=build /usr/shrunk/frontend/dist /var/www/html
-COPY --from=build /usr/shrunk/frontend/dist /usr/local/apache2/htdocs
+COPY --from=base /usr/shrunk/frontend/dist /var/www/html
+COPY --from=base /usr/shrunk/frontend/dist /usr/local/apache2/htdocs
 COPY ./httpd/httpd.conf usr/local/apache2/conf/httpd.conf
 
 # Install and run the frontend
