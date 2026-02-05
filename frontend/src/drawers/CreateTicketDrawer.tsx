@@ -58,7 +58,7 @@ const CreateTicketDrawer: React.FC<Props> = ({
   const [form] = Form.useForm();
 
   const { message } = App.useApp();
-  const isDev = process.env.NODE_ENV === 'development';
+  const isDev = import.meta.env.DEV;
 
   /**
    * Create a ticket.

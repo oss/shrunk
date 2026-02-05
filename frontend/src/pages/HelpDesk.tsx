@@ -24,6 +24,7 @@ import {
   EyeIcon,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import type { ColumnsType } from 'antd/es/table';
 import {
   closeTicket,
   getHelpDeskText,
@@ -194,7 +195,7 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
     </Flex>
   );
 
-  const userColumns = [
+  const userColumns: ColumnsType<TicketInfo> = [
     {
       title: 'Reason',
       dataIndex: 'reason',
@@ -236,7 +237,7 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
     },
   ];
 
-  const adminColumns = [
+  const adminColumns: ColumnsType<TicketInfo> = [
     {
       title: 'Time Created',
       dataIndex: 'created_time',

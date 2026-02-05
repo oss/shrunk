@@ -1,4 +1,3 @@
-import { createObjectCsvStringifier } from 'csv-writer';
 import { doDownload } from '../lib/utils';
 import { GrantedUser } from '../interfaces/stats';
 
@@ -18,18 +17,32 @@ export function downloadVisits(link_id: string): void {
  * @param users The users
  */
 function createGrantedUsersCsv(users: GrantedUser[]): string {
-  const csvStringifier = createObjectCsvStringifier({
-    header: [
-      { id: 'entity', title: 'Grantee NetID' },
-      { id: 'granted_by', title: 'Granter NetID' },
-      { id: 'comment', title: 'Comment' },
-      { id: 'time_granted', title: 'Time Granted' },
-    ],
-  });
+  const headers = [
+    { id: 'entity', title: 'Grantee NetID' },
+    { id: 'granted_by', title: 'Granter NetID' },
+    { id: 'comment', title: 'Comment' },
+    { id: 'time_granted', title: 'Time Granted' },
+  ] as const;
 
-  return (
-    csvStringifier.getHeaderString() + csvStringifier.stringifyRecords(users)
+  const headerString = `${headers.map((h) => h.title).join(',')}\n`;
+
+  const rows = users.map((user) =>
+    headers
+      .map((header) => {
+        const value = user[header.id as keyof GrantedUser];
+        // Basic CSV escaping: quote if contains comma or quote, escape quotes
+        if (
+          typeof value === 'string' &&
+          (value.includes(',') || value.includes('"') || value.includes('\n'))
+        ) {
+          return `"${value.replace(/"/g, '""')}"`;
+        }
+        return value ?? '';
+      })
+      .join(','),
   );
+
+  return headerString + rows.join('\n');
 }
 
 /**

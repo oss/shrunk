@@ -191,7 +191,7 @@ const BlockedLinks = () => {
       title: 'Time Blocked',
       key: 'timeBlocked',
       dataIndex: 'timeBlocked',
-      render: (_, record) => (
+      render: (_: any, record: BlockedLink) => (
         <Typography.Text>
           {dayjs(record.timeBlocked).format('MMM D, YYYY - h:mm A')}
         </Typography.Text>

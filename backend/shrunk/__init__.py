@@ -319,7 +319,7 @@ def create_app(**kwargs: Any) -> Flask:
 
     @app.route("/", methods=["GET"])
     def _redirect_to_real_index() -> Any:
-        return redirect("/app")
+        return redirect("/app/")
 
     @app.route("/api/core/release-notes", methods=["GET"])
     def serve_release_notes() -> Any:

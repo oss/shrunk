@@ -91,7 +91,9 @@ export const useUsers = (): UsersContextType => {
   return context;
 };
 
-const UsersProvider: React.FC = ({ children }) => {
+const UsersProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [users, setUsers] = useState<User[]>([]);
   const [options, setOptions] = useState<{ [key: string]: any } | null>(null); // null to prevent TypeError
   const [loading, setLoading] = useState<boolean>(false);

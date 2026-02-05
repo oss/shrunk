@@ -16,7 +16,6 @@ services:
     volumes:
       - ./development.env:/usr/shrunk/frontend/.env
       - ./frontend:/usr/shrunk/frontend
-      - ./frontend/dist:/var/www/html
     env_file:
       - ./development.env
     depends_on:
@@ -29,9 +28,7 @@ services:
     ports:
       - "4343:4343"
     volumes:
-      - ./frontend/dist:/var/www/html
       - ./httpd/httpd.conf:/usr/local/apache2/conf/httpd.conf
-      - ./frontend/dist:/usr/local/apache2/htdocs
       - ./httpd:/usr/local/apache2/logs
 
   mongodb:

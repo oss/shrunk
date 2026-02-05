@@ -7,13 +7,15 @@
     "target": "es6",
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
-    "jsx": "react",
+    "jsx": "react-jsx",
     "moduleResolution": "node",
     "resolveJsonModule": true,
+    "skipLibCheck": true,
     "lib": ["dom"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]
     }
-  }
+  },
+  "include": ["src", "vite.config.ts", "src/vite-env.d.ts"]
 }
