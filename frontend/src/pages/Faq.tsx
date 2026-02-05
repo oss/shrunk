@@ -4,6 +4,7 @@
  */
 import React from 'react';
 import { Row, Table, Collapse, Typography } from 'antd/lib';
+import type { ColumnsType } from 'antd/es/table';
 
 const Data = {
   data: [
@@ -143,7 +144,7 @@ const Data = {
       key: 'everyone',
       align: 'center',
     },
-  ],
+  ] as ColumnsType<any>,
 };
 
 /**

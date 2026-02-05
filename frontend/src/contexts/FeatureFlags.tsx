@@ -2,7 +2,13 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { FeatureFlags } from '../interfaces/app';
 import { getFeatureFlags } from '../api/app';
 
-const FeatureFlagsContext = createContext<FeatureFlags>({});
+const FeatureFlagsContext = createContext<FeatureFlags>({
+  devLogins: false,
+  trackingPixel: false,
+  domains: false,
+  googleSafeBrowsing: false,
+  helpDesk: false,
+});
 
 export const useFeatureFlags = () =>
   useContext<FeatureFlags>(FeatureFlagsContext);

@@ -345,7 +345,6 @@ export default function Shrunk(props: Props) {
                     <Route exact path="/app/dash">
                       <Dashboard
                         userPrivileges={userPrivileges}
-                        netid={netid}
                         filterOptions={filterOptions}
                       />
                     </Route>
@@ -371,10 +370,7 @@ export default function Shrunk(props: Props) {
                       />
                     </Route>
                     <Route exact path="/app/orgs/:id/tokens">
-                      <OrganizationToken
-                        userNetId={netid}
-                        userPrivileges={userPrivileges}
-                      />
+                      <OrganizationToken />
                     </Route>
                     <Route exact path="/app/tickets">
                       <HelpDesk netid={netid} userPrivileges={userPrivileges} />
