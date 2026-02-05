@@ -1,4 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# NOTE: we have to specify namespace in order for rewrite to occur for list
+# resources (rewrite required since hash is appended to configfile)
+namespace: oit-eas-macs-shrunk
 configMapGenerator:
 - name: configfile
   envs:
   - .env
+resources:
+- ./backend/deployment.yml
+- ./frontend/deployment.yml

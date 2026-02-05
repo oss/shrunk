@@ -1,7 +1,8 @@
 services:
   backend:
-    build: ./backend
-    command: uv run python3 -m flask run --host=0.0.0.0 -p 3050
+    build:
+      context: ./backend
+      target: dev
     volumes:
       - ./development.env:/usr/shrunk/backend/.env
       - ./backend:/usr/shrunk/backend
@@ -21,16 +22,13 @@ services:
     build:
       context: ./frontend
       target: dev
-    volumes:
-      - ./development.env:/usr/shrunk/frontend/.env
-      - ./frontend:/usr/shrunk/frontend
     env_file:
       - ./development.env
     ports:
-      - "4343:4343"
+      - 3000:3000
     volumes:
-      - ./httpd/httpd.conf:/usr/local/apache2/conf/httpd.conf
-      - ./httpd:/usr/local/apache2/logs
+      - ./development.env:/usr/shrunk/frontend/.env
+      - ./frontend:/usr/shrunk/frontend
     networks:
       - proxy-net
 

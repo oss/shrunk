@@ -19,13 +19,16 @@ spec:
         - name: backend
           image: ei-quay-quay-quay-enterprise.apps.ocp.ei.rutgers.edu/openshift_oit-eas-macs-shrunk/backend:latest
           imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: configfile
           volumeMounts:
-            - name: configfile
-              mountPath: /usr/shrunk/backend/.env
+            - name: logs
+              mountPath: /usr/shrunk/backend/logs
           ports:
           - containerPort: 3050
             protocol: TCP
       volumes:
-        - name: configfile
-          configMap:
-            name: configfile
+        - name: logs
+          persistentVolumeClaim:
+            claimName: shrunk-logs

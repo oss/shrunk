@@ -7,6 +7,9 @@ WORKDIR /usr/shrunk/frontend/
 COPY package.json package-lock.json ./
 RUN npm install --frozen-lockfile
 
+# TODO: Openshift does not like --exclude, find out why
+COPY . .
+
 RUN npm run build
 
 # Development target, runs node server for hot reloading
@@ -20,7 +23,7 @@ EXPOSE 3000
 COPY package.json package-lock.json ./
 RUN npm install
 
-COPY --exclude=.npm --exclude=node_modules . .
+COPY . .
 
 CMD ["npm", "run", "dev"]
 
@@ -31,7 +34,4 @@ EXPOSE 4343
 
 COPY --from=base /usr/shrunk/frontend/dist /var/www/html
 COPY --from=base /usr/shrunk/frontend/dist /usr/local/apache2/htdocs
-COPY ./httpd/httpd.conf usr/local/apache2/conf/httpd.conf
-
-# Install and run the frontend
-CMD [ "sh", "-c", "npm install && npm run dev" ]
+COPY ./httpd/httpd.conf /usr/local/apache2/conf/httpd.conf
