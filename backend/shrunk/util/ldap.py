@@ -4,7 +4,7 @@ import os
 import ldap
 from flask import current_app
 
-__all__ = ["is_valid_netid", "query_given_name", "is)university_guest"]
+__all__ = ["is_valid_netid", "query_given_name", "is_university_guest"]
 
 
 def _validate_netid_chars(netid: str) -> bool:
