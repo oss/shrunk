@@ -43,7 +43,7 @@ export function getRedirectFromAlias(
   alias: string,
   isTrackingPixel?: boolean,
 ): string {
-  const isDev = process.env.NODE_ENV === 'development';
+  const isDev = import.meta.env.DEV;
   const protocol = isDev ? 'http' : 'https';
   return `${protocol}://${getLinkFromAlias(alias, isTrackingPixel)}`;
 }

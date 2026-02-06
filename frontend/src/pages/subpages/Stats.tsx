@@ -20,7 +20,7 @@ import {
   QRCodeProps,
   Flex,
 } from 'antd/lib';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import {
   CloudDownloadIcon,
   CopyIcon,
@@ -200,13 +200,13 @@ export function Stats(props: Props): React.ReactElement {
   const onVisitStateRangeChanged = async (
     dates: null | (Dayjs | null)[],
     _dateStrings: string[],
-  ): void => {
+  ): Promise<void> => {
     setVisitStats(
       await getLinkVisitsStats(
         props.id,
         currentSource,
-        dates?.[0],
-        dates?.[1].endOf('day'),
+        dates?.[0] || undefined,
+        dates?.[1]?.endOf('day'),
       ),
     );
   };
@@ -248,14 +248,14 @@ export function Stats(props: Props): React.ReactElement {
     }
 
     // Create the request to edit title, long_url, and expiration_time
-    const patchReq: EditLinkValues = {};
+    const patchReq: Partial<EditLinkValues> = {};
     if (values.title !== oldLinkInfo.title) {
       patchReq.title = values.title;
     }
     if (values.long_url !== oldLinkInfo.long_url) {
       patchReq.long_url = values.long_url;
     }
-    if (values.owner._id !== oldLinkInfo.owner._id) {
+    if (values.owner && values.owner._id !== oldLinkInfo.owner._id) {
       patchReq.owner = {
         _id: values.owner._id,
         type: 'netid',
@@ -268,10 +268,7 @@ export function Stats(props: Props): React.ReactElement {
       typeof values.expiration_time !== 'undefined' &&
       values.expiration_time !== oldLinkInfo.expiration_time
     ) {
-      patchReq.expiration_time =
-        values.expiration_time === null
-          ? null
-          : values.expiration_time.format();
+      patchReq.expiration_time = values.expiration_time;
     }
 
     const patchRequest = await editLink(props.id, patchReq);
@@ -437,7 +434,7 @@ export function Stats(props: Props): React.ReactElement {
             <Space style={{ marginBottom: 19, marginTop: 19 }}>
               <Typography.Title style={{ margin: 0 }} ellipsis>
                 {!linkInfo?.is_tracking_pixel_link
-                  ? getLinkFromAlias(linkInfo?.alias, false)
+                  ? getLinkFromAlias(linkInfo?.alias || '', false)
                   : linkInfo?.alias}
               </Typography.Title>
 
@@ -549,7 +546,7 @@ export function Stats(props: Props): React.ReactElement {
                                 key: 'original_url',
                                 label: 'Original URL',
                                 children: linkInfo?.long_url,
-                                span: 'filled',
+                                span: 3,
                               },
                             ]),
                         {
@@ -563,7 +560,7 @@ export function Stats(props: Props): React.ReactElement {
                             ) : (
                               linkInfo?.owner._id
                             ),
-                          span: isTrackingPixel ? 1 : 'filled',
+                          span: isTrackingPixel ? 1 : 2,
                         },
                         {
                           key: 'date_created',
