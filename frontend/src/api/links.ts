@@ -1,6 +1,6 @@
 import base32 from 'hi-base32';
 
-import { Dayjs } from 'dayjs';
+import { Dayjs, dayjs } from 'dayjs';
 import {
   BrowserStats,
   Link,
@@ -32,6 +32,7 @@ export async function createLink(
   alias?: string,
   expirationTime?: Dayjs,
   trackingPixelImageType?: '.png' | '.gif',
+  org_id?: string,
 ): Promise<string> {
   if (trackingPixelImageType && !isTrackingPixel) {
     throw new Error(
@@ -46,6 +47,7 @@ export async function createLink(
     long_url: url,
     expiration_time: expirationTime?.toISOString(),
     tracking_pixel_extension: trackingPixelImageType,
+    org_id,
   };
   const resp = await fetch('/api/core/link', {
     method: 'POST',
@@ -89,7 +91,7 @@ export async function removeCollaborator(
   const patchReq = {
     acl: `viewers`,
     action: 'remove',
-    entry: { _id: collaborator._id, type: collaborator._id },
+    entry: { _id: collaborator._id, type: collaborator.type },
   };
 
   if (role === 'viewer' || role === undefined) {
@@ -133,35 +135,77 @@ export async function isValidAlias(alias: string): Promise<boolean> {
   return data.valid as boolean;
 }
 
-export async function getLinkStats(linkId: string) {
-  const resp = await fetch(`/api/core/link/${linkId}/stats`);
+export async function getLinkStats(linkId: string, source?: string) {
+  const params = new URLSearchParams();
+
+  if (source) {
+    params.append('source', source);
+  }
+
+  const resp = await fetch(
+    `/api/core/link/${linkId}/stats?${params.toString()}`,
+  );
   const data = await resp.json();
 
   return data as OverallStats;
 }
 
-export async function getLinkVisitsStats(linkId: string) {
-  const resp = await fetch(`/api/core/link/${linkId}/stats/visits`);
+export async function getLinkVisitsStats(
+  linkId: string,
+  source?: string,
+  start_date?: dayjs,
+  end_date?: dayjs,
+) {
+  const params = new URLSearchParams();
+  // The endpoint defaults to one year from today if we don't set
+  // these parameters
+  if (start_date) {
+    params.append('start_date', start_date.format());
+  }
+  if (end_date) {
+    params.append('end_date', end_date.format());
+  }
+  if (source) {
+    params.append('source', source);
+  }
+
+  const url = `/api/core/link/${linkId}/stats/visits?${params.toString()}`;
+  const resp = await fetch(url);
   const data = await resp.json();
 
   return data as VisitStats;
 }
 
-export async function getLinkGeoIpStats(linkId: string) {
-  const resp = await fetch(`/api/core/link/${linkId}/stats/geoip`);
+export async function getLinkGeoIpStats(linkId: string, source?: string) {
+  const params = new URLSearchParams();
+  if (source) {
+    params.append('source', source);
+  }
+  const resp = await fetch(
+    `/api/core/link/${linkId}/stats/geoip?${params.toString()}`,
+  );
   const data = await resp.json();
 
   return data as GeoipStats;
 }
 
-export async function getLinkBrowserStats(linkId: string) {
-  const resp = await fetch(`/api/core/link/${linkId}/stats/browser`);
+export async function getLinkBrowserStats(linkId: string, source?: string) {
+  const params = new URLSearchParams();
+  if (source) {
+    params.append('source', source);
+  }
+  const resp = await fetch(
+    `/api/core/link/${linkId}/stats/browser?${params.toString()}`,
+  );
   const data = await resp.json();
 
   return data as BrowserStats;
 }
 
-export async function editLink(linkId: string, values: EditLinkValues) {
+export async function editLink(
+  linkId: string,
+  values: Partial<EditLinkValues>,
+) {
   const resp = await fetch(`/api/core/link/${linkId}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },

@@ -17,7 +17,6 @@ RUN pip install poetry
 
 # Poetry configuration
 RUN poetry config virtualenvs.create false
-RUN poetry lock
 
 # Install backend Python dependencies
 RUN poetry install

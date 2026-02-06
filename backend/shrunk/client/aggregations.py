@@ -1,12 +1,12 @@
 from typing import Any
 from collections import OrderedDict
+import datetime
 
 
 def match_link_id(link_id: str) -> Any:
     return {"$match": {"link_id": link_id}}
 
 
-# daily visits aggregations phases
 group_tracking_ids = {
     "$group": {
         "_id": "$tracking_id",
@@ -44,7 +44,7 @@ find_first = {
     }
 }
 
-mark_unqiue = {
+mark_unique = {
     "$project": {
         "visits": {
             "$let": {
@@ -126,14 +126,12 @@ clean_results = {
     }
 }
 
-limit_stage = {"$limit": 365}
 
-
-daily_visits_aggregation = [
+visits_aggregation = [
     # mark the first_time_visits
     group_tracking_ids,
     find_first,
-    mark_unqiue,
+    mark_unique,
     unwind_ips,
     # break into days
     group_days,
@@ -141,5 +139,4 @@ daily_visits_aggregation = [
     make_sortable,
     chronological_sort,
     clean_results,
-    limit_stage,
 ]

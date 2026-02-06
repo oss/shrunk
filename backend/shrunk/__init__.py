@@ -17,16 +17,16 @@ from bson import ObjectId
 from flask.json import JSONEncoder
 from flask.logging import default_handler
 from flask_mailman import Mail
+import urllib
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.routing import BaseConverter, ValidationError
 
 # Extensions
 # Blueprints
 from . import api, dev_logins, sso, views
-from .api import extern
 from .client import ShrunkClient
 from .util.github import pull_outlook_assets_from_github
-from .util.ldap import is_valid_netid
+from .util.ldap import is_university_guest, is_valid_netid, query_position_info
 from .util.string import get_domain, validate_url
 from .util.verification import verify_signature
 
@@ -236,6 +236,15 @@ def _init_roles() -> None:
     )
 
     client.roles.create(
+        "guest",
+        lambda netid: client.roles.has_some(["admin", "facstaff", "power_user"], netid),
+        is_university_guest,
+        custom_text={
+            "title": "University Guests",
+        },
+    )
+
+    client.roles.create(
         "facstaff",
         is_admin,
         is_valid_netid,
@@ -250,7 +259,17 @@ def create_app(**kwargs: Any) -> Flask:
 
     app = Flask(__name__, static_url_path="/static")
     app.secret_key = os.getenv("SHRUNK_SECRET_KEY")
-    app.testing = bool(os.getenv("SHRUNK_FLASK_TESTING", 0))
+    app.testing = bool(int(os.getenv("SHRUNK_FLASK_TESTING", 0)))
+
+    app.config["SSO_LOGIN_URL"] = os.getenv("SSO_LOGIN_URL", "/login")
+    # Maybe move to env?
+    SSO_ATTRIBUTE_MAP = {
+        "SHIB_UID_1": (True, "netid"),
+        # "SHIB_UID_2": (True, "uid2"),
+        "SHIB_UID_3": (True, "employeeType"),
+        "SHIB_twoFactorAuth": (False, "twoFactorAuth"),
+    }
+    app.config["SSO_ATTRIBUTE_MAP"] = SSO_ATTRIBUTE_MAP
 
     app.json_encoder = ShrunkEncoder
 
@@ -275,7 +294,7 @@ def create_app(**kwargs: Any) -> Flask:
 
     # set up blueprints
     app.register_blueprint(views.bp)
-    if bool(os.getenv("SHRUNK_DEV_LOGINS", 0)):
+    if bool(int(os.getenv("SHRUNK_DEV_LOGINS", 0))):
         app.register_blueprint(dev_logins.bp)
     app.register_blueprint(api.link.bp)
     app.register_blueprint(api.org.bp)
@@ -287,9 +306,10 @@ def create_app(**kwargs: Any) -> Flask:
     app.register_blueprint(api.security.bp)
     app.register_blueprint(api.ticket.bp)
     app.register_blueprint(api.user.bp)
-
-    # EXTERNAL API
-    app.register_blueprint(extern.bp)
+    app.register_blueprint(api.userv1.bp)
+    app.register_blueprint(api.linkv1.bp)
+    app.register_blueprint(api.trackingpixelv1.bp)
+    app.register_blueprint(api.orgv1.bp)
 
     # set up extensions
     mail = Mail()
@@ -324,6 +344,8 @@ def create_app(**kwargs: Any) -> Flask:
             )
         )
 
+        valid_products = ["website", "ms-office", "public-api"]
+
         for release in releases:
             for category, changes in release["categories"].items():
                 for change in changes:
@@ -331,6 +353,9 @@ def create_app(**kwargs: Any) -> Flask:
                         contributors.get(contrib_id, contrib_id)
                         for contrib_id in change["contributors"]
                     ]
+
+                    if change.get("product", "website") not in valid_products:
+                        raise Exception("Invalid product")
 
         return jsonify(releases)
 
@@ -347,7 +372,7 @@ def create_app(**kwargs: Any) -> Flask:
 
         # If the user is a dev user, all we need to do to log out is to clear the session,
         # which we did above.
-        if bool(os.getenv("SHRUNK_DEV_LOGINS", 0)) and netid in {
+        if bool(int(os.getenv("SHRUNK_DEV_LOGINS", 0))) and netid in {
             "DEV_USER",
             "DEV_FACSTAFF",
             "DEV_PWR_USER",
@@ -413,13 +438,15 @@ def create_app(**kwargs: Any) -> Flask:
     def get_features_flag() -> Any:
         return jsonify(
             {
-                "devLogins": bool(os.getenv("SHRUNK_DEV_LOGINS", 0)),
-                "trackingPixel": bool(os.getenv("SHRUNK_TRACKING_PIXELS_ENABLED", 0)),
-                "domains": bool(os.getenv("SHRUNK_DOMAINS_ENABLED", 0)),
-                "googleSafeBrowsing": bool(
-                    os.getenv("SHRUNK_GOOGLE_SAFEBROWSE_ENABLED", 0)
+                "devLogins": bool(int(os.getenv("SHRUNK_DEV_LOGINS", 0))),
+                "trackingPixel": bool(
+                    int(os.getenv("SHRUNK_TRACKING_PIXELS_ENABLED", 0))
                 ),
-                "helpDesk": bool(os.getenv("SHRUNK_HELP_DESK_ENABLED", 0)),
+                "domains": bool(int(os.getenv("SHRUNK_DOMAINS_ENABLED", 0))),
+                "googleSafeBrowsing": bool(
+                    int(os.getenv("SHRUNK_GOOGLE_SAFEBROWSE_ENABLED", 0))
+                ),
+                "helpDesk": bool(int(os.getenv("SHRUNK_HELP_DESK_ENABLED", 0))),
             }
         )
 
@@ -435,7 +462,7 @@ def create_app(**kwargs: Any) -> Flask:
             alias = alias.lower()
 
         if link_info is None:
-            return jsonify({"message": "Link not found"}), 404
+            return jsonify({"message": "Link not found1"}), 404
 
         is_tracking_pixel_link = client.links.is_tracking_pixel_link(alias)
         if is_tracking_pixel_link:
@@ -449,11 +476,11 @@ def create_app(**kwargs: Any) -> Flask:
                 return redirect(f"/api/core/t/{alias}")
             else:
                 # We do not want to promote the use of tracking pixels used under the alias route.
-                return jsonify({"message": "Link not found"}), 404
+                return jsonify({"message": "Link not found2"}), 404
 
         long_url = client.links.get_long_url(alias)
         if long_url is None:
-            return jsonify({"message": "Link not found"}), 404
+            return jsonify({"message": "Link not found3"}), 404
 
         # Get or generate a tracking id
         tracking_id = request.cookies.get("shrunkid") or client.tracking.get_new_id()
@@ -475,10 +502,38 @@ def create_app(**kwargs: Any) -> Flask:
                 return jsonify({"message": "Domain not found"}), 404
 
         if long_url is None and not is_tracking_pixel_link:
-            return jsonify({"message": "Link not found"}), 404
+            return jsonify({"message": "Link not found4"}), 404
 
         # Get or generate a tracking id
         tracking_id = request.cookies.get("shrunkid") or client.tracking.get_new_id()
+
+        q_strings = {}
+        mid = None
+        uid = None
+        source = None
+
+        # Preserve URL parameters from the original request
+        if request.query_string:
+            print("true", request.query_string, flush=True)
+            separator = "&" if "?" in long_url else "?"
+
+            decoded = request.query_string.decode("utf-8").replace("&amp;", "&")
+            q_strings = dict(urllib.parse.parse_qsl(decoded))
+            mid = q_strings.get("mid", None)
+            uid = q_strings.get("uid", None)
+            source = q_strings.get("source", None)
+            q_strings.pop("mid", None)
+            q_strings.pop("uid", None)
+            q_strings.pop("source", None)
+
+            if len(q_strings) == 0:
+                separator = ""
+            long_url = f"{long_url}{separator}{urllib.parse.urlencode(q_strings)}"
+
+        allowed_sources = ["qr"]
+
+        if source not in allowed_sources:
+            source = None
 
         client.links.visit(
             alias,
@@ -486,15 +541,13 @@ def create_app(**kwargs: Any) -> Flask:
             request.remote_addr,
             request.headers.get("User-Agent"),
             request.headers.get("Referer"),
+            uid,
+            mid,
+            source,
         )
 
         if "://" not in long_url:
             long_url = f"http://{long_url}"
-
-        # Preserve URL parameters from the original request
-        if request.query_string:
-            separator = "&" if "?" in long_url else "?"
-            long_url = f"{long_url}{separator}{request.query_string.decode('utf-8')}"
 
         response = redirect(long_url)
 
@@ -502,6 +555,21 @@ def create_app(**kwargs: Any) -> Flask:
         response.set_cookie("shrunkid", tracking_id)
 
         return response
+
+    # Redirect to the alias stats page if "/manage" is appended to the alias
+    @app.route("/<alias>/manage", methods=["GET"])
+    def _serve_shortened_links_manage(alias: str) -> Any:
+        client: ShrunkClient = current_app.client
+        link_info = client.links.get_link_info_by_alias(alias)
+        # might be legacy alias
+        if link_info is None:
+            link_info = client.links.get_link_info_by_alias(alias.lower())
+            alias = alias.lower()
+
+        if link_info is None:
+            return jsonify({"message": "Link not found"}), 404
+
+        return redirect(f'/app/links/{str(link_info["_id"])}')
 
     # Add "/api/core/t/" because you're technically using an API endpoint for the websites using the tracking pixel.
     # This will also make it easier for the NGINX server in the near future.
@@ -513,12 +581,17 @@ def create_app(**kwargs: Any) -> Flask:
         if client.links.get_link_info_by_alias(tracking_pixel) is None:
             return "There was an error trying to find your tracking pixel.", 404
 
+        mid = request.args.get("mid", None)
+        uid = request.args.get("uid", None)
+
         client.links.visit(
             tracking_pixel,
             tracking_id,
             request.remote_addr,
             request.headers.get("User-Agent"),
             request.headers.get("Referer"),
+            uid,
+            mid,
         )
 
         extension = None

@@ -18,7 +18,9 @@ import {
   Trash2Icon,
   UsersIcon,
 } from 'lucide-react';
+
 import { Link } from '../interfaces/link';
+import { getRedirectFromAlias } from '../lib/utils';
 
 export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
   const onCopyOriginalLink = () => {
@@ -34,7 +36,7 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
             <Button
               icon={<EyeIcon />}
               type="text"
-              href={`/app/links/${linkInfo.id}`}
+              href={`/app/links/${linkInfo._id}`}
               target="_blank"
             />
           </Tooltip>
@@ -42,7 +44,7 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
             <Button
               icon={<EditIcon />}
               type="text"
-              href={`/app/links/${linkInfo.id}?mode=edit`}
+              href={`/app/links/${linkInfo._id}?mode=edit`}
               target="_blank"
             />
           </Tooltip>
@@ -50,7 +52,7 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
             <Button
               icon={<UsersIcon />}
               type="text"
-              href={`/app/links/${linkInfo.id}?mode=collaborate`}
+              href={`/app/links/${linkInfo._id}?mode=collaborate`}
               target="_blank"
             />
           </Tooltip>
@@ -58,7 +60,7 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
             <Button
               icon={<QrCodeIcon />}
               type="text"
-              href={`/app/links/${linkInfo.id}?mode=qrcode`}
+              href={`/app/links/${linkInfo._id}?mode=qrcode`}
               target="_blank"
             />
           </Tooltip>
@@ -68,7 +70,7 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
               type="text"
               danger
               disabled={linkInfo.deletion_info !== null}
-              href={`/app/links/${linkInfo.id}?mode=edit`}
+              href={`/app/links/${linkInfo._id}?mode=edit`}
               target="_blank"
             />
           </Tooltip>
@@ -83,7 +85,14 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
             {
               key: 'created_by',
               label: 'Owner',
-              children: linkInfo.owner,
+              children:
+                linkInfo.owner.type === 'netid' ? (
+                  linkInfo.owner._id
+                ) : (
+                  <a href={`/app/orgs/${linkInfo.owner._id}`}>
+                    {linkInfo.owner.org_name}
+                  </a>
+                ),
             },
             {
               key: 'unique_visits',
@@ -126,27 +135,37 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
                     type="dashed"
                     onClick={() => {
                       navigator.clipboard.writeText(
-                        `${document.location.host}/${linkInfo.alias}`,
+                        getRedirectFromAlias(
+                          linkInfo.alias,
+                          linkInfo.is_tracking_pixel_link,
+                        ),
                       );
                     }}
                   >
-                    {document.location.host}/{linkInfo.alias}
+                    {getRedirectFromAlias(
+                      linkInfo.alias,
+                      linkInfo.is_tracking_pixel_link,
+                    )}
                   </Button>
                 </Tooltip>
               </Col>
             </Row>
           </Col>
           <Col>
-            <Tooltip title="Copy to clipboard">
-              <Button
-                className="tw-max-w-96"
-                icon={<CopyIcon />}
-                type="dashed"
-                onClick={onCopyOriginalLink}
-              >
-                <Typography.Text ellipsis>{linkInfo.long_url}</Typography.Text>
-              </Button>
-            </Tooltip>
+            {!linkInfo.is_tracking_pixel_link && (
+              <Tooltip title="Copy to clipboard">
+                <Button
+                  className="tw-max-w-96"
+                  icon={<CopyIcon />}
+                  type="dashed"
+                  onClick={onCopyOriginalLink}
+                >
+                  <Typography.Text ellipsis>
+                    {linkInfo.long_url}
+                  </Typography.Text>
+                </Button>
+              </Tooltip>
+            )}
           </Col>
         </Row>
       </Card.Grid>

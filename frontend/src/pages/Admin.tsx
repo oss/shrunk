@@ -10,16 +10,25 @@ import {
   LockKeyholeIcon,
   ShieldCheckIcon,
   UserIcon,
+  Key,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { getPendingLinksCount } from '../api/google-safebrowse';
 import AdminStats from '../components/admin/AdminStats';
 import BlockedLinks from '../components/admin/BlockedLinks';
 import Security from '../components/admin/Security';
+import SuperTokens from '../components/admin/SuperTokens';
+
 import UserLookup from '../components/admin/UserLookup';
 import UsersProvider from '../contexts/Users';
 
-const VALID_TABS = ['analytics', 'user-lookup', 'links', 'security'];
+const VALID_TABS = [
+  'analytics',
+  'user-lookup',
+  'links',
+  'security',
+  'super-tokens',
+];
 const DEFAULT_TAB = 'analytics';
 
 export default function Admin(): React.ReactElement {
@@ -110,6 +119,12 @@ export default function Admin(): React.ReactElement {
       icon: <LockKeyholeIcon />,
       label: 'Security',
       children: <Security />,
+    },
+    {
+      key: 'super-tokens',
+      icon: <Key />,
+      label: 'Super Tokens',
+      children: <SuperTokens />,
     },
   ];
 

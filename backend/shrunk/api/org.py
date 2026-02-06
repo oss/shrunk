@@ -1,13 +1,14 @@
 """Implements API endpoints under ``/api/org``"""
 
-from typing import Any, Dict
+from typing import Any, Dict, List
 
+import bson
 from flask import Blueprint, jsonify, request
 from werkzeug.exceptions import abort
 from bson import ObjectId
 
 from shrunk.client import ShrunkClient
-from shrunk.util.ldap import is_valid_netid
+from shrunk.util.ldap import is_valid_netid, is_university_guest
 from shrunk.util.decorators import require_login, request_schema
 
 __all__ = ["bp"]
@@ -77,7 +78,7 @@ CREATE_ORG_SCHEMA = {
     "properties": {
         "name": {
             "type": "string",
-            "pattern": "^[a-zA-Z0-9_.,-]*$",
+            "pattern": r"^[a-zA-Z0-9_.,\- ]*$",
             "minLength": 1,
         },
     },
@@ -114,8 +115,26 @@ def post_org(netid: str, client: ShrunkClient, req: Any) -> Any:
     org_id = client.orgs.create(req["name"])
     if org_id is None:
         abort(409)
-    client.orgs.create_member(org_id, netid, is_admin=True)
+    client.orgs.create_member(org_id, netid, "admin")
     return jsonify({"id": org_id, "name": req["name"]})
+
+
+@bp.route("/<ObjectId:org_id>/hasAssociatedUrls", methods=["GET"])
+@require_login
+def check_urls(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
+    """``GET /api/org/<org_id>/hasAssociatedUrls``
+
+    Checking to see if orgs are associcated with any urls before deleting
+
+    :param netid:
+    :param client:
+    :param org_id:
+    """
+
+    if not client.orgs.is_admin(org_id, netid) and not client.roles.has("admin", netid):
+        abort(403)
+    has_urls = client.orgs.has_associated_urls(org_id)
+    return {"hasAssociatedUrls": has_urls}, 200
 
 
 @bp.route("/<ObjectId:org_id>", methods=["DELETE"])
@@ -133,7 +152,7 @@ def delete_org(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
         netid, "admin"
     ):
         abort(403)
-    client.orgs.delete(org_id)
+    client.orgs.delete(org_id, netid)
     return "", 204
 
 
@@ -155,13 +174,42 @@ def get_org(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
     org = client.orgs.get_org(org_id)
     if org is None:
         abort(404)
+
+    if client.orgs.is_admin(org_id, netid):
+        org["role"] = "admin"
+    elif client.orgs.is_guest(org_id, netid):
+        org["role"] = "guest"
+    else:
+        org["role"] = "member"
+
     org["id"] = org["_id"]
+
     del org["_id"]
-    org["is_member"] = any(member["netid"] == netid for member in org["members"])
-    org["is_admin"] = any(
-        member["netid"] == netid and member["is_admin"] for member in org["members"]
-    )
     return jsonify(org)
+
+
+@bp.route("/<ObjectId:org_id>/links", methods=["GET"])
+@require_login
+def get_org_links(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
+    """``GET /api/org/<org_id>/links``
+
+    Get a list of all links associated with an organization.
+
+    :param netid:
+    :param client:
+    :param org_id:
+    """
+
+    resp = client.orgs.get_org(org_id)
+    if resp is None:
+        abort(404)
+
+    if not client.orgs.is_member(org_id, netid) and not client.roles.has(
+        "admin", netid
+    ):
+        abort(403)
+    links = client.orgs.get_links(org_id)
+    return jsonify(links)
 
 
 @bp.route("/<ObjectId:org_id>/rename/<string:new_org_name>", methods=["PUT"])
@@ -266,6 +314,64 @@ def validate_netid(_netid: str, _client: ShrunkClient, req: Any) -> Any:
     return jsonify(response)
 
 
+@bp.route("/validate_guest", methods=["POST"])
+@request_schema(VALIDATE_NETID_SCHEMA)
+@require_login
+def validate_guest(_netid: str, _client: ShrunkClient, req: Any) -> Any:
+    """``POST /api/org/validate_guest``
+
+    Check that a guest NetID is valid. This endpoint is used for form validation in the frontend. Request format:
+
+    .. code-block:: json
+
+       { "netid": "string" }
+
+    Response format:
+
+    .. code-block:: json
+
+       { "valid": "boolean", "reason?": "string" }
+
+    :param netid:
+    :param client:
+    :param req:
+    """
+
+    valid = is_university_guest(req["netid"])
+    response: Dict[str, Any] = {"valid": valid}
+    if not valid:
+        response["reason"] = "That NetID does not have the guest role."
+    return jsonify(response)
+
+
+@bp.route("/<ObjectId:org_id>/stats", methods=["GET"])
+@require_login
+def get_org_stats(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
+    """``GET /api/org/<org_id>/stats``
+
+
+
+    Response format:
+    .. code-block:: json
+
+       {
+         "total_links": "number",
+         "total_visits": "number",
+         "total_users": "number",
+       }
+
+    """
+
+    if client.orgs.get_org(org_id) is None:
+        abort(404)
+    if not client.orgs.is_member(org_id, netid) and not client.roles.has(
+        "admin", netid
+    ):
+        abort(403)
+    stats = client.orgs.get_org_overall_stats(org_id)
+    return jsonify(stats)
+
+
 @bp.route("/<ObjectId:org_id>/stats/visits", methods=["GET"])
 @require_login
 def get_org_visit_stats(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
@@ -275,11 +381,11 @@ def get_org_visit_stats(netid: str, client: ShrunkClient, org_id: ObjectId) -> A
 
     .. code-block:: json
 
-       { "visits": [ {
+       {
          "netid": "string",
          "total_visits": "number",
          "unique_visits": "number"
-         } ]
+         }
        }
 
     :param netid:
@@ -319,7 +425,7 @@ def get_org_geoip_stats(netid: str, client: ShrunkClient, org_id: ObjectId) -> A
 def put_org_member(
     netid: str, client: ShrunkClient, org_id: ObjectId, member_netid: str
 ) -> Any:
-    """``PUT /api/org/<org_id>/member/<netid>``
+    """``PUT /api/org/<org_id>/member/<member_netid>``
 
     Add a user to an org. Performs no action if the user is already a member of the org. Returns 204
     on success.
@@ -334,6 +440,36 @@ def put_org_member(
     ):
         abort(403)
     client.orgs.create_member(org_id, member_netid)
+    return "", 204
+
+
+@bp.route("/<ObjectId:org_id>/guest/<member_netid>", methods=["PUT"])
+@require_login
+def put_org_guest(
+    netid: str, client: ShrunkClient, org_id: ObjectId, member_netid: str
+) -> Any:
+    """``PUT /api/org/<org_id>/guest/<netid>``
+
+    Add a guest user to an org. Can only add users designated as guests in the university LDAP. A guest may only be apart of one org at a time.
+
+    :param netid:
+    :param client:
+    :param org_id:
+    :param member_netid:
+    """
+    if not client.orgs.is_admin(org_id, netid) and not client.roles.has("admin", netid):
+        abort(403)
+
+    if not is_university_guest(member_netid):
+        return "That NetID does not have the guest role.", 400
+
+    if len(client.orgs.get_orgs(member_netid, True)) > 0:
+
+        return "Guest user already belongs to an organization", 400
+
+    if client.orgs.create_member(org_id, member_netid, "guest"):
+        client.roles.grant("guest", netid, member_netid, f"Added to org: {org_id}")
+
     return "", 204
 
 
@@ -436,7 +572,7 @@ MODIFY_ORG_MEMBER_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
     "properties": {
-        "is_admin": {"type": "boolean"},
+        "role": {"type": "string", "enum": ["admin", "member", "guest"]},
     },
 }
 
@@ -453,7 +589,7 @@ def patch_org_member(
 
     .. code-block:: json
 
-       { "is_admin?": "boolean" }
+       { "role": "admin" | "member" | "guest" }
 
     Properties present in the request will be updated. Properties missing from the request will not be modified.
 
@@ -467,11 +603,118 @@ def patch_org_member(
         netid, "admin"
     ):
         abort(403)
-    if "is_admin" in req:
+    if req["role"] is not None:
         # Prevent the last admin from being demoted
         admin_count = client.orgs.get_admin_count(org_id)
-        if admin_count <= 1:
+
+        if req["role"] == "member" and netid == member_netid and admin_count <= 1:
             abort(400)
 
-        client.orgs.set_member_admin(org_id, member_netid, req["is_admin"])
+        client.orgs.set_member_role(org_id, member_netid, req["role"])
+    return "", 204
+
+
+@bp.route("/valid-permissions", methods=["GET"])
+@require_login
+def getValidPermissions(netid: str, client: ShrunkClient) -> Any:
+    return jsonify({"permissions": client.access_tokens.access_tokens_permissions})
+
+
+ACCESS_TOKEN_ORG_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["title", "description", "permissions"],
+    "properties": {
+        "organizationId": {"type": "string"},
+        "title": {"type": "string"},
+        "description": {"type": "string"},
+        "permissions": {"type": "array"},
+    },
+}
+
+
+@bp.route("/access_token", methods=["POST"])
+@request_schema(ACCESS_TOKEN_ORG_SCHEMA)
+@require_login
+def create_access_token(netid: str, client: ShrunkClient, req: Any) -> Any:
+    if not req["permissions"]:
+        return "permissions is missing", 400
+    valid_permissions = client.access_tokens.access_tokens_permissions
+
+    owner = {}
+
+    if "organizationId" in req:
+        try:
+            req["organizationId"] = ObjectId(req["organizationId"])
+            owner = {"_id": ObjectId(req["organizationId"]), "type": "org"}
+        except bson.errors.InvalidId:
+            return "Invalid org id", 400
+
+        if client.orgs.get_org(req["organizationId"]) is None:
+            return "No such org", 400
+
+        if not client.orgs.is_admin(
+            req["organizationId"], netid
+        ) and not client.roles.has("admin", netid):
+            abort(403)
+    else:
+        if not client.roles.has("admin", netid):
+            abort(403)
+        owner = {"_id": netid, "type": "netid"}
+
+    for permission in req["permissions"]:
+        if permission not in valid_permissions:
+            return "invalid permissions", 400
+    access_token = client.access_tokens.create(
+        owner, req["title"], req["description"], netid, req["permissions"]
+    )
+
+    return jsonify({"access_token": access_token}), 201
+
+
+@bp.route("/<ObjectId:org_id>/access_token", methods=["GET"])
+@require_login
+def get_access_tokens(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
+    if not client.orgs.is_admin(org_id, netid) and not client.roles.has("admin", netid):
+        abort(403)
+
+    owner = {}
+
+    try:
+        org_id = ObjectId(org_id)
+        owner = {"_id": ObjectId(org_id), "type": "org"}
+    except bson.errors.InvalidId:
+        return "Invalid org id", 400
+
+    if client.orgs.get_org(org_id) is None:
+        return "No such org", 400
+
+    tokens = client.access_tokens.get_tokens(owner)
+
+    return jsonify({"tokens": list(tokens)})
+
+
+@bp.route("/super_token", methods=["GET"])
+@require_login
+def get_super_tokens(netid: str, client: ShrunkClient) -> Any:
+    if not client.roles.has("admin", netid):
+        abort(403)
+    tokens = client.access_tokens.get_tokens()
+
+    return jsonify({"tokens": list(tokens)})
+
+
+@bp.route("/access_token/<ObjectId:token_id>", methods=["DELETE"])
+@require_login
+def delete_access_token(netid: str, client: ShrunkClient, token_id: ObjectId) -> Any:
+    token_owner = client.access_tokens.get_owner(token_id)
+    if token_owner["type"] == "org":
+        if not client.orgs.is_admin(token_owner["_id"], netid) and not client.roles.has(
+            "admin", netid
+        ):
+            abort(403)
+    else:
+        if not client.roles.has("admin", netid):
+            abort(403)
+    client.access_tokens.delete_token(token_id, netid)
     return "", 204

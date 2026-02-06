@@ -25,7 +25,7 @@ def login(user_info: Any) -> Any:
     types: List[str] = user_info.get("employeeType").split(";")
     netid: str = user_info.get("netid")
     twoFactorAuth = user_info.get("twoFactorAuth")
-    if not twoFactorAuth and bool(os.getenv("SHRUNK_REQUIRE_2FA"), False):
+    if not twoFactorAuth and bool(int(os.getenv("SHRUNK_REQUIRE_2FA"), 0)):
         return redirect("/app")
 
     def t(typ: str) -> bool:  # pylint: disable=invalid-name
@@ -44,6 +44,7 @@ def login(user_info: Any) -> Any:
     roles = client.users.get_user_roles(netid)
     is_whitelisted = any(role == "whitelisted" for role in roles)
     is_blacklisted = any(role == "blacklisted" for role in roles)
+    is_guest = any(role == "guest" for role in roles)
     is_super_admin = os.getenv("SHRUNK_SUPER_ADMIN")
 
     # now make decisions regarding whether the user can login, and what privs they should get
@@ -63,8 +64,14 @@ def login(user_info: Any) -> Any:
     if fac_staff:
         client.users.initialize_user(netid, "facstaff")
 
+    if is_guest:
+        client.users.initialize_user(netid, "guest")
+        
+    if is_whitelisted:
+        client.users.initialize_user(netid, "whitelisted")
+
     # now determine whether to allow login
-    if not (is_super_admin or fac_staff or is_whitelisted):
+    if not (is_super_admin or fac_staff or is_whitelisted or is_guest):
         log_failed("unauthorized")
         abort(403)
 

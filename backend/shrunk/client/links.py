@@ -5,7 +5,8 @@ import random
 import string
 import re
 import secrets
-from typing import Optional, List, Set, Any, Dict, cast, Tuple
+from typing import Optional, List, Set, Any, Dict, Union, cast, Tuple
+from functools import lru_cache
 
 from flask import current_app, url_for
 from flask_mailman import Mail
@@ -73,7 +74,7 @@ class LinksClient:
             re.compile(regex, re.IGNORECASE) for regex in BANNED_REGEXES
         ]
         self.tracking_pixel_ui_enabled = bool(
-            os.getenv("SHRUNK_TRACKING_PIXELS_ENABLED", 0)
+            int(os.getenv("SHRUNK_TRACKING_PIXELS_ENABLED", 0))
         )
         self.other_clients = other_clients
 
@@ -150,7 +151,7 @@ class LinksClient:
         long_url: str,
         alias: Optional[str],
         expiration_time: Optional[datetime],
-        netid: str,
+        owner: Dict[str, Any],
         creator_ip: str,
         domain: str = "",
         viewers: List[Dict[str, Any]] = [],
@@ -158,12 +159,26 @@ class LinksClient:
         bypass_security_measures: bool = False,
         is_tracking_pixel_link: bool = False,
         extension: Optional[str] = None,
+        created_using_api: bool = False,
+        created_with_superToken: bool = False,
     ) -> Tuple[ObjectId, str]:
         if self.long_url_is_blocked(long_url):
             raise BadLongURLException
 
         if self.redirects_to_blocked_url(long_url):
             raise BadLongURLException
+
+        self.assert_valid_acl_entry("owner", owner)
+
+        if created_using_api:
+            org = self.other_clients.orgs.get_org(owner["_id"])
+
+        for member in viewers + editors:
+            if member["type"] == "org":
+                try:
+                    member["_id"] = ObjectId(member["_id"])
+                except:
+                    raise NotUserOrOrg
 
         for acl in ["viewers", "editors"]:
             members = {"viewers": viewers, "editors": editors}[acl]
@@ -174,11 +189,22 @@ class LinksClient:
         # (https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/274)
 
         if alias is None:
-            alias = self.create_random_alias(extension=extension)
+            if created_using_api:
+                if created_with_superToken:
+                    alias = self.create_random_alias(extension=extension, orgAlias=None)
+                else:
+                    alias = self.create_random_alias(
+                        extension=extension, orgAlias=org["name"].replace(" ", "")
+                    )
+            else:
+                alias = self.create_random_alias(extension=extension, orgAlias=None)
         else:
             # Ban the future use of creating case-sensitive aliases
             # (https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/205)
             alias = alias.lower()
+            if created_using_api:
+                if not created_with_superToken:
+                    alias = org["name"].replace(" ", "") + "-" + alias
 
             if not bool(re.fullmatch(r"^[a-zA-Z0-9_\-\.]+$", alias)):
                 raise BadAliasException
@@ -199,11 +225,12 @@ class LinksClient:
             "deleted": False,
             "creator_ip": creator_ip,
             "expiration_time": expiration_time,
-            "netid": netid,
+            "owner": owner,
             "domain": domain,
             "viewers": viewers,
             "editors": editors,
             "is_tracking_pixel_link": is_tracking_pixel_link,
+            "created_using_api": created_using_api,
         }
 
         if is_tracking_pixel_link:
@@ -228,15 +255,16 @@ class LinksClient:
         long_url: Optional[str] = None,
         expiration_time: Optional[datetime] = None,
         owner: Optional[str] = None,
+        alias: Optional[str] = None,
     ) -> None:
         if long_url is not None and self.long_url_is_blocked(long_url):
             raise BadLongURLException
-
         if (
             title is None
             and long_url is None
             and expiration_time is None
             and owner is None
+            and alias is None
         ):
             return
 
@@ -247,32 +275,93 @@ class LinksClient:
 
         fields: Dict[str, Any] = {}
         update: Dict[str, Any] = {"$set": fields}
-
         if title is not None:
             fields["title"] = title
         if long_url is not None:
             fields["long_url"] = long_url
         if expiration_time is not None:
             fields["expiration_time"] = expiration_time
+        if alias is not None:
+            fields["alias"] = alias
         if owner is not None:
-            fields["netid"] = owner
-            update["$push"] = {
-                "ownership_transfer_history": {
-                    "from": link_info["netid"],
-                    "to": owner,
-                    "timestamp": datetime.now(timezone.utc),
-                },
-            }
+
+            if owner["type"] == "netid" and is_valid_netid(owner["_id"]):
+                fields["owner"] = {"_id": owner["_id"], "type": "netid"}
+                update["$push"] = {
+                    "ownership_transfer_history": {
+                        "from": link_info["owner"],
+                        "to": {"_id": owner["_id"], "type": "netid"},
+                        "timestamp": datetime.now(timezone.utc),
+                    },
+                }
+                if link_info["owner"]["type"] == "org":
+                    # Push org to editors since it is no longer owner
+                    update["$push"] = {
+                        "editors": {"_id": link_info["owner"]["_id"], "type": "org"},
+                        "viewers": {"_id": link_info["owner"]["_id"], "type": "org"},
+                    }
+            else:
+
+                fields["owner"] = {"_id": ObjectId(owner["_id"]), "type": "org"}
+                update["$push"] = {
+                    "ownership_transfer_history": {
+                        "from": {
+                            "_id": link_info["owner"]["_id"],
+                            "type": link_info["owner"]["type"],
+                        },
+                        "to": {"_id": ObjectId(owner["_id"]), "type": "org"},
+                        "timestamp": datetime.now(timezone.utc),
+                    },
+                }
+                # Remove the org from editors and viewers list since it is now
+                update["$pull"] = {
+                    "editors": {"_id": ObjectId(owner["_id"])},
+                    "viewers": {"_id": ObjectId(owner["_id"])},
+                }
 
         result = self.db.urls.update_one({"_id": link_id}, update)
         if result.matched_count != 1:
             raise NoSuchObjectException
 
+    def check_link_exists(
+        self, long_url: str, owner: Dict[str, Any]
+    ) -> Tuple[ObjectId, str]:
+        self.assert_valid_acl_entry("owner", owner)
+
+        query = {
+            "long_url": long_url,
+            "deleted": False,
+            "is_tracking_pixel_link": False,
+            "$or": [
+                {"expiration_time": {"$gt": datetime.now(timezone.utc)}},
+                {"expiration_time": None},
+            ],
+        }
+
+        if owner["type"] == "org":
+            query["owner._id"] = owner["_id"]
+            result = self.db.urls.find_one(query)
+        else:
+            result = self.db.urls.find_one(query)
+
+        if result:
+            return result["_id"], result["alias"]
+        else:
+            raise NoSuchObjectException
+
     def assert_valid_acl_entry(self, acl, entry):
         target = entry["_id"]
         mtype = entry["type"]
+        if mtype == "org":
+            try:
+                ObjectId(target)
+            except:
+                raise NotUserOrOrg(
+                    f"{target} is not a valid {mtype}. can't add to {acl}"
+                )
+
         if (mtype == "netid" and not is_valid_netid(target)) or (
-            mtype == "org" and not self.other_clients.orgs.get_org(target)
+            mtype == "org" and not self.other_clients.orgs.get_org(ObjectId(target))
         ):
             raise NotUserOrOrg(f"{target} is not a valid {mtype}. can't add to {acl}")
 
@@ -280,7 +369,10 @@ class LinksClient:
         info = self.get_link_info(link_id)
 
         # dont modify if they are owner
-        if entry["_id"] == info["netid"]:
+        if (
+            entry["_id"] == info["owner"]["_id"]
+            and entry["type"] == info["owner"]["type"]
+        ):
             return
         # make sure we don't add a dupe if they already have the perm
         operator = "$addToSet"
@@ -367,10 +459,16 @@ class LinksClient:
             raise NoSuchObjectException
 
     def get_daily_visits(
-        self, link_id: ObjectId, alias: Optional[str] = None
+        self,
+        link_id: ObjectId,
+        alias: Optional[str] = None,
+        date_range: Optional[Tuple[datetime, datetime]] = None,
+        source: Optional[str] = None,
     ) -> List[Any]:
-        """Given a short URL, return how many visits and new unique visitors it gets per day.
+        """Given a short URL, return how many visits and new unique
+           visitors it gets per day for the given date range.
         :param short_url: A shortened URL
+        :param date_range: Date range to consider, defaults to one year from today
         """
 
         if alias is None:
@@ -378,11 +476,32 @@ class LinksClient:
         else:
             match = {"$match": {"link_id": link_id, "alias": alias}}
 
-        aggregation = [match] + cast(List[Any], aggregations.daily_visits_aggregation)
-        return list(self.db.visits.aggregate(aggregation))
+        if source:
+            match["$match"]["source"] = source
+
+        if date_range is None:
+            date_match = {
+                "$match": {
+                    "time": {
+                        "$gte": datetime.datetime.now() - datetime.timedelta(days=365)
+                    }
+                }
+            }
+        else:
+            date_match = {
+                "$match": {"time": {"$gte": date_range[0], "$lte": date_range[1]}}
+            }
+
+        aggregation = (
+            [match] + [date_match] + cast(List[Any], aggregations.visits_aggregation)
+        )
+        return list(self.db.visits.aggregate(aggregation, allowDiskUse=True))
 
     def get_geoip_stats(
-        self, link_id: Optional[ObjectId] = None, alias: Optional[str] = None
+        self,
+        link_id: Optional[ObjectId] = None,
+        alias: Optional[str] = None,
+        source: Optional[str] = None,
     ) -> Any:
         if alias is not None:
             assert link_id is not None
@@ -393,6 +512,10 @@ class LinksClient:
                 match = {"$match": {"link_id": link_id}}
             else:
                 match = {"$match": {"link_id": link_id, "alias": alias}}
+
+            if source:
+                match["$match"]["source"] = source
+
             aggregation.append(match)
         aggregation.append(
             {
@@ -419,9 +542,32 @@ class LinksClient:
         )
         return next(self.db.visits.aggregate(aggregation))
 
-    def get_overall_visits(self, link_id: ObjectId, alias: Optional[str] = None) -> Any:
+    def get_overall_visits(
+        self,
+        link_id: ObjectId,
+        alias: Optional[str] = None,
+        source: Optional[str] = None,
+    ) -> Any:
         if alias is None:
             info = self.get_link_info(link_id)
+
+            if source:
+                filter = {"link_id": link_id, "source": source}
+                total_visits = self.db.visits.count_documents(filter)
+                visits = self.db.visits.aggregate(
+                    [
+                        {"$match": filter},
+                        {"$group": {"_id": "$tracking_id"}},
+                        {"$count": "count"},
+                    ],
+                    allowDiskUse=True,
+                )
+                unique_visits = next(visits, {"count": 0})
+                return {
+                    "total_visits": total_visits,
+                    "unique_visits": unique_visits["count"],
+                }
+
             return {
                 "total_visits": info["visits"],
                 "unique_visits": info.get("unique_visits", 0),
@@ -456,34 +602,73 @@ class LinksClient:
             "unique_visits": result["unique_visits"][0]["count"],
         }
 
-    def get_visits(self, link_id: ObjectId, alias: Optional[str] = None) -> List[Any]:
-        if alias is None:
-            result = self.db.visits.find({"link_id": link_id})
-        else:
-            result = self.db.visits.find({"link_id": link_id, "alias": alias})
+    def get_visits(
+        self,
+        link_id: ObjectId,
+        alias: Optional[str] = None,
+        mid: Optional[Union[str, List[str]]] = None,
+        uid: Optional[Union[str, List[str]]] = None,
+        source: Optional[str] = None,
+    ) -> List[Any]:
+        query = {"link_id": link_id}
+        if alias is not None:
+            query["alias"] = alias
+        if mid is not None:
+            if isinstance(mid, list):
+                query["mid"] = {"$in": mid}
+            else:
+                query["mid"] = mid
+        if uid is not None:
+            if isinstance(uid, list):
+                query["uid"] = {"$in": uid}
+            else:
+                query["uid"] = uid
+        if source is not None:
+            query["source"] = source
+        result = self.db.visits.find(query)
         return list(result)
 
-    def create_random_alias(self, extension: Optional[str] = None) -> str:
+    def create_random_alias(
+        self, extension: Optional[str] = None, orgAlias: Optional[str] = None
+    ) -> str:
         while True:
             alias = self._generate_unique_key()
+            if orgAlias:
+                alias = orgAlias + "-" + alias
             if extension:
                 alias += extension
-            while self.alias_is_reserved(alias):
-                alias = self._generate_unique_key()
-                if extension:
-                    alias += extension
-
-            return alias
+            if not self.alias_is_reserved(alias):
+                return alias
 
     def get_owner(self, link_id: ObjectId) -> str:
-        result = self.db.urls.find_one({"_id": link_id}, {"netid": 1})
+
+        result = self.db.urls.find_one({"_id": link_id})
+
         if result is None:
             raise NoSuchObjectException
-        return cast(str, result["netid"])
+
+        if result["owner"]["type"] == "org":
+            res = self.other_clients.orgs.get_org(ObjectId(result["owner"]["_id"]))
+            owner = {
+                "_id": result["owner"]["_id"],
+                "type": "org",
+                "org_name": res["name"],
+            }
+            return owner
+
+        return result["owner"]
 
     def is_owner(self, link_id: ObjectId, netid: str) -> bool:
-        result = self.db.urls.find_one({"_id": link_id, "netid": netid})
-        return result is not None
+        result = self.db.urls.find_one({"_id": link_id})
+        if result is None:
+            raise NoSuchObjectException
+        if result["owner"]["type"] == "netid":
+            return result["owner"]["_id"] == netid
+        elif self.other_clients.orgs.is_admin(
+            ObjectId(result["owner"]["_id"]), netid
+        ):  # Org admins have "owner" permissions
+            return True
+        return False
 
     def may_edit(self, link_id: ObjectId, netid: str) -> bool:
         if self.other_clients.roles.has("admin", netid):
@@ -491,10 +676,11 @@ class LinksClient:
 
         orgs = self.other_clients.orgs.get_orgs(netid, True)
         orgs = [org["id"] for org in orgs]
+
         result = self.db.urls.find_one(
             {
                 "$or": [
-                    {"_id": link_id, "netid": netid},  # owner
+                    {"_id": link_id, "owner._id": netid},  # owner
                     {
                         "_id": link_id,
                         "editors": {"$elemMatch": {"_id": netid}},
@@ -503,6 +689,10 @@ class LinksClient:
                         "_id": link_id,
                         "editors": {"$elemMatch": {"_id": {"$in": orgs}}},
                     },  # shared with org
+                    {
+                        "_id": link_id,
+                        "owner._id": {"$in": orgs},  # user is in org that owns the link
+                    },
                 ]
             }
         )
@@ -514,15 +704,23 @@ class LinksClient:
         result = self.db.urls.find_one(
             {
                 "$or": [
-                    {"_id": link_id, "netid": netid},  # owner
+                    {"_id": link_id, "owner._id": netid},  # owner
+                    {  # editor
+                        "_id": link_id,
+                        "editors": {"$elemMatch": {"_id": netid}},
+                    },
                     {
                         "_id": link_id,
                         "viewers": {"$elemMatch": {"_id": netid}},
-                    },  # shared
+                    },  # viewer
                     {
                         "_id": link_id,
                         "viewers": {"$elemMatch": {"_id": {"$in": orgs}}},
                     },  # shared with org
+                    {
+                        "_id": link_id,
+                        "owner._id": {"$in": orgs},  # user is in org that owns the link
+                    },
                 ]
             }
         )
@@ -579,8 +777,15 @@ class LinksClient:
             )
         )
 
-    def get_link_info(self, link_id: ObjectId) -> Any:
-        result = self.db.urls.find_one({"_id": link_id})
+    def get_link_info(
+        self, link_id: ObjectId, is_tracking_pixel: Optional[bool] = None
+    ) -> Any:
+        if is_tracking_pixel:
+            result = self.db.urls.find_one(
+                {"_id": link_id, "is_tracking_pixel_link": is_tracking_pixel}
+            )
+        else:
+            result = self.db.urls.find_one({"_id": link_id})
         if result is None:
             raise NoSuchObjectException
         return result
@@ -664,6 +869,9 @@ class LinksClient:
         source_ip: str,
         user_agent: Optional[str],
         referer: Optional[str],
+        uid: Optional[str] = None,
+        mid: Optional[str] = None,
+        source: Optional[str] = None,
     ) -> None:
         """Visits the given URL and logs visit information.
 
@@ -680,6 +888,8 @@ class LinksClient:
         :param source_ip: The client's IP address
         :param user_agent: The client's user agent
         :param referer: The client's referer
+        :param uid: The user's unique identifier, if available
+        :param mid: The mail ID, if available
 
         """
         resp = self.get_link_info_by_alias(alias)
@@ -695,20 +905,31 @@ class LinksClient:
             self.db.urls.update_one({"_id": resp["_id"]}, {"$inc": {"visits": 1}})
 
         state_code, country_code = self.geoip.get_location_codes(source_ip)
-        self.db.visits.insert_one(
-            {
-                "link_id": resp["_id"],
-                "alias": alias,
-                "tracking_id": tracking_id,
-                "source_ip": source_ip,
-                "time": datetime.now(timezone.utc),
-                "user_agent": user_agent,
-                "referer": referer,
-                "state_code": state_code,
-                "country_code": country_code,
-            }
-        )
 
+        doc = {
+            "link_id": resp["_id"],
+            "alias": alias,
+            "tracking_id": tracking_id,
+            "source_ip": source_ip,
+            "time": datetime.now(timezone.utc),
+            "user_agent": user_agent,
+            "referer": referer,
+            "state_code": state_code,
+            "country_code": country_code,
+        }
+
+        if mid:
+            doc["mid"] = mid
+
+        if uid:
+            doc["uid"] = uid
+
+        if source:
+            doc["source"] = source
+
+        self.db.visits.insert_one(doc)
+
+    @lru_cache(maxsize=2048)
     def get_visitor_id(self, ipaddr: str) -> str:
         """Gets a unique, opaque identifier for an IP address.
 

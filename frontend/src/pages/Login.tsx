@@ -13,11 +13,12 @@ export default function Login() {
   const featureFlags: FeatureFlags = useFeatureFlags();
 
   const [loginLink, setLoginLink] = useState<
-    'user' | 'facstaff' | 'powerUser' | 'admin' | 'default'
+    'guest' | 'user' | 'facstaff' | 'powerUser' | 'admin' | 'default'
   >('default');
 
   const loginTypes: { [key: string]: LoginType } = {
     user: { href: '/api/core/devlogins/user', loginMessage: 'DEV_USER' },
+    guest: { href: '/api/core/devlogins/guest', loginMessage: 'DEV_GUEST' },
     facstaff: {
       href: '/api/core/devlogins/facstaff',
       loginMessage: 'DEV_FACSTAFF',

@@ -3,7 +3,7 @@
 from typing import Any
 import functools
 
-from flask import current_app, redirect, url_for, request, session
+from flask import current_app, request, session, jsonify
 from flask_mailman import Mail
 from werkzeug.exceptions import abort
 import jsonschema
@@ -12,7 +12,7 @@ __all__ = ["require_login", "request_schema"]
 
 
 def require_login(func: Any) -> Any:
-    """decorator to check if user is logged in"""
+    """Decorator to require login via SSO."""
 
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -57,3 +57,79 @@ def request_schema(schema: Any) -> Any:
         return wrapper
 
     return check_body
+
+
+def require_token(required_permission: str):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            client = current_app.client
+            header = request.headers.get("Authorization")
+            if not header:
+                return (
+                    jsonify(
+                        {
+                            "error": {
+                                "code": "MISSING_AUTHORIZATION",
+                                "message": "Authorization header is required",
+                                "details": "Please provide a valid Bearer token",
+                            }
+                        }
+                    ),
+                    401,
+                )
+
+            if not header.startswith("Bearer "):
+                return (
+                    jsonify(
+                        {
+                            "error": {
+                                "code": "INVALID_AUTHORIZATION_FORMAT",
+                                "message": "Invalid authorization format",
+                                "details": "Authorization header must start with 'Bearer '",
+                            }
+                        }
+                    ),
+                    401,
+                )
+
+            # Extract and validate token
+            token = header.split()[1]
+            token_id = client.access_tokens.verify_token(token)
+            if not token_id:
+                return (
+                    jsonify(
+                        {
+                            "error": {
+                                "code": "INVALID_TOKEN",
+                                "message": "Invalid or disabled token",
+                                "details": "Please provide a valid access token",
+                            }
+                        }
+                    ),
+                    401,
+                )
+
+            # Check permissions
+            if not client.access_tokens.check_permissions(
+                token_id, required_permission
+            ):
+                return (
+                    jsonify(
+                        {
+                            "error": {
+                                "code": "INSUFFICIENT_PERMISSIONS",
+                                "message": "Insufficient permissions",
+                                "details": f"Token requires '{required_permission}' permission",
+                            }
+                        }
+                    ),
+                    403,
+                )
+            token_owner = client.access_tokens.get_owner(token_id)
+
+            return func(token_owner, client, *args, **kwargs)
+
+        return wrapper
+
+    return decorator

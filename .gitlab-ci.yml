@@ -54,7 +54,7 @@ mypy:
 
 flake8:
   stage: lint
-  image: python:latest
+  image: python:3.13
   needs: []
   script:
     - cd backend

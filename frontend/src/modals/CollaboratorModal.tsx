@@ -14,7 +14,7 @@ import {
 import { PlusCircleIcon, XIcon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { getOrganizations } from '../api/organization';
-import { serverValidateNetId } from '../api/validators';
+import { serverValidateGuest, serverValidateNetId } from '../api/validators';
 import { Organization } from '../interfaces/organizations';
 
 export interface Collaborator {
@@ -62,6 +62,13 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
 
   function refreshOrganizations() {
     getOrganizations('user').then((orgs) => setOrganizations(orgs));
+  }
+
+  function validator(_rule: any, value: string) {
+    if (collaboratorRole === 'guest') {
+      return serverValidateGuest(_rule, value);
+    }
+    return serverValidateNetId(_rule, value);
   }
 
   const masterRole = props.roles[0].value;
@@ -119,7 +126,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                       required: true,
                       message: 'Please enter a valid NetID.',
                     },
-                    { validator: serverValidateNetId },
+                    { validator },
                   ]}
                 >
                   <Input
@@ -211,6 +218,24 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                 const canChangeRole =
                   !isLastMaster && (!isMaster || canDemoteMaster);
 
+                const isDisabled = (role: { value: string; label: string }) => {
+                  if (entity.type === 'org') {
+                    if (entity.role === masterRole && !canAddMaster) {
+                      // if the org is already the owner
+                      return true;
+                    }
+                    return !(
+                      canChangeRole ||
+                      (role.value === masterRole && !canAddMaster)
+                    );
+                  }
+                  return (
+                    (role.value === masterRole && !canAddMaster) ||
+                    (!canChangeRole && role.value !== entity.role) ||
+                    (isLastMaster && role.value !== masterRole)
+                  );
+                };
+
                 return (
                   <>
                     <Col span={12}>{displayName}</Col>
@@ -226,9 +251,9 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                             value: role.value,
                             label: role.label,
                             disabled:
-                              (role.value === masterRole && !canAddMaster) ||
-                              (!canChangeRole && role.value !== entity.role) ||
-                              (isLastMaster && role.value !== masterRole),
+                              isDisabled(role) ||
+                              role.value === 'guest' ||
+                              entity.role === 'guest',
                           }))}
                         />
 

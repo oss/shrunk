@@ -29,7 +29,7 @@ def accept_access_request(netid: str, client: ShrunkClient, token: bytes) -> Any
     except NoSuchObjectException:
         abort(404)
     client.links.accept_access_request(token)
-    enable_dev = bool(os.getenv("SHRUNK_DEV_LOGINS", 0))
+    enable_dev = bool(int(os.getenv("SHRUNK_DEV_LOGINS", 0)))
     return render_template(
         "access_request_resolved.html",
         message="The access request has been granted.",
@@ -48,7 +48,7 @@ def deny_access_request(netid: str, client: ShrunkClient, token: bytes) -> Any:
     except NoSuchObjectException:
         abort(404)
     client.links.deny_access_request(token)
-    enable_dev = bool(os.getenv("SHRUNK_DEV_LOGINS", 0))
+    enable_dev = bool(int(os.getenv("SHRUNK_DEV_LOGINS", 0)))
     return render_template(
         "access_request_resolved.html",
         message="The access request has been denied.",

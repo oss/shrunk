@@ -208,7 +208,7 @@ class UserClient:
                 "$lookup": {
                     "from": "urls",
                     "localField": "netid",
-                    "foreignField": "netid",
+                    "foreignField": "owner._id",
                     "as": "links",
                 }
             },
@@ -219,10 +219,24 @@ class UserClient:
                     "from": "organizations",
                     "let": {"user_netid": "$netid"},
                     "pipeline": [
-                        {"$unwind": "$members"},
                         {
                             "$match": {
-                                "$expr": {"$eq": ["$members.netid", "$$user_netid"]}
+                                "$expr": {
+                                    "$or": [
+                                        {
+                                            "$in": [
+                                                "$$user_netid",
+                                                {"$ifNull": ["$members.netid", []]},
+                                            ]
+                                        },
+                                        {
+                                            "$in": [
+                                                "$$user_netid",
+                                                {"$ifNull": ["$guests.netid", []]},
+                                            ]
+                                        },
+                                    ]
+                                }
                             }
                         },
                         {"$project": {"name": 1, "_id": 0}},
@@ -255,7 +269,8 @@ class UserClient:
                 if op_field == "netid" and op_spec == "matches":
                     ops_pipeline.append({"$match": {op_field: op_fs}})
                 elif op_field in ["organizations", "roles"] and op_spec == "contains":
-                    ops_pipeline.append({"$match": {op_field: {"$in": [op_fs]}}})
+                    filter_values = [val.strip() for val in op_fs.split(",")]
+                    ops_pipeline.append({"$match": {op_field: {"$in": filter_values}}})
                 elif op_field == "linksCreated":
                     if op_spec == "lt":
                         ops_pipeline.append(

@@ -8,6 +8,10 @@ import os
 import pymongo
 import pymongo.errors
 
+from .exceptions import (
+    NoSuchObjectException,
+)
+
 __all__ = ["OrgsClient"]
 
 
@@ -16,7 +20,7 @@ class OrgsClient:
 
     def __init__(self, *, db: pymongo.database.Database):
         self.db = db
-        self.domain_enabled = bool(os.getenv("SHRUNK_DOMAINS_ENABLED", 0))
+        self.domain_enabled = bool(int(os.getenv("SHRUNK_DOMAINS_ENABLED", 0)))
 
     def get_org(self, org_id: ObjectId) -> Optional[Any]:
         """Get information about a given org
@@ -25,11 +29,17 @@ class OrgsClient:
         :returns: The Mongo document for the org, or ``None`` if no org
           exists with the provided ID
         """
+
         org = self.db.organizations.find_one({"_id": org_id})
+        if org is None:
+            return None
 
         # Organizations created before implementations of domains key do not have the `domains` field
         if org is not None and org.get("domains") is None:
             org["domains"] = []
+
+        if org.get("access_tokens") is None:
+            org["access_tokens"] = []
 
         return org
 
@@ -44,31 +54,51 @@ class OrgsClient:
         """
         aggregation: List[Any] = []
         if only_member_orgs:
-            aggregation.append({"$match": {"members.netid": netid}})
+            aggregation.append(
+                {
+                    "$match": {
+                        "$or": [
+                            {"guests.netid": netid},
+                            {"$and": [{"members.netid": netid}, {"deleted": False}]},
+                        ]
+                    }
+                }
+            )
         aggregation += [
             {
                 "$addFields": {
-                    "matching_admins": {
-                        "$filter": {
-                            "input": "$members",
-                            "cond": {
-                                "$and": [
-                                    {"$eq": ["$$this.netid", netid]},
-                                    {"$eq": ["$$this.is_admin", True]},
-                                ]
+                    "member": {
+                        "$arrayElemAt": [
+                            {
+                                "$filter": {
+                                    "input": "$members",
+                                    "as": "member",
+                                    "cond": {"$eq": ["$$member.netid", netid]},
+                                }
                             },
-                        },
-                    },
+                            0,
+                        ]
+                    }
                 },
             },
             {
                 "$addFields": {
                     "id": "$_id",
-                    "is_member": {"$in": [netid, "$members.netid"]},
-                    "is_admin": {"$ne": [0, {"$size": "$matching_admins"}]},
+                    "role": {
+                        "$cond": {
+                            "if": {"$ne": ["$member", None]},
+                            "then": "$member.role",
+                            "else": None,
+                        }
+                    },
                 },
             },
-            {"$project": {"_id": 0, "matching_admins": 0}},
+            {
+                "$project": {
+                    "_id": 0,
+                    "member": 0,
+                },
+            },
         ]
         return list(self.db.organizations.aggregate(aggregation))
 
@@ -85,7 +115,9 @@ class OrgsClient:
                     "name": org_name,
                     "timeCreated": datetime.now(timezone.utc),
                     "members": [],
+                    "guests": [],
                     "domains": [],
+                    "deleted": False,
                 }
             )
         except pymongo.errors.DuplicateKeyError:
@@ -113,14 +145,69 @@ class OrgsClient:
 
         return cast(int, result.modified_count) == 1
 
-    def delete(self, org_id: ObjectId) -> bool:
+    def has_associated_urls(self, org_id: ObjectId) -> bool:
+        """check to see if orgs have any associations with urls before deletion
+
+        :param org_id: The org ID
+
+        returns Whether there are URLs associated with the org
+        """
+        assoicatedUrls = self.db.urls.count_documents(
+            {
+                "$or": [
+                    {"viewers._id": org_id},
+                    {"editors._id": org_id},
+                    {"owner._id": org_id},
+                ]
+            }
+        )
+        if assoicatedUrls > 0:
+            return True
+
+        return False
+
+    def delete(self, org_id: ObjectId, deleted_by: str) -> bool:
         """Delete an org
 
         :param org_id: The org ID
+        :param deleted_by: The netid of the user requesting deletion
+
         :returns: Whether the org was successfully deleted
         """
-        result = self.db.organizations.delete_one({"_id": org_id})
-        return cast(int, result.deleted_count) == 1
+        self.db.urls.update_many(
+            {"$or": [{"viewers._id": org_id}, {"editors._id": org_id}]},
+            {"$pull": {"viewers": {"_id": org_id}, "editors": {"_id": org_id}}},
+        )
+        self.db.urls.update_many(
+            {"owner._id": org_id},
+            {
+                "$set": {
+                    "deleted": True,
+                    "deleted_by": deleted_by,
+                    "deleted_time": datetime.now(timezone.utc),
+                }
+            },
+        )
+
+        for member in self.db.organizations.find_one({"_id": org_id})["members"]:
+            if member["role"] == "guest":
+                self.db.grants.delete_many({"entity": member["netid"]})
+                self.db.organizations.update_one(
+                    {"_id": org_id},
+                    {"$pull": {"members": {"netid": member["netid"]}}},
+                )
+
+        result = self.db.organizations.update_one(
+            {"_id": org_id, "deleted": False},
+            {
+                "$set": {
+                    "deleted": True,
+                    "deleted_by": deleted_by,
+                    "deleted_time": datetime.now(timezone.utc),
+                }
+            },
+        )
+        return result.modified_count == 1
 
     def get_members(self, org_id: ObjectId) -> List[Any]:
         return list(
@@ -144,17 +231,15 @@ class OrgsClient:
             [
                 {"$match": {"_id": org_id}},
                 {"$unwind": "$members"},
-                {"$match": {"members.is_admin": True}},
-                {"$count": "count"},
+                {"$match": {"members.role": "admin"}},
+                {"$count": "admin_count"},
             ]
         )
 
         admin_count = next(result, {"admin_count": 0}).get("admin_count", 0)
         return admin_count
 
-    def create_member(
-        self, org_id: ObjectId, netid: str, is_admin: bool = False
-    ) -> bool:
+    def create_member(self, org_id: ObjectId, netid: str, role: str = "member") -> bool:
         match = {
             "_id": org_id,
             "members": {"$not": {"$elemMatch": {"netid": netid}}},
@@ -164,7 +249,7 @@ class OrgsClient:
             "$addToSet": {
                 "members": {
                     "netid": netid,
-                    "is_admin": is_admin,
+                    "role": role,
                     "timeCreated": datetime.now(timezone.utc),
                 },
             },
@@ -174,22 +259,31 @@ class OrgsClient:
         return cast(int, result.modified_count) == 1
 
     def delete_member(self, org_id: ObjectId, netid: str) -> bool:
-        result = self.db.organizations.update_one(
-            {"_id": org_id}, {"$pull": {"members": {"netid": netid}}}
-        )
-        return cast(int, result.modified_count) == 1
-
-    def set_member_admin(self, org_id: ObjectId, netid: str, is_admin: bool) -> bool:
+        if self.is_guest(org_id, netid):  # remove access to guest
+            self.db.grants.delete_many({"entity": netid})
         result = self.db.organizations.update_one(
             {"_id": org_id},
-            {"$set": {"members.$[elem].is_admin": is_admin}},
+            {"$pull": {"members": {"netid": netid}}},
+        )
+
+        return cast(int, result.modified_count) == 1
+
+    def set_member_role(self, org_id: ObjectId, netid: str, role: str) -> bool:
+        result = self.db.organizations.update_one(
+            {"_id": org_id},
+            {"$set": {"members.$[elem].role": role}},
             array_filters=[{"elem.netid": netid}],
         )
         return cast(int, result.modified_count) == 1
 
     def is_member(self, org_id: ObjectId, netid: str) -> bool:
         return (
-            self.db.organizations.find_one({"_id": org_id, "members.netid": netid})
+            self.db.organizations.find_one(
+                {
+                    "_id": org_id,
+                    "members": {"$elemMatch": {"netid": netid}},
+                }
+            )
             is not None
         )
 
@@ -198,7 +292,16 @@ class OrgsClient:
         if result is None:
             return False
         for member in result["members"]:
-            if member["netid"] == netid and member["is_admin"]:
+            if member["netid"] == netid and member["role"] == "admin":
+                return True
+        return False
+
+    def is_guest(self, org_id: ObjectId, netid: str) -> bool:
+        result = self.db.organizations.find_one({"_id": org_id, "members.netid": netid})
+        if result is None:
+            return False
+        for member in result["members"]:
+            if member["netid"] == netid and member["role"] == "guest":
                 return True
         return False
 
@@ -268,6 +371,119 @@ class OrgsClient:
         ]
 
         return list(self.db.organizations.aggregate(pipeline))
+
+    def get_links(
+        self, org_id: ObjectId, is_tracking_pixel: Optional[bool] = None
+    ) -> List[Any]:
+        """Get all links associated with an org
+
+        :param org_id: The org ID
+        :returns: A list of links associated with the org
+        """
+        if is_tracking_pixel is not None:
+            result = self.db.urls.find(
+                {"owner._id": org_id, "is_tracking_pixel_link": is_tracking_pixel}
+            )
+
+            if result is None:
+                raise NoSuchObjectException
+            return list(result)
+
+        pipeline = [
+            {
+                "$match": {
+                    "$or": [
+                        {
+                            "$and": [{"owner.type": "org"}, {"owner._id": org_id}],
+                        },
+                        {"viewers._id": org_id},
+                    ]
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "organizations",
+                    "localField": "owner._id",
+                    "foreignField": "_id",
+                    "as": "owner_org",
+                }
+            },
+            {
+                "$addFields": {
+                    "canEdit": {
+                        "$cond": {
+                            "if": {
+                                "$or": [
+                                    {"$eq": ["$owner._id", org_id]},
+                                    {"$in": [org_id, "$editors._id"]},
+                                ]
+                            },
+                            "then": True,
+                            "else": False,
+                        }
+                    },
+                    "role": {
+                        "$cond": {
+                            "if": {"$eq": ["$owner._id", org_id]},
+                            "then": "owner",
+                            "else": {
+                                "$cond": {
+                                    "if": {"$in": [org_id, "$editors._id"]},
+                                    "then": "editor",
+                                    "else": "viewer",
+                                }
+                            },
+                        }
+                    },
+                    "owner.org_name": {
+                        "$cond": [
+                            {"$eq": ["$owner.type", "org"]},
+                            {"$first": "$owner_org.name"},
+                            "$owner._id",
+                        ]
+                    },
+                }
+            },
+            {"$project": {"owner_org": 0}},
+        ]
+        return list(self.db.urls.aggregate(pipeline))
+
+    def get_org_overall_stats(self, org_id: ObjectId) -> List[Any]:
+        """Get overall stats for an org
+
+        :param org_id: The org ID
+        :returns: A list of stats for the org
+        """
+        pipeline = [
+            {
+                "$match": {
+                    "$or": [
+                        {
+                            "$and": [{"owner.type": "org"}, {"owner._id": org_id}],
+                        },
+                        {"viewers._id": org_id},
+                    ]
+                }
+            },
+            {
+                "$group": {
+                    "_id": None,
+                    "total_links": {"$sum": 1},
+                    "total_visits": {"$sum": "$visits"},
+                    "unique_visits": {"$sum": "$unique_visits"},
+                }
+            },
+            {
+                "$project": {
+                    "_id": 0,
+                }
+            },
+        ]
+
+        results = list(self.db.urls.aggregate(pipeline))
+        if not results or len(results) == 0:
+            return {"total_links": 0, "total_visits": 0, "total_users": 0}
+        return results[0]
 
     def get_geoip_stats(self, org_id: ObjectId) -> Any:
         def not_null(field: str) -> Any:

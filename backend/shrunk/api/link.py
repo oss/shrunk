@@ -1,12 +1,15 @@
 """Implements API endpoints under ``/api/link``"""
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Optional, Dict
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, Response
 from flask_mailman import Mail
 from bson import ObjectId
 import bson
+import os
+import csv
+from io import StringIO
 from werkzeug.exceptions import abort
 
 from shrunk.client import ShrunkClient
@@ -24,7 +27,11 @@ from shrunk.util.stats import (
     browser_stats_from_visits,
 )
 from shrunk.util.ldap import is_valid_netid
-from shrunk.util.decorators import require_login, require_mail, request_schema
+from shrunk.util.decorators import (
+    require_login,
+    require_mail,
+    request_schema,
+)
 
 __all__ = ["bp"]
 
@@ -51,56 +58,42 @@ CREATE_LINK_SCHEMA = {
         "long_url": {"type": "string", "minLength": 1},
         "alias": {"type": "string", "minLength": 5},
         "expiration_time": {"type": "string", "format": "date-time"},
-        "editors": {"type": "array", "items": ACL_ENTRY_SCHEMA},
-        "viewers": {"type": "array", "items": ACL_ENTRY_SCHEMA},
-        "bypass_security_measures": {"type": "boolean"},
         "is_tracking_pixel_link": {"type": "boolean"},
         "tracking_pixel_extension": {"type": "string", "enum": [".png", ".gif"]},
-        "domain": {"type": "string", "minLength": 0},
+        "domain": {
+            "type": "string",
+            "minLength": 0,
+        },  # TODO: Delete this by version 3.2, this is not a properly implemented feature.
+        "editors": {
+            "type": "array",
+            "items": ACL_ENTRY_SCHEMA,
+        },
+        "viewers": {
+            "type": "array",
+            "items": ACL_ENTRY_SCHEMA,
+        },
+        "org_id": {
+            "type": "string",
+        },
     },
 }
+
+if int(os.getenv("SHRUNK_FLASK_TESTING")):
+    CREATE_LINK_SCHEMA["properties"]["bypass_security_measures"] = {"type": "boolean"}
 
 
 @bp.route("", methods=["POST"])
 @request_schema(CREATE_LINK_SCHEMA)
 @require_login
 def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
-    """``POST /api/link``
+    """Creates a new link."""
 
-    Create a new link. Returns id of created link or errors. Request format:
-
-    .. code-block:: json
-
-       { "description": "string", "long_url": "string",
-         "expiration_time": "2020-11-11T11:11:11Z",
-         "editors": ["<ACL_ENTRY>"], "viewers": ["<ACL_ENTRY>"]}
-
-    an ACL entry looks like. for orgs the id must be a valid bson ObjectId
-
-    .. code-block:: json
-
-       {"_id": "netid|org_id", "type": "org|user"}
-
-    Success response format:
-
-    .. code-block:: json
-
-       { "id": "string" }
-
-    Error response format:
-
-    .. code-block:: json
-
-       { "errors": ["long_url"] }
-
-    :param netid:
-    :param client:
-    :param req:
-    """
     if "editors" not in req:
         req["editors"] = []
+
     if "viewers" not in req:
         req["viewers"] = []
+
     if "domain" not in req:
         req["domain"] = ""
 
@@ -118,58 +111,37 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
     if "long_url" not in req and req["is_tracking_pixel_link"]:
         req["long_url"] = "http://example.com"
     elif "long_url" not in req and not req["is_tracking_pixel_link"]:
-        return jsonify({"errors": ["long_url is missing"]}), 400
+        return "long_url is missing", 400
 
     if not client.users.has_role(netid, "admin") and req["bypass_security_measures"]:
         abort(403)
 
     if "expiration_time" in req:
         expiration_time: Optional[datetime] = datetime.fromisoformat(
-            req["expiration_time"]
+            req["expiration_time"].replace("Z", "")
         )
     else:
         expiration_time = None
 
-    # convert _id to objectid for orgs in acls
-    try:
+    owner = {}
 
-        def str2ObjectId(acl):
-            return [
-                (
-                    {"_id": ObjectId(entry["_id"]), "type": entry["type"]}
-                    if entry["type"] == "org"
-                    else entry
-                )
-                for entry in acl
-            ]
+    if client.roles.has("guest", netid):  # force org link ownership for guest
+        org = client.orgs.get_orgs(netid, True)[0]
+        req["org_id"] = str(org["id"])
 
-        req["editors"] = str2ObjectId(req["editors"])
-        req["viewers"] = str2ObjectId(req["viewers"])
-    except bson.errors.InvalidId as e:
-        return (
-            jsonify({"errors": ["type org requires _id to be an ObjectId: " + str(e)]}),
-            400,
-        )
+    if "org_id" in req:
+        try:
+            req["org_id"] = ObjectId(req["org_id"])
+            owner = {"_id": ObjectId(req["org_id"]), "type": "org"}
+        except bson.errors.InvalidId:
+            return "Invalid org id", 400
 
-    # deduplicate
-    def dedupe(acl):
-        ids = set()
-        result = []
-        for entry in acl:
-            if entry["_id"] not in ids:
-                result.append(entry)
-                ids.add(entry["_id"])
-        return result
-
-    req["editors"] = dedupe(req["editors"])
-    req["viewers"] = dedupe(req["viewers"])
-
-    # make sure editors also have viewer permissions
-    viewer_ids = {viewer["_id"] for viewer in req["viewers"]}
-    for editor in req["editors"]:
-        if editor["_id"] not in viewer_ids:
-            viewer_ids.add(editor["_id"])
-            req["viewers"].append(editor)
+        if client.orgs.get_org(req["org_id"]) is None:
+            return "No such org", 400
+        if not client.orgs.is_member(req["org_id"], netid):
+            return "Not a member of the specified org", 403
+    else:
+        owner = {"_id": netid, "type": "netid"}
 
     alias = req.get("alias", None)
 
@@ -178,7 +150,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
         and not client.users.has_role(netid, "admin")
         and not client.users.has_role(netid, "power_user")
     ):
-        abort(403)
+        return "No permission to create a link with a custom alias", 403
 
     try:
         link_id, created_alias = client.links.create(
@@ -190,47 +162,36 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
             req["long_url"],
             alias,
             expiration_time,
-            netid,
+            owner,
             request.remote_addr,
             domain=req["domain"],
-            viewers=req["viewers"],
             editors=req["editors"],
+            viewers=req["viewers"],
             bypass_security_measures=req["bypass_security_measures"],
             is_tracking_pixel_link=req["is_tracking_pixel_link"],
             extension=req["tracking_pixel_extension"],
         )
+
     except BadLongURLException:
-        return jsonify({"errors": ["long_url"]}), 400
+        return "Bad long_url", 403
+
     except SecurityRiskDetected:
         return (
-            jsonify(
-                {
-                    "errors": [
-                        "This url has been detected to be a potential security \
-            risk and requires manual verification. We apologize for the inconvenience and we'll\
-            verify the link as soon as possible. For more information, contact us at oss@oit.rutgers.edu"
-                    ]
-                }
-            ),
+            "Link is detected as a potential security risk. Please contact system administration.",
             403,
         )
+
     except LinkIsPendingOrRejected:
         return (
-            jsonify(
-                {
-                    "errors": [
-                        "This url was previously detected to be a potential security risk. \
-            The url either is pending verification or has been rejected. For more information, contact us at \
-            oss@oit.rutgers.edu"
-                    ]
-                }
-            ),
+            "Link is detected as a potential security risk. Please contact system administration.",
             403,
         )
+
     except NotUserOrOrg as e:
-        return jsonify({"errors": [str(e)]}), 400
+        return jsonify({"error": str(e)}), 400
+
     except BadAliasException:
-        return jsonify({"errors": ["alias"]}), 400
+        return "Bad alias", 400
 
     return jsonify({"id": str(link_id), "alias": created_alias}), 201
 
@@ -282,11 +243,12 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         abort(403)
 
     # Get rid of types that cannot safely be passed to jsonify
+
     json_info = {
         "_id": info["_id"],
         "title": info["title"],
         "long_url": info["long_url"],
-        "owner": client.links.get_owner(link_id),
+        "owner": client.links.get_owner(ObjectId(info["_id"])),
         "created_time": info["timeCreated"],
         "expiration_time": info.get("expiration_time", None),
         "domain": info.get("domain", None),
@@ -306,13 +268,13 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
 
 MODIFY_LINK_SCHEMA = {
     "type": "object",
-    "additionalProperties": False,
+    "additionalProperties": True,
     "properties": {
         "title": {"type": "string", "minLength": 1},
         "long_url": {"type": "string", "format": "uri"},
         "expiration_time": {"type": ["string", "null"], "format": "date-time"},
         "created_time": {"type": ["string", "null"], "format": "date-time"},
-        "owner": {"type": "string", "minLength": 1},
+        "alias": {"type": "string", "minLength": 5},
     },
 }
 
@@ -341,7 +303,7 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
     if "expiration_time" in req and req["expiration_time"] is not None:
         req["expiration_time"] = datetime.fromisoformat(req["expiration_time"])
     try:
-        client.links.get_link_info(link_id)
+        link = client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
 
@@ -349,15 +311,43 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
         link_id, netid
     ):
         abort(403)
-    if "owner" in req and not is_valid_netid(req["owner"]):
-        abort(400)
+    if "alias" in req:
+        if client.links.alias_is_duplicate(
+            req["alias"], link.get("is_tracking_pixel_link", False)
+        ):
+            abort(400)
+        if client.links.alias_is_reserved(req["alias"]):
+            abort(400)
+        if client.roles.has_some(["admin", "power_user"], netid) == False:
+            abort(403)
+
+    if "owner" in req:
+        if not client.links.is_owner(link_id, netid) and not client.roles.has(
+            "admin", netid
+        ):
+            abort(403)
+        if req["owner"]["type"] == "netid":
+            if not is_valid_netid(req["owner"]["_id"]) or client.roles.has(
+                "guest", req["owner"]["_id"]
+            ):
+                abort(400)
+        elif req["owner"]["type"] == "org":
+            if not client.orgs.get_org(ObjectId(req["owner"]["_id"])):
+                abort(400)
+            if not client.orgs.is_member(
+                ObjectId(req["owner"]["_id"]), netid
+            ) and not client.roles.has("admin", netid):
+                abort(403)
+
     try:
+
         client.links.modify(
             link_id,
             title=req.get("title"),
             long_url=req.get("long_url"),
             expiration_time=req.get("expiration_time"),
             owner=req.get("owner"),
+            alias=req.get("alias"),
         )
         if "expiration_time" in req and req["expiration_time"] is None:
             client.links.remove_expiration_time(link_id)
@@ -541,12 +531,13 @@ def anonymize_visit(client: ShrunkClient, visit: Any) -> Any:
     :param client:
     :param visit:
     """
-    return {
+
+    visit_anonymized = {
         "link_id": visit["link_id"],
         "alias": visit["alias"],
         "visitor_id": client.links.get_visitor_id(visit["source_ip"]),
         "user_agent": visit.get("user_agent", "Unknown"),
-        "referer": get_human_readable_referer_domain(visit),
+        "referer": get_human_readable_referer_domain(visit.get("referer", "Unknown")),
         "state_code": (
             visit.get("state_code", "Unknown")
             if visit.get("country_code") == "US"
@@ -555,6 +546,13 @@ def anonymize_visit(client: ShrunkClient, visit: Any) -> Any:
         "country_code": visit.get("country_code", "Unknown"),
         "time": visit["time"],
     }
+
+    if "mid" in visit:
+        visit_anonymized["mid"] = visit["mid"]
+    if "uid" in visit:
+        visit_anonymized["uid"] = visit["uid"]
+
+    return visit_anonymized
 
 
 @bp.route("/<ObjectId:link_id>/visits", methods=["GET"])
@@ -584,10 +582,58 @@ def get_link_visits(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     if not client.users.has_role(netid, "admin") and not client.links.may_view(
         link_id, netid
     ):
+
         abort(403)
     visits = client.links.get_visits(link_id)
-    anonymized_visits = [anonymize_visit(client, visit) for visit in visits]
-    return jsonify({"visits": anonymized_visits})
+
+    def generate():
+        output = StringIO()
+        writer = csv.writer(output)
+        writer.writerow(
+            [
+                "link_id",
+                "alias",
+                "visitor_id",
+                "mid",
+                "uid",
+                "user_agent",
+                "referer",
+                "state_code",
+                "country_code",
+                "time",
+            ]
+        )
+        yield output.getvalue()
+        output.seek(0)
+        output.truncate(0)
+
+        for visit in visits:
+            anon_visit = anonymize_visit(client, visit)
+            writer.writerow(
+                [
+                    anon_visit["link_id"],
+                    anon_visit["alias"],
+                    anon_visit.get("visitor_id", ""),
+                    anon_visit.get("mid", ""),
+                    anon_visit.get("uid", ""),
+                    anon_visit["user_agent"],
+                    anon_visit["referer"],
+                    anon_visit["state_code"],
+                    anon_visit["country_code"],
+                    anon_visit["time"].isoformat(),
+                ]
+            )
+            yield output.getvalue()
+            output.seek(0)
+            output.truncate(0)
+
+    return Response(
+        generate(),
+        headers={
+            "content-disposition": f"attachment; filename={link_id}.csv",
+            "Content-Type": "text/csv",
+        },
+    )
 
 
 @bp.route("/<ObjectId:link_id>/stats", methods=["GET"])
@@ -609,7 +655,10 @@ def get_link_overall_stats(netid: str, client: ShrunkClient, link_id: ObjectId) 
         link_id, netid
     ):
         abort(403)
-    stats = client.links.get_overall_visits(link_id)
+
+    source = request.args.get("source")
+
+    stats = client.links.get_overall_visits(link_id, None, source)
     return jsonify(stats)
 
 
@@ -628,6 +677,18 @@ def get_link_visit_stats(netid: str, client: ShrunkClient, link_id: ObjectId) ->
            "first_time_visits": "number"
        } ] }
 
+    This endpoint supports passing start_date and end_date via url
+    parameters, the dates must be in ISO format. The start date must
+    be before the end date, the parameters are optional, the default
+    behavior is the following:
+
+    - If start date exists but not end date, the range goes from the
+      start date to today's date.
+    - If end date exists but not start date, the range goes from the
+      one year from the end date to the end date
+    - If neither exists, then the range is from one year from today,
+      to today's date
+
     :param netid:
     :param client:
     :param link_id:
@@ -636,7 +697,25 @@ def get_link_visit_stats(netid: str, client: ShrunkClient, link_id: ObjectId) ->
         link_id, netid
     ):
         abort(403)
-    visits = client.links.get_daily_visits(link_id)
+
+    # If start_date exists but not end_date, we default to <start_date, today>
+    # If end_date exists but not start_date, we default to <year from end_date, end_date>
+    # If neither exists, then it is just, <year from today, today>
+    end_date = datetime.fromisoformat(
+        request.args.get("end_date", datetime.now().isoformat())
+    )
+    start_date = datetime.fromisoformat(
+        request.args.get("start_date", (end_date - timedelta(days=365)).isoformat())
+    )
+
+    if start_date > end_date:
+        return jsonify({"error": "start_date must be before end_date"})
+
+    source = request.args.get("source")
+
+    visits = client.links.get_daily_visits(
+        link_id, date_range=(start_date, end_date), source=source
+    )
     return jsonify({"visits": visits})
 
 
@@ -665,7 +744,10 @@ def get_link_geoip_stats(netid: str, client: ShrunkClient, link_id: ObjectId) ->
         link_id, netid
     ):
         abort(403)
-    geoip = client.links.get_geoip_stats(link_id)
+
+    source = request.args.get("source")
+
+    geoip = client.links.get_geoip_stats(link_id, source=source)
     return jsonify(geoip)
 
 
@@ -692,7 +774,10 @@ def get_link_browser_stats(netid: str, client: ShrunkClient, link_id: ObjectId) 
         link_id, netid
     ):
         abort(403)
-    visits = client.links.get_visits(link_id)
+
+    source = request.args.get("source")
+
+    visits = client.links.get_visits(link_id, source=source)
     stats = browser_stats_from_visits(visits)
     return jsonify(stats)
 

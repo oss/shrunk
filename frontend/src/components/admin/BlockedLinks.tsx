@@ -17,17 +17,19 @@ import {
   Space,
   Table,
   Tooltip,
+  Typography,
 } from 'antd/lib';
-import Fuse from 'fuse.js';
 import {
   CloudDownloadIcon,
   PlusCircleIcon,
   SearchIcon,
   TrashIcon,
 } from 'lucide-react';
+import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { blockLink, getBlockedLinks, unBlockLink } from '../../api/app';
 import { GrantedBy } from '../../interfaces/csv';
+import useFuzzySearch from '../../lib/hooks/useFuzzySearch';
 
 /**
  * Renders the URLs as clickable links
@@ -80,10 +82,6 @@ const renderUnblockButton = (
  * @interface
  */
 interface SearchBannedLinksProps {
-  blockedLinks: Array<{
-    url: string;
-    blockedBy: string;
-  }>;
   onSearch: (value: string) => void;
 }
 
@@ -92,21 +90,8 @@ interface SearchBannedLinksProps {
  * Available filters include: URL, NetID
  * @class
  */
-const SearchBannedLinks: React.FC<SearchBannedLinksProps> = ({
-  blockedLinks,
-  onSearch,
-}) => {
+const SearchBannedLinks: React.FC<SearchBannedLinksProps> = ({ onSearch }) => {
   const [value, setValue] = React.useState('');
-
-  const fuse = useMemo(
-    () =>
-      new Fuse(blockedLinks, {
-        keys: ['url', 'blockedBy'],
-        threshold: 0.3,
-        distance: 100,
-      }),
-    [blockedLinks],
-  );
 
   const handleSearch = useCallback(
     (searchValue: string) => {
@@ -117,7 +102,7 @@ const SearchBannedLinks: React.FC<SearchBannedLinksProps> = ({
       }
       onSearch(searchValue);
     },
-    [fuse, onSearch],
+    [onSearch],
   );
 
   const handleSelect = useCallback(
@@ -179,20 +164,16 @@ const BlockedLinks = () => {
     setRefetchBlockedLinks((prev) => !prev);
   };
 
-  const fuse = useMemo(
-    () =>
-      new Fuse(blockedLinks, {
-        keys: ['url', 'blockedBy'],
-        threshold: 0.3, // Adjustable sensitivity for fuzzy search
-        distance: 100,
-      }),
-    [blockedLinks],
-  );
+  const { search } = useFuzzySearch(blockedLinks, {
+    keys: ['url', 'blockedBy'],
+    threshold: 0.3, // Adjustable sensitivity for fuzzy search
+    distance: 100,
+  });
 
   const filteredLinks = useMemo(() => {
     if (!searchQuery) return blockedLinks;
-    return fuse.search(searchQuery).map((result) => result.item);
-  }, [fuse, searchQuery, blockedLinks]);
+    return search(searchQuery).map((result) => result.item);
+  }, [search, searchQuery, blockedLinks]);
 
   const columns = [
     {
@@ -205,6 +186,16 @@ const BlockedLinks = () => {
       title: 'Blocked By',
       dataIndex: 'blockedBy',
       key: 'blockedBy',
+    },
+    {
+      title: 'Time Blocked',
+      key: 'timeBlocked',
+      dataIndex: 'timeBlocked',
+      render: (_, record) => (
+        <Typography.Text>
+          {dayjs(record.timeBlocked).format('MMM D, YYYY - h:mm A')}
+        </Typography.Text>
+      ),
     },
     {
       title: () => <Flex justify="flex-end">Actions</Flex>,
@@ -252,7 +243,7 @@ const BlockedLinks = () => {
           url: entity.entity,
           comment: entity.comment ?? '',
           blockedBy: entity.granted_by ?? '',
-          timeBlocked: entity.time_granted ?? '',
+          timeBlocked: entity.time_granted ?? dayjs.unix(0).format(),
         })),
       );
     };
@@ -289,10 +280,7 @@ const BlockedLinks = () => {
         <Col span={24}>
           <Flex justify="space-between" style={{ width: '100%' }}>
             <Space direction="horizontal">
-              <SearchBannedLinks
-                blockedLinks={blockedLinks}
-                onSearch={handleSearch}
-              />
+              <SearchBannedLinks onSearch={handleSearch} />
             </Space>
             <Space direction="horizontal">
               <Button icon={<CloudDownloadIcon />} onClick={exportAsCSV}>
@@ -317,6 +305,13 @@ const BlockedLinks = () => {
             rowKey="url"
             pagination={{ position: ['bottomCenter'], pageSize: 10 }}
             scroll={{ x: 'max-content' }}
+            expandable={{
+              expandedRowRender: (record) => (
+                <Typography.Text>
+                  {`Comment: ${record.comment}`}
+                </Typography.Text>
+              ),
+            }}
           />
         </Col>
       </Row>

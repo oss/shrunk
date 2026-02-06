@@ -15,6 +15,7 @@ from .security import SecurityClient
 from .tickets import TicketsClient
 from .tracking import TrackingClient
 from .users import UserClient
+from .access_token import AccessTokenClient
 
 __all__ = ["ShrunkClient"]
 
@@ -60,15 +61,18 @@ class ShrunkClient:
         self.security = SecurityClient(db=self.db, other_clients=self)
         self.tickets = TicketsClient(db=self.db)
         self.users = UserClient(db=self.db)
+        self.access_tokens = AccessTokenClient(db=self.db)
 
     def _ensure_indexes(self) -> None:
+        self.db.access_tokens.create_index([("token", pymongo.TEXT)], unique=True)
+
         self.db.urls.create_index([("alias", pymongo.ASCENDING)])
-        self.db.urls.create_index([("netid", pymongo.ASCENDING)])
+        self.db.urls.create_index([("owner._id", pymongo.ASCENDING)])
         self.db.urls.create_index(
             [
                 ("title", pymongo.TEXT),
                 ("long_url", pymongo.TEXT),
-                ("netid", pymongo.TEXT),
+                ("owner._id", pymongo.TEXT),
                 ("alias", pymongo.TEXT),
             ]
         )
@@ -81,6 +85,8 @@ class ShrunkClient:
 
         self.db.visits.create_index([("link_id", pymongo.ASCENDING)])
         self.db.visits.create_index([("source_ip", pymongo.ASCENDING)])
+        self.db.visits.create_index([("mid", pymongo.ASCENDING)])
+        self.db.visits.create_index([("uid", pymongo.ASCENDING)])
         self.db.visitors.create_index([("ip", pymongo.ASCENDING)], unique=True)
         self.db.organizations.create_index([("name", pymongo.ASCENDING)], unique=True)
         self.db.organizations.create_index(
@@ -110,12 +116,12 @@ class ShrunkClient:
             "grants",
             "organizations",
             "tickets",
-            "tracking_ids",
             "unsafe_links",
             "urls",
             "users",
             "visitors",
             "visits",
+            "access_tokens",
         ]:
             self.db[col].delete_many({})
 
@@ -127,6 +133,18 @@ class ShrunkClient:
         :param begin:
         :param end:
         """
+
+        num_users = next(
+            self.db.grants.aggregate(
+                [
+                    {"$match": {"role": {"$nin": ["blacklisted", "blocked_url"]}}},
+                    {"$group": {"_id": "$entity", "total": {"$sum": 1}}},
+                    {"$count": "count"},
+                ]
+            ),
+            {"count": 0},
+        )["count"]
+
         if begin is None and end is None:
             # estimated_document_count() is MUCH faster than count_documents({})
             num_links = self.db.urls.estimated_document_count()
@@ -145,19 +163,7 @@ class ShrunkClient:
 
             num_links = self.db.urls.count_documents(match_range("timeCreated"))
             num_visits = self.db.visits.count_documents(match_range("time"))
-            try:
-                num_users = next(
-                    self.db.urls.aggregate(
-                        [
-                            {"$match": match_range("timeCreated")},
-                            {"$project": {"netid": 1}},
-                            {"$group": {"_id": "$netid"}},
-                            {"$count": "count"},
-                        ]
-                    )
-                )["count"]
-            except StopIteration:
-                num_users = 0
+
         else:
             raise ValueError(f"Invalid input begin={begin} end={end}")
 

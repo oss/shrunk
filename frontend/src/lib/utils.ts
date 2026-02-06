@@ -8,12 +8,10 @@ import { twMerge } from 'tailwind-merge';
  * @param csvString The contents of the file
  */
 export function doDownload(filename: string, csvString: string): void {
-  const utf8EncodedCsvString = new TextEncoder().encode(csvString);
-  const base64String = btoa(String.fromCharCode(...utf8EncodedCsvString));
-  const dataUrl = `data:text/csv;base64,${base64String}`;
+  const blob = new Blob([csvString], { type: 'text/csv' });
   const dlLink = document.createElement('a');
   dlLink.download = filename;
-  dlLink.href = dataUrl;
+  dlLink.href = URL.createObjectURL(blob);
   document.body.appendChild(dlLink);
   dlLink.click();
   document.body.removeChild(dlLink); // Clean up the DOM
@@ -37,7 +35,7 @@ export function getLinkFromAlias(
   alias: string,
   isTrackingPixel?: boolean,
 ): string {
-  const routePrefix = isTrackingPixel ? 'api/v1/t/' : '';
+  const routePrefix = isTrackingPixel ? 'api/core/t/' : '';
   return `${document.location.host}/${routePrefix}${alias}`;
 }
 

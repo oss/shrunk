@@ -5,7 +5,7 @@ from datetime import datetime, timezone, timedelta
 
 from werkzeug.test import Client
 
-from util import dev_login
+from util import dev_login, create_link
 
 
 def test_endpoint_stats(client: Client) -> None:
@@ -48,3 +48,19 @@ def test_overview_stats_unauthorized(client: Client) -> None:
     with dev_login(client, "user"):
         resp = client.post("/api/core/admin/stats/overview", json={})
         assert resp.status_code == 403
+
+
+def test_user_overview_stats(client: Client) -> None:
+    with dev_login(client, "admin"):
+        create_link(client, "title", "https://example.com")
+        resp = client.post("/api/core/user", json={"operations": []})
+        assert resp.status_code == 200
+        response_data = resp.json
+        assert len(response_data["users"]) == 1
+        user = response_data["users"][0]
+
+        assert "netid" in user
+        assert "organizations" in user
+        assert "roles" in user
+        assert "linksCreated" in user
+        assert user["linksCreated"] == 1

@@ -14,6 +14,7 @@ import {
   Popconfirm,
   Row,
   Space,
+  Tooltip,
 } from 'antd/lib';
 import dayjs from 'dayjs';
 import { CircleAlertIcon, SaveIcon, TrashIcon } from 'lucide-react';
@@ -24,7 +25,7 @@ import {
   isValidAlias,
   reverLinkExpirationDate,
 } from '../api/links';
-import { serverValidateNetId } from '../api/validators';
+import { serverValidateLongUrl, serverValidateNetId } from '../api/validators';
 import DatePicker from '../components/date-picker';
 import { EditLinkValues, Link } from '../interfaces/link';
 
@@ -91,11 +92,12 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
         : dayjs(props.linkInfo.expiration_time),
   };
   const mayEditOwner =
-    props.netid === initialValues.owner || props.userPrivileges.has('admin');
+    (props.netid === initialValues.owner._id ||
+      props.userPrivileges.has('admin')) &&
+    props.linkInfo.owner.type !== 'org';
 
   const isTrackingPixelLink = props.linkInfo.is_tracking_pixel_link;
-
-  const [ownerInputVal, setOwnerInputVal] = useState(initialValues.owner);
+  const [ownerInputVal, setOwnerInputVal] = useState(initialValues.owner._id);
 
   const currDate = new Date();
   const isExpired =
@@ -142,7 +144,7 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
   };
 
   const onSave = () => {
-    if (ownerInputVal !== initialValues.owner) {
+    if (ownerInputVal !== initialValues.owner._id) {
       Modal.confirm({
         title: 'Link owner modification',
         icon: <CircleAlertIcon />,
@@ -201,25 +203,79 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
         requiredMark={false}
       >
         <Row gutter={16}>
-          <Col span={24}>
+          <Col span={12}>
             <Form.Item label="Title" name="title">
               <Input />
             </Form.Item>
           </Col>
           <Col span={12}>
             <Form.Item
-              label="Owner"
-              name="owner"
+              label="Alias"
+              name="alias"
               rules={[
-                { required: true, message: 'Please input a NetID.' },
-                { validator: serverValidateNetId },
+                { required: true, message: 'Please input an alias.' },
+                {
+                  min: 5,
+                  message: 'Aliases may be no shorter than 5 characters.',
+                },
               ]}
             >
               <Input
-                placeholder="NetID"
-                onChange={handleChange}
-                disabled={!mayEditOwner}
+                disabled={
+                  isTrackingPixelLink ||
+                  (!props.userPrivileges.has('admin') &&
+                    !props.userPrivileges.has('power_user'))
+                }
               />
+            </Form.Item>
+          </Col>
+          {!isTrackingPixelLink && (
+            <Col span={24}>
+              <Form.Item
+                label="Long URL"
+                name="long_url"
+                rules={[
+                  { required: true, message: 'Please input a long URL.' },
+                  { type: 'url', message: 'Please enter a valid URL.' },
+                  { validator: serverValidateLongUrl },
+                ]}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
+          )}
+          <Col span={12}>
+            <Form.Item
+              label="Owner"
+              name={['owner', '_id']}
+              rules={
+                mayEditOwner
+                  ? [
+                      { required: true, message: 'Please input a NetID.' },
+                      { validator: serverValidateNetId },
+                    ]
+                  : []
+              }
+            >
+              {mayEditOwner ? (
+                <Input
+                  placeholder="NetID"
+                  value={ownerInputVal}
+                  onChange={handleChange}
+                />
+              ) : (
+                <Tooltip title="This link is owned by an organization, please go to the organization's dashboard to edit it.">
+                  <Input
+                    placeholder="NetID"
+                    value={
+                      props.linkInfo.owner.type === 'org'
+                        ? props.linkInfo.owner.org_name
+                        : props.linkInfo.owner._id
+                    }
+                    disabled
+                  />
+                </Tooltip>
+              )}
             </Form.Item>
           </Col>
           {!isTrackingPixelLink && (

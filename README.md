@@ -6,12 +6,10 @@
 
 ## Features
 
-- Shorten long URLs
-- Create a collection of URLs onto a customizable webpage
-- Supports Rutgers Central Authentication Service (CAS)
-- Statistics on number of visits on a shortened URL with dynamic charts and geographic maps
-- Share multiple shortened URLs via organizations
-- Restricted permissions on certain actions
+- Shorten URLs with a dedicated statistics page
+- Create tracking pixels
+- Collaborate with multiple links under an organization
+- Supports SSO (Single-sign-on)
 
 ## Build Instructions
 

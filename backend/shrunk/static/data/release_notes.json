@@ -2,12 +2,121 @@
   {
     "major": 3,
     "minor": 1,
+    "patch": 3,
+    "projectDirector": "ah1371",
+    "date": "11-07-2025",
+    "description": "Guest User access and small improvements to the public API",
+    "categories": {
+      "features": [
+        {
+          "text": "Organizations can now add guest users to their organizations. Guest users must be classified as university guests, all links created by guests will be owned by the organization they are apart of.",
+          "contributors": ["ak2399"]
+        },
+        {
+          "text": "Link analytics now supports filtering by QR Code traffic source",
+          "contributors": ["ys973"]
+        }
+      ],
+      "improvements": [
+         {
+          "text": "Update response payload for create link endpoint to include the newly generated link",
+          "contributors": ["ys973"],
+          "product": "public-api"
+        },
+        {
+          "text": "Add option to return an existing link for the same long URL when creating a new link",
+          "contributors": ["ys973"],
+          "product": "public-api"
+        },
+        {
+          "text": "CSV generation moved to server side for better performance on large links.",
+          "contributors": ["ak2399"]
+        }
+      ],
+      "fixes": [
+        {
+          "text": "Fix bug to parse mid and uid correctly",
+          "contributors": ["ak2399"]
+        },
+        {
+          "text": "Fix calculation of top most referrer",
+          "contributors": ["ak2399"]
+        }
+      ]
+    }
+  },
+  {
+    "major": 3,
+    "minor": 1,
+    "patch": 2,
+    "projectDirector": "ah1371",
+    "date": "10-06-2025",
+    "description": "Various bug fixes",
+    "categories": {
+      "features": [],
+      "improvements": [],
+      "fixes": [
+        {
+            "text": "Resolve infinite loading issue in visit graph for links with high visit counts",
+          "contributors": ["ak2399"]
+        },
+        {
+          "text": "Revert broken code from the dashboard preventing users from searching links",
+          "contributors": ["ah1371"]
+        }
+      ]
+    }
+  },
+  {
+    "major": 3,
+    "minor": 1,
+    "patch": 1,
+    "projectDirector": "ah1371",
+    "date": "TODO",
+    "description": "A small patch to fix some bugs from the last release.",
+    "categories": {
+      "features": [
+	{
+          "text": "Add quick access to stats of a link by appending /manage to it",
+          "contributors": ["iz80"]
+	}
+      ],
+      "improvements": [
+        {
+          "text": "Allow users to select a custom date range in the visits graph",
+          "contributors": ["iz80"]
+        },
+        {
+          "text": "Show comments and time blocked for links",
+          "contributors": ["iz80"]
+        }
+      ],
+      "fixes": [
+        {
+          "text": "Re-add ability to edit alias and long url of a shortened link",
+          "contributors": ["ak2399"]
+        },
+	{
+	  "text": "Show BlockedLinked and Blacklisted state in user view instead of a blank",
+          "contributors": ["iz80"]
+	}
+      ]
+    }
+  },
+  {
+    "major": 3,
+    "minor": 1,
     "patch": 0,
     "projectDirector": "ah1371",
     "date": "TODO",
-    "description": "The new public API for faculty developers, real-time notifications, continued codebase cleanup update, and testing suite update.",
+    "description": "The new public API for faculty developers, real-time notifications, continued codebase cleanup, testing suite update and organization page updates.",
     "categories": {
       "features": [
+        {
+          "text": "Add Super Access Tokens for the public API, managabale via admin dashboard",
+          "contributors": ["ys973"],
+          "product": "public-api"
+        },
         {
           "text": "Alert system replaced with a new MOTD system",
           "contributors": ["ah1371"],
@@ -16,9 +125,41 @@
         {
           "text": "Backend tests are able to be run locally on the developer's machine with hot reloading using Docker",
           "contributors": ["ah1371"]
+        },
+        {
+          "text": "New page for creating tokens for the public API via organization management",
+          "contributors": ["ah1371", "ys973"],
+          "product": "public-api"
+        },
+        {
+          "text": "Organizations can use our public API to interact with users, links, tracking pixels, and organizations",
+          "contributors": ["ys973"],
+          "product": "public-api"
+        },
+        {
+          "text": "New page containing an API Reference for the public API",
+          "contributors": ["ys973"],
+          "product": "public-api"
+        },
+        {
+          "text": "New pages in an organization's dashboard: Overview and Links allows organizations to quickly view and manage their links and tracking pixels",
+          "contributors": ["ak2399"]
+        },
+        {
+          "text": "Organizations can now own a link or tracking pixel",
+          "contributors": ["ak2399"]
         }
+
       ],
       "improvements": [
+         {
+          "text": "Allow spaces in organization names with automatic cleanup",
+          "contributors": ["ys973"]
+        },
+         {
+          "text": "Warning popup appears before deleting an organization that has associated URLs",
+          "contributors": ["ys973"]
+        },
         {
           "text": "Feature flags are stored using React context hooks",
           "contributors": ["ah1371"]
@@ -66,6 +207,19 @@
         },
         {
           "text": "Private API routes are now under \"core\" instead of \"v1\"",
+          "contributors": ["ah1371"],
+          "warning": true
+        },
+        {
+          "text": "Individual organization management page now has a more consistent layout with the rest of the site",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Three version of release notes, the web app, the public API, and the Outlook add-in",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Table fonts are now 14px instead of 16px",
           "contributors": ["ah1371"]
         },
         {
@@ -74,6 +228,18 @@
         }
       ],
       "fixes": [
+        {
+          "text": "Resolves incorrect link card URL/clipboard behavior for tracking pixel links; hides long URL",
+          "contributors": ["ys973"]
+        },
+        {
+          "text": "Fix organization creation showing false success messages when validation fails",
+          "contributors": ["ys973"]
+        },
+        {
+          "text": "Deleted organizations are removed from viewers/editors list in assoicated URL's",
+          "contributors": ["ys973"]
+        },
         {
           "text": "403 page no longer flickers before loading the actual page",
           "contributors": ["ejw135"]
@@ -94,6 +260,14 @@
         {
           "text": "Add a couple missing test cases regarding link creation",
           "contributors": ["ah1371"]
+        },
+        {
+          "text": "Phishing links can no longer be bypassed via API routes initially used for testing",
+          "contributors": ["ah1371"]
+        },
+        {
+          "text": "Fix server crash when querying users on admin dashboard.",
+          "contributors": ["ak2399"]
         }
       ]
     }
@@ -356,6 +530,11 @@
         {
           "text": "Add user lookup to the admin dashboard",
           "contributors": ["ejw135"]
+        },
+        {
+          "text": "Microsoft Outlook Add-in created for uploading tracking pixels",
+          "contributors": ["av782", "kgm74"],
+          "product": "ms-office"
         }
       ],
       "improvements": [

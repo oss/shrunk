@@ -1,4 +1,9 @@
-import { Organization, OrganizationMember } from '../interfaces/organizations';
+import {
+  Organization,
+  OrganizationLink,
+  OrganizationMember,
+  OrganizationStats,
+} from '../interfaces/organizations';
 
 /**
  * @param which Whether to list all orgs or orgs of which the user is a member
@@ -35,12 +40,42 @@ export async function getOrganization(id: string): Promise<Organization> {
   };
 }
 
+export async function getOrganizationStats(
+  id: string,
+): Promise<OrganizationStats> {
+  const result: any = await fetch(`/api/core/org/${id}/stats`).then((resp) =>
+    resp.json(),
+  );
+  return result;
+}
+
+export async function getOrganizationLinks(
+  id: string,
+): Promise<OrganizationLink[]> {
+  const result: any = await fetch(`/api/core/org/${id}/links`).then((resp) =>
+    resp.json(),
+  );
+  return result as OrganizationLink[];
+}
+
 export async function createOrg(name: string): Promise<void> {
-  await fetch('/api/core/org', {
+  const res = await fetch('/api/core/org', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name }),
   });
+
+  if (!res.ok) {
+    throw new Error('Failed to create organization');
+  }
+}
+
+export async function hasAssociatedUrls(id: string): Promise<boolean> {
+  const res = await fetch(`/api/core/org/${id}/hasAssociatedUrls`, {
+    method: 'GET',
+  });
+  const data = await res.json();
+  return data.hasAssociatedUrls;
 }
 
 export async function deleteOrganization(id: string): Promise<void> {
@@ -62,18 +97,27 @@ export async function addMemberToOrganization(
   });
 }
 
+export async function addGuestToOrganization(
+  organizationId: string,
+  netid: string,
+) {
+  await fetch(`/api/core/org/${organizationId}/guest/${netid}`, {
+    method: 'PUT',
+  });
+}
+
 /**
  * Make someone an admin or not.
  */
 export async function setAdminStatusOrganization(
   organizationId: string,
   netid: string,
-  isAdmin: boolean,
+  role: string,
 ) {
   await fetch(`/api/core/org/${organizationId}/member/${netid}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ is_admin: isAdmin }),
+    body: JSON.stringify({ role }),
   });
 }
 
@@ -86,9 +130,58 @@ export async function removeMemberFromOrganization(
   });
 }
 
-export async function getOrganizationVisits(linkId: string) {
-  const resp = await fetch(`/api/core/org/${linkId}/stats/visits`);
+export async function getOrganizationVisits(organizationId: string) {
+  const resp = await fetch(`/api/core/org/${organizationId}/stats/visits`);
   const data = resp.json();
 
   return data as any;
+}
+
+export async function getValidAccessTokenPermissions() {
+  const resp = await fetch(`/api/core/org/valid-permissions`);
+  const data = await resp.json();
+
+  return data.permissions as string[];
+}
+
+export async function generateAccessToken(
+  title: string,
+  description: string,
+  permissions: string,
+  organizationId?: string,
+): Promise<string> {
+  const resp = await fetch(`/api/core/org/access_token`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      title,
+      description,
+      permissions,
+      organizationId,
+    }),
+  });
+  const data = await resp.json();
+  return data.access_token;
+}
+
+export async function getSuperTokens() {
+  const resp = await fetch(`/api/core/org/super_token`, {
+    method: 'GET',
+  });
+  const data = await resp.json();
+  return data.tokens;
+}
+
+export async function getAccessTokens(organizationId: string) {
+  const resp = await fetch(`/api/core/org/${organizationId}/access_token`, {
+    method: 'GET',
+  });
+  const data = await resp.json();
+  return data.tokens;
+}
+
+export async function deleteToken(tokenId: string): Promise<void> {
+  await fetch(`/api/core/org/access_token/${tokenId}`, { method: 'DELETE' });
 }

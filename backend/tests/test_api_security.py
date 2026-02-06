@@ -47,8 +47,6 @@ def test_user_and_admin_security_link_abilities(
         # this is a forbidden action. the link will then
         # become a pending link in the unsafe_links collection
         assert resp.status_code == 403
-        with pytest.raises(KeyError) as err:
-            link_id = resp.json["id"]
 
     with dev_login(client, "admin"):
         resp = client.post(

@@ -29,8 +29,8 @@ import {
   UsersIcon,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 
+import { useLocation } from 'react-router-dom';
 import { downloadVisits } from '../../api/csv';
 import {
   BrowserStats,
@@ -131,6 +131,9 @@ export function Stats(props: Props): React.ReactElement {
   const [entities, setEntities] = useState<Collaborator[]>([]);
 
   const [topReferrer, setTopReferrer] = useState<string | null>(null);
+  const [currentSource, setCurrentSource] = useState<string | undefined>(
+    undefined,
+  );
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const mode = queryParams.get('mode');
@@ -159,8 +162,8 @@ export function Stats(props: Props): React.ReactElement {
     const mentionedIds = new Set<string>();
 
     tempEntities.push({
-      _id: templinkInfo.owner,
-      type: 'netid',
+      _id: templinkInfo.owner._id,
+      type: templinkInfo.owner.type,
       role: 'owner',
     });
 
@@ -186,12 +189,27 @@ export function Stats(props: Props): React.ReactElement {
     setEntities(tempEntities);
   }
 
-  async function updateStats() {
-    setOverallStats(await getLinkStats(props.id));
-    setVisitStats(await getLinkVisitsStats(props.id));
-    setGeoipStats(await getLinkGeoIpStats(props.id));
-    setBrowserStats(await getLinkBrowserStats(props.id));
+  async function updateStats(source?: string) {
+    setOverallStats(await getLinkStats(props.id, source));
+    setVisitStats(await getLinkVisitsStats(props.id, source));
+    setGeoipStats(await getLinkGeoIpStats(props.id, source));
+    setBrowserStats(await getLinkBrowserStats(props.id, source));
+    setCurrentSource(source);
   }
+
+  const onVisitStateRangeChanged = async (
+    dates: null | (Dayjs | null)[],
+    _dateStrings: string[],
+  ): void => {
+    setVisitStats(
+      await getLinkVisitsStats(
+        props.id,
+        currentSource,
+        dates?.[0],
+        dates?.[1].endOf('day'),
+      ),
+    );
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -237,10 +255,19 @@ export function Stats(props: Props): React.ReactElement {
     if (values.long_url !== oldLinkInfo.long_url) {
       patchReq.long_url = values.long_url;
     }
-    if (values.owner !== oldLinkInfo.owner) {
-      patchReq.owner = values.owner;
+    if (values.owner._id !== oldLinkInfo.owner._id) {
+      patchReq.owner = {
+        _id: values.owner._id,
+        type: 'netid',
+      };
     }
-    if (values.expiration_time !== oldLinkInfo.expiration_time) {
+    if (values.alias !== oldLinkInfo.alias) {
+      patchReq.alias = values.alias;
+    }
+    if (
+      typeof values.expiration_time !== 'undefined' &&
+      values.expiration_time !== oldLinkInfo.expiration_time
+    ) {
       patchReq.expiration_time =
         values.expiration_time === null
           ? null
@@ -254,6 +281,10 @@ export function Stats(props: Props): React.ReactElement {
 
     if (patchRequestStatus !== 204) {
       message.error('There was an error editing the link.', 4);
+    } else {
+      await updateLinkInfo();
+      message.success('Link edited successfully', 4);
+      await updateStats();
     }
   }
 
@@ -266,7 +297,7 @@ export function Stats(props: Props): React.ReactElement {
       return;
     }
 
-    await downloadVisits(props.id, linkInfo.alias);
+    await downloadVisits(props.id);
   };
 
   const downloadCanvasQRCode = () => {
@@ -320,6 +351,25 @@ export function Stats(props: Props): React.ReactElement {
     onRemoveCollaborator(entity);
   };
 
+  const transferOwnershipToOrg = (
+    activeTab: 'netid' | 'org',
+    entity: Collaborator,
+  ) => {
+    editLink(props.id, {
+      owner: {
+        _id: entity._id,
+        type: activeTab,
+      },
+    })
+      .then(() => {
+        message.success('Ownership transferred successfully');
+        updateLinkInfo();
+      })
+      .catch(() => {
+        message.error('Failed to transfer ownership');
+      });
+  };
+
   const onChangeEntity = (
     activeTab: 'netid' | 'org',
     entity: Collaborator,
@@ -327,6 +377,12 @@ export function Stats(props: Props): React.ReactElement {
   ) => {
     // Remove viewer if they're an editor
     // Search "# SHARING_ACL_REFACTOR" for the following comment
+
+    if (activeTab === 'org' && value === 'owner') {
+      transferOwnershipToOrg(activeTab, entity);
+      return;
+    }
+
     if (value === 'viewer' && entity.role === 'editor') {
       onRemoveCollaborator(entity, 'editor');
       return;
@@ -342,7 +398,12 @@ export function Stats(props: Props): React.ReactElement {
   };
 
   const statTabs: Record<StatChart, React.ReactNode> = {
-    Visits: <VisitsChart visitStats={visitStats} />,
+    Visits: (
+      <VisitsChart
+        visitStats={visitStats}
+        onRangeChange={onVisitStateRangeChanged}
+      />
+    ),
     GeoIP: <GeoipChart data={geoipStats} />,
     Browser: (
       <ShrunkPieChart
@@ -444,7 +505,10 @@ export function Stats(props: Props): React.ReactElement {
                       iconSize={size / 4}
                       value={
                         linkInfo
-                          ? getRedirectFromAlias(linkInfo.alias, false)
+                          ? getRedirectFromAlias(
+                              `${linkInfo.alias}?source=qr`,
+                              false,
+                            )
                           : ''
                       }
                     />
@@ -491,7 +555,14 @@ export function Stats(props: Props): React.ReactElement {
                         {
                           key: 'owner',
                           label: 'Owner',
-                          children: linkInfo?.owner,
+                          children:
+                            linkInfo?.owner.type === 'org' ? (
+                              <a href={`/app/orgs/${linkInfo.owner._id}`}>
+                                {linkInfo.owner.org_name}
+                              </a>
+                            ) : (
+                              linkInfo?.owner._id
+                            ),
                           span: isTrackingPixel ? 1 : 'filled',
                         },
                         {
@@ -517,6 +588,21 @@ export function Stats(props: Props): React.ReactElement {
               </Col>
             </Row>
           </Card>
+        </Col>
+        <Col span={24}>
+          <Row justify="start" style={{ marginTop: 16 }}>
+            <Select
+              value={currentSource ?? 'All'}
+              className="tw-w-40"
+              onChange={(value) =>
+                updateStats(value === 'All' ? undefined : value)
+              }
+              options={[
+                { value: 'All', label: 'All sources' },
+                { value: 'qr', label: 'QR code' },
+              ]}
+            />
+          </Row>
         </Col>
         {overallStats === null || linkInfo === null ? (
           <></>
