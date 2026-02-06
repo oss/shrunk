@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import { Input, InputProps } from 'antd/lib';
+import { Input, InputProps } from 'antd';
 import { SearchProps } from 'antd/lib/input';
 import { SearchIcon } from 'lucide-react';
 import React from 'react';

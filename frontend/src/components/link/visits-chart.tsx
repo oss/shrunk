@@ -2,14 +2,17 @@ import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import React from 'react';
 import type { TimeRangePickerProps, GetProps } from 'antd';
-import { DatePicker, Row, Col, Flex } from 'antd/lib';
+import { DatePicker, Row, Col, Flex } from 'antd';
 import dayjs from 'dayjs';
 import { VisitDatum, VisitStats } from '../../interfaces/link';
 
 type RangePickerProps = GetProps<typeof DatePicker.RangePicker>;
 type Props = {
   visitStats: VisitStats | null;
-  onRangeChange: (dates: [dayjs, dayjs], dateStrings: [string, string]) => void;
+  onRangeChange: (
+    dates: [Dayjs | null, Dayjs | null] | null,
+    dateStrings: [string, string],
+  ) => void;
 };
 
 const { RangePicker } = DatePicker;

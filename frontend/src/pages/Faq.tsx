@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 import React from 'react';
-import { Row, Table, Collapse, Typography } from 'antd/lib';
+import { Row, Table, Collapse, Typography } from 'antd';
 
 const Data = {
   data: [
@@ -143,7 +143,7 @@ const Data = {
       key: 'everyone',
       align: 'center',
     },
-  ],
+  ] as ColumnsType<any>,
 };
 
 /**

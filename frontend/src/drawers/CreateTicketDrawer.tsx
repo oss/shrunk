@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import { App, Button, Drawer, Form, Input, Select, Typography } from 'antd/lib';
+import { App, Button, Drawer, Form, Input, Select, Typography } from 'antd';
 import React, { useState } from 'react';
 import { CreateTicketInfo, TicketInfo } from '../interfaces/tickets';
 import { createTicket, sendTicketEmail } from '../api/tickets';
@@ -58,7 +58,7 @@ const CreateTicketDrawer: React.FC<Props> = ({
   const [form] = Form.useForm();
 
   const { message } = App.useApp();
-  const isDev = process.env.NODE_ENV === 'development';
+  const isDev = import.meta.env.DEV;
 
   /**
    * Create a ticket.

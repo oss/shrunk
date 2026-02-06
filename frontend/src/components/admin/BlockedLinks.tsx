@@ -18,7 +18,7 @@ import {
   Table,
   Tooltip,
   Typography,
-} from 'antd/lib';
+} from 'antd';
 import {
   CloudDownloadIcon,
   PlusCircleIcon,
@@ -191,7 +191,7 @@ const BlockedLinks = () => {
       title: 'Time Blocked',
       key: 'timeBlocked',
       dataIndex: 'timeBlocked',
-      render: (_, record) => (
+      render: (_: any, record: BlockedLink) => (
         <Typography.Text>
           {dayjs(record.timeBlocked).format('MMM D, YYYY - h:mm A')}
         </Typography.Text>
@@ -279,10 +279,10 @@ const BlockedLinks = () => {
       <Row gutter={[16, 16]}>
         <Col span={24}>
           <Flex justify="space-between" style={{ width: '100%' }}>
-            <Space direction="horizontal">
+            <Space orientation="horizontal">
               <SearchBannedLinks onSearch={handleSearch} />
             </Space>
-            <Space direction="horizontal">
+            <Space orientation="horizontal">
               <Button icon={<CloudDownloadIcon />} onClick={exportAsCSV}>
                 Export
               </Button>

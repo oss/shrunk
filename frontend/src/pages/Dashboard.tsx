@@ -11,7 +11,7 @@ import {
   RadioChangeEvent,
   Select,
   Typography,
-} from 'antd/lib';
+} from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import {
   PlusIcon,

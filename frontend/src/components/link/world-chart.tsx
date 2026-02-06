@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Select, Row, Col, Flex } from 'antd/lib';
+import { Select, Row, Col, Flex } from 'antd';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import HighchartsMapModule from 'highcharts/modules/map';
