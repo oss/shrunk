@@ -14,7 +14,7 @@ import {
   Select,
   Space,
   Typography,
-} from 'antd/lib';
+} from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import { FilterIcon, PlusCircleIcon } from 'lucide-react';
 import { searchLinks, updateUserFilterOptions } from '../api/links';
@@ -372,6 +372,7 @@ export default function Dashboard({
             dateRange: [beginTime, endTime],
           }}
         >
+          {/* its ok that this is deprecated because the filtering system is being overhauled */}
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="orgSelect" label="Links">
@@ -413,14 +414,25 @@ export default function Dashboard({
                   value={sortKey}
                   onChange={sortLinksByKey}
                   style={{ width: '100%' }}
-                >
-                  <Select.Option value="relevance">Relevance</Select.Option>
-                  <Select.Option value="created_time">
-                    Time created
-                  </Select.Option>
-                  <Select.Option value="title">Title</Select.Option>
-                  <Select.Option value="visits">Number of visits</Select.Option>
-                </Select>
+                  options={[
+                    {
+                      value: 'relevance',
+                      label: 'Relevance',
+                    },
+                    {
+                      value: 'create_time',
+                      label: 'Time Created',
+                    },
+                    {
+                      value: 'title',
+                      label: 'Title',
+                    },
+                    {
+                      value: 'visits',
+                      label: 'Number of visits',
+                    },
+                  ]}
+                />
               </Form.Item>
             </Col>
             <Col span={12}>

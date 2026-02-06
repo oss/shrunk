@@ -18,7 +18,7 @@ import {
   Table,
   Tooltip,
   Typography,
-} from 'antd/lib';
+} from 'antd';
 import {
   CloudDownloadIcon,
   PlusCircleIcon,
@@ -279,10 +279,10 @@ const BlockedLinks = () => {
       <Row gutter={[16, 16]}>
         <Col span={24}>
           <Flex justify="space-between" style={{ width: '100%' }}>
-            <Space direction="horizontal">
+            <Space orientation="horizontal">
               <SearchBannedLinks onSearch={handleSearch} />
             </Space>
-            <Space direction="horizontal">
+            <Space orientation="horizontal">
               <Button icon={<CloudDownloadIcon />} onClick={exportAsCSV}>
                 Export
               </Button>

@@ -19,7 +19,7 @@ import {
   Typography,
   message,
   Alert,
-} from 'antd/lib';
+} from 'antd';
 import {
   EllipsisIcon,
   EyeIcon,
@@ -184,8 +184,12 @@ export default function MyOrganizations({
                 items: [
                   {
                     key: 'create',
-                    label: 'Create an organization',
-                    icon: <PlusCircleIcon />,
+                    label: (
+                      <p className="tw-m-0 !tw-text-black">
+                        Create an organization
+                      </p>
+                    ),
+                    icon: <PlusCircleIcon color="#000" />,
                     onClick: () => {
                       setIsCreateDrawerOpen(true);
                     },
@@ -193,8 +197,16 @@ export default function MyOrganizations({
                   },
                   {
                     key: 'admin_show_all_organizations',
-                    label: 'Show all organizations',
-                    icon: showAll ? <EyeIcon /> : <EyeOffIcon />,
+                    label: (
+                      <p className="tw-m-0 !tw-text-black">
+                        Show all organizations
+                      </p>
+                    ),
+                    icon: showAll ? (
+                      <EyeIcon color="#000" />
+                    ) : (
+                      <EyeOffIcon color="#000" />
+                    ),
                     onClick: toggleShowAllOrganizations,
                     disabled: !isAdmin,
                   },
@@ -208,7 +220,7 @@ export default function MyOrganizations({
         <Col span={24}>
           {showAssociatedUrlsAlert && (
             <Alert
-              message="Warning! Links found to be associated with organization"
+              title="Warning! Links found to be associated with organization"
               type="warning"
               showIcon
               closable

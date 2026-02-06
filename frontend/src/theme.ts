@@ -1,4 +1,4 @@
-import { ThemeConfig } from 'antd/lib';
+import { ThemeConfig } from 'antd';
 import { red } from '@ant-design/colors';
 
 export const lightTheme: ThemeConfig = {

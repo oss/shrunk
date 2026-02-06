@@ -19,8 +19,8 @@ import {
   QRCode,
   QRCodeProps,
   Flex,
-} from 'antd/lib';
-import dayjs, { Dayjs } from 'dayjs';
+} from 'antd';
+import dayjs from 'dayjs';
 import {
   CloudDownloadIcon,
   CopyIcon,

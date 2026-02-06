@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import { App, Button, Drawer, Form, Input, Select, Typography } from 'antd/lib';
+import { App, Button, Drawer, Form, Input, Select, Typography } from 'antd';
 import React, { useState } from 'react';
 import { CreateTicketInfo, TicketInfo } from '../interfaces/tickets';
 import { createTicket, sendTicketEmail } from '../api/tickets';

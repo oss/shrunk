@@ -4,7 +4,7 @@
  */
 
 import type { TabsProps } from 'antd';
-import { Badge, Space, Tabs, Typography } from 'antd/lib';
+import { Badge, Space, Tabs, Typography } from 'antd';
 import {
   ChartLineIcon,
   LockKeyholeIcon,
@@ -101,7 +101,7 @@ export default function Admin(): React.ReactElement {
       key: 'links',
       icon: <ShieldCheckIcon />,
       label: (
-        <Space direction="horizontal">
+        <Space orientation="horizontal">
           Link Control
           {linksToBeVerified > 0 && (
             <Badge count={linksToBeVerified} style={{ marginLeft: '8px' }} />

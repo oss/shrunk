@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Flex, Card } from 'antd';
-import { Statistic } from 'antd/lib';
+import { Flex, Card, Statistic } from 'antd';
 import { getOrganizationStats } from '../../api/organization';
 import { OrganizationStats } from '../../interfaces/organizations';
 

@@ -15,7 +15,7 @@ import {
   Table,
   Tooltip,
   Typography,
-} from 'antd/lib';
+} from 'antd';
 import dayjs from 'dayjs';
 import {
   CircleCheckIcon,

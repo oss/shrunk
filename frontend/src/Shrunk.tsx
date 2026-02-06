@@ -23,11 +23,11 @@ import {
   Image,
   Layout,
   Typography,
-} from 'antd/lib';
+  message,
+} from 'antd';
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom';
 
-import { message } from 'antd';
 import Markdown from 'markdown-to-jsx';
 import Admin from './pages/Admin';
 import Dashboard from './pages/Dashboard';
@@ -147,7 +147,7 @@ export default function Shrunk(props: Props) {
     window.location.href = await logout();
   };
 
-  const onAlertClose = async () => {
+  const onAlertClose = (): void => {
     if (motd === '') {
       return;
     }
@@ -168,15 +168,23 @@ export default function Shrunk(props: Props) {
     { type: 'divider' },
     {
       key: 'orgs',
-      icon: <UsersIcon />,
-      label: <a href="/app/orgs">My Organizations</a>,
+      icon: <UsersIcon color="#000" />,
+      label: (
+        <a href="/app/orgs" className="!tw-text-black">
+          My Organizations
+        </a>
+      ),
     },
     ...(showAdminTab && featureFlags.helpDesk
       ? [
           {
             key: 'tickets',
-            icon: <BugIcon />,
-            label: <a href="/tickets">Help Desk</a>,
+            icon: <BugIcon color="#000" />,
+            label: (
+              <a href="/tickets" className="!tw-text-black">
+                Help Desk
+              </a>
+            ),
           },
         ]
       : []),
@@ -184,27 +192,43 @@ export default function Shrunk(props: Props) {
       ? [
           {
             key: 'admin-dashboard',
-            icon: <LayoutDashboardIcon />,
-            label: <a href="/app/admin">Admin Dashboard</a>,
+            icon: <LayoutDashboardIcon color="#000" />,
+            label: (
+              <a href="/app/admin" className="!tw-text-black">
+                Admin Dashboard
+              </a>
+            ),
           },
         ]
       : []),
     { type: 'divider' },
     {
       key: 'api-reference',
-      icon: <CodeIcon />,
-      label: <a href="/app/api-reference">API Reference</a>,
+      icon: <CodeIcon color="#000" />,
+      label: (
+        <a href="/app/api-reference" className="!tw-text-black">
+          API Reference
+        </a>
+      ),
     },
     { type: 'divider' },
     {
       key: 'releases',
-      icon: <RocketIcon />,
-      label: <a href="/app/releases">Release Notes</a>,
+      icon: <RocketIcon color="#000" />,
+      label: (
+        <a href="/app/releases" className="!tw-text-black">
+          Release Notes
+        </a>
+      ),
     },
     {
       key: 'faq',
-      icon: <CircleHelpIcon />,
-      label: <a href="/app/faq">FAQ</a>,
+      icon: <CircleHelpIcon color="#000" />,
+      label: (
+        <a href="/app/faq" className="!tw-text-black">
+          FAQ
+        </a>
+      ),
     },
     { type: 'divider' },
     {
@@ -252,7 +276,7 @@ export default function Shrunk(props: Props) {
             <Layout>
               {domain === 'shrunk.rutgers.edu' && (
                 <Alert
-                  message={
+                  title={
                     <Typography.Text>
                       This is a developer environment, any progress you make on
                       this site is prone to deletion. Please use the real site
@@ -268,7 +292,7 @@ export default function Shrunk(props: Props) {
 
               {showMotd && (
                 <Alert
-                  message={<Markdown>{motd}</Markdown>}
+                  title={<Markdown>{motd}</Markdown>}
                   type="info"
                   showIcon
                   closable

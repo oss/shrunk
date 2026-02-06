@@ -7,7 +7,7 @@ import {
   Row,
   Space,
   Tooltip,
-} from 'antd/lib';
+} from 'antd';
 import React from 'react';
 import dayjs from 'dayjs';
 import {

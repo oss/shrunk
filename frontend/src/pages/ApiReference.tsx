@@ -11,7 +11,7 @@ import {
   Divider,
   Row,
   Col,
-} from 'antd/lib';
+} from 'antd';
 
 export default function ApiReference() {
   const apiUrl = `${window.location.origin}/api/v1`;

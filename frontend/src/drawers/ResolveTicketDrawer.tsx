@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import { App, Button, Divider, Drawer, Form, Input, Radio } from 'antd/lib';
+import { App, Button, Divider, Drawer, Form, Input, Radio } from 'antd';
 import React from 'react';
 import { useHistory } from 'react-router-dom';
 import TicketDetails, { EntityDetails } from '../components/TicketDetails';

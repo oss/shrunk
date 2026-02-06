@@ -12,9 +12,9 @@ import {
   Checkbox,
   Alert,
   Modal,
-} from 'antd/lib';
+  message,
+} from 'antd';
 import { CirclePlusIcon, PlusCircleIcon } from 'lucide-react';
-import { message } from 'antd';
 import {
   generateAccessToken,
   getAccessTokens,
@@ -141,7 +141,7 @@ function OrganizationToken(props: IOrganizationToken) {
           <Row gutter={16}>
             <Col span={24} className="tw-mb-4">
               <Alert
-                message="Secure your data."
+                title="Secure your data."
                 description="Keeping your access token private is your responsibility. We salt and use Argon2, a quantum-safe and award-winning key derivation function, to encrypt your access token and store it in our database."
                 type="warning"
               />

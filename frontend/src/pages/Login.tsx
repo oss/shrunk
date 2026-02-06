@@ -1,4 +1,4 @@
-import { Button, Card, Col, Flex, Row, Select, Space } from 'antd/lib';
+import { Button, Card, Col, Flex, Row, Select, Space } from 'antd';
 import { LogInIcon } from 'lucide-react';
 import React, { useState } from 'react';
 import { useFeatureFlags } from '../contexts/FeatureFlags';
