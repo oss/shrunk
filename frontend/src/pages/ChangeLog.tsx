@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Col, Flex, Row, Tabs, Typography } from 'antd/lib';
+import { Col, Flex, Row, Tabs, Typography } from 'antd';
 import { getReleaseNotes } from '../api/app';
 import {
   Note,

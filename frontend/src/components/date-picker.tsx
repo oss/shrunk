@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import { DatePicker, DatePickerProps } from 'antd/lib';
+import { DatePicker, DatePickerProps } from 'antd';
 import { RangePickerProps } from 'antd/lib/date-picker';
 import {
   CalendarIcon,

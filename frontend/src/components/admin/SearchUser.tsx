@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import { AutoComplete } from 'antd/lib';
+import { AutoComplete } from 'antd';
 import { SearchIcon } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 

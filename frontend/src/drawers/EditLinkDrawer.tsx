@@ -15,7 +15,7 @@ import {
   Row,
   Space,
   Tooltip,
-} from 'antd/lib';
+} from 'antd';
 import dayjs from 'dayjs';
 import { CircleAlertIcon, SaveIcon, TrashIcon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';

@@ -12,7 +12,7 @@ import {
   Row,
   Space,
   Typography,
-} from 'antd/lib';
+} from 'antd';
 import { CircleCheckIcon, CircleXIcon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';

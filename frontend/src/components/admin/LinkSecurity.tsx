@@ -4,7 +4,7 @@
  */
 
 import Spin from 'antd/es/spin';
-import { Button, Col, Popconfirm, Row } from 'antd/lib';
+import { Button, Col, Popconfirm, Row } from 'antd';
 import { CircleAlertIcon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import {

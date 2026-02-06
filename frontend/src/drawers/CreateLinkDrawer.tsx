@@ -11,7 +11,7 @@ import {
   Space,
   Typography,
   message,
-} from 'antd/lib';
+} from 'antd';
 import { FormInstance } from 'antd/lib/form';
 import dayjs from 'dayjs';
 import { SendHorizontalIcon } from 'lucide-react';
@@ -69,6 +69,7 @@ export interface Props {
 }
 
 export default function CreateLinkDrawer(props: Props): JSX.Element {
+  const { Search } = Input;
   const featureFlags: FeatureFlags = useFeatureFlags();
   const [loading, setLoading] = useState<boolean>(false);
   const [linkCreationMode, setLinkCreationMode] = useState<'url' | 'pixel'>(
@@ -192,10 +193,10 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
                   { validator: serverValidateDuplicateAlias },
                 ]}
               >
-                <Input
-                  addonBefore={`${document.location.host}/`}
-                  placeholder="If left blank, it will be randomized"
-                />
+                <Space.Compact className="tw-w-full">
+                  <Space.Addon>{`${window.location.host}/`}</Space.Addon>
+                  <Search placeholder="If left blank, it will be randomized" />
+                </Space.Compact>
               </Form.Item>
             </Col>
           )}

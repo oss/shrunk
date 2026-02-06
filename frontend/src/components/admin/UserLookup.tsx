@@ -14,7 +14,7 @@ import {
   Tag,
   Tooltip,
   message,
-} from 'antd/lib';
+} from 'antd';
 import type { ColumnsType, TableProps } from 'antd/lib/table';
 import type { SorterResult } from 'antd/lib/table/interface';
 import { TrashIcon } from 'lucide-react';
@@ -164,7 +164,7 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
   };
 
   return (
-    <Space style={{ width: '100%' }} direction="vertical">
+    <Space style={{ width: '100%' }} orientation="vertical">
       <Select
         mode="multiple"
         allowClear

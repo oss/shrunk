@@ -5,7 +5,7 @@
 
 import React, { useEffect, useState } from 'react';
 
-import { Spin, Card, Statistic, Flex } from 'antd/lib';
+import { Spin, Card, Statistic, Flex } from 'antd';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 

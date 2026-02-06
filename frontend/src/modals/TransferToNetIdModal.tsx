@@ -1,6 +1,5 @@
-import { Button, Form, Input, Modal, Popconfirm } from 'antd/lib';
+import { Button, Form, Input, Modal, Popconfirm, message } from 'antd';
 import React, { useState } from 'react';
-import { message } from 'antd';
 import { serverValidateNetId } from '../api/validators';
 
 interface ITransferModal {

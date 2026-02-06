@@ -12,7 +12,7 @@ import {
   Table,
   Typography,
   Tabs,
-} from 'antd/lib';
+} from 'antd';
 import type { TabsProps } from 'antd/lib/tabs';
 import type { FormInstance } from 'antd/lib/form';
 import dayjs from 'dayjs';
@@ -294,16 +294,20 @@ function ManageOrgBase({
                 items: [
                   {
                     key: 'settings_organization',
-                    label: 'Settings',
-                    icon: <SettingsIcon />,
+                    label: <p className="tw-m-0 !tw-text-black">Settings</p>,
+                    icon: <SettingsIcon color="#000" />,
                     onClick: onEditOrganization,
                   },
                   ...(isAdmin
                     ? [
                         {
                           key: 'settings_developer_organization',
-                          label: 'Access Tokens',
-                          icon: <CodeIcon />,
+                          label: (
+                            <p className="tw-m-0 !tw-text-black">
+                              Access Tokens
+                            </p>
+                          ),
+                          icon: <CodeIcon color="#000" />,
                           onClick: () => {
                             history.push(`/app/orgs/${match.params.id}/tokens`);
                           },

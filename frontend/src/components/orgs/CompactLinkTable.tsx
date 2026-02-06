@@ -1,6 +1,6 @@
 import type { ColumnsType } from 'antd/lib/table';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Table, Flex, Tooltip, Button, message } from 'antd/lib';
+import { Table, Flex, Tooltip, Button, message } from 'antd';
 import {
   EditIcon,
   EyeIcon,

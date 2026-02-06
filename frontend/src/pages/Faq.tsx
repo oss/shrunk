@@ -3,8 +3,7 @@
  * @packageDocumentation
  */
 import React from 'react';
-import { Row, Table, Collapse, Typography } from 'antd/lib';
-import type { ColumnsType } from 'antd/es/table';
+import { Row, Table, Collapse, Typography } from 'antd';
 
 const Data = {
   data: [

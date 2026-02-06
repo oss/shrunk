@@ -1,4 +1,4 @@
-import { Button, Card, Col, Form, Input, Row } from 'antd/lib';
+import { Button, Card, Col, Form, Input, Row } from 'antd';
 import { CircleMinusIcon } from 'lucide-react';
 import React from 'react';
 import { serverValidateDuplicateAlias } from '../api/validators';

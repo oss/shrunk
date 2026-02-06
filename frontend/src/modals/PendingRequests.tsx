@@ -2,7 +2,7 @@
 
 // TODO: Scheduled for deletion. See: https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/277
 
-import { Button, Col, Modal, Row } from 'antd/lib';
+import { Button, Col, Modal, Row } from 'antd';
 import dayjs from 'dayjs';
 import { CheckIcon, XIcon } from 'lucide-react';
 import React from 'react';

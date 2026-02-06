@@ -1,4 +1,4 @@
-import { Descriptions, Typography } from 'antd/lib';
+import { Descriptions, Typography } from 'antd';
 import dayjs from 'dayjs';
 import React from 'react';
 import { EntityPositionInfo, TicketInfo } from '../interfaces/tickets';
