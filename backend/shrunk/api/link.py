@@ -125,7 +125,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
 
     owner = {}
 
-    if client.roles.has("guest", netid):  # force org link ownership for guest
+    if client.users.has_role(netid, "guest"):  # force org link ownership for guest
         org = client.orgs.get_orgs(netid, True)[0]
         req["org_id"] = str(org["id"])
 
@@ -318,17 +318,19 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
             abort(400)
         if client.links.alias_is_reserved(req["alias"]):
             abort(400)
-        if client.roles.has_some(["admin", "power_user"], netid) == False:
+        if not client.users.has_role(netid, "admin") or not client.users.has_role(
+            netid, "power_user"
+        ):
             abort(403)
 
     if "owner" in req:
-        if not client.links.is_owner(link_id, netid) and not client.roles.has(
+        if not client.links.is_owner(link_id, netid) and not client.users.has_role(
             "admin", netid
         ):
             abort(403)
         if req["owner"]["type"] == "netid":
-            if not is_valid_netid(req["owner"]["_id"]) or client.roles.has(
-                "guest", req["owner"]["_id"]
+            if not is_valid_netid(req["owner"]["_id"]) or client.users.has_role(
+                req["owner"]["_id"], "guest"
             ):
                 abort(400)
         elif req["owner"]["type"] == "org":
@@ -336,7 +338,7 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
                 abort(400)
             if not client.orgs.is_member(
                 ObjectId(req["owner"]["_id"]), netid
-            ) and not client.roles.has("admin", netid):
+            ) and not client.users.has_role(netid, "admin"):
                 abort(403)
 
     try:

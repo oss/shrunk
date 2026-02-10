@@ -121,6 +121,9 @@ def add_user_role(netid: str, client: ShrunkClient) -> Any:
         abort(400)
     except InvalidEntity as e:
         abort(403)
+        
+    if role == "blacklisted":
+        client.links.blacklist_user_links(netid)
     return "", 204
 
 
