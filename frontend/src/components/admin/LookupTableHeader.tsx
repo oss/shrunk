@@ -16,7 +16,6 @@ import {
 import { CloudDownloadIcon, PlusCircleIcon } from 'lucide-react';
 import React from 'react';
 import { createUser } from '../../api/users';
-import { User } from '../../contexts/Users';
 import SearchUser from './SearchUser';
 
 /**
