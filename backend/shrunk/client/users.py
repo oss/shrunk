@@ -388,6 +388,7 @@ class UserClient:
                 }
             },
         )
+        
 
     def revoke_role(self, grantor: str, grantee: str, role: str) -> None:
         """Revokes a specific role from a user.

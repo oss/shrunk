@@ -17,7 +17,7 @@ from bson import ObjectId
 from flask.json import JSONEncoder
 from flask.logging import default_handler
 from flask_mailman import Mail
-import urllib
+from urllib.parse import parse_qsl, urlencode
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.routing import BaseConverter, ValidationError
 
@@ -111,145 +111,6 @@ def _init_shrunk_client() -> None:
     current_app.client = ShrunkClient()
 
 
-def _init_roles() -> None:
-    client: ShrunkClient = current_app.client
-
-    def is_admin(netid: str) -> bool:
-        return client.roles.has("admin", netid)
-
-    client.roles.create(
-        "admin", is_admin, is_valid_netid, custom_text={"title": "Admins"}
-    )
-
-    client.roles.create(
-        "power_user",
-        is_admin,
-        is_valid_netid,
-        custom_text={
-            "title": "Power Users",
-            "grant_title": "Grant power user",
-            "revoke_title": "Revoke power user",
-            "allow_comment": True,
-            "comment_prompt": "Describe why the user has been granted power user access to Go.",
-        },
-    )
-
-    def onblacklist(netid: str) -> None:
-        client.links.blacklist_user_links(netid)
-
-    def unblacklist(netid: str) -> None:
-        client.links.unblacklist_user_links(netid)
-
-    client.roles.create(
-        "blacklisted",
-        is_admin,
-        is_valid_netid,
-        custom_text={
-            "title": "Blacklisted Users",
-            "grant_title": "Blacklist a user:",
-            "grantee_text": "User to blacklist (and disable their links)",
-            "grant_button": "BLACKLIST",
-            "revoke_title": "Unblacklist a user",
-            "revoke_button": "UNBLACKLIST",
-            "empty": "There are currently no blacklisted users",
-            "granted_by": "blacklisted by",
-        },
-        oncreate=onblacklist,
-        onrevoke=unblacklist,
-    )
-
-    def onblock(url: str) -> None:
-        domain = get_domain(url)
-        urls = client.db.urls
-        current_app.logger.info(
-            f"url {url} has been blocked. removing all urls with domain {domain}"
-        )
-
-        # . needs to be escaped in the domain because it is regex wildcard
-        contains_domain = urls.find(
-            {"long_url": {"$regex": "%s*" % domain.replace(".", r"\.")}}
-        )
-
-        matches_domain = [
-            link for link in contains_domain if get_domain(link["long_url"]) == domain
-        ]
-
-        msg = "deleting links: " + ", ".join(
-            f'{link["_id"]} -> {link["long_url"]}' for link in matches_domain
-        )
-        current_app.logger.info(msg)
-
-        client.links.block_urls(list(doc["_id"] for doc in matches_domain))
-
-    def unblock(url: str) -> None:
-        urls = client.db.urls
-        domain = get_domain(url)
-        contains_domain = urls.find(
-            {
-                "long_url": {"$regex": "%s*" % domain.replace(".", r"\.")},
-                "deleted": True,
-                "deleted_by": "!BLOCKED",
-            }
-        )
-
-        matches_domain = [
-            link for link in contains_domain if get_domain(link["long_url"]) == domain
-        ]
-        client.links.unblock_urls(list(doc["_id"] for doc in matches_domain))
-
-    client.roles.create(
-        "blocked_url",
-        is_admin,
-        validate_url,
-        custom_text={
-            "title": "Blocked URLs",
-            "invalid": "Bad URL",
-            "grant_title": "Block a URL:",
-            "grantee_text": "URL to block",
-            "grant_button": "BLOCK",
-            "revoke_title": "Unblock a URL",
-            "revoke_button": "UNBLOCK",
-            "empty": "There are currently no blocked URLs",
-            "granted_by": "Blocked by",
-        },
-        process_entity=get_domain,
-        oncreate=onblock,
-        onrevoke=unblock,
-    )
-
-    client.roles.create(
-        "whitelisted",
-        lambda netid: client.roles.has_some(["admin", "facstaff", "power_user"], netid),
-        is_valid_netid,
-        custom_text={
-            "title": "Whitelisted Users",
-            "grant_title": "Whitelist a user",
-            "grantee_text": "User to whitelist",
-            "grant_button": "WHITELIST",
-            "revoke_title": "Remove a user from the whitelist",
-            "revoke_button": "UNWHITELIST",
-            "empty": "You have not whitelisted any users",
-            "granted_by": "Whitelisted by",
-            "allow_comment": True,
-            "comment_prompt": "Describe why the user has been granted access to Go.",
-        },
-    )
-
-    client.roles.create(
-        "guest",
-        lambda netid: client.roles.has_some(["admin", "facstaff", "power_user"], netid),
-        is_university_guest,
-        custom_text={
-            "title": "University Guests",
-        },
-    )
-
-    client.roles.create(
-        "facstaff",
-        is_admin,
-        is_valid_netid,
-        custom_text={"title": "Faculty or Staff Member"},
-    )
 
 
 def create_app(**kwargs: Any) -> Flask:
@@ -287,7 +148,7 @@ def create_app(**kwargs: Any) -> Flask:
     # call initialization functions
     app.before_first_request(_init_logging)
     app.before_first_request(_init_shrunk_client)
-    app.before_first_request(_init_roles)
+
 
     # wsgi middleware
     app.wsgi_app = ProxyFix(app.wsgi_app)  # type: ignore
@@ -518,7 +379,7 @@ def create_app(**kwargs: Any) -> Flask:
             separator = "&" if "?" in long_url else "?"
 
             decoded = request.query_string.decode("utf-8").replace("&amp;", "&")
-            q_strings = dict(urllib.parse.parse_qsl(decoded))
+            q_strings = dict(parse_qsl(decoded))
             mid = q_strings.get("mid", None)
             uid = q_strings.get("uid", None)
             source = q_strings.get("source", None)
@@ -528,7 +389,7 @@ def create_app(**kwargs: Any) -> Flask:
 
             if len(q_strings) == 0:
                 separator = ""
-            long_url = f"{long_url}{separator}{urllib.parse.urlencode(q_strings)}"
+            long_url = f"{long_url}{separator}{urlencode(q_strings)}"
 
         allowed_sources = ["qr"]
 

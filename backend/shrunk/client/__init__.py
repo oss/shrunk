@@ -9,7 +9,6 @@ import pymongo
 from .geoip import GeoipClient
 from .links import LinksClient
 from .orgs import OrgsClient
-from .roles import RolesClient
 from .search import SearchClient
 from .security import SecurityClient
 from .tickets import TicketsClient
@@ -53,7 +52,6 @@ class ShrunkClient:
             BANNED_REGEXES=BANNED_REGEXES or [],
             other_clients=self,
         )
-        self.roles = RolesClient(db=self.db)
         self.tracking = TrackingClient(db=self.db)
 
         self.orgs = OrgsClient(db=self.db)
