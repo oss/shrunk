@@ -338,7 +338,7 @@ class UserClient:
 
     def is_valid_role(self, role: str) -> bool:
         """Check whether a role is valid"""
-        roles = ["admin", "power_user", "facstaff", "whitelisted", "blacklisted"]
+        roles = ["admin", "power_user", "facstaff", "whitelisted", "blacklisted", "guest"]
         return role in roles
 
     def grant_role(

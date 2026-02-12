@@ -671,7 +671,7 @@ class LinksClient:
         return False
 
     def may_edit(self, link_id: ObjectId, netid: str) -> bool:
-        if self.other_clients.roles.has("admin", netid):
+        if self.other_clients.users.has_role(netid, "admin"):
             return True
 
         orgs = self.other_clients.orgs.get_orgs(netid, True)

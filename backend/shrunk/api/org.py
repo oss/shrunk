@@ -464,7 +464,7 @@ def put_org_guest(
         return "Guest user already belongs to an organization", 400
 
     if client.orgs.create_member(org_id, member_netid, "guest"):
-        client.users.grant_role(netid, member_netid, "guest", f"Added to org: {org_id}")
+        client.users.initialize_user(member_netid, "guest", netid)
 
     return "", 204
 
