@@ -31,39 +31,45 @@ class SearchClient:
         # We're going to build up an aggregation pipeline based on the submitted query.
         pipeline: List[Any] = []
 
-        if "query" in query and query["query"] != "" and "shared" not in sets:
-            pipeline += [
-                {"$match": {"$text": {"$search": query["query"]}}},
+        # Independent field-based search
+        search_filters = []
+        exact_score_conditions = []
+
+        if query.get("title"):
+            search_filters.append(
+                {"title": {"$regex": query["title"], "$options": "i"}}
+            )
+            exact_score_conditions.append({"$eq": ["$title", query["title"]]})
+
+        if query.get("alias"):
+            search_filters.append(
+                {"alias": {"$regex": query["alias"], "$options": "i"}}
+            )
+            exact_score_conditions.append({"$eq": ["$alias", query["alias"]]})
+
+        if query.get("url"):
+            search_filters.append(
+                {"long_url": {"$regex": query["url"], "$options": "i"}}
+            )
+            exact_score_conditions.append({"$eq": ["$long_url", query["url"]]})
+
+        if search_filters:
+            pipeline.append({"$match": {"$and": search_filters}})
+
+            # Add optional relevance scoring
+            pipeline.append(
                 {
                     "$addFields": {
                         "text_search_score": {
-                            "$add": [
-                                # add textScore + (100 if there is an exact match in any of the fields, else 0)
-                                {"$meta": "textScore"},
-                                {
-                                    "$cond": {
-                                        "if": {
-                                            "$or": [
-                                                {"$eq": ["$title", query["query"]]},
-                                                {"$eq": ["$long_url", query["query"]]},
-                                                {"$eq": ["$netid", query["query"]]},
-                                                {
-                                                    "$eq": [
-                                                        "$alias",
-                                                        query["query"],
-                                                    ]
-                                                },
-                                            ]
-                                        },
-                                        "then": 100,
-                                        "else": 0,
-                                    }
-                                },
-                            ]
+                            "$cond": {
+                                "if": {"$or": exact_score_conditions},
+                                "then": 100,
+                                "else": 0,
+                            }
                         }
                     }
-                },
-            ]
+                }
+            )
 
         set_filters = []
 
@@ -120,7 +126,7 @@ class SearchClient:
             sort_key = "title"
         elif query["sort"]["key"] == "relevance":
             sort_key = "text_search_score"
-            if query.get("query", "") == "":
+            if not any([query.get("title"), query.get("alias"), query.get("url")]):
                 sort_key = "timeCreated"
         else:
             # This should never happen
@@ -280,12 +286,7 @@ class SearchClient:
         if org_ids:
             shared_filter["$or"].append({"viewers._id": {"$in": org_ids}})
 
-        if "query" in query and query["query"] != "":
-            pipeline.append({"$match": {"$text": {"$search": query["query"]}}})
-            pipeline.append(
-                {"$addFields": {"text_search_score": {"$meta": "textScore"}}}
-            )
-
+        # Apply shared filter after search
         pipeline.append({"$match": shared_filter})
 
         return pipeline

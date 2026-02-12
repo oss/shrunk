@@ -26,6 +26,9 @@ SEARCH_SCHEMA = {
         "show_type",
     ],
     "properties": {
+        "alias": {"type": "string"},
+        "url": {"type": "string"},
+        "title": {"type": "string"},
         "query": {"type": "string"},
         # Accept an array of sets for multi-filter support
         "set": {

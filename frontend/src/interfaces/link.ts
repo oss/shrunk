@@ -161,6 +161,9 @@ export interface SearchQuery {
    * @property
    */
   queryString: string;
+  alias: string;
+  url: string;
+  title: string;
 
   /**
    * The set of links to search (c.f. [[SearchSet]])
