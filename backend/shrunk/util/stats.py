@@ -5,7 +5,6 @@ from functools import lru_cache
 
 import httpagentparser
 
-
 __all__ = ["get_human_readable_referer_domain", "browser_stats_from_visits"]
 
 

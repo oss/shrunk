@@ -34,7 +34,9 @@ def _query_netid(netid: str) -> Optional[List[Tuple[str, Dict[str, List[bytes]]]
 
 
 def is_valid_netid(netid: str) -> bool:
-    if bool(int(os.getenv("SHRUNK_DEV_LOGINS", 0))) and netid.startswith("DEV_"):
+    if bool(int(os.getenv("SHRUNK_DEV_LOGINS", 0))) and netid.upper().startswith(
+        "DEV_"
+    ):
         return True
 
     if current_app.client.user_exists(netid):
@@ -46,7 +48,9 @@ def is_valid_netid(netid: str) -> bool:
 
 
 def is_university_guest(netid: str) -> bool:
-    if bool(int(os.getenv("SHRUNK_DEV_LOGINS", 0))) and netid.startswith("DEV_"):
+    if bool(int(os.getenv("SHRUNK_DEV_LOGINS", 0))) and netid.upper().startswith(
+        "DEV_"
+    ):
         return True
 
     if not is_valid_netid(netid):
@@ -59,7 +63,7 @@ def is_university_guest(netid: str) -> bool:
 
 
 def query_given_name(netid: str) -> str:
-    if netid.startswith("DEV_"):
+    if netid.upper().startswith("DEV_"):
         return netid
 
     res = _query_netid(netid)

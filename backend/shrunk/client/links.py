@@ -32,7 +32,6 @@ from .exceptions import (
     SecurityRiskDetected,
 )
 
-
 __all__ = ["LinksClient"]
 
 
