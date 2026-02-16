@@ -3,7 +3,7 @@ import {
   OrganizationLink,
   OrganizationMember,
   OrganizationStats,
-} from '../interfaces/organizations';
+} from '@/interfaces/organizations';
 
 /**
  * @param which Whether to list all orgs or orgs of which the user is a member

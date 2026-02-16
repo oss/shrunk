@@ -17,15 +17,15 @@ import {
 } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import { FilterIcon, PlusCircleIcon } from 'lucide-react';
-import { searchLinks, updateUserFilterOptions } from '../api/links';
-import { getOrganizations } from '../api/organization';
-import { serverValidateNetId } from '../api/validators';
-import DatePicker from '../components/date-picker';
-import Input from '../components/input';
-import CreateLinkDrawer from '../drawers/CreateLinkDrawer';
-import { Link, SearchQuery, SearchSet } from '../interfaces/link';
-import { Organization } from '../interfaces/organizations';
-import LinkCard from '../components/LinkCard';
+import { searchLinks, updateUserFilterOptions } from '@/api/links';
+import { getOrganizations } from '@/api/organization';
+import { serverValidateNetId } from '@/api/validators';
+import DatePicker from '@/components/date-picker';
+import Input from '@/components/input';
+import CreateLinkDrawer from '@/drawers/CreateLinkDrawer';
+import { Link, SearchQuery, SearchSet } from '@/interfaces/link';
+import { Organization } from '@/interfaces/organizations';
+import LinkCard from '@/components/LinkCard';
 
 interface Props {
   userPrivileges: Set<string>;

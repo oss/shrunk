@@ -10,7 +10,7 @@ import {
   EditLinkValues,
   SearchQuery,
   GeoipStats,
-} from '../interfaces/link';
+} from '@/interfaces/link';
 
 export async function getLink(linkId: string): Promise<Link> {
   const resp = await fetch(`/api/core/link/${linkId}`, {

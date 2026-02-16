@@ -29,30 +29,30 @@ import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom';
 
 import Markdown from 'markdown-to-jsx';
-import Admin from './pages/Admin';
-import Dashboard from './pages/Dashboard';
-import Faq from './pages/Faq';
-import ApiReference from './pages/ApiReference';
-import MyOrganizations from './pages/organizations';
+import Admin from '@/pages/Admin';
+import Dashboard from '@/pages/Dashboard';
+import Faq from '@/pages/Faq';
+import ApiReference from '@/pages/ApiReference';
+import MyOrganizations from '@/pages/organizations';
 
-import Login from './pages/Login';
-import ManageOrg from './pages/organization-manage';
-import { Stats } from './pages/subpages/Stats';
+import Login from '@/pages/Login';
+import ManageOrg from '@/pages/organization-manage';
+import { Stats } from '@/pages/subpages/Stats';
 
-import { PendingRequests } from './modals/PendingRequests';
+import { PendingRequests } from '@/modals/PendingRequests';
 
-import ErrorPage from './pages/ErrorPage';
-import HelpDesk from './pages/HelpDesk';
+import ErrorPage from '@/pages/ErrorPage';
+import HelpDesk from '@/pages/HelpDesk';
 
-import { getUserInfo, logout } from './api/app';
-import { FeatureFlagsProvider, useFeatureFlags } from './contexts/FeatureFlags';
-import rutgersLogo from './images/rutgers.png';
-import { FeatureFlags } from './interfaces/app';
-import ChangeLog from './pages/ChangeLog';
-import Ticket from './pages/subpages/Ticket';
-import { lightTheme } from './theme';
-import { SearchQuery } from './interfaces/link';
-import OrganizationToken from './pages/organization-tokens';
+import { getUserInfo, logout } from '@/api/app';
+import { FeatureFlagsProvider, useFeatureFlags } from '@/contexts/FeatureFlags';
+import rutgersLogo from '@/images/rutgers.png';
+import { FeatureFlags } from '@/interfaces/app';
+import ChangeLog from '@/pages/ChangeLog';
+import Ticket from '@/pages/subpages/Ticket';
+import { lightTheme } from '@/theme';
+import { SearchQuery } from '@/interfaces/link';
+import OrganizationToken from '@/pages/organization-tokens';
 
 const { Header, Content, Footer, Sider } = Layout;
 

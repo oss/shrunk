@@ -4,6 +4,7 @@
  */
 import React from 'react';
 import { Row, Table, Collapse, Typography } from 'antd';
+import { ColumnsType } from 'antd/es/table';
 
 const Data = {
   data: [

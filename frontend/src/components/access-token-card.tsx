@@ -12,8 +12,8 @@ import {
 import React from 'react';
 import dayjs from 'dayjs';
 import { Trash2Icon } from 'lucide-react';
-import { AccessTokenData } from '../interfaces/access-token';
-import { deleteToken } from '../api/organization';
+import { AccessTokenData } from '@/interfaces/access-token';
+import { deleteToken } from '@/api/organization';
 
 export default function AccessTokenCard({
   accessTokenData,

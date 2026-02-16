@@ -33,8 +33,8 @@ import {
   deleteOrganization,
   getOrganizations,
   hasAssociatedUrls,
-} from '../api/organization';
-import { Organization } from '../interfaces/organizations';
+} from '@/api/organization';
+import { Organization } from '@/interfaces/organizations';
 
 interface Props {
   userPrivileges: Set<string>;

@@ -16,15 +16,15 @@ import { FormInstance } from 'antd/lib/form';
 import dayjs from 'dayjs';
 import { SendHorizontalIcon } from 'lucide-react';
 import React, { useRef, useState } from 'react';
-import { createLink } from '../api/links';
+import { createLink } from '@/api/links';
 import {
   serverValidateDuplicateAlias,
   serverValidateLongUrl,
-} from '../api/validators';
-import DatePicker from '../components/date-picker';
-import { useFeatureFlags } from '../contexts/FeatureFlags';
-import { FeatureFlags } from '../interfaces/app';
-import { Organization } from '../interfaces/organizations';
+} from '@/api/validators';
+import DatePicker from '@/components/date-picker';
+import { useFeatureFlags } from '@/contexts/FeatureFlags';
+import { FeatureFlags } from '@/interfaces/app';
+import { Organization } from '@/interfaces/organizations';
 /**
  * The final values of the create link form
  * @interface

@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Col, Flex, Row, Tabs, Typography } from 'antd';
-import { getReleaseNotes } from '../api/app';
+import { getReleaseNotes } from '@/api/app';
 import {
   Note,
   Contributor,
   Release,
   ProductDisplay,
-} from '../interfaces/releases';
+} from '@/interfaces/releases';
 
 function getNotesLength(data: Note[], product: ProductDisplay) {
   return product === 'everything'

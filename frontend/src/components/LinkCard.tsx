@@ -19,8 +19,8 @@ import {
   UsersIcon,
 } from 'lucide-react';
 
-import { Link } from '../interfaces/link';
-import { getRedirectFromAlias } from '../lib/utils';
+import { Link } from '@/interfaces/link';
+import { getRedirectFromAlias } from '@/lib/utils';
 
 export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
   const onCopyOriginalLink = () => {

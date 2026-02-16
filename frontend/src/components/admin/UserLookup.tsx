@@ -19,10 +19,10 @@ import type { ColumnsType, TableProps } from 'antd/lib/table';
 import type { SorterResult } from 'antd/lib/table/interface';
 import { TrashIcon } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
-import { addRoleToUser, removeRoleFromUser } from '../../api/users';
-import { User, useUsers } from '../../contexts/Users';
-import useFuzzySearch from '../../lib/hooks/useFuzzySearch';
-import LookupTableHeader from './LookupTableHeader';
+import { addRoleToUser, removeRoleFromUser } from '@/api/users';
+import { User, useUsers } from '@/contexts/Users';
+import useFuzzySearch from '@/lib/hooks/useFuzzySearch';
+import LookupTableHeader from '@/components/admin/LookupTableHeader';
 
 /**
  * Order of roles in the select dropdown

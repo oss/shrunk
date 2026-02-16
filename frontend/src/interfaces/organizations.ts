@@ -1,4 +1,4 @@
-import { Link } from './link';
+import { Link } from '@/interfaces/link';
 
 export interface OrganizationMember {
   /**

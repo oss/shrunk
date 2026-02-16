@@ -1,7 +1,7 @@
 import base32 from 'hi-base32';
 import { Dayjs } from 'dayjs';
-import { AdminStatsData, EndpointDatum, FeatureFlags } from '../interfaces/app';
-import { Release } from '../interfaces/releases';
+import { AdminStatsData, EndpointDatum, FeatureFlags } from '@/interfaces/app';
+import { Release } from '@/interfaces/releases';
 
 export async function getReleaseNotes(): Promise<Release[]> {
   const resp = await fetch('/api/core/release-notes', {

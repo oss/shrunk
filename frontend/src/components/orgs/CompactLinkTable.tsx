@@ -10,11 +10,11 @@ import {
   UsersIcon,
   UserPlusIcon,
 } from 'lucide-react';
-import { OrganizationLink } from '../../interfaces/organizations';
-import { getOrganizationLinks } from '../../api/organization';
-import { getLinkFromAlias } from '../../lib/utils';
-import TransferToNetIdModal from '../../modals/TransferToNetIdModal';
-import { editLink } from '../../api/links';
+import { OrganizationLink } from '@/interfaces/organizations';
+import { getOrganizationLinks } from '@/api/organization';
+import { getLinkFromAlias } from '@/lib/utils';
+import TransferToNetIdModal from '@/modals/TransferToNetIdModal';
+import { editLink } from '@/api/links';
 
 /**
  * Compact table for displaying organization links.

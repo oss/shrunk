@@ -27,9 +27,9 @@ import {
 } from 'lucide-react';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { blockLink, getBlockedLinks, unBlockLink } from '../../api/app';
-import { GrantedBy } from '../../interfaces/csv';
-import useFuzzySearch from '../../lib/hooks/useFuzzySearch';
+import { blockLink, getBlockedLinks, unBlockLink } from '@/api/app';
+import { GrantedBy } from '@/interfaces/csv';
+import useFuzzySearch from '@/lib/hooks/useFuzzySearch';
 
 /**
  * Renders the URLs as clickable links

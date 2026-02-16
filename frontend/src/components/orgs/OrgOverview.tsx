@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Flex, Card, Statistic } from 'antd';
-import { getOrganizationStats } from '../../api/organization';
-import { OrganizationStats } from '../../interfaces/organizations';
+import { getOrganizationStats } from '@/api/organization';
+import { OrganizationStats } from '@/interfaces/organizations';
 
 interface OrgOverviewProps {
   orgId: string;
