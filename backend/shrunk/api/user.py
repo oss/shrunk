@@ -160,6 +160,9 @@ def remove_user_role(netid: str, client: ShrunkClient) -> Any:
         abort(404)
     except InvalidEntity:
         abort(403)
+        
+    if role == "blacklisted":
+        client.links.unblacklist_user_links(netid)
     return "", 204
 
 

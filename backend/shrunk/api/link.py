@@ -854,7 +854,7 @@ def revert_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         abort(403)
 
     alias = info["alias"]
-    if client.links.alias_is_reserved(alias) and client.links.alias_is_duplicate(alias):
+    if client.links.alias_is_reserved(alias) and client.links.alias_is_duplicate(alias, info.is_tracking_pixel_link):
         abort(400)
 
     try:

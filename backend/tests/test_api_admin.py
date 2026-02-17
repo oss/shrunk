@@ -53,7 +53,7 @@ def test_overview_stats_unauthorized(client: Client) -> None:
 def test_user_overview_stats(client: Client) -> None:
     with dev_login(client, "admin"):
         create_link(client, "title", "https://example.com")
-        resp = client.post("/api/core/user", json={"operations": []})
+        resp = client.post("/api/core/user/all", json={"operations": []})
         assert resp.status_code == 200
         response_data = resp.json
         assert len(response_data["users"]) == 1

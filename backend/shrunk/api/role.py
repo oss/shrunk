@@ -13,24 +13,6 @@ __all__ = ["bp"]
 bp = Blueprint("role", __name__, url_prefix="/api/core/role")
 
 
-@bp.route("", methods=["GET"])
-@require_login
-def get_roles(netid: str, client: ShrunkClient) -> Any:
-    """``GET /api/role``
-
-    Get a list of all existing roles. Response format:
-
-    .. code-block:: json
-
-       { "roles": ["string"] }
-
-    :param netid:
-    :param client:
-    """
-    if not client.users.has_role(netid, "admin"):
-        abort(403)
-    return jsonify({"roles": client.roles.get_role_names()})
-
 
 @bp.route("/<role_name>/text", methods=["GET"])
 @require_login
@@ -61,6 +43,8 @@ def get_role_text(netid: str, client: ShrunkClient, role_name: str) -> Any:
 @require_login
 def get_role_entities(netid: str, client: ShrunkClient, role_name: str) -> Any:
     """``GET /api/role/<role_name>/entity``
+    
+    TODO: Delete (Not used anymore)
 
     Get a list of entities having the specified role. Response format:
 
