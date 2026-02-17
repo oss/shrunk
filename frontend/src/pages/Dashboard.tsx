@@ -11,25 +11,21 @@ import {
   Button,
   Empty,
   Pagination,
-  RadioChangeEvent,
   Typography,
-  notification,
 } from 'antd';
-import { Dayjs } from 'dayjs';
 import { PlusIcon, PlusCircleIcon, FilterIcon } from 'lucide-react';
 import { searchLinks } from '../api/links';
 import { getOrganizations } from '../api/organization';
 import { serverValidateNetId } from '../api/validators';
 import DashboardSearch from '../components/DashboardSearch';
 import CreateLinkDrawer from '../drawers/CreateLinkDrawer';
-import { Link, SearchQuery, SearchSet } from '../interfaces/link';
+import { Link, SearchQuery, DEFAULT_QUERY } from '../interfaces/link';
 import { Organization } from '../interfaces/organizations';
 import LinkCard from '../components/LinkCard';
 
 interface Props {
   userPrivileges: Set<string>;
   mockData?: Link[];
-  // filterOptions?: SearchQuery;
   demo?: boolean;
 }
 
@@ -40,24 +36,7 @@ interface Filters {
   url: string;
 }
 
-const DEFAULT_QUERY: SearchQuery = {
-  queryString: '',
-  alias: '',
-  title: '',
-  url: '',
-  set: [{ set: 'user' }],
-  show_expired_links: false,
-  show_deleted_links: false,
-  sort: { key: 'relevance', order: 'descending' },
-  begin_time: null,
-  end_time: null,
-  showType: 'links',
-  owner: null,
-};
-
 export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
-  const [api, contextHolder] = notification.useNotification();
-
   const [userOrgs, setUserOrgs] = useState<Organization[] | null>(null);
   const [linkInfo, setLinkInfo] = useState<Link[] | null>(
     mockData === undefined ? null : mockData,
@@ -69,12 +48,8 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
   const [totalLinks, setTotalLinks] = useState<number>(0);
   const [isCreateModalOpen, setCreateModalOpen] = useState<boolean>(false);
   const [isVisible, setIsVisible] = useState<boolean>(false);
-  const [sortOrder, setSortOrder] = useState<'ascending' | 'descending'>(
-    'descending',
-  );
 
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState<boolean>(false);
-  console.log(mobileFiltersOpen);
 
   const [filters, setFilters] = useState<Filters>({
     title: '',
@@ -199,99 +174,6 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
     [demo, query, linksPerPage, doQuery],
   );
 
-  const showByOrg = useCallback(
-    (orgs: SearchSet[]) => {
-      if (orgs.find((item) => item.set === 'all')) {
-        const allOrgs: SearchSet[] = [{ set: 'all' }];
-        const newQuery = { ...query, set: allOrgs };
-        setNewQuery(newQuery);
-      } else {
-        const newQuery = { ...query, set: orgs };
-        setNewQuery(newQuery);
-      }
-    },
-    [query, setNewQuery],
-  );
-
-  const showLinksInRange = useCallback(
-    (dates: [Dayjs | null, Dayjs | null] | null, _: [string, string]) => {
-      const newQuery = {
-        ...query,
-        begin_time: dates?.[0] ?? null,
-        end_time: dates?.[1] ?? null,
-      };
-      setNewQuery(newQuery);
-    },
-    [query, setNewQuery],
-  );
-
-  const handleSearch = useCallback(async () => {
-    if (filters.owner.length > 0) {
-      try {
-        await serverValidateNetId({}, filters.owner);
-      } catch {
-        api.warning({
-          title: 'Invalid net ID!',
-          description: 'There are no users found with the entered net ID',
-        });
-        return;
-      }
-    }
-
-    const newQuery: SearchQuery = {
-      ...query,
-      title: filters.title,
-      alias: filters.alias,
-      url: filters.url,
-      owner: filters.owner,
-    };
-
-    setQuery(newQuery);
-    setNewQuery(newQuery);
-  }, [query, filters, setNewQuery]);
-
-  const showExpiredLinks = useCallback(
-    (show_expired_links: boolean) => {
-      const newQuery = { ...query, show_expired_links };
-      setNewQuery(newQuery);
-    },
-    [query, setNewQuery],
-  );
-
-  const showDeletedLinks = useCallback(
-    (show_deleted_links: boolean) => {
-      const newQuery = { ...query, show_deleted_links };
-      setNewQuery(newQuery);
-    },
-    [query, setNewQuery],
-  );
-
-  const sortLinksByKey = useCallback(
-    (key: string) => {
-      console.log(key);
-      const newQuery = { ...query, sort: { ...query.sort, key } };
-      setQuery(newQuery);
-      setNewQuery(newQuery);
-    },
-    [query, setNewQuery],
-  );
-
-  const sortLinkOrder = useCallback(() => {
-    const order = sortOrder === 'ascending' ? 'descending' : 'ascending';
-    setSortOrder(order);
-    const newQuery = { ...query, sort: { ...query.sort, order } };
-    setNewQuery(newQuery);
-  }, [sortOrder, query, setNewQuery]);
-
-  const sortByType = useCallback(
-    (e: RadioChangeEvent) => {
-      const key = e.target.value;
-      const newQuery = { ...query, showType: key };
-      setNewQuery(newQuery);
-    },
-    [query, setNewQuery],
-  );
-
   const refreshResults = useCallback(async (): Promise<void> => {
     await setPage(currentPage);
   }, [currentPage, setPage]);
@@ -342,7 +224,6 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
 
   return (
     <>
-      {contextHolder}
       <Layout>
         <Header className="tw-hidden tw-mb-4 tw-bg-white tw-p-0 lg:tw-block">
           <Flex className="tw-bg-white" align="center" justify="space-between">
@@ -357,21 +238,26 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
             </Button>
           </Flex>
         </Header>
-        <Header className="tw-mb-4 tw-bg-white tw-p-0 md:tw-hidden">
-          <Flex className="tw-bg-white" align="center" justify="space-between">
-            <Typography.Title>URL Shortener</Typography.Title>
+        <Header className="tw-flex tw-flex-col tw-gap-3 !tw-mb-4 tw-bg-white tw-p-0 md:tw-hidden">
+          <Typography.Title level={2} className="!tw-m-0">
+            URL Shortener
+          </Typography.Title>
+
+          <Flex justify="space-between" gap="small">
             <Button
-              ref={componentRef}
               type="primary"
               icon={<FilterIcon />}
               onClick={() => setMobileFiltersOpen(true)}
-            />
+            >
+              Filter
+            </Button>
             <Button
-              ref={componentRef}
               type="primary"
               icon={<PlusCircleIcon />}
               onClick={() => setCreateModalOpen(true)}
-            />
+            >
+              Create
+            </Button>
           </Flex>
         </Header>
         <Content className="tw-bg-white">
@@ -386,25 +272,15 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
               <Affix offsetTop={50}>
                 <DashboardSearch
                   query={query}
-                  DEFAULT_QUERY={DEFAULT_QUERY}
                   filters={filters}
                   setFilters={setFilters}
-                  handleSearch={handleSearch}
                   setNewQuery={setNewQuery}
-                  showByOrg={showByOrg}
                   userOrgs={userOrgs}
                   userPrivileges={userPrivileges}
-                  sortLinksByKey={sortLinksByKey}
-                  sortByType={sortByType}
-                  sortLinkOrder={sortLinkOrder}
-                  sortOrder={sortOrder}
-                  showLinksInRange={showLinksInRange}
-                  showExpiredLinks={showExpiredLinks}
-                  showDeletedLinks={showDeletedLinks}
                 />
               </Affix>
             </Sider>
-            <Content className="tw-bg-white">
+            <Content className="tw-mt-4 tw-bg-white">
               {linkInfo === null || linkInfo.length === 0 ? (
                 <Empty />
               ) : (
@@ -462,21 +338,11 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
       >
         <DashboardSearch
           query={query}
-          DEFAULT_QUERY={DEFAULT_QUERY}
           filters={filters}
           setFilters={setFilters}
-          handleSearch={handleSearch}
           setNewQuery={setNewQuery}
-          showByOrg={showByOrg}
           userOrgs={userOrgs}
           userPrivileges={userPrivileges}
-          sortLinksByKey={sortLinksByKey}
-          sortByType={sortByType}
-          sortLinkOrder={sortLinkOrder}
-          sortOrder={sortOrder}
-          showLinksInRange={showLinksInRange}
-          showExpiredLinks={showExpiredLinks}
-          showDeletedLinks={showDeletedLinks}
         />
       </Drawer>
     </>

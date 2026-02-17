@@ -205,6 +205,22 @@ export interface SearchQuery {
   owner: string | null;
 }
 
+
+export const DEFAULT_QUERY: SearchQuery = {
+  queryString: '',
+  alias: '',
+  title: '',
+  url: '',
+  set: [{ set: 'user' }],
+  show_expired_links: false,
+  show_deleted_links: false,
+  sort: { key: 'relevance', order: 'descending' },
+  begin_time: null,
+  end_time: null,
+  showType: 'links',
+  owner: null,
+};
+
 export enum StatChart {
   Visits = 'Visits',
   GeoIP = 'GeoIP',

@@ -17,35 +17,24 @@ import {
   Col,
   Form,
   Input,
+  notification,
 } from 'antd';
 import { XIcon, SearchIcon, ArrowUpIcon, ArrowDownIcon } from 'lucide-react';
 import dayjs, { Dayjs } from 'dayjs';
 import type { InputRef, TreeProps, TreeDataNode, RadioChangeEvent } from 'antd';
-import { SearchQuery, SearchSet } from '../interfaces/link';
+import { SearchQuery, SearchSet, DEFAULT_QUERY } from '../interfaces/link';
 import DatePicker from './date-picker';
 
 import { Organization } from '../interfaces/organizations';
+import { serverValidateNetId } from '../api/validators';
 
 interface Props {
   query: SearchQuery;
-  DEFAULT_QUERY: SearchQuery;
   filters: Filters;
   setFilters: Dispatch<SetStateAction<Filters>>;
-  handleSearch: () => void;
   setNewQuery: (query: SearchQuery) => void;
-  showByOrg: (orgs: SearchSet[]) => void;
   userOrgs: Organization[] | null;
   userPrivileges: Set<string>;
-  sortLinksByKey: (key: string) => void;
-  sortByType: (e: RadioChangeEvent) => void;
-  sortLinkOrder: () => void;
-  sortOrder: 'ascending' | 'descending';
-  showLinksInRange: (
-    dates: [Dayjs | null, Dayjs | null] | null,
-    _: [string, string],
-  ) => void;
-  showExpiredLinks: (show_expired: boolean) => void;
-  showDeletedLinks: (show_deleted: boolean) => void;
 }
 
 interface DataNode {
@@ -64,23 +53,15 @@ interface Filters {
 const filterKeys: Array<keyof Filters> = ['title', 'alias', 'owner', 'url'];
 
 export default function DashboardSearch({
-  showByOrg,
-  userOrgs,
   query,
-  handleSearch,
-  DEFAULT_QUERY,
+  userOrgs,
   filters,
   setFilters,
   setNewQuery,
   userPrivileges,
-  sortLinksByKey,
-  sortLinkOrder,
-  sortOrder,
-  showLinksInRange,
-  showDeletedLinks,
-  showExpiredLinks,
-  sortByType,
 }: Props) {
+  const [api, contextHolder] = notification.useNotification();
+
   const titleInputRef = useRef<InputRef>(null);
   const aliasInputRef = useRef<InputRef>(null);
   const urlInputRef = useRef<InputRef>(null);
@@ -89,6 +70,9 @@ export default function DashboardSearch({
   const [treeSelectValues, setTreeSelectValues] = useState<string[]>([]);
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>();
   const [checkedKeys, setCheckedKeys] = useState<React.Key[]>(['0-0']);
+  const [sortOrder, setSortOrder] = useState<'ascending' | 'descending'>(
+    'descending',
+  );
 
   const treeSelectData = [
     {
@@ -224,8 +208,70 @@ export default function DashboardSearch({
     [],
   );
 
+  const showByOrg = useCallback(
+    (orgs: SearchSet[]) => {
+      if (orgs.find((item) => item.set === 'all')) {
+        const allOrgs: SearchSet[] = [{ set: 'all' }];
+        const newQuery = { ...query, set: allOrgs };
+        setNewQuery(newQuery);
+      } else {
+        const newQuery = { ...query, set: orgs };
+        setNewQuery(newQuery);
+      }
+    },
+    [query, setNewQuery],
+  );
+
+  const sortByType = useCallback(
+    (e: RadioChangeEvent) => {
+      const key = e.target.value;
+      const newQuery = { ...query, showType: key };
+      setNewQuery(newQuery);
+    },
+    [query, setNewQuery],
+  );
+  const handleSearch = useCallback(async () => {
+    if (filters.owner.length > 0) {
+      try {
+        await serverValidateNetId({}, filters.owner);
+      } catch {
+        api.warning({
+          title: 'Invalid net ID!',
+          description: 'There are no users found with the entered net ID',
+        });
+        return;
+      }
+    }
+
+    const newQuery: SearchQuery = {
+      ...query,
+      title: filters.title,
+      alias: filters.alias,
+      url: filters.url,
+      owner: filters.owner,
+    };
+
+    setNewQuery(newQuery);
+  }, [query, filters, setNewQuery]);
+  const showLinksInRange = useCallback(
+    (dates: [Dayjs | null, Dayjs | null] | null, _: [string, string]) => {
+      const newQuery = {
+        ...query,
+        begin_time: dates?.[0] ?? null,
+        end_time: dates?.[1] ?? null,
+      };
+      setNewQuery(newQuery);
+    },
+    [query, setNewQuery],
+  );
+
   const onCheck: TreeProps['onCheck'] = useCallback(
-    (checkedKeysValue, info) => {
+    (
+      checkedKeysValue:
+        | React.Key[]
+        | { checked: React.Key[]; halfChecked: React.Key[] },
+      info: Parameters<NonNullable<TreeProps['onCheck']>>[1],
+    ) => {
       setCheckedKeys(checkedKeysValue as React.Key[]);
       setTimeout(() => {
         const search: SearchSet[] = [];
@@ -244,6 +290,36 @@ export default function DashboardSearch({
     [showByOrg],
   );
 
+  const sortLinkOrder = useCallback(() => {
+    const order = sortOrder === 'ascending' ? 'descending' : 'ascending';
+    setSortOrder(order);
+    const newQuery = { ...query, sort: { ...query.sort, order } };
+    setNewQuery(newQuery);
+  }, [sortOrder, query, setNewQuery]);
+
+  const showExpiredLinks = useCallback(
+    (show_expired_links: boolean) => {
+      const newQuery = { ...query, show_expired_links };
+      setNewQuery(newQuery);
+    },
+    [query, setNewQuery],
+  );
+
+  const showDeletedLinks = useCallback(
+    (show_deleted_links: boolean) => {
+      const newQuery = { ...query, show_deleted_links };
+      setNewQuery(newQuery);
+    },
+    [query, setNewQuery],
+  );
+
+  const sortLinksByKey = useCallback(
+    (key: string) => {
+      const newQuery = { ...query, sort: { ...query.sort, key } };
+      setNewQuery(newQuery);
+    },
+    [query, setNewQuery],
+  );
   useEffect(() => {
     setTreeSelectValues(
       (['title', 'alias', 'url', 'owner'] as const).filter(
@@ -253,6 +329,7 @@ export default function DashboardSearch({
   }, [filters]);
   return (
     <>
+      {contextHolder}
       <Space.Compact
         orientation="horizontal"
         block
