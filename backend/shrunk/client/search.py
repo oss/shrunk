@@ -124,6 +124,9 @@ class SearchClient:
             sort_key = "visits"
         elif query["sort"]["key"] == "title":
             sort_key = "title"
+            sort_order = (
+                -1 if query["sort"]["order"] == "ascending" else 1
+            )  # sort order is flipped
         elif query["sort"]["key"] == "relevance":
             sort_key = "text_search_score"
             if not any([query.get("title"), query.get("alias"), query.get("url")]):

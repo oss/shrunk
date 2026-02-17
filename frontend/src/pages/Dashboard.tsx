@@ -1,55 +1,35 @@
 /* eslint-disable react/no-unused-state */
+/* eslint-disable tailwindcss/classnames-order */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  Input as AntInput,
+  Drawer,
   Flex,
   Layout,
   Space,
   Affix,
   Tooltip,
-  Tree,
-  TreeSelect,
   Button,
-  Col,
   Empty,
-  Form,
   Pagination,
-  Radio,
   RadioChangeEvent,
-  Select,
   Typography,
   notification,
 } from 'antd';
-import type { TreeDataNode, TreeProps, InputRef } from 'antd';
-import dayjs, { Dayjs } from 'dayjs';
-import {
-  PlusIcon,
-  PlusCircleIcon,
-  ArrowUpAZIcon,
-  ArrowDownZAIcon,
-  SearchIcon,
-  XIcon,
-} from 'lucide-react';
-import { searchLinks, updateUserFilterOptions } from '../api/links';
+import { Dayjs } from 'dayjs';
+import { PlusIcon, PlusCircleIcon, FilterIcon } from 'lucide-react';
+import { searchLinks } from '../api/links';
 import { getOrganizations } from '../api/organization';
 import { serverValidateNetId } from '../api/validators';
-import DatePicker from '../components/date-picker';
-import Input from '../components/input';
+import DashboardSearch from '../components/DashboardSearch';
 import CreateLinkDrawer from '../drawers/CreateLinkDrawer';
 import { Link, SearchQuery, SearchSet } from '../interfaces/link';
 import { Organization } from '../interfaces/organizations';
 import LinkCard from '../components/LinkCard';
 
-interface DataNode {
-  title: string;
-  key: string;
-  value?: string;
-}
-
 interface Props {
   userPrivileges: Set<string>;
   mockData?: Link[];
-  filterOptions?: SearchQuery;
+  // filterOptions?: SearchQuery;
   demo?: boolean;
 }
 
@@ -59,8 +39,6 @@ interface Filters {
   owner: string;
   url: string;
 }
-
-const filterKeys: Array<keyof Filters> = ['title', 'alias', 'owner', 'url'];
 
 const DEFAULT_QUERY: SearchQuery = {
   queryString: '',
@@ -77,42 +55,7 @@ const DEFAULT_QUERY: SearchQuery = {
   owner: null,
 };
 
-const findByValue = (
-  nodes: (TreeDataNode & { value?: string })[],
-  value: string,
-): (TreeDataNode & { value?: string }) | undefined => {
-  const directMatch = nodes.find((node) => node.value === value);
-  if (directMatch) {
-    return directMatch;
-  }
-
-  return nodes.reduce<(TreeDataNode & { value?: string }) | undefined>(
-    (found, node) => {
-      if (found) return found;
-      return node.children ? findByValue(node.children, value) : undefined;
-    },
-    undefined,
-  );
-};
-
-const getValueFromSearchSet = (search: SearchSet): string => {
-  if (search.set === 'org') {
-    return `org_${search.org}`;
-  }
-  return search.set;
-};
-
-export default function Dashboard({
-  userPrivileges,
-  mockData,
-  filterOptions,
-  demo,
-}: Props) {
-  const titleInputRef = useRef<InputRef>(null);
-  const aliasInputRef = useRef<InputRef>(null);
-  const urlInputRef = useRef<InputRef>(null);
-  const ownerInputRef = useRef<InputRef>(null);
-
+export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
   const [api, contextHolder] = notification.useNotification();
 
   const [userOrgs, setUserOrgs] = useState<Organization[] | null>(null);
@@ -120,31 +63,18 @@ export default function Dashboard({
     mockData === undefined ? null : mockData,
   );
   const [linksPerPage] = useState<number>(10);
-  const [query, setQuery] = useState<SearchQuery>(
-    filterOptions ?? DEFAULT_QUERY,
-  );
+  const [query, setQuery] = useState<SearchQuery>(DEFAULT_QUERY);
 
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalLinks, setTotalLinks] = useState<number>(0);
   const [isCreateModalOpen, setCreateModalOpen] = useState<boolean>(false);
   const [isVisible, setIsVisible] = useState<boolean>(false);
-  const [showExpired, setShowExpired] = useState<boolean>(
-    filterOptions === undefined ? false : filterOptions.show_expired_links,
-  );
-  const [showDeleted, setShowDeleted] = useState<boolean>(
-    filterOptions === undefined ? false : filterOptions.show_deleted_links,
-  );
-
-  console.log(showExpired, showDeleted);
-  const [sortKey, setSortKey] = useState<string>('relevance');
   const [sortOrder, setSortOrder] = useState<'ascending' | 'descending'>(
     'descending',
   );
-  const [beginTime, setBeginTime] = useState<dayjs.Dayjs | null>(null);
-  const [endTime, setEndTime] = useState<dayjs.Dayjs | null>(null);
 
-  const [checkedKeys, setCheckedKeys] = useState<React.Key[]>();
-  const [expandedKeys, setExpandedKeys] = useState<React.Key[]>();
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState<boolean>(false);
+  console.log(mobileFiltersOpen);
 
   const [filters, setFilters] = useState<Filters>({
     title: '',
@@ -152,8 +82,6 @@ export default function Dashboard({
     url: '',
     owner: '',
   });
-
-  const [treeSelectValues, setTreeSelectValues] = useState<string[]>([]);
 
   const componentRef = useRef(null);
 
@@ -165,134 +93,6 @@ export default function Dashboard({
   // DONE: backend !!
   // TODO: remove persisting filters
   // TODO: clean up code / sort into files
-
-  const treeSelectData = [
-    {
-      title: (
-        <Space.Compact>
-          <Space.Addon>Title:</Space.Addon>
-          <Input
-            onClick={() => {
-              titleInputRef.current!.focus({ cursor: 'all' });
-            }}
-            value={filters.title}
-            style={
-              {
-                '--char-count': Math.max(filters.title.length, 5),
-              } as React.CSSProperties
-            }
-            className="!tw-mr-[0px] tw-ml-[2px] tw-w-[calc(var(--char-count)*1ch+1.25rem)] !tw-px-[5px]"
-          />
-        </Space.Compact>
-      ),
-      value: 'title',
-    },
-    {
-      title: (
-        <Space.Compact>
-          <Space.Addon>Alias:</Space.Addon>
-          <Input
-            onClick={() => {
-              aliasInputRef.current!.focus({ cursor: 'all' });
-            }}
-            value={filters.alias}
-            style={
-              {
-                '--char-count': Math.max(filters.alias.length, 5),
-              } as React.CSSProperties
-            }
-            className="!tw-mr-[0px] tw-ml-[2px] tw-w-[calc(var(--char-count)*1ch+1.25rem)] !tw-px-[5px]"
-          />
-        </Space.Compact>
-      ),
-      value: 'alias',
-    },
-    {
-      title: (
-        <Space.Compact>
-          <Space.Addon>URL:</Space.Addon>
-          <Input
-            onClick={() => {
-              urlInputRef.current!.focus({ cursor: 'all' });
-            }}
-            value={filters.url}
-            style={
-              {
-                '--char-count': Math.max(filters.url.length, 5),
-              } as React.CSSProperties
-            }
-            className="!tw-mr-[0px] tw-ml-[2px] tw-w-[calc(var(--char-count)*1ch+1.25rem)] !tw-px-[5px]"
-          />
-        </Space.Compact>
-      ),
-      value: 'url',
-    },
-    {
-      title: (
-        <Space.Compact>
-          <Space.Addon>Owner:</Space.Addon>
-          <Input
-            onClick={() => {
-              ownerInputRef.current!.focus({ cursor: 'all' });
-            }}
-            value={filters.owner}
-            style={
-              {
-                '--char-count': Math.max(filters.owner.length, 5),
-              } as React.CSSProperties
-            }
-            className="!tw-mr-[0px] tw-ml-[2px] tw-w-[calc(var(--char-count)*1ch+1.25rem)] !tw-px-[5px]"
-          />
-        </Space.Compact>
-      ),
-      value: 'owner',
-    },
-  ];
-
-  // question: is it better to move this to a different file as a function and then read in userOrgs with useEffect and useState?
-  const treeData: (TreeDataNode & { value?: string })[] = [
-    {
-      title: 'My Links',
-      key: '0-0',
-      value: 'user',
-    },
-    {
-      title: 'Shared with Me',
-      key: '0-1',
-      value: 'shared',
-    },
-    ...(userOrgs?.length === 0 || userOrgs === null
-      ? [
-          {
-            title: 'Organization Links',
-            key: '0-2',
-            disabled: true,
-          },
-        ]
-      : [
-          {
-            title: 'Organization Links',
-            key: '0-2',
-            children:
-              userOrgs?.map(
-                (organization: Organization, idx: number): DataNode => ({
-                  title: organization.name,
-                  key: `0-2-${idx}`,
-                  value: `org_${organization.id}`,
-                }),
-              ) ?? [],
-          },
-        ]),
-    ...(userPrivileges.has('admin')
-      ? [
-          {
-            title: 'All Links',
-            key: '0-3',
-            value: 'all',
-          },
-        ]
-      : []),
-  ];
 
   const doQuery = useCallback(
     async (
@@ -351,7 +151,7 @@ export default function Dashboard({
 
   const setNewQuery = useCallback(
     async (newQuery: SearchQuery): Promise<void> => {
-      if (demo || newQuery === query) {
+      if (demo) {
         return;
       }
 
@@ -369,14 +169,6 @@ export default function Dashboard({
       }
 
       const results = await doQuery(newQuery, 0, linksPerPage);
-
-      await updateUserFilterOptions({
-        ...newQuery,
-        title: '',
-        alias: '',
-        url: '',
-        owner: '',
-      });
 
       setLinkInfo(results.results);
       setQuery(newQuery);
@@ -409,34 +201,16 @@ export default function Dashboard({
 
   const showByOrg = useCallback(
     (orgs: SearchSet[]) => {
-      const newQuery = { ...query, set: orgs };
-      setNewQuery(newQuery);
+      if (orgs.find((item) => item.set === 'all')) {
+        const allOrgs: SearchSet[] = [{ set: 'all' }];
+        const newQuery = { ...query, set: allOrgs };
+        setNewQuery(newQuery);
+      } else {
+        const newQuery = { ...query, set: orgs };
+        setNewQuery(newQuery);
+      }
     },
     [query, setNewQuery],
-  );
-
-  const onExpand: TreeProps['onExpand'] = useCallback((expandedKeysValue) => {
-    setExpandedKeys(expandedKeysValue);
-  }, []);
-
-  const onCheck: TreeProps['onCheck'] = useCallback(
-    (checkedKeysValue, info) => {
-      setCheckedKeys(checkedKeysValue as React.Key[]);
-      setTimeout(() => {
-        const search: SearchSet[] = [];
-        for (let i = 0; i < info.checkedNodes.length; i++) {
-          const node: DataNode = info.checkedNodes[i] as DataNode;
-          if (node.value && node.value.startsWith('org_')) {
-            const orgId = node.value.slice(4);
-            search.push({ set: 'org', org: orgId });
-          } else if (node.value) {
-            search.push({ set: node.value as 'user' | 'shared' | 'all' });
-          }
-        }
-        showByOrg(search);
-      }, 300);
-    },
-    [showByOrg],
   );
 
   const showLinksInRange = useCallback(
@@ -479,7 +253,6 @@ export default function Dashboard({
   const showExpiredLinks = useCallback(
     (show_expired_links: boolean) => {
       const newQuery = { ...query, show_expired_links };
-      setShowExpired(show_expired_links);
       setNewQuery(newQuery);
     },
     [query, setNewQuery],
@@ -488,7 +261,6 @@ export default function Dashboard({
   const showDeletedLinks = useCallback(
     (show_deleted_links: boolean) => {
       const newQuery = { ...query, show_deleted_links };
-      setShowDeleted(show_deleted_links);
       setNewQuery(newQuery);
     },
     [query, setNewQuery],
@@ -523,14 +295,6 @@ export default function Dashboard({
   const refreshResults = useCallback(async (): Promise<void> => {
     await setPage(currentPage);
   }, [currentPage, setPage]);
-
-  useEffect(() => {
-    setTreeSelectValues(
-      (['title', 'alias', 'url', 'owner'] as const).filter(
-        (key) => filters[key].length > 0,
-      ),
-    );
-  }, [filters]);
 
   // functional component equivalent of componentDidMount
   useEffect(() => {
@@ -572,307 +336,72 @@ export default function Dashboard({
   }, []);
 
   useEffect(() => {
-    if (filterOptions) {
-      setNewQuery({
-        ...filterOptions,
-        begin_time: filterOptions.begin_time,
-        end_time: filterOptions.end_time,
-      });
-
-      setShowDeleted(filterOptions.show_deleted_links);
-      setSortKey(filterOptions.sort.key);
-
-      console.log(filterOptions);
-      setBeginTime(
-        filterOptions.begin_time ? dayjs(filterOptions.begin_time) : null,
-      );
-      setEndTime(filterOptions.end_time ? dayjs(filterOptions.end_time) : null);
-      setCurrentPage(1);
-
-      setQuery(filterOptions);
-
-      const checked = filterOptions.set
-        .map(
-          (search) => findByValue(treeData, getValueFromSearchSet(search))?.key,
-        )
-        .filter((key): key is string => key !== undefined);
-      setCheckedKeys(checked as React.Key[]);
-    }
-  }, [filterOptions]);
-
-  useEffect(() => console.log(query), [query]);
+    setNewQuery(DEFAULT_QUERY);
+    console.log(query.sort.key);
+  }, [DEFAULT_QUERY]);
 
   return (
     <>
       {contextHolder}
       <Layout>
-        <Header className="tw-mb-4 tw-bg-white tw-p-0">
+        <Header className="tw-hidden tw-mb-4 tw-bg-white tw-p-0 lg:tw-block">
           <Flex className="tw-bg-white" align="center" justify="space-between">
             <Typography.Title>URL Shortener</Typography.Title>
             <Button
               ref={componentRef}
               type="primary"
               icon={<PlusCircleIcon />}
-              onClick={() => {
-                if (demo) {
-                  return;
-                }
-
-                setCreateModalOpen(true);
-              }}
+              onClick={() => setCreateModalOpen(true)}
             >
               Create
             </Button>
           </Flex>
         </Header>
+        <Header className="tw-mb-4 tw-bg-white tw-p-0 md:tw-hidden">
+          <Flex className="tw-bg-white" align="center" justify="space-between">
+            <Typography.Title>URL Shortener</Typography.Title>
+            <Button
+              ref={componentRef}
+              type="primary"
+              icon={<FilterIcon />}
+              onClick={() => setMobileFiltersOpen(true)}
+            />
+            <Button
+              ref={componentRef}
+              type="primary"
+              icon={<PlusCircleIcon />}
+              onClick={() => setCreateModalOpen(true)}
+            />
+          </Flex>
+        </Header>
         <Content className="tw-bg-white">
           <Layout className="tw-bg-white">
-            <Sider className="tw-mt-[4px] tw-bg-white tw-pr-4" width="25%">
+            <Sider
+              className="tw-mt-[4px] tw-bg-white tw-pr-4 tw-hidden lg:tw-block"
+              width="25%"
+              trigger={null}
+              breakpoint="lg"
+              collapsedWidth="0"
+            >
               <Affix offsetTop={50}>
-                <Space.Compact
-                  orientation="horizontal"
-                  block
-                  className="tw-flex tw-w-full tw-items-stretch"
-                >
-                  <TreeSelect
-                    className="tw-mb-2 tw-w-full"
-                    styles={{ item: { paddingLeft: 0, border: 0 } }}
-                    multiple
-                    size="large"
-                    placeholder="Click to search"
-                    value={treeSelectValues}
-                    treeData={treeSelectData}
-                    onChange={(values) => {
-                      setTreeSelectValues(values);
-
-                      filterKeys.forEach((key) => {
-                        if (!values.includes(key)) {
-                          filters[key] = '';
-                        }
-                      });
-                      handleSearch();
-                    }}
-                    popupRender={(_) => (
-                      <>
-                        <Space orientation="vertical" style={{ padding: 8 }}>
-                          <p className="!tw-my-0">Search by...</p>
-                          <Space.Compact block>
-                            <AntInput
-                              placeholder="Title"
-                              ref={titleInputRef}
-                              value={filters.title}
-                              onChange={(e) =>
-                                setFilters((f) => ({
-                                  ...f,
-                                  title: e.target.value,
-                                }))
-                              }
-                            />
-                            <Button
-                              icon={<XIcon />}
-                              onClick={() => {
-                                setFilters({ ...filters, title: '' });
-                                setNewQuery({ ...query, title: '' });
-                              }}
-                            />
-                          </Space.Compact>
-                          <Space.Compact block>
-                            <AntInput
-                              ref={aliasInputRef}
-                              placeholder="Alias"
-                              value={filters.alias}
-                              onChange={(e) =>
-                                setFilters((f) => ({
-                                  ...f,
-                                  alias: e.target.value,
-                                }))
-                              }
-                            />
-                            <Button
-                              icon={<XIcon />}
-                              onClick={() => {
-                                setFilters((f) => ({ ...f, alias: '' }));
-                                setNewQuery({ ...query, alias: '' });
-                              }}
-                            />
-                          </Space.Compact>
-                          <Space.Compact block>
-                            <AntInput
-                              ref={urlInputRef}
-                              placeholder="URL"
-                              value={filters.url}
-                              onChange={(e) =>
-                                setFilters((f) => ({
-                                  ...f,
-                                  url: e.target.value,
-                                }))
-                              }
-                            />
-                            <Button
-                              icon={<XIcon />}
-                              onClick={() => {
-                                setFilters((f) => ({ ...f, url: '' }));
-                                setNewQuery({ ...query, url: '' });
-                              }}
-                            />
-                          </Space.Compact>
-                          <Space.Compact block>
-                            <AntInput
-                              ref={ownerInputRef}
-                              placeholder="Owner (net ID)"
-                              value={filters.owner}
-                              onChange={(e) =>
-                                setFilters((f) => ({
-                                  ...f,
-                                  owner: e.target.value,
-                                }))
-                              }
-                            />
-                            <Button
-                              icon={<XIcon />}
-                              onClick={() => {
-                                setFilters((f) => ({ ...f, owner: '' }));
-                                setNewQuery({ ...query, owner: '' });
-                              }}
-                            />
-                          </Space.Compact>
-                        </Space>
-                      </>
-                    )}
-                  />
-                  <Button
-                    type="primary"
-                    size="middle"
-                    className="tw-mb-2 tw-h-auto"
-                    disabled={
-                      filters.url.length === 0 &&
-                      filters.alias.length === 0 &&
-                      filters.title.length === 0 &&
-                      filters.owner.length === 0
-                    }
-                    icon={<SearchIcon />}
-                    onClick={handleSearch}
-                  />
-                </Space.Compact>
-                <Form layout="vertical">
-                  <Col>
-                    <Form.Item name="orgSelect" label="Links">
-                      <Tree
-                        checkable
-                        autoExpandParent
-                        selectable={false}
-                        onCheck={onCheck}
-                        onExpand={onExpand}
-                        expandedKeys={expandedKeys}
-                        treeData={treeData}
-                        checkedKeys={checkedKeys}
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col>
-                    <Form.Item name="sortKeyInput" label="Sort by">
-                      <Select
-                        value={sortKey}
-                        onChange={sortLinksByKey}
-                        style={{ width: '100%' }}
-                      >
-                        <Select.Option value="relevance">
-                          Relevance
-                        </Select.Option>
-                        <Select.Option value="created_time">
-                          Time created
-                        </Select.Option>
-                        <Select.Option value="title">Title</Select.Option>
-                        <Select.Option value="visits">
-                          Number of visits
-                        </Select.Option>
-                      </Select>
-                    </Form.Item>
-                    <Form.Item name="sortOrder" label="Sort Order">
-                      <Button
-                        onClick={sortLinkOrder}
-                        icon={
-                          sortOrder === 'ascending' ? (
-                            <ArrowUpAZIcon />
-                          ) : (
-                            <ArrowDownZAIcon />
-                          )
-                        }
-                      >
-                        {sortOrder.charAt(0).toUpperCase() + sortOrder.slice(1)}
-                      </Button>
-                    </Form.Item>
-                  </Col>
-                  <Col>
-                    <Form.Item name="dateRange" label="Creation Date">
-                      <DatePicker.RangePicker
-                        format="YYYY-MM-DD"
-                        onChange={showLinksInRange}
-                        style={{ width: '100%' }}
-                        value={[dayjs(beginTime), dayjs(endTime)]}
-                        allowEmpty={[false, true]}
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col>
-                    <Form.Item name="show_expired" label="Expired Links">
-                      <Radio.Group
-                        optionType="button"
-                        buttonStyle="solid"
-                        options={[
-                          { label: 'Show', value: 'show' },
-                          { label: 'Hide', value: 'hide' },
-                        ]}
-                        defaultValue="hide"
-                        onChange={(e) =>
-                          showExpiredLinks(e.target.value === 'show')
-                        }
-                      />
-                    </Form.Item>
-                  </Col>
-                  {userPrivileges.has('admin') && (
-                    <Col>
-                      <Form.Item name="show_deleted" label="Deleted Links">
-                        <Radio.Group
-                          optionType="button"
-                          buttonStyle="solid"
-                          options={[
-                            { label: 'Show', value: 'show' },
-                            { label: 'Hide', value: 'hide' },
-                          ]}
-                          defaultValue="hide"
-                          onChange={(e) => {
-                            showDeletedLinks(e.target.value === 'show');
-                          }}
-                        />
-                      </Form.Item>
-                    </Col>
-                  )}
-                  <Col>
-                    <Form.Item name="links_vs_pixels" label="Link Type">
-                      <Radio.Group
-                        optionType="button"
-                        buttonStyle="solid"
-                        options={[
-                          { label: 'Links', value: 'links' },
-                          {
-                            label: 'Tracking Pixels',
-                            value: 'tracking_pixels',
-                          },
-                        ]}
-                        defaultValue={query.showType}
-                        onChange={sortByType}
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col>
-                    <Form.Item name="reset">
-                      <Button onClick={() => setNewQuery(DEFAULT_QUERY)}>
-                        Reset Filters
-                      </Button>
-                    </Form.Item>
-                  </Col>
-                </Form>
+                <DashboardSearch
+                  query={query}
+                  DEFAULT_QUERY={DEFAULT_QUERY}
+                  filters={filters}
+                  setFilters={setFilters}
+                  handleSearch={handleSearch}
+                  setNewQuery={setNewQuery}
+                  showByOrg={showByOrg}
+                  userOrgs={userOrgs}
+                  userPrivileges={userPrivileges}
+                  sortLinksByKey={sortLinksByKey}
+                  sortByType={sortByType}
+                  sortLinkOrder={sortLinkOrder}
+                  sortOrder={sortOrder}
+                  showLinksInRange={showLinksInRange}
+                  showExpiredLinks={showExpiredLinks}
+                  showDeletedLinks={showDeletedLinks}
+                />
               </Affix>
             </Sider>
             <Content className="tw-bg-white">
@@ -925,6 +454,31 @@ export default function Dashboard({
           </Tooltip>
         </Affix>
       )}
+      <Drawer
+        title="Filters"
+        placement="left"
+        onClose={() => setMobileFiltersOpen(false)}
+        open={mobileFiltersOpen}
+      >
+        <DashboardSearch
+          query={query}
+          DEFAULT_QUERY={DEFAULT_QUERY}
+          filters={filters}
+          setFilters={setFilters}
+          handleSearch={handleSearch}
+          setNewQuery={setNewQuery}
+          showByOrg={showByOrg}
+          userOrgs={userOrgs}
+          userPrivileges={userPrivileges}
+          sortLinksByKey={sortLinksByKey}
+          sortByType={sortByType}
+          sortLinkOrder={sortLinkOrder}
+          sortOrder={sortOrder}
+          showLinksInRange={showLinksInRange}
+          showExpiredLinks={showExpiredLinks}
+          showDeletedLinks={showDeletedLinks}
+        />
+      </Drawer>
     </>
   );
 }
