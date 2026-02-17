@@ -62,13 +62,6 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
 
   const { Header, Footer, Sider, Content } = Layout;
 
-  // DONE: clear button
-  // DONE: fix removing tags
-  // DONE: state management
-  // DONE: backend !!
-  // TODO: remove persisting filters
-  // TODO: clean up code / sort into files
-
   const doQuery = useCallback(
     async (
       newQuery: SearchQuery,
@@ -219,7 +212,6 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
 
   useEffect(() => {
     setNewQuery(DEFAULT_QUERY);
-    console.log(query.sort.key);
   }, [DEFAULT_QUERY]);
 
   return (

@@ -205,7 +205,6 @@ export interface SearchQuery {
   owner: string | null;
 }
 
-
 export const DEFAULT_QUERY: SearchQuery = {
   queryString: '',
   alias: '',
