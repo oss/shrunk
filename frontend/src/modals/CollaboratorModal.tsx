@@ -13,9 +13,9 @@ import {
 } from 'antd';
 import { PlusCircleIcon, XIcon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { getOrganizations } from '../api/organization';
-import { serverValidateGuest, serverValidateNetId } from '../api/validators';
-import { Organization } from '../interfaces/organizations';
+import { getOrganizations } from '@/api/organization';
+import { serverValidateGuest, serverValidateNetId } from '@/api/validators';
+import { Organization } from '@/interfaces/organizations';
 
 export interface Collaborator {
   _id: string;

@@ -1,5 +1,5 @@
 import base32 from 'hi-base32';
-import { ResolveTicketInfo } from '../interfaces/tickets';
+import { ResolveTicketInfo } from '@/interfaces/tickets';
 
 export async function getTicket(ticketId: string): Promise<any> {
   const response = await fetch(`/api/core/ticket/${base32.encode(ticketId)}`);

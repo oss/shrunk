@@ -20,7 +20,7 @@ import {
   QRCodeProps,
   Flex,
 } from 'antd';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import {
   CloudDownloadIcon,
   CopyIcon,
@@ -31,7 +31,7 @@ import {
 import React, { useEffect, useState } from 'react';
 
 import { useLocation } from 'react-router-dom';
-import { downloadVisits } from '../../api/csv';
+import { downloadVisits } from '@/api/csv';
 import {
   BrowserStats,
   Link,
@@ -41,7 +41,7 @@ import {
   EditLinkValues,
   StatChart,
   GeoipStats,
-} from '../../interfaces/link';
+} from '@/interfaces/link';
 
 import {
   addCollaborator,
@@ -52,20 +52,18 @@ import {
   getLinkStats,
   getLinkVisitsStats,
   removeCollaborator,
-} from '../../api/links';
-import { EditLinkDrawer } from '../../drawers/EditLinkDrawer';
+} from '@/api/links';
+import { EditLinkDrawer } from '@/drawers/EditLinkDrawer';
 import {
   daysBetween,
   getLinkFromAlias,
   getRedirectFromAlias,
-} from '../../lib/utils';
-import CollaboratorModal, {
-  Collaborator,
-} from '../../modals/CollaboratorModal';
-import ErrorPage from '../ErrorPage';
-import VisitsChart from '../../components/link/visits-chart';
-import GeoipChart from '../../components/link/world-chart';
-import ShrunkPieChart, { processData } from '../../components/pie-chart';
+} from '@/lib/utils';
+import CollaboratorModal, { Collaborator } from '@/modals/CollaboratorModal';
+import ErrorPage from '@/pages/ErrorPage';
+import VisitsChart from '@/components/link/visits-chart';
+import GeoipChart from '@/components/link/world-chart';
+import ShrunkPieChart, { processData } from '@/components/pie-chart';
 
 export interface Props {
   /**

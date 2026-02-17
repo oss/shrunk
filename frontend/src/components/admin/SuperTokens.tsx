@@ -20,13 +20,13 @@ import {
   List,
 } from 'antd';
 import { CirclePlusIcon, PlusCircleIcon } from 'lucide-react';
-import { AccessTokenData } from '../../interfaces/access-token';
+import { AccessTokenData } from '@/interfaces/access-token';
 import {
   getSuperTokens,
   generateAccessToken,
   getValidAccessTokenPermissions,
-} from '../../api/organization';
-import AccessTokenCard from '../access-token-card';
+} from '@/api/organization';
+import AccessTokenCard from '@/components/access-token-card';
 
 export default function SuperTokens(): JSX.Element {
   const [accessTokens, setAccessTokens] = useState<AccessTokenData[]>([]);

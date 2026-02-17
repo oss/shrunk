@@ -11,8 +11,8 @@ import {
   getPendingLinks,
   getStatus,
   updateLinkSecurity,
-} from '../../api/google-safebrowse';
-import { PendingLink } from '../../interfaces/google-safebrowse';
+} from '@/api/google-safebrowse';
+import { PendingLink } from '@/interfaces/google-safebrowse';
 
 interface PendingRowProps {
   document: PendingLink;

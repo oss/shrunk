@@ -39,13 +39,13 @@ import {
   removeMemberFromOrganization,
   renameOrganization,
   setAdminStatusOrganization,
-} from '../api/organization';
-import { serverValidateOrgName } from '../api/validators';
-import { Organization, OrganizationMember } from '../interfaces/organizations';
-import CollaboratorModal, { Collaborator } from '../modals/CollaboratorModal';
-import CompactLinkTable from '../components/orgs/CompactLinkTable';
-import CreateLinkDrawer from '../drawers/CreateLinkDrawer';
-import OrgOverview from '../components/orgs/OrgOverview';
+} from '@/api/organization';
+import { serverValidateOrgName } from '@/api/validators';
+import { Organization, OrganizationMember } from '@/interfaces/organizations';
+import CollaboratorModal, { Collaborator } from '@/modals/CollaboratorModal';
+import CompactLinkTable from '@/components/orgs/CompactLinkTable';
+import CreateLinkDrawer from '@/drawers/CreateLinkDrawer';
+import OrgOverview from '@/components/orgs/OrgOverview';
 
 type RouteParams = {
   id: string;

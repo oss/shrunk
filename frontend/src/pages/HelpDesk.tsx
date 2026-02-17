@@ -30,9 +30,9 @@ import {
   getHelpDeskText,
   getTickets,
   getTicketsResolvedCount,
-} from '../api/tickets';
-import CreateTicketDrawer from '../drawers/CreateTicketDrawer';
-import { TicketInfo } from '../interfaces/tickets';
+} from '@/api/tickets';
+import CreateTicketDrawer from '@/drawers/CreateTicketDrawer';
+import { TicketInfo } from '@/interfaces/tickets';
 
 /**
  * Props for the [[HelpDesk]] component

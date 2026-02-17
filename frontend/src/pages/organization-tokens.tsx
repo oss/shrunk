@@ -19,9 +19,9 @@ import {
   generateAccessToken,
   getAccessTokens,
   getValidAccessTokenPermissions,
-} from '../api/organization';
-import AccessTokenCard from '../components/access-token-card';
-import { AccessTokenData } from '../interfaces/access-token';
+} from '@/api/organization';
+import AccessTokenCard from '@/components/access-token-card';
+import { AccessTokenData } from '@/interfaces/access-token';
 
 type RouteParams = {
   id: string;

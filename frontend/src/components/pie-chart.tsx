@@ -1,7 +1,7 @@
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import React from 'react';
-import { PieDatum } from '../interfaces/link';
+import { PieDatum } from '@/interfaces/link';
 
 const ShrunkPieChart: React.FC<{ data: PieDatum[] }> = (props) => {
   const options = {

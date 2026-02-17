@@ -20,7 +20,6 @@ from shrunk.client.exceptions import (
 
 from shrunk.util.string import validate_url
 
-
 __all__ = ["bp"]
 bp = Blueprint("linkv1", __name__, url_prefix="/api/v1/links")
 

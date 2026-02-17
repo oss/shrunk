@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { FeatureFlags } from '../interfaces/app';
-import { getFeatureFlags } from '../api/app';
+import { FeatureFlags } from '@/interfaces/app';
+import { getFeatureFlags } from '@/api/app';
 
 const FeatureFlagsContext = createContext<FeatureFlags>({
   devLogins: false,

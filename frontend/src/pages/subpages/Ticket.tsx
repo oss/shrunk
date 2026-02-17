@@ -21,10 +21,10 @@ import {
   getEntityPosition,
   getHelpDeskText,
   getTicket,
-} from '../../api/tickets';
-import TicketDetails, { EntityDetails } from '../../components/TicketDetails';
-import ResolveTicketDrawer from '../../drawers/ResolveTicketDrawer';
-import { EntityPositionInfo, TicketInfo } from '../../interfaces/tickets';
+} from '@/api/tickets';
+import TicketDetails, { EntityDetails } from '@/components/TicketDetails';
+import ResolveTicketDrawer from '@/drawers/ResolveTicketDrawer';
+import { EntityPositionInfo, TicketInfo } from '@/interfaces/tickets';
 
 /**
  * Props for the [[Ticket]] component

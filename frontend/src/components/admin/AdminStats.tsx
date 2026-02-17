@@ -9,8 +9,8 @@ import { Spin, Card, Statistic, Flex } from 'antd';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 
-import { getEndpointData, getShrunkVersion } from '../../api/app';
-import { AdminStatsData, EndpointDatum } from '../../interfaces/app';
+import { getEndpointData, getShrunkVersion } from '@/api/app';
+import { AdminStatsData, EndpointDatum } from '@/interfaces/app';
 
 /**
  * The [[AdminStats]] component allows the user to view summary statistics

@@ -1,9 +1,9 @@
 import { Button, Card, Col, Flex, Row, Select, Space } from 'antd';
 import { LogInIcon } from 'lucide-react';
 import React, { useState } from 'react';
-import { useFeatureFlags } from '../contexts/FeatureFlags';
-import { FeatureFlags } from '../interfaces/app';
-import BlurFade from '../components/magicui/blur-fade';
+import { useFeatureFlags } from '@/contexts/FeatureFlags';
+import { FeatureFlags } from '@/interfaces/app';
+import BlurFade from '@/components/magicui/blur-fade';
 
 interface LoginType {
   loginMessage: string;
