@@ -419,6 +419,10 @@ export default function DashboardSearch({
                 </Space.Compact>
                 <Space.Compact block>
                   <Input
+                    disabled={
+                      checkedKeys.length === 1 &&
+                      checkedKeys.includes('0-0' as React.Key)
+                    }
                     ref={ownerInputRef}
                     placeholder="Owner (net ID)"
                     value={filters.owner}
