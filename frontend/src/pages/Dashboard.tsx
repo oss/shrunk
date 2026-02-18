@@ -272,7 +272,7 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
                 />
               </Affix>
             </Sider>
-            <Content className="tw-mt-4 tw-bg-white">
+            <Content className="tw-bg-white">
               {linkInfo === null || linkInfo.length === 0 ? (
                 <Empty />
               ) : (
