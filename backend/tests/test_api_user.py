@@ -18,7 +18,7 @@ def test_default_options(client: Client, user: str) -> None:
         "show_deleted_links": False,
         "sort": {"key": "relevance", "order": "descending"},
         "showType": "links",
-        "set": {"set": "user"},
+        "set": [{"set": "user"}],
         "begin_time": None,
         "end_time": None,
         "owner": None,

@@ -13,7 +13,7 @@ def test_search_types(client: Client) -> None:
             json={
                 "pagination": {"skip": 0, "limit": 10},
                 "query": "",
-                "set": {"set": "user"},
+                "set": [{"set": "user"}],
                 "sort": {"key": "relevance", "order": "descending"},
                 "show_deleted_links": False,
                 "show_expired_links": False,
@@ -29,7 +29,7 @@ def test_search_types(client: Client) -> None:
             json={
                 "pagination": {"skip": 0, "limit": 10},
                 "query": "",
-                "set": {"set": "user"},
+                "set": [{"set": "user"}],
                 "sort": {"key": "relevance", "order": "descending"},
                 "show_deleted_links": False,
                 "show_expired_links": False,
