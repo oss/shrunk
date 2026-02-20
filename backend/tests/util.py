@@ -65,7 +65,7 @@ def assert_json(resp: Response, expected: Any) -> None:
     assert resp.get_json() == expected
 
 
-def setup_guest_user(client: Client) -> None:
+def setup_guest_user(client: Client) -> str:
     with dev_login(client, "admin"):
         resp = client.post("/api/core/org", json={"name": "Test Org"})
         org_id = resp.json["id"]

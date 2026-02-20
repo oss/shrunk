@@ -222,6 +222,7 @@ def test_get_user_info(client: Client, user: str, expected: int) -> None:
         assert resp.status_code == expected
         if expected == 200:
             assert resp.json["netid"] == "DEV_ADMIN"
+            assert len(resp.json["roles"]) > 0
 
 
 @pytest.mark.parametrize(

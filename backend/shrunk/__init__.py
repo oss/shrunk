@@ -109,13 +109,14 @@ def _init_shrunk_client() -> None:
     """Connect to the database.
     self.logger must be initialized before this function is called."""
     current_app.client = ShrunkClient()
-    
+
+
 def _init_roles() -> None:
     client: ShrunkClient = current_app.client
-    
+
     def is_admin(netid: str) -> bool:
         return client.users.has_role(netid, "admin")
-    
+
     def onblock(url: str) -> None:
         domain = get_domain(url)
         urls = client.db.urls
@@ -176,10 +177,6 @@ def _init_roles() -> None:
     )
 
 
-
-
-
-
 def create_app(**kwargs: Any) -> Flask:
     # Backport the datetime.datetime.fromisoformat method. Can be removed
     # once we update to Python 3.7+.
@@ -216,7 +213,6 @@ def create_app(**kwargs: Any) -> Flask:
     app.before_first_request(_init_logging)
     app.before_first_request(_init_shrunk_client)
     app.before_first_request(_init_roles)
-
 
     # wsgi middleware
     app.wsgi_app = ProxyFix(app.wsgi_app)  # type: ignore

@@ -260,7 +260,7 @@ class OrgsClient:
 
     def delete_member(self, org_id: ObjectId, netid: str) -> bool:
         if self.is_guest(org_id, netid):  # remove access to guest
-            self.db.grants.delete_many({"entity": netid})
+            self.db.users.update_one({"netid": netid}, {"$set": {"roles": []}})
         result = self.db.organizations.update_one(
             {"_id": org_id},
             {"$pull": {"members": {"netid": netid}}},

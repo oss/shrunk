@@ -13,7 +13,6 @@ __all__ = ["bp"]
 bp = Blueprint("role", __name__, url_prefix="/api/core/role")
 
 
-
 @bp.route("/<role_name>/text", methods=["GET"])
 @require_login
 def get_role_text(netid: str, client: ShrunkClient, role_name: str) -> Any:
@@ -43,7 +42,7 @@ def get_role_text(netid: str, client: ShrunkClient, role_name: str) -> Any:
 @require_login
 def get_role_entities(netid: str, client: ShrunkClient, role_name: str) -> Any:
     """``GET /api/role/<role_name>/entity``
-    
+
     TODO: Delete (Not used anymore)
 
     Get a list of entities having the specified role. Response format:

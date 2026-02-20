@@ -454,3 +454,23 @@ def delete_guest_user_from_org(client: Client) -> None:
         resp = client.get(f"/api/core/org/{org_id}")
         assert resp.status_code == 200
         assert "DEV_GUEST" not in [guest["netid"] for guest in resp.json["guests"]]
+
+        resp = client.get(f"/api/core/user/DEV_GUEST")
+        assert resp.status_code == 200
+        assert len(resp.json["roles"]) == 0
+
+
+def re_add_user_to_org(client: Client) -> None:
+    """Tests that a guest user can be re-added to an org after being deleted from it."""
+
+    org_id = setup_guest_user(client)
+    with dev_login(client, "admin"):
+        resp = client.delete(f"/api/core/org/{org_id}/guest/DEV_GUEST")
+        assert resp.status_code == 204
+
+        resp = client.put(f"/api/core/org/{org_id}/guest/DEV_GUEST")
+        assert resp.status_code == 204
+
+        resp = client.get(f"/api/core/user/DEV_GUEST")
+        assert resp.status_code == 200
+        assert any(role["role"] == "guest" for role in resp.json["roles"])

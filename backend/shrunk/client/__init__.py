@@ -63,7 +63,6 @@ class ShrunkClient:
         self.access_tokens = AccessTokenClient(db=self.db)
         self.roles = RolesClient(db=self.db)
 
-
     def _ensure_indexes(self) -> None:
         self.db.access_tokens.create_index([("token", pymongo.TEXT)], unique=True)
 

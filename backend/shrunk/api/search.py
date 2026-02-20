@@ -181,7 +181,7 @@ def post_search_urls(netid: str, client: ShrunkClient, req: Any) -> Any:
             "set": "org",
             "org": str(org["id"]),
         }  # force return org-owned links for guest users
-        # Make client side instead? 
+        # Make client side instead?
 
     # Must be admin to view deleted links.
     if req.get("show_deleted_links", False) and not is_admin:

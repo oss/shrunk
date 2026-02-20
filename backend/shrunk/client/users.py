@@ -338,7 +338,14 @@ class UserClient:
 
     def is_valid_role(self, role: str) -> bool:
         """Check whether a role is valid"""
-        roles = ["admin", "power_user", "facstaff", "whitelisted", "blacklisted", "guest"]
+        roles = [
+            "admin",
+            "power_user",
+            "facstaff",
+            "whitelisted",
+            "blacklisted",
+            "guest",
+        ]
         return role in roles
 
     def grant_role(
@@ -388,7 +395,6 @@ class UserClient:
                 }
             },
         )
-        
 
     def revoke_role(self, grantor: str, grantee: str, role: str) -> None:
         """Revokes a specific role from a user.

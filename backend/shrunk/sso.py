@@ -66,7 +66,7 @@ def login(user_info: Any) -> Any:
 
     if is_guest:
         client.users.initialize_user(netid, "guest")
-        
+
     if is_whitelisted:
         client.users.initialize_user(netid, "whitelisted")
 

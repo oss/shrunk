@@ -131,7 +131,9 @@ def check_urls(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
     :param org_id:
     """
 
-    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(netid, "admin"):
+    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(
+        netid, "admin"
+    ):
         abort(403)
     has_urls = client.orgs.has_associated_urls(org_id)
     return {"hasAssociatedUrls": has_urls}, 200
@@ -204,7 +206,9 @@ def get_org_links(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
     if resp is None:
         abort(404)
 
-    if not client.orgs.is_member(org_id, netid) and not client.users.has_role(netid, "admin"):
+    if not client.orgs.is_member(org_id, netid) and not client.users.has_role(
+        netid, "admin"
+    ):
         abort(403)
     links = client.orgs.get_links(org_id)
     return jsonify(links)
@@ -362,7 +366,9 @@ def get_org_stats(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
 
     if client.orgs.get_org(org_id) is None:
         abort(404)
-    if not client.orgs.is_member(org_id, netid) and not client.users.has_role(netid, "admin"):
+    if not client.orgs.is_member(org_id, netid) and not client.users.has_role(
+        netid, "admin"
+    ):
         abort(403)
     stats = client.orgs.get_org_overall_stats(org_id)
     return jsonify(stats)
@@ -444,16 +450,18 @@ def put_org_member(
 def put_org_guest(
     netid: str, client: ShrunkClient, org_id: ObjectId, member_netid: str
 ) -> Any:
-    """``PUT /api/org/<org_id>/guest/<netid>``
+    """``PUT /api/org/<org_id>/guest/<member_netid>``
 
     Add a guest user to an org. Can only add users designated as guests in the university LDAP. A guest may only be apart of one org at a time.
 
-    :param netid:
+    :param netid: User performing the action
     :param client:
     :param org_id:
-    :param member_netid:
+    :param member_netid: user to add
     """
-    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(netid, "admin"):
+    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(
+        netid, "admin"
+    ):
         abort(403)
 
     if not is_university_guest(member_netid):
@@ -464,7 +472,10 @@ def put_org_guest(
         return "Guest user already belongs to an organization", 400
 
     if client.orgs.create_member(org_id, member_netid, "guest"):
-        client.users.initialize_user(member_netid, "guest", netid)
+        if client.users.get_user(member_netid) is None:
+            client.users.initialize_user(member_netid, "guest", netid)
+        else:
+            client.users.grant_role(netid, member_netid, "guest")
 
     return "", 204
 
@@ -671,7 +682,9 @@ def create_access_token(netid: str, client: ShrunkClient, req: Any) -> Any:
 @bp.route("/<ObjectId:org_id>/access_token", methods=["GET"])
 @require_login
 def get_access_tokens(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
-    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(netid, "admin"):
+    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(
+        netid, "admin"
+    ):
         abort(403)
 
     owner = {}
@@ -705,7 +718,9 @@ def get_super_tokens(netid: str, client: ShrunkClient) -> Any:
 def delete_access_token(netid: str, client: ShrunkClient, token_id: ObjectId) -> Any:
     token_owner = client.access_tokens.get_owner(token_id)
     if token_owner["type"] == "org":
-        if not client.orgs.is_admin(token_owner["_id"], netid) and not client.users.has_role(netid, "admin"):
+        if not client.orgs.is_admin(
+            token_owner["_id"], netid
+        ) and not client.users.has_role(netid, "admin"):
             abort(403)
     else:
         if not client.users.has_role(netid, "admin"):
