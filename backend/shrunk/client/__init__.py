@@ -15,6 +15,7 @@ from .tickets import TicketsClient
 from .tracking import TrackingClient
 from .users import UserClient
 from .access_token import AccessTokenClient
+from .roles import RolesClient
 
 __all__ = ["ShrunkClient"]
 
@@ -60,6 +61,8 @@ class ShrunkClient:
         self.tickets = TicketsClient(db=self.db)
         self.users = UserClient(db=self.db)
         self.access_tokens = AccessTokenClient(db=self.db)
+        self.roles = RolesClient(db=self.db)
+
 
     def _ensure_indexes(self) -> None:
         self.db.access_tokens.create_index([("token", pymongo.TEXT)], unique=True)

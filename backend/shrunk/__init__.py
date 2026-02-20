@@ -109,6 +109,73 @@ def _init_shrunk_client() -> None:
     """Connect to the database.
     self.logger must be initialized before this function is called."""
     current_app.client = ShrunkClient()
+    
+def _init_roles() -> None:
+    client: ShrunkClient = current_app.client
+    
+    def is_admin(netid: str) -> bool:
+        return client.users.has_role(netid, "admin")
+    
+    def onblock(url: str) -> None:
+        domain = get_domain(url)
+        urls = client.db.urls
+        current_app.logger.info(
+            f"url {url} has been blocked. removing all urls with domain {domain}"
+        )
+
+        # . needs to be escaped in the domain because it is regex wildcard
+        contains_domain = urls.find(
+            {"long_url": {"$regex": "%s*" % domain.replace(".", r"\.")}}
+        )
+
+        matches_domain = [
+            link for link in contains_domain if get_domain(link["long_url"]) == domain
+        ]
+
+        msg = "deleting links: " + ", ".join(
+            f'{link["_id"]} -> {link["long_url"]}' for link in matches_domain
+        )
+        current_app.logger.info(msg)
+
+        client.links.block_urls(list(doc["_id"] for doc in matches_domain))
+
+    def unblock(url: str) -> None:
+        urls = client.db.urls
+        domain = get_domain(url)
+        contains_domain = urls.find(
+            {
+                "long_url": {"$regex": "%s*" % domain.replace(".", r"\.")},
+                "deleted": True,
+                "deleted_by": "!BLOCKED",
+            }
+        )
+
+        matches_domain = [
+            link for link in contains_domain if get_domain(link["long_url"]) == domain
+        ]
+        client.links.unblock_urls(list(doc["_id"] for doc in matches_domain))
+
+    client.roles.create(
+        "blocked_url",
+        is_admin,
+        validate_url,
+        custom_text={
+            "title": "Blocked URLs",
+            "invalid": "Bad URL",
+            "grant_title": "Block a URL:",
+            "grantee_text": "URL to block",
+            "grant_button": "BLOCK",
+            "revoke_title": "Unblock a URL",
+            "revoke_button": "UNBLOCK",
+            "empty": "There are currently no blocked URLs",
+            "granted_by": "Blocked by",
+        },
+        process_entity=get_domain,
+        oncreate=onblock,
+        onrevoke=unblock,
+    )
+
+
 
 
 
@@ -148,6 +215,7 @@ def create_app(**kwargs: Any) -> Flask:
     # call initialization functions
     app.before_first_request(_init_logging)
     app.before_first_request(_init_shrunk_client)
+    app.before_first_request(_init_roles)
 
 
     # wsgi middleware
