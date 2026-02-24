@@ -59,6 +59,7 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
   });
 
   const componentRef = useRef(null);
+  const layoutRef = useRef<HTMLDivElement>(null);
 
   const { Header, Footer, Sider, Content } = Layout;
 
@@ -253,15 +254,12 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
           </Flex>
         </Header>
         <Content className="tw-bg-white">
-          <Layout className="tw-bg-white">
+          <Layout ref={layoutRef} className="tw-bg-white">
             <Sider
               className="tw-mt-[4px] tw-bg-white tw-pr-4 tw-hidden lg:tw-block"
               width="25%"
-              trigger={null}
-              breakpoint="lg"
-              collapsedWidth="0"
             >
-              <Affix offsetTop={50}>
+              <div className="tw-sticky tw-top-[50px] tw-max-h-[calc(100vh-130px)] tw-overflow-auto">
                 <DashboardSearch
                   query={query}
                   filters={filters}
@@ -270,7 +268,7 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
                   userOrgs={userOrgs}
                   userPrivileges={userPrivileges}
                 />
-              </Affix>
+              </div>
             </Sider>
             <Content className="tw-bg-white">
               {linkInfo === null || linkInfo.length === 0 ? (
