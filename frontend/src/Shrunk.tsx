@@ -51,7 +51,6 @@ import { FeatureFlags } from '@/interfaces/app';
 import ChangeLog from '@/pages/ChangeLog';
 import Ticket from '@/pages/subpages/Ticket';
 import { lightTheme } from '@/theme';
-import { SearchQuery } from '@/interfaces/link';
 import OrganizationToken from '@/pages/organization-tokens';
 
 const { Header, Content, Footer, Sider } = Layout;
@@ -355,9 +354,7 @@ export default function Shrunk(props: Props) {
                       <Login />
                     </Route>
                     <Route exact path="/app/dash">
-                      <Dashboard
-                        userPrivileges={userPrivileges}
-                      />
+                      <Dashboard userPrivileges={userPrivileges} />
                     </Route>
                     <Route
                       exact
