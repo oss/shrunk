@@ -237,7 +237,7 @@ class UserClient:
                 "show_deleted_links": False,
                 "sort": {"key": "relevance", "order": "descending"},
                 "showType": "links",
-                "set": {"set": "user"},
+                "set": [{"set": "user"}],
                 "begin_time": None,
                 "end_time": None,
                 "owner": None,
@@ -246,6 +246,9 @@ class UserClient:
 
             self.update_user_filter_options(netid, filterOptions)
             return filterOptions
+
+        # necessary for migration
+        user["filterOptions"]["set"] = list(user["filterOptions"]["set"])
         return user["filterOptions"]
 
     def update_user_filter_options(

@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   Button,
   Card,
@@ -5,10 +6,8 @@ import {
   Descriptions,
   Typography,
   Row,
-  Space,
   Tooltip,
 } from 'antd';
-import React from 'react';
 import dayjs from 'dayjs';
 import {
   CopyIcon,
@@ -31,54 +30,108 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
   return (
     <Card
       title={linkInfo.title}
-      extra={
-        <Space>
-          <Tooltip title="View link details">
-            <Button
-              icon={<EyeIcon />}
-              type="text"
-              href={`/app/links/${linkInfo._id}`}
-              target="_blank"
-            />
-          </Tooltip>
-          <Tooltip title="Edit link">
-            <Button
-              icon={<EditIcon />}
-              type="text"
-              href={`/app/links/${linkInfo._id}?mode=edit`}
-              target="_blank"
-            />
-          </Tooltip>
-          <Tooltip title="Share link permissions">
-            <Button
-              icon={<UsersIcon />}
-              type="text"
-              href={`/app/links/${linkInfo._id}?mode=collaborate`}
-              target="_blank"
-            />
-          </Tooltip>
-          <Tooltip title="Access qr code">
-            <Button
-              icon={<QrCodeIcon />}
-              type="text"
-              href={`/app/links/${linkInfo._id}?mode=qrcode`}
-              target="_blank"
-            />
-          </Tooltip>
-          <Tooltip title="Delete link">
-            <Button
-              icon={<Trash2Icon />}
-              type="text"
-              danger
-              disabled={linkInfo.deletion_info !== null}
-              href={`/app/links/${linkInfo._id}?mode=edit`}
-              target="_blank"
-            />
-          </Tooltip>
-        </Space>
-      }
+      actions={[
+        <Tooltip title="View link details">
+          <Button
+            icon={<EyeIcon />}
+            type="text"
+            href={`/app/links/${linkInfo._id}`}
+            target="_blank"
+          />
+        </Tooltip>,
+        <Tooltip title="Edit link">
+          <Button
+            icon={<EditIcon />}
+            type="text"
+            href={`/app/links/${linkInfo._id}?mode=edit`}
+            target="_blank"
+          />
+        </Tooltip>,
+        <Tooltip title="Share link permissions">
+          <Button
+            icon={<UsersIcon />}
+            type="text"
+            href={`/app/links/${linkInfo._id}?mode=collaborate`}
+            target="_blank"
+          />
+        </Tooltip>,
+        <Tooltip title="Access qr code">
+          <Button
+            icon={<QrCodeIcon />}
+            type="text"
+            href={`/app/links/${linkInfo._id}?mode=qrcode`}
+            target="_blank"
+          />
+        </Tooltip>,
+        <Tooltip title="Delete link">
+          <Button
+            icon={<Trash2Icon />}
+            type="text"
+            danger
+            disabled={linkInfo.deletion_info !== null}
+            href={`/app/links/${linkInfo._id}?mode=edit`}
+            target="_blank"
+            className="!tw-text-red-600"
+          />
+        </Tooltip>,
+      ]}
     >
-      <Card.Grid style={{ width: '100%' }} hoverable={false}>
+      <Card.Grid
+        className="md:tw-hidden"
+        style={{ width: '100%' }}
+        hoverable={false}
+      >
+        <Descriptions
+          layout="vertical"
+          colon={false}
+          items={[
+            {
+              key: 'created_by',
+              label: 'Owner',
+              children:
+                linkInfo.owner.type === 'netid' ? (
+                  linkInfo.owner._id
+                ) : (
+                  <a href={`/app/orgs/${linkInfo.owner._id}`}>
+                    {linkInfo.owner.org_name}
+                  </a>
+                ),
+            },
+            {
+              key: 'unique_visits',
+              label: 'Unique Visits',
+              children: linkInfo.unique_visits,
+            },
+            {
+              key: 'total_visits',
+              label: 'Total Visits',
+              children: linkInfo.visits,
+            },
+            {
+              key: 'date_created',
+              label: 'Date Created',
+              children: dayjs(linkInfo.created_time).format(
+                'MMM D, YYYY - h:mm A',
+              ),
+            },
+            {
+              key: 'date_expires',
+              label: 'Date Expires',
+              children:
+                linkInfo.expiration_time === null
+                  ? 'N/A'
+                  : dayjs(linkInfo.expiration_time).format(
+                      'MMM D, YYYY - h:mm A',
+                    ),
+            },
+          ]}
+        />
+      </Card.Grid>
+      <Card.Grid
+        className="tw-hidden md:tw-block"
+        style={{ width: '100%' }}
+        hoverable={false}
+      >
         <Descriptions
           column={5}
           colon={false}
