@@ -64,17 +64,6 @@ export default function Shrunk(props: Props) {
   const { siderWidth } = props;
   const [userPrivileges, setUserPrivileges] = useState<Set<string>>(new Set());
   const [netid, setNetid] = useState<string>('');
-  const [filterOptions, setFilterOptions] = useState<SearchQuery>({
-    queryString: '',
-    set: [{ set: 'user' }],
-    show_expired_links: false,
-    show_deleted_links: false,
-    sort: { key: 'relevance', order: 'descending' },
-    begin_time: null,
-    end_time: null,
-    showType: 'links',
-    owner: null,
-  });
   const [isLoading, setIsLoading] = useState(true);
   const [motd, setMotd] = useState<string>('');
 
@@ -114,7 +103,6 @@ export default function Shrunk(props: Props) {
           setNetid(data.netid);
           setUserPrivileges(new Set(data.privileges || []));
           setMotd(data.motd);
-          setFilterOptions(data.filterOptions);
 
           // If we're on login page and have session, redirect to dash
           if (window.location.pathname === '/app/login') {
@@ -369,7 +357,6 @@ export default function Shrunk(props: Props) {
                     <Route exact path="/app/dash">
                       <Dashboard
                         userPrivileges={userPrivileges}
-                        filterOptions={filterOptions}
                       />
                     </Route>
                     <Route
