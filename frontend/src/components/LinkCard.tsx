@@ -18,6 +18,7 @@ import {
   Trash2Icon,
   UsersIcon,
 } from 'lucide-react';
+import { Link as RouterLink } from 'react-router-dom';
 
 import { Link } from '@/interfaces/link';
 import { getRedirectFromAlias } from '@/lib/utils';
@@ -89,9 +90,9 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
                 linkInfo.owner.type === 'netid' ? (
                   linkInfo.owner._id
                 ) : (
-                  <a href={`/app/orgs/${linkInfo.owner._id}`}>
+                  <RouterLink to={`/app/orgs/${linkInfo.owner._id}`}>
                     {linkInfo.owner.org_name}
-                  </a>
+                  </RouterLink>
                 ),
             },
             {
