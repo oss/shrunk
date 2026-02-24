@@ -26,7 +26,7 @@ import {
   message,
 } from 'antd';
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom';
+import { BrowserRouter, Redirect, Route, Switch, Link } from 'react-router-dom';
 
 import Markdown from 'markdown-to-jsx';
 import Admin from '@/pages/Admin';
@@ -301,7 +301,7 @@ export default function Shrunk(props: Props) {
                 />
               )}
               <Header className="tw-flex tw-items-center tw-justify-between">
-                <a href={netid ? '/app/dash' : '/app/login'}>
+                <Link to={netid ? '/app/dash' : '/app/login'}>
                   <Image
                     preview={false}
                     alt="Rutgers"
@@ -309,7 +309,7 @@ export default function Shrunk(props: Props) {
                     width="175px"
                     srcSet={rutgersLogo}
                   />
-                </a>
+                </Link>
                 {netid && (
                   <Dropdown menu={{ items: menuItems }}>
                     <Button

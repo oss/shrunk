@@ -28,6 +28,7 @@ import {
   TrashIcon,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   createOrg,
   deleteOrganization,
@@ -122,11 +123,12 @@ export default function MyOrganizations({
         <Flex justify="flex-end">
           <Space>
             <Tooltip title="View">
-              <Button
-                type="text"
-                icon={<EyeIcon />}
-                href={`/app/orgs/${record.id}`}
-              />
+              <Link
+                className="tw-flex tw-items-center"
+                to={`/app/orgs/${record.id}`}
+              >
+                <EyeIcon color="#000" />
+              </Link>
             </Tooltip>
             {record.role === 'admin' && (
               <Tooltip title="Delete">

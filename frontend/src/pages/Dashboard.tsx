@@ -270,7 +270,7 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
                 />
               </div>
             </Sider>
-            <Content className="tw-bg-white">
+            <Content className="tw-mt-4 md:tw-mt-0 tw-bg-white">
               {linkInfo === null || linkInfo.length === 0 ? (
                 <Empty />
               ) : (

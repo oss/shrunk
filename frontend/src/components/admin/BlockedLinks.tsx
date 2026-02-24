@@ -155,6 +155,7 @@ const BlockedLinks = () => {
   const [form] = Form.useForm();
   const [modalLoading, setModalLoading] = React.useState(false);
   const [showBlockLinkModal, setShowBlockLinkModal] = React.useState(false);
+  const [pageSize, setPageSize] = React.useState(10);
 
   /**
    * Triggers a refresh of the blocked links data
@@ -174,6 +175,12 @@ const BlockedLinks = () => {
     if (!searchQuery) return blockedLinks;
     return search(searchQuery).map((result) => result.item);
   }, [search, searchQuery, blockedLinks]);
+
+  const handleTableChange = (pagination: any) => {
+    if (pagination.pageSize) {
+      setPageSize(pagination.pageSize);
+    }
+  };
 
   const columns = [
     {
@@ -303,8 +310,13 @@ const BlockedLinks = () => {
             columns={columns}
             dataSource={filteredLinks}
             rowKey="url"
-            pagination={{ position: ['bottomCenter'], pageSize: 10 }}
+            pagination={{
+              position: ['bottomCenter'],
+              pageSize,
+              showSizeChanger: true,
+            }}
             scroll={{ x: 'max-content' }}
+            onChange={handleTableChange}
             expandable={{
               expandedRowRender: (record) => (
                 <Typography.Text>

@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link as RouterLink } from 'react-router-dom';
 import { downloadVisits } from '@/api/csv';
 import {
   BrowserStats,
@@ -552,9 +552,11 @@ export function Stats(props: Props): React.ReactElement {
                           label: 'Owner',
                           children:
                             linkInfo?.owner.type === 'org' ? (
-                              <a href={`/app/orgs/${linkInfo.owner._id}`}>
+                              <RouterLink
+                                to={`/app/orgs/${linkInfo.owner._id}`}
+                              >
                                 {linkInfo.owner.org_name}
-                              </a>
+                              </RouterLink>
                             ) : (
                               linkInfo?.owner._id
                             ),

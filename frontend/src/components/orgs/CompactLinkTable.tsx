@@ -35,6 +35,7 @@ const CompactLinkTable = ({
 }: CompactLinkTableProps) => {
   const [links, setLinks] = useState<OrganizationLink[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pageSize, setPageSize] = useState(10);
   const [transferModalVisible, setTransferModalVisible] = useState(false);
   const [selectedLinkId, setSelectedLinkId] = useState<string>('');
   const fetchLinks = async () => {
@@ -70,6 +71,12 @@ const CompactLinkTable = ({
     return [...nonDeleted, ...deleted];
   };
   const sortedLinks = useMemo(() => sortLinks(links), [links]);
+
+  const handleTableChange = (pagination: any) => {
+    if (pagination.pageSize) {
+      setPageSize(pagination.pageSize);
+    }
+  };
 
   const columns: ColumnsType<OrganizationLink> = [
     {
@@ -224,10 +231,11 @@ const CompactLinkTable = ({
         dataSource={sortedLinks}
         pagination={{
           position: ['bottomCenter'],
-          pageSize: 10,
+          pageSize,
+          showSizeChanger: true,
         }}
         scroll={{ x: 'max-content' }}
-        size="small"
+        onChange={handleTableChange}
       />
       <TransferToNetIdModal
         visible={transferModalVisible}
