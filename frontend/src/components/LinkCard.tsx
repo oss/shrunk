@@ -77,7 +77,7 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
       ]}
     >
       <Card.Grid
-        className="md:tw-hidden"
+        className="xl:tw-hidden"
         style={{ width: '100%' }}
         hoverable={false}
       >
@@ -128,7 +128,7 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
         />
       </Card.Grid>
       <Card.Grid
-        className="tw-hidden md:tw-block"
+        className="tw-hidden xl:tw-block"
         style={{ width: '100%' }}
         hoverable={false}
       >

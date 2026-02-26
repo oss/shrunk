@@ -232,7 +232,7 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
             </Button>
           </Flex>
         </Header>
-        <Header className="tw-flex tw-flex-col tw-bg-white dark:tw-bg-[#1f1f1f] tw-gap-3 !tw-mb-4  tw-p-0 md:tw-hidden">
+        <Header className="tw-flex tw-flex-col tw-bg-white dark:tw-bg-[#1f1f1f] tw-gap-3 !tw-mb-4  tw-p-0 lg:tw-hidden">
           <Typography.Title level={2} className="!tw-m-0">
             URL Shortener
           </Typography.Title>
@@ -275,7 +275,10 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
               {linkInfo === null || linkInfo.length === 0 ? (
                 <Empty />
               ) : (
-                <Space className="dark:tw-bg-[#1f1f1f]" orientation="vertical">
+                <Space
+                  className="md:tw-mt-4 lg:tw-mt-0 dark:tw-bg-[#1f1f1f]"
+                  orientation="vertical"
+                >
                   {linkInfo.map((link: Link) => (
                     <LinkCard key={link._id || link.alias} linkInfo={link} />
                   ))}

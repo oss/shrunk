@@ -291,7 +291,7 @@ function ShrunkContent({
       </Header>
 
       <Layout>
-        <Sider width={siderWidth} breakpoint="xl" collapsedWidth="10" />
+        <Sider width={siderWidth} breakpoint="xxl" collapsedWidth="10" />
         <Content className="tw-m-0 tw-min-h-[90vh] tw-p-6">
           <PendingRequests />
 
@@ -402,7 +402,7 @@ function ShrunkContent({
             </Route>
           </Switch>
         </Content>
-        <Sider width={siderWidth} breakpoint="xl" collapsedWidth="10" />
+        <Sider width={siderWidth} breakpoint="xxl" collapsedWidth="10" />
       </Layout>
 
       <Footer className="tw-flex tw-justify-center tw-bg-black tw-text-center">
