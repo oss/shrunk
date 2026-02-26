@@ -36,6 +36,7 @@ import {
   hasAssociatedUrls,
 } from '@/api/organization';
 import { Organization } from '@/interfaces/organizations';
+import useDarkMode from '@/lib/hooks/useDarkMode';
 
 interface Props {
   userPrivileges: Set<string>;
@@ -44,6 +45,7 @@ interface Props {
 export default function MyOrganizations({
   userPrivileges,
 }: Props): React.ReactElement {
+  const { darkMode } = useDarkMode();
   const [showAll, setShowAll] = useState(false);
   const [orgs, setOrgs] = useState<Organization[] | null>(null);
   const [showAssociatedUrlsAlert, setShowAssociatedUrlsAlert] = useState(false);
@@ -127,7 +129,7 @@ export default function MyOrganizations({
                 className="tw-flex tw-items-center"
                 to={`/app/orgs/${record.id}`}
               >
-                <EyeIcon color="#000" />
+                <EyeIcon color={darkMode ? '#FFFFFF' : '#000000'} />
               </Link>
             </Tooltip>
             {record.role === 'admin' && (

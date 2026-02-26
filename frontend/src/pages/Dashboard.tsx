@@ -218,10 +218,11 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
   return (
     <>
       <Layout>
-        <Header className="tw-hidden tw-mb-4 tw-bg-white tw-p-0 lg:tw-block">
-          <Flex className="tw-bg-white" align="center" justify="space-between">
+        <Header className="tw-hidden tw-mb-4 tw-bg-white dark:tw-bg-[#1f1f1f]  tw-p-0 lg:tw-block">
+          <Flex className="" align="center" justify="space-between">
             <Typography.Title>URL Shortener</Typography.Title>
             <Button
+              className="!tw-shadow-none"
               ref={componentRef}
               type="primary"
               icon={<PlusCircleIcon />}
@@ -231,7 +232,7 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
             </Button>
           </Flex>
         </Header>
-        <Header className="tw-flex tw-flex-col tw-gap-3 !tw-mb-4 tw-bg-white tw-p-0 md:tw-hidden">
+        <Header className="tw-flex tw-flex-col tw-bg-white dark:tw-bg-[#1f1f1f] tw-gap-3 !tw-mb-4  tw-p-0 md:tw-hidden">
           <Typography.Title level={2} className="!tw-m-0">
             URL Shortener
           </Typography.Title>
@@ -253,10 +254,10 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
             </Button>
           </Flex>
         </Header>
-        <Content className="tw-bg-white">
-          <Layout ref={layoutRef} className="tw-bg-white">
+        <Content className="tw-bg-white dark:tw-bg-[#1f1f1f]">
+          <Layout ref={layoutRef} className="tw-bg-white dark:tw-bg-[#1f1f1f]">
             <Sider
-              className="tw-mt-[4px] tw-bg-white tw-pr-4 tw-hidden lg:tw-block"
+              className="tw-mt-[4px] tw-pr-4 tw-hidden lg:tw-block"
               width="25%"
             >
               <div className="tw-sticky tw-top-[50px] tw-max-h-[calc(100vh-130px)] tw-overflow-auto">
@@ -270,11 +271,11 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
                 />
               </div>
             </Sider>
-            <Content className="tw-mt-4 md:tw-mt-0 tw-bg-white">
+            <Content className="dark:tw-bg-[#1f1f1f] tw-mt-4 md:tw-mt-0 tw-bg-white">
               {linkInfo === null || linkInfo.length === 0 ? (
                 <Empty />
               ) : (
-                <Space orientation="vertical">
+                <Space className="dark:tw-bg-[#1f1f1f]" orientation="vertical">
                   {linkInfo.map((link: Link) => (
                     <LinkCard key={link._id || link.alias} linkInfo={link} />
                   ))}
@@ -283,7 +284,7 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
             </Content>
           </Layout>
         </Content>
-        <Footer className="tw-bg-white">
+        <Footer className="dark:tw-bg-[#1f1f1f]">
           <Pagination
             align="center"
             defaultCurrent={1}

@@ -29,7 +29,7 @@ export default function ApiReference() {
             Request
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
               {`curl ${apiUrl}/users \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $SHRUNK_API_KEY"`}
@@ -39,7 +39,7 @@ export default function ApiReference() {
             Response
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-border tw-bg-[#f5f5f5] tw-p-8 tw-font-mono">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
               {`{
     "users": [
       {
@@ -114,7 +114,7 @@ export default function ApiReference() {
             Request
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
               {`curl ${apiUrl}/links \\
   -X POST \\
   -H "Content-Type: application/json" \\
@@ -133,7 +133,7 @@ export default function ApiReference() {
             Response
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-border tw-bg-[#f5f5f5] tw-p-8 tw-font-mono">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
               {`{
   "id": str,
   "alias": str
@@ -298,7 +298,7 @@ export default function ApiReference() {
             Request
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
               {`curl ${apiUrl}/links/<org_id>/<link_id> \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $SHRUNK_API_KEY"`}
@@ -308,7 +308,7 @@ export default function ApiReference() {
             Response
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-border tw-bg-[#f5f5f5] tw-p-8 tw-font-mono">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
               {`{
   "_id": str,
   "title": str,
@@ -388,7 +388,7 @@ export default function ApiReference() {
             Request
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
               {`curl ${apiUrl}/links/<org_id> \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $SHRUNK_API_KEY"`}
@@ -398,7 +398,7 @@ export default function ApiReference() {
             Response
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-border tw-bg-[#f5f5f5] tw-p-8 tw-font-mono">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
               {`{
   "links": [
     {
@@ -463,7 +463,7 @@ export default function ApiReference() {
             Request
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
               {`curl ${apiUrl}/links/<org_id>/<link_id>/visits \\
   -X POST \\
   -H "Content-Type: application/json" \\
@@ -478,7 +478,7 @@ export default function ApiReference() {
             Response
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-border tw-bg-[#f5f5f5] tw-p-8 tw-font-mono">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
               {`{
   "_id": str,
   "alias": str,
@@ -562,7 +562,7 @@ export default function ApiReference() {
             Request
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
               {`curl ${apiUrl}/tracking-pixels \\
   -X POST \\
   -H "Content-Type: application/json" \\
@@ -578,7 +578,7 @@ export default function ApiReference() {
             Response
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-border tw-bg-[#f5f5f5] tw-p-8 tw-font-mono">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
               {`{
   "id": str,
   "alias": str
@@ -675,7 +675,7 @@ export default function ApiReference() {
             Request
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
               {`curl ${apiUrl}/tracking-pixels/<org_id>/<link_id> \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $SHRUNK_API_KEY"`}
@@ -685,7 +685,7 @@ export default function ApiReference() {
             Response
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-border tw-bg-[#f5f5f5] tw-p-8 tw-font-mono">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
               {`{
   "_id": str,
   "title": str,
@@ -767,7 +767,7 @@ export default function ApiReference() {
             Request
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
               {`curl ${apiUrl}/tracking-pixels/<org_id> \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $SHRUNK_API_KEY"`}
@@ -777,7 +777,7 @@ export default function ApiReference() {
             Response
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-border tw-bg-[#f5f5f5] tw-p-8 tw-font-mono">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
               {`{
   "tracking-pixels": [
     {
@@ -840,7 +840,7 @@ export default function ApiReference() {
             Request
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
               {`curl ${apiUrl}/organizations \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $SHRUNK_API_KEY"`}
@@ -850,7 +850,7 @@ export default function ApiReference() {
             Response
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-border tw-bg-[#f5f5f5] tw-p-8 tw-font-mono">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
               {`{
   "organizations": [
     {
@@ -880,7 +880,7 @@ export default function ApiReference() {
             Request
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
               {`curl ${apiUrl}/organizations/<netid> \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $SHRUNK_API_KEY"`}
@@ -890,7 +890,7 @@ export default function ApiReference() {
             Response
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-border tw-bg-[#f5f5f5] tw-p-8 tw-font-mono">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
               {`{
   "organizations": [
     {
@@ -941,7 +941,7 @@ export default function ApiReference() {
             Request
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
               {`curl -O -J ${apiUrl}/links/<link_id>/qrcode \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $SHRUNK_API_KEY"`}
@@ -951,7 +951,7 @@ export default function ApiReference() {
             Response
           </Typography.Paragraph>
           <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-border tw-bg-[#f5f5f5] tw-p-8 tw-font-mono">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
               PNG Image: alias-qrcode.png
             </Flex>
           </Typography>
