@@ -164,7 +164,8 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
   const tagRender = (props: any) => {
     const { label, value, closable, onClose } = props;
     const isHighestRole = isSelf && value === getHighestRole(initialRoles);
-    const canRemoveRole = !isHighestRole && closable && selectedRoles.length > 1;
+    const canRemoveRole =
+      !isHighestRole && closable && selectedRoles.length > 1;
 
     return (
       <Tag
@@ -465,6 +466,8 @@ const UserLookup: React.FC = () => {
     },
   ];
 
+  const tableLoading = usersLoading || loading;
+
   return (
     <>
       <LookupTableHeader
@@ -476,7 +479,8 @@ const UserLookup: React.FC = () => {
       <Row style={{ marginBottom: 24 }} />
 
       <Table
-        loading={usersLoading || loading}
+        loading={tableLoading}
+        locale={{ emptyText: tableLoading ? null : undefined }}
         columns={columns}
         dataSource={filteredData}
         rowKey="netid"

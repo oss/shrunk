@@ -96,7 +96,7 @@ const UsersProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [users, setUsers] = useState<User[]>([]);
   const [options, setOptions] = useState<{ [key: string]: any } | null>(null); // null to prevent TypeError
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [appliedOperations, setAppliedOperations] = useState<Operation[]>([
     {
       type: 'sort',
@@ -138,39 +138,10 @@ const UsersProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     fetchUsers();
-  }, [refetchUsers]);
-
-  useEffect(() => {
-    const fetchUsers = async (): Promise<void> => {
-      setLoading(true);
-      try {
-        // eslint-disable-next-line no-restricted-globals
-        const response = await fetch('/api/core/user/all', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ operations: appliedOperations }),
-        });
-        if (!response.ok) {
-          setUsers([]);
-          throw new Error('Something went wrong');
-        }
-        const data = await response.json();
-        setUsers(data.users);
-      } catch (error) {
-        throw new Error(`Failed to fetch users: {error}`);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUsers();
-  }, [appliedOperations]);
+  }, [appliedOperations, refetchUsers]);
 
   useEffect(() => {
     const fetchOptions = async (): Promise<void> => {
-      setLoading(true);
       try {
         // eslint-disable-next-line no-restricted-globals
         const response = await fetch('/api/core/user/options', {
@@ -183,8 +154,6 @@ const UsersProvider: React.FC<{ children: React.ReactNode }> = ({
         setOptions(data.options);
       } catch (error) {
         setOptions(null);
-      } finally {
-        setLoading(false);
       }
     };
 
