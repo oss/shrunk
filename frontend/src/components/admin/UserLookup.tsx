@@ -23,6 +23,7 @@ import { addRoleToUser, removeRoleFromUser } from '@/api/users';
 import { User, useUsers } from '@/contexts/Users';
 import useFuzzySearch from '@/lib/hooks/useFuzzySearch';
 import LookupTableHeader from '@/components/admin/LookupTableHeader';
+import { getUserInfo } from '@/api/app';
 
 /**
  * Order of roles in the select dropdown
@@ -70,6 +71,12 @@ interface RolesSelectProps {
    * @property
    */
   rehydrateData: () => void;
+
+  /**
+   * Whether the user being edited is the current user
+   * @property
+   */
+  isSelf: boolean;
 }
 
 /**
@@ -81,6 +88,7 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
   netid,
   onRolesChange,
   rehydrateData,
+  isSelf,
 }) => {
   const [selectedRoles, setSelectedRoles] = useState<string[]>(
     // Sort roles in descending order of privilege
@@ -111,7 +119,8 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
   const options = roleOrder.map((role) => ({
     label: role,
     value: role,
-    disabled: role === getHighestRole(initialRoles) || role === 'guest',
+    disabled:
+      (isSelf && role === getHighestRole(initialRoles)) || role === 'guest',
   }));
 
   const filteredOptions = options.filter(
@@ -126,7 +135,7 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
   const handleRolesChange = async (newRoles: string[]) => {
     const highestRole = getHighestRole(initialRoles);
 
-    if (highestRole && !newRoles.includes(highestRole)) {
+    if (isSelf && highestRole && !newRoles.includes(highestRole)) {
       newRoles.push(highestRole);
       message.warning('Cannot remove your highest privilege role');
     }
@@ -149,7 +158,7 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
 
   const tagRender = (props: any) => {
     const { label, value, closable, onClose } = props;
-    const isHighestRole = value === getHighestRole(initialRoles);
+    const isHighestRole = isSelf && value === getHighestRole(initialRoles);
 
     return (
       <Tag
@@ -189,6 +198,7 @@ const renderOrganizations = (organizations: string[]): JSX.Element[] =>
  */
 const UserLookup: React.FC = () => {
   const { users, loading: usersLoading, rehydrateUsers } = useUsers();
+  const [currentNetid, setCurrentNetid] = useState('');
   const [filteredData, setFilteredData] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [pageSize, setPageSize] = useState(10);
@@ -203,6 +213,19 @@ const UserLookup: React.FC = () => {
   useEffect(() => {
     setFilteredData(users);
   }, [users]);
+
+  useEffect(() => {
+    const fetchCurrentUserNetid = async () => {
+      try {
+        const userInfo = await getUserInfo();
+        setCurrentNetid(userInfo.netid || '');
+      } catch {
+        setCurrentNetid('');
+      }
+    };
+
+    fetchCurrentUserNetid();
+  }, []);
 
   const exportToCSV = useCallback(() => {
     const dataToExport = filteredData.length > 0 ? filteredData : users;
@@ -402,6 +425,7 @@ const UserLookup: React.FC = () => {
           initialRoles={roles}
           netid={record.netid}
           onRolesChange={handleRolesChange}
+          isSelf={record.netid === currentNetid}
         />
       ),
       filters: rolesFilters,
