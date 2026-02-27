@@ -6,13 +6,32 @@ export const lightTheme: ThemeConfig = {
     colorPrimary: red[6],
     colorLink: red[5],
     fontFamily: 'Geist',
+    colorText: '#000000', // ✅ Global text color
+    colorTextBase: '#000000', // ✅ Base text color
   },
   components: {
     Dropdown: {
       colorText: '#000000',
+      colorTextDescription: '#000000',
+      controlItemBgActive: '#f5f5f5',
+      controlItemBgHover: '#fafafa',
     },
     Table: {
       cellFontSize: 14,
+      filterDropdownBg: '#FFFFFF',
+      filterDropdownMenuBg: '#FFFFFF',
+      colorText: '#000000',
+      colorTextHeading: '#000000',
+    },
+    Checkbox: {
+      // ✅ Fixes checkbox labels
+      colorText: '#000000',
+      colorTextDisabled: '#999999',
+    },
+    Button: {
+      // ✅ Fixes Reset/OK buttons
+      colorText: '#000000',
+      colorPrimaryHover: red[5],
     },
     Layout: {
       headerBg: red[6],
@@ -25,7 +44,7 @@ export const lightTheme: ThemeConfig = {
       itemBg: '#fff',
       colorPrimaryHover: '#FFFFFF',
       colorPrimaryTextActive: '#FFFFFF',
-      colorText: '#FFFFFF',
+      colorText: '#000000',
       colorPrimary: '#FFFFFF',
     },
     Tabs: {
@@ -60,6 +79,8 @@ export const darkTheme: ThemeConfig = {
       headerBg: '#262626',
       headerColor: '#ffffff',
       rowHoverBg: '#262626',
+      // filterDropdownBg: '',
+      filterDropdownMenuBg: '#262626',
     },
     Layout: {
       headerBg: '#141414',
