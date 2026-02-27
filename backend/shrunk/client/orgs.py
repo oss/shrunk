@@ -2,11 +2,12 @@
 
 from datetime import datetime, timezone
 from typing import Any, Optional, List, cast
-
+import re
 from bson import ObjectId
 import os
 import pymongo
 import pymongo.errors
+from pymongo.collation import Collation
 
 from .exceptions import (
     NoSuchObjectException,
@@ -536,3 +537,108 @@ class OrgsClient:
         ]
 
         return next(self.db.organizations.aggregate(aggregation))
+
+    def search(self, netid: str, query: Any) -> Any:
+        """Execute an organization search query.
+
+        :param netid: The NetID of the user performing the search
+        :param query: The search query parameters
+        """
+        pipeline: List[Any] = []
+
+        # Match by name
+        if "query" in query and query["query"]:
+            # Escape regex characters to prevent ReDoS or query injection
+            escaped_query = re.escape(query["query"])
+            pipeline.append(
+                {"$match": {"name": {"$regex": escaped_query, "$options": "i"}}}
+            )
+
+        # Fields for Metrics and Relationship
+        pipeline.append(
+            {
+                "$addFields": {
+                    "memberCount": {"$size": "$members"},
+                    "my_member_info": {
+                        "$first": {
+                            "$filter": {
+                                "input": "$members",
+                                "as": "m",
+                                "cond": {"$eq": ["$$m.netid", netid]},
+                            }
+                        }
+                    },
+                }
+            }
+        )
+
+        pipeline.append(
+            {
+                "$addFields": {
+                    "role": {"$ifNull": ["$my_member_info.role", None]},
+                    "dateAdded": {"$ifNull": ["$my_member_info.timeCreated", None]},
+                }
+            }
+        )
+
+        # Filter Access
+        if not query.get("filter_deleted", False):
+            pipeline.append({"$match": {"deleted": False}})
+
+        pipeline.append({"$match": {"role": {"$ne": None}}})
+
+        # Filter by Role
+        if "filter_role" in query and len(query["filter_role"]) > 0:
+            pipeline.append({"$match": {"role": {"$in": query["filter_role"]}}})
+
+        # Filter by Member NetID
+        if "filter_member" in query and query["filter_member"]:
+            pipeline.append({"$match": {"members.netid": query["filter_member"]}})
+
+        # Sort
+        sort_key = query["sort"]["key"]
+        sort_order = 1 if query["sort"]["order"] == "ascending" else -1
+
+        # Map frontend keys to backend fields
+        key_map = {
+            "name": "name",
+            "timeCreated": "timeCreated",
+            "memberCount": "memberCount",
+            "role": "role",
+            "dateAdded": "dateAdded",
+        }
+
+        mongo_key = key_map.get(sort_key, "name")
+        pipeline.append({"$sort": {mongo_key: sort_order, "_id": 1}})
+
+        # Pagination
+        pipeline.append(
+            {
+                "$facet": {
+                    "count": [{"$count": "count"}],
+                    "results": [
+                        {"$skip": query["pagination"]["skip"]},
+                        {"$limit": query["pagination"]["limit"]},
+                    ],
+                }
+            }
+        )
+
+        cursor = self.db.organizations.aggregate(pipeline, collation=Collation("en"))
+
+        try:
+            result = next(cursor)
+        except StopIteration:
+            return {"count": 0, "results": []}
+
+        count = result["count"][0]["count"] if result["count"] else 0
+        results = result["results"]
+
+        final_results = []
+        for res in results:
+            res["id"] = res["_id"]
+            res.pop("_id")
+            res.pop("my_member_info", None)
+            final_results.append(res)
+
+        return {"count": count, "results": final_results}

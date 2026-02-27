@@ -207,3 +207,59 @@ def post_search_urls(netid: str, client: ShrunkClient, req: Any) -> Any:
 
     result = client.search.execute_url(netid, req)
     return jsonify(result)
+
+
+SEARCH_ORG_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["sort", "pagination"],
+    "properties": {
+        "query": {"type": "string"},
+        "filter_deleted": {"type": "boolean"},
+        "filter_role": {
+            "type": "array",
+            "items": {"type": "string", "enum": ["admin", "member", "guest"]},
+        },
+        "filter_member": {"type": "string"},
+        "sort": {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["key", "order"],
+            "properties": {
+                "key": {
+                    "type": "string",
+                    "enum": ["name", "timeCreated", "memberCount", "role", "dateAdded"],
+                },
+                "order": {
+                    "type": "string",
+                    "enum": ["ascending", "descending"],
+                },
+            },
+        },
+        "pagination": {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["skip", "limit"],
+            "properties": {
+                "skip": {"type": "integer", "minimum": 0},
+                "limit": {"type": "integer", "minimum": 1},
+            },
+        },
+    },
+}
+
+
+@bp.route("/org", methods=["POST"])
+@request_schema(SEARCH_ORG_SCHEMA)
+@require_login
+def post_search_orgs(netid: str, client: ShrunkClient, req: Any) -> Any:
+    """``POST /api/core/search/org``
+
+    Execute an organization search query.
+    """
+    # Only admins can see deleted organizations
+    if req.get("filter_deleted", False) and not client.roles.has("admin", netid):
+        abort(403)
+
+    result = client.orgs.search(netid, req)
+    return jsonify(result)

@@ -29,6 +29,7 @@ export interface Organization {
   role?: 'admin' | 'member' | 'guest';
 
   domains: string[];
+  deleted?: boolean;
 }
 
 export interface OrganizationLink extends Omit<Link, 'owner'> {
@@ -45,4 +46,19 @@ export interface OrganizationStats {
   total_links: number;
   total_visits: number;
   unique_visits: number;
+}
+
+export interface OrgSearchQuery {
+  query?: string;
+  filter_deleted?: boolean;
+  filter_role?: ('admin' | 'member' | 'guest')[];
+  filter_member?: string;
+  sort: {
+    key: 'name' | 'timeCreated' | 'memberCount' | 'role' | 'dateAdded';
+    order: 'ascending' | 'descending';
+  };
+  pagination: {
+    skip: number;
+    limit: number;
+  };
 }
