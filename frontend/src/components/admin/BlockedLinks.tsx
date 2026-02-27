@@ -4,7 +4,6 @@
  */
 
 import {
-  AutoComplete,
   Button,
   Col,
   Flex,
@@ -14,7 +13,6 @@ import {
   Modal,
   Popconfirm,
   Row,
-  Space,
   Table,
   Tooltip,
   Typography,
@@ -105,23 +103,14 @@ const SearchBannedLinks: React.FC<SearchBannedLinksProps> = ({ onSearch }) => {
     [onSearch],
   );
 
-  const handleSelect = useCallback(
-    (selectedValue: string) => {
-      setValue(selectedValue);
-      onSearch(selectedValue);
-    },
-    [onSearch],
-  );
-
   return (
-    <AutoComplete
-      style={{ width: '100%', minWidth: '300px' }}
+    <Input
       value={value}
-      onChange={handleSearch}
-      onSelect={handleSelect}
+      style={{ width: '100%', minWidth: 0 }}
+      onChange={(e) => handleSearch(e.target.value)}
       allowClear
       placeholder="Search by URL or NetID"
-      suffixIcon={<SearchIcon />}
+      prefix={<SearchIcon size={16} />}
     />
   );
 };
@@ -285,11 +274,19 @@ const BlockedLinks = () => {
     <>
       <Row gutter={[16, 16]}>
         <Col span={24}>
-          <Flex justify="space-between" style={{ width: '100%' }}>
-            <Space orientation="horizontal">
+          <Flex
+            justify="space-between"
+            style={{ width: '100%' }}
+            className="tw-flex tw-flex-col tw-gap-3 lg:tw-flex-row lg:tw-items-center"
+          >
+            <Flex className="tw-w-full lg:tw-w-auto">
               <SearchBannedLinks onSearch={handleSearch} />
-            </Space>
-            <Space orientation="horizontal">
+            </Flex>
+            <Flex
+              justify="space-between"
+              gap="small"
+              className="tw-w-full lg:tw-w-auto"
+            >
               <Button icon={<CloudDownloadIcon />} onClick={exportAsCSV}>
                 Export
               </Button>
@@ -300,7 +297,7 @@ const BlockedLinks = () => {
               >
                 Block Link
               </Button>
-            </Space>
+            </Flex>
           </Flex>
         </Col>
 

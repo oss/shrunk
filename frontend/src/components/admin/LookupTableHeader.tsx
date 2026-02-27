@@ -90,11 +90,18 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
 
   return (
     <>
-      <Flex justify="space-between">
-        <Space orientation="horizontal">
+      <Flex
+        justify="space-between"
+        className="tw-flex tw-flex-col tw-gap-3 lg:tw-flex-row lg:tw-items-center"
+      >
+        <Flex className="tw-w-full lg:tw-w-[280px]">
           <SearchUser onSearch={onSearch} />
-        </Space>
-        <Space orientation="horizontal">
+        </Flex>
+        <Flex
+          justify="space-between"
+          gap="small"
+          className="tw-w-full lg:tw-w-auto"
+        >
           <Button icon={<CloudDownloadIcon />} onClick={onExportClick}>
             Export
           </Button>
@@ -105,7 +112,7 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
           >
             Add
           </Button>
-        </Space>
+        </Flex>
       </Flex>
 
       <Modal

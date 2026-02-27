@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import { AutoComplete } from 'antd';
+import { Input } from 'antd';
 import { SearchIcon } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 
@@ -38,23 +38,14 @@ const SearchUser: React.FC<SearchUserProps> = ({ onSearch }) => {
     [onSearch],
   );
 
-  const handleSelect = useCallback(
-    (selectedValue: string) => {
-      setValue(selectedValue);
-      onSearch(selectedValue);
-    },
-    [onSearch],
-  );
-
   return (
-    <AutoComplete
-      style={{ width: '100%', minWidth: '300px' }}
+    <Input
       value={value}
-      placeholder="Search for user"
-      onChange={handleSearch}
-      onSelect={handleSelect}
+      style={{ width: '100%', minWidth: 0 }}
+      onChange={(e) => handleSearch(e.target.value)}
       allowClear
-      suffixIcon={<SearchIcon />}
+      placeholder="Search for user"
+      prefix={<SearchIcon size={16} />}
     />
   );
 };

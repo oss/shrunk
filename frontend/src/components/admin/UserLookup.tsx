@@ -167,7 +167,7 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
     <Space style={{ width: '100%' }} orientation="vertical">
       <Select
         mode="multiple"
-        allowClear
+        allowClear={false}
         style={{ width: '100%' }}
         placeholder="Please select roles"
         value={selectedRoles}

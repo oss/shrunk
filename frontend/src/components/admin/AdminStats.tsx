@@ -5,7 +5,17 @@
 
 import React, { useEffect, useState } from 'react';
 
-import { Spin, Card, Statistic, Flex } from 'antd';
+import {
+  Spin,
+  Card,
+  Statistic,
+  Flex,
+  Row,
+  Col,
+  Grid,
+  List,
+  Typography,
+} from 'antd';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 
@@ -19,6 +29,9 @@ import { AdminStatsData, EndpointDatum } from '@/interfaces/app';
  * @function
  */
 export default function AdminStats(): React.ReactElement {
+  const screens = Grid.useBreakpoint();
+  const isMobile = !screens.md;
+
   const [endpointData, setEndpointData] = useState<EndpointDatum[] | null>(
     null,
   );
@@ -61,11 +74,17 @@ export default function AdminStats(): React.ReactElement {
   }
 
   const options = {
-    chart: { type: 'bar' },
+    chart: {
+      type: 'bar',
+      height: Math.max(endpointData.length * 30, 320),
+    },
     title: { text: 'Endpoint visits' },
     xAxis: {
       categories: endpointData.map((datum) => datum.endpoint),
       title: { text: 'Endpoint' },
+      labels: {
+        style: { fontSize: '11px' },
+      },
     },
     yAxis: {
       min: 0,
@@ -79,6 +98,24 @@ export default function AdminStats(): React.ReactElement {
       x: -40,
       y: 80,
       borderWidth: 1,
+    },
+    responsive: {
+      rules: [
+        {
+          condition: { maxWidth: 768 },
+          chartOptions: {
+            chart: {
+              height: Math.max(endpointData.length * 22, 260),
+            },
+            legend: {
+              enabled: false,
+            },
+            yAxis: {
+              labels: { step: 2 },
+            },
+          },
+        },
+      ],
     },
     series: [
       {
@@ -94,30 +131,68 @@ export default function AdminStats(): React.ReactElement {
     ],
   };
 
+  const mobileEndpointRows = [...endpointData]
+    .sort((a, b) => b.total_visits - a.total_visits)
+    .slice(0, 8);
+
   return (
     <>
       <Flex gap="1rem" wrap="wrap" justify="space-between" vertical>
         {adminData === null ? (
           <Spin size="small" />
         ) : (
-          <Flex gap="1rem" wrap="wrap" justify="space-between">
-            <Card style={{ flex: 1 }}>
-              <Statistic title="Links" value={adminData.links} />
-            </Card>
-            <Card style={{ flex: 1 }}>
-              <Statistic title="Visits" value={adminData.visits} />
-            </Card>
-            <Card style={{ flex: 1 }}>
-              <Statistic title="Users" value={adminData.users} />
-            </Card>
-            <Card style={{ flex: 1 }}>
-              <Statistic title="Version" value={version || ''} />
-            </Card>
-          </Flex>
+          <Row gutter={[16, 16]}>
+            <Col xs={12} sm={12} lg={6}>
+              <Card size={isMobile ? 'small' : 'default'}>
+                <Statistic title="Links" value={adminData.links} />
+              </Card>
+            </Col>
+            <Col xs={12} sm={12} lg={6}>
+              <Card size={isMobile ? 'small' : 'default'}>
+                <Statistic title="Visits" value={adminData.visits} />
+              </Card>
+            </Col>
+            <Col xs={12} sm={12} lg={6}>
+              <Card size={isMobile ? 'small' : 'default'}>
+                <Statistic title="Users" value={adminData.users} />
+              </Card>
+            </Col>
+            <Col xs={12} sm={12} lg={6}>
+              <Card size={isMobile ? 'small' : 'default'}>
+                <Statistic title="Version" value={version || ''} />
+              </Card>
+            </Col>
+          </Row>
         )}
-        <Card>
-          <HighchartsReact highcharts={Highcharts} options={options} />
-        </Card>
+        {isMobile ? (
+          <Card title="Endpoint visits" size="small">
+            <List
+              dataSource={mobileEndpointRows}
+              locale={{ emptyText: 'No endpoint visit data available' }}
+              renderItem={(datum) => (
+                <List.Item>
+                  <Flex vertical style={{ width: '100%', gap: '4px' }}>
+                    <Typography.Text ellipsis={{ tooltip: datum.endpoint }}>
+                      {datum.endpoint}
+                    </Typography.Text>
+                    <Flex justify="space-between" style={{ width: '100%' }}>
+                      <Typography.Text type="secondary">
+                        Total: {datum.total_visits}
+                      </Typography.Text>
+                      <Typography.Text type="secondary">
+                        Unique: {datum.unique_visits}
+                      </Typography.Text>
+                    </Flex>
+                  </Flex>
+                </List.Item>
+              )}
+            />
+          </Card>
+        ) : (
+          <Card style={{ overflowX: 'auto' }}>
+            <HighchartsReact highcharts={Highcharts} options={options} />
+          </Card>
+        )}
       </Flex>
     </>
   );
