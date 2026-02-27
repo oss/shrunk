@@ -164,8 +164,7 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
   const tagRender = (props: any) => {
     const { label, value, closable, onClose } = props;
     const isHighestRole = isSelf && value === getHighestRole(initialRoles);
-    const canRemoveRole =
-      !isHighestRole && closable && selectedRoles.length > 1;
+    const canRemoveRole = !isHighestRole && closable && selectedRoles.length > 1;
 
     return (
       <Tag
