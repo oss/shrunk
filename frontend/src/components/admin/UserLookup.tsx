@@ -133,6 +133,11 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
    * @param newRoles - the new roles to assign to the user
    */
   const handleRolesChange = async (newRoles: string[]) => {
+    if (newRoles.length === 0) {
+      message.warning('A user must have at least one role');
+      return;
+    }
+
     const highestRole = getHighestRole(initialRoles);
 
     if (isSelf && highestRole && !newRoles.includes(highestRole)) {
@@ -159,11 +164,12 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
   const tagRender = (props: any) => {
     const { label, value, closable, onClose } = props;
     const isHighestRole = isSelf && value === getHighestRole(initialRoles);
+    const canRemoveRole = !isHighestRole && closable && selectedRoles.length > 1;
 
     return (
       <Tag
         color={roleColors[value] || 'default'}
-        closable={!isHighestRole && closable}
+        closable={canRemoveRole}
         onClose={onClose}
         style={{ marginRight: 3 }}
       >
