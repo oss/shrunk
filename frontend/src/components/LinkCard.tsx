@@ -55,7 +55,7 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
             target="_blank"
           />
         </Tooltip>,
-        <Tooltip title="Access qr code">
+        <Tooltip title="Access QR code">
           <Button
             icon={<QrCodeIcon />}
             type="text"
