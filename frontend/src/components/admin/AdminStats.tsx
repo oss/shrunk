@@ -21,6 +21,7 @@ import HighchartsReact from 'highcharts-react-official';
 
 import { getEndpointData, getShrunkVersion } from '@/api/app';
 import { AdminStatsData, EndpointDatum } from '@/interfaces/app';
+import useDarkMode from '@/lib/hooks/useDarkMode';
 
 /**
  * The [[AdminStats]] component allows the user to view summary statistics
@@ -29,6 +30,7 @@ import { AdminStatsData, EndpointDatum } from '@/interfaces/app';
  * @function
  */
 export default function AdminStats(): React.ReactElement {
+  const { darkMode } = useDarkMode();
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
 
@@ -73,23 +75,78 @@ export default function AdminStats(): React.ReactElement {
     return <></>;
   }
 
+  const axisLabelColor = darkMode ? '#d9d9d9' : '#4b5563';
+  const axisTitleColor = darkMode ? '#f5f5f5' : '#1f2937';
+  const gridLineColor = darkMode ? '#434343' : '#d9d9d9';
+  const legendTextColor = darkMode ? '#f5f5f5' : '#1f2937';
+  const tooltipBackgroundColor = darkMode ? '#262626' : '#ffffff';
+  const tooltipTextColor = darkMode ? '#f5f5f5' : '#1f2937';
+
   const options = {
     chart: {
       type: 'bar',
       height: Math.max(endpointData.length * 30, 320),
+      backgroundColor: 'transparent',
+      plotBackgroundColor: 'transparent',
     },
-    title: { text: 'Endpoint visits' },
+    plotOptions: {
+      bar: {
+        borderWidth: 0,
+        borderColor: 'transparent',
+        states: {
+          hover: {
+            animation: {
+              duration: 300,
+            },
+            brightness: 0,
+          },
+        },
+      },
+      series: {
+        states: {
+          inactive: {
+            animation: {
+              duration: 300,
+            },
+            opacity: 0,
+          },
+        },
+      },
+    },
+    title: {
+      text: 'Endpoint visits',
+      style: { color: axisTitleColor },
+    },
     xAxis: {
       categories: endpointData.map((datum) => datum.endpoint),
-      title: { text: 'Endpoint' },
+      title: {
+        text: 'Endpoint',
+        style: { color: axisTitleColor },
+      },
+      gridLineColor,
+      lineColor: gridLineColor,
+      tickColor: gridLineColor,
       labels: {
-        style: { fontSize: '11px' },
+        style: { fontSize: '11px', color: axisLabelColor },
       },
     },
     yAxis: {
       min: 0,
-      title: { text: 'Visits' },
-      labels: { overflow: 'justify', step: 4 },
+      title: {
+        text: 'Visits',
+        style: { color: axisTitleColor },
+      },
+      gridLineColor,
+      labels: {
+        overflow: 'justify',
+        step: 4,
+        style: { color: axisLabelColor },
+      },
+    },
+    tooltip: {
+      backgroundColor: tooltipBackgroundColor,
+      borderColor: gridLineColor,
+      style: { color: tooltipTextColor },
     },
     legend: {
       layout: 'vertical',
@@ -98,6 +155,8 @@ export default function AdminStats(): React.ReactElement {
       x: -40,
       y: 80,
       borderWidth: 1,
+      itemStyle: { color: legendTextColor },
+      itemHoverStyle: { color: legendTextColor },
     },
     responsive: {
       rules: [
