@@ -9,6 +9,7 @@ import {
   BugIcon,
   CircleHelpIcon,
   CodeIcon,
+  HomeIcon,
   LayoutDashboardIcon,
   LogOutIcon,
   Moon,
@@ -136,8 +137,18 @@ function ShrunkContent({
     },
     { type: 'divider' },
     {
+      key: 'dash',
+      icon: <HomeIcon color={darkMode ? '#ffffff' : '#000000'} />,
+      label: <Link to="/app/dash"> Dashboard </Link>,
+    },
+    {
       key: 'orgs',
-      icon: <UsersIcon color={darkMode ? '#ffffff' : '#000000'} />,
+      icon: (
+        <UsersIcon
+          className={darkMode ? '!tw-text-white' : '!tw-text-black'}
+          color={darkMode ? '#ffffff' : '#000000'}
+        />
+      ),
       label: (
         <Link
           className={darkMode ? '!tw-text-white' : '!tw-text-black'}
