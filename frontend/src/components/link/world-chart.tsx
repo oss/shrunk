@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Select, Row, Col, Flex } from 'antd/lib';
+import { Select, Row, Col, Flex } from 'antd';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import HighchartsMapModule from 'highcharts/modules/map';
 import unitedStatesData from '@highcharts/map-collection/countries/us/us-all.geo.json';
 import worldData from '@highcharts/map-collection/custom/world.geo.json';
-import { GeoipStats, MapDatum, StatMap } from '../../interfaces/link';
+import { GeoipStats, MapDatum, StatMap } from '@/interfaces/link';
 
 HighchartsMapModule(Highcharts);
 

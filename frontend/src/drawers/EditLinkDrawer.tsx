@@ -15,19 +15,15 @@ import {
   Row,
   Space,
   Tooltip,
-} from 'antd/lib';
+} from 'antd';
 import dayjs from 'dayjs';
 import { CircleAlertIcon, SaveIcon, TrashIcon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import {
-  deleteLink,
-  isValidAlias,
-  reverLinkExpirationDate,
-} from '../api/links';
-import { serverValidateLongUrl, serverValidateNetId } from '../api/validators';
-import DatePicker from '../components/date-picker';
-import { EditLinkValues, Link } from '../interfaces/link';
+import { deleteLink, isValidAlias, reverLinkExpirationDate } from '@/api/links';
+import { serverValidateLongUrl, serverValidateNetId } from '@/api/validators';
+import DatePicker from '@/components/date-picker';
+import { EditLinkValues, Link } from '@/interfaces/link';
 
 /**
  * Props of the [[EditLinkDrawer]] component

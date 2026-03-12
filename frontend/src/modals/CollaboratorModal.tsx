@@ -10,12 +10,12 @@ import {
   Space,
   Tabs,
   Tooltip,
-} from 'antd/lib';
+} from 'antd';
 import { PlusCircleIcon, XIcon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { getOrganizations } from '../api/organization';
-import { serverValidateGuest, serverValidateNetId } from '../api/validators';
-import { Organization } from '../interfaces/organizations';
+import { getOrganizations } from '@/api/organization';
+import { serverValidateGuest, serverValidateNetId } from '@/api/validators';
+import { Organization } from '@/interfaces/organizations';
 
 export interface Collaborator {
   _id: string;
@@ -152,13 +152,11 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                     onChange={(_: any) => {
                       setCollaboratorType('org');
                     }}
-                  >
-                    {organizations.map((org) => (
-                      <Select.Option key={org.id} value={org.id}>
-                        {org.name}
-                      </Select.Option>
-                    ))}
-                  </Select>
+                    options={organizations.map((org) => ({
+                      value: org.id,
+                      label: org.name,
+                    }))}
+                  />
                 </Form.Item>
               )}
               <Select

@@ -161,12 +161,15 @@ export interface SearchQuery {
    * @property
    */
   queryString: string;
+  alias: string;
+  url: string;
+  title: string;
 
   /**
    * The set of links to search (c.f. [[SearchSet]])
    * @property
    */
-  set: SearchSet;
+  set: SearchSet[];
 
   /**
    * Whether to show expired links
@@ -201,6 +204,21 @@ export interface SearchQuery {
 
   owner: string | null;
 }
+
+export const DEFAULT_QUERY: SearchQuery = {
+  queryString: '',
+  alias: '',
+  title: '',
+  url: '',
+  set: [{ set: 'user' }],
+  show_expired_links: false,
+  show_deleted_links: false,
+  sort: { key: 'relevance', order: 'descending' },
+  begin_time: null,
+  end_time: null,
+  showType: 'links',
+  owner: null,
+};
 
 export enum StatChart {
   Visits = 'Visits',

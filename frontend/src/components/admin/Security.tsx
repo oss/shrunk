@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import LinkSecurity from './LinkSecurity';
+import LinkSecurity from '@/components/admin/LinkSecurity';
 
 /**
  * The [[Security]] component displays everything related to link security

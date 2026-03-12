@@ -14,15 +14,15 @@ import {
   Tag,
   Tooltip,
   message,
-} from 'antd/lib';
+} from 'antd';
 import type { ColumnsType, TableProps } from 'antd/lib/table';
 import type { SorterResult } from 'antd/lib/table/interface';
 import { TrashIcon } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
-import { addRoleToUser, removeRoleFromUser } from '../../api/users';
-import { User, useUsers } from '../../contexts/Users';
-import useFuzzySearch from '../../lib/hooks/useFuzzySearch';
-import LookupTableHeader from './LookupTableHeader';
+import { addRoleToUser, removeRoleFromUser } from '@/api/users';
+import { User, useUsers } from '@/contexts/Users';
+import useFuzzySearch from '@/lib/hooks/useFuzzySearch';
+import LookupTableHeader from '@/components/admin/LookupTableHeader';
 
 /**
  * Order of roles in the select dropdown
@@ -164,7 +164,7 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
   };
 
   return (
-    <Space style={{ width: '100%' }} direction="vertical">
+    <Space style={{ width: '100%' }} orientation="vertical">
       <Select
         mode="multiple"
         allowClear
@@ -191,6 +191,7 @@ const UserLookup: React.FC = () => {
   const { users, loading: usersLoading, rehydrateUsers } = useUsers();
   const [filteredData, setFilteredData] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
+  const [pageSize, setPageSize] = useState(10);
 
   const { search } = useFuzzySearch(users, {
     keys: ['netid', 'organizations', 'roles'],
@@ -326,6 +327,9 @@ const UserLookup: React.FC = () => {
     filters,
     sorter,
   ) => {
+    if (pagination.pageSize) {
+      setPageSize(pagination.pageSize);
+    }
     let newData = [...users];
 
     Object.keys(filters).forEach((key) => {
@@ -446,7 +450,12 @@ const UserLookup: React.FC = () => {
         columns={columns}
         dataSource={filteredData}
         rowKey="netid"
-        pagination={{ position: ['bottomCenter'], pageSize: 10 }}
+        pagination={{
+          position: ['bottomCenter'],
+          pageSize,
+          showSizeChanger: true,
+          hideOnSinglePage: false,
+        }}
         scroll={{ x: 'max-content' }}
         onChange={handleTableChange}
       />

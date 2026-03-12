@@ -12,11 +12,12 @@ import {
   message,
   Modal,
   Space,
-} from 'antd/lib';
+} from 'antd';
 import { CloudDownloadIcon, PlusCircleIcon } from 'lucide-react';
 import React from 'react';
-import { createUser } from '../../api/users';
-import SearchUser from './SearchUser';
+import { createUser, addRoleToUser } from '@/api/users';
+import SearchUser from '@/components/admin/SearchUser';
+
 
 /**
  * Props for the [[LookupTableHeader]] component
@@ -91,10 +92,10 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
   return (
     <>
       <Flex justify="space-between">
-        <Space direction="horizontal">
+        <Space orientation="horizontal">
           <SearchUser onSearch={onSearch} />
         </Space>
-        <Space direction="horizontal">
+        <Space orientation="horizontal">
           <Button icon={<CloudDownloadIcon />} onClick={onExportClick}>
             Export
           </Button>
@@ -138,11 +139,11 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
           >
             <Checkbox.Group>
               <Flex gap="1rem" wrap="wrap" justify="space-between">
-                <Space direction="vertical">
+                <Space orientation="vertical">
                   <Checkbox value="whitelisted">Whitelisted</Checkbox>
                   <Checkbox value="admin">Admin</Checkbox>
                 </Space>
-                <Space direction="vertical">
+                <Space orientation="vertical">
                   <Checkbox value="powerUser">Power User</Checkbox>
                   <Checkbox value="facultyStaff">Faculty/Staff</Checkbox>
                 </Space>

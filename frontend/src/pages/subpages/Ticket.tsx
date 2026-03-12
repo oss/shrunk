@@ -12,7 +12,7 @@ import {
   Row,
   Space,
   Typography,
-} from 'antd/lib';
+} from 'antd';
 import { CircleCheckIcon, CircleXIcon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
@@ -21,10 +21,10 @@ import {
   getEntityPosition,
   getHelpDeskText,
   getTicket,
-} from '../../api/tickets';
-import TicketDetails, { EntityDetails } from '../../components/TicketDetails';
-import ResolveTicketDrawer from '../../drawers/ResolveTicketDrawer';
-import { EntityPositionInfo, TicketInfo } from '../../interfaces/tickets';
+} from '@/api/tickets';
+import TicketDetails, { EntityDetails } from '@/components/TicketDetails';
+import ResolveTicketDrawer from '@/drawers/ResolveTicketDrawer';
+import { EntityPositionInfo, TicketInfo } from '@/interfaces/tickets';
 
 /**
  * Props for the [[Ticket]] component

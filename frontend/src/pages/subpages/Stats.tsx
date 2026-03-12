@@ -19,7 +19,7 @@ import {
   QRCode,
   QRCodeProps,
   Flex,
-} from 'antd/lib';
+} from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import {
   CloudDownloadIcon,
@@ -30,8 +30,8 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { useLocation } from 'react-router-dom';
-import { downloadVisits } from '../../api/csv';
+import { useLocation, Link as RouterLink } from 'react-router-dom';
+import { downloadVisits } from '@/api/csv';
 import {
   BrowserStats,
   Link,
@@ -41,7 +41,7 @@ import {
   EditLinkValues,
   StatChart,
   GeoipStats,
-} from '../../interfaces/link';
+} from '@/interfaces/link';
 
 import {
   addCollaborator,
@@ -52,20 +52,18 @@ import {
   getLinkStats,
   getLinkVisitsStats,
   removeCollaborator,
-} from '../../api/links';
-import { EditLinkDrawer } from '../../drawers/EditLinkDrawer';
+} from '@/api/links';
+import { EditLinkDrawer } from '@/drawers/EditLinkDrawer';
 import {
   daysBetween,
   getLinkFromAlias,
   getRedirectFromAlias,
-} from '../../lib/utils';
-import CollaboratorModal, {
-  Collaborator,
-} from '../../modals/CollaboratorModal';
-import ErrorPage from '../ErrorPage';
-import VisitsChart from '../../components/link/visits-chart';
-import GeoipChart from '../../components/link/world-chart';
-import ShrunkPieChart, { processData } from '../../components/pie-chart';
+} from '@/lib/utils';
+import CollaboratorModal, { Collaborator } from '@/modals/CollaboratorModal';
+import ErrorPage from '@/pages/ErrorPage';
+import VisitsChart from '@/components/link/visits-chart';
+import GeoipChart from '@/components/link/world-chart';
+import ShrunkPieChart, { processData } from '@/components/pie-chart';
 
 export interface Props {
   /**
@@ -554,9 +552,11 @@ export function Stats(props: Props): React.ReactElement {
                           label: 'Owner',
                           children:
                             linkInfo?.owner.type === 'org' ? (
-                              <a href={`/app/orgs/${linkInfo.owner._id}`}>
+                              <RouterLink
+                                to={`/app/orgs/${linkInfo.owner._id}`}
+                              >
                                 {linkInfo.owner.org_name}
-                              </a>
+                              </RouterLink>
                             ) : (
                               linkInfo?.owner._id
                             ),

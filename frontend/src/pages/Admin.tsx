@@ -4,7 +4,7 @@
  */
 
 import type { TabsProps } from 'antd';
-import { Badge, Space, Tabs, Typography } from 'antd/lib';
+import { Badge, Space, Tabs, Typography } from 'antd';
 import {
   ChartLineIcon,
   LockKeyholeIcon,
@@ -13,14 +13,14 @@ import {
   Key,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { getPendingLinksCount } from '../api/google-safebrowse';
-import AdminStats from '../components/admin/AdminStats';
-import BlockedLinks from '../components/admin/BlockedLinks';
-import Security from '../components/admin/Security';
-import SuperTokens from '../components/admin/SuperTokens';
+import { getPendingLinksCount } from '@/api/google-safebrowse';
+import AdminStats from '@/components/admin/AdminStats';
+import BlockedLinks from '@/components/admin/BlockedLinks';
+import Security from '@/components/admin/Security';
+import SuperTokens from '@/components/admin/SuperTokens';
 
-import UserLookup from '../components/admin/UserLookup';
-import UsersProvider from '../contexts/Users';
+import UserLookup from '@/components/admin/UserLookup';
+import UsersProvider from '@/contexts/Users';
 
 const VALID_TABS = [
   'analytics',
@@ -101,7 +101,7 @@ export default function Admin(): React.ReactElement {
       key: 'links',
       icon: <ShieldCheckIcon />,
       label: (
-        <Space direction="horizontal">
+        <Space orientation="horizontal">
           Link Control
           {linksToBeVerified > 0 && (
             <Badge count={linksToBeVerified} style={{ marginLeft: '8px' }} />

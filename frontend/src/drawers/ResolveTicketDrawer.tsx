@@ -3,17 +3,17 @@
  * @packageDocumentation
  */
 
-import { App, Button, Divider, Drawer, Form, Input, Radio } from 'antd/lib';
+import { App, Button, Divider, Drawer, Form, Input, Radio } from 'antd';
 import React from 'react';
 import { useHistory } from 'react-router-dom';
-import TicketDetails, { EntityDetails } from '../components/TicketDetails';
+import TicketDetails, { EntityDetails } from '@/components/TicketDetails';
 import {
   EntityPositionInfo,
   ResolveTicketInfo,
   TicketInfo,
-} from '../interfaces/tickets';
-import { resolveTicket, sendTicketEmail } from '../api/tickets';
-import { addRoleToUser } from '../api/users';
+} from '@/interfaces/tickets';
+import { resolveTicket, sendTicketEmail } from '@/api/tickets';
+import { addRoleToUser } from '@/api/users';
 
 /**
  * Props for the [[ResolveTicketModal]] component

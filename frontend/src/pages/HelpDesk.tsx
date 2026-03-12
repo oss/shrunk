@@ -15,7 +15,7 @@ import {
   Table,
   Tooltip,
   Typography,
-} from 'antd/lib';
+} from 'antd';
 import dayjs from 'dayjs';
 import {
   CircleCheckIcon,
@@ -30,9 +30,9 @@ import {
   getHelpDeskText,
   getTickets,
   getTicketsResolvedCount,
-} from '../api/tickets';
-import CreateTicketDrawer from '../drawers/CreateTicketDrawer';
-import { TicketInfo } from '../interfaces/tickets';
+} from '@/api/tickets';
+import CreateTicketDrawer from '@/drawers/CreateTicketDrawer';
+import { TicketInfo } from '@/interfaces/tickets';
 
 /**
  * Props for the [[HelpDesk]] component
@@ -73,6 +73,7 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
   const [tickets, setTickets] = useState<TicketInfo[]>([]);
   const [numTicketsResolved, setNumTicketsResolved] = useState<number>(0);
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState<boolean>(false);
+  const [pageSize, setPageSize] = useState<number>(10);
 
   const { message } = App.useApp();
 
@@ -153,6 +154,12 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
       );
     }
     return entity;
+  };
+
+  const handleTableChange = (pagination: any) => {
+    if (pagination.pageSize) {
+      setPageSize(pagination.pageSize);
+    }
   };
 
   /**
@@ -327,9 +334,16 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
             dataSource={tickets}
             columns={columns}
             rowKey="_id"
-            pagination={userPrivileges.has('admin') ? { pageSize: 10 } : false}
+            pagination={
+              userPrivileges.has('admin')
+                ? { pageSize, showSizeChanger: true }
+                : false
+            }
             locale={{ emptyText: 'No open tickets' }}
             loading={loading}
+            onChange={
+              userPrivileges.has('admin') ? handleTableChange : undefined
+            }
           />
         </Col>
       </Row>

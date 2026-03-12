@@ -1,5 +1,5 @@
 module.exports = {
-  darkMode: ['class'],
+  darkMode: 'selector',
   corePlugins: {
     preflight: false,
   },

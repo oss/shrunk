@@ -1,6 +1,6 @@
 import type { ColumnsType } from 'antd/lib/table';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Table, Flex, Tooltip, Button, message } from 'antd/lib';
+import { Table, Flex, Tooltip, Button, message } from 'antd';
 import {
   EditIcon,
   EyeIcon,
@@ -10,11 +10,11 @@ import {
   UsersIcon,
   UserPlusIcon,
 } from 'lucide-react';
-import { OrganizationLink } from '../../interfaces/organizations';
-import { getOrganizationLinks } from '../../api/organization';
-import { getLinkFromAlias } from '../../lib/utils';
-import TransferToNetIdModal from '../../modals/TransferToNetIdModal';
-import { editLink } from '../../api/links';
+import { OrganizationLink } from '@/interfaces/organizations';
+import { getOrganizationLinks } from '@/api/organization';
+import { getLinkFromAlias } from '@/lib/utils';
+import TransferToNetIdModal from '@/modals/TransferToNetIdModal';
+import { editLink } from '@/api/links';
 
 /**
  * Compact table for displaying organization links.
@@ -35,6 +35,7 @@ const CompactLinkTable = ({
 }: CompactLinkTableProps) => {
   const [links, setLinks] = useState<OrganizationLink[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pageSize, setPageSize] = useState(10);
   const [transferModalVisible, setTransferModalVisible] = useState(false);
   const [selectedLinkId, setSelectedLinkId] = useState<string>('');
   const fetchLinks = async () => {
@@ -70,6 +71,12 @@ const CompactLinkTable = ({
     return [...nonDeleted, ...deleted];
   };
   const sortedLinks = useMemo(() => sortLinks(links), [links]);
+
+  const handleTableChange = (pagination: any) => {
+    if (pagination.pageSize) {
+      setPageSize(pagination.pageSize);
+    }
+  };
 
   const columns: ColumnsType<OrganizationLink> = [
     {
@@ -224,10 +231,11 @@ const CompactLinkTable = ({
         dataSource={sortedLinks}
         pagination={{
           position: ['bottomCenter'],
-          pageSize: 10,
+          pageSize,
+          showSizeChanger: true,
         }}
         scroll={{ x: 'max-content' }}
-        size="small"
+        onChange={handleTableChange}
       />
       <TransferToNetIdModal
         visible={transferModalVisible}

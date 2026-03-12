@@ -1,4 +1,4 @@
-import { Row, Col, Typography, Collapse, Button, Space } from 'antd/lib';
+import { Row, Col, Typography, Collapse, Button, Space } from 'antd';
 import React from 'react';
 
 export default function Developer() {

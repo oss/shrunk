@@ -3,7 +3,8 @@ import {
   OrganizationLink,
   OrganizationMember,
   OrganizationStats,
-} from '../interfaces/organizations';
+  OrgSearchQuery,
+} from '@/interfaces/organizations';
 
 /**
  * @param which Whether to list all orgs or orgs of which the user is a member
@@ -184,4 +185,30 @@ export async function getAccessTokens(organizationId: string) {
 
 export async function deleteToken(tokenId: string): Promise<void> {
   await fetch(`/api/core/org/access_token/${tokenId}`, { method: 'DELETE' });
+}
+
+export async function searchOrgs(
+  query: OrgSearchQuery,
+): Promise<{ count: number; results: Organization[] }> {
+  const resp = await fetch('/api/core/search/org', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(query),
+  });
+  const data = await resp.json();
+  return {
+    count: data.count,
+    results: data.results.map((org: any) => ({
+      ...org,
+      timeCreated: new Date(org.timeCreated),
+      members: org.members
+        ? org.members.map((m: any) => ({
+            ...m,
+            timeCreated: new Date(m.timeCreated),
+          }))
+        : [],
+    })),
+  };
 }

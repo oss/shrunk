@@ -3,8 +3,9 @@
  * @packageDocumentation
  */
 import React from 'react';
-import { Row, Table, Collapse, Typography } from 'antd/lib';
-import type { ColumnsType } from 'antd/es/table';
+import { Row, Table, Collapse, Typography } from 'antd';
+import { ColumnsType } from 'antd/es/table';
+import { Link } from 'react-router-dom';
 
 const Data = {
   data: [
@@ -192,10 +193,10 @@ export default function Faq(): JSX.Element {
           key="4"
         >
           To grant access to an undergraduate user, click the&nbsp;
-          <a href="/roles/whitelisted">Whitelist</a> tab in the navigation bar,
-          then enter the user&rsquo;s NetID and the reason the user needs access
-          to Go. Undergraduate users should only use Go for purposes related to
-          their employment with the University.
+          <Link to="/roles/whitelisted">Whitelist</Link> tab in the navigation
+          bar, then enter the user&rsquo;s NetID and the reason the user needs
+          access to Go. Undergraduate users should only use Go for purposes
+          related to their employment with the University.
         </Panel>
         <Panel
           header="Why would I create multiple aliases for one link?"
@@ -213,8 +214,8 @@ export default function Faq(): JSX.Element {
         </Panel>
         <Panel header="How can I use the organizations feature?" key="7">
           Only faculty and staff members are able to create a new organization.
-          To do so, navigate to the <a href="/app/orgs">Organizations</a> page
-          and click the <b>Create an Organization</b> button. You will
+          To do so, navigate to the <Link to="/app/orgs">Organizations</Link>{' '}
+          page and click the <b>Create an Organization</b> button. You will
           automatically be made an administrator of the newly created
           organization. Once the organization has been created, you may navigate
           to its management page and use the <b>Add a Member</b> button to add

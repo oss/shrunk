@@ -1,4 +1,4 @@
-import { PendingLink } from '../interfaces/google-safebrowse';
+import { PendingLink } from '@/interfaces/google-safebrowse';
 
 export async function getStatus(): Promise<string> {
   const resp = await fetch('/api/core/security/status');

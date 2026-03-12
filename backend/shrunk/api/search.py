@@ -26,46 +26,44 @@ SEARCH_SCHEMA = {
         "show_type",
     ],
     "properties": {
-        # The search query. May be omitted to show all links.
+        "alias": {"type": "string"},
+        "url": {"type": "string"},
+        "title": {"type": "string"},
         "query": {"type": "string"},
-        # Within which "set" to search. Required. Valid configurations include:
-        #  * links owned by the user (set.set == 'user')
-        #  * all links (set.set == 'all')
-        #  * links belonging to a particular group (set.set == 'group' and set.group is set)
+        # Accept an array of sets for multi-filter support
         "set": {
-            "oneOf": [
-                {
-                    "type": "object",
-                    "additionalProperties": False,
-                    "required": ["set"],
-                    "properties": {
-                        "set": {
-                            "type": "string",
-                            "enum": ["user", "shared", "all"],
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "oneOf": [
+                    {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "required": ["set"],
+                        "properties": {
+                            "set": {
+                                "type": "string",
+                                "enum": ["user", "shared", "all"],
+                            },
                         },
                     },
-                },
-                {
-                    "type": "object",
-                    "additionalProperties": False,
-                    "required": ["set", "org"],
-                    "properties": {
-                        "set": {
-                            "type": "string",
-                            "enum": ["org"],
+                    {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "required": ["set", "org"],
+                        "properties": {
+                            "set": {
+                                "type": "string",
+                                "enum": ["org"],
+                            },
+                            "org": {"type": "string"},
                         },
-                        "org": {"type": "string"},
                     },
-                },
-            ],
+                ],
+            },
         },
-        # Whether to show expired links. Required.
         "show_expired_links": {"type": "boolean"},
-        # Whether to show deleted links. Required.
         "show_deleted_links": {"type": "boolean"},
-        # Sorting parameters. Required.
-        #  * sort.key may be one of 'created_time', 'title', or 'visits'.
-        #  * sort.order may be one of 'ascending' or 'descending'.
         "sort": {
             "type": "object",
             "additionalProperties": False,
@@ -81,7 +79,6 @@ SEARCH_SCHEMA = {
                 },
             },
         },
-        # Pagination parameters. May be omitted to return all links.
         "pagination": {
             "type": "object",
             "additionalProperties": False,
@@ -123,10 +120,12 @@ def post_search_urls(netid: str, client: ShrunkClient, req: Any) -> Any:
 
        {
          "query?": "string",
-         "set": {
-           "set": "'user' | 'shared' | 'all' | 'org'",
-           "org?": "string"
-         },
+         "set": [
+           {
+             "set": "'user' | 'shared' | 'all' | 'org'",
+             "org?": "string"
+           }
+         ],
          "show_expired_links": "boolean",
          "show_deleted_links": "boolean",
          "sort": {
@@ -170,31 +169,36 @@ def post_search_urls(netid: str, client: ShrunkClient, req: Any) -> Any:
     :param req:
     """
     is_admin = client.users.has_role(netid, "admin")
+    
 
-    # Must be admin to view all links.
-    if req["set"]["set"] == "all" and not is_admin:
+    sets = [item["set"] for item in req["set"]]
+
+    if "all" in sets and not is_admin:
         abort(403)
 
     if client.users.has_role(netid, "guest"):
         org = client.orgs.get_orgs(netid, True)[0]
-        req["set"] = {
-            "set": "org",
-            "org": str(org["id"]),
-        }  # force return org-owned links for guest users
-        # Make client side instead?
+        req["set"] = [
+            {
+                "set": "org",
+                "org": str(org["id"]),
+            }
+        ]
+        sets = ["org"]
 
-    # Must be admin to view deleted links.
     if req.get("show_deleted_links", False) and not is_admin:
         abort(403)
 
-    # Must be admin or member of organization to view its links.
-    if req["set"]["set"] == "org":
-        try:
-            req["set"]["org"] = ObjectId(req["set"]["org"])
-        except bson.errors.InvalidId:
-            abort(400)
-        if not is_admin and not client.orgs.is_member(req["set"]["org"], netid):
-            abort(403)
+    if "org" in sets:
+        for item in req["set"]:
+            if item["set"] == "org":
+                try:
+                    item["org"] = ObjectId(item["org"])
+                except bson.errors.InvalidId:
+                    abort(400)
+
+                if not is_admin and not client.orgs.is_member(item["org"], netid):
+                    abort(403)
 
     if "begin_time" in req:
         req["begin_time"] = datetime.fromisoformat(req["begin_time"])
@@ -203,4 +207,60 @@ def post_search_urls(netid: str, client: ShrunkClient, req: Any) -> Any:
         req["end_time"] = datetime.fromisoformat(req["end_time"])
 
     result = client.search.execute_url(netid, req)
+    return jsonify(result)
+
+
+SEARCH_ORG_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["sort", "pagination"],
+    "properties": {
+        "query": {"type": "string"},
+        "filter_deleted": {"type": "boolean"},
+        "filter_role": {
+            "type": "array",
+            "items": {"type": "string", "enum": ["admin", "member", "guest"]},
+        },
+        "filter_member": {"type": "string"},
+        "sort": {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["key", "order"],
+            "properties": {
+                "key": {
+                    "type": "string",
+                    "enum": ["name", "timeCreated", "memberCount", "role", "dateAdded"],
+                },
+                "order": {
+                    "type": "string",
+                    "enum": ["ascending", "descending"],
+                },
+            },
+        },
+        "pagination": {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["skip", "limit"],
+            "properties": {
+                "skip": {"type": "integer", "minimum": 0},
+                "limit": {"type": "integer", "minimum": 1},
+            },
+        },
+    },
+}
+
+
+@bp.route("/org", methods=["POST"])
+@request_schema(SEARCH_ORG_SCHEMA)
+@require_login
+def post_search_orgs(netid: str, client: ShrunkClient, req: Any) -> Any:
+    """``POST /api/core/search/org``
+
+    Execute an organization search query.
+    """
+    # Only admins can see deleted organizations
+    if req.get("filter_deleted", False) and not client.roles.has("admin", netid):
+        abort(403)
+
+    result = client.orgs.search(netid, req)
     return jsonify(result)

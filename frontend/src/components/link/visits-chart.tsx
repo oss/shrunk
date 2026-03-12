@@ -2,9 +2,9 @@ import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import React from 'react';
 import type { TimeRangePickerProps, GetProps } from 'antd';
-import { DatePicker, Row, Col, Flex } from 'antd/lib';
+import { DatePicker, Row, Col, Flex } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
-import { VisitDatum, VisitStats } from '../../interfaces/link';
+import { VisitDatum, VisitStats } from '@/interfaces/link';
 
 type RangePickerProps = GetProps<typeof DatePicker.RangePicker>;
 type Props = {

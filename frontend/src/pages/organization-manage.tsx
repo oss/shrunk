@@ -12,7 +12,7 @@ import {
   Table,
   Typography,
   Tabs,
-} from 'antd/lib';
+} from 'antd';
 import type { TabsProps } from 'antd/lib/tabs';
 import type { FormInstance } from 'antd/lib/form';
 import dayjs from 'dayjs';
@@ -39,13 +39,14 @@ import {
   removeMemberFromOrganization,
   renameOrganization,
   setAdminStatusOrganization,
-} from '../api/organization';
-import { serverValidateOrgName } from '../api/validators';
-import { Organization, OrganizationMember } from '../interfaces/organizations';
-import CollaboratorModal, { Collaborator } from '../modals/CollaboratorModal';
-import CompactLinkTable from '../components/orgs/CompactLinkTable';
-import CreateLinkDrawer from '../drawers/CreateLinkDrawer';
-import OrgOverview from '../components/orgs/OrgOverview';
+} from '@/api/organization';
+import { serverValidateOrgName } from '@/api/validators';
+import { Organization, OrganizationMember } from '@/interfaces/organizations';
+import CollaboratorModal, { Collaborator } from '@/modals/CollaboratorModal';
+import CompactLinkTable from '@/components/orgs/CompactLinkTable';
+import CreateLinkDrawer from '@/drawers/CreateLinkDrawer';
+import OrgOverview from '@/components/orgs/OrgOverview';
+import useDarkMode from '@/lib/hooks/useDarkMode';
 
 type RouteParams = {
   id: string;
@@ -71,6 +72,8 @@ function ManageOrgBase({
   match,
   history,
 }: Props): React.ReactElement {
+  const { darkMode } = useDarkMode();
+
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [adminsCount, setAdminsCount] = useState(0);
   const [shareModalVisible, setShareModalVisible] = useState(false);
@@ -290,11 +293,16 @@ function ManageOrgBase({
             </Button>
             <Dropdown
               placement="bottomRight"
+              styles={{
+                item: {
+                  color: `${darkMode ? 'white' : 'black'}`,
+                },
+              }}
               menu={{
                 items: [
                   {
                     key: 'settings_organization',
-                    label: 'Settings',
+                    label: <p className="tw-m-0">Settings</p>,
                     icon: <SettingsIcon />,
                     onClick: onEditOrganization,
                   },
@@ -302,7 +310,7 @@ function ManageOrgBase({
                     ? [
                         {
                           key: 'settings_developer_organization',
-                          label: 'Access Tokens',
+                          label: <p className="tw-m-0">Access Tokens</p>,
                           icon: <CodeIcon />,
                           onClick: () => {
                             history.push(`/app/orgs/${match.params.id}/tokens`);
@@ -318,6 +326,7 @@ function ManageOrgBase({
                     disabled: userMayNotLeave && organization.role === 'member',
                     onClick: onLeaveOrg,
                     danger: true,
+                    className: '!tw-text-red-600 hover:!tw-text-white',
                   },
                 ],
               }}
