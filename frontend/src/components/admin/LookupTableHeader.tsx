@@ -15,9 +15,8 @@ import {
 } from 'antd';
 import { CloudDownloadIcon, PlusCircleIcon } from 'lucide-react';
 import React from 'react';
-import { createUser, addRoleToUser } from '@/api/users';
+import { createUser } from '@/api/users';
 import SearchUser from '@/components/admin/SearchUser';
-
 
 /**
  * Props for the [[LookupTableHeader]] component

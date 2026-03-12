@@ -57,12 +57,7 @@ class OrgsClient:
         if only_member_orgs:
             aggregation.append(
                 {
-                    "$match": {
-                        "$or": [
-                            {"guests.netid": netid},
-                            {"$and": [{"members.netid": netid}, {"deleted": False}]},
-                        ]
-                    }
+                    "$match": {"$and": [{"members.netid": netid}, {"deleted": False}]},
                 }
             )
         aggregation += [

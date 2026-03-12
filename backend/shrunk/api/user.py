@@ -322,7 +322,7 @@ def update_user_options(
         netid (str): the netid of the user logged in
         client (ShrunkClient): the client object
 
-
+    @TODO: Remove as not used anymore
 
 
 

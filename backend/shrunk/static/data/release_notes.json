@@ -1,6 +1,24 @@
 [
   {
     "major": 3,
+    "minor": 2,
+    "patch": 0,
+    "projectDirector": "ah1371",
+    "date": "TODO",
+    "description": "Updates to the UI, modernization of frontend infrastructure and updates to our user management system.",
+    "categories": {
+      "features": [
+        {
+          "text": "Rewrite user managment system to modernize and improve both developer experience and performance",
+          "contributors": ["ak2399"]
+        }
+      ],
+      "improvements": [],
+      "fixes": []
+    }
+  },
+  {
+    "major": 3,
     "minor": 1,
     "patch": 3,
     "projectDirector": "ah1371",
@@ -221,10 +239,6 @@
         {
           "text": "Table fonts are now 14px instead of 16px",
           "contributors": ["ah1371"]
-        },
-        {
-          "text": "Migrate user storage into their own collection for more flexibility",
-          "contributors": ["ak2399"]
         }
       ],
       "fixes": [

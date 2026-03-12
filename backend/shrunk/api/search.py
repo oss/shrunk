@@ -169,7 +169,6 @@ def post_search_urls(netid: str, client: ShrunkClient, req: Any) -> Any:
     :param req:
     """
     is_admin = client.users.has_role(netid, "admin")
-    
 
     sets = [item["set"] for item in req["set"]]
 

@@ -288,6 +288,7 @@ class SearchClient:
 
         if org_ids:
             shared_filter["$or"].append({"viewers._id": {"$in": org_ids}})
+            # shared_filter["$or"].append({"owner._id": {"$in": org_ids}}) - should shared with me include links owned by orgs - Ashton?
 
         # Apply shared filter after search
         pipeline.append({"$match": shared_filter})
