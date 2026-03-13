@@ -215,10 +215,14 @@ SEARCH_ORG_SCHEMA = {
     "required": ["sort", "pagination"],
     "properties": {
         "query": {"type": "string"},
+        "show_all": {"type": "boolean"},
         "filter_deleted": {"type": "boolean"},
         "filter_role": {
             "type": "array",
-            "items": {"type": "string", "enum": ["admin", "member", "guest"]},
+            "items": {
+                "type": "string",
+                "enum": ["admin", "member", "guest", "not_member"],
+            },
         },
         "filter_member": {"type": "string"},
         "sort": {
@@ -257,8 +261,13 @@ def post_search_orgs(netid: str, client: ShrunkClient, req: Any) -> Any:
 
     Execute an organization search query.
     """
+    is_admin = client.users.has_role(netid, "admin")
     # Only admins can see deleted organizations
-    if req.get("filter_deleted", False) and not client.roles.has("admin", netid):
+    if req.get("filter_deleted", False) and not is_admin:
+        abort(403)
+
+    # Only admins can view all organizations
+    if req.get("show_all", False) and not is_admin:
         abort(403)
 
     result = client.orgs.search(netid, req)

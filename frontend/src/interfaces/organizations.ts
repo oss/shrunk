@@ -50,8 +50,9 @@ export interface OrganizationStats {
 
 export interface OrgSearchQuery {
   query?: string;
+  show_all?: boolean;
   filter_deleted?: boolean;
-  filter_role?: ('admin' | 'member' | 'guest')[];
+  filter_role?: ('admin' | 'member' | 'guest' | 'not_member')[];
   filter_member?: string;
   sort: {
     key: 'name' | 'timeCreated' | 'memberCount' | 'role' | 'dateAdded';

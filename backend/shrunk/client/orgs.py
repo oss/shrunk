@@ -580,11 +580,26 @@ class OrgsClient:
         if not query.get("filter_deleted", False):
             pipeline.append({"$match": {"deleted": False}})
 
-        pipeline.append({"$match": {"role": {"$ne": None}}})
+        if not query.get("show_all", False):
+            pipeline.append({"$match": {"role": {"$ne": None}}})
 
         # Filter by Role
         if "filter_role" in query and len(query["filter_role"]) > 0:
-            pipeline.append({"$match": {"role": {"$in": query["filter_role"]}}})
+            selected_roles = [
+                role for role in query["filter_role"] if role != "not_member"
+            ]
+            role_clauses = []
+
+            if len(selected_roles) > 0:
+                role_clauses.append({"role": {"$in": selected_roles}})
+
+            if "not_member" in query["filter_role"]:
+                role_clauses.append({"role": None})
+
+            if len(role_clauses) == 1:
+                pipeline.append({"$match": role_clauses[0]})
+            elif len(role_clauses) > 1:
+                pipeline.append({"$match": {"$or": role_clauses}})
 
         # Filter by Member NetID
         if "filter_member" in query and query["filter_member"]:

@@ -63,6 +63,7 @@ interface FilterFormProps {
 
 const DEFAULT_QUERY: OrgSearchQuery = {
   query: '',
+  show_all: false,
   filter_deleted: false,
   filter_role: [],
   filter_member: '',
@@ -122,7 +123,12 @@ const FilterForm = ({
         onChange={(checkedValues) =>
           setQuery((prev) => ({
             ...prev,
-            filter_role: checkedValues as ('admin' | 'member' | 'guest')[],
+            filter_role: checkedValues as (
+              | 'admin'
+              | 'member'
+              | 'guest'
+              | 'not_member'
+            )[],
           }))
         }
       >
@@ -131,6 +137,9 @@ const FilterForm = ({
             <Checkbox value="admin">Admin</Checkbox>
             <Checkbox value="member">Member</Checkbox>
             <Checkbox value="guest">Guest</Checkbox>
+            {query.show_all && (
+              <Checkbox value="not_member">Not a member</Checkbox>
+            )}
           </Space>
         </Flex>
       </Checkbox.Group>
@@ -154,6 +163,29 @@ const FilterForm = ({
         {query.sort.order.charAt(0).toUpperCase() + query.sort.order.slice(1)}
       </Button>
     </Form.Item>
+    {isAdmin && (
+      <Form.Item label="All Organizations">
+        <Radio.Group
+          optionType="button"
+          buttonStyle="solid"
+          value={query.show_all}
+          onChange={(e) => {
+            const showAll = e.target.value as boolean;
+            setQuery((prev) => ({
+              ...prev,
+              show_all: showAll,
+              filter_role: showAll
+                ? prev.filter_role
+                : prev.filter_role?.filter((role) => role !== 'not_member'),
+              pagination: { ...prev.pagination, skip: 0 },
+            }));
+          }}
+        >
+          <Radio.Button value={false}>Hide</Radio.Button>
+          <Radio.Button value>Show</Radio.Button>
+        </Radio.Group>
+      </Form.Item>
+    )}
     {isAdmin && (
       <Form.Item label="Deleted Organizations">
         <Radio.Group
