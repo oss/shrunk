@@ -11,10 +11,64 @@
         {
           "text": "Rewrite user managment system to modernize and improve both developer experience and performance",
           "contributors": ["ak2399"]
+        },
+        {
+          "text": "Replace Parcel with Vite for development and building.",
+          "contributors": ["sb2787"]
+        },
+        {
+          "text": "Replace dashboard search drawer with sidebar, add more filterign options for organizations.",
+          "contributors": ["sb2787"]
+        },
+        {
+          "text": "Add a search sidebar to organizations dashboard.",
+          "contributors": ["sb2787"]
+        },
+        {
+          "text": "Add toggable dark mode",
+          "contributors": ["jds508"]
         }
       ],
-      "improvements": [],
-      "fixes": []
+      "improvements": [
+        {
+          "text": "Update Dashboard to be a functional component, remove final class components.",
+          "contributors": ["jds508"]
+        },
+        {
+          "text": "Update to Ant Design 6",
+          "contributors": ["jds508"]
+        },
+        {
+          "text": "Add hot reloading for frontend development",
+          "contributors": ["sb2787"]
+        },
+        {
+          "text": "Improve readability and responsiveness of link cards on mobile layout",
+          "contributors": ["jds508"]
+        },
+        {
+          "text": "Replace <a> tags with <link> tags to take advantage of client side routing",
+          "contributors": ["jds508"]
+        },
+        {
+          "text": "Use TypeScript path aliases",
+          "contributors": ["sb2787"]
+        }, 
+        {
+          "text": "Add dashboard navigation button to dropdown",
+          "contributors": ["jds508"]
+        }
+      ],
+      "fixes": [
+        {
+          "text": "Fix x/page dropdown from not showing the correct amount on admin dashboard and other tables.",
+          "contributors": ["sb2787"]
+        },
+        {
+          "text": "Remove server side storage and persistance of user search filters.",
+          "contributors": ["jds508", "ak2399"]
+        }
+      ]
     }
   },
   {
