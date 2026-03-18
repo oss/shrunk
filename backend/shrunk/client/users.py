@@ -27,7 +27,6 @@ class UserClient:
 
 
         :param entity: The entity to initialize
-        :param filterOptions: The filter options for the user
         :param role: The role to assign to the user (can be a list of roles)
 
         """
@@ -59,17 +58,6 @@ class UserClient:
             new_user = {
                 "netid": netid,
                 "roles": roles,
-                "filterOptions": {
-                    "show_expired_links": False,
-                    "show_deleted_links": False,
-                    "sort": {"key": "relevance", "order": "descending"},
-                    "showType": "links",
-                    "set": {"set": "user"},
-                    "begin_time": None,
-                    "end_time": None,
-                    "owner": None,
-                    "queryString": "",
-                },
                 "date_created": datetime.now(timezone.utc),
             }
             self.db["users"].insert_one(new_user)
@@ -97,7 +85,6 @@ class UserClient:
                             "in": "$$role.role",
                         }
                     },
-                    "filterOptions": 1,
                     "date_created": 1,
                 }
             },
@@ -151,7 +138,6 @@ class UserClient:
                     "date_created": user_data[0]["date_created"],
                     "linksCreated": user_data[0]["linksCreated"],
                     "organizations": user_data[0]["organizations"],
-                    "filterOptions": user_data[0].get("filterOptions", None),
                 }
         return None
 
@@ -488,32 +474,3 @@ class UserClient:
             ),
         }
         return formatted_position_info
-
-    def update_user_filter_options(
-        self, netid: str, filterOptions: Dict[str, Any]
-    ) -> None:
-        """Update the filter options for a user
-
-        :param netid: The netid of the user to update the filter options for
-        :param filterOptions: The new filter options for the user
-        :raises ValueError: If missing keys in filterOptions
-        """
-
-        keys = [
-            "show_expired_links",
-            "show_deleted_links",
-            "sort",
-            "showType",
-            "set",
-            "begin_time",
-            "end_time",
-            "owner",
-            "queryString",
-        ]
-        for key in keys:
-            if key not in filterOptions:
-                raise ValueError(f"Missing key {key} in filterOptions")
-
-            self.db["users"].update_one(
-                {"netid": netid}, {"$set": {"filterOptions": filterOptions}}
-            )

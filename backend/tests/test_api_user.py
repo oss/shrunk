@@ -47,7 +47,6 @@ def test_initialize_user(client: Client, user: str, expected: dict) -> None:
         assert resp.status_code == 200
         assert resp.json["netid"] == expected["netid"]
         assert resp.json["privileges"] == expected["privileges"]
-        assert resp.json["filterOptions"] == defaultOptions
 
 
 @pytest.mark.parametrize(
@@ -223,82 +222,3 @@ def test_get_user_info(client: Client, user: str, expected: int) -> None:
         if expected == 200:
             assert resp.json["netid"] == "DEV_ADMIN"
             assert len(resp.json["roles"]) > 0
-
-
-@pytest.mark.parametrize(
-    ("user", "updated_options", "expected"),
-    [
-        (
-            "admin",
-            {
-                "show_expired_links": False,
-                "show_deleted_links": False,
-                "sort": {"key": "relevance", "order": "descending"},
-                "showType": "links",
-                "set": {"set": "user"},
-                "begin_time": None,
-                "end_time": None,
-                "owner": None,
-                "queryString": None,
-            },
-            204,
-        ),
-        (
-            "facstaff",
-            {
-                "show_expired_links": False,
-                "show_deleted_links": False,
-                "sort": {"key": "relevance", "order": "descending"},
-                "showType": "links",
-                "set": {"set": "user"},
-                "begin_time": None,
-                "end_time": None,
-                "owner": None,
-                "queryString": None,
-            },
-            204,
-        ),
-        (
-            "user",
-            {
-                "show_expired_links": False,
-                "show_deleted_links": True,
-                "sort": {"key": "relevance", "order": "descending"},
-                "showType": "links",
-                "set": {"set": "user"},
-                "begin_time": None,
-                "end_time": None,
-                "owner": None,
-                "queryString": None,
-            },
-            204,
-        ),
-        (
-            "user",
-            {
-                "show_expired_links": False,
-                "show_deleted_links": False,
-                "sort": {"key": "relevance", "order": "descending"},
-                "showType": "links",
-                "set": {"set": "user"},
-                "end_time": None,
-                "owner": None,
-                "queryString": None,
-            },
-            400,
-        ),
-        (
-            "admin",
-            {},  # Missing required keys
-            400,
-        ),
-    ],
-)
-def test_update_user_options(
-    client: Client, user: str, updated_options: dict, expected: int
-) -> None:
-    with dev_login(client, user):
-        resp = client.patch(
-            "/api/core/user/options/filter", json={"filterOptions": updated_options}
-        )
-        assert resp.status_code == expected

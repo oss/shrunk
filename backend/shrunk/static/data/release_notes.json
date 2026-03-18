@@ -13,15 +13,15 @@
           "contributors": ["ak2399"]
         },
         {
-          "text": "Replace Parcel with Vite for development and building.",
+          "text": "Replace Parcel with Vite for development and building",
           "contributors": ["sb2787"]
         },
         {
-          "text": "Replace dashboard search drawer with sidebar, add more filterign options for organizations.",
+          "text": "Replace dashboard search drawer with sidebar, add more filtering options for organizations",
           "contributors": ["sb2787"]
         },
         {
-          "text": "Add a search sidebar to organizations dashboard.",
+          "text": "Add a search sidebar to organizations dashboard",
           "contributors": ["sb2787"]
         },
         {
@@ -31,7 +31,7 @@
       ],
       "improvements": [
         {
-          "text": "Update Dashboard to be a functional component, remove final class components.",
+          "text": "Update Dashboard to be a functional component, remove final class components",
           "contributors": ["jds508"]
         },
         {
@@ -61,11 +61,11 @@
       ],
       "fixes": [
         {
-          "text": "Fix x/page dropdown from not showing the correct amount on admin dashboard and other tables.",
+          "text": "Fix x/page dropdown from not showing the correct amount on admin dashboard and other tables",
           "contributors": ["sb2787"]
         },
         {
-          "text": "Remove server side storage and persistance of user search filters.",
+          "text": "Remove server side storage and persistance of user search filters",
           "contributors": ["jds508", "ak2399"]
         }
       ]
@@ -81,7 +81,7 @@
     "categories": {
       "features": [
         {
-          "text": "Organizations can now add guest users to their organizations. Guest users must be classified as university guests, all links created by guests will be owned by the organization they are apart of.",
+          "text": "Organizations can now add guest users to their organizations. Guest users must be classified as university guests, all links created by guests will be owned by the organization they are apart of",
           "contributors": ["ak2399"]
         },
         {
@@ -101,7 +101,7 @@
           "product": "public-api"
         },
         {
-          "text": "CSV generation moved to server side for better performance on large links.",
+          "text": "CSV generation moved to server side for better performance on large links",
           "contributors": ["ak2399"]
         }
       ],
@@ -334,7 +334,7 @@
           "contributors": ["ah1371"]
         },
         {
-          "text": "Fix server crash when querying users on admin dashboard.",
+          "text": "Fix server crash when querying users on admin dashboard",
           "contributors": ["ak2399"]
         }
       ]

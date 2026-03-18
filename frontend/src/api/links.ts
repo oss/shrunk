@@ -8,7 +8,6 @@ import {
   OverallStats,
   VisitStats,
   EditLinkValues,
-  SearchQuery,
   GeoipStats,
 } from '@/interfaces/link';
 
@@ -225,12 +224,4 @@ export async function searchLinks(query: any) {
   });
   const data = await resp.json();
   return data;
-}
-
-export async function updateUserFilterOptions(options: SearchQuery) {
-  await fetch(`/api/core/user/options/filter`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ filterOptions: options }),
-  });
 }
