@@ -673,7 +673,7 @@ class LinksClient:
         if self.other_clients.users.has_role(netid, "admin"):
             return True
 
-        orgs = self.other_clients.orgs.get_orgs(netid, True)
+        orgs = self.other_clients.orgs.get_orgs(netid, only_member_orgs=True)
         orgs = [org["id"] for org in orgs]
 
         result = self.db.urls.find_one(

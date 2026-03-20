@@ -318,7 +318,7 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
             abort(400)
         if client.links.alias_is_reserved(req["alias"]):
             abort(400)
-        if not client.users.has_role(netid, "admin") or not client.users.has_role(
+        if not client.users.has_role(netid, "admin") and not client.users.has_role(
             netid, "power_user"
         ):
             abort(403)
