@@ -57,6 +57,10 @@
         {
           "text": "Add dashboard navigation button to dropdown",
           "contributors": ["jds508"]
+        },
+        {
+          "text": "Improve layout for admin dashboard on mobile",
+          "contributors": ["sb2787"]
         }
       ],
       "fixes": [
@@ -67,6 +71,10 @@
         {
           "text": "Remove server side storage and persistance of user search filters",
           "contributors": ["jds508", "ak2399"]
+        },
+        {
+          "text": "Fix power user role not being able to be removed from a user even if they have other roles",
+          "contributors": ["sb2787"]
         }
       ]
     }
