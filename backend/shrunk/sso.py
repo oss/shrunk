@@ -56,7 +56,7 @@ def login(user_info: Any) -> Any:
         abort(403)
 
     # config-whitelisted users are automatically made admins
-    if is_super_admin:
+    if netid == is_super_admin:
         client.users.initialize_user(netid, "admin")
 
     # (if not blacklisted) facstaff can always login, but we need to grant a role
