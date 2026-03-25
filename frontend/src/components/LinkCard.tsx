@@ -27,55 +27,68 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
     navigator.clipboard.writeText(linkInfo.long_url);
   };
 
+  const actions: React.ReactNode[] = [
+    <div className="tw-flex tw-items-center tw-justify-center">
+      <Tooltip title="View link details">
+        <Button
+          icon={<EyeIcon />}
+          type="text"
+          href={`/app/links/${linkInfo._id}`}
+          target="_blank"
+          className="!tw-inline-flex !tw-items-center !tw-justify-center"
+        />
+      </Tooltip>
+    </div>,
+    <div className="tw-flex tw-items-center tw-justify-center">
+      <Tooltip title="Edit link">
+        <Button
+          icon={<EditIcon />}
+          type="text"
+          href={`/app/links/${linkInfo._id}?mode=edit`}
+          target="_blank"
+          className="!tw-inline-flex !tw-items-center !tw-justify-center"
+        />
+      </Tooltip>
+    </div>,
+    <div className="tw-flex tw-items-center tw-justify-center">
+      <Tooltip title="Share link permissions">
+        <Button
+          icon={<UsersIcon />}
+          type="text"
+          href={`/app/links/${linkInfo._id}?mode=collaborate`}
+          target="_blank"
+          className="!tw-inline-flex !tw-items-center !tw-justify-center"
+        />
+      </Tooltip>
+    </div>,
+    <div className="tw-flex tw-items-center tw-justify-center">
+      <Tooltip title="Access QR code">
+        <Button
+          icon={<QrCodeIcon />}
+          type="text"
+          href={`/app/links/${linkInfo._id}?mode=qrcode`}
+          target="_blank"
+          className="!tw-inline-flex !tw-items-center !tw-justify-center"
+        />
+      </Tooltip>
+    </div>,
+    <div className="tw-flex tw-items-center tw-justify-center">
+      <Tooltip title="Delete link">
+        <Button
+          icon={<Trash2Icon />}
+          type="text"
+          danger
+          disabled={linkInfo.deletion_info !== null}
+          href={`/app/links/${linkInfo._id}?mode=edit`}
+          target="_blank"
+          className="!tw-inline-flex !tw-items-center !tw-justify-center !tw-text-red-600"
+        />
+      </Tooltip>
+    </div>,
+  ];
+
   return (
-    <Card
-      title={linkInfo.title}
-      actions={[
-        <Tooltip title="View link details">
-          <Button
-            icon={<EyeIcon />}
-            type="text"
-            href={`/app/links/${linkInfo._id}`}
-            target="_blank"
-          />
-        </Tooltip>,
-        <Tooltip title="Edit link">
-          <Button
-            icon={<EditIcon />}
-            type="text"
-            href={`/app/links/${linkInfo._id}?mode=edit`}
-            target="_blank"
-          />
-        </Tooltip>,
-        <Tooltip title="Share link permissions">
-          <Button
-            icon={<UsersIcon />}
-            type="text"
-            href={`/app/links/${linkInfo._id}?mode=collaborate`}
-            target="_blank"
-          />
-        </Tooltip>,
-        <Tooltip title="Access QR code">
-          <Button
-            icon={<QrCodeIcon />}
-            type="text"
-            href={`/app/links/${linkInfo._id}?mode=qrcode`}
-            target="_blank"
-          />
-        </Tooltip>,
-        <Tooltip title="Delete link">
-          <Button
-            icon={<Trash2Icon />}
-            type="text"
-            danger
-            disabled={linkInfo.deletion_info !== null}
-            href={`/app/links/${linkInfo._id}?mode=edit`}
-            target="_blank"
-            className="!tw-text-red-600"
-          />
-        </Tooltip>,
-      ]}
-    >
+    <Card title={linkInfo.title} actions={actions}>
       <Card.Grid
         className="xl:tw-hidden"
         style={{ width: '100%' }}
