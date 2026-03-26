@@ -491,7 +491,11 @@ export default function DashboardSearch({
               <Button
                 onClick={sortLinkOrder}
                 icon={
-                  sortOrder === 'ascending' ? <ArrowUpIcon /> : <ArrowDownIcon />
+                  sortOrder === 'ascending' ? (
+                    <ArrowUpIcon />
+                  ) : (
+                    <ArrowDownIcon />
+                  )
                 }
                 style={{ width: 120 }}
               >
@@ -562,7 +566,11 @@ export default function DashboardSearch({
         </Col>
         <Col>
           <Form.Item name="reset">
-            <Button variant="filled" color="danger" onClick={() => setNewQuery(DEFAULT_QUERY)}>
+            <Button
+              variant="filled"
+              color="danger"
+              onClick={() => setNewQuery(DEFAULT_QUERY)}
+            >
               Reset Filters
             </Button>
           </Form.Item>
