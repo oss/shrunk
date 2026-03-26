@@ -476,27 +476,28 @@ export default function DashboardSearch({
         </Col>
         <Col>
           <Form.Item name="sortKeyInput" label="Sort by">
-            <Select
-              defaultValue={query.sort.key}
-              onChange={sortLinksByKey}
-              style={{ width: '100%' }}
-              options={[
-                { value: 'relevance', label: 'Relevance' },
-                { value: 'created_time', label: 'Time created' },
-                { value: 'title', label: 'Title' },
-                { value: 'visits', label: 'Number of visits' },
-              ]}
-            />
-          </Form.Item>
-          <Form.Item name="sortOrder" label="Sort Order">
-            <Button
-              onClick={sortLinkOrder}
-              icon={
-                sortOrder === 'ascending' ? <ArrowUpIcon /> : <ArrowDownIcon />
-              }
-            >
-              {sortOrder.charAt(0).toUpperCase() + sortOrder.slice(1)}
-            </Button>
+            <Space.Compact block>
+              <Select
+                defaultValue={query.sort.key}
+                onChange={sortLinksByKey}
+                style={{ flex: 1 }}
+                options={[
+                  { value: 'relevance', label: 'Relevance' },
+                  { value: 'created_time', label: 'Time created' },
+                  { value: 'title', label: 'Title' },
+                  { value: 'visits', label: 'Number of visits' },
+                ]}
+              />
+              <Button
+                onClick={sortLinkOrder}
+                icon={
+                  sortOrder === 'ascending' ? <ArrowUpIcon /> : <ArrowDownIcon />
+                }
+                style={{ width: 120 }}
+              >
+                {sortOrder.charAt(0).toUpperCase() + sortOrder.slice(1)}
+              </Button>
+            </Space.Compact>
           </Form.Item>
         </Col>
         <Col>
@@ -561,7 +562,7 @@ export default function DashboardSearch({
         </Col>
         <Col>
           <Form.Item name="reset">
-            <Button onClick={() => setNewQuery(DEFAULT_QUERY)}>
+            <Button variant="filled" color="danger" onClick={() => setNewQuery(DEFAULT_QUERY)}>
               Reset Filters
             </Button>
           </Form.Item>
