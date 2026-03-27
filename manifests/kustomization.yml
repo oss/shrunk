@@ -7,7 +7,26 @@ namespace: oit-eas-macs-shrunk
 configMapGenerator:
 - name: configfile
   envs:
-  - .env
+  - configs/.prod.env
+secretGenerator:
+- name: shibfiles
+  files:
+  - configs-test/attribute-map.xml
+  - configs-test/shibboleth2.xml
+  - configs-test/sp-cert.pem
+  - configs-test/sp-signing-cert.pem
+  - configs-test/sp-encrypt-cert.pem
+  - configs-test/test-idps.rutgers.edu_idp-metadata.xml
+  # files:
+  # - configs/attribute-map.xml
+  # - configs/shibboleth2.xml
+  # - configs/sp-cert.pem
+  # - configs/sp-key.pem
+  # - configs/sp-signing-cert.pem
+  # - configs/sp-signing-key.pem
+  # - configs/sp-encrypt-cert.pem
+  # - configs/sp-encrypt-key.pem
+  # - configs/prod-idps.rutgers.edu_idp-metadata.xml
 resources:
 - ./backend/deployment.yml
 - ./frontend/deployment.yml

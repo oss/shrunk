@@ -1,0 +1,5 @@
+services:
+  shib-sp:
+    build: ./shib-sp
+    volumes:
+     - ./manifests/configs:/etc/shibconfig
