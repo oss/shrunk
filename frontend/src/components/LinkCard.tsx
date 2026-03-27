@@ -1,5 +1,4 @@
-/* eslint-disable react/jsx-props-no-spreading */
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   Button,
   Card,
@@ -10,100 +9,31 @@ import {
   Tooltip,
 } from 'antd';
 import dayjs from 'dayjs';
-import {
-  CopyIcon,
-  EditIcon,
-  EyeIcon,
-  QrCodeIcon,
-  Trash2Icon,
-  UsersIcon,
-} from 'lucide-react';
+import { CopyIcon, EyeIcon } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { Link } from '@/interfaces/link';
 import { getRedirectFromAlias } from '@/lib/utils';
 
-const LARGE_SCREEN_QUERY = '(min-width: 1024px)';
-
 export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
-  const [isLgAndUp, setIsLgAndUp] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return undefined;
-    }
-    const mediaQuery = window.matchMedia(LARGE_SCREEN_QUERY);
-    const handleChange = (event: MediaQueryListEvent | MediaQueryList) => {
-      setIsLgAndUp('matches' in event ? event.matches : mediaQuery.matches);
-    };
-
-    setIsLgAndUp(mediaQuery.matches);
-    if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener('change', handleChange);
-      return () => mediaQuery.removeEventListener('change', handleChange);
-    }
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
   const onCopyOriginalLink = () => {
     navigator.clipboard.writeText(linkInfo.long_url);
   };
 
-  const actions: React.ReactNode[] = [
-    <Tooltip title="View link details">
-      <Button
-        icon={<EyeIcon />}
-        type="text"
-        href={`/app/links/${linkInfo._id}`}
-        target="_blank"
-        className="!tw-inline-flex !tw-items-center !tw-justify-center"
-      />
-    </Tooltip>,
-    <Tooltip title="Edit link">
-      <Button
-        icon={<EditIcon />}
-        type="text"
-        href={`/app/links/${linkInfo._id}?mode=edit`}
-        target="_blank"
-        className="!tw-inline-flex !tw-items-center !tw-justify-center"
-      />
-    </Tooltip>,
-    <Tooltip title="Share link permissions">
-      <Button
-        icon={<UsersIcon />}
-        type="text"
-        href={`/app/links/${linkInfo._id}?mode=collaborate`}
-        target="_blank"
-        className="!tw-inline-flex !tw-items-center !tw-justify-center"
-      />
-    </Tooltip>,
-    <Tooltip title="Access QR code">
-      <Button
-        icon={<QrCodeIcon />}
-        type="text"
-        href={`/app/links/${linkInfo._id}?mode=qrcode`}
-        target="_blank"
-        className="!tw-inline-flex !tw-items-center !tw-justify-center"
-      />
-    </Tooltip>,
-    <Tooltip title="Delete link">
-      <Button
-        icon={<Trash2Icon />}
-        type="text"
-        danger
-        disabled={linkInfo.deletion_info !== null}
-        href={`/app/links/${linkInfo._id}?mode=edit`}
-        target="_blank"
-        className="!tw-inline-flex !tw-items-center !tw-justify-center !tw-text-red-600"
-      />
-    </Tooltip>,
-  ];
-
   return (
     <Card
       title={linkInfo.title}
-      {...(isLgAndUp ? { extra: actions } : { actions })}
+      extra={[
+        <Tooltip key="view" title="View link">
+          <Button
+            icon={<EyeIcon />}
+            type="text"
+            href={`/app/links/${linkInfo._id}`}
+            target="_blank"
+            className="!tw-inline-flex !tw-items-center !tw-justify-center"
+          />
+        </Tooltip>,
+      ]}
     >
       <Card.Grid
         className="xl:tw-hidden"
