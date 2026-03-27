@@ -43,8 +43,8 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
       return () => mediaQuery.removeEventListener('change', handleChange);
     }
 
-    mediaQuery.addListener(handleChange);
-    return () => mediaQuery.removeListener(handleChange);
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
   const onCopyOriginalLink = () => {
     navigator.clipboard.writeText(linkInfo.long_url);
