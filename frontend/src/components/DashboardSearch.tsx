@@ -516,18 +516,43 @@ export default function DashboardSearch({
           </Form.Item>
         </Col>
         <Col>
-          <Form.Item name="show_expired" label="Expired Links">
-            <Radio.Group
-              optionType="button"
-              buttonStyle="solid"
-              options={[
-                { label: 'Show', value: 'show' },
-                { label: 'Hide', value: 'hide' },
-              ]}
-              defaultValue="hide"
-              onChange={(e) => showExpiredLinks(e.target.value === 'show')}
-            />
-          </Form.Item>
+          <div className="tw-flex">
+            <Form.Item
+              name="show_expired"
+              label="Expired Links"
+              className="tw-min-w-fit tw-flex-1"
+            >
+              <Radio.Group
+                optionType="button"
+                buttonStyle="solid"
+                options={[
+                  { label: 'Show', value: 'show' },
+                  { label: 'Hide', value: 'hide' },
+                ]}
+                defaultValue="hide"
+                onChange={(e) => showExpiredLinks(e.target.value === 'show')}
+              />
+            </Form.Item>
+            <Form.Item
+              name="links_vs_pixels"
+              label="Link Type"
+              className="tw-min-w-fit tw-flex-1"
+            >
+              <Radio.Group
+                optionType="button"
+                buttonStyle="solid"
+                options={[
+                  { label: 'Links', value: 'links' },
+                  {
+                    label: 'Tracking Pixels',
+                    value: 'tracking_pixels',
+                  },
+                ]}
+                defaultValue={query.showType}
+                onChange={sortByType}
+              />
+            </Form.Item>
+          </div>
         </Col>
         {userPrivileges.has('admin') && (
           <Col>
@@ -547,23 +572,6 @@ export default function DashboardSearch({
             </Form.Item>
           </Col>
         )}
-        <Col>
-          <Form.Item name="links_vs_pixels" label="Link Type">
-            <Radio.Group
-              optionType="button"
-              buttonStyle="solid"
-              options={[
-                { label: 'Links', value: 'links' },
-                {
-                  label: 'Tracking Pixels',
-                  value: 'tracking_pixels',
-                },
-              ]}
-              defaultValue={query.showType}
-              onChange={sortByType}
-            />
-          </Form.Item>
-        </Col>
         <Col>
           <Form.Item name="reset">
             <Button
