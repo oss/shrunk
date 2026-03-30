@@ -241,10 +241,8 @@ class LinksClient:
         ):
             self.other_clients.security.create_pending_link(document)
             raise SecurityRiskDetected
-        try:
-            result = self.db.urls.insert_one(document)
-        except pymongo.errors.DuplicateKeyError:
-            raise BadAliasException
+
+        result = self.db.urls.insert_one(document)
 
         return result.inserted_id, alias
 

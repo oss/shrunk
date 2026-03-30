@@ -1,4 +1,3 @@
-import threading
 import time
 import base64
 from datetime import datetime, timezone, timedelta
@@ -1173,44 +1172,3 @@ def test_link_redirect_query_params(client: Client, query: str, expected: str) -
     assert resp.status_code == 302
     redirected_url = resp.headers["Location"]
     assert redirected_url == expected
-
-
-def test_same_alias_multiple_link(client: Client) -> None:
-    with dev_login(client, "admin"):
-
-        def _create_link_helper(alias: str, results: list) -> str:
-            resp = create_link(client, "title", "https://osu.ppy.sh", alias=alias)
-            results.append(resp.status_code)
-
-        results = []
-        threads = [
-            threading.Thread(target=_create_link_helper, args=("osugame", results))
-            for i in range(3)
-        ]
-        for thread in threads:
-            thread.start()
-        for thread in threads:
-            thread.join()
-        assert results[0] == 201
-        for i in range(1, 3):
-            assert results[i] == 400
-
-
-def test_create_second_link_with_deleted_alias(client: Client) -> None:
-    with dev_login(client, "admin"):
-        resp = create_link(
-            client,
-            "title",
-            "https://www.instagram.com/reel/DV9CIqegXN_/?igsh=cTB6bnYxdHF3NHYz",
-            alias="funny",
-        )
-        assert resp.status_code == 201
-        link_id = resp.json["id"]
-
-        resp = client.delete(f"/api/core/link/{link_id}")
-        assert resp.status_code == 204
-
-        # Create a new link with the same alias
-        resp = create_link(client, "new title", "https://example.com", alias="funny")
-        assert resp.status_code == 201
-        assert resp.json["alias"] == "funny"

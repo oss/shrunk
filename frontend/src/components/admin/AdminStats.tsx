@@ -176,6 +176,24 @@ export default function AdminStats(): React.ReactElement {
         },
       ],
     },
+    responsive: {
+      rules: [
+        {
+          condition: { maxWidth: 768 },
+          chartOptions: {
+            chart: {
+              height: Math.max(endpointData.length * 22, 260),
+            },
+            legend: {
+              enabled: false,
+            },
+            yAxis: {
+              labels: { step: 2 },
+            },
+          },
+        },
+      ],
+    },
     series: [
       {
         name: 'Total visits',
