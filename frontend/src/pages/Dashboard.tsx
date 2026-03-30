@@ -260,7 +260,7 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
               className="tw-mt-[4px] tw-pr-4 tw-hidden lg:tw-block"
               width={360}
             >
-              <div className="tw-sticky tw-top-[50px] tw-max-h-[calc(100vh-130px)] tw-overflow-auto">
+              <div className="tw-sticky tw-top-[50px]  tw-overflow-auto">
                 <DashboardSearch
                   query={query}
                   filters={filters}
