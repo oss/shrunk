@@ -45,7 +45,7 @@ def login(user_info: Any) -> Any:
     is_whitelisted = any(role == "whitelisted" for role in roles)
     is_blacklisted = any(role == "blacklisted" for role in roles)
     is_guest = any(role == "guest" for role in roles)
-    is_super_admin = os.getenv("SHRUNK_SUPER_ADMIN")
+    is_super_admin = os.getenv("SHRUNK_SUPER_ADMIN") == netid
 
     # now make decisions regarding whether the user can login, and what privs they should get
 
