@@ -15,6 +15,7 @@ import {
   Moon,
   RocketIcon,
   Sun,
+  SunMoon,
   UsersIcon,
 } from 'lucide-react';
 
@@ -27,10 +28,11 @@ import {
   Dropdown,
   Image,
   Layout,
+  Tooltip,
   Typography,
   message,
 } from 'antd';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import {
   BrowserRouter,
   Redirect,
@@ -64,7 +66,7 @@ import ChangeLog from '@/pages/ChangeLog';
 import Ticket from '@/pages/subpages/Ticket';
 import { darkTheme, lightTheme } from '@/theme';
 import OrganizationToken from '@/pages/organization-tokens';
-import useDarkMode from './lib/hooks/useDarkMode';
+import { DarkModeContext, DarkModeProvider } from '@/contexts/DarkModeContext';
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -82,8 +84,6 @@ function ShrunkContent({
   role,
   onLogout,
   onAlertClose,
-  darkMode,
-  toggleTheme,
   ProtectedRoute,
   featureFlags,
 }: {
@@ -96,14 +96,19 @@ function ShrunkContent({
   role: string;
   onLogout: () => Promise<void>;
   onAlertClose: () => void;
-  darkMode: boolean;
-  toggleTheme: () => void;
   ProtectedRoute: (props: {
     children: any;
     requiredPrivilege: string;
   }) => JSX.Element;
   featureFlags: FeatureFlags;
 }) {
+  const darkModeContext = useContext(DarkModeContext);
+
+  if (!darkModeContext) {
+    throw new Error('DarkModeContext is missing.');
+  }
+
+  const { darkMode, setDarkMode, isFollowingSystem } = darkModeContext;
   const location = useLocation();
 
   const domain = window.location.hostname;
@@ -241,6 +246,39 @@ function ShrunkContent({
     },
   ];
 
+  const currentThemeKey = isFollowingSystem
+    ? 'system'
+    : darkMode
+    ? 'dark'
+    : 'light';
+
+  const currentThemeIcon = isFollowingSystem ? (
+    <SunMoon />
+  ) : darkMode ? (
+    <Moon />
+  ) : (
+    <Sun />
+  );
+  const currentThemeLabel = isFollowingSystem
+    ? 'System Preference'
+    : darkMode
+    ? 'Dark'
+    : 'Light';
+
+  const handleThemeButtonClick = () => {
+    if (currentThemeKey === 'light') {
+      setDarkMode('dark');
+      return;
+    }
+
+    if (currentThemeKey === 'dark') {
+      setDarkMode('system');
+      return;
+    }
+
+    setDarkMode('light');
+  };
+
   return (
     <Layout>
       {domain === 'shrunk.rutgers.edu' && (
@@ -292,12 +330,15 @@ function ShrunkContent({
               </Button>
             </Dropdown>
           )}
-          <Button
-            icon={darkMode ? <Moon /> : <Sun />}
-            onClick={toggleTheme}
-            type="text"
-            className="!tw-text-white"
-          />
+          <Tooltip title={currentThemeLabel} placement="bottom">
+            <Button
+              icon={currentThemeIcon}
+              type="text"
+              aria-label={`Theme: ${currentThemeLabel}`}
+              className="tw-flex tw-h-9 tw-w-9 tw-items-center tw-justify-center tw-p-0 !tw-text-white"
+              onClick={handleThemeButtonClick}
+            />
+          </Tooltip>
         </div>
       </Header>
 
@@ -448,7 +489,6 @@ export default function Shrunk(props: Props) {
   const featureFlags: FeatureFlags = useFeatureFlags();
 
   const { siderWidth } = props;
-  const { darkMode, toggleTheme } = useDarkMode();
 
   const [userPrivileges, setUserPrivileges] = useState<Set<string>>(new Set());
   const [netid, setNetid] = useState<string>('');
@@ -539,28 +579,40 @@ export default function Shrunk(props: Props) {
   }
 
   return (
-    <FeatureFlagsProvider>
-      <ConfigProvider theme={darkMode ? darkTheme : lightTheme}>
-        <App className={darkMode ? 'tw-dark' : ''}>
-          <BrowserRouter>
-            <ShrunkContent
-              siderWidth={siderWidth}
-              netid={netid}
-              userPrivileges={userPrivileges}
-              isLoading={isLoading}
-              motd={motd}
-              showAdminTab={showAdminTab}
-              role={role}
-              onLogout={onLogout}
-              onAlertClose={onAlertClose}
-              darkMode={darkMode}
-              toggleTheme={toggleTheme}
-              ProtectedRoute={ProtectedRoute}
-              featureFlags={featureFlags}
-            />
-          </BrowserRouter>
-        </App>
-      </ConfigProvider>
-    </FeatureFlagsProvider>
+    <DarkModeProvider>
+      <DarkModeContext.Consumer>
+        {(darkModeContext) => {
+          if (!darkModeContext) {
+            return null;
+          }
+
+          const { darkMode } = darkModeContext;
+
+          return (
+            <FeatureFlagsProvider>
+              <ConfigProvider theme={darkMode ? darkTheme : lightTheme}>
+                <App className={darkMode ? 'tw-dark' : ''}>
+                  <BrowserRouter>
+                    <ShrunkContent
+                      siderWidth={siderWidth}
+                      netid={netid}
+                      userPrivileges={userPrivileges}
+                      isLoading={isLoading}
+                      motd={motd}
+                      showAdminTab={showAdminTab}
+                      role={role}
+                      onLogout={onLogout}
+                      onAlertClose={onAlertClose}
+                      ProtectedRoute={ProtectedRoute}
+                      featureFlags={featureFlags}
+                    />
+                  </BrowserRouter>
+                </App>
+              </ConfigProvider>
+            </FeatureFlagsProvider>
+          );
+        }}
+      </DarkModeContext.Consumer>
+    </DarkModeProvider>
   );
 }

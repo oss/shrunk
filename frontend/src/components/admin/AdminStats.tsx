@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 
 import {
   Spin,
@@ -21,7 +21,7 @@ import HighchartsReact from 'highcharts-react-official';
 
 import { getEndpointData, getShrunkVersion } from '@/api/app';
 import { AdminStatsData, EndpointDatum } from '@/interfaces/app';
-import useDarkMode from '@/lib/hooks/useDarkMode';
+import { DarkModeContext } from '@/contexts/DarkModeContext';
 
 /**
  * The [[AdminStats]] component allows the user to view summary statistics
@@ -30,7 +30,13 @@ import useDarkMode from '@/lib/hooks/useDarkMode';
  * @function
  */
 export default function AdminStats(): React.ReactElement {
-  const { darkMode } = useDarkMode();
+  const darkModeContext = useContext(DarkModeContext);
+
+  if (!darkModeContext) {
+    throw new Error('DarkModeContext is missing.');
+  }
+
+  const { darkMode } = darkModeContext;
   const screens = Grid.useBreakpoint();
   const isMobile = !screens.md;
 
