@@ -8,7 +8,12 @@
     "description": "Bug fixes and improvements following the 3.2.0 release.",
     "categories": {
       "features": [],
-      "improvements": [],
+      "improvements": [
+        {
+          "text": "Rewrite the dark mode system to use React context in order to implement a 'follow system preference' feature",
+          "contributors": ["jds508"]
+        }
+      ],
       "fixes": [
         {
           "text": "Fix potential race condition where two links could have the same alias if created at the same time",

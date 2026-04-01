@@ -36,14 +36,14 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import dayjs from 'dayjs';
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import {
   createOrg,
   deleteOrganization,
   searchOrgs,
   hasAssociatedUrls,
 } from '@/api/organization';
-import useDarkMode from '@/lib/hooks/useDarkMode';
+import { DarkModeContext } from '@/contexts/DarkModeContext';
 import { serverValidateNetId } from '@/api/validators';
 import { Organization, OrgSearchQuery } from '@/interfaces/organizations';
 
@@ -225,7 +225,13 @@ const useDebounce = <T,>(value: T, delay: number): T => {
 export default function MyOrganizations({
   userPrivileges,
 }: Props): React.ReactElement {
-  const { darkMode } = useDarkMode();
+  const darkModeContext = useContext(DarkModeContext);
+
+  if (!darkModeContext) {
+    throw new Error('DarkModeContext is missing.');
+  }
+
+  const { darkMode } = darkModeContext;
   const [orgs, setOrgs] = useState<Organization[] | null>(null);
   const [totalOrgs, setTotalOrgs] = useState<number>(0);
   const [query, setQuery] = useState<OrgSearchQuery>(DEFAULT_QUERY);
