@@ -120,13 +120,11 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
 
   const handleDelete = async () => {
     try {
-      const result = await deleteLink(props.linkInfo._id);
-      message.success(result);
-      if (result === 'Link deleted successfully') {
-        setTimeout(() => {
-          window.location.href = '/app/dash';
-        }, 1000); // 1-second delay
-      }
+      deleteLink(props.linkInfo._id);
+      message.success('Link deleted successfully');
+      setTimeout(() => {
+        window.location.href = '/app/dash';
+      }, 1000); // 1-second delay
     } catch (error) {
       message.error('Failed to delete link');
     }
