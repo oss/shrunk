@@ -1,7 +1,9 @@
-FROM python:3.6
+FROM python:3.14
 
 EXPOSE 3050
 WORKDIR /usr/shrunk/backend/
+
+
 
 # Copy all files
 COPY . .
@@ -12,14 +14,10 @@ COPY ./GeoLite2-City.mmdb /usr/share/GeoIP/GeoLite2-City.mmdb
 # Install backend binary dependencies
 RUN apt-get update
 RUN apt-get install -y libsasl2-dev libldap2-dev libssl-dev
-RUN pip install --upgrade pip
-RUN pip install poetry
+# Install uv
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh 
+RUN uv sync 
 
-# Poetry configuration
-RUN poetry config virtualenvs.create false
-
-# Install backend Python dependencies
-RUN poetry install
 
 # Install dependencies for docker-compose.tests.yml
 RUN python3 -m pip install pytest watchdog

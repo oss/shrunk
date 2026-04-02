@@ -1,59 +1,79 @@
-[tool.poetry]
+[project]
 name = "shrunk"
 version = "3.2.1"
-# readme = "../README.md"  # THIS HAS BEEN REPORTED TO THE POETRY DEVELOPMENT TEAM: https://github.com/python-poetry/poetry/issues/9488
 description = "URL Shortener for Rutgers University"
-repository = "https://github.com/oss/shrunk"
-authors = ["Rutgers Open System Solutions <oss@oit.rutgers.edu>"]
+authors = [{ name = "Rutgers Open System Solutions", email = "oss@oit.rutgers.edu" }]
+requires-python = "==3.14"
 license = "MIT"
-maintainers = ["Andrew Hong <ah1371@oit.rutgers.edu>"]
+maintainers = [{ name = "Andrew Hong", email = "ah1371@oit.rutgers.edu" }]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "License :: OSI Approved :: MIT License",
-    "Private :: Do not Upload",                    # Do not upload to PyPi, this is not meant to be used by anyone outside of our team.
+    "Private :: Do not Upload",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+    "flask==1.1.2",
+    "flask-sso==0.4.0",
+    "flask-mailman==0.1.7",
+    "jinja2==2.11.3",
+    "werkzeug==1.0.1",
+    "itsdangerous==1.1.0",
+    "pymongo==3.11.0",
+    "geoip2==2.9.0",
+    "httpagentparser==1.9.0",
+    "click==7.0",
+    "python-ldap>=3.4.4,<4",
+    "jsonschema==3.2.0",
+    "backports-datetime-fromisoformat==1.0.0",
+    "six>=1.16.0,<2",
+    "requests==2.17.3",
+    "backports_datetime_fromisoformat==1.0.0",
+    "segno>=1.6.1,<2",
+    "pillow==8.4.0",
+    "argon2-cffi==21.3.0",
+    "MarkupSafe==2.0.0",
+    "mkdocs==1.3.1",
 ]
 
-include = [
-    { path = "shrunk/**/*.py" },
-    { path = "shrunk/static/img/*.ico" },
-    { path = "shrunk/static/img/*.png" },
-    { path = "shrunk/static/dist/*.js" },
-    { path = "shrunk/static/dist/*.css" },
-    { path = "shrunk/static/dist/*.html" },
-    { path = "shrunk/templates/*.html" },
-    { path = "shrunk/static/webpack-stats.json" },
-]
-exclude = ["shrunk/config.py", "shrunk/test-config.py"]
+[project.urls]
+Repository = "https://github.com/oss/shrunk"
 
-[tool.poetry.dependencies]
-python = "^3.6"
-flask = "1.1.2"
-flask-sso = "0.4.0"
-flask-mailman = "0.1.7"
-jinja2 = "2.11.3"
-werkzeug = "1.0.1"
-itsdangerous = "1.1.0"
-pymongo = "3.11.0"
-geoip2 = "2.9.0"
-httpagentparser = "1.9.0"
-click = "7.0"
-python-ldap = "^3.4.4"
-jsonschema = "3.2.0"
-backports-datetime-fromisoformat = "1.0.0"
-six = "^1.16.0"
-requests = "2.17.3"                        # Do not change this version, you will have build issues if you do.
-backports_datetime_fromisoformat = "1.0.0" # Do not change this version, you will have build issues if you do.
-segno = "^1.6.1"
-pillow = "8.4.0"
-argon2-cffi = "21.3.0"
-MarkupSafe = "2.0.0"
-mkdocs = "1.3.1"
+[tool.uv]
+
+[tool.uv.build-backend]
+module-root = ""
+source-exclude = [
+    "shrunk/config.py",
+    "shrunk/test-config.py",
+]
+source-include = [
+    "shrunk/**/*.py",
+    "shrunk/static/img/*.ico",
+    "shrunk/static/img/*.png",
+    "shrunk/static/dist/*.js",
+    "shrunk/static/dist/*.css",
+    "shrunk/static/dist/*.html",
+    "shrunk/templates/*.html",
+    "shrunk/static/webpack-stats.json/**",
+]
+wheel-exclude = [
+    "shrunk/config.py",
+    "shrunk/test-config.py",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["uv_build>=0.9.22,<0.10.0"]
+build-backend = "uv_build"
 
 [tool.mypy]
 ignore_missing_imports = true
