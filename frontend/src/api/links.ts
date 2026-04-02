@@ -60,15 +60,8 @@ export async function createLink(
   return data.id as string;
 }
 
-export async function deleteLink(linkId: string): Promise<string> {
-  const resp = await fetch(`/api/core/link/${linkId}`, { method: 'DELETE' });
-  if (resp.status === 403) {
-    return 'You do not have permission to delete this link';
-  }
-  if (!resp.ok) {
-    return 'Failed to delete link';
-  }
-  return 'Link deleted successfully';
+export async function deleteLink(linkId: string) {
+  await fetch(`/api/core/link/${linkId}`, { method: 'DELETE' });
 }
 
 export async function addCollaborator(
