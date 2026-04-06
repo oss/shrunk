@@ -18,6 +18,10 @@
         {
           "text": "Fix potential race condition where two links could have the same alias if created at the same time",
           "contributors": ["ak2399"]
+        },
+        {
+          "text": "Fix an error when modifying a link's expiration date and time",
+          "contributors": ["ys973"]
         }
       ]
     }
