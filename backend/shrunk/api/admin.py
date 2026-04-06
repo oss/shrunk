@@ -19,11 +19,11 @@ bp = Blueprint("admin", __name__, url_prefix="/api/core/admin")
 @bp.route("/app-version", methods=["GET"])
 def _shrunk_version() -> Any:
     try:
-        version = version("shrunk")
+        v = version("shrunk")
     except Exception:
-        version = "DEV_BUILD"
+        v = "DEV_BUILD"
 
-    return jsonify({"version": version})
+    return jsonify({"version": v})
 
 
 OVERVIEW_STATS_SCHEMA = {
