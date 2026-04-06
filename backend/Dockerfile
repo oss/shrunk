@@ -23,4 +23,4 @@ ENV PATH="/root/.local/bin/:$PATH"
 RUN uv sync
 
 # Install dependencies for docker-compose.tests.yml
-RUN python3 -m pip install pytest watchdog
+RUN uv add pytest watchdog
