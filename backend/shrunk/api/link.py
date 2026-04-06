@@ -301,7 +301,9 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
     :param link_id:
     """
     if "expiration_time" in req and req["expiration_time"] is not None:
-        req["expiration_time"] = datetime.fromisoformat(req["expiration_time"])
+        req["expiration_time"] = datetime.fromisoformat(
+            req["expiration_time"].replace("Z", "")
+        )
     try:
         link = client.links.get_link_info(link_id)
     except NoSuchObjectException:
