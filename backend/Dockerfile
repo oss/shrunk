@@ -14,10 +14,12 @@ COPY ./GeoLite2-City.mmdb /usr/share/GeoIP/GeoLite2-City.mmdb
 # Install backend binary dependencies
 RUN apt-get update
 RUN apt-get install -y libsasl2-dev libldap2-dev libssl-dev
-# Install uv
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh 
-RUN uv sync 
 
+# install UV
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
+ADD https://astral.sh/uv/install.sh /uv-installer.sh
+RUN sh /uv-installer.sh && rm /uv-installer.sh
+ENV PATH="/root/.local/bin/:$PATH"
 
 # Install dependencies for docker-compose.tests.yml
 RUN python3 -m pip install pytest watchdog
