@@ -23,7 +23,7 @@ from flask import (
 )
 from backports import datetime_fromisoformat
 from bson import ObjectId
-from flask.json import JSONEncoder
+from flask.json.provider import DefaultJSONProvider
 from flask.logging import default_handler
 from flask_mailman import Mail
 from urllib.parse import parse_qsl, urlencode
@@ -68,13 +68,13 @@ class Base32Converter(BaseConverter):
         return str(base64.b32encode(bytes(value, "utf8")), "utf8")
 
 
-class ShrunkEncoder(JSONEncoder):
+class ShrunkJSONProvider(DefaultJSONProvider):
     def default(self, o):
         if isinstance(o, ObjectId):
             return str(o)
         if isinstance(o, datetime.datetime):
             return o.isoformat()
-        return JSONEncoder.default(self, o)
+        return super().default(o)
 
 
 class HexTokenConverter(BaseConverter):
@@ -205,7 +205,7 @@ def create_app(**kwargs: Any) -> Flask:
     }
     app.config["SSO_ATTRIBUTE_MAP"] = SSO_ATTRIBUTE_MAP
 
-    app.json_encoder = ShrunkEncoder
+    app.json = ShrunkJSONProvider(app)
 
     formatter = RequestFormatter(
         "[%(asctime)s] [%(user)s@%(remote_addr)s] [%(url)s] %(levelname)s "
@@ -218,10 +218,10 @@ def create_app(**kwargs: Any) -> Flask:
     app.url_map.converters["b32"] = Base32Converter
     app.url_map.converters["hex_token"] = HexTokenConverter
 
-    # call initialization functions
-    app.before_first_request(_init_logging)
-    app.before_first_request(_init_shrunk_client)
-    app.before_first_request(_init_roles)
+    with app.app_context():
+        _init_logging()
+        _init_shrunk_client()
+        _init_roles()
 
     # wsgi middleware
     app.wsgi_app = ProxyFix(app.wsgi_app)  # type: ignore

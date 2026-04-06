@@ -5,6 +5,7 @@ services:
     volumes:
       - ./development.env:/usr/shrunk/backend/.env
       - ./backend:/usr/shrunk/backend
+      - backend_venv:/usr/shrunk/backend/.venv
     env_file:
       - ./development.env
     depends_on:
@@ -38,3 +39,6 @@ services:
     attach: false  # We don't care.
     ports:
       - '27017:27017'
+
+volumes:
+  backend_venv:
