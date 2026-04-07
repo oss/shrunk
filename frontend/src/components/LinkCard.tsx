@@ -9,7 +9,7 @@ import {
   Tooltip,
 } from 'antd';
 import dayjs from 'dayjs';
-import { CopyIcon, EyeIcon } from 'lucide-react';
+import { CopyIcon, EditIcon, EyeIcon } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { Link } from '@/interfaces/link';
@@ -24,6 +24,15 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
     <Card
       title={linkInfo.title}
       extra={[
+        <Tooltip key="edit" title="Edit link">
+          <Button
+            icon={<EditIcon />}
+            type="text"
+            href={`/app/links/${linkInfo._id}?mode=edit`}
+            target="_blank"
+            className="!tw-inline-flex !tw-items-center !tw-justify-center"
+          />
+        </Tooltip>,
         <Tooltip key="view" title="View link">
           <Button
             icon={<EyeIcon />}
