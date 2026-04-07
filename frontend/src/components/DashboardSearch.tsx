@@ -20,7 +20,7 @@ import {
   notification,
 } from 'antd';
 import { XIcon, SearchIcon, ArrowUpIcon, ArrowDownIcon } from 'lucide-react';
-import dayjs, { Dayjs } from 'dayjs';
+import { Dayjs } from 'dayjs';
 import type { InputRef, TreeProps, TreeDataNode, RadioChangeEvent } from 'antd';
 import { SearchQuery, SearchSet, DEFAULT_QUERY } from '../interfaces/link';
 import DatePicker from './date-picker';
@@ -320,6 +320,27 @@ export default function DashboardSearch({
     },
     [query, setNewQuery],
   );
+
+  useEffect(() => {
+    setSortOrder(query.sort.order as 'ascending' | 'descending');
+  }, [query.sort.order]);
+
+  const resetFilters = useCallback(() => {
+    setFilters({ title: '', alias: '', url: '', owner: '' });
+    setTreeSelectValues([]);
+    setExpandedKeys(undefined);
+    setCheckedKeys(['0-0']);
+    setSortOrder('descending');
+    setNewQuery(DEFAULT_QUERY);
+  }, [
+    setFilters,
+    setTreeSelectValues,
+    setExpandedKeys,
+    setCheckedKeys,
+    setSortOrder,
+    setNewQuery,
+  ]);
+
   useEffect(() => {
     setTreeSelectValues(
       (['title', 'alias', 'url', 'owner'] as const).filter(
@@ -475,10 +496,10 @@ export default function DashboardSearch({
           </Form.Item>
         </Col>
         <Col>
-          <Form.Item name="sortKeyInput" label="Sort by">
+          <Form.Item label="Sort by">
             <Space.Compact block>
               <Select
-                defaultValue={query.sort.key}
+                value={query.sort.key}
                 onChange={sortLinksByKey}
                 style={{ flex: 1 }}
                 options={[
@@ -505,23 +526,19 @@ export default function DashboardSearch({
           </Form.Item>
         </Col>
         <Col>
-          <Form.Item name="dateRange" label="Creation Date">
+          <Form.Item label="Creation Date">
             <DatePicker.RangePicker
               format="YYYY-MM-DD"
               onChange={showLinksInRange}
               style={{ width: '100%' }}
-              value={[dayjs(query.begin_time), dayjs(query.end_time)]}
+              value={[query.begin_time ?? null, query.end_time ?? null]}
               allowEmpty={[false, true]}
             />
           </Form.Item>
         </Col>
         <Col>
           <div className="tw-flex">
-            <Form.Item
-              name="show_expired"
-              label="Expired Links"
-              className="tw-min-w-fit tw-flex-1"
-            >
+            <Form.Item label="Expired Links" className="tw-min-w-fit tw-flex-1">
               <Radio.Group
                 optionType="button"
                 buttonStyle="solid"
@@ -529,15 +546,11 @@ export default function DashboardSearch({
                   { label: 'Show', value: 'show' },
                   { label: 'Hide', value: 'hide' },
                 ]}
-                defaultValue="hide"
+                value={query.show_expired_links ? 'show' : 'hide'}
                 onChange={(e) => showExpiredLinks(e.target.value === 'show')}
               />
             </Form.Item>
-            <Form.Item
-              name="links_vs_pixels"
-              label="Link Type"
-              className="tw-min-w-fit tw-flex-1"
-            >
+            <Form.Item label="Link Type" className="tw-min-w-fit tw-flex-1">
               <Radio.Group
                 optionType="button"
                 buttonStyle="solid"
@@ -548,7 +561,7 @@ export default function DashboardSearch({
                     value: 'tracking_pixels',
                   },
                 ]}
-                defaultValue={query.showType}
+                value={query.showType}
                 onChange={sortByType}
               />
             </Form.Item>
@@ -556,7 +569,7 @@ export default function DashboardSearch({
         </Col>
         {userPrivileges.has('admin') && (
           <Col>
-            <Form.Item name="show_deleted" label="Deleted Links">
+            <Form.Item label="Deleted Links">
               <Radio.Group
                 optionType="button"
                 buttonStyle="solid"
@@ -564,7 +577,7 @@ export default function DashboardSearch({
                   { label: 'Show', value: 'show' },
                   { label: 'Hide', value: 'hide' },
                 ]}
-                defaultValue="hide"
+                value={query.show_deleted_links ? 'show' : 'hide'}
                 onChange={(e) => {
                   showDeletedLinks(e.target.value === 'show');
                 }}
@@ -573,12 +586,8 @@ export default function DashboardSearch({
           </Col>
         )}
         <Col>
-          <Form.Item name="reset">
-            <Button
-              variant="filled"
-              color="danger"
-              onClick={() => setNewQuery(DEFAULT_QUERY)}
-            >
+          <Form.Item>
+            <Button variant="filled" color="danger" onClick={resetFilters}>
               Reset Filters
             </Button>
           </Form.Item>
