@@ -2,6 +2,19 @@
   {
     "major": 3,
     "minor": 2,
+    "patch": 2,
+    "projectDirector": "ah1371",
+    "date": "TODO",
+    "description": "Bug fixes and improvements following the 3.2.0 release.",
+    "categories": {
+      "features": [],
+      "improvements": [],
+      "fixes": []
+    }
+  },
+  {
+    "major": 3,
+    "minor": 2,
     "patch": 1,
     "projectDirector": "ah1371",
     "date": "TODO",
