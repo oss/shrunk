@@ -8,8 +8,18 @@
     "description": "Bug fixes and improvements following the 3.2.0 release.",
     "categories": {
       "features": [],
-      "improvements": [],
-      "fixes": []
+      "improvements": [
+        {
+          "text": "Added a card skeleton for the organization overview tab",
+          "contributors": ["jds508"]
+        }
+      ],
+      "fixes": [
+        {
+          "text": "Fixed the styling on the organization collaborate modal so that all components were the same height",
+          "contributors": ["jds508"]
+        }
+      ]
     }
   },
   {
