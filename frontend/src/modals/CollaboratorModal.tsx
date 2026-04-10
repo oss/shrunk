@@ -112,66 +112,79 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
         props.onCancel();
       }}
       footer={null}
+      styles={{
+        header: {
+          background: 'transparent',
+        },
+      }}
     >
       <Form form={form} preserve={false}>
         <Row gutter={[16, 2]}>
           <Col span={24}>
-            <Space.Compact style={{ width: '100%' }}>
-              {activeTab === 'netid' ? (
-                <Form.Item
-                  name="netid"
-                  style={{ marginBottom: '5px', width: '100%' }}
-                  rules={[
-                    {
-                      required: true,
-                      message: 'Please enter a valid NetID.',
-                    },
-                    { validator },
-                  ]}
-                >
-                  <Input
-                    placeholder="Search by NetID"
-                    onPressEnter={(_: any) => {
-                      setCollaboratorType('netid');
-                    }}
-                  />
-                </Form.Item>
-              ) : (
-                <Form.Item
-                  name="organization"
-                  style={{ marginBottom: '5px', width: '100%' }}
-                  rules={[
-                    {
-                      required: true,
-                      message: 'Please select an organization.',
-                    },
-                  ]}
-                >
-                  <Select
-                    placeholder="Your Organizations"
-                    onChange={(_: any) => {
-                      setCollaboratorType('org');
-                    }}
-                    options={organizations.map((org) => ({
-                      value: org.id,
-                      label: org.name,
-                    }))}
-                  />
-                </Form.Item>
-              )}
-              <Select
-                defaultValue={collaboratorRole}
-                onChange={(value: string) => {
-                  setCollaboratorRole(value);
-                }}
-                options={props.roles.map((role) => ({
-                  value: role.value,
-                  label: role.label,
-                  disabled: role.value === masterRole && !canAddMaster,
-                }))}
-              />
+            <Space.Compact className="tw-flex tw-w-full tw-items-stretch ">
+              <div className="tw-flex-1">
+                {activeTab === 'netid' ? (
+                  <Form.Item
+                    name="netid"
+                    className="tw-mb-0"
+                    rules={[
+                      {
+                        required: true,
+                        message: 'Please enter a valid NetID.',
+                      },
+                      { validator },
+                    ]}
+                  >
+                    <Input
+                      className="tw-h-9"
+                      placeholder="Search by NetID"
+                      onPressEnter={(_: any) => {
+                        setCollaboratorType('netid');
+                      }}
+                    />
+                  </Form.Item>
+                ) : (
+                  <Form.Item
+                    name="organization"
+                    className="tw-mb-0"
+                    rules={[
+                      {
+                        required: true,
+                        message: 'Please select an organization.',
+                      },
+                    ]}
+                  >
+                    <Select
+                      className="tw-h-9"
+                      placeholder="Your Organizations"
+                      onChange={(_: any) => {
+                        setCollaboratorType('org');
+                      }}
+                      options={organizations.map((org) => ({
+                        value: org.id,
+                        label: org.name,
+                      }))}
+                    />
+                  </Form.Item>
+                )}
+              </div>
+              <div className="tw-flex tw-items-stretch">
+                <Select
+                  defaultValue={collaboratorRole}
+                  className="tw-h-9"
+                  onChange={(value: string) => {
+                    setCollaboratorRole(value);
+                  }}
+                  options={props.roles.map((role) => ({
+                    value: role.value,
+                    label: role.label,
+                    disabled: role.value === masterRole && !canAddMaster,
+                  }))}
+                />
+              </div>
               <Button
                 icon={<PlusCircleIcon />}
+                className="tw-flex tw-h-9 tw-items-center"
                 onClick={() => {
                   props.onAddEntity(activeTab, {
                     _id:
