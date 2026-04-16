@@ -50,9 +50,6 @@ class AccessTokenClient:
             "created_by": creator,  # the creator's netid
             "created_date": datetime.now(timezone.utc),
             "permissions": permissions,
-            "disabled": False,
-            "disabled_by": None,
-            "disabled_time": None,
             "deleted": False,
             "deleted_by": None,
             "deleted_time": None,

@@ -526,7 +526,7 @@ def create_app(**kwargs: Any) -> Flask:
             uid,
             mid,
         )
-        
+
         ALLOWED_EXTENSIONS = {"gif", "png"}
         extension = None
 
