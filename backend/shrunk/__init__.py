@@ -11,7 +11,16 @@ from typing import Any
 
 import bson.errors
 import flask
-from flask import Flask, current_app, jsonify, redirect, request, session, send_file
+from flask import (
+    Flask,
+    current_app,
+    jsonify,
+    redirect,
+    request,
+    session,
+    send_file,
+    send_from_directory,
+)
 from backports import datetime_fromisoformat
 from bson import ObjectId
 from flask.json import JSONEncoder
@@ -352,10 +361,9 @@ def create_app(**kwargs: Any) -> Flask:
     @app.route("/outlook/assets/<string:env>/<path:filename>", methods=["GET"])
     def _outlook_assets_prod(env: str, filename: str) -> Any:
         OUTLOOK_PATH = f"/var/www/outlook/{env}"
-        if env == "dev":
-            return send_file(f"{OUTLOOK_PATH}/{filename}")
-        elif env == "prod":
-            return send_file(f"{OUTLOOK_PATH}/{filename}")
+        if env not in {"dev", "prod"}:
+            return send_from_directory(OUTLOOK_PATH, filename)
+
         else:
             return "Bad Request. Env variable was invalid.", 400
 
