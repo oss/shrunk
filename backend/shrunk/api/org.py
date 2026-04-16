@@ -65,7 +65,7 @@ def get_orgs(netid: str, client: ShrunkClient, req: Any) -> Any:
     :param client:
     :param req:
     """
-    if req["which"] == "all" and not client.users.has_role("admin", netid):
+    if req["which"] == "all" and not client.users.has_role(netid, "admin"):
         abort(403)
     orgs = client.orgs.get_orgs(netid, req["which"] == "user")
     return jsonify({"orgs": orgs})

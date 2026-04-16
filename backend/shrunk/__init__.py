@@ -526,11 +526,16 @@ def create_app(**kwargs: Any) -> Flask:
             uid,
             mid,
         )
-
+        
+        ALLOWED_EXTENSIONS = {"gif", "png"}
         extension = None
 
         if "." in tracking_pixel:
-            extension = tracking_pixel.split(".")[-1]
+            ext = tracking_pixel.split(".")[-1].lower()
+            if ext in ALLOWED_EXTENSIONS:
+                extension = ext
+            else:
+                return "Bad Request. Invalid file extension.", 400
         else:
             extension = "gif"
 
