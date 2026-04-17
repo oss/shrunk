@@ -105,7 +105,6 @@ backend:
   needs: []
   script:
     - cd backend
-    - pip3 install -r requirements-build.txt
     - apt-get update
     - apt-get install -y libsasl2-dev libldap2-dev libssl-dev
     - curl -LsSf https://astral.sh/uv/install.sh | sh
