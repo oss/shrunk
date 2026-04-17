@@ -20,6 +20,6 @@ FROM base AS prod
 
 WORKDIR /usr/shrunk/backend/
 
-RUN python3 -m pip install gunicorn
+RUN pip install uwsgi
 
 ENTRYPOINT ["sh", "entrypoint.sh"]
