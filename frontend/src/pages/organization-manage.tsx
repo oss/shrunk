@@ -12,6 +12,7 @@ import {
   Table,
   Typography,
   Tabs,
+  Grid,
 } from 'antd';
 import type { TabsProps } from 'antd/lib/tabs';
 import type { FormInstance } from 'antd/lib/form';
@@ -23,7 +24,6 @@ import {
   TrashIcon,
   UserMinusIcon,
   UsersIcon,
-  Link2,
   PlusCircleIcon,
   ChartLineIcon,
 } from 'lucide-react';
@@ -63,7 +63,7 @@ interface VisitDatum {
   unique_visits: number;
 }
 
-const VALID_TABS = ['members', 'links', 'overview'];
+const VALID_TABS = ['members', 'overview'];
 const DEFAULT_TAB = 'overview';
 
 function ManageOrgBase({
@@ -79,6 +79,7 @@ function ManageOrgBase({
   }
 
   const { darkMode } = darkModeContext;
+  const screens = Grid.useBreakpoint();
 
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [adminsCount, setAdminsCount] = useState(0);
@@ -237,10 +238,24 @@ function ManageOrgBase({
       icon: <ChartLineIcon />,
       label: 'Overview',
       children: (
-        <OrgOverview
-          totalMembers={organization.members.length}
-          orgId={organization.id}
-        />
+        <Row gutter={[16, 16]}>
+          <Col xs={24} lg={8} xl={6}>
+            <OrgOverview
+              totalMembers={organization.members.length}
+              orgId={organization.id}
+              isMobile={!screens.md}
+            />
+          </Col>
+          <Col xs={24} lg={16} xl={18}>
+            <CompactLinkTable
+              org_id={organization.id}
+              forceRefresh={forceRefresh}
+              isAdmin={
+                organization.role === 'admin' || userPrivileges.has('admin')
+              }
+            />
+          </Col>
+        </Row>
       ),
     },
     {
@@ -255,18 +270,6 @@ function ManageOrgBase({
           )}
           rowKey="netid"
           pagination={false}
-        />
-      ),
-    },
-    {
-      key: 'links',
-      icon: <Link2 />,
-      label: 'Links',
-      children: (
-        <CompactLinkTable
-          org_id={organization.id}
-          forceRefresh={forceRefresh}
-          isAdmin={organization.role === 'admin' || userPrivileges.has('admin')}
         />
       ),
     },
