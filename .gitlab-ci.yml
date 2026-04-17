@@ -101,16 +101,15 @@ frontend:
 
 backend:
   stage: build
-  image: python:3.6
+  image: python:3.14
   needs: []
   script:
     - cd backend
     - pip3 install -r requirements-build.txt
     - apt-get update
     - apt-get install -y libsasl2-dev libldap2-dev libssl-dev
-    - poetry config virtualenvs.create false
-    - poetry install
-    - poetry build
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - uv build
   artifacts:
     paths:
       - backend/dist/shrunk-*.whl
