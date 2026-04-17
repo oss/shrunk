@@ -14,8 +14,11 @@ secretGenerator:
   - configs-test/attribute-map.xml
   - configs-test/shibboleth2.xml
   - configs-test/sp-cert.pem
+  - configs-test/sp-key.pem
   - configs-test/sp-signing-cert.pem
+  - configs-test/sp-signing-key.pem
   - configs-test/sp-encrypt-cert.pem
+  - configs-test/sp-encrypt-key.pem
   - configs-test/test-idps.rutgers.edu_idp-metadata.xml
   # files:
   # - configs/attribute-map.xml
