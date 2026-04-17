@@ -271,8 +271,8 @@ function ShrunkContent({
   const currentThemeKey = isFollowingSystem
     ? 'system'
     : darkMode
-    ? 'dark'
-    : 'light';
+      ? 'dark'
+      : 'light';
 
   const currentThemeIcon = isFollowingSystem ? (
     <SunMoon />
@@ -284,8 +284,8 @@ function ShrunkContent({
   const currentThemeLabel = isFollowingSystem
     ? 'System Preference'
     : darkMode
-    ? 'Dark'
-    : 'Light';
+      ? 'Dark'
+      : 'Light';
 
   const handleThemeButtonClick = () => {
     if (currentThemeKey === 'light') {
@@ -585,12 +585,12 @@ export default function Shrunk(props: Props) {
     userPrivileges.size === 0
       ? 'Whitelisted User'
       : userPrivileges.has('power_user')
-      ? 'Power User'
-      : userPrivileges.has('facstaff')
-      ? 'Faculty'
-      : userPrivileges.has('guest')
-      ? 'Guest User'
-      : 'Administrator';
+        ? 'Power User'
+        : userPrivileges.has('facstaff')
+          ? 'Faculty'
+          : userPrivileges.has('guest')
+            ? 'Guest User'
+            : 'Administrator';
 
   const onLogout = async () => {
     window.location.href = await logout();

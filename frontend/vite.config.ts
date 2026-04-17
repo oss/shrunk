@@ -32,12 +32,12 @@ export default defineConfig({
     // PROD: httpd is used
     proxy: {
       '/api': {
-        target: 'http://backend:3050'
+        target: 'http://backend:3050',
       },
       '^(?!\/app\/).*': {
-	target: 'http://backend:3050'
-      }
-    }
+        target: 'http://backend:3050',
+      },
+    },
   },
   build: {
     outDir: 'dist',

@@ -3,6 +3,12 @@ FROM python:3.14 AS base
 EXPOSE 3050
 WORKDIR /usr/shrunk/backend/
 
+# Copy all files
+COPY . .
+
+# Copy GeoLite2-City.mmdb
+COPY ./GeoLite2-City.mmdb /usr/share/GeoIP/GeoLite2-City.mmdb
+
 # Install UV
 RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
 ADD https://astral.sh/uv/install.sh /uv-installer.sh
