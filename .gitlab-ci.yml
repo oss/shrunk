@@ -109,6 +109,7 @@ backend:
     - apt-get update
     - apt-get install -y libsasl2-dev libldap2-dev libssl-dev
     - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - source $HOME/.local/bin/env
     - uv build
   artifacts:
     paths:
