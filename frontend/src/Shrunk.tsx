@@ -32,7 +32,7 @@ import {
   Typography,
   message,
 } from 'antd';
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useRef, useState, useContext } from 'react';
 import {
   BrowserRouter,
   Redirect,
@@ -128,7 +128,29 @@ function ShrunkContent({
   };
 
   const isApp = location.pathname.split('/').slice(1)[0] === 'app';
+  const isDashboardRoute = location.pathname === '/app/dash';
   const showMotd = motd !== '' && localStorage.getItem('alert-read') !== motd;
+  const appHeaderRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const setStickyOffsets = () => {
+      const appHeaderHeight = Math.round(
+        appHeaderRef.current?.getBoundingClientRect().height ?? 0,
+      );
+
+      document.documentElement.style.setProperty(
+        '--app-header-height',
+        `${appHeaderHeight}px`,
+      );
+    };
+
+    setStickyOffsets();
+    window.addEventListener('resize', setStickyOffsets);
+
+    return () => {
+      window.removeEventListener('resize', setStickyOffsets);
+    };
+  }, [location.pathname]);
 
   const menuItems: any[] = [
     {
@@ -308,7 +330,10 @@ function ShrunkContent({
         />
       )}
 
-      <Header className="tw-flex tw-items-center tw-justify-between">
+      <Header
+        ref={appHeaderRef}
+        className="tw-sticky tw-top-0 tw-z-50 tw-flex tw-items-center tw-justify-between"
+      >
         <Link to={netid ? '/app/dash' : '/app/login'}>
           <Image
             preview={false}
@@ -344,46 +369,56 @@ function ShrunkContent({
 
       <Layout>
         <Sider width={siderWidth} breakpoint="xxl" collapsedWidth="10" />
-        <Content className="tw-m-0 tw-min-h-[90vh] tw-p-6">
+        <Content
+          className={
+            isDashboardRoute
+              ? 'tw-m-0 tw-min-h-[90svh] tw-px-3 tw-pb-6 sm:tw-px-4 md:tw-min-h-[90vh] md:tw-px-6'
+              : 'tw-m-0 tw-min-h-[90svh] tw-p-6 md:tw-min-h-[90vh]'
+          }
+        >
           <PendingRequests />
 
-          {netid !== '' && isApp && (
-            <Breadcrumb
-              items={location.pathname
-                .split('/')
-                .slice(1)
-                .map((part, index, arr) => {
-                  if (part === 'app') {
+          {netid !== '' && isApp && !isDashboardRoute && (
+            <section>
+              <Breadcrumb
+                items={location.pathname
+                  .split('/')
+                  .slice(1)
+                  .map((part, index, arr) => {
+                    if (part === 'app') {
+                      return {
+                        title: <Link to="/app/dash">Home</Link>,
+                      };
+                    }
+
+                    if (!(part in partToName)) {
+                      return {
+                        title: part,
+                      };
+                    }
+
+                    const path =
+                      partToName[part].href === undefined
+                        ? arr.slice(0, index + 1).join('/')
+                        : partToName[part].href;
+
+                    const isClickable = partToName[part].clickable;
+                    const isLastItem = index === arr.length - 1;
+
+                    if (isLastItem || !isClickable) {
+                      return {
+                        title: partToName[part].name,
+                      };
+                    }
+
                     return {
-                      title: <Link to="/app/dash">Home</Link>,
+                      title: (
+                        <Link to={`/${path}`}>{partToName[part].name}</Link>
+                      ),
                     };
-                  }
-
-                  if (!(part in partToName)) {
-                    return {
-                      title: part,
-                    };
-                  }
-
-                  const path =
-                    partToName[part].href === undefined
-                      ? arr.slice(0, index + 1).join('/')
-                      : partToName[part].href;
-
-                  const isClickable = partToName[part].clickable;
-                  const isLastItem = index === arr.length - 1;
-
-                  if (isLastItem || !isClickable) {
-                    return {
-                      title: partToName[part].name,
-                    };
-                  }
-
-                  return {
-                    title: <Link to={`/${path}`}>{partToName[part].name}</Link>,
-                  };
-                })}
-            />
+                  })}
+              />
+            </section>
           )}
 
           <Switch>

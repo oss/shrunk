@@ -11,13 +11,23 @@
       "improvements": [
         {
           "text": "Added a card skeleton for the organization overview tab",
-          "contributors": ["jds508"]
+          "contributors": [
+            "jds508"
+          ]
+        },
+        {
+          "text": "Replace pagination with infinite scrolling for the dashboard",
+          "contributors": [
+            "sb2787"
+          ]
         }
       ],
       "fixes": [
         {
           "text": "Fixed the styling on the organization collaborate modal so that all components were the same height",
-          "contributors": ["jds508"]
+          "contributors": [
+            "jds508"
+          ]
         }
       ]
     }
@@ -34,25 +44,35 @@
       "improvements": [
         {
           "text": "Rewrite the dark mode system to use React context in order to implement a 'follow system preference' feature",
-          "contributors": ["jds508"]
-        }, 
+          "contributors": [
+            "jds508"
+          ]
+        },
         {
           "text": "Re-add the edit link icon to link cards",
-          "contributors": ["jds508"]
+          "contributors": [
+            "jds508"
+          ]
         }
       ],
       "fixes": [
         {
           "text": "Fix potential race condition where two links could have the same alias if created at the same time",
-          "contributors": ["ak2399"]
+          "contributors": [
+            "ak2399"
+          ]
         },
         {
           "text": "Fix an error when modifying a link's expiration date and time",
-          "contributors": ["ys973"]
-        }, 
+          "contributors": [
+            "ys973"
+          ]
+        },
         {
           "text": "Fix an error where the UI did not reflect changes when the Reset Filters Button was pressed",
-          "contributors": ["jds508"]
+          "contributors": [
+            "jds508"
+          ]
         }
       ]
     }
@@ -68,71 +88,104 @@
       "features": [
         {
           "text": "Rewrite user managment system to modernize and improve both developer experience and performance",
-          "contributors": ["ak2399"]
+          "contributors": [
+            "ak2399"
+          ]
         },
         {
           "text": "Replace Parcel with Vite for development and building",
-          "contributors": ["sb2787"]
+          "contributors": [
+            "sb2787"
+          ]
         },
         {
           "text": "Replace dashboard search drawer with sidebar, add more filtering options for organizations",
-          "contributors": ["sb2787"]
+          "contributors": [
+            "sb2787"
+          ]
         },
         {
           "text": "Add a search sidebar to organizations dashboard",
-          "contributors": ["sb2787"]
+          "contributors": [
+            "sb2787"
+          ]
         },
         {
           "text": "Add toggable dark mode",
-          "contributors": ["jds508"]
+          "contributors": [
+            "jds508"
+          ]
         }
       ],
       "improvements": [
         {
           "text": "Update Dashboard to be a functional component, remove final class components",
-          "contributors": ["jds508"]
+          "contributors": [
+            "jds508"
+          ]
         },
         {
           "text": "Update to Ant Design 6",
-          "contributors": ["jds508"]
+          "contributors": [
+            "jds508"
+          ]
         },
         {
           "text": "Add hot reloading for frontend development",
-          "contributors": ["sb2787"]
+          "contributors": [
+            "sb2787"
+          ]
         },
         {
           "text": "Improve readability and responsiveness of link cards on mobile layout",
-          "contributors": ["jds508"]
+          "contributors": [
+            "jds508"
+          ]
         },
         {
           "text": "Replace <a> tags with <link> tags to take advantage of client side routing",
-          "contributors": ["jds508"]
+          "contributors": [
+            "jds508"
+          ]
         },
         {
           "text": "Use TypeScript path aliases",
-          "contributors": ["sb2787"]
-        }, 
+          "contributors": [
+            "sb2787"
+          ]
+        },
         {
           "text": "Add dashboard navigation button to dropdown",
-          "contributors": ["jds508"]
+          "contributors": [
+            "jds508"
+          ]
         },
         {
           "text": "Improve layout for admin dashboard on mobile",
-          "contributors": ["sb2787"]
+          "contributors": [
+            "sb2787"
+          ]
         }
       ],
       "fixes": [
         {
           "text": "Fix x/page dropdown from not showing the correct amount on admin dashboard and other tables",
-          "contributors": ["sb2787"]
+          "contributors": [
+            "sb2787"
+          ]
         },
         {
           "text": "Remove server side storage and persistance of user search filters",
-          "contributors": ["jds508", "ak2399"]
+          "contributors": [
+            "jds508",
+            "ak2399"
+          ]
         },
         {
           "text": "Fix power user role not being able to be removed from a user even if they have other roles",
-          "contributors": ["sb2787"]
+          "contributors": [
+            "sb2787"
+          ]
         }
       ]
     }
@@ -148,37 +201,51 @@
       "features": [
         {
           "text": "Organizations can now add guest users to their organizations. Guest users must be classified as university guests, all links created by guests will be owned by the organization they are apart of",
-          "contributors": ["ak2399"]
+          "contributors": [
+            "ak2399"
+          ]
         },
         {
           "text": "Link analytics now supports filtering by QR Code traffic source",
-          "contributors": ["ys973"]
+          "contributors": [
+            "ys973"
+          ]
         }
       ],
       "improvements": [
-         {
+        {
           "text": "Update response payload for create link endpoint to include the newly generated link",
-          "contributors": ["ys973"],
+          "contributors": [
+            "ys973"
+          ],
           "product": "public-api"
         },
         {
           "text": "Add option to return an existing link for the same long URL when creating a new link",
-          "contributors": ["ys973"],
+          "contributors": [
+            "ys973"
+          ],
           "product": "public-api"
         },
         {
           "text": "CSV generation moved to server side for better performance on large links",
-          "contributors": ["ak2399"]
+          "contributors": [
+            "ak2399"
+          ]
         }
       ],
       "fixes": [
         {
           "text": "Fix bug to parse mid and uid correctly",
-          "contributors": ["ak2399"]
+          "contributors": [
+            "ak2399"
+          ]
         },
         {
           "text": "Fix calculation of top most referrer",
-          "contributors": ["ak2399"]
+          "contributors": [
+            "ak2399"
+          ]
         }
       ]
     }
@@ -195,12 +262,16 @@
       "improvements": [],
       "fixes": [
         {
-            "text": "Resolve infinite loading issue in visit graph for links with high visit counts",
-          "contributors": ["ak2399"]
+          "text": "Resolve infinite loading issue in visit graph for links with high visit counts",
+          "contributors": [
+            "ak2399"
+          ]
         },
         {
           "text": "Revert broken code from the dashboard preventing users from searching links",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         }
       ]
     }
@@ -214,30 +285,40 @@
     "description": "A small patch to fix some bugs from the last release.",
     "categories": {
       "features": [
-	{
+        {
           "text": "Add quick access to stats of a link by appending /manage to it",
-          "contributors": ["iz80"]
-	}
+          "contributors": [
+            "iz80"
+          ]
+        }
       ],
       "improvements": [
         {
           "text": "Allow users to select a custom date range in the visits graph",
-          "contributors": ["iz80"]
+          "contributors": [
+            "iz80"
+          ]
         },
         {
           "text": "Show comments and time blocked for links",
-          "contributors": ["iz80"]
+          "contributors": [
+            "iz80"
+          ]
         }
       ],
       "fixes": [
         {
           "text": "Re-add ability to edit alias and long url of a shortened link",
-          "contributors": ["ak2399"]
+          "contributors": [
+            "ak2399"
+          ]
         },
-	{
-	  "text": "Show BlockedLinked and Blacklisted state in user view instead of a blank",
-          "contributors": ["iz80"]
-	}
+        {
+          "text": "Show BlockedLinked and Blacklisted state in user view instead of a blank",
+          "contributors": [
+            "iz80"
+          ]
+        }
       ]
     }
   },
@@ -252,156 +333,226 @@
       "features": [
         {
           "text": "Add Super Access Tokens for the public API, managabale via admin dashboard",
-          "contributors": ["ys973"],
+          "contributors": [
+            "ys973"
+          ],
           "product": "public-api"
         },
         {
           "text": "Alert system replaced with a new MOTD system",
-          "contributors": ["ah1371"],
+          "contributors": [
+            "ah1371"
+          ],
           "warning": true
         },
         {
           "text": "Backend tests are able to be run locally on the developer's machine with hot reloading using Docker",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "New page for creating tokens for the public API via organization management",
-          "contributors": ["ah1371", "ys973"],
+          "contributors": [
+            "ah1371",
+            "ys973"
+          ],
           "product": "public-api"
         },
         {
           "text": "Organizations can use our public API to interact with users, links, tracking pixels, and organizations",
-          "contributors": ["ys973"],
+          "contributors": [
+            "ys973"
+          ],
           "product": "public-api"
         },
         {
           "text": "New page containing an API Reference for the public API",
-          "contributors": ["ys973"],
+          "contributors": [
+            "ys973"
+          ],
           "product": "public-api"
         },
         {
           "text": "New pages in an organization's dashboard: Overview and Links allows organizations to quickly view and manage their links and tracking pixels",
-          "contributors": ["ak2399"]
+          "contributors": [
+            "ak2399"
+          ]
         },
         {
           "text": "Organizations can now own a link or tracking pixel",
-          "contributors": ["ak2399"]
+          "contributors": [
+            "ak2399"
+          ]
         }
-
       ],
       "improvements": [
-         {
+        {
           "text": "Allow spaces in organization names with automatic cleanup",
-          "contributors": ["ys973"]
+          "contributors": [
+            "ys973"
+          ]
         },
-         {
+        {
           "text": "Warning popup appears before deleting an organization that has associated URLs",
-          "contributors": ["ys973"]
+          "contributors": [
+            "ys973"
+          ]
         },
         {
           "text": "Feature flags are stored using React context hooks",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Utilize environment variables over using a Python file for configuration values so feature flags can be changed at runtime",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "All API routes from the frontend to the backend are under a single directory",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "No longer able to clear visit data via the frontend to prevent accidental purges",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
-          "text":"Move to Lucide's Icon Framework from Ant Design's Icon Framework for more icon options",
-          "contributors": ["ejw135"]
+          "text": "Move to Lucide's Icon Framework from Ant Design's Icon Framework for more icon options",
+          "contributors": [
+            "ejw135"
+          ]
         },
         {
           "text": "Filter settings now persist between login sessions",
-          "contributors": ["ak2399"]
+          "contributors": [
+            "ak2399"
+          ]
         },
         {
           "text": "All links no longer support multiple aliases, links that had multiple aliases have been sharded into having only one",
-          "contributors": ["ah1371"],
+          "contributors": [
+            "ah1371"
+          ],
           "warning": true
         },
         {
           "text": "Creating a link now does not require calling two routes",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Remove route to search links by their exact title value (this route was only used during testing)",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Page dedicated for links and tracking pixels readjusted for new charts",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Code quality checks are now the last stage of the CI/CD pipeline",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Private API routes are now under \"core\" instead of \"v1\"",
-          "contributors": ["ah1371"],
+          "contributors": [
+            "ah1371"
+          ],
           "warning": true
         },
         {
           "text": "Individual organization management page now has a more consistent layout with the rest of the site",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Three version of release notes, the web app, the public API, and the Outlook add-in",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Table fonts are now 14px instead of 16px",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         }
       ],
       "fixes": [
         {
           "text": "Resolves incorrect link card URL/clipboard behavior for tracking pixel links; hides long URL",
-          "contributors": ["ys973"]
+          "contributors": [
+            "ys973"
+          ]
         },
         {
           "text": "Fix organization creation showing false success messages when validation fails",
-          "contributors": ["ys973"]
+          "contributors": [
+            "ys973"
+          ]
         },
         {
           "text": "Deleted organizations are removed from viewers/editors list in assoicated URL's",
-          "contributors": ["ys973"]
+          "contributors": [
+            "ys973"
+          ]
         },
         {
           "text": "403 page no longer flickers before loading the actual page",
-          "contributors": ["ejw135"]
+          "contributors": [
+            "ejw135"
+          ]
         },
         {
           "text": "404 page is returned when attempting to fetch an unavailable link",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Creating a new link with an alias that was previously deleted no longer resurrects old data associated with the previously deleted link",
-          "contributors": ["ah1371"],
+          "contributors": [
+            "ah1371"
+          ],
           "warning": true
         },
         {
           "text": "Fix rare edgecase where creating a shortened link does not create an alias",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Add a couple missing test cases regarding link creation",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Phishing links can no longer be bypassed via API routes initially used for testing",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Fix server crash when querying users on admin dashboard",
-          "contributors": ["ak2399"]
+          "contributors": [
+            "ak2399"
+          ]
         }
       ]
     }
@@ -418,21 +569,29 @@
       "improvements": [
         {
           "text": "Add back the card-based design for the dashboard",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         }
       ],
       "fixes": [
         {
           "text": "Check for duplicate case-sensitive aliases in the frontend before submitting",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "When mis-capitalizing an alias that already exists, it no longer redirects to a 404",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Add back multiple alias support for qr codes",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         }
       ]
     }
@@ -449,33 +608,47 @@
       "improvements": [
         {
           "text": "Remove date picker for administration statistics",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Remove repetitive words in the admin dashboard",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "User lookup renamed to user search with a slight redesign",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Add button to copy original URL to clipboard",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Replace mock dashboard with feature cards for the landing page",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         }
       ],
       "fixes": [
         {
           "text": "Add a maximum width to the original URL column in the dashboard table to prevent overflow errors",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Fix styling for the developer environment warning banner and add link to the main site",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         }
       ]
     }
@@ -492,25 +665,35 @@
       "improvements": [
         {
           "text": "Font has been made smaller on tables to fit more text",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         }
       ],
       "fixes": [
         {
           "text": "Regression from 3.0.0; the file name for qr codes will be the name of the alias",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Regression from 3.0.0; \"share\" button has been replaced with the \"qr code\" button",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Regression from 3.0.0; columns are no longer fixed on the left and right of the dashboard's table to avoid overflow errors",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Delete button is disabled for deleted links",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         }
       ]
     }
@@ -526,124 +709,183 @@
       "features": [
         {
           "text": "Links and tracking pixels have their own page dedicated for editing, collaborating, sharing, and viewing stats",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "New page for release notes",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "URI parameters being preserved from redirect",
-          "contributors": ["ah1371"],
+          "contributors": [
+            "ah1371"
+          ],
           "warning": true
         },
         {
           "text": "Add QR code generator via an exposed API endpoint",
-          "contributors": ["av782", "kgm74"]
+          "contributors": [
+            "av782",
+            "kgm74"
+          ]
         }
       ],
       "improvements": [
         {
           "text": "HTTPD handles routing instead of Flask",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Dashboard displays links in a table",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "New admin dashboard with all pages condensed into one with tab",
-          "contributors": ["yas55"]
+          "contributors": [
+            "yas55"
+          ]
         },
         {
           "text": "New collaborating UI",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "New profile dropdown menu",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Add filter options for owner and link type (links and tracking pixels)",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Add 403 and 404 pages with consistent styling with the rest of the website",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "HTTPD conditionally serves frontend and backend at the root",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Changed to a new font \"Geist\"",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Icons are now consistent throughout the site by using one icon framework instead of two",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Tracking pixels are now served as an API route",
-          "contributors": ["ah1371"],
+          "contributors": [
+            "ah1371"
+          ],
           "warning": true
         },
         {
           "text": "Utilizing TailwindCSS 3 over SCSS",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "No longer using HashRouter, using BrowserRouter",
-          "contributors": ["ah1371"],
+          "contributors": [
+            "ah1371"
+          ],
           "warning": true
         },
         {
           "text": "Use breadcrumbs instead of a back button",
-          "contributors": ["ah1371", "kgm74"]
+          "contributors": [
+            "ah1371",
+            "kgm74"
+          ]
         },
         {
           "text": "Ban the future creation of case-sensitive aliases",
-          "contributors": ["ah1371"],
+          "contributors": [
+            "ah1371"
+          ],
           "warning": true
         },
         {
           "text": "Add GitLab CI/CD for Python and TypeScript code",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Drop Internet Explorer support",
-          "contributors": ["ah1371", "kgm74"],
+          "contributors": [
+            "ah1371",
+            "kgm74"
+          ],
           "warning": true
         },
         {
           "text": "Add a banner warning to users who are on the developer environment version of the site",
-          "contributors": ["pk641"]
+          "contributors": [
+            "pk641"
+          ]
         }
       ],
       "fixes": [
         {
           "text": "Setting expiration time after creation no longer leads to invalid dates",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Deleting a link with multiple aliases no longer only deletes its first alias",
-          "contributors": ["ejw135"]
+          "contributors": [
+            "ejw135"
+          ]
         },
         {
           "text": "Organizations can no longer exist without any admins",
-          "contributors": ["ejw135"]
+          "contributors": [
+            "ejw135"
+          ]
         },
         {
           "text": "Support iCloud Private Relay on Safari",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Google Safe Browsing no longer shows a broken status message",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Editors are no longer allowed to add owners as an editor or viewer",
-          "contributors": ["pk641"]
+          "contributors": [
+            "pk641"
+          ]
         }
       ]
     }
@@ -659,42 +901,62 @@
       "features": [
         {
           "text": "Implement tracking pixel functionality",
-          "contributors": ["av782", "kgm74"]
+          "contributors": [
+            "av782",
+            "kgm74"
+          ]
         },
         {
           "text": "Add user lookup to the admin dashboard",
-          "contributors": ["ejw135"]
+          "contributors": [
+            "ejw135"
+          ]
         },
         {
           "text": "Microsoft Outlook Add-in created for uploading tracking pixels",
-          "contributors": ["av782", "kgm74"],
+          "contributors": [
+            "av782",
+            "kgm74"
+          ],
           "product": "ms-office"
         }
       ],
       "improvements": [
         {
           "text": "Symbolic links are no longer needed in the building and deploying process",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Dockerized entire codebase",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Reworked the search functionality by using MongoDB's aggregate pipeline",
-          "contributors": ["av782"]
+          "contributors": [
+            "av782"
+          ]
         },
         {
           "text": "Delete unnecessary HTML documentation generator for the frontend and backend",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         },
         {
           "text": "Add a 60 character limit to organization names",
-          "contributors": ["jsp241"]
+          "contributors": [
+            "jsp241"
+          ]
         },
         {
           "text": "Update to the new Rutgers University logo",
-          "contributors": ["kgm74"]
+          "contributors": [
+            "kgm74"
+          ]
         }
       ],
       "fixes": []
@@ -711,27 +973,37 @@
       "features": [
         {
           "text": "Google Safe Browsing integrated to prevent malicious websites from being added to the site",
-          "contributors": ["kgm74"]
+          "contributors": [
+            "kgm74"
+          ]
         }
       ],
       "improvements": [
         {
           "text": "Made both dropdowns styles consistent with the dashboard",
-          "contributors": ["kgm74"]
+          "contributors": [
+            "kgm74"
+          ]
         },
         {
           "text": "Admins of Shrunk can change easily change ownership of links",
-          "contributors": ["kgm74"]
+          "contributors": [
+            "kgm74"
+          ]
         },
         {
           "text": "Admins of Shrunk can change edit any link without permission from its owner",
-          "contributors": ["kgm74"]
+          "contributors": [
+            "kgm74"
+          ]
         }
       ],
       "fixes": [
         {
           "text": "Landing page footer styles fixed",
-          "contributors": ["ah1371"]
+          "contributors": [
+            "ah1371"
+          ]
         }
       ]
     }
@@ -747,33 +1019,47 @@
       "features": [
         {
           "text": "Add a FAQ",
-          "contributors": ["gracechen11"]
+          "contributors": [
+            "gracechen11"
+          ]
         },
         {
           "text": "Admins of its organization can change their organization's name",
-          "contributors": ["kgm74"]
+          "contributors": [
+            "kgm74"
+          ]
         }
       ],
       "improvements": [
         {
           "text": "Add references to other Rutgers sites to the footer",
-          "contributors": ["gracechen11"]
+          "contributors": [
+            "gracechen11"
+          ]
         },
         {
           "text": "Add back buttons to subpages",
-          "contributors": ["gracechen11"]
+          "contributors": [
+            "gracechen11"
+          ]
         },
         {
           "text": "Power users can now have comments when granted the role",
-          "contributors": ["gracechen11"]
+          "contributors": [
+            "gracechen11"
+          ]
         },
         {
           "text": "Admins of its organization can change their organization's name",
-          "contributors": ["kgm74"]
+          "contributors": [
+            "kgm74"
+          ]
         },
         {
           "text": "Add remove button for users of an organization to add a member",
-          "contributors": ["gracechen11"]
+          "contributors": [
+            "gracechen11"
+          ]
         }
       ],
       "fixes": []

@@ -115,7 +115,11 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
     onSubmitClick();
   };
 
-  const initialValues = { alias: '' };
+  const initialValues = {
+    alias: '',
+    domain: '',
+    tracking_pixel_extension: '.png',
+  };
   const mayUseCustomAliases =
     props.userPrivileges.has('power_user') || props.userPrivileges.has('admin');
 
@@ -137,7 +141,7 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
     <Drawer
       title={props.title}
       open={props.visible}
-      width={720}
+      size="large"
       onClose={props.onCancel}
       placement="right"
       extra={
@@ -212,7 +216,6 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
                         label: domain,
                       }),
                     )}
-                    defaultValue=""
                     placeholder="Select a domain"
                   />
                 </Form.Item>
@@ -227,8 +230,8 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
                   valuePropName="checked"
                 >
                   <Radio.Group
+                    value={linkCreationMode}
                     onChange={onTrackingPixelChange}
-                    defaultValue="url"
                     optionType="button"
                     buttonStyle="solid"
                   >
@@ -246,11 +249,7 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
                 label="Image Type"
                 name="tracking_pixel_extension"
               >
-                <Radio.Group
-                  defaultValue=".png"
-                  optionType="button"
-                  buttonStyle="solid"
-                >
+                <Radio.Group optionType="button" buttonStyle="solid">
                   <Radio.Button value=".png">PNG</Radio.Button>
                   <Radio.Button value=".gif">GIF</Radio.Button>
                 </Radio.Group>
