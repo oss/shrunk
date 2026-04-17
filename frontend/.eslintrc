@@ -5,7 +5,7 @@
     "project": "./tsconfig.json"
   },
   "plugins": ["@typescript-eslint", "prettier", "tailwindcss", "react"],
-  "extends": ["airbnb-typescript", "prettier"],
+  "extends": ["airbnb", "airbnb-typescript", "prettier"],
   "rules": {
     "tailwindcss/classnames-order": "error",
     "react/forbid-dom-props": [
