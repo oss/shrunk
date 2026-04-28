@@ -1,10 +1,11 @@
 services:
   backend-test:
     build: ./backend
-    command: watchmedo shell-command --recursive --patterns="*.py" --command='python -m pytest tests' .
+    command: uv run pytest tests
     volumes:
       - ./test.env:/usr/shrunk/backend/.env
       - ./backend:/usr/shrunk/backend
+      - backend_venv:/usr/shrunk/backend/.venv
     working_dir: /usr/shrunk/backend
     env_file:
       - ./test.env
@@ -19,3 +20,6 @@ services:
     command: mongod --port 27018
     ports:
         - '27018:27018'
+
+volumes:
+  backend_venv:

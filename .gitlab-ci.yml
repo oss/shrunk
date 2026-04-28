@@ -54,7 +54,7 @@ mypy:
 
 flake8:
   stage: lint
-  image: python:3.13
+  image: python:3.14
   needs: []
   script:
     - cd backend
@@ -154,6 +154,11 @@ backend-test:
     - mkdir /usr/share/GeoIP
     - cp backend/GeoLite2-City.mmdb /usr/share/GeoIP/GeoLite2-City.mmdb
 
+
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - source $HOME/.local/bin/env
+
+
     - curl -fsS https://dotenvx.sh | sh
     - cp .env.example test.env
 
@@ -164,8 +169,8 @@ backend-test:
     - dotenvx set SHRUNK_GOOGLE_SAFEBROWSE_API_KEY "$GOOGLE_SAFE_BROWSING_API" -f test.env
 
     - cd backend
-    - pip install pytest
-    - dotenvx run -f ../test.env -- pytest --junitxml=../pytest.xml tests
+    - uv sync
+    - dotenvx run -f ../test.env -- uv run pytest --junitxml=../pytest.xml tests
   artifacts:
     reports:
       junit: pytest.xml

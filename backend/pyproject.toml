@@ -88,6 +88,8 @@ dev = [
     "pylint>=4.0.5",
     "pylint-flask>=0.6",
     "pylint-junit>=0.3.5",
+    "pytest>=9.0.3",
+    "pytest-cov>=7.1.0",
     "setuptools>=82.0.1",
     "wheel>=0.47.0",
 ]
@@ -107,9 +109,12 @@ show_column_numbers = true
 show_error_context = true
 
 [tool.pytest]
-addopts = "--cov=shrunk --verbose -m 'not slow'"
+addopts = ["--cov=shrunk", "--verbose", "-m", "not slow"]
 console_output_style = "count"
 testpaths = ["tests"]
+markers = [
+    "slow: marks tests as slow",
+]
 
 [tool.flake8]
 ignore = ["C812", "C813", "C814", "C815", "C816"]
