@@ -134,7 +134,7 @@ package:
 
 backend-test:
   stage: test
-  image: python:3.6
+  image: python:3.14
   needs: [backend]
   dependencies:
     - backend
