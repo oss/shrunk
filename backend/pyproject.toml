@@ -78,6 +78,7 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "autopep8>=2.3.2",
+    "black>=26.3.1",
     "flake8>=7.3.0",
     "flake8-commas>=4.0.0",
     "flake8-formatter-junit-xml>=0.0.6",
