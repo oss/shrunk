@@ -91,6 +91,7 @@ dev = [
     "pylint-junit>=0.3.5",
     "pytest>=9.0.3",
     "pytest-cov>=7.1.0",
+    "ruff>=0.15.12",
     "setuptools>=82.0.1",
     "wheel>=0.47.0",
 ]
@@ -117,8 +118,13 @@ markers = [
     "slow: marks tests as slow",
 ]
 
-[tool.flake8]
-ignore = ["C812", "C813", "C814", "C815", "C816"]
-max-line-length = 120
-select = ["Q0", "C", "PT"]
-inline-quotes = '"'
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["Q0", "COM", "PT"]
+ignore = ["COM812"]
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "double"
+
