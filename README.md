@@ -26,6 +26,12 @@ docker-compose up
 
 5. Start developing at `http://localhost:4343` [(click to learn more about this change)](https://stackoverflow.com/questions/72369320/why-always-something-is-running-at-port-5000-on-my-mac)
 
+## Local Development
+
+- We use uv as our package manager, install it [here](https://docs.astral.sh/uv/getting-started/installation/#installation-methods)
+- Run `uv sync` to install the dependencies, get typing information and set up the venv
+
+
 ### Test your code locally
 
 This is completely optional as GitLab CI/CD should also provide you the test results.
