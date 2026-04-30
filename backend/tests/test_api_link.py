@@ -5,6 +5,7 @@ from datetime import datetime, timezone, timedelta
 import random
 import csv
 
+from flask import Flask
 import pytest
 from werkzeug.test import Client
 
@@ -1175,25 +1176,25 @@ def test_link_redirect_query_params(client: Client, query: str, expected: str) -
     assert redirected_url == expected
 
 
-def test_same_alias_multiple_link(client: Client) -> None:
-    with dev_login(client, "admin"):
-
-        def _create_link_helper(alias: str, results: list) -> str:
+def test_same_alias_multiple_link(app: Flask) -> None:
+    def _create_link_helper(alias: str, results: list) -> str:
+        client = app.test_client()
+        with dev_login(client, "admin"):
             resp = create_link(client, "title", "https://osu.ppy.sh", alias=alias)
             results.append(resp.status_code)
 
-        results = []
-        threads = [
-            threading.Thread(target=_create_link_helper, args=("osugame", results))
-            for i in range(3)
-        ]
-        for thread in threads:
-            thread.start()
-        for thread in threads:
-            thread.join()
-        assert results[0] == 201
-        for i in range(1, 3):
-            assert results[i] == 400
+    results = []
+    threads = [
+        threading.Thread(target=_create_link_helper, args=("osugame", results))
+        for i in range(3)
+    ]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    assert results[0] == 201
+    for i in range(1, 3):
+        assert results[i] == 400
 
 
 def test_create_second_link_with_deleted_alias(client: Client) -> None:
