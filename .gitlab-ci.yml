@@ -33,8 +33,10 @@ pylint:
     - apt-get update
     - apt-get install -y gcc libldap-common libldap2-dev libsasl2-dev
     - cd backend
-    - pip3 install -r requirements-dev.txt
-    - pylint --exit-zero --output-format=junit shrunk tests/*.py > pylint.xml
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - source $HOME/.local/bin/env
+    - uv sync
+    - uv run pylint --exit-zero --output-format=junit shrunk tests/*.py > pylint.xml
   artifacts:
     reports:
       junit: backend/pylint.xml
@@ -46,8 +48,10 @@ mypy:
   needs: []
   script:
     - cd backend
-    - pip3 install -r requirements-dev.txt
-    - mypy --junit-xml=./mypy.xml .
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - source $HOME/.local/bin/env
+    - uv sync
+    - uv run mypy --junit-xml=./mypy.xml .
   artifacts:
     reports:
       junit: mypy.xml
@@ -58,8 +62,10 @@ flake8:
   needs: []
   script:
     - cd backend
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - source $HOME/.local/bin/env
     - uv sync
-    - flake8 --format=pylint --exit-zero --format=junit-xml shrunk backend/tests > flake8.xml
+    - uv run flake8 --format=pylint --exit-zero --format=junit-xml shrunk tests > flake8.xml
   artifacts:
     reports:
       junit: backend/flake8.xml
@@ -70,8 +76,10 @@ black:
   needs: []
   script:
     - cd backend
-    - pip3 install black==25.1.0  # TODO: Move to ruff after updating to a newer version of Python.
-    - black --check .
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - source $HOME/.local/bin/env
+    - uv sync
+    - uv run black --check .
 
 prettier:
   stage: lint
@@ -150,14 +158,13 @@ backend-test:
   script:
     - apt-get update
     - apt-get install -y libldap2-dev libsasl2-dev
-    - pip3 install backend/dist/shrunk-*.whl
-    - mkdir /usr/share/GeoIP
-    - cp backend/GeoLite2-City.mmdb /usr/share/GeoIP/GeoLite2-City.mmdb
-
-
+    
     - curl -LsSf https://astral.sh/uv/install.sh | sh
     - source $HOME/.local/bin/env
+    - pip install backend/dist/shrunk-*.whl
 
+    - mkdir /usr/share/GeoIP
+    - cp backend/GeoLite2-City.mmdb /usr/share/GeoIP/GeoLite2-City.mmdb
 
     - curl -fsS https://dotenvx.sh | sh
     - cp .env.example test.env
