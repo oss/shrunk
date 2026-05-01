@@ -56,34 +56,7 @@ mypy:
     reports:
       junit: mypy.xml
 
-flake8:
-  stage: lint
-  image: python:3.14
-  needs: []
-  script:
-    - apt-get update
-    - apt-get install -y gcc libldap-common libldap2-dev libsasl2-dev
-    - cd backend
-    - curl -LsSf https://astral.sh/uv/install.sh | sh
-    - source $HOME/.local/bin/env
-    - uv sync
-    - uv run flake8 --format=pylint --exit-zero --format=junit-xml shrunk tests > flake8.xml
-  artifacts:
-    reports:
-      junit: backend/flake8.xml
 
-black:
-  stage: lint
-  image: python:latest
-  needs: []
-  script:
-    - apt-get update
-    - apt-get install -y gcc libldap-common libldap2-dev libsasl2-dev
-    - cd backend
-    - curl -LsSf https://astral.sh/uv/install.sh | sh
-    - source $HOME/.local/bin/env
-    - uv sync
-    - uv run black --check .
 
 ruff-lint:
   stage: lint

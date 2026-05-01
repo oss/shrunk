@@ -52,10 +52,15 @@ docker-compose -f docker-compose.tests.yml up
 
 ### Formatting
 
-We use [black](https://github.com/psf/black) for our backend's formatting, while using pylint, flake8, and mypy for linting in the GitLab CI/CD, you can run this command to make sure your code is up to standards. If you're using Visual Studio Code, it does this automatically.
+We use [ruff](https://docs.astral.sh/ruff/) for our backend's formatting & linting, while using pylint & ruff for linting in the GitLab CI/CD, you can run this command to make sure your code is up to standards. If you're using Visual Studio Code, it does this automatically.
 
+This command runs the format check
 ```
-python3 -m black .
+uv run ruff format 
+```
+This command runs the lint check
+```
+uv run ruff check 
 ```
 
 We also use [Prettier](https://prettier.io/) for our frontend's formatting, you can run this command to make sure your code is up to standards. If you're using Visual Studio Code, it does this automatically.
