@@ -41,9 +41,7 @@ CREATE_LINK_SCHEMA = {
 @bp.route("", methods=["POST"])
 @request_schema(CREATE_LINK_SCHEMA)
 @require_token(required_permission="create:links")
-def create_link(
-    token_owner: Dict[str, Any], client: ShrunkClient, req: Any
-) -> Dict[Any, Any]:
+def create_link(token_owner: Dict[str, Any], client: ShrunkClient, req: Any) -> Dict[Any, Any]:
     """Creates a new link"""
 
     org_id = req.get("organization_id")
@@ -65,7 +63,6 @@ def create_link(
             )
 
     if token_owner["type"] == "netid":
-
         if org_id is None:
             return (
                 jsonify(
@@ -125,9 +122,7 @@ def create_link(
         )
 
     if "expiration_time" in req:
-        expiration_time: Optional[datetime] = datetime.fromisoformat(
-            req["expiration_time"].replace("Z", "")
-        )
+        expiration_time: Optional[datetime] = datetime.fromisoformat(req["expiration_time"].replace("Z", ""))
     else:
         expiration_time = None
 
@@ -138,9 +133,7 @@ def create_link(
     if "check_existing" in req:
         if req["check_existing"]:
             try:
-                link_id, created_alias = client.links.check_link_exists(
-                    req["long_url"], owner
-                )
+                link_id, created_alias = client.links.check_link_exists(req["long_url"], owner)
                 return jsonify({"id": str(link_id), "alias": created_alias}), 201
             except NoSuchObjectException:
                 pass
@@ -160,11 +153,7 @@ def create_link(
 
     try:
         link_id, created_alias = client.links.create(
-            (
-                "Untitled Link"
-                if "title" not in req or req["title"] == ""
-                else req["title"]
-            ),
+            ("Untitled Link" if "title" not in req or req["title"] == "" else req["title"]),
             req["long_url"],
             alias,
             expiration_time,
@@ -257,9 +246,7 @@ def create_link(
 
 @bp.route("/<ObjectId:org_id>/<ObjectId:link_id>", methods=["GET"])
 @require_token(required_permission="read:links")
-def get_link(
-    token_owner: str, client: ShrunkClient, org_id: ObjectId, link_id: ObjectId
-) -> Any:
+def get_link(token_owner: str, client: ShrunkClient, org_id: ObjectId, link_id: ObjectId) -> Any:
     """``GET /api/v1/links/<org_id>/<link_id>``
 
     Get information about a link. Basically just returns the Mongo document.
@@ -404,9 +391,7 @@ def get_org_links(token_owner: str, client: ShrunkClient, org_id: ObjectId) -> A
 
 @bp.route("/<ObjectId:org_id>/<ObjectId:link_id>/visits", methods=["POST"])
 @require_token(required_permission="read:links")
-def get_link_visits(
-    token_owner: str, client: ShrunkClient, org_id: ObjectId, link_id: ObjectId
-) -> Any:
+def get_link_visits(token_owner: str, client: ShrunkClient, org_id: ObjectId, link_id: ObjectId) -> Any:
     """``POST /api/v1/links/<org_id>/<link_id>/visits``
 
     Get advanced information about visits to a link.

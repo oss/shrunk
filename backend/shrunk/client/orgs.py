@@ -368,18 +368,14 @@ class OrgsClient:
 
         return list(self.db.organizations.aggregate(pipeline))
 
-    def get_links(
-        self, org_id: ObjectId, is_tracking_pixel: Optional[bool] = None
-    ) -> List[Any]:
+    def get_links(self, org_id: ObjectId, is_tracking_pixel: Optional[bool] = None) -> List[Any]:
         """Get all links associated with an org
 
         :param org_id: The org ID
         :returns: A list of links associated with the org
         """
         if is_tracking_pixel is not None:
-            result = self.db.urls.find(
-                {"owner._id": org_id, "is_tracking_pixel_link": is_tracking_pixel}
-            )
+            result = self.db.urls.find({"owner._id": org_id, "is_tracking_pixel_link": is_tracking_pixel})
 
             if result is None:
                 raise NoSuchObjectException
@@ -520,13 +516,8 @@ class OrgsClient:
             {"$replaceRoot": {"newRoot": "$visits"}},
             {
                 "$facet": {
-                    "us": filter_us
-                    + not_null("state_code")
-                    + group_by("$state_code")
-                    + rename_id,
-                    "world": not_null("country_code")
-                    + group_by("$country_code")
-                    + rename_id,
+                    "us": filter_us + not_null("state_code") + group_by("$state_code") + rename_id,
+                    "world": not_null("country_code") + group_by("$country_code") + rename_id,
                 }
             },
         ]
@@ -545,9 +536,7 @@ class OrgsClient:
         if "query" in query and query["query"]:
             # Escape regex characters to prevent ReDoS or query injection
             escaped_query = re.escape(query["query"])
-            pipeline.append(
-                {"$match": {"name": {"$regex": escaped_query, "$options": "i"}}}
-            )
+            pipeline.append({"$match": {"name": {"$regex": escaped_query, "$options": "i"}}})
 
         # Fields for Metrics and Relationship
         pipeline.append(
@@ -585,9 +574,7 @@ class OrgsClient:
 
         # Filter by Role
         if "filter_role" in query and len(query["filter_role"]) > 0:
-            selected_roles = [
-                role for role in query["filter_role"] if role != "not_member"
-            ]
+            selected_roles = [role for role in query["filter_role"] if role != "not_member"]
             role_clauses = []
 
             if len(selected_roles) > 0:

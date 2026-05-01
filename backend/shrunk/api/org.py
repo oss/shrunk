@@ -108,9 +108,7 @@ def post_org(netid: str, client: ShrunkClient, req: Any) -> Any:
     :param client:
     :param req:
     """
-    if not client.users.has_role(netid, "facstaff") and not client.users.has_role(
-        netid, "admin"
-    ):
+    if not client.users.has_role(netid, "facstaff") and not client.users.has_role(netid, "admin"):
         abort(403)
     org_id = client.orgs.create(req["name"])
     if org_id is None:
@@ -131,9 +129,7 @@ def check_urls(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
     :param org_id:
     """
 
-    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(
-        netid, "admin"
-    ):
+    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(netid, "admin"):
         abort(403)
     has_urls = client.orgs.has_associated_urls(org_id)
     return {"hasAssociatedUrls": has_urls}, 200
@@ -150,9 +146,7 @@ def delete_org(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
     :param client:
     :param org_id:
     """
-    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(
-        netid, "admin"
-    ):
+    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(netid, "admin"):
         abort(403)
     client.orgs.delete(org_id, netid)
     return "", 204
@@ -169,9 +163,7 @@ def get_org(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
     :param client:
     :param org_id:
     """
-    if not client.orgs.is_member(org_id, netid) and not client.users.has_role(
-        netid, "admin"
-    ):
+    if not client.orgs.is_member(org_id, netid) and not client.users.has_role(netid, "admin"):
         abort(403)
     org = client.orgs.get_org(org_id)
     if org is None:
@@ -206,9 +198,7 @@ def get_org_links(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
     if resp is None:
         abort(404)
 
-    if not client.orgs.is_member(org_id, netid) and not client.users.has_role(
-        netid, "admin"
-    ):
+    if not client.orgs.is_member(org_id, netid) and not client.users.has_role(netid, "admin"):
         abort(403)
     links = client.orgs.get_links(org_id)
     return jsonify(links)
@@ -216,9 +206,7 @@ def get_org_links(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
 
 @bp.route("/<ObjectId:org_id>/rename/<string:new_org_name>", methods=["PUT"])
 @require_login
-def rename_org(
-    netid: str, client: ShrunkClient, org_id: ObjectId, new_org_name: str
-) -> Any:
+def rename_org(netid: str, client: ShrunkClient, org_id: ObjectId, new_org_name: str) -> Any:
     """`PUT /api/org/<org_id>/rename/<new_org_name>`
 
     Changes an organization's name if user is the admin of the org.
@@ -230,8 +218,7 @@ def rename_org(
     if org is None:
         abort(404)
     if (
-        not client.orgs.is_member(org_id, netid)
-        and not client.orgs.is_admin(org_id, netid)
+        not client.orgs.is_member(org_id, netid) and not client.orgs.is_admin(org_id, netid)
     ) or not client.orgs.validate_name(new_org_name):
         abort(403)
     client.orgs.rename_org(org_id, new_org_name)
@@ -366,9 +353,7 @@ def get_org_stats(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
 
     if client.orgs.get_org(org_id) is None:
         abort(404)
-    if not client.orgs.is_member(org_id, netid) and not client.users.has_role(
-        netid, "admin"
-    ):
+    if not client.orgs.is_member(org_id, netid) and not client.users.has_role(netid, "admin"):
         abort(403)
     stats = client.orgs.get_org_overall_stats(org_id)
     return jsonify(stats)
@@ -394,9 +379,7 @@ def get_org_visit_stats(netid: str, client: ShrunkClient, org_id: ObjectId) -> A
     :param client:
     :param org_id:
     """
-    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(
-        netid, "admin"
-    ):
+    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(netid, "admin"):
         abort(403)
     visits = client.orgs.get_visit_stats(org_id)
     return jsonify({"visits": visits})
@@ -414,9 +397,7 @@ def get_org_geoip_stats(netid: str, client: ShrunkClient, org_id: ObjectId) -> A
     :param client:
     :param org_id:
     """
-    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(
-        netid, "admin"
-    ):
+    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(netid, "admin"):
         abort(403)
     geoip = client.orgs.get_geoip_stats(org_id)
     return jsonify({"geoip": geoip})
@@ -424,9 +405,7 @@ def get_org_geoip_stats(netid: str, client: ShrunkClient, org_id: ObjectId) -> A
 
 @bp.route("/<ObjectId:org_id>/member/<member_netid>", methods=["PUT"])
 @require_login
-def put_org_member(
-    netid: str, client: ShrunkClient, org_id: ObjectId, member_netid: str
-) -> Any:
+def put_org_member(netid: str, client: ShrunkClient, org_id: ObjectId, member_netid: str) -> Any:
     """``PUT /api/org/<org_id>/member/<member_netid>``
 
     Add a user to an org. Performs no action if the user is already a member of the org. Returns 204
@@ -437,9 +416,7 @@ def put_org_member(
     :param org_id:
     :param member_netid:
     """
-    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(
-        netid, "admin"
-    ):
+    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(netid, "admin"):
         abort(403)
     client.orgs.create_member(org_id, member_netid)
     return "", 204
@@ -447,9 +424,7 @@ def put_org_member(
 
 @bp.route("/<ObjectId:org_id>/guest/<member_netid>", methods=["PUT"])
 @require_login
-def put_org_guest(
-    netid: str, client: ShrunkClient, org_id: ObjectId, member_netid: str
-) -> Any:
+def put_org_guest(netid: str, client: ShrunkClient, org_id: ObjectId, member_netid: str) -> Any:
     """``PUT /api/org/<org_id>/guest/<member_netid>``
 
     Add a guest user to an org. Can only add users designated as guests in the university LDAP. A guest may only be apart of one org at a time.
@@ -459,16 +434,13 @@ def put_org_guest(
     :param org_id:
     :param member_netid: user to add
     """
-    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(
-        netid, "admin"
-    ):
+    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(netid, "admin"):
         abort(403)
 
     if not is_university_guest(member_netid):
         return "That NetID does not have the guest role.", 400
 
     if len(client.orgs.get_orgs(member_netid, True)) > 0:
-
         return "Guest user already belongs to an organization", 400
 
     if client.orgs.create_member(org_id, member_netid, "guest"):
@@ -554,9 +526,7 @@ def delete_domain(netid: str, client: ShrunkClient) -> Any:
 
 @bp.route("/<ObjectId:org_id>/member/<member_netid>", methods=["DELETE"])
 @require_login
-def delete_org_member(
-    netid: str, client: ShrunkClient, org_id: ObjectId, member_netid: str
-) -> Any:
+def delete_org_member(netid: str, client: ShrunkClient, org_id: ObjectId, member_netid: str) -> Any:
     """``DELETE /api/org/<org_id>/member/<netid>``
 
     Remove a member from an org. Returns 204 on success.
@@ -566,9 +536,7 @@ def delete_org_member(
     :param org_id:
     :param member_netid:
     """
-    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(
-        netid, "admin"
-    ):
+    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(netid, "admin"):
         if not netid == member_netid:
             abort(403)
     client.orgs.delete_member(org_id, member_netid)
@@ -587,9 +555,7 @@ MODIFY_ORG_MEMBER_SCHEMA = {
 @bp.route("/<ObjectId:org_id>/member/<member_netid>", methods=["PATCH"])
 @request_schema(MODIFY_ORG_MEMBER_SCHEMA)
 @require_login
-def patch_org_member(
-    netid: str, client: ShrunkClient, req: Any, org_id: ObjectId, member_netid: str
-) -> Any:
+def patch_org_member(netid: str, client: ShrunkClient, req: Any, org_id: ObjectId, member_netid: str) -> Any:
     """``PATCH /api/org/<org_id>/member/<netid>``
 
     Modify a member of an org. Returns 204 on success. Request response:
@@ -606,9 +572,7 @@ def patch_org_member(
     :param org_id:
     :param member_netid:
     """
-    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(
-        netid, "admin"
-    ):
+    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(netid, "admin"):
         abort(403)
     if req["role"] is not None:
         # Prevent the last admin from being demoted
@@ -660,9 +624,7 @@ def create_access_token(netid: str, client: ShrunkClient, req: Any) -> Any:
         if client.orgs.get_org(req["organizationId"]) is None:
             return "No such org", 400
 
-        if not client.orgs.is_admin(
-            req["organizationId"], netid
-        ) and not client.users.has_role(netid, "admin"):
+        if not client.orgs.is_admin(req["organizationId"], netid) and not client.users.has_role(netid, "admin"):
             abort(403)
     else:
         if not client.users.has_role(netid, "admin"):
@@ -672,9 +634,7 @@ def create_access_token(netid: str, client: ShrunkClient, req: Any) -> Any:
     for permission in req["permissions"]:
         if permission not in valid_permissions:
             return "invalid permissions", 400
-    access_token = client.access_tokens.create(
-        owner, req["title"], req["description"], netid, req["permissions"]
-    )
+    access_token = client.access_tokens.create(owner, req["title"], req["description"], netid, req["permissions"])
 
     return jsonify({"access_token": access_token}), 201
 
@@ -682,9 +642,7 @@ def create_access_token(netid: str, client: ShrunkClient, req: Any) -> Any:
 @bp.route("/<ObjectId:org_id>/access_token", methods=["GET"])
 @require_login
 def get_access_tokens(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
-    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(
-        netid, "admin"
-    ):
+    if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(netid, "admin"):
         abort(403)
 
     owner = {}
@@ -718,9 +676,7 @@ def get_super_tokens(netid: str, client: ShrunkClient) -> Any:
 def delete_access_token(netid: str, client: ShrunkClient, token_id: ObjectId) -> Any:
     token_owner = client.access_tokens.get_owner(token_id)
     if token_owner["type"] == "org":
-        if not client.orgs.is_admin(
-            token_owner["_id"], netid
-        ) and not client.users.has_role(netid, "admin"):
+        if not client.orgs.is_admin(token_owner["_id"], netid) and not client.users.has_role(netid, "admin"):
             abort(403)
     else:
         if not client.users.has_role(netid, "admin"):

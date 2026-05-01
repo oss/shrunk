@@ -37,12 +37,8 @@ class SecurityClient:
     def __init__(self, *, db: pymongo.database.Database, other_clients: Any):
         self.db = db
         self.other_clients = other_clients
-        self.security_measures_on = bool(
-            int(os.getenv("SHRUNK_GOOGLE_SAFEBROWSE_ENABLED", 0))
-        )
-        self.google_safe_browsing_api = os.getenv(
-            "SHRUNK_GOOGLE_SAFEBROWSE_API_KEY", None
-        )
+        self.security_measures_on = bool(int(os.getenv("SHRUNK_GOOGLE_SAFEBROWSE_ENABLED", 0)))
+        self.google_safe_browsing_api = os.getenv("SHRUNK_GOOGLE_SAFEBROWSE_API_KEY", None)
         self.latest_status = "OFF" if not self.security_measures_on else "ON"
 
     def create_pending_link(self, link_document: Dict[str, Any]):
@@ -59,9 +55,7 @@ class SecurityClient:
         result = self.db.unsafe_links.insert_one(link_document)
         return result.inserted_id
 
-    def change_link_status(
-        self, link_id: ObjectId, net_id: str, new_status: DetectedLinkStatus
-    ):
+    def change_link_status(self, link_id: ObjectId, net_id: str, new_status: DetectedLinkStatus):
         unsafe_link_document = self.get_unsafe_link_document(link_id)
         """
         Modifies status of pending link
@@ -169,9 +163,7 @@ class SecurityClient:
 
     def get_pending_links(self):
         """Returns a list of links currently awaiting verification"""
-        return list(
-            self.db.unsafe_links.find({"status": DetectedLinkStatus.PENDING.value})
-        )
+        return list(self.db.unsafe_links.find({"status": DetectedLinkStatus.PENDING.value}))
 
     def get_number_of_pending_links(self):
         """Returns number of pending links awaiting verification"""
@@ -193,10 +185,7 @@ class SecurityClient:
         :param long_url:
         """
         status = self.get_status_of_url(long_url)
-        return (
-            status == DetectedLinkStatus.DENIED.value
-            or status == DetectedLinkStatus.PENDING.value
-        )
+        return status == DetectedLinkStatus.DENIED.value or status == DetectedLinkStatus.PENDING.value
 
     def toggle_security(self):
         """Toggles security feature"""
@@ -268,18 +257,14 @@ class SecurityClient:
             self.latest_status = message
             return len(r.json().get("matches", [])) > 0
         except requests.exceptions.HTTPError as err:
-            message = (
-                f"Google Safe Browsing API request failed. Status code: {r.status_code}"
-            )
+            message = f"Google Safe Browsing API request failed. Status code: {r.status_code}"
             current_app.logger.warning(message)
             current_app.logger.warning(err)
         except KeyError as err:
             message = f"ERROR: The key {err} did not exist in the JSON response"
             current_app.logger.warning(message)
         except Exception as err:
-            message = (
-                "An unknown error was detected when calling Google Safe Browsing API"
-            )
+            message = "An unknown error was detected when calling Google Safe Browsing API"
             current_app.logger.warning(message)
             current_app.logger.warning(err)
 

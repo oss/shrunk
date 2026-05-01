@@ -16,9 +16,7 @@ class SearchClient:
         self.db = db
         self.client = client
 
-    def execute_url(
-        self, user_netid: str, query: Any
-    ) -> Any:  # pylint: disable=too-many-branches,too-many-statements
+    def execute_url(self, user_netid: str, query: Any) -> Any:  # pylint: disable=too-many-branches,too-many-statements
         """Execute a search query for shortened URLs.
 
         :param user_netid: The NetID of the user performing the search
@@ -36,21 +34,15 @@ class SearchClient:
         exact_score_conditions = []
 
         if query.get("title"):
-            search_filters.append(
-                {"title": {"$regex": query["title"], "$options": "i"}}
-            )
+            search_filters.append({"title": {"$regex": query["title"], "$options": "i"}})
             exact_score_conditions.append({"$eq": ["$title", query["title"]]})
 
         if query.get("alias"):
-            search_filters.append(
-                {"alias": {"$regex": query["alias"], "$options": "i"}}
-            )
+            search_filters.append({"alias": {"$regex": query["alias"], "$options": "i"}})
             exact_score_conditions.append({"$eq": ["$alias", query["alias"]]})
 
         if query.get("url"):
-            search_filters.append(
-                {"long_url": {"$regex": query["url"], "$options": "i"}}
-            )
+            search_filters.append({"long_url": {"$regex": query["url"], "$options": "i"}})
             exact_score_conditions.append({"$eq": ["$long_url", query["url"]]})
 
         if search_filters:
@@ -124,16 +116,14 @@ class SearchClient:
             sort_key = "visits"
         elif query["sort"]["key"] == "title":
             sort_key = "title"
-            sort_order = (
-                -1 if query["sort"]["order"] == "ascending" else 1
-            )  # sort order is flipped
+            sort_order = -1 if query["sort"]["order"] == "ascending" else 1  # sort order is flipped
         elif query["sort"]["key"] == "relevance":
             sort_key = "text_search_score"
             if not any([query.get("title"), query.get("alias"), query.get("url")]):
                 sort_key = "timeCreated"
         else:
             # This should never happen
-            raise RuntimeError(f'Bad sort key {query["sort"]["key"]}')
+            raise RuntimeError(f"Bad sort key {query['sort']['key']}")
 
         pipeline.append({"$sort": {sort_key: sort_order, "_id": sort_order}})
 
@@ -165,9 +155,7 @@ class SearchClient:
             pipeline.append({"$match": {"timeCreated": {"$lte": query["end_time"]}}})
 
         if query["show_type"] == "tracking_pixels":
-            pipeline.append(
-                {"$match": {"is_tracking_pixel_link": {"$exists": True, "$eq": True}}}
-            )
+            pipeline.append({"$match": {"is_tracking_pixel_link": {"$exists": True, "$eq": True}}})
 
         if query["show_type"] == "links":
             pipeline.append(
@@ -210,9 +198,7 @@ class SearchClient:
 
             if res["owner"]["type"] == "org":
                 # If the owner is an organization, get the organization name
-                res["owner"]["org_name"] = self.client.orgs.get_org(
-                    res["owner"]["_id"]
-                )["name"]
+                res["owner"]["org_name"] = self.client.orgs.get_org(res["owner"]["_id"])["name"]
 
             if res.get("expiration_time"):
                 expiration_time = res["expiration_time"]
@@ -232,11 +218,7 @@ class SearchClient:
                 "alias": res["alias"],
                 "is_expired": res["is_expired"],
                 "may_edit": self.client.links.may_edit(res["_id"], user_netid),
-                "is_tracking_pixel_link": (
-                    res["is_tracking_pixel_link"]
-                    if "is_tracking_pixel_link" in res
-                    else False
-                ),
+                "is_tracking_pixel_link": (res["is_tracking_pixel_link"] if "is_tracking_pixel_link" in res else False),
             }
 
             if res.get("deleted"):
@@ -274,9 +256,7 @@ class SearchClient:
         """
         pipeline: List[Any] = []
 
-        orgs_cursor = self.db.organizations.find(
-            {"members.netid": user_netid}, {"_id": 1}
-        )
+        orgs_cursor = self.db.organizations.find({"members.netid": user_netid}, {"_id": 1})
         org_ids = [org["_id"] for org in orgs_cursor]
 
         # Build filter for shared links

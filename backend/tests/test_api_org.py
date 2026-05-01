@@ -30,15 +30,11 @@ def test_rename_org(client: Client) -> None:
         assert resp.json["name"] == new_name
 
         # Check that we cannot rename the org to an org that already exists
-        resp = client.put(
-            f"/api/core/org/{org_rename_test_id}/rename/{org_rename_test_name}"
-        )
+        resp = client.put(f"/api/core/org/{org_rename_test_id}/rename/{org_rename_test_name}")
         assert resp.status_code == 403
 
         # Test that renaming an org that doesn't exist won't work
-        resp = client.put(
-            f"/api/core/org/THISORGDOESN'TEXIST/rename/{org_rename_test_id}"
-        )
+        resp = client.put(f"/api/core/org/THISORGDOESN'TEXIST/rename/{org_rename_test_id}")
         assert resp.status_code == 404
 
 
@@ -67,18 +63,14 @@ def test_restrict_last_admin_demotion(client: Client) -> None:
         resp = client.put(f"/api/core/org/{org_id}/member/DEV_TEST")
         assert resp.status_code == 204
 
-        resp = client.patch(
-            f"/api/core/org/{org_id}/member/DEV_TEST", json={"role": "admin"}
-        )
+        resp = client.patch(f"/api/core/org/{org_id}/member/DEV_TEST", json={"role": "admin"})
         assert resp.status_code == 204
 
         resp = client.delete(f"/api/core/org/{org_id}/member/DEV_TEST")
         assert resp.status_code == 204
 
         # Attempt to demote the last admin
-        resp = client.patch(
-            f"/api/core/org/{org_id}/member/DEV_ADMIN", json={"role": "member"}
-        )
+        resp = client.patch(f"/api/core/org/{org_id}/member/DEV_ADMIN", json={"role": "member"})
         assert resp.status_code == 400
 
 
@@ -102,9 +94,7 @@ def test_restrict_last_admin_demotion(client: Client) -> None:
         ([], False),
     ],
 )
-def test_create_access_token_permissions(
-    client: Client, permissions: List[str], expect_pass: bool
-) -> None:
+def test_create_access_token_permissions(client: Client, permissions: List[str], expect_pass: bool) -> None:
     with dev_login(client, "admin"):
         resp = client.post("/api/core/org", json={"name": "test123"})
         org_id = resp.json["id"]
@@ -139,7 +129,6 @@ def test_create_access_token_permissions(
 
 def test_external_api_endpoints(client: Client) -> None:
     with dev_login(client, "admin"):
-
         resp = client.post("/api/core/org", json={"name": "test123"})
         org_id = resp.json["id"]
 
@@ -183,9 +172,7 @@ def test_external_api_endpoints(client: Client) -> None:
         invalid_org_id = invalid_org_id
 
         # attempt invalid token
-        resp = client.get(
-            "/api/v1/users", headers={"Authorization": f"Bearer {invalid_token}"}
-        )
+        resp = client.get("/api/v1/users", headers={"Authorization": f"Bearer {invalid_token}"})
         assert resp.status_code == 401
 
         # attempt users with regular access token
@@ -417,9 +404,7 @@ def test_org_get_overall_stats_no_links(client: Client) -> None:
         ("hello", 400),
     ],
 )
-def test_add_guest_user_to_org(
-    client: Client, guest_netid: str, expected_status_code: int
-) -> None:
+def test_add_guest_user_to_org(client: Client, guest_netid: str, expected_status_code: int) -> None:
     """Tests adding a guest user to an organization."""
 
     with dev_login(client, "admin"):

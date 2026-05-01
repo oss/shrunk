@@ -65,6 +65,4 @@ bp.add_url_rule(
     mk_dev_login("DEV_PWR_USER", "Dev Power user", "power_user"),
     methods=["POST"],
 )
-bp.add_url_rule(
-    "/admin", "admin", mk_dev_login("DEV_ADMIN", "Dev Admin", "admin"), methods=["POST"]
-)
+bp.add_url_rule("/admin", "admin", mk_dev_login("DEV_ADMIN", "Dev Admin", "admin"), methods=["POST"])

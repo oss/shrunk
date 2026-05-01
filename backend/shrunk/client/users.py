@@ -20,9 +20,7 @@ class UserClient:
     ):
         self.db = db
 
-    def initialize_user(
-        self, netid: str, role: Union[str, List[str]], grantor: Optional[str] = "system"
-    ) -> None:
+    def initialize_user(self, netid: str, role: Union[str, List[str]], grantor: Optional[str] = "system") -> None:
         """Initialize a user in the database
 
 
@@ -104,11 +102,7 @@ class UserClient:
                     "let": {"user_netid": "$netid"},
                     "pipeline": [
                         {"$unwind": "$members"},
-                        {
-                            "$match": {
-                                "$expr": {"$eq": ["$members.netid", "$$user_netid"]}
-                            }
-                        },
+                        {"$match": {"$expr": {"$eq": ["$members.netid", "$$user_netid"]}}},
                         {"$project": {"name": 1, "_id": 0}},
                     ],
                     "as": "organizations",
@@ -259,13 +253,9 @@ class UserClient:
                     ops_pipeline.append({"$match": {op_field: {"$in": filter_values}}})
                 elif op_field == "linksCreated":
                     if op_spec == "lt":
-                        ops_pipeline.append(
-                            {"$match": {"linksCreated": {"$lt": int(op_fs)}}}
-                        )
+                        ops_pipeline.append({"$match": {"linksCreated": {"$lt": int(op_fs)}}})
                     elif op_spec == "gt":
-                        ops_pipeline.append(
-                            {"$match": {"linksCreated": {"$gt": int(op_fs)}}}
-                        )
+                        ops_pipeline.append({"$match": {"linksCreated": {"$gt": int(op_fs)}}})
                     else:
                         pass  # should never reach here
             elif op_type == "sort":
@@ -273,11 +263,7 @@ class UserClient:
                 ops_pipeline.append({"$sort": {op_field: sort_order}})
 
         return [
-            {
-                key: user[key]
-                for key in ["netid", "roles", "linksCreated", "organizations"]
-                if key in user
-            }
+            {key: user[key] for key in ["netid", "roles", "linksCreated", "organizations"] if key in user}
             for user in self.db["users"].aggregate(pipeline)
         ]
 
@@ -334,9 +320,7 @@ class UserClient:
         ]
         return role in roles
 
-    def grant_role(
-        self, grantor: str, grantee: str, role: str, comment: Optional[str]
-    ) -> None:
+    def grant_role(self, grantor: str, grantee: str, role: str, comment: Optional[str]) -> None:
         """Grants a specific role to a user.
 
         Args:
@@ -356,16 +340,12 @@ class UserClient:
         grantee_user = self.db["users"].find_one({"netid": grantee})
 
         if not grantee_user:
-            raise NoSuchObjectException(
-                f"Grantee {grantee} does not exist in the database."
-            )
+            raise NoSuchObjectException(f"Grantee {grantee} does not exist in the database.")
 
         if not self.has_role(grantor, "admin"):
             raise InvalidEntity(f"Grantor {grantor} is not an admin.")
 
-        for user_role in grantee_user.get(
-            "roles", []
-        ):  # check if user already has the role
+        for user_role in grantee_user.get("roles", []):  # check if user already has the role
             if user_role.get("role") == role:
                 raise InvalidEntity(f"User {grantee} already has the role {role}.")
         self.db["users"].update_one(
@@ -407,9 +387,7 @@ class UserClient:
         grantee_user = self.db["users"].find_one({"netid": grantee})
 
         if not grantee_user:
-            raise NoSuchObjectException(
-                f"Grantee {grantee} does not exist in the database."
-            )
+            raise NoSuchObjectException(f"Grantee {grantee} does not exist in the database.")
 
         if not self.has_role(grantee, role):
             raise InvalidEntity(f"Grantee {grantee} does not have the role {role}.")
@@ -466,11 +444,7 @@ class UserClient:
         # LDAP queries are enabled
         formatted_position_info = {
             "titles": position_info.get("title", ["No titles found"]),
-            "departments": position_info.get(
-                "rutgersEduStaffDepartment", ["No departments found"]
-            ),
-            "employmentTypes": position_info.get(
-                "employeeType", ["No employment types found"]
-            ),
+            "departments": position_info.get("rutgersEduStaffDepartment", ["No departments found"]),
+            "employmentTypes": position_info.get("employeeType", ["No employment types found"]),
         }
         return formatted_position_info

@@ -54,9 +54,7 @@ def pull_outlook_assets_from_github():
         asset_zip_urls.append(asset["browser_download_url"])
 
     if len(asset_zip_names) != len(asset_zip_urls):
-        print(
-            "Error: Number of asset zip names does not match number of asset zip urls"
-        )
+        print("Error: Number of asset zip names does not match number of asset zip urls")
         exit(1)
 
     for url in asset_zip_urls:
@@ -66,11 +64,7 @@ def pull_outlook_assets_from_github():
         filename_path = os.path.join("/tmp/shrunk", filename)
 
         open(filename_path, "wb").write(asset_response.content)
-        print(
-            "Downloaded asset from {url} to {folder}".format(
-                url=url, folder=filename_path
-            )
-        )
+        print("Downloaded asset from {url} to {folder}".format(url=url, folder=filename_path))
         print("asset zips: ", asset_zip_names)
 
         # now, unzip the files
@@ -78,18 +72,10 @@ def pull_outlook_assets_from_github():
         isDev = "test" in url
         extraction_folder_dest = "dev" if isDev else "prod"
         os.path.join(var_folder, extraction_folder_dest)
-        print(
-            "Unzipping {asset} to {destination}".format(
-                asset=asset, destination=extraction_folder_dest
-            )
-        )
+        print("Unzipping {asset} to {destination}".format(asset=asset, destination=extraction_folder_dest))
         # shutil.unpack_archive(asset, os.path.join(var_folder, folder))
         # unzip folder and move to /var_folder/folder
-        os.system(
-            "unzip {asset} -d {destination}".format(
-                asset=asset, destination=extraction_folder_dest
-            )
-        )
+        os.system("unzip {asset} -d {destination}".format(asset=asset, destination=extraction_folder_dest))
         print("Unzipped {asset}".format(asset=asset))
         os.remove(asset)
         print("Removed {asset}".format(asset=asset))

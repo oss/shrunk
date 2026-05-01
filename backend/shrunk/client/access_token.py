@@ -90,9 +90,7 @@ class AccessTokenClient:
         except ValueError:
             return None
 
-        found_token = self.db.access_tokens.find_one(
-            {"lookup_key": lookup_key, "deleted": False}
-        )
+        found_token = self.db.access_tokens.find_one({"lookup_key": lookup_key, "deleted": False})
         if found_token:
             try:
                 if self.ph.verify(found_token["hashed_token"], user_token):

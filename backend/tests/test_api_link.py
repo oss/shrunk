@@ -206,9 +206,7 @@ def test_remove_acl_on_transfer_to_org(client: Client) -> None:
         assert resp.status_code == 201
         link_id = resp.json["id"]
 
-        resp = client.patch(
-            f"/api/core/link/{link_id}", json={"owner": {"_id": org_id, "type": "org"}}
-        )
+        resp = client.patch(f"/api/core/link/{link_id}", json={"owner": {"_id": org_id, "type": "org"}})
         assert resp.status_code == 204
         resp = client.get(f"/api/core/link/{link_id}")
         assert len(resp.json["editors"]) == 0
@@ -340,14 +338,10 @@ def test_modify_link_bad_long_url(client: Client) -> None:
 )
 def test_validate_long_url(client: Client, long_url: str, expected: bool) -> None:
     blocked_long_url = "https://example.com"
-    blocked_long_url_b32 = str(
-        base64.b32encode(bytes(blocked_long_url, "utf8")), "utf8"
-    )
+    blocked_long_url_b32 = str(base64.b32encode(bytes(blocked_long_url, "utf8")), "utf8")
 
     with dev_login(client, "admin"):
-        resp = client.put(
-            f"/api/core/role/blocked_url/entity/{blocked_long_url_b32}", json={}
-        )
+        resp = client.put(f"/api/core/role/blocked_url/entity/{blocked_long_url_b32}", json={})
         assert resp.status_code == 204
 
     long_url_b32 = str(base64.b32encode(bytes(long_url, "utf8")), "utf8")
@@ -790,9 +784,7 @@ def test_update_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
 
         # add owner doesn't actually add them to the list
 
-        link, status = mod_acl(
-            "add", {"_id": "DEV_FACSTAFF", "type": "netid"}, "editors"
-        )
+        link, status = mod_acl("add", {"_id": "DEV_FACSTAFF", "type": "netid"}, "editors")
         assert 200 <= status <= 300
         assert len(link["viewers"]) == 0
         assert len(link["editors"]) == 0
@@ -885,10 +877,7 @@ def test_acl(client: Client) -> None:  # pylint: disable=too-many-statements
 
             resp = client.patch(
                 f"/api/core/link/{link_id}",
-                json={
-                    "long_url": "https://example.com?rand="
-                    + str(random.randrange(0, 1000))
-                },
+                json={"long_url": "https://example.com?rand=" + str(random.randrange(0, 1000))},
             )
             assert_access(user["update_url"], resp.status_code)
 
@@ -934,9 +923,7 @@ def test_acl(client: Client) -> None:  # pylint: disable=too-many-statements
 
         resp = client.patch(
             f"/api/core/link/{link_id}",
-            json={
-                "long_url": "https://example.com?rand=" + str(random.randrange(0, 1000))
-            },
+            json={"long_url": "https://example.com?rand=" + str(random.randrange(0, 1000))},
         )
         assert_access(True, resp.status_code)
 
@@ -962,15 +949,11 @@ def test_case_sensitive_duplicate_aliases(client: Client) -> None:
     """
 
     with dev_login(client, "admin"):
-        resp = create_link(
-            client, "title", "https://playvalorant.com/", alias="VALORANT"
-        )
+        resp = create_link(client, "title", "https://playvalorant.com/", alias="VALORANT")
         assert resp.status_code == 201
         assert resp.json["alias"] == "valorant"
 
-        resp = create_link(
-            client, "title", "https://playvalorant.com/", alias="valorant"
-        )
+        resp = create_link(client, "title", "https://playvalorant.com/", alias="valorant")
         assert resp.status_code == 400
 
 
@@ -1087,9 +1070,7 @@ def test_owner_transfer(client: Client) -> None:
         assert resp.status_code == 403
 
         # test transfer to org that user is not a member of
-        resp = client.post(
-            "/api/core/link", json={"title": "title", "long_url": "https://example.com"}
-        )
+        resp = client.post("/api/core/link", json={"title": "title", "long_url": "https://example.com"})
         assert resp.status_code == 201
         link_id2 = resp.json["id"]
 
@@ -1184,10 +1165,7 @@ def test_same_alias_multiple_link(app: Flask) -> None:
             results.append(resp.status_code)
 
     results = []
-    threads = [
-        threading.Thread(target=_create_link_helper, args=("osugame", results))
-        for i in range(3)
-    ]
+    threads = [threading.Thread(target=_create_link_helper, args=("osugame", results)) for i in range(3)]
     for thread in threads:
         thread.start()
     for thread in threads:

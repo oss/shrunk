@@ -69,12 +69,8 @@ class LinksClient:
         self.db = db
         self.geoip = geoip
         self.reserved_words = RESERVED_WORDS
-        self.banned_regexes = [
-            re.compile(regex, re.IGNORECASE) for regex in BANNED_REGEXES
-        ]
-        self.tracking_pixel_ui_enabled = bool(
-            int(os.getenv("SHRUNK_TRACKING_PIXELS_ENABLED", 0))
-        )
+        self.banned_regexes = [re.compile(regex, re.IGNORECASE) for regex in BANNED_REGEXES]
+        self.tracking_pixel_ui_enabled = bool(int(os.getenv("SHRUNK_TRACKING_PIXELS_ENABLED", 0)))
         self.other_clients = other_clients
 
     def alias_is_reserved(self, alias: str) -> bool:
@@ -129,9 +125,7 @@ class LinksClient:
         :param long_url: The long url to query
         """
         try:
-            redirected_url = requests.head(
-                long_url, allow_redirects=True, timeout=0.5
-            ).url
+            redirected_url = requests.head(long_url, allow_redirects=True, timeout=0.5).url
         except requests.exceptions.RequestException:
             return False
         return self.long_url_is_blocked(redirected_url)
@@ -192,9 +186,7 @@ class LinksClient:
                 if created_with_superToken:
                     alias = self.create_random_alias(extension=extension, orgAlias=None)
                 else:
-                    alias = self.create_random_alias(
-                        extension=extension, orgAlias=org["name"].replace(" ", "")
-                    )
+                    alias = self.create_random_alias(extension=extension, orgAlias=org["name"].replace(" ", ""))
             else:
                 alias = self.create_random_alias(extension=extension, orgAlias=None)
         else:
@@ -235,10 +227,7 @@ class LinksClient:
         if is_tracking_pixel_link:
             document["is_trackingpixel_legacy_endpoint"] = False
 
-        if (
-            not bypass_security_measures
-            and self.other_clients.security.security_risk_detected(long_url)
-        ):
+        if not bypass_security_measures and self.other_clients.security.security_risk_detected(long_url):
             self.other_clients.security.create_pending_link(document)
             raise SecurityRiskDetected
         try:
@@ -260,13 +249,7 @@ class LinksClient:
     ) -> None:
         if long_url is not None and self.long_url_is_blocked(long_url):
             raise BadLongURLException
-        if (
-            title is None
-            and long_url is None
-            and expiration_time is None
-            and owner is None
-            and alias is None
-        ):
+        if title is None and long_url is None and expiration_time is None and owner is None and alias is None:
             return
 
         if self.other_clients.security.security_risk_detected(long_url):
@@ -285,7 +268,6 @@ class LinksClient:
         if alias is not None:
             fields["alias"] = alias
         if owner is not None:
-
             if owner["type"] == "netid" and is_valid_netid(owner["_id"]):
                 fields["owner"] = {"_id": owner["_id"], "type": "netid"}
                 update["$push"] = {
@@ -302,7 +284,6 @@ class LinksClient:
                         "viewers": {"_id": link_info["owner"]["_id"], "type": "org"},
                     }
             else:
-
                 fields["owner"] = {"_id": ObjectId(owner["_id"]), "type": "org"}
                 update["$push"] = {
                     "ownership_transfer_history": {
@@ -324,9 +305,7 @@ class LinksClient:
         if result.matched_count != 1:
             raise NoSuchObjectException
 
-    def check_link_exists(
-        self, long_url: str, owner: Dict[str, Any]
-    ) -> Tuple[ObjectId, str]:
+    def check_link_exists(self, long_url: str, owner: Dict[str, Any]) -> Tuple[ObjectId, str]:
         self.assert_valid_acl_entry("owner", owner)
 
         query = {
@@ -357,9 +336,7 @@ class LinksClient:
             try:
                 ObjectId(target)
             except:
-                raise NotUserOrOrg(
-                    f"{target} is not a valid {mtype}. can't add to {acl}"
-                )
+                raise NotUserOrOrg(f"{target} is not a valid {mtype}. can't add to {acl}")
 
         if (mtype == "netid" and not is_valid_netid(target)) or (
             mtype == "org" and not self.other_clients.orgs.get_org(ObjectId(target))
@@ -370,10 +347,7 @@ class LinksClient:
         info = self.get_link_info(link_id)
 
         # dont modify if they are owner
-        if (
-            entry["_id"] == info["owner"]["_id"]
-            and entry["type"] == info["owner"]["type"]
-        ):
+        if entry["_id"] == info["owner"]["_id"] and entry["type"] == info["owner"]["type"]:
             return
         # make sure we don't add a dupe if they already have the perm
         operator = "$addToSet"
@@ -426,9 +400,7 @@ class LinksClient:
 
     def clear_visits(self, link_id: ObjectId) -> None:
         self.db.visits.delete_many({"link_id": link_id})
-        self.db.urls.update_one(
-            {"_id": link_id}, {"$set": {"visits": 0, "unique_visits": 0}}
-        )
+        self.db.urls.update_one({"_id": link_id}, {"$set": {"visits": 0, "unique_visits": 0}})
 
     def delete(self, link_id: ObjectId, deleted_by: str) -> None:
         result = self.db.urls.update_one(
@@ -445,17 +417,13 @@ class LinksClient:
             raise NoSuchObjectException
 
     def remove_expiration_time(self, link_id: ObjectId) -> None:
-        result = self.db.urls.update_one(
-            {"_id": link_id}, {"$set": {"expiration_time": None}}
-        )
+        result = self.db.urls.update_one({"_id": link_id}, {"$set": {"expiration_time": None}})
         if result.matched_count != 1:
             raise NoSuchObjectException
 
     def delete_visits(self, link_id: ObjectId) -> None:
         self.db.visits.delete_many({"link_id": link_id})
-        result = self.db.urls.update_one(
-            {"_id": link_id}, {"$set": {"visits": 0, "unique_visits": 0}}
-        )
+        result = self.db.urls.update_one({"_id": link_id}, {"$set": {"visits": 0, "unique_visits": 0}})
         if result.modified_count != 1:
             raise NoSuchObjectException
 
@@ -481,21 +449,11 @@ class LinksClient:
             match["$match"]["source"] = source
 
         if date_range is None:
-            date_match = {
-                "$match": {
-                    "time": {
-                        "$gte": datetime.datetime.now() - datetime.timedelta(days=365)
-                    }
-                }
-            }
+            date_match = {"$match": {"time": {"$gte": datetime.datetime.now() - datetime.timedelta(days=365)}}}
         else:
-            date_match = {
-                "$match": {"time": {"$gte": date_range[0], "$lte": date_range[1]}}
-            }
+            date_match = {"$match": {"time": {"$gte": date_range[0], "$lte": date_range[1]}}}
 
-        aggregation = (
-            [match] + [date_match] + cast(List[Any], aggregations.visits_aggregation)
-        )
+        aggregation = [match] + [date_match] + cast(List[Any], aggregations.visits_aggregation)
         return list(self.db.visits.aggregate(aggregation, allowDiskUse=True))
 
     def get_geoip_stats(
@@ -629,9 +587,7 @@ class LinksClient:
         result = self.db.visits.find(query)
         return list(result)
 
-    def create_random_alias(
-        self, extension: Optional[str] = None, orgAlias: Optional[str] = None
-    ) -> str:
+    def create_random_alias(self, extension: Optional[str] = None, orgAlias: Optional[str] = None) -> str:
         while True:
             alias = self._generate_unique_key()
             if orgAlias:
@@ -739,7 +695,7 @@ class LinksClient:
         )
         try:
             users = list(users)[0]["count"]
-        except (IndexError, KeyError):
+        except IndexError, KeyError:
             users = 0
         return {
             "links": links,
@@ -778,13 +734,9 @@ class LinksClient:
             )
         )
 
-    def get_link_info(
-        self, link_id: ObjectId, is_tracking_pixel: Optional[bool] = None
-    ) -> Any:
+    def get_link_info(self, link_id: ObjectId, is_tracking_pixel: Optional[bool] = None) -> Any:
         if is_tracking_pixel:
-            result = self.db.urls.find_one(
-                {"_id": link_id, "is_tracking_pixel_link": is_tracking_pixel}
-            )
+            result = self.db.urls.find_one({"_id": link_id, "is_tracking_pixel_link": is_tracking_pixel})
         else:
             result = self.db.urls.find_one({"_id": link_id})
         if result is None:
@@ -896,12 +848,8 @@ class LinksClient:
         resp = self.get_link_info_by_alias(alias)
         print(resp)
 
-        if not self.db.visits.find_one(
-            {"link_id": resp["_id"], "tracking_id": tracking_id}
-        ):
-            self.db.urls.update_one(
-                {"_id": resp["_id"]}, {"$inc": {"visits": 1, "unique_visits": 1}}
-            )
+        if not self.db.visits.find_one({"link_id": resp["_id"], "tracking_id": tracking_id}):
+            self.db.urls.update_one({"_id": resp["_id"]}, {"$inc": {"visits": 1, "unique_visits": 1}})
         else:
             self.db.urls.update_one({"_id": resp["_id"]}, {"$inc": {"visits": 1}})
 
@@ -990,9 +938,7 @@ class LinksClient:
             },
         )
 
-    def request_edit_access(
-        self, mail: Mail, link_id: ObjectId, requesting_netid: str
-    ) -> None:
+    def request_edit_access(self, mail: Mail, link_id: ObjectId, requesting_netid: str) -> None:
         token = secrets.token_bytes(16)
         self.db.access_requests.insert_one(
             {
@@ -1009,15 +955,13 @@ class LinksClient:
 
         owner_netid: str = link_info["netid"]
         owner_given_name = query_given_name(owner_netid)
-        accept_url = url_for(
-            "shrunk.accept_access_request", token=token, _external=True
-        )
+        accept_url = url_for("shrunk.accept_access_request", token=token, _external=True)
         deny_url = url_for("shrunk.deny_access_request", token=token, _external=True)
 
         plaintext_message = f"""Dear {owner_given_name},
 
 You are receiving this message because the user {requesting_netid} has requested
-access to edit your link "{link_info['title']}".
+access to edit your link "{link_info["title"]}".
 
 You may follow the following link to accept the request:
     {accept_url}
@@ -1080,7 +1024,7 @@ Please do not reply to this email. You may direct any questions to oss@oit.rutge
         <p>Dear {owner_netid},</p>
 
         <p>You are receiving this message because the user <span class="requesting-user">{requesting_netid}</span>
-        has requested access to edit your link &ldquo;{link_info['title']}&rdquo;. Please use the buttons
+        has requested access to edit your link &ldquo;{link_info["title"]}&rdquo;. Please use the buttons
         below to accept or deny the request.</p>
 
         <div>
@@ -1102,9 +1046,7 @@ Please do not reply to this email. You may direct any questions to oss@oit.rutge
             recipient_list=[f"{owner_netid}@rutgers.edu"],
         )
 
-    def active_request_exists(
-        self, mail: Mail, link_id: ObjectId, requesting_netid: str
-    ) -> bool:
+    def active_request_exists(self, mail: Mail, link_id: ObjectId, requesting_netid: str) -> bool:
         request = self.db.access_requests.find_one(
             {
                 "link_id": link_id,
@@ -1114,9 +1056,7 @@ Please do not reply to this email. You may direct any questions to oss@oit.rutge
         )
         return True if request is not None else False
 
-    def cancel_request_edit_access(
-        self, mail: Mail, link_id: ObjectId, requesting_netid: str
-    ) -> None:
+    def cancel_request_edit_access(self, mail: Mail, link_id: ObjectId, requesting_netid: str) -> None:
         self.db.access_requests.remove({"link_id": link_id})
         return
 

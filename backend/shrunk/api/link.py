@@ -117,9 +117,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
         abort(403)
 
     if "expiration_time" in req:
-        expiration_time: Optional[datetime] = datetime.fromisoformat(
-            req["expiration_time"].replace("Z", "")
-        )
+        expiration_time: Optional[datetime] = datetime.fromisoformat(req["expiration_time"].replace("Z", ""))
     else:
         expiration_time = None
 
@@ -145,20 +143,12 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
 
     alias = req.get("alias", None)
 
-    if (
-        "alias" in req
-        and not client.users.has_role(netid, "admin")
-        and not client.users.has_role(netid, "power_user")
-    ):
+    if "alias" in req and not client.users.has_role(netid, "admin") and not client.users.has_role(netid, "power_user"):
         return "No permission to create a link with a custom alias", 403
 
     try:
         link_id, created_alias = client.links.create(
-            (
-                "Untitled Link"
-                if "title" not in req or req["title"] == ""
-                else req["title"]
-            ),
+            ("Untitled Link" if "title" not in req or req["title"] == "" else req["title"]),
             req["long_url"],
             alias,
             expiration_time,
@@ -237,9 +227,7 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     if info.get("deleted", False) and not client.users.has_role(netid, "admin"):
         abort(404)
 
-    if not client.users.has_role(netid, "admin") and not client.links.may_view(
-        link_id, netid
-    ):
+    if not client.users.has_role(netid, "admin") and not client.links.may_view(link_id, netid):
         abort(403)
 
     # Get rid of types that cannot safely be passed to jsonify
@@ -301,50 +289,37 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
     :param link_id:
     """
     if "expiration_time" in req and req["expiration_time"] is not None:
-        req["expiration_time"] = datetime.fromisoformat(
-            req["expiration_time"].replace("Z", "")
-        )
+        req["expiration_time"] = datetime.fromisoformat(req["expiration_time"].replace("Z", ""))
     try:
         link = client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
 
-    if not client.users.has_role(netid, "admin") and not client.links.may_edit(
-        link_id, netid
-    ):
+    if not client.users.has_role(netid, "admin") and not client.links.may_edit(link_id, netid):
         abort(403)
     if "alias" in req:
-        if client.links.alias_is_duplicate(
-            req["alias"], link.get("is_tracking_pixel_link", False)
-        ):
+        if client.links.alias_is_duplicate(req["alias"], link.get("is_tracking_pixel_link", False)):
             abort(400)
         if client.links.alias_is_reserved(req["alias"]):
             abort(400)
-        if not client.users.has_role(netid, "admin") and not client.users.has_role(
-            netid, "power_user"
-        ):
+        if not client.users.has_role(netid, "admin") and not client.users.has_role(netid, "power_user"):
             abort(403)
 
     if "owner" in req:
-        if not client.links.is_owner(link_id, netid) and not client.users.has_role(
-            netid, "admin"
-        ):
+        if not client.links.is_owner(link_id, netid) and not client.users.has_role(netid, "admin"):
             abort(403)
         if req["owner"]["type"] == "netid":
-            if not is_valid_netid(req["owner"]["_id"]) or client.users.has_role(
-                req["owner"]["_id"], "guest"
-            ):
+            if not is_valid_netid(req["owner"]["_id"]) or client.users.has_role(req["owner"]["_id"], "guest"):
                 abort(400)
         elif req["owner"]["type"] == "org":
             if not client.orgs.get_org(ObjectId(req["owner"]["_id"])):
                 abort(400)
-            if not client.orgs.is_member(
-                ObjectId(req["owner"]["_id"]), netid
-            ) and not client.users.has_role(netid, "admin"):
+            if not client.orgs.is_member(ObjectId(req["owner"]["_id"]), netid) and not client.users.has_role(
+                netid, "admin"
+            ):
                 abort(403)
 
     try:
-
         client.links.modify(
             link_id,
             title=req.get("title"),
@@ -406,9 +381,7 @@ def modify_acl(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) ->
         client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
-    if not client.users.has_role(netid, "admin") and not client.links.may_edit(
-        link_id, netid
-    ):
+    if not client.users.has_role(netid, "admin") and not client.links.may_edit(link_id, netid):
         abort(403)
     try:
         if req["entry"]["type"] == "org":
@@ -419,9 +392,7 @@ def modify_acl(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) ->
             400,
         )
     try:
-        client.links.modify_acl(
-            link_id, req["entry"], req["action"] == "add", req["acl"]
-        )
+        client.links.modify_acl(link_id, req["entry"], req["action"] == "add", req["acl"])
     except InvalidACL:
         return jsonify({"errors": ["invalid acl"]})
     except NotUserOrOrg as e:
@@ -444,9 +415,7 @@ def delete_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
-    if not client.users.has_role(netid, "admin") and not client.links.is_owner(
-        link_id, netid
-    ):
+    if not client.users.has_role(netid, "admin") and not client.links.is_owner(link_id, netid):
         abort(403)
     client.links.delete(link_id, netid)
     return "", 204
@@ -467,9 +436,7 @@ def post_clear_visits(netid: str, client: ShrunkClient, link_id: ObjectId) -> An
         client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
-    if not client.users.has_role(netid, "admin") and not client.links.is_owner(
-        link_id, netid
-    ):
+    if not client.users.has_role(netid, "admin") and not client.links.is_owner(link_id, netid):
         abort(403)
     client.links.clear_visits(link_id)
     return "", 204
@@ -478,16 +445,12 @@ def post_clear_visits(netid: str, client: ShrunkClient, link_id: ObjectId) -> An
 @bp.route("/<ObjectId:link_id>/request_edit_access", methods=["POST"])
 @require_mail
 @require_login
-def post_request_edit(
-    netid: str, client: ShrunkClient, mail: Mail, link_id: ObjectId
-) -> Any:
+def post_request_edit(netid: str, client: ShrunkClient, mail: Mail, link_id: ObjectId) -> Any:
     try:
         client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
-    if not client.users.has_role(netid, "admin") and not client.links.may_view(
-        link_id, netid
-    ):
+    if not client.users.has_role(netid, "admin") and not client.links.may_view(link_id, netid):
         abort(403)
     client.links.request_edit_access(mail, link_id, netid)
     return "", 204
@@ -496,16 +459,12 @@ def post_request_edit(
 @bp.route("/<ObjectId:link_id>/cancel_request_edit_access", methods=["POST"])
 @require_mail
 @require_login
-def cancel_request_edit(
-    netid: str, client: ShrunkClient, mail: Mail, link_id: ObjectId
-) -> Any:
+def cancel_request_edit(netid: str, client: ShrunkClient, mail: Mail, link_id: ObjectId) -> Any:
     try:
         client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
-    if not client.users.has_role(netid, "admin") and not client.links.may_view(
-        link_id, netid
-    ):
+    if not client.users.has_role(netid, "admin") and not client.links.may_view(link_id, netid):
         abort(403)
     client.links.cancel_request_edit_access(mail, link_id, netid)
     return "", 204
@@ -514,16 +473,12 @@ def cancel_request_edit(
 @bp.route("/<ObjectId:link_id>/active_request_exists", methods=["GET"])
 @require_mail
 @require_login
-def request_exists(
-    netid: str, client: ShrunkClient, mail: Mail, link_id: ObjectId
-) -> bool:
+def request_exists(netid: str, client: ShrunkClient, mail: Mail, link_id: ObjectId) -> bool:
     try:
         client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
-    if not client.users.has_role(netid, "admin") and not client.links.may_view(
-        link_id, netid
-    ):
+    if not client.users.has_role(netid, "admin") and not client.links.may_view(link_id, netid):
         abort(403)
     exists = client.links.active_request_exists(mail, link_id, netid)
     return jsonify(exists)
@@ -542,11 +497,7 @@ def anonymize_visit(client: ShrunkClient, visit: Any) -> Any:
         "visitor_id": client.links.get_visitor_id(visit["source_ip"]),
         "user_agent": visit.get("user_agent", "Unknown"),
         "referer": get_human_readable_referer_domain(visit.get("referer", "Unknown")),
-        "state_code": (
-            visit.get("state_code", "Unknown")
-            if visit.get("country_code") == "US"
-            else "Unknown"
-        ),
+        "state_code": (visit.get("state_code", "Unknown") if visit.get("country_code") == "US" else "Unknown"),
         "country_code": visit.get("country_code", "Unknown"),
         "time": visit["time"],
     }
@@ -583,10 +534,7 @@ def get_link_visits(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     :param client:
     :param link_id:
     """
-    if not client.users.has_role(netid, "admin") and not client.links.may_view(
-        link_id, netid
-    ):
-
+    if not client.users.has_role(netid, "admin") and not client.links.may_view(link_id, netid):
         abort(403)
     visits = client.links.get_visits(link_id)
 
@@ -655,9 +603,7 @@ def get_link_overall_stats(netid: str, client: ShrunkClient, link_id: ObjectId) 
     :param client:
     :param link_id:
     """
-    if not client.users.has_role(netid, "admin") and not client.links.may_view(
-        link_id, netid
-    ):
+    if not client.users.has_role(netid, "admin") and not client.links.may_view(link_id, netid):
         abort(403)
 
     source = request.args.get("source")
@@ -697,29 +643,21 @@ def get_link_visit_stats(netid: str, client: ShrunkClient, link_id: ObjectId) ->
     :param client:
     :param link_id:
     """
-    if not client.users.has_role(netid, "admin") and not client.links.may_view(
-        link_id, netid
-    ):
+    if not client.users.has_role(netid, "admin") and not client.links.may_view(link_id, netid):
         abort(403)
 
     # If start_date exists but not end_date, we default to <start_date, today>
     # If end_date exists but not start_date, we default to <year from end_date, end_date>
     # If neither exists, then it is just, <year from today, today>
-    end_date = datetime.fromisoformat(
-        request.args.get("end_date", datetime.now().isoformat())
-    )
-    start_date = datetime.fromisoformat(
-        request.args.get("start_date", (end_date - timedelta(days=365)).isoformat())
-    )
+    end_date = datetime.fromisoformat(request.args.get("end_date", datetime.now().isoformat()))
+    start_date = datetime.fromisoformat(request.args.get("start_date", (end_date - timedelta(days=365)).isoformat()))
 
     if start_date > end_date:
         return jsonify({"error": "start_date must be before end_date"})
 
     source = request.args.get("source")
 
-    visits = client.links.get_daily_visits(
-        link_id, date_range=(start_date, end_date), source=source
-    )
+    visits = client.links.get_daily_visits(link_id, date_range=(start_date, end_date), source=source)
     return jsonify({"visits": visits})
 
 
@@ -744,9 +682,7 @@ def get_link_geoip_stats(netid: str, client: ShrunkClient, link_id: ObjectId) ->
     :param client:
     :param link_id:
     """
-    if not client.users.has_role(netid, "admin") and not client.links.may_view(
-        link_id, netid
-    ):
+    if not client.users.has_role(netid, "admin") and not client.links.may_view(link_id, netid):
         abort(403)
 
     source = request.args.get("source")
@@ -774,9 +710,7 @@ def get_link_browser_stats(netid: str, client: ShrunkClient, link_id: ObjectId) 
     :param client:
     :param link_id:
     """
-    if not client.users.has_role(netid, "admin") and not client.links.may_view(
-        link_id, netid
-    ):
+    if not client.users.has_role(netid, "admin") and not client.links.may_view(link_id, netid):
         abort(403)
 
     source = request.args.get("source")
@@ -850,15 +784,11 @@ def revert_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     except NoSuchObjectException:
         abort(404)
 
-    if not client.users.has_role(netid, "admin") and not client.links.may_edit(
-        link_id, netid
-    ):
+    if not client.users.has_role(netid, "admin") and not client.links.may_edit(link_id, netid):
         abort(403)
 
     alias = info["alias"]
-    if client.links.alias_is_reserved(alias) and client.links.alias_is_duplicate(
-        alias, info.is_tracking_pixel_link
-    ):
+    if client.links.alias_is_reserved(alias) and client.links.alias_is_duplicate(alias, info.is_tracking_pixel_link):
         abort(400)
 
     try:

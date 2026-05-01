@@ -29,9 +29,7 @@ find_first = {
                         "if": {"$lt": ["$$this.time", "$$value.first.time"]},
                         "then": {
                             "first": "$$this",
-                            "rest": {
-                                "$concatArrays": [["$$value.first"], "$$value.rest"]
-                            },
+                            "rest": {"$concatArrays": [["$$value.first"], "$$value.rest"]},
                         },
                         "else": {
                             "first": "$$value.first",

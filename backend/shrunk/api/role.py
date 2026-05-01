@@ -74,11 +74,7 @@ def get_role_entities(netid: str, client: ShrunkClient, role_name: str) -> Any:
                     "entity": entity["entity"],
                     "granted_by": entity["granted_by"],
                     "comment": entity.get("comment"),
-                    "time_granted": (
-                        entity["time_granted"].isoformat()
-                        if "time_granted" in entity
-                        else None
-                    ),
+                    "time_granted": (entity["time_granted"].isoformat() if "time_granted" in entity else None),
                 }
                 for entity in entities
             ]
@@ -88,9 +84,7 @@ def get_role_entities(netid: str, client: ShrunkClient, role_name: str) -> Any:
 
 @bp.route("/<role_name>/validate_entity/<b32:entity>", methods=["GET"])
 @require_login
-def validate_role_entity(
-    netid: str, client: ShrunkClient, role_name: str, entity: str
-) -> Any:
+def validate_role_entity(netid: str, client: ShrunkClient, role_name: str, entity: str) -> Any:
     """``GET /api/role/<role_name>/validate_entity/<b32:entity>``
 
     Check whether an entity is valid for a given role. This endpoint is used for form validation
@@ -132,9 +126,7 @@ PUT_ROLE_ENTITY_SCHEMA = {
 @bp.route("/<role_name>/entity/<b32:entity>", methods=["PUT"])
 @request_schema(PUT_ROLE_ENTITY_SCHEMA)
 @require_login
-def put_role_entity(
-    netid: str, client: ShrunkClient, req: Any, role_name: str, entity: str
-) -> Any:
+def put_role_entity(netid: str, client: ShrunkClient, req: Any, role_name: str, entity: str) -> Any:
     """``PUT /api/role/<role_name>/entity/<b32:entity>``
 
     Add an entity to a role. If the entity is already present in the role, the operation has no
@@ -156,9 +148,7 @@ def put_role_entity(
 
 @bp.route("/<role_name>/entity/<b32:entity>", methods=["DELETE"])
 @require_login
-def delete_role_entity(
-    netid: str, client: ShrunkClient, role_name: str, entity: str
-) -> Any:
+def delete_role_entity(netid: str, client: ShrunkClient, role_name: str, entity: str) -> Any:
     """``DELETE /api/role/<role_name>/entity/<b32:entity>``
 
     Remove an entity from a role. Returns 204 on success.

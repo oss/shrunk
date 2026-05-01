@@ -22,9 +22,7 @@ def get_pending_requests(netid: str, client: ShrunkClient) -> Any:
         return {
             "link_id": str(req["_id"]),
             "title": req["title"],
-            "request_token": str(
-                codecs.encode(req["request"]["token"], encoding="hex"), "utf8"
-            ),
+            "request_token": str(codecs.encode(req["request"]["token"], encoding="hex"), "utf8"),
             "requesting_netid": req["request"]["requesting_netid"],
             "request_time": req["request"]["created_at"].isoformat(),
         }
@@ -36,9 +34,7 @@ def get_pending_requests(netid: str, client: ShrunkClient) -> Any:
 @require_login
 def accept_request(netid: str, client: ShrunkClient, token: bytes) -> Any:
     try:
-        if not client.users.has_role(
-            netid, "admin"
-        ) and not client.links.check_access_request_permission(token, netid):
+        if not client.users.has_role(netid, "admin") and not client.links.check_access_request_permission(token, netid):
             abort(403)
     except NoSuchObjectException:
         abort(404)
@@ -50,9 +46,7 @@ def accept_request(netid: str, client: ShrunkClient, token: bytes) -> Any:
 @require_login
 def deny_request(netid: str, client: ShrunkClient, token: bytes) -> Any:
     try:
-        if not client.users.has_role(
-            netid, "admin"
-        ) and not client.links.check_access_request_permission(token, netid):
+        if not client.users.has_role(netid, "admin") and not client.links.check_access_request_permission(token, netid):
             abort(403)
     except NoSuchObjectException:
         abort(404)

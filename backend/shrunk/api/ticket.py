@@ -82,9 +82,7 @@ def get_help_desk_text(
 @require_mail
 @request_schema(HELP_DESK_EMAIL_SCHEMA)
 @require_login
-def send_help_desk_email(
-    netid: str, client: ShrunkClient, req: Any, mail: Mail
-) -> Response:
+def send_help_desk_email(netid: str, client: ShrunkClient, req: Any, mail: Mail) -> Response:
     """``POST /api/ticket/email``
 
     Send an email relating to a help desk ticket. This includes confirming the
@@ -99,10 +97,7 @@ def send_help_desk_email(
     :return: an empty response
     """
     # Disable route according to help desk configuration
-    if (
-        not client.users.has_role(netid, "admin")
-        and not client.tickets.get_help_desk_enabled()
-    ):
+    if not client.users.has_role(netid, "admin") and not client.tickets.get_help_desk_enabled():
         abort(403)
 
     # Ticket does not exist
@@ -136,10 +131,7 @@ def get_tickets(netid: str, client: ShrunkClient) -> Response:
     :return: a list of tickets
     """
     # Disable route according to help desk configuration
-    if (
-        not client.users.has_role(netid, "admin")
-        and not client.tickets.get_help_desk_enabled()
-    ):
+    if not client.users.has_role(netid, "admin") and not client.tickets.get_help_desk_enabled():
         abort(403)
 
     # Add filter parameter
@@ -151,9 +143,7 @@ def get_tickets(netid: str, client: ShrunkClient) -> Response:
             query[key] = value
 
     # Only admins can view tickets that are not their own
-    if (
-        "reporter" not in query or query["reporter"] != netid
-    ) and not client.users.has_role(netid, "admin"):
+    if ("reporter" not in query or query["reporter"] != netid) and not client.users.has_role(netid, "admin"):
         abort(403)
 
     # Add count parameter
@@ -188,10 +178,7 @@ def get_ticket(netid: str, client: ShrunkClient, id: str) -> Response:
     :return: the ticket
     """
     # Disable route according to help desk configuration
-    if (
-        not client.users.has_role(netid, "admin")
-        and not client.tickets.get_help_desk_enabled()
-    ):
+    if not client.users.has_role(netid, "admin") and not client.tickets.get_help_desk_enabled():
         return Response(status=403)
 
     ticket = client.tickets.get_ticket({"_id": id})
@@ -223,10 +210,7 @@ def create_ticket(netid: str, client: ShrunkClient, req: Any) -> Response:
     :return: a response with a message, and the new ticket on success
     """
     # Disable route according to help desk configuration
-    if (
-        not client.users.has_role(netid, "admin")
-        and not client.tickets.get_help_desk_enabled()
-    ):
+    if not client.users.has_role(netid, "admin") and not client.tickets.get_help_desk_enabled():
         abort(403)
 
     # Reporter has too many open tickets. For now, the hard limit is 10.
@@ -250,9 +234,7 @@ def create_ticket(netid: str, client: ShrunkClient, req: Any) -> Response:
         return jsonify({"message": "Duplicate ticket exists"}), 409
 
     # Entity already has the role
-    if info["reason"] in ROLE_REQUESTS and client.users.has_role(
-        info["entity"], info["reason"]
-    ):
+    if info["reason"] in ROLE_REQUESTS and client.users.has_role(info["entity"], info["reason"]):
         return jsonify({"message": "Already has the role"}), 409
 
     # Set additional ticket information
@@ -290,10 +272,7 @@ def patch_ticket(netid: str, client: ShrunkClient, req: Any, id: str) -> Respons
     :return: an empty response
     """
     # Disable route according to help desk configuration
-    if (
-        not client.users.has_role(netid, "admin")
-        and not client.tickets.get_help_desk_enabled()
-    ):
+    if not client.users.has_role(netid, "admin") and not client.tickets.get_help_desk_enabled():
         abort(403)
 
     # Ticket does not exist

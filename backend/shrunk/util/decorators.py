@@ -47,9 +47,7 @@ def request_schema(schema: Any) -> Any:
             if req is None:
                 abort(400)
             try:
-                jsonschema.validate(
-                    req, schema, format_checker=jsonschema.draft7_format_checker
-                )
+                jsonschema.validate(req, schema, format_checker=jsonschema.draft7_format_checker)
             except jsonschema.exceptions.ValidationError:
                 abort(400)
             return func(req, *args, **kwargs)
@@ -111,9 +109,7 @@ def require_token(required_permission: str):
                 )
 
             # Check permissions
-            if not client.access_tokens.check_permissions(
-                token_id, required_permission
-            ):
+            if not client.access_tokens.check_permissions(token_id, required_permission):
                 return (
                     jsonify(
                         {

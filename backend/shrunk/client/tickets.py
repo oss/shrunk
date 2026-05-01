@@ -47,10 +47,7 @@ class TicketsClient:
                         "ticket will be manually processed to ensure that "
                         "you meet the criteria."
                     ),
-                    "placeholder": (
-                        "Please provide a brief explanation of why you need "
-                        "the power user role."
-                    ),
+                    "placeholder": ("Please provide a brief explanation of why you need the power user role."),
                     "name": "Grant power user role to self",
                 },
                 "whitelisted": {
@@ -60,10 +57,7 @@ class TicketsClient:
                         "NetID. Your ticket will be manually processed based "
                         "on the comment provided."
                     ),
-                    "placeholder": (
-                        "Please provide a brief explanation of why you need to"
-                        " whitelist this person."
-                    ),
+                    "placeholder": ("Please provide a brief explanation of why you need to whitelist this person."),
                     "name": "Whitelist another person to Go services",
                 },
                 "other": {
@@ -73,10 +67,7 @@ class TicketsClient:
                         "suggestions on how we can improve the site, etc. "
                         "Your ticket will be manually processed."
                     ),
-                    "placeholder": (
-                        "Please provide a brief description of your issue or "
-                        "request."
-                    ),
+                    "placeholder": ("Please provide a brief description of your issue or request."),
                     "name": "Other",
                 },
             },
@@ -97,24 +88,16 @@ class TicketsClient:
 
         # Construct the email
         SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-        HTML_TEMPLATE_PATH = os.path.join(
-            SCRIPT_DIR, "../static/html/tickets", f"{category}.html"
-        )
-        PLAINTEXT_TEMPLATE_PATH = os.path.join(
-            SCRIPT_DIR, "../static/txt/tickets", f"{category}.txt"
-        )
+        HTML_TEMPLATE_PATH = os.path.join(SCRIPT_DIR, "../static/html/tickets", f"{category}.html")
+        PLAINTEXT_TEMPLATE_PATH = os.path.join(SCRIPT_DIR, "../static/txt/tickets", f"{category}.txt")
 
         from_email = "go-support@oit.rutgers.edu"
         recipient_list = [f"{ticket['reporter']}@rutgers.edu"]
-        subject = (
-            f"Go: Rutgers University URL Shortener - {CATEGORY_TO_SUBJECT[category]}"
-        )
+        subject = f"Go: Rutgers University URL Shortener - {CATEGORY_TO_SUBJECT[category]}"
 
         variables = ticket
         if "is_role_granted" in ticket:
-            variables["role_request_status"] = (
-                "APPROVED" if ticket["is_role_granted"] else "DENIED"
-            )
+            variables["role_request_status"] = "APPROVED" if ticket["is_role_granted"] else "DENIED"
 
         if category == "notification":
             recipient_list = ["oss@oit.rutgers.edu"]  # Send to OSS team
@@ -170,9 +153,7 @@ class TicketsClient:
 
         return self.db.tickets.find_one(query)
 
-    def get_tickets(
-        self, query: dict, sort: Optional[List[tuple]] = None
-    ) -> List[Ticket]:
+    def get_tickets(self, query: dict, sort: Optional[List[tuple]] = None) -> List[Ticket]:
         """Get all tickets that match the given criteria and sort them if
         needed.
 

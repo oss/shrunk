@@ -49,9 +49,7 @@ def get_all_organizations(token_owner: Dict[str, Any], client: ShrunkClient) -> 
 
 @bp.route("/<netid>", methods=["GET"])
 @require_token(required_permission="read:organizations")
-def get_user_organizations(
-    token_owner: Dict[str, Any], client: ShrunkClient, netid: str
-) -> Any:
+def get_user_organizations(token_owner: Dict[str, Any], client: ShrunkClient, netid: str) -> Any:
     """``GET /api/v1/organizations/<netid>``
 
     Get information about all organizations a user is a member of. Basically just returns the Mongo document.

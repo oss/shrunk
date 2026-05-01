@@ -16,9 +16,7 @@ def verify_signature(payload_body, secret_token, signature_header):
     if not signature_header:
         current_app.logger.error("x-hub-signature-256 header is missing!")
         raise Exception()
-    hash_object = hmac.new(
-        secret_token.encode("utf-8"), msg=payload_body, digestmod=hashlib.sha256
-    )
+    hash_object = hmac.new(secret_token.encode("utf-8"), msg=payload_body, digestmod=hashlib.sha256)
     expected_signature = "sha256=" + hash_object.hexdigest()
 
     if not hmac.compare_digest(expected_signature, signature_header):

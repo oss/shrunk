@@ -15,9 +15,7 @@ from util import dev_login
         ("facstaff", "blacklisted", False),
     ],
 )
-def test_get_role_entities(
-    client: Client, user: str, role: str, expected: bool
-) -> None:
+def test_get_role_entities(client: Client, user: str, role: str, expected: bool) -> None:
     with dev_login(client, user):
         resp = client.get(f"/api/core/role/{role}/entity")
 
@@ -37,9 +35,7 @@ def test_get_role_entities(
         ("blocked_url", "!!$*#$*#(*#", False),
     ],
 )
-def test_validate_entity(
-    client: Client, role: str, entity: str, expected: bool
-) -> None:
+def test_validate_entity(client: Client, role: str, entity: str, expected: bool) -> None:
     entity_b32 = str(base64.b32encode(bytes(entity, "utf8")), "utf8")
 
     with dev_login(client, "admin"):

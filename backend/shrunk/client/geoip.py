@@ -72,13 +72,9 @@ class GeoipClient:
             resp = self._geoip.city(ipaddr)
             country = resp.country.iso_code
             try:
-                state = (
-                    resp.subdivisions.most_specific.iso_code
-                    if country == "US"
-                    else None
-                )
+                state = resp.subdivisions.most_specific.iso_code if country == "US" else None
             except AttributeError:
                 state = None
             return state, country
-        except (AttributeError, geoip2.errors.AddressNotFoundError):
+        except AttributeError, geoip2.errors.AddressNotFoundError:
             return None, None

@@ -54,7 +54,7 @@ docker-compose -f docker-compose.tests.yml up
 
 We use [ruff](https://docs.astral.sh/ruff/) for our backend's formatting & linting, while using pylint & ruff for linting in the GitLab CI/CD, you can run this command to make sure your code is up to standards. If you're using Visual Studio Code, it does this automatically.
 
-This command runs the format check
+This command runs the format check (if in venv you can omit `uv run` from the commands)
 ```
 uv run ruff format 
 ```

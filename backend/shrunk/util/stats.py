@@ -52,7 +52,7 @@ def get_human_readable_referer_domain(referer: str) -> str:
                 hostname = "twitter.com"
 
             return REFERER_MAPPING.get(hostname, hostname)
-        except (ValueError, AttributeError):
+        except ValueError, AttributeError:
             return "Unknown"
     return "Unknown"
 
@@ -141,9 +141,7 @@ def browser_stats_from_visits(visits: List[Any]) -> Any:
         browser, platform = get_browser_platform(user_agent)
         browsers[browser] += 1
         platforms[platform] += 1
-        referers[
-            get_human_readable_referer_domain(visit.get("referer", "Unknown"))
-        ] += 1
+        referers[get_human_readable_referer_domain(visit.get("referer", "Unknown"))] += 1
     return {
         "browsers": [{"name": b, "y": n} for (b, n) in top_n(browsers, n=5).items()],
         "platforms": [{"name": p, "y": n} for (p, n) in top_n(platforms, n=5).items()],

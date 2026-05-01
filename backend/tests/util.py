@@ -9,9 +9,7 @@ def assert_is_response_valid(resp: Response) -> bool:
     assert 200 <= resp.status_code < 300
 
 
-def create_link(
-    client: Client, title: str, url: str, alias: Optional[str] = None
-) -> str:
+def create_link(client: Client, title: str, url: str, alias: Optional[str] = None) -> str:
     body = {
         "title": title,
         "long_url": url,
@@ -26,9 +24,7 @@ def create_link(
     )
 
 
-def create_tracking_pixel(
-    client: Client, title: str, tracking_pixel_extension: str
-) -> str:
+def create_tracking_pixel(client: Client, title: str, tracking_pixel_extension: str) -> str:
     return client.post(
         "/api/core/link",
         json={

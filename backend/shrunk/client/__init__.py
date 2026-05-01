@@ -93,15 +93,9 @@ class ShrunkClient:
         self.db.visits.create_index([("uid", pymongo.ASCENDING)])
         self.db.visitors.create_index([("ip", pymongo.ASCENDING)], unique=True)
         self.db.organizations.create_index([("name", pymongo.ASCENDING)], unique=True)
-        self.db.organizations.create_index(
-            [("members.name", pymongo.ASCENDING), ("members.netid", pymongo.ASCENDING)]
-        )
-        self.db.organizations.create_index(
-            [("name", pymongo.TEXT), ("members.netid", pymongo.TEXT)]
-        )
-        self.db.access_requests.create_index(
-            [("token", pymongo.ASCENDING)], unique=True
-        )
+        self.db.organizations.create_index([("members.name", pymongo.ASCENDING), ("members.netid", pymongo.ASCENDING)])
+        self.db.organizations.create_index([("name", pymongo.TEXT), ("members.netid", pymongo.TEXT)])
+        self.db.access_requests.create_index([("token", pymongo.ASCENDING)], unique=True)
 
         self.db.users.create_index([("netid", pymongo.ASCENDING)], unique=True)
 
@@ -129,9 +123,7 @@ class ShrunkClient:
         ]:
             self.db[col].delete_many({})
 
-    def admin_stats(
-        self, begin: Optional[datetime] = None, end: Optional[datetime] = None
-    ) -> Any:
+    def admin_stats(self, begin: Optional[datetime] = None, end: Optional[datetime] = None) -> Any:
         """Get basic Shrunk usage stats. An optional time range may be specified.
 
         :param begin:

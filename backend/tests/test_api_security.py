@@ -29,9 +29,7 @@ def test_security_risk_client_method(client: Client) -> None:
 
 
 @pytest.mark.parametrize(("permission"), ["user", "facstaff", "power"])
-def test_user_and_admin_security_link_abilities(
-    client: Client, permission: str
-) -> None:
+def test_user_and_admin_security_link_abilities(client: Client, permission: str) -> None:
     unsafe_link = "http://malware.testing.google.test/testing/malware/*"
     unsafe_link_title = "first unsafe link"
     regular_link = "https://google.com"
@@ -91,9 +89,7 @@ def test_security_api_permissions(client: Client, permission: str) -> None:
         # objectID to work with. it does not matter what it is,
         # we just need an objectID to work with in order to call endpoints
         random_link = "http://google.com"
-        resp = client.post(
-            "/api/core/link", json={"title": "random", "long_url": random_link}
-        )
+        resp = client.post("/api/core/link", json={"title": "random", "long_url": random_link})
         link_id = resp.json["id"]
 
         resp = client.patch(f"/api/core/security/promote/{link_id}")

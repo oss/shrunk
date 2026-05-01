@@ -33,9 +33,7 @@ def login(user_info: Any) -> Any:
 
     def log_failed(why: str) -> None:
         user_roles = user_info.get("employeeType")
-        logger.info(
-            f"login: failed SSO login for {netid} (roles: {user_roles}, reason: {why})"
-        )
+        logger.info(f"login: failed SSO login for {netid} (roles: {user_roles}, reason: {why})")
 
     # get info from shibboleth types
     fac_staff = t("FACULTY") or t("STAFF")

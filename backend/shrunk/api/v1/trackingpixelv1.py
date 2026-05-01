@@ -33,9 +33,7 @@ CREATE_LINK_SCHEMA = {
 @bp.route("", methods=["POST"])
 @request_schema(CREATE_LINK_SCHEMA)
 @require_token(required_permission="create:tracking-pixels")
-def create_tracking_pixel(
-    token_owner: Dict[str, Any], client: ShrunkClient, req: Any
-) -> Dict[Any, Any]:
+def create_tracking_pixel(token_owner: Dict[str, Any], client: ShrunkClient, req: Any) -> Dict[Any, Any]:
     """Creates a new link"""
 
     org_id = req.get("organization_id")
@@ -57,7 +55,6 @@ def create_tracking_pixel(
             )
 
     if token_owner["type"] == "netid":
-
         if org_id is None:
             return (
                 jsonify(
@@ -92,9 +89,7 @@ def create_tracking_pixel(
         req["tracking_pixel_extension"] = ".png"
 
     if "expiration_time" in req:
-        expiration_time: Optional[datetime] = datetime.fromisoformat(
-            req["expiration_time"].replace("Z", "")
-        )
+        expiration_time: Optional[datetime] = datetime.fromisoformat(req["expiration_time"].replace("Z", ""))
     else:
         expiration_time = None
 
@@ -103,11 +98,7 @@ def create_tracking_pixel(
     created_with_superToken = token_owner["type"] == "netid"
     try:
         link_id, created_alias = client.links.create(
-            (
-                "Untitled Link"
-                if "title" not in req or req["title"] == ""
-                else req["title"]
-            ),
+            ("Untitled Link" if "title" not in req or req["title"] == "" else req["title"]),
             "http://example.com",
             alias,
             expiration_time,
@@ -264,9 +255,7 @@ def get_tracking_pixel(
 
 @bp.route("/<ObjectId:org_id>", methods=["GET"])
 @require_token(required_permission="read:tracking-pixels")
-def get_org_tracking_pixels(
-    token_owner: Dict[str, Any], client: ShrunkClient, org_id: ObjectId
-) -> Any:
+def get_org_tracking_pixels(token_owner: Dict[str, Any], client: ShrunkClient, org_id: ObjectId) -> Any:
     """``GET /api/v1/link/<org_id>``
 
     Get information about trackingpixels owned by a org. Basically just returns the Mongo document.

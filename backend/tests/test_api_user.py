@@ -61,9 +61,7 @@ def test_initialize_user(client: Client, user: str, expected: dict) -> None:
 )
 def test_create_user(client: Client, user: str, new_netid: str, expected: int) -> None:
     with dev_login(client, user):
-        resp = client.post(
-            "/api/core/user", json={"netid": new_netid, "roles": ["facstaff"]}
-        )
+        resp = client.post("/api/core/user", json={"netid": new_netid, "roles": ["facstaff"]})
         assert resp.status_code == expected
 
 
@@ -121,9 +119,7 @@ def test_add_role(client: Client, user: str, new_role: str, expected: int) -> No
     with dev_login(client, user):
         test_account = f"DEV_TEST{random.randint(1000, 1000000)}"
         if user == "admin":
-            client.post(
-                "/api/core/user", json={"netid": test_account, "roles": ["facstaff"]}
-            )
+            client.post("/api/core/user", json={"netid": test_account, "roles": ["facstaff"]})
             resp = client.patch(
                 "/api/core/user/roles",
                 json={"netid": test_account, "role": new_role, "comment": "test"},
@@ -134,9 +130,7 @@ def test_add_role(client: Client, user: str, new_role: str, expected: int) -> No
                 json_data = resp.json
                 assert new_role in json_data.get("roles", [])
         else:
-            resp = client.post(
-                "/api/core/user", json={"netid": test_account, "roles": ["facstaff"]}
-            )
+            resp = client.post("/api/core/user", json={"netid": test_account, "roles": ["facstaff"]})
             assert resp.status_code == 403
 
 
@@ -152,9 +146,7 @@ def test_add_role(client: Client, user: str, new_role: str, expected: int) -> No
         ("user", "power_user", 403),
     ],
 )
-def test_remove_role(
-    client: Client, user: str, remove_role: str, expected: int
-) -> None:
+def test_remove_role(client: Client, user: str, remove_role: str, expected: int) -> None:
     with dev_login(client, user):
         test_account = f"DEV_TEST{random.randint(1000, 1000000)}"
         if user == "admin":

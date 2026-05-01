@@ -55,9 +55,7 @@ def pull_outlook_assets_from_github():
         asset_zip_urls.append(asset["browser_download_url"])
 
     if len(asset_zip_names) != len(asset_zip_urls):
-        print(
-            "Error: Number of asset zip names does not match number of asset zip urls"
-        )
+        print("Error: Number of asset zip names does not match number of asset zip urls")
         exit(1)
 
     for url in asset_zip_urls:
@@ -67,11 +65,7 @@ def pull_outlook_assets_from_github():
         filename_path = os.path.join("/tmp/shrunk", filename)
 
         open(filename_path, "wb").write(asset_response.content)
-        print(
-            "Downloaded asset from {url} to {folder}".format(
-                url=url, folder=filename_path
-            )
-        )
+        print("Downloaded asset from {url} to {folder}".format(url=url, folder=filename_path))
 
         # now, unzip the files
         for asset in asset_zip_names:

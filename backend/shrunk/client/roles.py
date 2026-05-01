@@ -112,7 +112,6 @@ class RolesClient:
 
             # guard against double insertions
             if not self.has(role, grantee):
-
                 self.db.grants.insert_one(
                     {
                         "role": role,
@@ -164,10 +163,7 @@ class RolesClient:
 
            { "name": "string", "display_name": "string" }
         """
-        return [
-            {"name": name, "display_name": info["title"]}
-            for (name, info) in self.form_text.items()
-        ]
+        return [{"name": name, "display_name": info["title"]} for (name, info) in self.form_text.items()]
 
     def get_role_entities(self, role: str) -> List[Any]:
         """Get all entities having the given role

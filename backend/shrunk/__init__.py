@@ -129,22 +129,14 @@ def _init_roles() -> None:
     def onblock(url: str) -> None:
         domain = get_domain(url)
         urls = client.db.urls
-        current_app.logger.info(
-            f"url {url} has been blocked. removing all urls with domain {domain}"
-        )
+        current_app.logger.info(f"url {url} has been blocked. removing all urls with domain {domain}")
 
         # . needs to be escaped in the domain because it is regex wildcard
-        contains_domain = urls.find(
-            {"long_url": {"$regex": "%s*" % domain.replace(".", r"\.")}}
-        )
+        contains_domain = urls.find({"long_url": {"$regex": "%s*" % domain.replace(".", r"\.")}})
 
-        matches_domain = [
-            link for link in contains_domain if get_domain(link["long_url"]) == domain
-        ]
+        matches_domain = [link for link in contains_domain if get_domain(link["long_url"]) == domain]
 
-        msg = "deleting links: " + ", ".join(
-            f'{link["_id"]} -> {link["long_url"]}' for link in matches_domain
-        )
+        msg = "deleting links: " + ", ".join(f"{link['_id']} -> {link['long_url']}" for link in matches_domain)
         current_app.logger.info(msg)
 
         client.links.block_urls(list(doc["_id"] for doc in matches_domain))
@@ -160,9 +152,7 @@ def _init_roles() -> None:
             }
         )
 
-        matches_domain = [
-            link for link in contains_domain if get_domain(link["long_url"]) == domain
-        ]
+        matches_domain = [link for link in contains_domain if get_domain(link["long_url"]) == domain]
         client.links.unblock_urls(list(doc["_id"] for doc in matches_domain))
 
     client.roles.create(
@@ -208,8 +198,7 @@ def create_app(**kwargs: Any) -> Flask:
     app.json = ShrunkJSONProvider(app)
 
     formatter = RequestFormatter(
-        "[%(asctime)s] [%(user)s@%(remote_addr)s] [%(url)s] %(levelname)s "
-        + "in %(module)s: %(message)s",
+        "[%(asctime)s] [%(user)s@%(remote_addr)s] [%(url)s] %(levelname)s " + "in %(module)s: %(message)s",
     )
     default_handler.setFormatter(formatter)
 
@@ -284,8 +273,7 @@ def create_app(**kwargs: Any) -> Flask:
             for category, changes in release["categories"].items():
                 for change in changes:
                     change["contributors"] = [
-                        contributors.get(contrib_id, contrib_id)
-                        for contrib_id in change["contributors"]
+                        contributors.get(contrib_id, contrib_id) for contrib_id in change["contributors"]
                     ]
 
                     if change.get("product", "website") not in valid_products:
@@ -332,9 +320,7 @@ def create_app(**kwargs: Any) -> Flask:
                 request.headers.get("X-Hub-Signature-256"),
             )
 
-            app.logger.info(
-                "Signature verified. Proceeding with updating Outlook add-in version."
-            )
+            app.logger.info("Signature verified. Proceeding with updating Outlook add-in version.")
         except Exception:
             app.logger.error("Signature was incorrect or unable to be verified.\n")
             return "Unauthorized", 401
@@ -372,13 +358,9 @@ def create_app(**kwargs: Any) -> Flask:
         return jsonify(
             {
                 "devLogins": bool(int(os.getenv("SHRUNK_DEV_LOGINS", 0))),
-                "trackingPixel": bool(
-                    int(os.getenv("SHRUNK_TRACKING_PIXELS_ENABLED", 0))
-                ),
+                "trackingPixel": bool(int(os.getenv("SHRUNK_TRACKING_PIXELS_ENABLED", 0))),
                 "domains": bool(int(os.getenv("SHRUNK_DOMAINS_ENABLED", 0))),
-                "googleSafeBrowsing": bool(
-                    int(os.getenv("SHRUNK_GOOGLE_SAFEBROWSE_ENABLED", 0))
-                ),
+                "googleSafeBrowsing": bool(int(os.getenv("SHRUNK_GOOGLE_SAFEBROWSE_ENABLED", 0))),
                 "helpDesk": bool(int(os.getenv("SHRUNK_HELP_DESK_ENABLED", 0))),
             }
         )
@@ -502,7 +484,7 @@ def create_app(**kwargs: Any) -> Flask:
         if link_info is None:
             return jsonify({"message": "Link not found"}), 404
 
-        return redirect(f'/app/links/{str(link_info["_id"])}')
+        return redirect(f"/app/links/{str(link_info['_id'])}")
 
     # Add "/api/core/t/" because you're technically using an API endpoint for the websites using the tracking pixel.
     # This will also make it easier for the NGINX server in the near future.
