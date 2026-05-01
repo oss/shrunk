@@ -85,6 +85,32 @@ black:
     - uv sync
     - uv run black --check .
 
+ruff-lint:
+  stage: lint
+  image: python:latest
+  needs: []
+  script:
+    - apt-get update
+    - apt-get install -y gcc libldap-common libldap2-dev libsasl2-dev
+    - cd backend
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - source $HOME/.local/bin/env
+    - uv sync
+    - uv run ruff check
+
+ruff-format:
+  stage: lint
+  image: python:latest
+  needs: []
+  script:
+    - apt-get update
+    - apt-get install -y gcc libldap-common libldap2-dev libsasl2-dev
+    - cd backend
+    - curl -LsSf https://astral.sh/uv/install.sh | sh
+    - source $HOME/.local/bin/env
+    - uv sync
+    - uv run ruff format --check
+
 prettier:
   stage: lint
   image: node:latest
