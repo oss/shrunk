@@ -9,14 +9,7 @@ import {
   Tooltip,
 } from 'antd';
 import dayjs from 'dayjs';
-import {
-  CopyIcon,
-  EditIcon,
-  EyeIcon,
-  QrCodeIcon,
-  Trash2Icon,
-  UsersIcon,
-} from 'lucide-react';
+import { CopyIcon, EditIcon, EyeIcon } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { Link } from '@/interfaces/link';
@@ -30,48 +23,23 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
   return (
     <Card
       title={linkInfo.title}
-      actions={[
-        <Tooltip title="View link details">
-          <Button
-            icon={<EyeIcon />}
-            type="text"
-            href={`/app/links/${linkInfo._id}`}
-            target="_blank"
-          />
-        </Tooltip>,
-        <Tooltip title="Edit link">
+      extra={[
+        <Tooltip key="edit" title="Edit link">
           <Button
             icon={<EditIcon />}
             type="text"
             href={`/app/links/${linkInfo._id}?mode=edit`}
             target="_blank"
+            className="!tw-inline-flex !tw-items-center !tw-justify-center"
           />
         </Tooltip>,
-        <Tooltip title="Share link permissions">
+        <Tooltip key="view" title="View link">
           <Button
-            icon={<UsersIcon />}
+            icon={<EyeIcon />}
             type="text"
-            href={`/app/links/${linkInfo._id}?mode=collaborate`}
+            href={`/app/links/${linkInfo._id}`}
             target="_blank"
-          />
-        </Tooltip>,
-        <Tooltip title="Access QR code">
-          <Button
-            icon={<QrCodeIcon />}
-            type="text"
-            href={`/app/links/${linkInfo._id}?mode=qrcode`}
-            target="_blank"
-          />
-        </Tooltip>,
-        <Tooltip title="Delete link">
-          <Button
-            icon={<Trash2Icon />}
-            type="text"
-            danger
-            disabled={linkInfo.deletion_info !== null}
-            href={`/app/links/${linkInfo._id}?mode=edit`}
-            target="_blank"
-            className="!tw-text-red-600"
+            className="!tw-inline-flex !tw-items-center !tw-justify-center"
           />
         </Tooltip>,
       ]}

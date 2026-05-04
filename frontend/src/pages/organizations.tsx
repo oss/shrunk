@@ -21,7 +21,6 @@ import {
   message,
   Alert,
   Layout,
-  Affix,
   Select,
   Radio,
   Pagination,
@@ -37,14 +36,14 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import dayjs from 'dayjs';
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import {
   createOrg,
   deleteOrganization,
   searchOrgs,
   hasAssociatedUrls,
 } from '@/api/organization';
-import useDarkMode from '@/lib/hooks/useDarkMode';
+import { DarkModeContext } from '@/contexts/DarkModeContext';
 import { serverValidateNetId } from '@/api/validators';
 import { Organization, OrgSearchQuery } from '@/interfaces/organizations';
 
@@ -226,7 +225,13 @@ const useDebounce = <T,>(value: T, delay: number): T => {
 export default function MyOrganizations({
   userPrivileges,
 }: Props): React.ReactElement {
-  const { darkMode } = useDarkMode();
+  const darkModeContext = useContext(DarkModeContext);
+
+  if (!darkModeContext) {
+    throw new Error('DarkModeContext is missing.');
+  }
+
+  const { darkMode } = darkModeContext;
   const [orgs, setOrgs] = useState<Organization[] | null>(null);
   const [totalOrgs, setTotalOrgs] = useState<number>(0);
   const [query, setQuery] = useState<OrgSearchQuery>(DEFAULT_QUERY);
@@ -513,32 +518,30 @@ export default function MyOrganizations({
       </Row>
       <Layout className="tw-bg-white dark:tw-bg-[#1f1f1f]">
         <Sider
-          className="tw-mt-[4px]tw-bg-white tw-hidden tw-pr-4 lg:tw-block dark:tw-bg-[#1f1f1f]"
+          className="tw-mt-[4px]  tw-bg-white tw-pr-4 lg:tw-block dark:tw-bg-[#1f1f1f]"
           width="25%"
           breakpoint="lg"
           collapsedWidth="0"
           trigger={null}
         >
-          <Affix offsetTop={50}>
-            <div>
-              <Input.Search
-                className="tw-pb-2"
-                placeholder="Search organizations..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                onSearch={onSearch}
-                enterButton
-              />
-              <FilterForm
-                query={query}
-                setQuery={setQuery}
-                onSearch={onSearch}
-                isAdmin={isAdmin}
-                memberNetidError={memberNetidError}
-                setMemberNetidError={setMemberNetidError}
-              />
-            </div>
-          </Affix>
+          <div className="tw-sticky tw-top-[50px] tw-max-h-[calc(100vh-130px)] tw-overflow-auto">
+            <Input.Search
+              className="tw-pb-2"
+              placeholder="Search organizations..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onSearch={onSearch}
+              enterButton
+            />
+            <FilterForm
+              query={query}
+              setQuery={setQuery}
+              onSearch={onSearch}
+              isAdmin={isAdmin}
+              memberNetidError={memberNetidError}
+              setMemberNetidError={setMemberNetidError}
+            />
+          </div>
         </Sider>
         <Content className="tw-bg-white dark:tw-bg-[#1f1f1f]">
           {showAssociatedUrlsAlert && (

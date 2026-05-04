@@ -81,7 +81,15 @@ interface UsersContextType {
   rehydrateUsers: () => void;
 }
 
-const UsersContext = createContext<UsersContextType | undefined>(undefined);
+const UsersContext = createContext<UsersContextType>({
+  options: null,
+  users: [],
+  loading: false,
+  appliedOperations: [],
+  addOperation: () => {},
+  deleteOperation: () => {},
+  rehydrateUsers: () => {},
+});
 
 export const useUsers = (): UsersContextType => {
   const context = useContext(UsersContext);

@@ -27,7 +27,7 @@ import {
   PlusCircleIcon,
   ChartLineIcon,
 } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 
 import {
@@ -46,7 +46,7 @@ import CollaboratorModal, { Collaborator } from '@/modals/CollaboratorModal';
 import CompactLinkTable from '@/components/orgs/CompactLinkTable';
 import CreateLinkDrawer from '@/drawers/CreateLinkDrawer';
 import OrgOverview from '@/components/orgs/OrgOverview';
-import useDarkMode from '@/lib/hooks/useDarkMode';
+import { DarkModeContext } from '@/contexts/DarkModeContext';
 
 type RouteParams = {
   id: string;
@@ -72,7 +72,13 @@ function ManageOrgBase({
   match,
   history,
 }: Props): React.ReactElement {
-  const { darkMode } = useDarkMode();
+  const darkModeContext = useContext(DarkModeContext);
+
+  if (!darkModeContext) {
+    throw new Error('DarkModeContext is missing.');
+  }
+
+  const { darkMode } = darkModeContext;
 
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [adminsCount, setAdminsCount] = useState(0);

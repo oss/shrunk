@@ -2,6 +2,41 @@
   {
     "major": 3,
     "minor": 2,
+    "patch": 1,
+    "projectDirector": "ah1371",
+    "date": "TODO",
+    "description": "Bug fixes and improvements following the 3.2.0 release.",
+    "categories": {
+      "features": [],
+      "improvements": [
+        {
+          "text": "Rewrite the dark mode system to use React context in order to implement a 'follow system preference' feature",
+          "contributors": ["jds508"]
+        }, 
+        {
+          "text": "Re-add the edit link icon to link cards",
+          "contributors": ["jds508"]
+        }
+      ],
+      "fixes": [
+        {
+          "text": "Fix potential race condition where two links could have the same alias if created at the same time",
+          "contributors": ["ak2399"]
+        },
+        {
+          "text": "Fix an error when modifying a link's expiration date and time",
+          "contributors": ["ys973"]
+        }, 
+        {
+          "text": "Fix an error where the UI did not reflect changes when the Reset Filters Button was pressed",
+          "contributors": ["jds508"]
+        }
+      ]
+    }
+  },
+  {
+    "major": 3,
+    "minor": 2,
     "patch": 0,
     "projectDirector": "ah1371",
     "date": "TODO",

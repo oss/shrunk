@@ -69,7 +69,6 @@ export interface Props {
 }
 
 export default function CreateLinkDrawer(props: Props): JSX.Element {
-  const { Search } = Input;
   const featureFlags: FeatureFlags = useFeatureFlags();
   const [loading, setLoading] = useState<boolean>(false);
   const [linkCreationMode, setLinkCreationMode] = useState<'url' | 'pixel'>(
@@ -195,7 +194,7 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
               >
                 <Space.Compact className="tw-w-full">
                   <Space.Addon>{`${window.location.host}/`}</Space.Addon>
-                  <Search placeholder="If left blank, it will be randomized" />
+                  <Input placeholder="If left blank, it will be randomized" />
                 </Space.Compact>
               </Form.Item>
             </Col>
