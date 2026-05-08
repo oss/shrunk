@@ -47,18 +47,11 @@ export default function Admin(): React.ReactElement {
 
   useEffect(() => {
     const handleLocationChange = () => {
-      const hashParams = new URLSearchParams(
-        window.location.hash.split('?')[1] || '',
-      );
+      const hashParams = new URLSearchParams(window.location.search || '');
       const tabParam = hashParams.get('tab');
       if (!VALID_TABS.includes(tabParam || '')) {
         const baseUrl = window.location.pathname;
-        const hash = window.location.hash.split('?')[0];
-        window.history.pushState(
-          {},
-          '',
-          `${baseUrl}${hash}?tab=${DEFAULT_TAB}`,
-        );
+        window.history.pushState({}, '', `${baseUrl}?tab=${DEFAULT_TAB}`);
         setActiveTab(DEFAULT_TAB);
       } else {
         setActiveTab(tabParam!);

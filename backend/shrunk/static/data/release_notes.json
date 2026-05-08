@@ -28,7 +28,14 @@
           "contributors": [
             "jds508"
           ]
+        },
+        {
+          "text": "Fix parameter tabs not showing correct page on page load",
+          "contributors": [
+            "ak2399"
+          ]
         }
+       
       ]
     }
   },
