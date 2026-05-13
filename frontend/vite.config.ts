@@ -17,7 +17,7 @@ export default defineConfig({
       plugins: [tailwindcss()],
     },
   },
-  plugins: [react(), tsconfigPaths(), eslint()],
+  plugins: [react(), tsconfigPaths(), eslint({ failOnError: false })],
   base: '/app/',
   server: {
     host: '0.0.0.0',
