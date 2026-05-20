@@ -34,7 +34,7 @@ export default defineConfig({
       '/api': {
         target: 'http://backend:3050',
       },
-      '^(?!\/app\/).*': {
+      '^(?!/app/).*': {
         target: 'http://backend:3050',
       },
     },

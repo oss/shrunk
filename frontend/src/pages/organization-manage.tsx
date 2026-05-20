@@ -217,8 +217,8 @@ function ManageOrgBase({
           {record.role === 'admin'
             ? 'Admin'
             : record.role === 'guest'
-              ? 'Guest'
-              : 'Member'}
+            ? 'Guest'
+            : 'Member'}
         </Typography.Text>
       ),
       width: '10%',

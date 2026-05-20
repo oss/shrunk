@@ -112,7 +112,7 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
                     deleted_by: output.deletion_info.deleted_by,
                     deleted_time: new Date(output.deletion_info.deleted_time),
                   },
-            }) as Link,
+            } as Link),
         ),
       };
     },
