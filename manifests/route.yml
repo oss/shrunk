@@ -4,7 +4,6 @@ metadata:
   name: shrunk
   namespace: oit-eas-macs-shrunk
 spec:
-  # host: oss-shrunk-new.apps.ocp.ei.rutgers.edu
   host: shrunk.rutgers.edu
   to:
     kind: Service
@@ -12,7 +11,8 @@ spec:
     weight: 100
   port:
     targetPort: 4343
-  tls:
-    termination: edge
-    insecureEdgeTerminationPolicy: Redirect
   wildcardPolicy: None
+  # This is handled by the VIP load balancer team, normally you would need this for https
+  # tls:
+  #   termination: edge
+  #   insecureEdgeTerminationPolicy: Redirect
