@@ -2,7 +2,6 @@ services:
   backend:
     build:
       context: ./backend
-      target: dev
     volumes:
       - ./development.env:/usr/shrunk/backend/.env
       - ./backend:/usr/shrunk/backend
