@@ -30,6 +30,12 @@
           ]
         },
         {
+          "text": "Fixed the Collaborator Modal to allow for other users to be added with the Owner role as well as improving the modal for sharing between users and organizations.",
+          "contributors": [
+            "jds508"
+          ]
+        },
+        {
           "text": "Fix parameter tabs not showing correct page on page load",
           "contributors": [
             "ak2399"

@@ -55,3 +55,6 @@ networks:
   proxy-net:
     driver: bridge
     attachable: true
+
+volumes:
+  backend_venv:

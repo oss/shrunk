@@ -8,6 +8,7 @@ export interface LinkDeletedBy {
 export interface LinkSharedWith {
   _id: string;
   type: 'netid' | 'org';
+  org_name?: string;
 }
 
 export interface Link {

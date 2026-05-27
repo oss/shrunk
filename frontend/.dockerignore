@@ -1,0 +1,12 @@
+.parcel-cache
+node_modules
+dist
+build
+.cache
+.vite
+.next
+coverage
+.git
+.DS_Store
+.env
+*.log

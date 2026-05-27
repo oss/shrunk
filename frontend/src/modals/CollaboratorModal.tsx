@@ -21,6 +21,7 @@ export interface Collaborator {
   _id: string;
   type: 'netid' | 'org';
   role?: string; // Optional if removing entity.
+  org_name?: string;
 }
 
 interface ICollaboratorModal {
@@ -222,7 +223,10 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                 const displayName =
                   entity.type === 'netid'
                     ? entity._id
-                    : organizations.find((org) => org.id === entity._id)?.name;
+                    : entity.org_name ||
+                      organizations.find((org) => org.id === entity._id)
+                        ?.name ||
+                      entity._id;
 
                 const isMaster = entity.role === masterRole;
                 const isLastMaster = isMaster && mastersCount === 1;

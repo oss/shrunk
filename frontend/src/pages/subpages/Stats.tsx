@@ -170,6 +170,7 @@ export function Stats(props: Props): React.ReactElement {
         _id: editor._id,
         type: editor.type,
         role: 'editor',
+        org_name: editor.org_name,
       });
       mentionedIds.add(editor._id);
     });
@@ -182,6 +183,7 @@ export function Stats(props: Props): React.ReactElement {
         _id: viewer._id,
         type: viewer.type,
         role: 'viewer',
+        org_name: viewer.org_name,
       });
     });
     setEntities(tempEntities);

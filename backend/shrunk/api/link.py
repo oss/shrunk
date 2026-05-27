@@ -1,7 +1,7 @@
 """Implements API endpoints under ``/api/link``"""
 
 from datetime import datetime, timedelta
-from typing import Any, Optional, Dict
+from typing import Any, Optional, Dict, List
 
 from flask import Blueprint, jsonify, request, Response
 from flask_mailman import Mail
@@ -230,6 +230,35 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     if not client.users.has_role(netid, "admin") and not client.links.may_view(link_id, netid):
         abort(403)
 
+    def enrich_acl_with_org_names(entries: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        enriched_entries: List[Dict[str, Any]] = []
+        org_name_cache: Dict[str, Optional[str]] = {}
+
+        for entry in entries:
+            enriched_entry = dict(entry)
+            if enriched_entry.get("type") == "org":
+                org_id = enriched_entry.get("_id")
+                normalized_org_id: Optional[ObjectId] = None
+
+                if isinstance(org_id, ObjectId):
+                    normalized_org_id = org_id
+                elif isinstance(org_id, str):
+                    try:
+                        normalized_org_id = ObjectId(org_id)
+                    except bson.errors.InvalidId, TypeError:
+                        normalized_org_id = None
+
+                if normalized_org_id is not None:
+                    cache_key = str(normalized_org_id)
+                    if cache_key not in org_name_cache:
+                        org = client.orgs.get_org(normalized_org_id)
+                        org_name_cache[cache_key] = org["name"] if org is not None else None
+
+                    if org_name_cache[cache_key] is not None:
+                        enriched_entry["org_name"] = org_name_cache[cache_key]
+            enriched_entries.append(enriched_entry)
+        return enriched_entries
+
     # Get rid of types that cannot safely be passed to jsonify
 
     json_info = {
@@ -246,8 +275,8 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
             "deleted_by": info.get("deleted_by", None),
             "delete_time": info.get("deleted_time", None),
         },
-        "editors": info["editors"] if "editors" in info else [],
-        "viewers": info["viewers"] if "viewers" in info else [],
+        "editors": enrich_acl_with_org_names(info["editors"] if "editors" in info else []),
+        "viewers": enrich_acl_with_org_names(info["viewers"] if "viewers" in info else []),
         "is_tracking_pixel_link": info.get("is_tracking_pixel_link", False),
         "may_edit": client.links.may_edit(link_id, netid),
     }
