@@ -696,6 +696,7 @@ export function Stats(props: Props): React.ReactElement {
 
           <CollaboratorModal
             visible={collabModalVisible}
+            multipleMasters
             roles={[
               { label: 'Owner', value: 'owner' },
               { label: 'Editor', value: 'editor' },
