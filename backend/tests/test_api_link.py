@@ -1170,9 +1170,10 @@ def test_same_alias_multiple_link(app: Flask) -> None:
         thread.start()
     for thread in threads:
         thread.join()
-    assert results[0] == 201
-    for i in range(1, 3):
-        assert results[i] == 400
+
+    assert len(results) == 3
+    assert results.count(201) == 1
+    assert results.count(400) == 2
 
 
 def test_create_second_link_with_deleted_alias(client: Client) -> None:
