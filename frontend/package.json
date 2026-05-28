@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "lint": "eslint ./src",
     "lint-fix": "eslint ./src --fix",
-    "format": "prettier --write . --config ./.prettierrc"
+    "format": "prettier --write . --config ./.prettierrc",
+    "prepare": "cd .. && husky frontend/.husky"
   },
   "dependencies": {
     "@ant-design/colors": "^7.2.0",
@@ -38,8 +39,10 @@
   },
   "devDependencies": {
     "@babel/core": "^7.11.6",
+    "@commitlint/cli": "^20.4.4",
+    "@commitlint/config-conventional": "^20.4.4",
     "@eslint/js": "^9.0.0",
-    "eslint-formatter-junit": "^9.0.1",
+    "@types/js-cookie": "^2.2.6",
     "@types/node": "^20.19.30",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
@@ -48,12 +51,15 @@
     "@vitejs/plugin-react": "^5.1.2",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^10.0.0",
+    "eslint-formatter-junit": "^9.0.1",
     "eslint-plugin-jsx-a11y": "^6.10.0",
     "eslint-plugin-prettier": "^5.0.0",
     "eslint-plugin-react": "^7.37.0",
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-tailwindcss": "^3.18.3",
     "eslint-plugin-unused-imports": "^4.0.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.3.3",
     "prettier": "^3.0.0",
     "process": "^0.11.10",
     "typescript": "^5.0.0",

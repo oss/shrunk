@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+set -e
+
+ROOT_DIR="$(git rev-parse --show-toplevel)"
+cd "$ROOT_DIR"
+
+cd frontend
+npx --no-install lint-staged
+cd "$ROOT_DIR"
+
+PY_FILES="$(git diff --cached --name-only --diff-filter=ACMR | grep '^backend/.*\.py$' || true)"
+
+if [ -n "$PY_FILES" ]; then
+  printf '%s\n' "$PY_FILES" | while IFS= read -r file; do
+    [ -n "$file" ] || continue
+    backend_file="${file#backend/}"
+
+    cd "$ROOT_DIR/backend"
+    uv run ruff check --fix -- "$backend_file"
+    uv run ruff format -- "$backend_file"
+    cd "$ROOT_DIR"
+
+    git add -- "$file"
+  done
+fi
