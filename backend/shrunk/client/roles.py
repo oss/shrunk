@@ -1,6 +1,6 @@
 """Implements the :py:class:`RolesClient` class."""
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from typing import Callable, Optional, List, Dict, Any
 
 from flask import current_app, has_app_context

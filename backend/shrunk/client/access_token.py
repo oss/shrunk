@@ -1,9 +1,10 @@
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
-from bson import ObjectId
 import uuid
-from argon2 import PasswordHasher
 import hashlib
+
+from argon2 import PasswordHasher
+from bson import ObjectId
 import pymongo
 
 from .exceptions import NoSuchObjectException
@@ -34,7 +35,7 @@ class AccessTokenClient:
         """Currently, only organizations can have access tokens."""
         for permission in permissions:
             if permission not in self.access_tokens_permissions:
-                raise Exception("Invalid permissions")
+                raise ValueError(f"Invalid permission: {permission}")
 
         token = uuid.uuid4()
         lookup_key = hashlib.sha256(str(token).encode()).hexdigest()[:16]
@@ -95,7 +96,7 @@ class AccessTokenClient:
             try:
                 if self.ph.verify(found_token["hashed_token"], user_token):
                     return found_token["_id"]
-            except Exception as e:
+            except Exception:  # pylint: disable=broad-exception-caught
                 return None
         return None
 

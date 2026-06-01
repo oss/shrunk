@@ -76,7 +76,7 @@ function useFuzzySearch<T>(
       return results.map((result) => ({
         item: result.item,
       }));
-    } catch (error) {
+    } catch {
       return [];
     }
   };

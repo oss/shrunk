@@ -1,10 +1,10 @@
 """Module for the user system client"""
 
 from typing import Any, Dict, List, Optional, Union
+from datetime import datetime, timezone
 
 import pymongo
 from shrunk.util.ldap import is_valid_netid, query_position_info
-from datetime import datetime, timezone
 
 from .exceptions import InvalidEntity, NoSuchObjectException
 
@@ -58,7 +58,10 @@ class UserClient:
                 "roles": roles,
                 "date_created": datetime.now(timezone.utc),
             }
-            self.db["users"].insert_one(new_user)
+            try:
+                self.db["users"].insert_one(new_user)
+            except pymongo.errors.DuplicateKeyError:
+                pass  # concurrent request already initialized this user
 
     def get_user(self, netid: str) -> Optional[Dict[str, Any]]:
         """Get a user from the database

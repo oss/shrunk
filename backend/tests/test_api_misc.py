@@ -1,5 +1,6 @@
-from werkzeug.test import Client
 import os
+
+from werkzeug.test import Client
 
 
 def test_motd(client: Client) -> None:

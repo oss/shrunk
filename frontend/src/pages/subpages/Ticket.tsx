@@ -143,6 +143,7 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
     };
 
     initComponent();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
 
   return (

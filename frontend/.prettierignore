@@ -1,3 +1,4 @@
-node_modules
-.parcel-cache
-dist
+src/ext/
+node_modules/
+dist/
+.parcel-cache/

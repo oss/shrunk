@@ -15,7 +15,7 @@ import {
 import { FormInstance } from 'antd/lib/form';
 import dayjs from 'dayjs';
 import { SendHorizontalIcon } from 'lucide-react';
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { createLink } from '@/api/links';
 import {
   serverValidateDuplicateAlias,

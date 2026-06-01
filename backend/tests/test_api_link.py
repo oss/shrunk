@@ -16,7 +16,7 @@ from util import dev_login, create_link, setup_guest_user
 def test_link(client: Client) -> None:  # pylint: disable=too-many-statements
     """This test simulates the process of creating a link, adding two random aliases
     to it, deleting an alias, and then deleting the link."""
-
+    # pylint: disable=undefined-variable
     with dev_login(client, "user"):
         # Create a link and get its ID
         resp = create_link(client, "title", "example.com")
@@ -95,6 +95,7 @@ def test_link(client: Client) -> None:  # pylint: disable=too-many-statements
         # Check that alias1 doesn't redirect
         resp = client.get(f"/{alias1}")
         assert resp.status_code == 404
+    # pylint: enable=undefined-variable
 
 
 def test_create_link_expiration(client: Client) -> None:
@@ -792,7 +793,7 @@ def test_update_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
 
 def test_acl(client: Client) -> None:  # pylint: disable=too-many-statements
     link_id = ""
-    alias = ""
+    _alias = ""
     with dev_login(client, "admin"):
         # create org
         resp = client.post("/api/core/org", json={"name": "testorg12"})
@@ -816,7 +817,7 @@ def test_acl(client: Client) -> None:  # pylint: disable=too-many-statements
         )
         assert 200 <= resp.status_code <= 300
         link_id = resp.json["id"]
-        alias = resp.json["alias"]
+        _alias = resp.json["alias"]
 
         resp = client.get(f"/api/core/link/{link_id}")
 
@@ -980,7 +981,7 @@ def test_revert_expiration_link(client: Client) -> None:
         # Fetch link and ensure expiration time field is set to None
         resp = client.get(f"/api/core/link/{link_id}")
         assert resp.status_code == 200, "Failed to fetch link"
-        assert resp.json["expiration_time"] == None, "Expiration time is not None"
+        assert resp.json["expiration_time"] is None, "Expiration time is not None"
 
 
 def test_visit_link_from_alias_with_caps(client: Client) -> None:

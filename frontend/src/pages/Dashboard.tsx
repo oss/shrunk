@@ -1,6 +1,5 @@
-/* eslint-disable react/no-unused-state */
 /* eslint-disable tailwindcss/classnames-order */
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Breadcrumb,
   Drawer,
@@ -112,7 +111,7 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
                     deleted_by: output.deletion_info.deleted_by,
                     deleted_time: new Date(output.deletion_info.deleted_time),
                   },
-            } as Link),
+            }) as Link,
         ),
       };
     },
@@ -133,7 +132,7 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
       if (newQuery.owner && newQuery.owner !== query.owner) {
         try {
           await serverValidateNetId({}, newQuery.owner);
-        } catch (err) {
+        } catch {
           return;
         }
       }
@@ -206,7 +205,7 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
 
   useEffect(() => {
     setNewQuery(DEFAULT_QUERY);
-  }, [DEFAULT_QUERY]);
+  }, [setNewQuery]);
 
   useEffect(() => {
     let lastContextHeaderHeight = -1;

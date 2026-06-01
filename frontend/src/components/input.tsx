@@ -16,7 +16,7 @@ const defaultIcons = {
  * Custom AntD Search component
  */
 const ShrunkSearch: React.FC<SearchProps> = (props) => (
-  <Input.Search {...defaultIcons} {...props} /> // eslint-disable-line
+  <Input.Search {...defaultIcons} {...props} />
 );
 
 /**
@@ -24,7 +24,7 @@ const ShrunkSearch: React.FC<SearchProps> = (props) => (
  */
 const ShrunkInput: React.FC<InputProps> & {
   Search: React.FC<SearchProps>;
-} = (props) => <Input {...props} />; // eslint-disable-line
+} = (props) => <Input {...props} />;
 
 ShrunkInput.Search = ShrunkSearch;
 

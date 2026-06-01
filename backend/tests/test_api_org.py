@@ -1,7 +1,9 @@
-from werkzeug.test import Client
-from util import dev_login, assert_is_response_valid, setup_guest_user
 from typing import List
+
 import pytest
+from werkzeug.test import Client
+
+from util import dev_login, assert_is_response_valid, setup_guest_user
 
 
 def test_rename_org(client: Client) -> None:
@@ -100,7 +102,7 @@ def test_create_access_token_permissions(client: Client, permissions: List[str],
         org_id = resp.json["id"]
 
         resp = client.post(
-            f"/api/core/org/access_token",
+            "/api/core/org/access_token",
             json={
                 "title": "title",
                 "description": "description",
@@ -114,7 +116,7 @@ def test_create_access_token_permissions(client: Client, permissions: List[str],
             assert resp.status_code == 400
 
         resp = client.post(
-            f"/api/core/org/access_token",
+            "/api/core/org/access_token",
             json={
                 "title": "title",
                 "description": "description",
@@ -138,7 +140,7 @@ def test_external_api_endpoints(client: Client) -> None:
         # attempt endpoint with missing permissions
 
         resp = client.post(
-            f"/api/core/org/access_token",
+            "/api/core/org/access_token",
             json={
                 "title": "title",
                 "description": "description",
@@ -152,7 +154,7 @@ def test_external_api_endpoints(client: Client) -> None:
         assert resp.status_code == 403
 
         resp = client.post(
-            f"/api/core/org/access_token",
+            "/api/core/org/access_token",
             json={
                 "title": "title",
                 "description": "description",
@@ -169,7 +171,7 @@ def test_external_api_endpoints(client: Client) -> None:
         )
         token = resp.json["access_token"]
         invalid_token = "9b598e36-839c-4f94-8a72-38892b0d74dc"
-        invalid_org_id = invalid_org_id
+        # invalid_org_id already set above
 
         # attempt invalid token
         resp = client.get("/api/v1/users", headers={"Authorization": f"Bearer {invalid_token}"})
@@ -256,14 +258,14 @@ def test_external_api_endpoints(client: Client) -> None:
 
         # get all organizations
         resp = client.get(
-            f"/api/v1/organizations",
+            "/api/v1/organizations",
             headers={"Authorization": f"Bearer {token}"},
         )
         assert resp.status_code == 403
 
         # get all organizations of a user
         resp = client.get(
-            f"/api/v1/organizations/DEV_ADMIN",
+            "/api/v1/organizations/DEV_ADMIN",
             headers={"Authorization": f"Bearer {token}"},
         )
         assert resp.status_code == 403
@@ -277,7 +279,7 @@ def test_external_api_endpoints(client: Client) -> None:
 
         # with super token test endpoints
         resp = client.post(
-            f"/api/core/org/access_token",
+            "/api/core/org/access_token",
             json={
                 "title": "title",
                 "description": "description",
@@ -339,13 +341,13 @@ def test_external_api_endpoints(client: Client) -> None:
         assert resp.status_code == 200
 
         resp = client.get(
-            f"/api/v1/organizations",
+            "/api/v1/organizations",
             headers={"Authorization": f"Bearer {token}"},
         )
         assert resp.status_code == 200
 
         resp = client.get(
-            f"/api/v1/organizations/DEV_ADMIN",
+            "/api/v1/organizations/DEV_ADMIN",
             headers={"Authorization": f"Bearer {token}"},
         )
         assert resp.status_code == 200
@@ -362,7 +364,7 @@ def test_get_valid_access_permissions(client: Client) -> None:
         resp = client.get("/api/core/org/valid-permissions")
         assert_is_response_valid(resp)
 
-        assert type(resp.json["permissions"]) is list
+        assert isinstance(resp.json["permissions"], list)
 
 
 def test_org_get_link_permissions(client: Client) -> None:
@@ -440,7 +442,7 @@ def delete_guest_user_from_org(client: Client) -> None:
         assert resp.status_code == 200
         assert "DEV_GUEST" not in [guest["netid"] for guest in resp.json["guests"]]
 
-        resp = client.get(f"/api/core/user/DEV_GUEST")
+        resp = client.get("/api/core/user/DEV_GUEST")
         assert resp.status_code == 200
         assert len(resp.json["roles"]) == 0
 
@@ -456,6 +458,6 @@ def re_add_user_to_org(client: Client) -> None:
         resp = client.put(f"/api/core/org/{org_id}/guest/DEV_GUEST")
         assert resp.status_code == 204
 
-        resp = client.get(f"/api/core/user/DEV_GUEST")
+        resp = client.get("/api/core/user/DEV_GUEST")
         assert resp.status_code == 200
         assert any(role["role"] == "guest" for role in resp.json["roles"])

@@ -3,13 +3,14 @@
 from datetime import datetime, timedelta
 from typing import Any, Optional, Dict, List
 
+import os
+import csv
+from io import StringIO
+
 from flask import Blueprint, jsonify, request, Response
 from flask_mailman import Mail
 from bson import ObjectId
 import bson
-import os
-import csv
-from io import StringIO
 from werkzeug.exceptions import abort
 
 from shrunk.client import ShrunkClient

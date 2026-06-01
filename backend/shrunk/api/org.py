@@ -1,6 +1,6 @@
 """Implements API endpoints under ``/api/org``"""
 
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 import bson
 from flask import Blueprint, jsonify, request
@@ -481,10 +481,10 @@ def put_domain(netid: str, client: ShrunkClient) -> Any:
 
     try:
         res = client.orgs.create_domain(org_name, domain_name)
-        if res == False:
+        if not res:
             return "There was an unexpected error creating a domain", 500
         return str(res), 204
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         return jsonify({"error": str(e)}), 500
 
 
@@ -517,10 +517,10 @@ def delete_domain(netid: str, client: ShrunkClient) -> Any:
 
     try:
         res = client.orgs.delete_domain(org_name, domain_name)
-        if res != True:
+        if res is not True:
             return jsonify({"error": res}), 500
         return "", 204
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         return jsonify({"error": str(e)}), 500
 
 
@@ -587,7 +587,7 @@ def patch_org_member(netid: str, client: ShrunkClient, req: Any, org_id: ObjectI
 
 @bp.route("/valid-permissions", methods=["GET"])
 @require_login
-def getValidPermissions(netid: str, client: ShrunkClient) -> Any:
+def getValidPermissions(_netid: str, client: ShrunkClient) -> Any:
     return jsonify({"permissions": client.access_tokens.access_tokens_permissions})
 
 

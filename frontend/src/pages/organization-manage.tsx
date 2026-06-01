@@ -127,6 +127,7 @@ function ManageOrgBase({
 
   useEffect(() => {
     refreshOrganization();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [match.params.id]);
 
   const onAddMember = async (netid: string, role: string) => {
@@ -217,8 +218,8 @@ function ManageOrgBase({
           {record.role === 'admin'
             ? 'Admin'
             : record.role === 'guest'
-            ? 'Guest'
-            : 'Member'}
+              ? 'Guest'
+              : 'Member'}
         </Typography.Text>
       ),
       width: '10%',
@@ -439,7 +440,6 @@ function ManageOrgBase({
 
       <CollaboratorModal
         onlyActiveTab="netid"
-        // eslint-disable-next-line react/jsx-boolean-value
         multipleMasters={true}
         visible={shareModalVisible}
         roles={[

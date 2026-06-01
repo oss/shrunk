@@ -26,7 +26,7 @@ const defaultIcons = {
  * Custom AntD RangePicker component
  */
 const ShrunkRangePicker: React.FC<RangePickerProps> = (props) => (
-  <DatePicker.RangePicker {...defaultIcons} {...props} /> // eslint-disable-line
+  <DatePicker.RangePicker {...defaultIcons} {...props} />
 );
 
 /**
@@ -34,7 +34,7 @@ const ShrunkRangePicker: React.FC<RangePickerProps> = (props) => (
  */
 const ShrunkDatePicker: React.FC<DatePickerProps> & {
   RangePicker: React.FC<RangePickerProps>;
-} = (props) => <DatePicker {...defaultIcons} {...props} />; // eslint-disable-line
+} = (props) => <DatePicker {...defaultIcons} {...props} />;
 
 ShrunkDatePicker.RangePicker = ShrunkRangePicker;
 

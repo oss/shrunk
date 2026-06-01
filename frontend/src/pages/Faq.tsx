@@ -2,7 +2,6 @@
  * Implements the [[Faq]] component
  * @packageDocumentation
  */
-import React from 'react';
 import { Row, Table, Collapse, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import { Link } from 'react-router-dom';

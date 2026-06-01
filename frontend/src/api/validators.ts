@@ -13,7 +13,7 @@ import base32 from 'hi-base32';
  * @param value The alias
  * @throws Error if the alias is a reserved word
  */
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+
 export const serverValidateReservedAlias = async (
   _rule: any,
   value: string,
@@ -36,7 +36,7 @@ export const serverValidateReservedAlias = async (
  * @param value The alias
  * @throws Error if the alias already exists
  */
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+
 export const serverValidateDuplicateAlias = async (
   _rule: any,
   value: string,
@@ -59,7 +59,7 @@ export const serverValidateDuplicateAlias = async (
  * @param value The long URL
  * @throws Error if the long URL is not allowed
  */
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+
 export const serverValidateLongUrl = async (
   _rule: any,
   value: string,
@@ -82,7 +82,7 @@ export const serverValidateLongUrl = async (
  * @param value The NetID
  * @throws [[Error]] if the NetID is invalid
  */
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+
 export const serverValidateNetId = async (
   _rule: any,
   value: string,

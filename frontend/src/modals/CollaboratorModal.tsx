@@ -12,7 +12,7 @@ import {
   Tooltip,
 } from 'antd';
 import { PlusCircleIcon, XIcon } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getOrganizations } from '@/api/organization';
 import { serverValidateGuest, serverValidateNetId } from '@/api/validators';
 import { Organization } from '@/interfaces/organizations';
@@ -42,9 +42,8 @@ interface ICollaboratorModal {
   onOk: () => void;
   onCancel: () => void;
 
-  // eslint-disable-next-line react/require-default-props
   multipleMasters?: boolean;
-  // eslint-disable-next-line react/require-default-props
+
   onlyActiveTab?: 'netid' | 'org';
 }
 
@@ -87,6 +86,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
     });
 
     refreshOrganizations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Count how many masters we currently have

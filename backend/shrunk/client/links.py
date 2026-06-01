@@ -1,6 +1,6 @@
 """Database-level interactions for shrunk."""
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import random
 import string
 import re
@@ -8,10 +8,11 @@ import secrets
 from typing import Optional, List, Set, Any, Dict, Union, cast, Tuple
 from functools import lru_cache
 
+import os
+
 from flask import current_app, url_for
 from flask_mailman import Mail
 import requests
-import os
 import pymongo
 from pymongo.collection import ReturnDocument
 from pymongo.results import UpdateResult
@@ -70,7 +71,7 @@ class LinksClient:
         self.geoip = geoip
         self.reserved_words = RESERVED_WORDS
         self.banned_regexes = [re.compile(regex, re.IGNORECASE) for regex in BANNED_REGEXES]
-        self.tracking_pixel_ui_enabled = bool(int(os.getenv("SHRUNK_TRACKING_PIXELS_ENABLED", 0)))
+        self.tracking_pixel_ui_enabled = bool(int(os.getenv("SHRUNK_TRACKING_PIXELS_ENABLED", "0")))
         self.other_clients = other_clients
 
     def alias_is_reserved(self, alias: str) -> bool:
@@ -94,7 +95,7 @@ class LinksClient:
                 "deleted": False,
             }
         )
-        return True if result is not None else False
+        return result is not None
 
     def _long_url_is_phished(self, long_url: str) -> bool:
         """Check whether the given long url is present in the phishing blacklist."""
@@ -110,13 +111,15 @@ class LinksClient:
         domain = get_domain(long_url)
         if not domain:
             return False
-        return [] != list(
-            self.db.grants.aggregate(
-                [
-                    {"$match": {"role": "blocked_url"}},
-                    {"$addFields": {"idx": {"$indexOfCP": ["$entity", domain]}}},
-                    {"$match": {"idx": {"$ne": -1}}},
-                ]
+        return bool(
+            list(
+                self.db.grants.aggregate(
+                    [
+                        {"$match": {"role": "blocked_url"}},
+                        {"$addFields": {"idx": {"$indexOfCP": ["$entity", domain]}}},
+                        {"$match": {"idx": {"$ne": -1}}},
+                    ]
+                )
             )
         )
 
@@ -147,14 +150,19 @@ class LinksClient:
         owner: Dict[str, Any],
         creator_ip: str,
         domain: str = "",
-        viewers: List[Dict[str, Any]] = [],
-        editors: List[Dict[str, Any]] = [],
+        viewers: Optional[List[Dict[str, Any]]] = None,
+        editors: Optional[List[Dict[str, Any]]] = None,
         bypass_security_measures: bool = False,
         is_tracking_pixel_link: bool = False,
         extension: Optional[str] = None,
         created_using_api: bool = False,
         created_with_superToken: bool = False,
     ) -> Tuple[ObjectId, str]:
+        if viewers is None:
+            viewers = []
+        if editors is None:
+            editors = []
+
         if self.long_url_is_blocked(long_url):
             raise BadLongURLException
 
@@ -170,8 +178,8 @@ class LinksClient:
             if member["type"] == "org":
                 try:
                     member["_id"] = ObjectId(member["_id"])
-                except:
-                    raise NotUserOrOrg
+                except Exception as exc:
+                    raise NotUserOrOrg from exc
 
         for acl in ["viewers", "editors"]:
             members = {"viewers": viewers, "editors": editors}[acl]
@@ -232,8 +240,8 @@ class LinksClient:
             raise SecurityRiskDetected
         try:
             result = self.db.urls.insert_one(document)
-        except pymongo.errors.DuplicateKeyError:
-            raise BadAliasException
+        except pymongo.errors.DuplicateKeyError as exc:
+            raise BadAliasException from exc
 
         return result.inserted_id, alias
 
@@ -326,8 +334,7 @@ class LinksClient:
 
         if result:
             return result["_id"], result["alias"]
-        else:
-            raise NoSuchObjectException
+        raise NoSuchObjectException
 
     def assert_valid_acl_entry(self, acl, entry):
         target = entry["_id"]
@@ -335,8 +342,8 @@ class LinksClient:
         if mtype == "org":
             try:
                 ObjectId(target)
-            except:
-                raise NotUserOrOrg(f"{target} is not a valid {mtype}. can't add to {acl}")
+            except Exception as exc:
+                raise NotUserOrOrg(f"{target} is not a valid {mtype}. can't add to {acl}") from exc
 
         if (mtype == "netid" and not is_valid_netid(target)) or (
             mtype == "org" and not self.other_clients.orgs.get_org(ObjectId(target))
@@ -361,34 +368,8 @@ class LinksClient:
 
         # editors always have view permission
 
-        """
-        # SHARING_ACL_REFACTOR
-
-        A study needs to be done why this is even a thing. We will
-        have duplicate information in the database since this is here.
-
-        We can save a LOT of data if we refactor this to just have a
-        collaborators keyvalue pair in the url document and just set
-        their permission there:
-
-        ```
-        {
-            "_id": "DEV_USER",
-            "type": "netid",
-            "permission": "editor"
-        }
-        ```
-
-        We could even do this:
-
-        ```
-        {
-            "_id": "DEV_USER",
-            "type": "netid",
-            "permissions": ["edit", "view"]
-        }
-        ```
-        """
+        # SHARING_ACL_REFACTOR: study why editors/viewers are stored separately.
+        # Refactor opportunity: single "collaborators" field with permission key.
 
         if acl == "editors" and add:
             change["viewers"] = entry
@@ -449,7 +430,7 @@ class LinksClient:
             match["$match"]["source"] = source
 
         if date_range is None:
-            date_match = {"$match": {"time": {"$gte": datetime.datetime.now() - datetime.timedelta(days=365)}}}
+            date_match = {"$match": {"time": {"$gte": datetime.now() - timedelta(days=365)}}}
         else:
             date_match = {"$match": {"time": {"$gte": date_range[0], "$lte": date_range[1]}}}
 
@@ -511,11 +492,11 @@ class LinksClient:
             info = self.get_link_info(link_id)
 
             if source:
-                filter = {"link_id": link_id, "source": source}
-                total_visits = self.db.visits.count_documents(filter)
+                filter_query = {"link_id": link_id, "source": source}
+                total_visits = self.db.visits.count_documents(filter_query)
                 visits = self.db.visits.aggregate(
                     [
-                        {"$match": filter},
+                        {"$match": filter_query},
                         {"$group": {"_id": "$tracking_id"}},
                         {"$count": "count"},
                     ],
@@ -621,7 +602,7 @@ class LinksClient:
             raise NoSuchObjectException
         if result["owner"]["type"] == "netid":
             return result["owner"]["_id"] == netid
-        elif self.other_clients.orgs.is_admin(
+        if self.other_clients.orgs.is_admin(
             ObjectId(result["owner"]["_id"]), netid
         ):  # Org admins have "owner" permissions
             return True
@@ -1046,7 +1027,7 @@ Please do not reply to this email. You may direct any questions to oss@oit.rutge
             recipient_list=[f"{owner_netid}@rutgers.edu"],
         )
 
-    def active_request_exists(self, mail: Mail, link_id: ObjectId, requesting_netid: str) -> bool:
+    def active_request_exists(self, _mail: Mail, link_id: ObjectId, requesting_netid: str) -> bool:
         request = self.db.access_requests.find_one(
             {
                 "link_id": link_id,
@@ -1054,11 +1035,10 @@ Please do not reply to this email. You may direct any questions to oss@oit.rutge
                 "state": "pending",
             }
         )
-        return True if request is not None else False
+        return request is not None
 
-    def cancel_request_edit_access(self, mail: Mail, link_id: ObjectId, requesting_netid: str) -> None:
-        self.db.access_requests.remove({"link_id": link_id})
-        return
+    def cancel_request_edit_access(self, _mail: Mail, link_id: ObjectId, requesting_netid: str) -> None:
+        self.db.access_requests.remove({"link_id": link_id, "requesting_netid": requesting_netid})
 
     def check_access_request_permission(self, token: bytes, netid: str) -> bool:
         request = self.db.access_requests.find_one({"token": token})

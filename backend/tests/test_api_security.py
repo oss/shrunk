@@ -98,9 +98,9 @@ def test_security_api_permissions(client: Client, permission: str) -> None:
         assert resp.status_code == 403
         resp = client.patch(f"/api/core/security/reject/{link_id}")
         assert resp.status_code == 403
-        resp = client.patch(f"/api/core/security/toggle")
+        resp = client.patch("/api/core/security/toggle")
         assert resp.status_code == 403
-        resp = client.get(f"/api/core/security/status")
+        resp = client.get("/api/core/security/status")
         assert resp.status_code == 403
 
 

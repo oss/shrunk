@@ -4,9 +4,10 @@ from typing import Any, Dict
 import os
 
 from flask import Blueprint, jsonify, request, session, current_app
-from shrunk.client.exceptions import InvalidEntity, NoSuchObjectException
 from werkzeug.exceptions import abort
+
 from shrunk.client import ShrunkClient
+from shrunk.client.exceptions import InvalidEntity, NoSuchObjectException
 from shrunk.util.decorators import require_login
 
 __all__ = ["bp"]
@@ -117,9 +118,9 @@ def add_user_role(netid: str, client: ShrunkClient) -> Any:
         abort(400)
     try:
         client.users.grant_role(netid, grantee, role, comment)
-    except NoSuchObjectException as e:
+    except NoSuchObjectException:
         abort(400)
-    except InvalidEntity as e:
+    except InvalidEntity:
         abort(403)
 
     if role == "blacklisted":
@@ -264,7 +265,7 @@ def get_user_info():
 
 @bp.route("/<b32:entity>/valid", methods=["GET"])
 @require_login
-def is_valid_entity(netid: str, client: ShrunkClient, entity: str) -> Any:
+def is_valid_entity(_netid: str, client: ShrunkClient, entity: str) -> Any:
     """GET /api/core/user/<b32:entity>/valid
 
     Args:

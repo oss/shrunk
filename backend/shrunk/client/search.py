@@ -191,7 +191,7 @@ class SearchClient:
         def prepare_result(res: Any) -> Any:
             """Turn a result from the DB into something than can be JSON-serialized."""
 
-            def is_alias_visible(alias: Any) -> bool:
+            def _is_alias_visible(alias: Any) -> bool:
                 if query.get("show_deleted_links", False):
                     return True
                 return not alias["deleted"]
@@ -244,7 +244,7 @@ class SearchClient:
             "results": unique_results,
         }
 
-    def _build_shared_pipeline(self, user_netid: str, query: Any) -> List[Any]:
+    def _build_shared_pipeline(self, user_netid: str, _query: Any) -> List[Any]:
         """Build a pipeline for searching shared links.
 
         This pipeline finds links that are shared with the user through organizations

@@ -1,9 +1,9 @@
 """Implements API endpoints under ``/api/alert``"""
 
 from typing import Any
+import os
 
 from flask import Blueprint
-import os
 
 __all__ = ["bp"]
 

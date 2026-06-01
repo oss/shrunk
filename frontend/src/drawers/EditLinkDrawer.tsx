@@ -125,7 +125,7 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
       setTimeout(() => {
         window.location.href = '/app/dash';
       }, 1000); // 1-second delay
-    } catch (error) {
+    } catch {
       message.error('Failed to delete link');
     }
   };
@@ -134,7 +134,7 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
     try {
       reverLinkExpirationDate(props.linkInfo._id);
       message.success('Link restored successfully');
-    } catch (error) {
+    } catch {
       message.error('Failed to restore link');
     }
   };

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import {
   Button,
@@ -54,6 +54,7 @@ function OrganizationToken(props: IOrganizationToken) {
     fetchValidPermissions();
 
     fetchOrganization();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onOpenGeneratorDrawer = () => {
@@ -77,7 +78,7 @@ function OrganizationToken(props: IOrganizationToken) {
         });
         form.resetFields();
         onCloseGeneratorDrawer();
-      } catch (error) {
+      } catch {
         message.error(
           'There was an error generating your access token. Please try again.',
         );
@@ -174,7 +175,7 @@ function OrganizationToken(props: IOrganizationToken) {
                 <Checkbox.Group className="tw-w-full">
                   <Row gutter={16}>
                     {validPermissions.map((permission: string) => (
-                      <Col span={24}>
+                      <Col key={permission} span={24}>
                         <Checkbox value={permission}>{permission}</Checkbox>
                       </Col>
                     ))}

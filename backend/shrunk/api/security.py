@@ -1,10 +1,11 @@
 from typing import Any
 
-from flask import Blueprint, abort, current_app, jsonify
-from shrunk.client import ShrunkClient
-from ..client.exceptions import NoSuchObjectException, InvalidStateChange
-from shrunk.util.decorators import require_login
 from bson import ObjectId
+from flask import Blueprint, abort, current_app, jsonify
+
+from shrunk.client import ShrunkClient
+from shrunk.util.decorators import require_login
+from ..client.exceptions import NoSuchObjectException, InvalidStateChange
 
 __all__ = ["bp"]
 
@@ -33,7 +34,7 @@ def promote(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         return jsonify({"errors": ["link is not pending"]}), 404
     except InvalidStateChange:
         return jsonify({"errors": ["cannot promote non-pending link"]}), 409
-    except Exception as err:
+    except Exception as err:  # pylint: disable=broad-exception-caught
         current_app.logger.warning(err)
 
     return jsonify({"_id": link_id}), 200
@@ -58,7 +59,7 @@ def reject(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         return jsonify({"errors": ["link is not pending"]}), 404
     except InvalidStateChange:
         return jsonify({"errors": ["cannot demote non-pending link"]}), 409
-    except Exception as err:
+    except Exception as err:  # pylint: disable=broad-exception-caught
         current_app.logger.warning(err)
 
     return jsonify({}), 200
@@ -121,7 +122,7 @@ def get_link_status(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         link_document = client.security.get_unsafe_link_document(link_id)
     except NoSuchObjectException:
         return jsonify({"error": ["object does not exist"]}), 404
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught
         return (
             jsonify({"error": ["an unknown exception when getting link status"]}),
             500,
@@ -149,7 +150,7 @@ def toggle_security(netid: str, client: ShrunkClient) -> Any:
         abort(403)
     try:
         status = client.security.toggle_security()
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught
         return jsonify({"error": ["an error occurred while toggling security"]}), 500
 
     return jsonify({"status": status}), 200
@@ -166,7 +167,7 @@ def get_security_status(netid: str, client: ShrunkClient) -> Any:
         abort(403)
     try:
         status = client.security.get_security_status()
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught
         return (
             jsonify({"error": ["an error occurred while obtaining security status"]}),
             500,

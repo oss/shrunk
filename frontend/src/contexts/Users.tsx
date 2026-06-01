@@ -139,7 +139,7 @@ const UsersProvider: React.FC<{ children: React.ReactNode }> = ({
         const data = await response.json();
         setUsers(data.users);
       } catch (error) {
-        throw new Error(`Failed to fetch users: {error}`);
+        throw new Error(`Failed to fetch users: ${String(error)}`);
       } finally {
         setLoading(false);
       }
@@ -160,7 +160,7 @@ const UsersProvider: React.FC<{ children: React.ReactNode }> = ({
         });
         const data = await response.json();
         setOptions(data.options);
-      } catch (error) {
+      } catch {
         setOptions(null);
       }
     };

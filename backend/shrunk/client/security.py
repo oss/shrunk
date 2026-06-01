@@ -37,7 +37,7 @@ class SecurityClient:
     def __init__(self, *, db: pymongo.database.Database, other_clients: Any):
         self.db = db
         self.other_clients = other_clients
-        self.security_measures_on = bool(int(os.getenv("SHRUNK_GOOGLE_SAFEBROWSE_ENABLED", 0)))
+        self.security_measures_on = bool(int(os.getenv("SHRUNK_GOOGLE_SAFEBROWSE_ENABLED", "0")))
         self.google_safe_browsing_api = os.getenv("SHRUNK_GOOGLE_SAFEBROWSE_API_KEY", None)
         self.latest_status = "OFF" if not self.security_measures_on else "ON"
 
@@ -57,13 +57,6 @@ class SecurityClient:
 
     def change_link_status(self, link_id: ObjectId, net_id: str, new_status: DetectedLinkStatus):
         unsafe_link_document = self.get_unsafe_link_document(link_id)
-        """
-        Modifies status of pending link
-
-        :param link_id: document id of pending link
-        :param net_id: net_id of modifier
-        :param new_status: status that pending link will change to
-        """
 
         update = {
             "$set": {"status": new_status},
@@ -185,7 +178,7 @@ class SecurityClient:
         :param long_url:
         """
         status = self.get_status_of_url(long_url)
-        return status == DetectedLinkStatus.DENIED.value or status == DetectedLinkStatus.PENDING.value
+        return status in (DetectedLinkStatus.DENIED.value, DetectedLinkStatus.PENDING.value)
 
     def toggle_security(self):
         """Toggles security feature"""
@@ -252,6 +245,7 @@ class SecurityClient:
             r = requests.post(
                 f"https://safebrowsing.googleapis.com/v4/threatMatches:find?key={API_KEY}",
                 data=json.dumps(postBody),
+                timeout=30,
             )
             r.raise_for_status()
             self.latest_status = message
@@ -263,7 +257,7 @@ class SecurityClient:
         except KeyError as err:
             message = f"ERROR: The key {err} did not exist in the JSON response"
             current_app.logger.warning(message)
-        except Exception as err:
+        except Exception as err:  # pylint: disable=broad-exception-caught
             message = "An unknown error was detected when calling Google Safe Browsing API"
             current_app.logger.warning(message)
             current_app.logger.warning(err)

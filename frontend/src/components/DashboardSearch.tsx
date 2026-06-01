@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 import React, {
   useEffect,
   useState,
@@ -252,7 +251,7 @@ export default function DashboardSearch({
     };
 
     setNewQuery(newQuery);
-  }, [query, filters, setNewQuery]);
+  }, [api, query, filters, setNewQuery]);
   const showLinksInRange = useCallback(
     (dates: [Dayjs | null, Dayjs | null] | null, _: [string, string]) => {
       const newQuery = {

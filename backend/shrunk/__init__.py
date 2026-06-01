@@ -9,6 +9,8 @@ import os
 import logging
 from typing import Any
 
+from urllib.parse import parse_qsl, urlencode
+
 import bson.errors
 import flask
 from flask import (
@@ -21,12 +23,11 @@ from flask import (
     send_file,
     send_from_directory,
 )
-from backports import datetime_fromisoformat
-from bson import ObjectId
 from flask.json.provider import DefaultJSONProvider
 from flask.logging import default_handler
+from backports import datetime_fromisoformat
+from bson import ObjectId
 from flask_mailman import Mail
-from urllib.parse import parse_qsl, urlencode
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.routing import BaseConverter, ValidationError
 
@@ -176,14 +177,14 @@ def _init_roles() -> None:
     )
 
 
-def create_app(**kwargs: Any) -> Flask:
+def create_app(**_kwargs: Any) -> Flask:
     # Backport the datetime.datetime.fromisoformat method. Can be removed
     # once we update to Python 3.7+.
     datetime_fromisoformat.MonkeyPatch.patch_fromisoformat()
 
     app = Flask(__name__, static_url_path="/static")
     app.secret_key = os.getenv("SHRUNK_SECRET_KEY")
-    app.testing = bool(int(os.getenv("SHRUNK_FLASK_TESTING", 0)))
+    app.testing = bool(int(os.getenv("SHRUNK_FLASK_TESTING", "0")))
 
     app.config["SSO_LOGIN_URL"] = os.getenv("SSO_LOGIN_URL", "/login")
     # Maybe move to env?
@@ -217,7 +218,7 @@ def create_app(**kwargs: Any) -> Flask:
 
     # set up blueprints
     app.register_blueprint(views.bp)
-    if bool(int(os.getenv("SHRUNK_DEV_LOGINS", 0))):
+    if bool(int(os.getenv("SHRUNK_DEV_LOGINS", "0"))):
         app.register_blueprint(dev_logins.bp)
     app.register_blueprint(api.link.bp)
     app.register_blueprint(api.org.bp)
@@ -246,38 +247,39 @@ def create_app(**kwargs: Any) -> Flask:
 
     @app.route("/api/core/release-notes", methods=["GET"])
     def serve_release_notes() -> Any:
-        releases = json.load(
-            open(
-                os.path.join(
-                    current_app.root_path,
-                    current_app.static_folder,
-                    "data",
-                    "release_notes.json",
-                )
-            )
-        )
-        contributors = json.load(
-            open(
-                os.path.join(
-                    current_app.root_path,
-                    current_app.static_folder,
-                    "data",
-                    "contributors.json",
-                )
-            )
-        )
+        with open(
+            os.path.join(
+                current_app.root_path,
+                current_app.static_folder,
+                "data",
+                "release_notes.json",
+            ),
+            encoding="utf-8",
+        ) as f:
+            releases = json.load(f)
+
+        with open(
+            os.path.join(
+                current_app.root_path,
+                current_app.static_folder,
+                "data",
+                "contributors.json",
+            ),
+            encoding="utf-8",
+        ) as f:
+            contributors = json.load(f)
 
         valid_products = ["website", "ms-office", "public-api"]
 
         for release in releases:
-            for category, changes in release["categories"].items():
+            for _, changes in release["categories"].items():
                 for change in changes:
                     change["contributors"] = [
                         contributors.get(contrib_id, contrib_id) for contrib_id in change["contributors"]
                     ]
 
                     if change.get("product", "website") not in valid_products:
-                        raise Exception("Invalid product")
+                        raise ValueError("Invalid product")
 
         return jsonify(releases)
 
@@ -294,7 +296,7 @@ def create_app(**kwargs: Any) -> Flask:
 
         # If the user is a dev user, all we need to do to log out is to clear the session,
         # which we did above.
-        if bool(int(os.getenv("SHRUNK_DEV_LOGINS", 0))) and netid in {
+        if bool(int(os.getenv("SHRUNK_DEV_LOGINS", "0"))) and netid in {
             "DEV_USER",
             "DEV_FACSTAFF",
             "DEV_PWR_USER",
@@ -321,7 +323,7 @@ def create_app(**kwargs: Any) -> Flask:
             )
 
             app.logger.info("Signature verified. Proceeding with updating Outlook add-in version.")
-        except Exception:
+        except ValueError:
             app.logger.error("Signature was incorrect or unable to be verified.\n")
             return "Unauthorized", 401
 
@@ -330,9 +332,8 @@ def create_app(**kwargs: Any) -> Flask:
         def run_update_outlook_script():
             try:
                 pull_outlook_assets_from_github()
-            except Exception as e:
-                app.logger.error("Unable to run outlook update function.\n", e)
-                return "Server Error", 500
+            except Exception:  # pylint: disable=broad-exception-caught
+                app.logger.error("Unable to run outlook update function.")
 
         if github_event == "create":
             ref_type = data_json["ref_type"]
@@ -349,19 +350,17 @@ def create_app(**kwargs: Any) -> Flask:
         OUTLOOK_PATH = f"/var/www/outlook/{env}"
         if env not in {"dev", "prod"}:
             return send_from_directory(OUTLOOK_PATH, filename)
-
-        else:
-            return "Bad Request. Env variable was invalid.", 400
+        return "Bad Request. Env variable was invalid.", 400
 
     @app.route("/api/core/enabled", methods=["GET"])
     def get_features_flag() -> Any:
         return jsonify(
             {
-                "devLogins": bool(int(os.getenv("SHRUNK_DEV_LOGINS", 0))),
-                "trackingPixel": bool(int(os.getenv("SHRUNK_TRACKING_PIXELS_ENABLED", 0))),
-                "domains": bool(int(os.getenv("SHRUNK_DOMAINS_ENABLED", 0))),
-                "googleSafeBrowsing": bool(int(os.getenv("SHRUNK_GOOGLE_SAFEBROWSE_ENABLED", 0))),
-                "helpDesk": bool(int(os.getenv("SHRUNK_HELP_DESK_ENABLED", 0))),
+                "devLogins": bool(int(os.getenv("SHRUNK_DEV_LOGINS", "0"))),
+                "trackingPixel": bool(int(os.getenv("SHRUNK_TRACKING_PIXELS_ENABLED", "0"))),
+                "domains": bool(int(os.getenv("SHRUNK_DOMAINS_ENABLED", "0"))),
+                "googleSafeBrowsing": bool(int(os.getenv("SHRUNK_GOOGLE_SAFEBROWSE_ENABLED", "0"))),
+                "helpDesk": bool(int(os.getenv("SHRUNK_HELP_DESK_ENABLED", "0"))),
             }
         )
 
@@ -389,9 +388,8 @@ def create_app(**kwargs: Any) -> Flask:
 
                 # TODO: Make this for the /<alias> route
                 return redirect(f"/api/core/t/{alias}")
-            else:
-                # We do not want to promote the use of tracking pixels used under the alias route.
-                return jsonify({"message": "Link not found2"}), 404
+            # We do not want to promote the use of tracking pixels used under the alias route.
+            return jsonify({"message": "Link not found2"}), 404
 
         long_url = client.links.get_long_url(alias)
         if long_url is None:
@@ -521,9 +519,9 @@ def create_app(**kwargs: Any) -> Flask:
         else:
             extension = "gif"
 
-        filename = "./static/img/pixel.{}".format(extension)
-        response = send_file(filename, mimetype="image/{}".format(extension))
-        response.headers["X-Image-Name"] = "pixel.{}".format(extension)
+        filename = f"./static/img/pixel.{extension}"
+        response = send_file(filename, mimetype=f"image/{extension}")
+        response.headers["X-Image-Name"] = f"pixel.{extension}"
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"

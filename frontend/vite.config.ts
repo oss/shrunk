@@ -2,7 +2,6 @@ import { defineConfig } from 'vite';
 // @ts-ignore
 import react from '@vitejs/plugin-react';
 import tsconfigPaths from 'vite-tsconfig-paths';
-import eslint from 'vite-plugin-eslint';
 import tailwindcss from 'tailwindcss';
 import path from 'path';
 
@@ -17,7 +16,7 @@ export default defineConfig({
       plugins: [tailwindcss()],
     },
   },
-  plugins: [react(), tsconfigPaths(), eslint({ failOnError: false })],
+  plugins: [react(), tsconfigPaths()],
   base: '/app/',
   server: {
     host: '0.0.0.0',

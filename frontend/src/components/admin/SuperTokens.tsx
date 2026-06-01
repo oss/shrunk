@@ -3,7 +3,7 @@
  * @packageDocumentation
  */
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Row,
   Col,
@@ -67,7 +67,7 @@ export default function SuperTokens(): JSX.Element {
         });
         form.resetFields();
         onCloseGeneratorDrawer();
-      } catch (error) {
+      } catch {
         message.error(
           'There was an error generating your super access token. Please try again.',
         );

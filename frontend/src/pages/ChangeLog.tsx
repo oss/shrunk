@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Col, Flex, Row, Tabs, Typography } from 'antd';
 import { getReleaseNotes } from '@/api/app';
 import {
@@ -53,6 +53,7 @@ const ReleaseSection = ({
                   {note.contributors
                     .map((contributor: Contributor) => (
                       <Typography.Link
+                        key={contributor.firstName + contributor.lastName}
                         className={`${secondaryColor} !tw-underline`}
                         href={contributor.href ? contributor.href : undefined}
                         target="_blank"
@@ -149,11 +150,14 @@ export default function ChangeLog() {
             featuresCount + improvementsCount + fixesCount === 0;
 
           if (hasNoNotes) {
-            return <></>;
+            return null;
           }
 
           return (
-            <Col span={24}>
+            <Col
+              key={`${release.major}.${release.minor}.${release.patch}`}
+              span={24}
+            >
               <Typography.Title className="tw-mt-2">
                 {release.major}.{release.minor}.{release.patch}
               </Typography.Title>

@@ -2,14 +2,13 @@
 
 from typing import Any
 from datetime import datetime
+from importlib.metadata import version, PackageNotFoundError
 
 from flask import Blueprint, jsonify
 from werkzeug.exceptions import abort
 
 from shrunk.client import ShrunkClient
 from shrunk.util.decorators import require_login, request_schema
-
-from importlib.metadata import version
 
 __all__ = ["bp"]
 
@@ -20,7 +19,7 @@ bp = Blueprint("admin", __name__, url_prefix="/api/core/admin")
 def _shrunk_version() -> Any:
     try:
         v = version("shrunk")
-    except Exception:
+    except PackageNotFoundError:
         v = "DEV_BUILD"
 
     return jsonify({"version": v})

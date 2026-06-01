@@ -32,7 +32,7 @@ from util import dev_login
 )
 def test_initialize_user(client: Client, user: str, expected: dict) -> None:
     with dev_login(client, user):
-        defaultOptions = {
+        _defaultOptions = {
             "show_expired_links": False,
             "show_deleted_links": False,
             "sort": {"key": "relevance", "order": "descending"},
@@ -183,7 +183,7 @@ def test_remove_role(client: Client, user: str, remove_role: str, expected: int)
 def test_get_all_users(client: Client, user: str, num_users: int) -> None:
     with dev_login(client, user):
         if user == "admin":
-            for i in range(num_users):
+            for _ in range(num_users):
                 test_account = f"DEV_TEST{random.randint(1000, 1000000)}"
                 client.post(
                     "/api/core/user",
@@ -209,7 +209,7 @@ def test_get_all_users(client: Client, user: str, num_users: int) -> None:
 )
 def test_get_user_info(client: Client, user: str, expected: int) -> None:
     with dev_login(client, user):
-        resp = client.get(f"/api/core/user/DEV_ADMIN")
+        resp = client.get("/api/core/user/DEV_ADMIN")
         assert resp.status_code == expected
         if expected == 200:
             assert resp.json["netid"] == "DEV_ADMIN"

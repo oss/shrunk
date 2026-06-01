@@ -1,7 +1,6 @@
 /**
  * Implements the [[ApiReference]] component
  */
-import React from 'react';
 import {
   Collapse,
   CollapseProps,

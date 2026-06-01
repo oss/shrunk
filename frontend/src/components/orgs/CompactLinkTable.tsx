@@ -1,5 +1,5 @@
 import type { ColumnsType } from 'antd/lib/table';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Table, Flex, Tooltip, Button, message } from 'antd';
 import {
   EditIcon,
@@ -45,13 +45,14 @@ const CompactLinkTable = ({
   };
   useEffect(() => {
     fetchLinks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [org_id, forceRefresh]);
 
   const transferLinkOwnership = async (netid: string, link_id: string) => {
     try {
       await editLink(link_id, { owner: { type: 'netid', _id: netid } });
       message.success('Link ownership transferred successfully');
-    } catch (error) {
+    } catch {
       message.error('Error transferring link ownership');
     }
     setTransferModalVisible(false);

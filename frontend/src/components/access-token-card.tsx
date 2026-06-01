@@ -9,7 +9,6 @@ import {
   Popconfirm,
   message,
 } from 'antd';
-import React from 'react';
 import dayjs from 'dayjs';
 import { Trash2Icon } from 'lucide-react';
 import { AccessTokenData } from '@/interfaces/access-token';
@@ -36,7 +35,7 @@ export default function AccessTokenCard({
                 try {
                   await onDeleteToken(accessTokenData.id);
                   message.success('Token deleted successfully');
-                } catch (error) {
+                } catch {
                   message.error('Failed to delete Token');
                 }
               }}

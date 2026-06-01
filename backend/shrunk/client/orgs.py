@@ -3,8 +3,9 @@
 from datetime import datetime, timezone
 from typing import Any, Optional, List, cast
 import re
-from bson import ObjectId
 import os
+
+from bson import ObjectId
 import pymongo
 import pymongo.errors
 from pymongo.collation import Collation
@@ -21,7 +22,7 @@ class OrgsClient:
 
     def __init__(self, *, db: pymongo.database.Database):
         self.db = db
-        self.domain_enabled = bool(int(os.getenv("SHRUNK_DOMAINS_ENABLED", 0)))
+        self.domain_enabled = bool(int(os.getenv("SHRUNK_DOMAINS_ENABLED", "0")))
 
     def get_org(self, org_id: ObjectId) -> Optional[Any]:
         """Get information about a given org

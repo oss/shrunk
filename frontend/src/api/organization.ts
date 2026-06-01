@@ -36,7 +36,7 @@ export async function getOrganization(id: string): Promise<Organization> {
         ({
           ...member,
           timeCreated: new Date(member.timeCreated),
-        } as OrganizationMember),
+        }) as OrganizationMember,
     ),
   };
 }

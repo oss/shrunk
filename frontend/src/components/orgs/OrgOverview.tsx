@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Flex, Card, Statistic, Row, Col } from 'antd';
 import { getOrganizationStats } from '@/api/organization';
 import { OrganizationStats } from '@/interfaces/organizations';
@@ -23,7 +23,7 @@ export default function OrgOverview({
       setStats(data);
     };
     fetchStats();
-  }, []);
+  }, [orgId]);
 
   return (
     <Flex gap="1rem" wrap="wrap" justify="space-between" vertical>

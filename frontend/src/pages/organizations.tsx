@@ -287,7 +287,7 @@ export default function MyOrganizations({
       const data = await searchOrgs(normalizedQuery);
       setOrgs(data.results);
       setTotalOrgs(data.count);
-    } catch (error) {
+    } catch {
       message.error('Failed to fetch organizations');
     }
   }, [debouncedQuery]);
@@ -326,7 +326,7 @@ export default function MyOrganizations({
       setIsCreateModalOpen(false);
       form.resetFields();
       await refreshOrgs();
-    } catch (error) {
+    } catch {
       message.error('Failed to create organization.');
     }
   };
@@ -398,7 +398,6 @@ export default function MyOrganizations({
           {
             title: 'Date Added',
             key: 'dateAdded',
-            // @ts-ignore
             dataIndex: 'dateAdded',
             render: (date: Date) =>
               date ? dayjs(date).format('MMM D, YYYY') : '-',
@@ -428,7 +427,7 @@ export default function MyOrganizations({
                   try {
                     await onDeleteOrg(record.id);
                     message.success('Organization deleted successfully');
-                  } catch (error) {
+                  } catch {
                     message.error('Failed to delete organization');
                   }
                   setShowAssociatedUrlsAlert(false);
@@ -450,7 +449,7 @@ export default function MyOrganizations({
                       if (res) {
                         setShowAssociatedUrlsAlert(true);
                       }
-                    } catch (error) {
+                    } catch {
                       message.error('Failed to search for associated urls');
                     }
                   }}

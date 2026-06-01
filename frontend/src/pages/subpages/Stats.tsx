@@ -220,7 +220,14 @@ export function Stats(props: Props): React.ReactElement {
     fetchData().then(() => {
       setLoading(false);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.id]);
+
+  useEffect(() => {
+    if (browserStats !== null && browserStats.referers.length > 0) {
+      setTopReferrer(browserStats.referers[0].name);
+    }
+  }, [browserStats]);
 
   if (!loading && linkInfo === null) {
     return (
@@ -230,12 +237,6 @@ export function Stats(props: Props): React.ReactElement {
       />
     );
   }
-
-  useEffect(() => {
-    if (browserStats !== null && browserStats.referers.length > 0) {
-      setTopReferrer(browserStats.referers[0].name);
-    }
-  }, [browserStats]);
 
   /**
    * Executes API requests to update a link

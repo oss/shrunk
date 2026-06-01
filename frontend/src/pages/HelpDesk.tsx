@@ -134,6 +134,7 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
     };
 
     initComponent();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /**

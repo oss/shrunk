@@ -15,22 +15,26 @@ def _query_netid(netid: str) -> Optional[List[Tuple[str, Dict[str, List[bytes]]]
     if not _validate_netid_chars(netid):
         return None
 
-    conn = ldap.initialize(os.getenv("SHRUNK_LDAP_URI"))
+    ldap_uri = os.getenv("SHRUNK_LDAP_URI")
+    if not ldap_uri:
+        return None
+
+    conn = ldap.initialize(ldap_uri)
     try:
         conn.simple_bind_s(os.getenv("SHRUNK_LDAP_BIND_DN"), os.getenv("SHRUNK_LDAP_CRED"))
         query = os.getenv("SHRUNK_LDAP_QUERY_STR").format(netid)
-        res = conn.search_s(os.getenv("SHRUNK_LDAP_BASE_DN"), ldap.SCOPE_ONELEVEL, query)
+        res = conn.search_s(os.getenv("SHRUNK_LDAP_BASE_DN"), ldap.SCOPE_ONELEVEL, query)  # pylint: disable=no-member
         return cast(List[Tuple[str, Dict[str, List[bytes]]]], res)
-    except ldap.INVALID_CREDENTIALS:
+    except ldap.INVALID_CREDENTIALS:  # pylint: disable=no-member
         current_app.logger.error("could not bind to LDAP server!")
         return None
-    except ldap.SERVER_DOWN:
+    except ldap.SERVER_DOWN:  # pylint: disable=no-member
         current_app.logger.error(f"LDAP server down: could not validate {netid}")
         return None
 
 
 def is_valid_netid(netid: str) -> bool:
-    if bool(int(os.getenv("SHRUNK_DEV_LOGINS", 0))) and netid.upper().startswith("DEV_"):
+    if bool(int(os.getenv("SHRUNK_DEV_LOGINS", "0"))) and netid.upper().startswith("DEV_"):
         return True
 
     if current_app.client.user_exists(netid):
@@ -42,7 +46,7 @@ def is_valid_netid(netid: str) -> bool:
 
 
 def is_university_guest(netid: str) -> bool:
-    if bool(int(os.getenv("SHRUNK_DEV_LOGINS", 0))) and netid.upper().startswith("DEV_"):
+    if bool(int(os.getenv("SHRUNK_DEV_LOGINS", "0"))) and netid.upper().startswith("DEV_"):
         return True
 
     if not is_valid_netid(netid):

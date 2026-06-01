@@ -21,7 +21,7 @@ def tracking_pixel_data(client: Client):
         }
 
 
-def test_create_tracking_pixel_png(tracking_pixel_data):
+def test_create_tracking_pixel_png(tracking_pixel_data):  # pylint: disable=redefined-outer-name
     """Test that verifies the creation worked"""
     assert tracking_pixel_data["title"] == "Tracking Pixel"
     assert tracking_pixel_data["alias"].endswith(".png")
@@ -39,7 +39,7 @@ def test_create_tracking_pixel_gif(client: Client):
         assert resp.json["alias"].endswith(".gif")
 
 
-def test_get_tracking_pixel(client: Client, tracking_pixel_data):
+def test_get_tracking_pixel(client: Client, tracking_pixel_data):  # pylint: disable=redefined-outer-name
     """Test that uses the created tracking pixel"""
     with dev_login(client, "user"):
         resp = client.get(f"/api/core/t/{tracking_pixel_data['alias']}")

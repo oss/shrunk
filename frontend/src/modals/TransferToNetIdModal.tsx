@@ -1,5 +1,5 @@
 import { Button, Form, Input, Modal, Popconfirm, message } from 'antd';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { serverValidateNetId } from '@/api/validators';
 
 interface ITransferModal {
@@ -24,7 +24,7 @@ const TransferToNetIdModal = (props: ITransferModal) => {
     try {
       await props.onOk(form.getFieldValue('netId'), props.link_id);
       form.resetFields();
-    } catch (error) {
+    } catch {
       message.error('Failed to transfer ownership: ');
     } finally {
       setLoading(false);

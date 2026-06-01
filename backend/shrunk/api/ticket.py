@@ -5,9 +5,10 @@ from typing import Any
 
 from flask import Blueprint, Response, jsonify, request
 from flask_mailman import Mail
+from werkzeug.exceptions import abort
+
 from shrunk.client import ShrunkClient
 from shrunk.util.decorators import request_schema, require_login, require_mail
-from werkzeug.exceptions import abort
 
 __all__ = ["bp"]
 bp = Blueprint("ticket", __name__, url_prefix="/api/core/ticket")
@@ -62,7 +63,7 @@ PATCH_TICKET_SCHEMA = {
 @bp.route("/text", methods=["GET"])
 @require_login
 def get_help_desk_text(
-    netid: str,
+    _netid: str,
     client: ShrunkClient,
 ) -> Response:
     """``GET /api/ticket/<reason>/text``
@@ -166,7 +167,7 @@ def get_tickets(netid: str, client: ShrunkClient) -> Response:
 
 @bp.route("/<b32:id>", methods=["GET"])
 @require_login
-def get_ticket(netid: str, client: ShrunkClient, id: str) -> Response:
+def get_ticket(netid: str, client: ShrunkClient, id: str) -> Response:  # pylint: disable=redefined-builtin
     """``GET /api/ticket/<id>``
 
     Get a ticket by its ID.
@@ -258,7 +259,7 @@ def create_ticket(netid: str, client: ShrunkClient, req: Any) -> Response:
 @bp.route("/<b32:id>", methods=["PATCH"])
 @request_schema(PATCH_TICKET_SCHEMA)
 @require_login
-def patch_ticket(netid: str, client: ShrunkClient, req: Any, id: str) -> Response:
+def patch_ticket(netid: str, client: ShrunkClient, req: Any, id: str) -> Response:  # pylint: disable=redefined-builtin
     """``PATCH /api/ticket/<id>``
 
     Update a ticket. This can be used to close or resolve a ticket. Note
@@ -300,7 +301,7 @@ def patch_ticket(netid: str, client: ShrunkClient, req: Any, id: str) -> Respons
         return jsonify({"message": "Ticket closed successfully"}), 200
 
     # Action is resolve
-    elif req["action"] == "resolve":
+    if req["action"] == "resolve":
         # Only an admin can resolve the ticket
         if not client.users.has_role(netid, "admin"):
             abort(403)
@@ -319,13 +320,12 @@ def patch_ticket(netid: str, client: ShrunkClient, req: Any, id: str) -> Respons
         return jsonify({"message": "Ticket resolved successfully"}), 200
 
     # Action is invalid
-    else:
-        abort(400)
+    abort(400)
 
 
 @bp.route("/<b32:id>", methods=["DELETE"])
 @require_login
-def delete_ticket(netid: str, client: ShrunkClient, id: str) -> Response:
+def delete_ticket(netid: str, client: ShrunkClient, id: str) -> Response:  # pylint: disable=redefined-builtin
     """``DELETE /api/ticket/<id>``
 
     Delete a ticket. This route is mainly used for testing purposes.

@@ -262,7 +262,7 @@ const BlockedLinks = () => {
         form.resetFields();
         setShowBlockLinkModal(false);
         rehydrateData();
-      } catch (error) {
+      } catch {
         message.error('Failed to block link');
       } finally {
         setModalLoading(false);
