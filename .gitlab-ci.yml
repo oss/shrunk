@@ -1,8 +1,7 @@
 stages:
-  - build
-  - package
-  - test
   - lint
+  - build
+  - test
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
@@ -56,8 +55,6 @@ mypy:
     reports:
       junit: mypy.xml
 
-
-
 ruff-lint:
   stage: lint
   image: python:latest
@@ -96,91 +93,59 @@ prettier:
     reports:
       junit: eslint.xml
 
+.buildah:
+  image: quay.io/buildah/stable
+  variables:
+    STORAGE_DRIVER: vfs
+    BUILDAH_ISOLATION: chroot
+  before_script:
+    - buildah login -u "$CI_REGISTRY_USER" --password $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  
 frontend:
+  extends: .buildah
   stage: build
-  image: node:20
-  needs: []
   script:
-    - cd frontend
-    - npm ci --cache .npm --prefer-offline
-    - npm install
-    - npm run build
-  artifacts:
-    paths:
-      - frontend/dist/*
-    expire_in: '1 day'
+    - buildah build -t "$CI_REGISTRY_IMAGE/frontend:${CI_COMMIT_SHA}" ./frontend
+    - buildah push "$CI_REGISTRY_IMAGE/frontend:${CI_COMMIT_SHA}"
 
 backend:
+  extends: .buildah
   stage: build
-  image: python:3.14
-  needs: []
   script:
-    - cd backend
-    - apt-get update
-    - apt-get install -y libsasl2-dev libldap2-dev libssl-dev
-    - curl -LsSf https://astral.sh/uv/install.sh | sh
-    - source $HOME/.local/bin/env
-    - uv build
-  artifacts:
-    paths:
-      - backend/dist/shrunk-*.whl
-    expire_in: '1 day'
+    - buildah build -t "$CI_REGISTRY_IMAGE/backend:${CI_COMMIT_SHA}" ./backend
+    - buildah push "$CI_REGISTRY_IMAGE/backend:${CI_COMMIT_SHA}"
 
-package:
-  stage: package
-  image: alpine:latest
-  needs:
-    - job: frontend
-    - job: backend
+shib-sp:
+  extends: .buildah
+  stage: build
   script:
-    - mkdir -p shrunk
-    - mkdir -p shrunk/frontend
-    - mkdir -p shrunk/backend
-    - cp -r frontend/dist/* shrunk/frontend
-    - cp -r backend/dist/* shrunk/backend
-  artifacts:
-    paths:
-      - shrunk/
-    expose_as: 'shrunk'
+    - buildah build -t "$CI_REGISTRY_IMAGE/shib-sp:${CI_COMMIT_SHA}" ./shib-sp
+    - buildah push "$CI_REGISTRY_IMAGE/shib-sp:${CI_COMMIT_SHA}"
 
 backend-test:
+  extends: .buildah
   stage: test
-  image: python:3.14
   needs: [backend]
   dependencies:
     - backend
-  variables:
-    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip_centos"
-    CRYPTOGRAPHY_DONT_BUILD_RUST: 1
-  cache:
-    key: ${CI_COMMIT_REF_SLUG}
-    paths:
-      - .cache/pip_centos
   services:
     - mongo
   script:
-    - apt-get update
-    - apt-get install -y libldap2-dev libsasl2-dev
-    
-    - curl -LsSf https://astral.sh/uv/install.sh | sh
-    - source $HOME/.local/bin/env
-    - pip install backend/dist/shrunk-*.whl
+    - container=$(buildah from "$CI_REGISTRY_IMAGE/backend:${CI_COMMIT_SHA}")
+    - container_root=$(buildah mount $container)
 
-    - mkdir /usr/share/GeoIP
-    - cp backend/GeoLite2-City.mmdb /usr/share/GeoIP/GeoLite2-City.mmdb
+    - cp .env.example ${container_root}/usr/shrunk/backend/test.env
+    - curl -fsS "https://dotenvx.sh?directory=${container_root}/usr/local/bin" | sh
+    - buildah run $container -- sh -c 
+        "dotenvx set SHRUNK_DB_HOST mongo -f test.env &&
+         dotenvx set SHRUNK_DB_NAME shrunk_test -f test.env &&
+         dotenvx set SHRUNK_FLASK_TESTING 1 -f test.env &&
+         dotenvx set SHRUNK_GOOGLE_SAFEBROWSE_ENABLED 1 -f test.env &&
+         dotenvx set SHRUNK_GOOGLE_SAFEBROWSE_API_KEY "$GOOGLE_SAFE_BROWSING_API" -f test.env &&
+         dotenvx run -f test.env -- pytest --junitxml=pytest.xml tests"
+    - cp ${container_root}/usr/shrunk/backend/pytest.xml .
 
-    - curl -fsS https://dotenvx.sh | sh
-    - cp .env.example test.env
-
-    - dotenvx set SHRUNK_DB_HOST mongo -f test.env
-    - dotenvx set SHRUNK_DB_NAME shrunk_test -f test.env
-    - dotenvx set SHRUNK_FLASK_TESTING 1 -f test.env
-    - dotenvx set SHRUNK_GOOGLE_SAFEBROWSE_ENABLED 1 -f test.env
-    - dotenvx set SHRUNK_GOOGLE_SAFEBROWSE_API_KEY "$GOOGLE_SAFE_BROWSING_API" -f test.env
-
-    - cd backend
-    - uv sync
-    - dotenvx run -f ../test.env -- uv run pytest --junitxml=../pytest.xml tests
+    - buildah unmount $container
   artifacts:
     reports:
       junit: pytest.xml

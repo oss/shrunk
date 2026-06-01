@@ -4,7 +4,7 @@ metadata:
   name: shrunk
   namespace: oit-eas-macs-shrunk
 spec:
-  host: shrunk.rutgers.edu
+  host: shrunk.apps.ocp.ei.rutgers.edu
   to:
     kind: Service
     name: frontend
