@@ -2,6 +2,7 @@ stages:
   - lint
   - build
   - test
+  - promote
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
@@ -12,10 +13,30 @@ cache:
     - frontend/.npm/
     - .cache/pip
 
+.images:
+  parallel:
+    matrix:
+      - IMAGE: ["frontend", "backend", "shib-sp"]
+
+.buildah:
+  image: quay.io/buildah/stable
+  variables:
+    STORAGE_DRIVER: vfs
+    BUILDAH_ISOLATION: chroot
+  before_script:
+    - buildah login -u "$CI_REGISTRY_USER" --password $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+.skopeo:
+  image:
+    name: quay.io/skopeo/stable
+    entrypoint: [""]
+  stage: promote
+  before_script:
+    - skopeo login -u "$CI_REGISTRY_USER" --password "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+
 eslint:
   stage: lint
   image: node:latest
-  needs: []
   script:
     - cd frontend
     - npm ci --cache .npm --prefer-offline
@@ -27,7 +48,6 @@ eslint:
 pylint:
   stage: lint
   image: python:latest
-  needs: []
   script:
     - apt-get update
     - apt-get install -y gcc libldap-common libldap2-dev libsasl2-dev
@@ -44,7 +64,6 @@ mypy:
   # stage: lint
   when: manual
   image: python:latest
-  needs: []
   script:
     - cd backend
     - curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -58,7 +77,6 @@ mypy:
 ruff-lint:
   stage: lint
   image: python:latest
-  needs: []
   script:
     - apt-get update
     - apt-get install -y gcc libldap-common libldap2-dev libsasl2-dev
@@ -71,7 +89,6 @@ ruff-lint:
 ruff-format:
   stage: lint
   image: python:latest
-  needs: []
   script:
     - apt-get update
     - apt-get install -y gcc libldap-common libldap2-dev libsasl2-dev
@@ -84,7 +101,6 @@ ruff-format:
 prettier:
   stage: lint
   image: node:latest
-  needs: []
   script:
     - cd frontend
     - npm ci --cache .npm --prefer-offline
@@ -92,42 +108,19 @@ prettier:
   artifacts:
     reports:
       junit: eslint.xml
-
-.buildah:
-  image: quay.io/buildah/stable
-  variables:
-    STORAGE_DRIVER: vfs
-    BUILDAH_ISOLATION: chroot
-  before_script:
-    - buildah login -u "$CI_REGISTRY_USER" --password $CI_REGISTRY_PASSWORD $CI_REGISTRY
   
-frontend:
-  extends: .buildah
+build:
+  extends:
+    - .buildah
+    - .images
   stage: build
   script:
-    - buildah build -t "$CI_REGISTRY_IMAGE/frontend:${CI_COMMIT_SHA}" ./frontend
-    - buildah push "$CI_REGISTRY_IMAGE/frontend:${CI_COMMIT_SHA}"
-
-backend:
-  extends: .buildah
-  stage: build
-  script:
-    - buildah build -t "$CI_REGISTRY_IMAGE/backend:${CI_COMMIT_SHA}" ./backend
-    - buildah push "$CI_REGISTRY_IMAGE/backend:${CI_COMMIT_SHA}"
-
-shib-sp:
-  extends: .buildah
-  stage: build
-  script:
-    - buildah build -t "$CI_REGISTRY_IMAGE/shib-sp:${CI_COMMIT_SHA}" ./shib-sp
-    - buildah push "$CI_REGISTRY_IMAGE/shib-sp:${CI_COMMIT_SHA}"
+    - buildah build -t "$CI_REGISTRY_IMAGE/${IMAGE}:${CI_COMMIT_SHA}" ${IMAGE}
+    - buildah push "$CI_REGISTRY_IMAGE/${IMAGE}:${CI_COMMIT_SHA}"
 
 backend-test:
   extends: .buildah
   stage: test
-  needs: [backend]
-  dependencies:
-    - backend
   services:
     - mongo
   script:
@@ -149,3 +142,23 @@ backend-test:
   artifacts:
     reports:
       junit: pytest.xml
+
+promote-build:
+  extends:
+    - .skopeo
+    - .images
+  rules:
+  - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  script:
+    - skopeo copy "docker://$CI_REGISTRY_IMAGE/${IMAGE}:${CI_COMMIT_SHA}"
+                  "docker://$CI_REGISTRY_IMAGE/${IMAGE}:${CI_PIPELINE_IID}-build"
+
+promote-prod:
+  extends:
+    - .skopeo
+    - .images
+  rules:
+  - if: $CI_COMMIT_TAG
+  script:
+    - skopeo copy "docker://$CI_REGISTRY_IMAGE/${IMAGE}:${CI_COMMIT_SHA}"
+                  "docker://$CI_REGISTRY_IMAGE/${IMAGE}:${CI_COMMIT_TAG}"
