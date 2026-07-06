@@ -3,15 +3,25 @@
  * @packageDocumentation
  */
 
-import Spin from 'antd/es/spin';
-import { Button, Col, Popconfirm, Row } from 'antd';
-import { CircleAlertIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
+
 import {
   getPendingLinks,
   getStatus,
   updateLinkSecurity,
 } from '@/api/google-safebrowse';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 import { PendingLink } from '@/interfaces/google-safebrowse';
 
 interface PendingRowProps {
@@ -27,51 +37,63 @@ function PendingLinkRow(props: PendingRowProps) {
   }
 
   return (
-    <Row className="primary-row">
-      <Col span={20}>
-        <Row>
-          <Col span={24}>
-            <span className="title">{document.title}</span>
-          </Col>
-        </Row>
-        <Row>
-          <Col span={24}>
-            <span>netID of creator: {document.netid}</span>
-          </Col>
-        </Row>
-        <Row>
-          <Col span={24}>
-            <span>
-              long url: <a href={document.long_url}>{document.long_url}</a>
-            </span>
-          </Col>
-        </Row>
-      </Col>
-      <Col span={2}>
-        <Popconfirm
-          placement="top"
-          title="Are you sure?"
-          onConfirm={() => updateLink('reject')}
-          icon={<CircleAlertIcon style={{ color: 'red' }} />}
-        >
-          <Button danger style={{ margin: '0px 10px' }}>
-            Deny
-          </Button>
-        </Popconfirm>
-      </Col>
-      <Col span={2}>
-        <Popconfirm
-          placement="top"
-          title="Are you sure?"
-          onConfirm={() => updateLink('promote')}
-          icon={<CircleAlertIcon style={{ color: 'red' }} />}
-        >
-          <Button type="primary" style={{ margin: '0px 10px' }}>
-            Approve
-          </Button>
-        </Popconfirm>
-      </Col>
-    </Row>
+    <div className="flex flex-col gap-4 border-b py-4 lg:flex-row lg:items-center lg:justify-between">
+      <div className="min-w-0 space-y-1">
+        <p className="font-semibold">{document.title}</p>
+        <p className="text-sm text-muted-foreground">
+          netID of creator: {document.netid}
+        </p>
+        <p className="text-sm break-all text-muted-foreground">
+          long url:{' '}
+          <a className="text-primary underline" href={document.long_url}>
+            {document.long_url}
+          </a>
+        </p>
+      </div>
+      <div className="flex shrink-0 gap-2">
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive">Deny</Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Deny this link?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to deny this link?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={() => updateLink('reject')}
+              >
+                Deny
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button>Approve</Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Approve this link?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to approve this link?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => updateLink('promote')}>
+                Approve
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </div>
   );
 }
 
@@ -93,20 +115,18 @@ export default function LinkSecurity() {
   }, []);
 
   return (
-    <>
-      <Row className="primary-row">
-        <span>
-          <strong>Current Security Status</strong>: {securityStatus}
-        </span>
-      </Row>
+    <div className="space-y-4">
+      <p>
+        <strong>Current Security Status</strong>: {securityStatus}
+      </p>
 
       {pendingLinks == null ? (
-        <Spin size="large" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
       ) : (
         pendingLinks.map((link) => (
           <PendingLinkRow key={link._id} document={link} />
         ))
       )}
-    </>
+    </div>
   );
 }

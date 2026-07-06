@@ -3,7 +3,6 @@ import tseslint from 'typescript-eslint';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import jsxA11yPlugin from 'eslint-plugin-jsx-a11y';
-import tailwindPlugin from 'eslint-plugin-tailwindcss';
 import unusedImportsPlugin from 'eslint-plugin-unused-imports';
 import prettierConfig from 'eslint-config-prettier';
 import prettierPlugin from 'eslint-plugin-prettier';
@@ -24,7 +23,6 @@ export default tseslint.config(
       },
     },
     plugins: {
-      tailwindcss: tailwindPlugin,
       'unused-imports': unusedImportsPlugin,
       prettier: prettierPlugin,
     },
@@ -34,7 +32,6 @@ export default tseslint.config(
     rules: {
       ...prettierConfig.rules,
       'prettier/prettier': 'warn',
-      'tailwindcss/classnames-order': 'error',
       'react/forbid-dom-props': [
         2,
         {

@@ -2,7 +2,9 @@ import { defineConfig } from 'vite';
 // @ts-ignore
 import react from '@vitejs/plugin-react';
 import tsconfigPaths from 'vite-tsconfig-paths';
-import tailwindcss from 'tailwindcss';
+import eslint from 'vite-plugin-eslint';
+// @ts-ignore
+import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 
 export default defineConfig({
@@ -11,12 +13,12 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-  css: {
-    postcss: {
-      plugins: [tailwindcss()],
-    },
-  },
-  plugins: [react(), tsconfigPaths()],
+  plugins: [
+    tailwindcss(),
+    react(),
+    tsconfigPaths(),
+    eslint({ failOnError: false }),
+  ],
   base: '/app/',
   server: {
     host: '0.0.0.0',

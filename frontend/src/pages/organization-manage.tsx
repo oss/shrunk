@@ -1,33 +1,16 @@
-import {
-  Button,
-  Col,
-  Drawer,
-  Dropdown,
-  Form,
-  Input,
-  Popconfirm,
-  Row,
-  Space,
-  Spin,
-  Table,
-  Typography,
-  Tabs,
-  Grid,
-} from 'antd';
-import type { TabsProps } from 'antd/lib/tabs';
-import type { FormInstance } from 'antd/lib/form';
 import dayjs from 'dayjs';
 import {
+  ChartLineIcon,
   CodeIcon,
   EllipsisIcon,
+  LinkIcon,
+  PlusCircleIcon,
   SettingsIcon,
   TrashIcon,
   UserMinusIcon,
   UsersIcon,
-  PlusCircleIcon,
-  ChartLineIcon,
 } from 'lucide-react';
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 
 import {
@@ -40,13 +23,65 @@ import {
   renameOrganization,
   setAdminStatusOrganization,
 } from '@/api/organization';
-import { serverValidateOrgName } from '@/api/validators';
-import { Organization, OrganizationMember } from '@/interfaces/organizations';
-import CollaboratorModal, { Collaborator } from '@/modals/CollaboratorModal';
 import CompactLinkTable from '@/components/orgs/CompactLinkTable';
 import CreateLinkDrawer from '@/drawers/CreateLinkDrawer';
 import OrgOverview from '@/components/orgs/OrgOverview';
-import { DarkModeContext } from '@/contexts/DarkModeContext';
+import { Organization } from '@/interfaces/organizations';
+import CollaboratorModal, { Collaborator } from '@/modals/CollaboratorModal';
+import { useFormState } from '@/lib/use-form-state';
+import { renameOrgFormSchema } from '@/lib/validations';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  adminContentWidthClass,
+  adminDividerClass,
+  adminInputClass,
+  adminOutlineButtonClass,
+  adminPrimaryButtonClass,
+  adminSectionTopClass,
+  adminShellClass,
+  adminTableCellClass,
+  adminTableHeadClass,
+  adminTableHeadDividerClass,
+  adminTableRowClass,
+  adminTableWrapperClass,
+  adminTabsListClass,
+  adminTabTriggerClass,
+} from '@/lib/admin-styles';
 
 type RouteParams = {
   id: string;
@@ -63,7 +98,7 @@ interface VisitDatum {
   unique_visits: number;
 }
 
-const VALID_TABS = ['members', 'overview'];
+const VALID_TABS = ['members', 'overview', 'links'];
 const DEFAULT_TAB = 'overview';
 
 function ManageOrgBase({
@@ -72,24 +107,30 @@ function ManageOrgBase({
   match,
   history,
 }: Props): React.ReactElement {
-  const darkModeContext = useContext(DarkModeContext);
-
-  if (!darkModeContext) {
-    throw new Error('DarkModeContext is missing.');
-  }
-
-  const { darkMode } = darkModeContext;
-  const screens = Grid.useBreakpoint();
-
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [adminsCount, setAdminsCount] = useState(0);
   const [shareModalVisible, setShareModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
-  const formRef = useRef<FormInstance>(null);
   const [visitStats, setVisitStats] = useState<VisitDatum[] | null>(null);
   const [activeTab, setActiveTab] = useState<string>(DEFAULT_TAB);
   const [showCreateLinkDrawer, setShowCreateLinkDrawer] = useState(false);
   const [forceRefresh, setForceRefresh] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  const {
+    errors: nameErrors,
+    submitting,
+    validate: validateName,
+    clearErrors,
+  } = useFormState(renameOrgFormSchema);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   useEffect(() => {
     const handleLocationChange = () => {
@@ -106,7 +147,7 @@ function ManageOrgBase({
       }
     };
     window.addEventListener('hashchange', handleLocationChange);
-    handleLocationChange(); // Handle initial URL
+    handleLocationChange();
     return () => window.removeEventListener('hashchange', handleLocationChange);
   }, []);
 
@@ -179,264 +220,307 @@ function ManageOrgBase({
     setEditModalVisible(true);
   };
 
+  const handleRenameOrg = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const newName = formData.get('newName') as string;
+    const ok = await validateName({ newName });
+    if (ok) {
+      onRenameOrg(newName);
+      setEditModalVisible(false);
+    }
+  };
+
   if (!organization) {
-    return <Spin size="large" />;
+    return (
+      <div className="flex justify-center py-8">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary" />
+      </div>
+    );
   }
 
   const isAdmin = organization.role === 'admin' || userPrivileges.has('admin');
   const userMayNotLeave = organization.role === 'admin' && adminsCount === 1;
 
-  const columns = [
-    {
-      title: 'Member',
-      key: 'netid',
-      dataIndex: 'netid',
-    },
-    {
-      title: 'Total Visits',
-      key: 'total_visits',
-      width: '15%',
-      render: (_: any, record: OrganizationMember) => {
-        const stats = visitStats?.find((v) => v.netid === record.netid);
-        return stats?.total_visits || 0;
-      },
-    },
-    {
-      title: 'Unique Visits',
-      key: 'unique_visits',
-      width: '15%',
-      render: (_: any, record: OrganizationMember) => {
-        const stats = visitStats?.find((v) => v.netid === record.netid);
-        return stats?.unique_visits || 0;
-      },
-    },
-    {
-      title: 'Role',
-      key: 'role',
-      render: (record: OrganizationMember) => (
-        <Typography.Text>
-          {record.role === 'admin'
-            ? 'Admin'
-            : record.role === 'guest'
-              ? 'Guest'
-              : 'Member'}
-        </Typography.Text>
-      ),
-      width: '10%',
-    },
-    {
-      title: 'Date Added',
-      dataIndex: 'timeCreated',
-      key: 'timeCreated',
-      width: '15%',
-      render: (date: string) => dayjs(date).format('MMM D, YYYY'),
-    },
-  ];
-
-  const items: TabsProps['items'] = [
-    {
-      key: 'overview',
-      icon: <ChartLineIcon />,
-      label: 'Overview',
-      children: (
-        <Row gutter={[16, 16]}>
-          <Col xs={24} lg={8} xl={6}>
-            <OrgOverview
-              totalMembers={organization.members.length}
-              orgId={organization.id}
-              isMobile={!screens.md}
-            />
-          </Col>
-          <Col xs={24} lg={16} xl={18}>
-            <CompactLinkTable
-              org_id={organization.id}
-              forceRefresh={forceRefresh}
-              isAdmin={
-                organization.role === 'admin' || userPrivileges.has('admin')
-              }
-            />
-          </Col>
-        </Row>
-      ),
-    },
-    {
-      key: 'members',
-      icon: <UsersIcon />,
-      label: 'Members',
-      children: (
-        <Table
-          dataSource={organization.members}
-          columns={columns.filter((col, index) =>
-            organization.role === 'admin' ? true : index !== 1 && index !== 2,
-          )}
-          rowKey="netid"
-          pagination={false}
-        />
-      ),
-    },
-  ];
-
   return (
     <>
-      <Row gutter={16} justify="space-between" align="middle">
-        <Col>
-          <Typography.Title>{organization.name}</Typography.Title>
-        </Col>
-        <Col>
-          <Space>
-            {isAdmin && (
-              <>
+      <div className={adminShellClass}>
+        <div className={adminContentWidthClass}>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <h1 className="app-page-heading text-foreground">
+              {organization.name}
+            </h1>
+            <div className="flex items-center gap-2">
+              {isAdmin && (
                 <Button
-                  icon={<UsersIcon />}
+                  variant="outline"
+                  className={`inline-flex items-center gap-2 ${adminOutlineButtonClass}`}
                   onClick={() => setShareModalVisible(true)}
                 >
+                  <UsersIcon className="h-4 w-4" />
                   Collaborate
                 </Button>
-              </>
-            )}
-            <Button
-              type="primary"
-              icon={<PlusCircleIcon />}
-              onClick={() => setShowCreateLinkDrawer(true)}
-            >
-              Create
-            </Button>
-            <Dropdown
-              placement="bottomRight"
-              styles={{
-                item: {
-                  color: `${darkMode ? 'white' : 'black'}`,
-                },
-              }}
-              menu={{
-                items: [
-                  {
-                    key: 'settings_organization',
-                    label: <p className="tw-m-0">Settings</p>,
-                    icon: <SettingsIcon />,
-                    onClick: onEditOrganization,
-                  },
-                  ...(isAdmin
-                    ? [
-                        {
-                          key: 'settings_developer_organization',
-                          label: <p className="tw-m-0">Access Tokens</p>,
-                          icon: <CodeIcon />,
-                          onClick: () => {
-                            history.push(`/app/orgs/${match.params.id}/tokens`);
-                          },
-                        },
-                      ]
-                    : []),
-                  { type: 'divider' },
-                  {
-                    key: 'leave_organization',
-                    label: 'Leave',
-                    icon: <UserMinusIcon />,
-                    disabled: userMayNotLeave && organization.role === 'member',
-                    onClick: onLeaveOrg,
-                    danger: true,
-                    className: '!tw-text-red-600 hover:!tw-text-white',
-                  },
-                ],
-              }}
-            >
-              <Button icon={<EllipsisIcon />} />
-            </Dropdown>
-          </Space>
-        </Col>
-      </Row>
-      <Row gutter={[16, 16]}>
-        <Col span={24}>
-          <Tabs
-            defaultActiveKey={DEFAULT_TAB}
-            activeKey={activeTab}
-            items={items}
-            onChange={handleTabChange}
-          />
-        </Col>
-      </Row>
+              )}
+              <Button
+                className={`inline-flex items-center gap-2 ${adminPrimaryButtonClass}`}
+                onClick={() => setShowCreateLinkDrawer(true)}
+              >
+                <PlusCircleIcon className="h-4 w-4" />
+                Create
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`${adminOutlineButtonClass} w-9 p-0`}
+                  >
+                    <EllipsisIcon className="h-4 w-4 shrink-0" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="border-border bg-popover text-popover-foreground shadow-md dark:border-primary-foreground/10"
+                >
+                  <DropdownMenuItem onClick={onEditOrganization}>
+                    <SettingsIcon className="mr-2 h-4 w-4" />
+                    Settings
+                  </DropdownMenuItem>
+                  {isAdmin && (
+                    <DropdownMenuItem
+                      onClick={() => {
+                        history.push(`/app/orgs/${match.params.id}/tokens`);
+                      }}
+                    >
+                      <CodeIcon className="mr-2 h-4 w-4" />
+                      Access Tokens
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator className="bg-border dark:bg-primary-foreground/10" />
+                  <DropdownMenuItem
+                    onClick={onLeaveOrg}
+                    disabled={userMayNotLeave && organization.role === 'member'}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <UserMinusIcon className="mr-2 h-4 w-4" />
+                    Leave
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
 
-      <Drawer
-        title="Settings"
-        width={720}
+          <Tabs
+            value={activeTab}
+            onValueChange={handleTabChange}
+            className="mt-8"
+          >
+            <TabsList className={adminTabsListClass}>
+              <TabsTrigger value="overview" className={adminTabTriggerClass}>
+                <span className="inline-flex items-center gap-2.5">
+                  <ChartLineIcon className="h-4 w-4 shrink-0" />
+                  <span>Overview</span>
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value="members" className={adminTabTriggerClass}>
+                <span className="inline-flex items-center gap-2.5">
+                  <UsersIcon className="h-4 w-4 shrink-0" />
+                  <span>Members</span>
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value="links" className={adminTabTriggerClass}>
+                <span className="inline-flex items-center gap-2.5">
+                  <LinkIcon className="h-4 w-4 shrink-0" />
+                  <span>Links</span>
+                </span>
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent
+              value="overview"
+              className={`${adminSectionTopClass} focus-visible:ring-0`}
+            >
+              <OrgOverview
+                totalMembers={organization.members.length}
+                orgId={organization.id}
+                isMobile={isMobile}
+              />
+            </TabsContent>
+            <TabsContent
+              value="links"
+              className={`${adminSectionTopClass} focus-visible:ring-0`}
+            >
+              <CompactLinkTable
+                org_id={organization.id}
+                forceRefresh={forceRefresh}
+                isAdmin={isAdmin}
+              />
+            </TabsContent>
+            <TabsContent
+              value="members"
+              className={`${adminSectionTopClass} focus-visible:ring-0`}
+            >
+              <div className={adminTableWrapperClass}>
+                <Table>
+                  <TableHeader className="bg-muted dark:bg-[#2a2a2a]">
+                    <TableRow className="border-b border-border hover:bg-transparent dark:border-white/10">
+                      <TableHead
+                        className={`${adminTableHeadClass} ${adminTableHeadDividerClass}`}
+                      >
+                        Member
+                      </TableHead>
+                      {isAdmin && (
+                        <TableHead
+                          className={`${adminTableHeadClass} ${adminTableHeadDividerClass}`}
+                        >
+                          Total Visits
+                        </TableHead>
+                      )}
+                      {isAdmin && (
+                        <TableHead
+                          className={`${adminTableHeadClass} ${adminTableHeadDividerClass}`}
+                        >
+                          Unique Visits
+                        </TableHead>
+                      )}
+                      <TableHead
+                        className={`${adminTableHeadClass} ${adminTableHeadDividerClass}`}
+                      >
+                        Role
+                      </TableHead>
+                      <TableHead className={adminTableHeadClass}>
+                        Date Added
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {organization.members.map((member) => (
+                      <TableRow
+                        key={member.netid}
+                        className={adminTableRowClass}
+                      >
+                        <TableCell
+                          className={`${adminTableCellClass} font-semibold text-foreground dark:text-[#f1f1f1]`}
+                        >
+                          {member.netid}
+                        </TableCell>
+                        {isAdmin && (
+                          <TableCell className={adminTableCellClass}>
+                            {visitStats?.find((v) => v.netid === member.netid)
+                              ?.total_visits || 0}
+                          </TableCell>
+                        )}
+                        {isAdmin && (
+                          <TableCell className={adminTableCellClass}>
+                            {visitStats?.find((v) => v.netid === member.netid)
+                              ?.unique_visits || 0}
+                          </TableCell>
+                        )}
+                        <TableCell
+                          className={`${adminTableCellClass} capitalize`}
+                        >
+                          {member.role === 'admin'
+                            ? 'Admin'
+                            : member.role === 'guest'
+                              ? 'Guest'
+                              : 'Member'}
+                        </TableCell>
+                        <TableCell className={adminTableCellClass}>
+                          {dayjs(member.timeCreated).format('MMM D, YYYY')}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+
+      <Sheet
         open={editModalVisible}
-        footer={null}
-        onClose={() => {
-          formRef.current?.resetFields();
-          setEditModalVisible(false);
+        onOpenChange={(open) => {
+          if (!open) clearErrors();
+          setEditModalVisible(open);
         }}
       >
-        {isAdmin && (
-          <Form
-            ref={formRef}
-            layout="vertical"
-            requiredMark={false}
-            onFinish={() => {
-              formRef.current?.validateFields().then((values) => {
-                onRenameOrg(values.newName);
-                formRef.current?.resetFields();
-                setEditModalVisible(false);
-              });
-            }}
-          >
-            <Row gutter={16}>
-              <Col span={24}>
-                <Typography.Title className="tw-m-0" level={3}>
+        <SheetContent
+          side="right"
+          className="border-border bg-background text-foreground sm:max-w-[720px] dark:border-white/10 dark:bg-[#262626] dark:text-[#efefef]"
+        >
+          <SheetHeader>
+            <SheetTitle>Settings</SheetTitle>
+          </SheetHeader>
+          {isAdmin && (
+            <form onSubmit={handleRenameOrg} className="mt-6 space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold tracking-tight">
                   Public Information
-                </Typography.Title>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="newName"
-                  label="Organization's name"
-                  rules={[
-                    { required: true, message: 'Please input a new name.' },
-                    {
-                      pattern: /^[a-zA-Z0-9_.,-]*$/,
-                      message:
-                        'Name must consist of letters, numbers, and the characters "_.,-".',
-                    },
-                    {
-                      max: 60,
-                      message: 'Org names can be at most 60 characters long',
-                    },
-                    { validator: serverValidateOrgName },
-                  ]}
-                >
-                  <Input placeholder={organization.name} />
-                </Form.Item>
-              </Col>
-              <Col span={24}>
-                <Form.Item>
-                  <Button type="primary" htmlType="submit">
-                    Save
-                  </Button>
-                </Form.Item>
-              </Col>
-              <Col span={24}>
-                <Typography.Title className="tw-m-0" level={3}>
-                  Danger Zone
-                </Typography.Title>
-              </Col>
-              <Col span={24}>
-                <Form.Item label="Once you delete an organization, there is no going back. Please be certain.">
-                  <Popconfirm
-                    title="Are you sure you want to delete this organization?"
-                    onConfirm={onDeleteOrganization}
-                    okText="Yes"
-                    cancelText="No"
+                </h3>
+                <div className="mt-4 grid gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="newName">Organization&apos;s name</Label>
+                    <Input
+                      id="newName"
+                      name="newName"
+                      placeholder={organization.name}
+                      className={adminInputClass}
+                    />
+                    {nameErrors.newName && (
+                      <p className="text-sm text-destructive">
+                        {nameErrors.newName}
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={submitting}
+                    className={adminPrimaryButtonClass}
                   >
-                    <Button danger icon={<TrashIcon />}>
-                      Delete
-                    </Button>
-                  </Popconfirm>
-                </Form.Item>
-              </Col>
-            </Row>
-          </Form>
-        )}
-      </Drawer>
+                    {submitting ? 'Validating...' : 'Save'}
+                  </Button>
+                </div>
+              </div>
+              <hr className={adminDividerClass} />
+              <div>
+                <h3 className="text-lg font-semibold tracking-tight">
+                  Danger Zone
+                </h3>
+                <p className="mt-2 text-sm text-muted-foreground dark:text-[#a9a9a9]">
+                  Once you delete an organization, there is no going back.
+                  Please be certain.
+                </p>
+                <div className="mt-4">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive">
+                        <TrashIcon className="mr-2 h-4 w-4" />
+                        Delete
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          Are you sure you want to delete this organization?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>No</AlertDialogCancel>
+                        <AlertDialogAction onClick={onDeleteOrganization}>
+                          Yes
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
+            </form>
+          )}
+        </SheetContent>
+      </Sheet>
 
       <CollaboratorModal
         onlyActiveTab="netid"
@@ -472,7 +556,7 @@ function ManageOrgBase({
         onCancel={() => setShowCreateLinkDrawer(false)}
         visible={showCreateLinkDrawer}
         title="Create a link"
-        userOrgs={[]} // Im not sure what this is used for but it doesn't seem to be used in the drawer
+        userOrgs={[]}
         onFinish={async () => {
           setShowCreateLinkDrawer(false);
           setForceRefresh(!forceRefresh);

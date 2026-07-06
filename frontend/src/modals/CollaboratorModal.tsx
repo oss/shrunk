@@ -1,26 +1,41 @@
-import {
-  Button,
-  Col,
-  Form,
-  Input,
-  Modal,
-  Popconfirm,
-  Row,
-  Select,
-  Space,
-  Tabs,
-  Tooltip,
-} from 'antd';
 import { PlusCircleIcon, XIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+
 import { getOrganizations } from '@/api/organization';
 import { serverValidateGuest, serverValidateNetId } from '@/api/validators';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Organization } from '@/interfaces/organizations';
 
 export interface Collaborator {
   _id: string;
   type: 'netid' | 'org';
-  role?: string; // Optional if removing entity.
+  role?: string;
   org_name?: string;
 }
 
@@ -47,179 +62,211 @@ interface ICollaboratorModal {
   onlyActiveTab?: 'netid' | 'org';
 }
 
-export default function CollaboratorModal(props: ICollaboratorModal) {
-  const [form] = Form.useForm();
+const collaboratorControlBorderClass = 'border border-border';
 
+export default function CollaboratorModal(props: ICollaboratorModal) {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [collaboratorRole, setCollaboratorRole] = useState<string>(
     props.roles[1].value,
   );
-  const [collaboratorType, setCollaboratorType] = useState<'netid' | 'org'>(
-    'netid',
+  const [activeTab, setActiveTab] = useState<'netid' | 'org'>(
+    props.onlyActiveTab ?? 'netid',
   );
-
-  const [activeTab, setActiveTab] = useState<'netid' | 'org'>(collaboratorType);
-
-  function refreshOrganizations() {
-    getOrganizations('user').then((orgs) => setOrganizations(orgs));
-  }
-
-  function validator(_rule: any, value: string) {
-    if (collaboratorRole === 'guest') {
-      return serverValidateGuest(_rule, value);
-    }
-    return serverValidateNetId(_rule, value);
-  }
+  const [netid, setNetid] = useState('');
+  const [organizationId, setOrganizationId] = useState('');
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const masterRole = props.roles[0].value;
 
   useEffect(() => {
+    getOrganizations('user').then((orgs) => setOrganizations(orgs));
+  }, []);
+
+  useEffect(() => {
+    if (props.onlyActiveTab) {
+      setActiveTab(props.onlyActiveTab);
+    }
+  }, [props.onlyActiveTab]);
+
+  const sortedPeople = useMemo(() => {
     const permissionOrder: { [key: string]: number } = {};
     props.roles.forEach((role, index) => {
       permissionOrder[role.value] = index;
     });
-    props.people.sort((a: Collaborator, b: Collaborator) => {
+
+    return [...props.people].sort((a: Collaborator, b: Collaborator) => {
       if (a.role === undefined || b.role === undefined) {
         throw new Error('Collaborator must have a role');
       }
       return permissionOrder[a.role] - permissionOrder[b.role];
     });
+  }, [props.people, props.roles]);
 
-    refreshOrganizations();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Count how many masters we currently have
   const mastersCount = props.people.filter(
     (entity) => entity.role === masterRole,
   ).length;
 
-  // Determine if we can add more masters based on multipleMasters prop
   const canAddMaster = props.multipleMasters || mastersCount === 0;
-
-  // Determine if we can demote masters based on multipleMasters prop
   const canDemoteMaster = props.multipleMasters && mastersCount > 1;
 
+  const validateNetId = async (value: string) => {
+    if (value.trim() === '') {
+      setValidationError('Please enter a valid NetID.');
+      return false;
+    }
+
+    try {
+      if (collaboratorRole === 'guest') {
+        await serverValidateGuest(null, value);
+      } else {
+        await serverValidateNetId(null, value);
+      }
+      setValidationError(null);
+      return true;
+    } catch (error) {
+      setValidationError(
+        error instanceof Error ? error.message : 'Invalid NetID',
+      );
+      return false;
+    }
+  };
+
+  const handleAddEntity = async () => {
+    if (activeTab === 'netid') {
+      const isValid = await validateNetId(netid);
+      if (!isValid) return;
+
+      props.onAddEntity(activeTab, {
+        _id: netid,
+        type: activeTab,
+        role: collaboratorRole,
+      });
+      setNetid('');
+      return;
+    }
+
+    if (organizationId === '') {
+      setValidationError('Please select an organization.');
+      return;
+    }
+
+    props.onAddEntity(activeTab, {
+      _id: organizationId,
+      type: activeTab,
+      role: collaboratorRole,
+    });
+    setOrganizationId('');
+    setValidationError(null);
+  };
+
+  const availableTabs = [
+    ...(['netid', undefined].includes(props.onlyActiveTab) ? ['netid'] : []),
+    ...(['org', undefined].includes(props.onlyActiveTab) ? ['org'] : []),
+  ] as Array<'netid' | 'org'>;
+
   return (
-    <Modal
+    <Dialog
       open={props.visible}
-      title="Collaborate"
-      onOk={() => {
-        form.resetFields();
-        props.onOk();
-      }}
-      onCancel={() => {
-        form.resetFields();
-        props.onCancel();
-      }}
-      footer={null}
-      styles={{
-        header: {
-          background: 'transparent',
-        },
+      onOpenChange={(open) => {
+        if (!open) {
+          setValidationError(null);
+          props.onCancel();
+        }
       }}
     >
-      <Form form={form} preserve={false}>
-        <Row gutter={[16, 2]}>
-          <Col span={24}>
-            <Space.Compact className="tw-flex tw-w-full tw-items-stretch ">
-              <div className="tw-flex-1">
-                {activeTab === 'netid' ? (
-                  <Form.Item
-                    name="netid"
-                    className="tw-mb-0"
-                    rules={[
-                      {
-                        required: true,
-                        message: 'Please enter a valid NetID.',
-                      },
-                      { validator },
-                    ]}
-                  >
-                    <Input
-                      className="tw-h-9"
-                      placeholder="Search by NetID"
-                      onPressEnter={(_: any) => {
-                        setCollaboratorType('netid');
-                      }}
-                    />
-                  </Form.Item>
-                ) : (
-                  <Form.Item
-                    name="organization"
-                    className="tw-mb-0"
-                    rules={[
-                      {
-                        required: true,
-                        message: 'Please select an organization.',
-                      },
-                    ]}
-                  >
-                    <Select
-                      className="tw-h-9"
-                      placeholder="Your Organizations"
-                      onChange={(_: any) => {
-                        setCollaboratorType('org');
-                      }}
-                      options={organizations.map((org) => ({
-                        value: org.id,
-                        label: org.name,
-                      }))}
-                    />
-                  </Form.Item>
-                )}
-              </div>
-              <div className="tw-flex tw-items-stretch">
-                <Select
-                  defaultValue={collaboratorRole}
-                  className="tw-h-9"
-                  onChange={(value: string) => {
-                    setCollaboratorRole(value);
-                  }}
-                  options={props.roles.map((role) => ({
-                    value: role.value,
-                    label: role.label,
-                    disabled: role.value === masterRole && !canAddMaster,
-                  }))}
-                />
-              </div>
-              <Button
-                icon={<PlusCircleIcon />}
-                className="tw-flex tw-h-9 tw-items-center"
-                onClick={() => {
-                  props.onAddEntity(activeTab, {
-                    _id:
-                      activeTab === 'netid'
-                        ? form.getFieldValue('netid')
-                        : form.getFieldValue('organization'),
-                    type: activeTab,
-                    role: collaboratorRole,
-                  });
-                }}
-                type="primary"
-              >
-                Add
-              </Button>
-            </Space.Compact>
-          </Col>
-          <Col span={24}>
-            <Tabs
-              activeKey={activeTab}
-              onChange={(value) => setActiveTab(value as 'netid' | 'org')}
-            >
-              {['netid', undefined].includes(props.onlyActiveTab) && (
-                <Tabs.TabPane tab="People" key="netid" />
-              )}
-              {['org', undefined].includes(props.onlyActiveTab) && (
-                <Tabs.TabPane tab="Organizations" key="org" />
-              )}
-            </Tabs>
-            <Row gutter={[2, 16]} justify="space-between" align="middle">
-              {props.people.map((entity) => {
-                if (entity.type !== activeTab) {
-                  return <></>;
-                }
+      <DialogContent className="sm:max-w-[720px]">
+        <DialogHeader>
+          <DialogTitle>Collaborate</DialogTitle>
+        </DialogHeader>
 
+        <div className="space-y-4">
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="min-w-0 flex-1">
+              {activeTab === 'netid' ? (
+                <Input
+                  value={netid}
+                  placeholder="Search by NetID"
+                  className={collaboratorControlBorderClass}
+                  onBlur={() => validateNetId(netid)}
+                  onChange={(event) => {
+                    setNetid(event.target.value);
+                    setValidationError(null);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      handleAddEntity();
+                    }
+                  }}
+                />
+              ) : (
+                <Select
+                  value={organizationId}
+                  onValueChange={(value) => {
+                    setOrganizationId(value);
+                    setValidationError(null);
+                  }}
+                >
+                  <SelectTrigger className={collaboratorControlBorderClass}>
+                    <SelectValue placeholder="Your Organizations" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {organizations.map((org) => (
+                      <SelectItem key={org.id} value={org.id}>
+                        {org.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+            <Select
+              value={collaboratorRole}
+              onValueChange={setCollaboratorRole}
+            >
+              <SelectTrigger
+                className={`w-full sm:w-36 ${collaboratorControlBorderClass}`}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {props.roles.map((role) => (
+                  <SelectItem
+                    key={role.value}
+                    value={role.value}
+                    disabled={role.value === masterRole && !canAddMaster}
+                  >
+                    {role.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button onClick={handleAddEntity}>
+              <PlusCircleIcon />
+              Add
+            </Button>
+          </div>
+          {validationError ? (
+            <p className="text-sm text-destructive">{validationError}</p>
+          ) : null}
+
+          <Tabs
+            value={activeTab}
+            onValueChange={(value) => setActiveTab(value as 'netid' | 'org')}
+          >
+            <TabsList>
+              {availableTabs.includes('netid') && (
+                <TabsTrigger value="netid">People</TabsTrigger>
+              )}
+              {availableTabs.includes('org') && (
+                <TabsTrigger value="org">Organizations</TabsTrigger>
+              )}
+            </TabsList>
+          </Tabs>
+
+          <div className="space-y-3">
+            {sortedPeople
+              .filter((entity) => entity.type === activeTab)
+              .map((entity) => {
                 const displayName =
                   entity.type === 'netid'
                     ? entity._id
@@ -236,7 +283,6 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                 const isDisabled = (role: { value: string; label: string }) => {
                   if (entity.type === 'org') {
                     if (entity.role === masterRole && !canAddMaster) {
-                      // if the org is already the owner
                       return true;
                     }
                     return !(
@@ -252,56 +298,85 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                 };
 
                 return (
-                  <>
-                    <Col span={12}>{displayName}</Col>
-                    <Col>
-                      <Space>
-                        <Select
-                          style={{ width: 120 }}
-                          defaultValue={entity.role}
-                          onChange={(value: string) => {
-                            props.onChangeEntity(activeTab, entity, value);
-                          }}
-                          options={props.roles.map((role) => ({
-                            value: role.value,
-                            label: role.label,
-                            disabled:
-                              isDisabled(role) ||
-                              role.value === 'guest' ||
-                              entity.role === 'guest',
-                          }))}
-                        />
-
-                        <Popconfirm
-                          title="Are you sure you want to remove this collaborator?"
-                          onConfirm={() => {
-                            props.onRemoveEntity(activeTab, entity);
-                          }}
-                          disabled={isLastMaster}
+                  <div
+                    key={`${entity.type}-${entity._id}`}
+                    className="flex items-center justify-between gap-3 rounded-md border border-border bg-background p-3"
+                  >
+                    <span className="min-w-0 truncate">{displayName}</span>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Select
+                        value={entity.role}
+                        onValueChange={(value) => {
+                          props.onChangeEntity(activeTab, entity, value);
+                        }}
+                      >
+                        <SelectTrigger
+                          className={`w-32 ${collaboratorControlBorderClass}`}
                         >
-                          <Tooltip
-                            title={
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {props.roles.map((role) => (
+                            <SelectItem
+                              key={role.value}
+                              value={role.value}
+                              disabled={
+                                isDisabled(role) ||
+                                role.value === 'guest' ||
+                                entity.role === 'guest'
+                              }
+                            >
+                              {role.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            aria-label={
                               isLastMaster
                                 ? `Cannot remove the only ${masterRole}`
                                 : 'Remove collaborator'
                             }
+                            disabled={isLastMaster}
+                            size="icon"
+                            variant="ghost"
+                            className={collaboratorControlBorderClass}
                           >
-                            <Button
-                              type="text"
-                              icon={<XIcon />}
-                              disabled={isLastMaster}
-                            />
-                          </Tooltip>
-                        </Popconfirm>
-                      </Space>
-                    </Col>
-                  </>
+                            <XIcon />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              Remove collaborator?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to remove this collaborator?
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              onClick={() => {
+                                props.onRemoveEntity(activeTab, entity);
+                              }}
+                            >
+                              Remove
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
                 );
               })}
-            </Row>
-          </Col>
-        </Row>
-      </Form>
-    </Modal>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1,88 +1,93 @@
-/**
- * Implements the [[UserLookup]] component
- * @packageDocumentation
- */
-
-import {
-  Button,
-  Flex,
-  Popconfirm,
-  Row,
-  Select,
-  Space,
-  Table,
-  Tag,
-  Tooltip,
-  message,
-} from 'antd';
-import type { ColumnsType, TableProps } from 'antd/lib/table';
-import type { SorterResult } from 'antd/lib/table/interface';
-import { TrashIcon } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import { ChevronLeftIcon, ChevronRightIcon, TrashIcon } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { addRoleToUser, removeRoleFromUser } from '@/api/users';
 import { User, useUsers } from '@/contexts/Users';
 import useFuzzySearch from '@/lib/hooks/useFuzzySearch';
 import LookupTableHeader from '@/components/admin/LookupTableHeader';
 import { getUserInfo } from '@/api/app';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
+  adminIconGhostButtonClass,
+  adminPaginationButtonClass,
+  adminPaginationCurrentClass,
+  adminPaginationWrapClass,
+  adminPageSizeClass,
+  adminTableCellClass,
+  adminTableHeadClass,
+  adminTableHeadDividerClass,
+  adminTableRowClass,
+  adminTableWrapperClass,
+} from '@/lib/admin-styles';
 
-/**
- * Order of roles in the select dropdown
- * @constant
- */
 const roleOrder = ['guest', 'whitelisted', 'facstaff', 'power_user', 'admin'];
 
-/**
- * Colors for each role in the select dropdown
- * @constant
- */
-const roleColors: Record<string, string> = {
-  admin: 'volcano',
-  whitelisted: 'green',
-  power_user: 'geekblue',
-  facstaff: 'purple',
-  guest: 'orange',
+const labelCase: Record<string, string> = {
+  admin: 'Admin',
+  whitelisted: 'Whitelisted',
+  guest: 'Guest',
+  power_user: 'Power User',
+  facstaff: 'Faculty',
+  blacklisted: 'Blacklisted',
+  blocked_url: 'Blocked URL',
 };
 
-/**
- * Props for the RolesSelect component
- * @interface
- */
+const roleChipClass: Record<string, string> = {
+  admin:
+    'border border-red-200 bg-red-50 text-red-700 dark:border-[#74242b] dark:bg-[#3e171b] dark:text-[#ff868d]',
+  whitelisted:
+    'border border-green-200 bg-green-50 text-green-700 dark:border-[#2d5e14] dark:bg-[#1e3914] dark:text-[#73e03b]',
+  power_user:
+    'border border-blue-200 bg-blue-50 text-blue-700 dark:border-[#1f3468] dark:bg-[#141f4a] dark:text-[#5d86ff]',
+  facstaff:
+    'border border-purple-200 bg-purple-50 text-purple-700 dark:border-[#4f2b77] dark:bg-[#25153c] dark:text-[#b07af6]',
+  guest:
+    'border border-border bg-muted text-muted-foreground dark:border-white/10 dark:bg-[#303030] dark:text-[#cccccc]',
+  blacklisted:
+    'border border-red-200 bg-red-50 text-red-700 dark:border-[#74242b] dark:bg-[#3e171b] dark:text-[#ff868d]',
+};
+
 interface RolesSelectProps {
-  /**
-   * Initial roles for the user
-   * @property
-   */
   initialRoles: string[];
-
-  /**
-   * NetID of the user
-   * @property
-   */
   netid: string;
-
-  /**
-   * Callback function to execute when the user's roles change
-   * @property
-   */
   onRolesChange: (netid: string, roles: string[]) => Promise<void>;
-
-  /**
-   * Callback function to force rehydrate the data
-   * @property
-   */
   rehydrateData: () => void;
-
-  /**
-   * Whether the user being edited is the current user
-   * @property
-   */
   isSelf: boolean;
 }
 
-/**
- * The RolesSelect component allows the current user to select roles for a specific user within the table
- * @class
- */
 const RolesSelect: React.FC<RolesSelectProps> = ({
   initialRoles,
   netid,
@@ -91,7 +96,6 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
   isSelf,
 }) => {
   const [selectedRoles, setSelectedRoles] = useState<string[]>(
-    // Sort roles in descending order of privilege
     initialRoles.sort((a, b) => roleOrder.indexOf(b) - roleOrder.indexOf(a)),
   );
   const [loading, setLoading] = useState(false);
@@ -106,43 +110,24 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
     return '';
   };
 
-  const labelCase = {
-    admin: 'Admin',
-    whitelisted: 'Whitelisted',
-    guest: 'Guest',
-    power_user: 'Power User',
-    facstaff: 'Faculty',
-    blacklisted: 'Blacklisted',
-    blocked_url: 'Blocked URL',
-  };
+  const highestRole = getHighestRole(initialRoles);
 
-  const options = roleOrder.map((role) => ({
-    label: role,
-    value: role,
-    disabled:
-      (isSelf && role === getHighestRole(initialRoles)) || role === 'guest',
-  }));
-
-  const filteredOptions = options.filter(
-    (option) => !selectedRoles.includes(option.value) || option.disabled,
+  const availableRoles = roleOrder.filter(
+    (role) =>
+      !selectedRoles.includes(role) &&
+      !(isSelf && role === highestRole) &&
+      role !== 'guest',
   );
 
-  /**
-   * Handles the change in roles for the user. Updates the roles in the backend and UI.
-   * Ensures that users do not revoke highest privilege rol from themselves.
-   * @param newRoles - the new roles to assign to the user
-   */
   const handleRolesChange = async (newRoles: string[]) => {
     if (newRoles.length === 0) {
-      message.warning('A user must have at least one role');
+      toast.warning('A user must have at least one role');
       return;
     }
 
-    const highestRole = getHighestRole(initialRoles);
-
     if (isSelf && highestRole && !newRoles.includes(highestRole)) {
       newRoles.push(highestRole);
-      message.warning('Cannot remove your highest privilege role');
+      toast.warning('Cannot remove your highest privilege role');
     }
 
     setLoading(true);
@@ -151,64 +136,98 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
       setSelectedRoles(
         newRoles.sort((a, b) => roleOrder.indexOf(b) - roleOrder.indexOf(a)),
       );
-      message.success('Roles updated successfully');
-
+      toast.success('Roles updated successfully');
       rehydrateData();
     } catch (error) {
-      message.error(`Failed to update roles: ${error}`);
+      toast.error(`Failed to update roles: ${error}`);
     } finally {
       setLoading(false);
     }
   };
 
-  const tagRender = (props: any) => {
-    const { label, value, closable, onClose } = props;
-    const isHighestRole = isSelf && value === getHighestRole(initialRoles);
-    const canRemoveRole =
-      !isHighestRole && closable && selectedRoles.length > 1;
+  const removeRole = (roleToRemove: string) => {
+    const isHighestRole = isSelf && roleToRemove === highestRole;
+    if (isHighestRole) {
+      toast.warning('Cannot remove your highest privilege role');
+      return;
+    }
+    if (selectedRoles.length <= 1) {
+      toast.warning('A user must have at least one role');
+      return;
+    }
+    handleRolesChange(selectedRoles.filter((r) => r !== roleToRemove));
+  };
 
-    return (
-      <Tag
-        color={roleColors[value] || 'default'}
-        closable={canRemoveRole}
-        onClose={onClose}
-        style={{ marginRight: 3 }}
-      >
-        {labelCase[label.toLowerCase() as keyof typeof labelCase]}
-      </Tag>
-    );
+  const addRole = (roleToAdd: string) => {
+    if (!selectedRoles.includes(roleToAdd)) {
+      handleRolesChange([...selectedRoles, roleToAdd]);
+    }
   };
 
   return (
-    <Space style={{ width: '100%' }} orientation="vertical">
-      <Select
-        mode="multiple"
-        allowClear={false}
-        style={{ width: '100%' }}
-        placeholder="Please select roles"
-        value={selectedRoles}
-        onChange={handleRolesChange}
-        options={filteredOptions}
-        tagRender={tagRender}
-        disabled={loading}
-      />
-    </Space>
+    <div className="flex min-h-10 flex-wrap items-center gap-1 rounded-md border border-input bg-background px-2 py-1 dark:border-white/14 dark:bg-[#232323]">
+      {selectedRoles.map((role) => (
+        <span
+          key={role}
+          className={`inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-xs font-medium ${roleChipClass[role] ?? 'border border-border bg-muted text-muted-foreground dark:border-white/10 dark:bg-[#303030] dark:text-[#d5d5d5]'}`}
+        >
+          {labelCase[role.toLowerCase()] || role}
+          {!(isSelf && role === highestRole) && selectedRoles.length > 1 && (
+            <button
+              type="button"
+              className="ml-0.5 rounded-full text-current opacity-85 hover:opacity-100"
+              onClick={() => removeRole(role)}
+              disabled={loading}
+            >
+              ×
+            </button>
+          )}
+        </span>
+      ))}
+      {availableRoles.length > 0 && (
+        <Select onValueChange={addRole} disabled={loading}>
+          <SelectTrigger
+            aria-label="Add role"
+            className="ml-auto h-7 w-8 border-0 bg-transparent px-0 text-xs text-muted-foreground shadow-none focus:ring-0 dark:text-[#9f9f9f]"
+          >
+            <SelectValue placeholder="" />
+          </SelectTrigger>
+          <SelectContent className="border-border bg-popover text-popover-foreground dark:border-white/10 dark:bg-[#2a2a2a] dark:text-[#efefef]">
+            {availableRoles.map((role) => (
+              <SelectItem
+                key={role}
+                value={role}
+                className="focus:bg-accent focus:text-accent-foreground dark:focus:bg-white/8 dark:focus:text-white"
+              >
+                {labelCase[role] || role}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+    </div>
   );
 };
 
 const renderOrganizations = (organizations: string[]): JSX.Element[] =>
-  organizations.map((org) => <Tag key={org}>{org}</Tag>);
+  organizations.map((org) => (
+    <Badge
+      key={org}
+      className="border-0 bg-muted px-2 py-0.5 text-muted-foreground shadow-none dark:bg-[#3a3a3a] dark:text-[#d8d8d8]"
+    >
+      {org}
+    </Badge>
+  ));
 
-/**
- * The [[UserLookup]] component allows the current user to search for users and manage their roles
- * @class
- */
 const UserLookup: React.FC = () => {
   const { users, loading: usersLoading, rehydrateUsers } = useUsers();
   const [currentNetid, setCurrentNetid] = useState('');
   const [filteredData, setFilteredData] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [sortField, setSortField] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const { search } = useFuzzySearch(users, {
     keys: ['netid', 'organizations', 'roles'],
@@ -216,7 +235,6 @@ const UserLookup: React.FC = () => {
     distance: 100,
   });
 
-  // Initialize filtered data with all users when component mounts or users change
   useEffect(() => {
     setFilteredData(users);
   }, [users]);
@@ -233,6 +251,10 @@ const UserLookup: React.FC = () => {
 
     fetchCurrentUserNetid();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [pageSize]);
 
   const exportToCSV = useCallback(() => {
     const dataToExport = filteredData.length > 0 ? filteredData : users;
@@ -262,33 +284,11 @@ const UserLookup: React.FC = () => {
     URL.revokeObjectURL(url);
   }, [filteredData, users]);
 
-  const [organizationsFilters, rolesFilters] = React.useMemo(() => {
-    const distinctOrganizations: Set<string> = new Set();
-    const distinctRoles: Set<string> = new Set();
-
-    users.forEach((user) => {
-      user.organizations.forEach((org) =>
-        distinctOrganizations.add(JSON.stringify({ text: org, value: org })),
-      );
-      user.roles.forEach((role) =>
-        distinctRoles.add(
-          JSON.stringify({ text: role.toString().toUpperCase(), value: role }),
-        ),
-      );
-    });
-
-    return [
-      Array.from(distinctOrganizations).map((el) => JSON.parse(el)),
-      Array.from(distinctRoles).map((el) => JSON.parse(el)),
-    ];
-  }, [users]);
-
   const handleRolesChange = async (netid: string, newRoles: string[]) => {
     setLoading(true);
     try {
       const existingRoles = users.find((u) => u.netid === netid)?.roles || [];
 
-      // Remove roles that are no longer selected
       await Promise.all(
         existingRoles.map((role) => {
           if (!newRoles.includes(role)) {
@@ -298,7 +298,6 @@ const UserLookup: React.FC = () => {
         }),
       );
 
-      // Add newly selected roles
       await Promise.all(
         newRoles.map((role) => {
           if (!existingRoles.includes(role)) {
@@ -318,7 +317,7 @@ const UserLookup: React.FC = () => {
         ),
       );
     } catch (error) {
-      message.error(`Error updating roles: ${error}`);
+      toast.error(`Error updating roles: ${error}`);
       throw error;
     } finally {
       setLoading(false);
@@ -329,7 +328,6 @@ const UserLookup: React.FC = () => {
     try {
       const userRoles = users.find((u) => u.netid === netid)?.roles || [];
 
-      // Remove user from all roles
       await Promise.all(
         userRoles.map((role) => removeRoleFromUser(netid, role)),
       );
@@ -346,56 +344,33 @@ const UserLookup: React.FC = () => {
         ),
       );
 
-      message.success('User banned successfully');
+      toast.success('User banned successfully');
     } catch (error) {
-      message.error(`Failed to ban user ${error}`);
+      toast.error(`Failed to ban user ${error}`);
     }
   };
 
-  const handleTableChange: TableProps<User>['onChange'] = (
-    pagination,
-    filters,
-    sorter,
-  ) => {
-    if (pagination.pageSize) {
-      setPageSize(pagination.pageSize);
-    }
-    let newData = [...users];
+  const handleSort = (field: string) => {
+    setSortOrder((prev) =>
+      sortField === field && prev === 'asc' ? 'desc' : 'asc',
+    );
+    setSortField(field);
+  };
 
-    Object.keys(filters).forEach((key) => {
-      const selectedFilters = filters[key];
-      if (selectedFilters && selectedFilters.length > 0) {
-        newData = newData.filter((record) => {
-          if (key === 'organizations' || key === 'roles') {
-            return (selectedFilters as string[]).some((filter: string) =>
-              record[key as 'organizations' | 'roles'].includes(filter),
-            );
-          }
-          return false;
-        });
+  const sortedData = useMemo(() => {
+    if (!sortField) return filteredData;
+    return [...filteredData].sort((a: any, b: any) => {
+      const aVal = a[sortField];
+      const bVal = b[sortField];
+      let cmp = 0;
+      if (typeof aVal === 'string') {
+        cmp = aVal.localeCompare(bVal);
+      } else {
+        cmp = aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
       }
+      return sortOrder === 'asc' ? cmp : -cmp;
     });
-
-    // Apply sorting
-    const sortResult = sorter as SorterResult<User>;
-    if (sortResult.field && typeof sortResult.field === 'string') {
-      newData.sort((a: any, b: any) => {
-        let compareResult = 0;
-        const aValue = a[sortResult.field as string];
-        const bValue = b[sortResult.field as string];
-
-        if (typeof aValue === 'string') {
-          compareResult = aValue.localeCompare(bValue);
-        } else {
-          compareResult = aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
-        }
-
-        return sortResult.order === 'ascend' ? compareResult : -compareResult;
-      });
-    }
-
-    setFilteredData(newData);
-  };
+  }, [filteredData, sortField, sortOrder]);
 
   const handleSearch = (value: string) => {
     if (value) {
@@ -403,97 +378,193 @@ const UserLookup: React.FC = () => {
     } else {
       setFilteredData(users);
     }
+    setCurrentPage(1);
   };
 
-  const columns: ColumnsType<User> = [
-    {
-      title: 'NetID',
-      dataIndex: 'netid',
-      key: 'netid',
-    },
-    {
-      title: 'Organizations',
-      dataIndex: 'organizations',
-      key: 'organizations',
-      render: renderOrganizations,
-      filters: organizationsFilters,
-      onFilter: (value, record) =>
-        record.organizations.includes(value as string),
-      filterMultiple: true,
-      filterOnClose: true,
-    },
-    {
-      title: 'Roles',
-      dataIndex: 'roles',
-      key: 'roles',
-      render: (roles: string[], record: User) => (
-        <RolesSelect
-          rehydrateData={rehydrateUsers}
-          initialRoles={roles}
-          netid={record.netid}
-          onRolesChange={handleRolesChange}
-          isSelf={record.netid === currentNetid}
-        />
-      ),
-      filters: rolesFilters,
-      onFilter: (value, record) => record.roles.includes(value as string),
-      filterMultiple: true,
-      filterOnClose: true,
-    },
-    {
-      title: 'Links Created',
-      dataIndex: 'linksCreated',
-      key: 'linksCreated',
-    },
-    {
-      title: () => <Flex justify="flex-end">Actions</Flex>,
-      key: 'actions',
-      render: (_: any, record: User) => (
-        <Flex justify="flex-end">
-          <Tooltip title="Ban">
-            <Popconfirm
-              title="Are you sure you want to ban this user?"
-              onConfirm={() => handleBan(record.netid)}
-              okText="Yes"
-              cancelText="No"
-              okButtonProps={{ danger: true }}
-            >
-              <Button type="text" danger icon={<TrashIcon />} />
-            </Popconfirm>
-          </Tooltip>
-        </Flex>
-      ),
-    },
-  ];
+  const totalPages = Math.ceil(sortedData.length / pageSize);
+  const paginatedData = sortedData.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
 
   const tableLoading = usersLoading || loading;
 
+  const SortableHead = ({
+    field,
+    children,
+  }: {
+    field: string;
+    children: React.ReactNode;
+  }) => (
+    <TableHead
+      className={`${adminTableHeadClass} ${adminTableHeadDividerClass} cursor-pointer select-none`}
+      onClick={() => handleSort(field)}
+    >
+      <div className="flex items-center gap-1">
+        {children}
+        {sortField === field && (
+          <span className="text-xs text-muted-foreground dark:text-[#8f8f8f]">
+            {sortOrder === 'asc' ? '▲' : '▼'}
+          </span>
+        )}
+      </div>
+    </TableHead>
+  );
+
   return (
-    <>
-      <LookupTableHeader
-        rehydrateData={rehydrateUsers}
-        onExportClick={exportToCSV}
-        onSearch={handleSearch}
-      />
+    <TooltipProvider>
+      <div className="space-y-4">
+        <LookupTableHeader
+          rehydrateData={rehydrateUsers}
+          onExportClick={exportToCSV}
+          onSearch={handleSearch}
+        />
 
-      <Row style={{ marginBottom: 24 }} />
+        <div className={adminTableWrapperClass}>
+          <Table>
+            <TableHeader className="bg-muted dark:bg-[#2a2a2a]">
+              <TableRow className="border-b border-border hover:bg-transparent dark:border-white/10">
+                <SortableHead field="netid">NetID</SortableHead>
+                <SortableHead field="organizations">Organizations</SortableHead>
+                <SortableHead field="roles">Roles</SortableHead>
+                <SortableHead field="linksCreated">Links Created</SortableHead>
+                <TableHead className={`${adminTableHeadClass} text-right`}>
+                  Actions
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {tableLoading ? (
+                <TableRow className={adminTableRowClass}>
+                  <TableCell
+                    colSpan={5}
+                    className="py-8 text-center text-muted-foreground dark:text-[#9d9d9d]"
+                  >
+                    Loading...
+                  </TableCell>
+                </TableRow>
+              ) : paginatedData.length === 0 ? (
+                <TableRow className={adminTableRowClass}>
+                  <TableCell
+                    colSpan={5}
+                    className="py-8 text-center text-muted-foreground dark:text-[#9d9d9d]"
+                  >
+                    No users found.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                paginatedData.map((record) => (
+                  <TableRow key={record.netid} className={adminTableRowClass}>
+                    <TableCell
+                      className={`${adminTableCellClass} font-semibold text-foreground dark:text-[#f1f1f1]`}
+                    >
+                      {record.netid}
+                    </TableCell>
+                    <TableCell className={adminTableCellClass}>
+                      <div className="flex flex-wrap gap-1">
+                        {renderOrganizations(record.organizations)}
+                      </div>
+                    </TableCell>
+                    <TableCell className={adminTableCellClass}>
+                      <RolesSelect
+                        rehydrateData={rehydrateUsers}
+                        initialRoles={record.roles}
+                        netid={record.netid}
+                        onRolesChange={handleRolesChange}
+                        isSelf={record.netid === currentNetid}
+                      />
+                    </TableCell>
+                    <TableCell
+                      className={`${adminTableCellClass} text-foreground dark:text-[#f1f1f1]`}
+                    >
+                      {record.linksCreated}
+                    </TableCell>
+                    <TableCell className={adminTableCellClass}>
+                      <div className="flex justify-end">
+                        <AlertDialog>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className={adminIconGhostButtonClass}
+                                >
+                                  <TrashIcon />
+                                </Button>
+                              </AlertDialogTrigger>
+                            </TooltipTrigger>
+                            <TooltipContent>Ban</TooltipContent>
+                          </Tooltip>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Are you sure you want to ban this user?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will remove all roles from {record.netid}{' '}
+                                and blacklist them.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>No</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => handleBan(record.netid)}
+                              >
+                                Yes
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
 
-      <Table
-        loading={tableLoading}
-        locale={{ emptyText: tableLoading ? null : undefined }}
-        columns={columns}
-        dataSource={filteredData}
-        rowKey="netid"
-        pagination={{
-          position: ['bottomCenter'],
-          pageSize,
-          showSizeChanger: true,
-          hideOnSinglePage: false,
-        }}
-        scroll={{ x: 'max-content' }}
-        onChange={handleTableChange}
-      />
-    </>
+        <div className={adminPaginationWrapClass}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={adminPaginationButtonClass}
+            disabled={currentPage <= 1}
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+          >
+            <ChevronLeftIcon className="size-4" />
+          </Button>
+          <span className={adminPaginationCurrentClass}>{currentPage}</span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={adminPaginationButtonClass}
+            disabled={currentPage >= totalPages}
+            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+          >
+            <ChevronRightIcon className="size-4" />
+          </Button>
+          <div className="ml-3 flex items-center gap-2">
+            <select
+              className={adminPageSizeClass}
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+            >
+              {[5, 10, 20, 50].map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+            <span>/ page</span>
+          </div>
+        </div>
+      </div>
+    </TooltipProvider>
   );
 };
 

@@ -1,31 +1,3 @@
-/**
- * Implements the orgs list view
- * @packageDocumentation
- */
-
-import {
-  Button,
-  Checkbox,
-  Col,
-  Drawer,
-  Flex,
-  Form,
-  Input,
-  Modal,
-  Popconfirm,
-  Row,
-  Space,
-  Table,
-  Tooltip,
-  Typography,
-  message,
-  Alert,
-  Layout,
-  Select,
-  Radio,
-  Pagination,
-  Tag,
-} from 'antd';
 import {
   EyeIcon,
   PlusCircleIcon,
@@ -33,19 +5,73 @@ import {
   ArrowUpIcon,
   ArrowDownIcon,
   FilterIcon,
+  SearchIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import dayjs from 'dayjs';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import {
   createOrg,
   deleteOrganization,
   searchOrgs,
   hasAssociatedUrls,
 } from '@/api/organization';
-import { DarkModeContext } from '@/contexts/DarkModeContext';
 import { serverValidateNetId } from '@/api/validators';
 import { Organization, OrgSearchQuery } from '@/interfaces/organizations';
+import { Button } from '@/components/ui/button';
+import { ButtonGroup } from '@/components/ui/button-group';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface Props {
   userPrivileges: Set<string>;
@@ -69,8 +95,17 @@ const DEFAULT_QUERY: OrgSearchQuery = {
   sort: { key: 'timeCreated', order: 'descending' },
   pagination: { skip: 0, limit: 10 },
 };
-
-const { Sider, Content } = Layout;
+const organizationControlBorderClass =
+  'border border-border bg-muted text-foreground shadow-none hover:bg-accent hover:text-foreground';
+const organizationInputClass =
+  'border-border bg-muted text-foreground placeholder:text-muted-foreground shadow-none';
+const organizationLabelClass = 'text-sm font-semibold text-foreground';
+const organizationSegmentButtonClass =
+  'h-8 min-w-fit px-4 text-sm font-semibold';
+const organizationInactiveButtonClass =
+  'border border-border bg-muted text-foreground shadow-none hover:bg-accent hover:text-foreground';
+const organizationActiveButtonClass =
+  'border border-primary bg-primary text-primary-foreground shadow-none hover:bg-primary/90 hover:text-primary-foreground';
 
 const FilterForm = ({
   query,
@@ -80,31 +115,41 @@ const FilterForm = ({
   memberNetidError,
   setMemberNetidError,
 }: FilterFormProps) => (
-  <Form layout="vertical">
-    <Form.Item label="Sort by">
+  <div className="space-y-5">
+    <div className="space-y-2">
+      <Label className={organizationLabelClass}>Sort by</Label>
       <Select
         value={query.sort.key}
-        onChange={(val) =>
+        onValueChange={(val) =>
           setQuery((prev) => ({
             ...prev,
-            sort: { ...prev.sort, key: val },
+            sort: {
+              ...prev.sort,
+              key: val as OrgSearchQuery['sort']['key'],
+            },
           }))
         }
-        style={{ width: '100%' }}
       >
-        <Select.Option value="timeCreated">Time Created</Select.Option>
-        <Select.Option value="name">Name</Select.Option>
-        <Select.Option value="memberCount">Member Count</Select.Option>
-        <Select.Option value="dateAdded">Date Added</Select.Option>
+        <SelectTrigger className={`h-9 ${organizationControlBorderClass}`}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="timeCreated">Time Created</SelectItem>
+          <SelectItem value="name">Name</SelectItem>
+          <SelectItem value="memberCount">Member Count</SelectItem>
+          <SelectItem value="dateAdded">Date Added</SelectItem>
+        </SelectContent>
       </Select>
-    </Form.Item>
-    <Form.Item
-      label="Has Member"
-      validateStatus={memberNetidError ? 'error' : undefined}
-      help={memberNetidError || undefined}
-    >
+    </div>
+
+    <div className="space-y-2">
+      <Label htmlFor="filter-member" className={organizationLabelClass}>
+        Has Member
+      </Label>
       <Input
+        id="filter-member"
         placeholder="NetID"
+        className={`h-9 ${organizationInputClass}`}
         value={query.filter_member}
         onChange={(e) => {
           setMemberNetidError(null);
@@ -113,38 +158,69 @@ const FilterForm = ({
             filter_member: e.target.value,
           }));
         }}
-        onPressEnter={onSearch}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') onSearch();
+        }}
       />
-    </Form.Item>
-    <Form.Item label="My Role">
-      <Checkbox.Group
-        value={query.filter_role}
-        onChange={(checkedValues) =>
-          setQuery((prev) => ({
-            ...prev,
-            filter_role: checkedValues as (
-              | 'admin'
-              | 'member'
-              | 'guest'
-              | 'not_member'
-            )[],
-          }))
-        }
-      >
-        <Flex gap="1rem" wrap="wrap" justify="space-between">
-          <Space orientation="vertical">
-            <Checkbox value="admin">Admin</Checkbox>
-            <Checkbox value="member">Member</Checkbox>
-            <Checkbox value="guest">Guest</Checkbox>
-            {query.show_all && (
-              <Checkbox value="not_member">Not a member</Checkbox>
-            )}
-          </Space>
-        </Flex>
-      </Checkbox.Group>
-    </Form.Item>
-    <Form.Item label="Sort Order">
+      {memberNetidError && (
+        <p className="text-sm text-destructive">{memberNetidError}</p>
+      )}
+    </div>
+
+    <div className="space-y-2">
+      <Label className={organizationLabelClass}>My Role</Label>
+      <div className="space-y-2.5">
+        {(['admin', 'member', 'guest'] as const).map((role) => (
+          <label
+            key={role}
+            className="flex min-h-4 cursor-pointer items-center gap-2 text-sm leading-none font-semibold text-foreground"
+          >
+            <Checkbox
+              className="border-border data-[state=checked]:border-primary"
+              checked={query.filter_role?.includes(role) ?? false}
+              onCheckedChange={(checked) => {
+                setQuery((prev) => ({
+                  ...prev,
+                  filter_role: checked
+                    ? [...(prev.filter_role ?? []), role]
+                    : (prev.filter_role ?? []).filter((r) => r !== role),
+                }));
+              }}
+            />
+            {role.charAt(0).toUpperCase() + role.slice(1)}
+          </label>
+        ))}
+        {query.show_all && (
+          <label
+            htmlFor="filter-role-not-member"
+            className="flex min-h-4 cursor-pointer items-center gap-2 text-sm leading-none font-semibold text-foreground"
+          >
+            <Checkbox
+              id="filter-role-not-member"
+              className="border-border data-[state=checked]:border-primary"
+              checked={query.filter_role?.includes('not_member') ?? false}
+              onCheckedChange={(checked) => {
+                setQuery((prev) => ({
+                  ...prev,
+                  filter_role: checked
+                    ? [...(prev.filter_role ?? []), 'not_member']
+                    : (prev.filter_role ?? []).filter(
+                        (r) => r !== 'not_member',
+                      ),
+                }));
+              }}
+            />
+            Not a member
+          </label>
+        )}
+      </div>
+    </div>
+
+    <div className="flex flex-col items-start gap-2">
+      <Label className={`block ${organizationLabelClass}`}>Sort Order</Label>
       <Button
+        variant="outline"
+        className={`h-9 w-fit px-4 ${organizationControlBorderClass}`}
         onClick={() =>
           setQuery((prev) => ({
             ...prev,
@@ -155,55 +231,81 @@ const FilterForm = ({
             },
           }))
         }
-        icon={
-          query.sort.order === 'ascending' ? <ArrowUpIcon /> : <ArrowDownIcon />
-        }
       >
+        {query.sort.order === 'ascending' ? <ArrowUpIcon /> : <ArrowDownIcon />}
         {query.sort.order.charAt(0).toUpperCase() + query.sort.order.slice(1)}
       </Button>
-    </Form.Item>
+    </div>
+
     {isAdmin && (
-      <Form.Item label="All Organizations">
-        <Radio.Group
-          optionType="button"
-          buttonStyle="solid"
-          value={query.show_all}
-          onChange={(e) => {
-            const showAll = e.target.value as boolean;
-            setQuery((prev) => ({
-              ...prev,
-              show_all: showAll,
-              filter_role: showAll
-                ? prev.filter_role
-                : prev.filter_role?.filter((role) => role !== 'not_member'),
-              pagination: { ...prev.pagination, skip: 0 },
-            }));
-          }}
-        >
-          <Radio.Button value={false}>Hide</Radio.Button>
-          <Radio.Button value>Show</Radio.Button>
-        </Radio.Group>
-      </Form.Item>
+      <div className="space-y-2">
+        <Label className={organizationLabelClass}>All Organizations</Label>
+        <ButtonGroup className="w-fit max-w-full">
+          <Button
+            variant={!query.show_all ? 'default' : 'outline'}
+            className={`${organizationSegmentButtonClass} ${!query.show_all ? organizationActiveButtonClass : organizationInactiveButtonClass}`}
+            onClick={() => {
+              setQuery((prev) => ({
+                ...prev,
+                show_all: false,
+                filter_role: (prev.filter_role ?? []).filter(
+                  (r) => r !== 'not_member',
+                ),
+                pagination: { ...prev.pagination, skip: 0 },
+              }));
+            }}
+          >
+            Hide
+          </Button>
+          <Button
+            variant={query.show_all ? 'default' : 'outline'}
+            className={`${organizationSegmentButtonClass} ${query.show_all ? organizationActiveButtonClass : organizationInactiveButtonClass}`}
+            onClick={() => {
+              setQuery((prev) => ({
+                ...prev,
+                show_all: true,
+                pagination: { ...prev.pagination, skip: 0 },
+              }));
+            }}
+          >
+            Show
+          </Button>
+        </ButtonGroup>
+      </div>
     )}
+
     {isAdmin && (
-      <Form.Item label="Deleted Organizations">
-        <Radio.Group
-          optionType="button"
-          buttonStyle="solid"
-          value={query.filter_deleted}
-          onChange={(e) =>
-            setQuery((prev) => ({
-              ...prev,
-              filter_deleted: e.target.value,
-            }))
-          }
-        >
-          <Radio.Button value={false}>Hide</Radio.Button>
-          <Radio.Button value>Show</Radio.Button>
-        </Radio.Group>
-      </Form.Item>
+      <div className="space-y-2">
+        <Label className={organizationLabelClass}>Deleted Organizations</Label>
+        <ButtonGroup className="w-fit max-w-full">
+          <Button
+            variant={!query.filter_deleted ? 'default' : 'outline'}
+            className={`${organizationSegmentButtonClass} ${!query.filter_deleted ? organizationActiveButtonClass : organizationInactiveButtonClass}`}
+            onClick={() =>
+              setQuery((prev) => ({
+                ...prev,
+                filter_deleted: false,
+              }))
+            }
+          >
+            Hide
+          </Button>
+          <Button
+            variant={query.filter_deleted ? 'default' : 'outline'}
+            className={`${organizationSegmentButtonClass} ${query.filter_deleted ? organizationActiveButtonClass : organizationInactiveButtonClass}`}
+            onClick={() =>
+              setQuery((prev) => ({
+                ...prev,
+                filter_deleted: true,
+              }))
+            }
+          >
+            Show
+          </Button>
+        </ButtonGroup>
+      </div>
     )}
-  </Form>
+  </div>
 );
 
 const useDebounce = <T,>(value: T, delay: number): T => {
@@ -222,16 +324,15 @@ const useDebounce = <T,>(value: T, delay: number): T => {
   return debouncedValue;
 };
 
+const orgRoleFormat: Record<string, string> = {
+  admin: 'Admin',
+  member: 'Member',
+  guest: 'Guest',
+};
+
 export default function MyOrganizations({
   userPrivileges,
 }: Props): React.ReactElement {
-  const darkModeContext = useContext(DarkModeContext);
-
-  if (!darkModeContext) {
-    throw new Error('DarkModeContext is missing.');
-  }
-
-  const { darkMode } = darkModeContext;
   const [orgs, setOrgs] = useState<Organization[] | null>(null);
   const [totalOrgs, setTotalOrgs] = useState<number>(0);
   const [query, setQuery] = useState<OrgSearchQuery>(DEFAULT_QUERY);
@@ -241,8 +342,11 @@ export default function MyOrganizations({
   const [memberNetidError, setMemberNetidError] = useState<string | null>(null);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newOrgName, setNewOrgName] = useState('');
 
-  const [form] = Form.useForm();
+  const [deleteConfirmOrgId, setDeleteConfirmOrgId] = useState<string | null>(
+    null,
+  );
 
   const isAdmin = userPrivileges.has('admin');
   const mayCreateOrg =
@@ -288,7 +392,7 @@ export default function MyOrganizations({
       setOrgs(data.results);
       setTotalOrgs(data.count);
     } catch {
-      message.error('Failed to fetch organizations');
+      toast.error('Failed to fetch organizations');
     }
   }, [debouncedQuery]);
 
@@ -318,16 +422,14 @@ export default function MyOrganizations({
 
   const onCreate = async () => {
     try {
-      const rawName = form.getFieldValue('organization_name');
-      const cleanedName = rawName.trim().replace(/\s+/g, ' ');
-
+      const cleanedName = newOrgName.trim().replace(/\s+/g, ' ');
       await createOrg(cleanedName);
-      message.success('Organization created successfully');
+      toast.success('Organization created successfully');
       setIsCreateModalOpen(false);
-      form.resetFields();
+      setNewOrgName('');
       await refreshOrgs();
     } catch {
-      message.error('Failed to create organization.');
+      toast.error('Failed to create organization.');
     }
   };
 
@@ -337,294 +439,426 @@ export default function MyOrganizations({
   };
 
   const onCheckUrls = async (id: string): Promise<boolean> => {
-    const check = await hasAssociatedUrls(id);
-    return check;
+    return await hasAssociatedUrls(id);
   };
 
-  const orgRoleFormat = {
-    admin: 'Admin',
-    member: 'Member',
-    guest: 'Guest',
+  const handleDeleteClick = async (orgId: string) => {
+    try {
+      const res = await onCheckUrls(orgId);
+      if (res) {
+        setShowAssociatedUrlsAlert(true);
+      }
+    } catch {
+      toast.error('Failed to search for associated urls');
+    }
+    setDeleteConfirmOrgId(orgId);
   };
 
-  const columns = [
-    {
-      title: 'Name',
-      key: 'name',
-      dataIndex: 'name',
-      render: (name: string, record: Organization) => (
-        <Space>
-          <Typography.Text>{name}</Typography.Text>
-          {record.deleted && (
-            <Tag color="red" className="tw-ml-2">
-              Deleted
-            </Tag>
-          )}
-        </Space>
-      ),
-    },
-    {
-      title: 'Role',
-      key: 'role',
-      render: (record: Organization) => (
-        <Typography.Text>
-          {record.role ? orgRoleFormat[record.role] : 'None'}
-        </Typography.Text>
-      ),
-    },
-    ...(lastActiveColumn === 'timeCreated'
-      ? [
-          {
-            title: 'Time Created',
-            key: 'timeCreated',
-            dataIndex: 'timeCreated',
-            render: (date: Date) =>
-              date ? dayjs(date).format('MMM D, YYYY') : '-',
-          },
-        ]
-      : []),
-    ...(lastActiveColumn === 'memberCount'
-      ? [
-          {
-            title: 'Members',
-            key: 'memberCount',
-            dataIndex: 'memberCount',
-            render: (count: number) => count || 0,
-          },
-        ]
-      : []),
-    ...(lastActiveColumn === 'dateAdded'
-      ? [
-          {
-            title: 'Date Added',
-            key: 'dateAdded',
-            dataIndex: 'dateAdded',
-            render: (date: Date) =>
-              date ? dayjs(date).format('MMM D, YYYY') : '-',
-          },
-        ]
-      : []),
-    {
-      title: <Flex justify="flex-end">Actions</Flex>,
-      key: 'actions',
-      width: '150px',
-      render: (record: Organization) => (
-        <Flex justify="flex-end">
-          <Space>
-            <Tooltip title="View">
-              <Link
-                className="tw-flex tw-items-center"
-                to={`/app/orgs/${record.id}`}
-              >
-                <EyeIcon color={darkMode ? '#FFFFFF' : '#000000'} />
-              </Link>
-            </Tooltip>
-            {isAdmin && (
-              <Popconfirm
-                title="Are you sure you want to delete this organization?"
-                disabled={record.deleted}
-                onConfirm={async () => {
-                  try {
-                    await onDeleteOrg(record.id);
-                    message.success('Organization deleted successfully');
-                  } catch {
-                    message.error('Failed to delete organization');
-                  }
-                  setShowAssociatedUrlsAlert(false);
-                }}
-                okText="Yes"
-                cancelText="No"
-                okButtonProps={{ danger: true }}
-                onCancel={() => setShowAssociatedUrlsAlert(false)}
-              >
-                <Button
-                  type="text"
-                  danger
-                  disabled={record.deleted}
-                  icon={<TrashIcon />}
-                  onClick={async () => {
-                    if (record.deleted) return;
-                    try {
-                      const res = await onCheckUrls(record.id);
-                      if (res) {
-                        setShowAssociatedUrlsAlert(true);
-                      }
-                    } catch {
-                      message.error('Failed to search for associated urls');
-                    }
-                  }}
-                />
-              </Popconfirm>
-            )}
-          </Space>
-        </Flex>
-      ),
-    },
-  ];
+  const handleDeleteConfirm = async () => {
+    const orgId = deleteConfirmOrgId;
+    if (!orgId) return;
+    try {
+      await onDeleteOrg(orgId);
+      toast.success('Organization deleted successfully');
+    } catch {
+      toast.error('Failed to delete organization');
+    }
+    setShowAssociatedUrlsAlert(false);
+    setDeleteConfirmOrgId(null);
+  };
 
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
+  const totalPages = Math.max(1, Math.ceil(totalOrgs / query.pagination.limit));
+
   return (
-    <Layout className="tw-bg-white dark:tw-bg-[#1f1f1f]">
-      <Row align="middle" justify="space-between">
-        <Col>
-          <Typography.Title level={2}>My Organizations</Typography.Title>
-        </Col>
-        <Col className="tw-hidden lg:tw-block">
+    <TooltipProvider>
+      <div className="min-h-[calc(100dvh-var(--app-header-height,0px))] space-y-5 bg-background pb-7">
+        <div className="flex items-center justify-between">
+          <h1 className="app-page-heading">My Organizations</h1>
+          <div className="hidden lg:block">
+            {mayCreateOrg && (
+              <Button
+                className="h-9 bg-primary px-4 font-semibold text-primary-foreground shadow-none hover:bg-primary/90"
+                onClick={() => setIsCreateModalOpen(true)}
+              >
+                <PlusCircleIcon />
+                Create
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 lg:hidden">
           {mayCreateOrg && (
             <Button
-              type="primary"
-              icon={<PlusCircleIcon />}
+              size="icon"
+              className="bg-primary text-primary-foreground shadow-none hover:bg-primary/90"
               onClick={() => setIsCreateModalOpen(true)}
             >
-              Create
+              <PlusCircleIcon />
             </Button>
           )}
-        </Col>
-      </Row>
-      <Row
-        className="tw-mb-4 lg:tw-hidden"
-        gutter={8}
-        wrap={false}
-        align="middle"
-      >
-        <Col>
-          {mayCreateOrg && (
-            <Button
-              type="primary"
-              icon={<PlusCircleIcon />}
-              onClick={() => setIsCreateModalOpen(true)}
-            />
-          )}
-        </Col>
-        <Col>
           <Button
-            icon={<FilterIcon />}
-            onClick={() => {
-              setMobileFiltersOpen(true);
-            }}
-          />
-        </Col>
-        <Col flex="auto">
-          <Input.Search
-            placeholder="Search organizations..."
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            onSearch={onSearch}
-            enterButton
-          />
-        </Col>
-      </Row>
-      <Layout className="tw-bg-white dark:tw-bg-[#1f1f1f]">
-        <Sider
-          className="tw-mt-[4px]  tw-bg-white tw-pr-4 lg:tw-block dark:tw-bg-[#1f1f1f]"
-          width="25%"
-          breakpoint="lg"
-          collapsedWidth="0"
-          trigger={null}
-        >
-          <div className="tw-sticky tw-top-[50px] tw-max-h-[calc(100vh-130px)] tw-overflow-auto">
-            <Input.Search
-              className="tw-pb-2"
+            size="icon"
+            variant="outline"
+            className={organizationControlBorderClass}
+            onClick={() => setMobileFiltersOpen(true)}
+          >
+            <FilterIcon />
+          </Button>
+          <div className="flex flex-1">
+            <Input
               placeholder="Search organizations..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              onSearch={onSearch}
-              enterButton
-            />
-            <FilterForm
-              query={query}
-              setQuery={setQuery}
-              onSearch={onSearch}
-              isAdmin={isAdmin}
-              memberNetidError={memberNetidError}
-              setMemberNetidError={setMemberNetidError}
-            />
-          </div>
-        </Sider>
-        <Content className="tw-bg-white dark:tw-bg-[#1f1f1f]">
-          {showAssociatedUrlsAlert && (
-            <Alert
-              title="Warning! Links found to be associated with organization"
-              type="warning"
-              showIcon
-              closable
-              onClose={() => setShowAssociatedUrlsAlert(false)}
-              className="tw-mb-4"
-            />
-          )}
-
-          <Table
-            dataSource={orgs || []}
-            loading={orgs === null}
-            columns={columns}
-            rowKey="id"
-            pagination={false}
-            scroll={{ x: 800 }}
-          />
-          <div className="tw-mt-4 tw-flex tw-justify-center">
-            <Pagination
-              current={currentPage}
-              total={totalOrgs}
-              pageSize={query.pagination.limit}
-              onChange={setPage}
-              showSizeChanger
-              onShowSizeChange={(page, pageSize) => {
-                setQuery((prev) => ({
-                  ...prev,
-                  pagination: {
-                    ...prev.pagination,
-                    limit: pageSize,
-                  },
-                }));
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') onSearch();
               }}
+              className={`rounded-r-none ${organizationInputClass}`}
             />
+            <Button
+              variant="outline"
+              className={`rounded-l-none border-l-0 px-3 ${organizationControlBorderClass}`}
+              onClick={onSearch}
+            >
+              <SearchIcon />
+            </Button>
           </div>
-        </Content>
-      </Layout>
+        </div>
 
-      <Drawer
-        title="Filters"
-        placement="left"
-        onClose={() => setMobileFiltersOpen(false)}
-        open={mobileFiltersOpen}
-      >
-        <FilterForm
-          query={query}
-          setQuery={setQuery}
-          onSearch={onSearch}
-          isAdmin={isAdmin}
-          memberNetidError={memberNetidError}
-          setMemberNetidError={setMemberNetidError}
-        />
-      </Drawer>
+        <div className="flex gap-3">
+          <div className="hidden w-[22.75rem] shrink-0 lg:block">
+            <div className="sticky top-[calc(var(--app-header-height,80px)+1.75rem)] max-h-[calc(100dvh-var(--app-header-height,80px)-3.5rem)] overflow-hidden">
+              <div className="mb-3 flex">
+                <Input
+                  placeholder="Search organizations..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') onSearch();
+                  }}
+                  className={`h-9 rounded-r-none ${organizationInputClass}`}
+                />
+                <Button
+                  variant="outline"
+                  className={`h-9 w-12 rounded-l-none border-l-0 px-0 ${organizationControlBorderClass}`}
+                  onClick={onSearch}
+                  aria-label="Search organizations"
+                >
+                  <SearchIcon />
+                </Button>
+              </div>
+              <FilterForm
+                query={query}
+                setQuery={setQuery}
+                onSearch={onSearch}
+                isAdmin={isAdmin}
+                memberNetidError={memberNetidError}
+                setMemberNetidError={setMemberNetidError}
+              />
+            </div>
+          </div>
 
-      <Modal
-        title="Create Organization"
-        open={isCreateModalOpen}
-        onOk={onCreate}
-        onCancel={() => {
-          setIsCreateModalOpen(false);
-          form.resetFields();
-        }}
-        okText="Create"
-        destroyOnHidden
-      >
-        <Form layout="vertical" requiredMark={false} form={form}>
-          <Form.Item
-            label="Organization Name"
-            name="organization_name"
-            rules={[
-              {
-                required: true,
-                message: 'Please enter the organization name.',
-              },
-            ]}
-          >
-            <Input placeholder="Enter organization name..." />
-          </Form.Item>
-        </Form>
-      </Modal>
-    </Layout>
+          <div className="min-w-0 flex-1">
+            {showAssociatedUrlsAlert && (
+              <Alert className="mb-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <AlertTitle>
+                      Warning! Links found to be associated with organization
+                    </AlertTitle>
+                    <AlertDescription>
+                      Deleting this organization may affect linked resources.
+                    </AlertDescription>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowAssociatedUrlsAlert(false)}
+                  >
+                    Dismiss
+                  </Button>
+                </div>
+              </Alert>
+            )}
+
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-muted">
+                  <TableRow className="border-b border-border hover:bg-transparent">
+                    <TableHead className="h-16 border-r border-border px-5 text-base font-bold text-foreground">
+                      Name
+                    </TableHead>
+                    <TableHead className="h-16 border-r border-border px-5 text-base font-bold text-foreground">
+                      Role
+                    </TableHead>
+                    {lastActiveColumn === 'timeCreated' && (
+                      <TableHead className="h-16 border-r border-border px-5 text-base font-bold text-foreground">
+                        Time Created
+                      </TableHead>
+                    )}
+                    {lastActiveColumn === 'memberCount' && (
+                      <TableHead className="h-16 border-r border-border px-5 text-base font-bold text-foreground">
+                        Members
+                      </TableHead>
+                    )}
+                    {lastActiveColumn === 'dateAdded' && (
+                      <TableHead className="h-16 border-r border-border px-5 text-base font-bold text-foreground">
+                        Date Added
+                      </TableHead>
+                    )}
+                    <TableHead className="h-16 px-5 text-right text-base font-bold text-foreground">
+                      Actions
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {orgs === null ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i} className="h-[74px] border-border">
+                        <TableCell className="px-5">
+                          <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+                        </TableCell>
+                        <TableCell className="px-5">
+                          <div className="h-4 w-16 animate-pulse rounded bg-muted" />
+                        </TableCell>
+                        <TableCell className="px-5">
+                          <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+                        </TableCell>
+                        <TableCell className="px-5 text-right">
+                          <div className="ml-auto h-4 w-16 animate-pulse rounded bg-muted" />
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : orgs.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={4}
+                        className="h-24 text-center text-muted-foreground"
+                      >
+                        No organizations found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    orgs.map((org) => (
+                      <TableRow
+                        key={org.id}
+                        className="h-[74px] border-border hover:bg-muted/30"
+                      >
+                        <TableCell className="px-5 text-base font-semibold text-foreground">
+                          <div className="flex items-center gap-2">
+                            <span>{org.name}</span>
+                            {org.deleted && (
+                              <Badge variant="destructive">Deleted</Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="px-5 text-base font-semibold text-foreground/85">
+                          {org.role ? orgRoleFormat[org.role] : 'None'}
+                        </TableCell>
+                        {lastActiveColumn === 'timeCreated' && (
+                          <TableCell className="px-5 text-base font-semibold text-foreground/85">
+                            {org.timeCreated
+                              ? dayjs(org.timeCreated).format('MMM D, YYYY')
+                              : '-'}
+                          </TableCell>
+                        )}
+                        {lastActiveColumn === 'memberCount' && (
+                          <TableCell className="px-5 text-base font-semibold text-foreground/85">
+                            {org.memberCount || 0}
+                          </TableCell>
+                        )}
+                        {lastActiveColumn === 'dateAdded' && (
+                          <TableCell className="px-5 text-base font-semibold text-foreground/85">
+                            {org.dateAdded
+                              ? dayjs(org.dateAdded).format('MMM D, YYYY')
+                              : '-'}
+                          </TableCell>
+                        )}
+                        <TableCell className="px-5 text-right">
+                          <div className="flex justify-end gap-4">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Link
+                                  to={`/app/orgs/${org.id}`}
+                                  className="flex h-8 w-8 items-center justify-center text-foreground/80 hover:text-foreground"
+                                >
+                                  <EyeIcon className="size-4" />
+                                </Link>
+                              </TooltipTrigger>
+                              <TooltipContent>View</TooltipContent>
+                            </Tooltip>
+                            {isAdmin && (
+                              <AlertDialog
+                                open={deleteConfirmOrgId === org.id}
+                                onOpenChange={(open) => {
+                                  if (!open) setDeleteConfirmOrgId(null);
+                                }}
+                              >
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-primary hover:bg-primary/10 hover:text-primary"
+                                  disabled={org.deleted}
+                                  onClick={() => handleDeleteClick(org.id)}
+                                >
+                                  <TrashIcon className="size-4" />
+                                </Button>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      Are you sure you want to delete this
+                                      organization?
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>No</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={handleDeleteConfirm}
+                                    >
+                                      Yes
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="mt-5 flex items-center justify-center gap-5">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Previous page"
+                className="h-8 w-8 text-muted-foreground hover:bg-transparent hover:text-foreground disabled:opacity-35"
+                onClick={() => setPage(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeftIcon className="size-4" />
+              </Button>
+              <select
+                aria-label="Current page"
+                className="h-9 w-9 appearance-none rounded-md border border-primary bg-background text-center text-sm font-semibold text-primary outline-none"
+                value={currentPage}
+                onChange={(e) => setPage(Number(e.target.value))}
+              >
+                {Array.from({ length: totalPages }).map((_, i) => (
+                  <option key={i + 1} value={i + 1}>
+                    {i + 1}
+                  </option>
+                ))}
+              </select>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Next page"
+                className="h-8 w-8 text-muted-foreground hover:bg-transparent hover:text-foreground disabled:opacity-35"
+                onClick={() => setPage(currentPage + 1)}
+                disabled={currentPage >= totalPages}
+              >
+                <ChevronRightIcon className="size-4" />
+              </Button>
+              <select
+                aria-label="Organizations per page"
+                className="h-9 rounded-md border border-border bg-background px-3 text-sm font-semibold text-foreground outline-none"
+                value={query.pagination.limit}
+                onChange={(e) => {
+                  const newLimit = Number(e.target.value);
+                  setQuery((prev) => ({
+                    ...prev,
+                    pagination: { ...prev.pagination, limit: newLimit },
+                  }));
+                  setCurrentPage(1);
+                }}
+              >
+                {[5, 10, 20, 50].map((size) => (
+                  <option key={size} value={size}>
+                    {size} / page
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+          <SheetContent side="left">
+            <SheetHeader>
+              <SheetTitle>Filters</SheetTitle>
+            </SheetHeader>
+            <div className="mt-6">
+              <FilterForm
+                query={query}
+                setQuery={setQuery}
+                onSearch={onSearch}
+                isAdmin={isAdmin}
+                memberNetidError={memberNetidError}
+                setMemberNetidError={setMemberNetidError}
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        <Dialog
+          open={isCreateModalOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              setIsCreateModalOpen(false);
+              setNewOrgName('');
+            }
+          }}
+        >
+          <DialogContent className="max-w-[38rem] gap-5 rounded-md border-border bg-muted px-7 pt-6 pb-6 text-foreground shadow-none">
+            <DialogHeader className="space-y-0 text-left">
+              <DialogTitle className="text-xl font-bold">
+                Create Organization
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="org-name" className={organizationLabelClass}>
+                  Organization Name
+                </Label>
+                <Input
+                  id="org-name"
+                  placeholder="Enter organization name..."
+                  className={`h-9 ${organizationInputClass}`}
+                  value={newOrgName}
+                  onChange={(e) => setNewOrgName(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter className="gap-2 sm:justify-end sm:space-x-0">
+              <Button
+                variant="outline"
+                className={`h-9 px-5 ${organizationControlBorderClass}`}
+                onClick={() => {
+                  setIsCreateModalOpen(false);
+                  setNewOrgName('');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="h-9 bg-primary px-5 font-semibold text-primary-foreground shadow-none hover:bg-primary/90"
+                onClick={onCreate}
+              >
+                Create
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </TooltipProvider>
   );
 }

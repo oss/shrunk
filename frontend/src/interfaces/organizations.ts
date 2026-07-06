@@ -25,6 +25,8 @@ export interface Organization {
   name: string;
   members: OrganizationMember[];
   timeCreated: Date;
+  memberCount?: number;
+  dateAdded?: Date;
 
   role?: 'admin' | 'member' | 'guest';
 

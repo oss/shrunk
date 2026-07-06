@@ -148,7 +148,7 @@ export async function getValidAccessTokenPermissions() {
 export async function generateAccessToken(
   title: string,
   description: string,
-  permissions: string,
+  permissions: string[],
   organizationId?: string,
 ): Promise<string> {
   const resp = await fetch(`/api/core/org/access_token`, {

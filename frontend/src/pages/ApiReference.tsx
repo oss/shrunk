@@ -1,44 +1,244 @@
 /**
  * Implements the [[ApiReference]] component
  */
-import {
-  Collapse,
-  CollapseProps,
-  Typography,
-  Flex,
-  Descriptions,
-  Divider,
-  Row,
-  Col,
-} from 'antd';
+import { AnchorHTMLAttributes, ReactNode } from 'react';
+import * as AccordionPrimitive from '@radix-ui/react-accordion';
+import { ChevronRightIcon } from 'lucide-react';
+
+import { CodeBlock } from '@/components/code-block';
+import { cn } from '@/lib/utils';
+
+type ApiReferenceItem = {
+  key: string;
+  label: string;
+  children: ReactNode;
+};
+
+type TextProps = {
+  children: ReactNode;
+  className?: string;
+  code?: boolean;
+  type?: 'secondary';
+};
+
+type TitleProps = {
+  children: ReactNode;
+  className?: string;
+  level?: 1 | 2 | 3 | 4 | 5 | 6;
+};
+
+type BaseProps = {
+  children: ReactNode;
+  className?: string;
+};
+
+type DescriptionListProps = BaseProps & {
+  column?: number;
+  bordered?: boolean;
+};
+
+type RowProps = BaseProps & {
+  gutter?: number | [number, number];
+  align?: string;
+  wrap?: boolean;
+};
+
+type LinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
+  children: ReactNode;
+};
+
+function TypographyRoot({ children, className }: BaseProps) {
+  return <div className={cn('space-y-1.5', className)}>{children}</div>;
+}
+
+function TypographyTitle({ children, className, level = 1 }: TitleProps) {
+  const Tag = `h${level}` as keyof JSX.IntrinsicElements;
+  const titleClasses = {
+    1: 'text-4xl font-bold tracking-normal text-[#f1f1f1]',
+    2: 'text-[2.25rem] leading-tight font-bold tracking-normal text-[#f1f1f1]',
+    3: 'text-[1.9rem] leading-tight font-bold tracking-normal text-[#f1f1f1]',
+    4: 'text-[1.05rem] font-semibold tracking-normal text-[#f1f1f1]',
+    5: 'text-base font-semibold tracking-normal text-[#dbdbdb]',
+    6: 'text-sm font-semibold tracking-tight',
+  };
+
+  return <Tag className={cn(titleClasses[level], className)}>{children}</Tag>;
+}
+
+function TypographyParagraph({ children, className, code }: TextProps) {
+  if (code) {
+    return (
+      <CodeBlock
+        className={cn(
+          'w-fit rounded-sm border border-white/10 bg-white/10 px-2 py-1 text-[0.95rem] text-[#f1f1f1]',
+          className,
+        )}
+      >
+        {children}
+      </CodeBlock>
+    );
+  }
+
+  return (
+    <p className={cn('text-[1.02rem] leading-8 text-[#d4d4d4]', className)}>
+      {children}
+    </p>
+  );
+}
+
+function TypographyText({ children, className, code, type }: TextProps) {
+  if (code) {
+    return (
+      <code
+        className={cn(
+          'rounded-sm border border-white/10 bg-white/10 px-1.5 py-0.5 font-mono text-[0.92rem] text-[#f1f1f1]',
+          className,
+        )}
+      >
+        {children}
+      </code>
+    );
+  }
+
+  return (
+    <span className={cn(type === 'secondary' && 'text-[#9c9c9c]', className)}>
+      {children}
+    </span>
+  );
+}
+
+function TypographyLink({ children, className, ...props }: LinkProps) {
+  const rel = props.target === '_blank' ? 'noreferrer' : props.rel;
+
+  return (
+    <a
+      className={cn(
+        'text-[#d62929] underline underline-offset-2 hover:text-[#ee3a3a]',
+        className,
+      )}
+      {...props}
+      rel={rel}
+    >
+      {children}
+    </a>
+  );
+}
+
+const Typography = Object.assign(TypographyRoot, {
+  Title: TypographyTitle,
+  Paragraph: TypographyParagraph,
+  Text: TypographyText,
+  Link: TypographyLink,
+});
+
+function Flex({ children }: BaseProps) {
+  return (
+    <CodeBlock className="rounded-sm border border-white/8 bg-white/16 px-6 py-6 text-[0.95rem] leading-8 text-[#f1f1f1]">
+      {children}
+    </CodeBlock>
+  );
+}
+
+function DescriptionList({ children, className }: DescriptionListProps) {
+  return (
+    <dl className={cn('divide-y divide-white/10', className)}>{children}</dl>
+  );
+}
+
+function DescriptionItem({
+  label,
+  children,
+}: {
+  label: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div className="grid gap-2 py-5 sm:grid-cols-[minmax(0,22rem)_1fr] sm:items-start">
+      <dt>{label}</dt>
+      <dd className="leading-7 text-[#d4d4d4]">{children}</dd>
+    </div>
+  );
+}
+
+const Descriptions = Object.assign(DescriptionList, {
+  Item: DescriptionItem,
+});
+
+function Divider({ className }: { className?: string }) {
+  return <hr className={cn('border-white/10', className)} />;
+}
+
+function Row({ children }: RowProps) {
+  return (
+    <span className="inline-flex flex-wrap items-center gap-3">{children}</span>
+  );
+}
+
+function Col({ children }: BaseProps) {
+  return <span>{children}</span>;
+}
+
+function Collapse({
+  items,
+  className,
+}: {
+  items: ApiReferenceItem[];
+  className?: string;
+}) {
+  return (
+    <AccordionPrimitive.Root
+      type="multiple"
+      className={cn(
+        'w-full overflow-hidden rounded-md border border-white/10 bg-[#2a2a2a]',
+        className,
+      )}
+    >
+      {items.map((item) => (
+        <AccordionPrimitive.Item
+          key={item.key}
+          value={item.key}
+          className="border-b border-white/10 last:border-b-0"
+        >
+          <AccordionPrimitive.Header className="flex">
+            <AccordionPrimitive.Trigger className="group flex w-full items-center gap-3 px-5 py-4 text-left text-[1.05rem] font-semibold text-[#efefef] transition-colors hover:bg-white/[0.03]">
+              <ChevronRightIcon className="size-4 shrink-0 text-[#a7a7a7] transition-transform duration-200 group-data-[state=open]:rotate-90" />
+              <span>{item.label}</span>
+            </AccordionPrimitive.Trigger>
+          </AccordionPrimitive.Header>
+          <AccordionPrimitive.Content className="overflow-hidden border-t border-white/10 text-sm data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+            <div className="space-y-5 px-5 pt-10 pb-14">{item.children}</div>
+          </AccordionPrimitive.Content>
+        </AccordionPrimitive.Item>
+      ))}
+    </AccordionPrimitive.Root>
+  );
+}
 
 export default function ApiReference() {
   const apiUrl = `${window.location.origin}/api/v1`;
-  const items: CollapseProps['items'] = [
+  const items: ApiReferenceItem[] = [
     {
       key: '1',
       label: 'GET /users',
       children: (
         <Typography>
           <Typography.Title level={4}>List all Users</Typography.Title>
-          <Typography.Title className="!tw-mt-4" level={5}>
+          <Typography.Title className="mt-4!" level={5}>
             Returns all the Users registered on Shrunk
           </Typography.Title>
-          <Typography.Paragraph className="!tw-mt-4">
-            Request
-          </Typography.Paragraph>
-          <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+          <Typography.Paragraph className="mt-4!">Request</Typography.Paragraph>
+          <Typography className="mt-4!">
+            <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
               {`curl ${apiUrl}/users \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $SHRUNK_API_KEY"`}
             </Flex>
           </Typography>
-          <Typography.Paragraph className="!tw-mt-4">
+          <Typography.Paragraph className="mt-4!">
             Response
           </Typography.Paragraph>
-          <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+          <Typography className="mt-4!">
+            <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
               {`{
     "users": [
       {
@@ -50,10 +250,10 @@ export default function ApiReference() {
     ]
 }`}
             </Flex>
-            <Typography.Title className="!tw-mt-4" level={5}>
+            <Typography.Title className="mt-4!" level={5}>
               Query Parameters
             </Typography.Title>
-            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+            <Descriptions column={1} bordered={false} className="mt-4!">
               <Descriptions.Item
                 label={
                   <Row gutter={8} align="middle" wrap={false}>
@@ -74,8 +274,8 @@ export default function ApiReference() {
                 Filter users by roles.
               </Descriptions.Item>
             </Descriptions>
-            <Divider className="tw-my-2 !tw-mt-4" />
-            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+            <Divider className="my-2 mt-4!" />
+            <Descriptions column={1} bordered={false} className="mt-4!">
               <Descriptions.Item
                 label={
                   <Row gutter={8} align="middle" wrap={false}>
@@ -106,14 +306,12 @@ export default function ApiReference() {
       children: (
         <Typography>
           <Typography.Title level={4}>Create Link</Typography.Title>
-          <Typography.Title className="!tw-mt-4" level={5}>
+          <Typography.Title className="mt-4!" level={5}>
             Creates a short link within an organization
           </Typography.Title>
-          <Typography.Paragraph className="!tw-mt-4">
-            Request
-          </Typography.Paragraph>
-          <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+          <Typography.Paragraph className="mt-4!">Request</Typography.Paragraph>
+          <Typography className="mt-4!">
+            <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
               {`curl ${apiUrl}/links \\
   -X POST \\
   -H "Content-Type: application/json" \\
@@ -128,21 +326,21 @@ export default function ApiReference() {
   }'`}
             </Flex>
           </Typography>
-          <Typography.Paragraph className="!tw-mt-4">
+          <Typography.Paragraph className="mt-4!">
             Response
           </Typography.Paragraph>
-          <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+          <Typography className="mt-4!">
+            <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
               {`{
   "id": str,
   "alias": str
   "link": str
 }`}
             </Flex>
-            <Typography.Title className="!tw-mt-4" level={5}>
+            <Typography.Title className="mt-4!" level={5}>
               Body Parameters
             </Typography.Title>
-            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+            <Descriptions column={1} bordered={false} className="mt-4!">
               <Descriptions.Item
                 label={
                   <Row gutter={8} align="middle" wrap={false}>
@@ -164,8 +362,8 @@ export default function ApiReference() {
                 token&apos;s organization.
               </Descriptions.Item>
             </Descriptions>
-            <Divider className="tw-my-2 !tw-mt-4" />
-            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+            <Divider className="my-2 mt-4!" />
+            <Descriptions column={1} bordered={false} className="mt-4!">
               <Descriptions.Item
                 label={
                   <Row gutter={8} align="middle" wrap={false}>
@@ -186,8 +384,8 @@ export default function ApiReference() {
                 Destination URL for the short link.
               </Descriptions.Item>
             </Descriptions>
-            <Divider className="tw-my-2 !tw-mt-4" />
-            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+            <Divider className="my-2 mt-4!" />
+            <Descriptions column={1} bordered={false} className="mt-4!">
               <Descriptions.Item
                 label={
                   <Row gutter={8} align="middle" wrap={false}>
@@ -209,8 +407,8 @@ export default function ApiReference() {
                 Link&quot;.
               </Descriptions.Item>
             </Descriptions>
-            <Divider className="tw-my-2 !tw-mt-4" />
-            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+            <Divider className="my-2 mt-4!" />
+            <Descriptions column={1} bordered={false} className="mt-4!">
               <Descriptions.Item
                 label={
                   <Row gutter={8} align="middle" wrap={false}>
@@ -231,8 +429,8 @@ export default function ApiReference() {
                 Custom short code (min length 5). If omitted, one is generated.
               </Descriptions.Item>
             </Descriptions>
-            <Divider className="tw-my-2 !tw-mt-4" />
-            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+            <Divider className="my-2 mt-4!" />
+            <Descriptions column={1} bordered={false} className="mt-4!">
               <Descriptions.Item
                 label={
                   <Row gutter={8} align="middle" wrap={false}>
@@ -255,8 +453,8 @@ export default function ApiReference() {
                 When the link should expire. Example: 2025-12-31T23:59:59Z
               </Descriptions.Item>
             </Descriptions>
-            <Divider className="tw-my-2 !tw-mt-4" />
-            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+            <Divider className="my-2 mt-4!" />
+            <Descriptions column={1} bordered={false} className="mt-4!">
               <Descriptions.Item
                 label={
                   <Row gutter={8} align="middle" wrap={false}>
@@ -290,24 +488,22 @@ export default function ApiReference() {
       children: (
         <Typography>
           <Typography.Title level={4}>Get Link</Typography.Title>
-          <Typography.Title className="!tw-mt-4" level={5}>
+          <Typography.Title className="mt-4!" level={5}>
             Retrieves a link by organization and link ID
           </Typography.Title>
-          <Typography.Paragraph className="!tw-mt-4">
-            Request
-          </Typography.Paragraph>
-          <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+          <Typography.Paragraph className="mt-4!">Request</Typography.Paragraph>
+          <Typography className="mt-4!">
+            <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
               {`curl ${apiUrl}/links/<org_id>/<link_id> \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $SHRUNK_API_KEY"`}
             </Flex>
           </Typography>
-          <Typography.Paragraph className="!tw-mt-4">
+          <Typography.Paragraph className="mt-4!">
             Response
           </Typography.Paragraph>
-          <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+          <Typography className="mt-4!">
+            <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
               {`{
   "_id": str,
   "title": str,
@@ -324,10 +520,10 @@ export default function ApiReference() {
   "is_tracking_pixel_link": false
 }`}
             </Flex>
-            <Typography.Title className="!tw-mt-4" level={5}>
+            <Typography.Title className="mt-4!" level={5}>
               Path Parameters
             </Typography.Title>
-            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+            <Descriptions column={1} bordered={false} className="mt-4!">
               <Descriptions.Item
                 label={
                   <Row gutter={8} align="middle" wrap={false}>
@@ -348,8 +544,8 @@ export default function ApiReference() {
                 Organization ID owning the link.
               </Descriptions.Item>
             </Descriptions>
-            <Divider className="tw-my-2 !tw-mt-4" />
-            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+            <Divider className="my-2 mt-4!" />
+            <Descriptions column={1} bordered={false} className="mt-4!">
               <Descriptions.Item
                 label={
                   <Row gutter={8} align="middle" wrap={false}>
@@ -380,24 +576,22 @@ export default function ApiReference() {
       children: (
         <Typography>
           <Typography.Title level={4}>List Organization Links</Typography.Title>
-          <Typography.Title className="!tw-mt-4" level={5}>
+          <Typography.Title className="mt-4!" level={5}>
             Returns all links owned by an organization
           </Typography.Title>
-          <Typography.Paragraph className="!tw-mt-4">
-            Request
-          </Typography.Paragraph>
-          <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+          <Typography.Paragraph className="mt-4!">Request</Typography.Paragraph>
+          <Typography className="mt-4!">
+            <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
               {`curl ${apiUrl}/links/<org_id> \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $SHRUNK_API_KEY"`}
             </Flex>
           </Typography>
-          <Typography.Paragraph className="!tw-mt-4">
+          <Typography.Paragraph className="mt-4!">
             Response
           </Typography.Paragraph>
-          <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+          <Typography className="mt-4!">
+            <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
               {`{
   "links": [
     {
@@ -418,10 +612,10 @@ export default function ApiReference() {
   ]
 }`}
             </Flex>
-            <Typography.Title className="!tw-mt-4" level={5}>
+            <Typography.Title className="mt-4!" level={5}>
               Path Parameters
             </Typography.Title>
-            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+            <Descriptions column={1} bordered={false} className="mt-4!">
               <Descriptions.Item
                 label={
                   <Row gutter={8} align="middle" wrap={false}>
@@ -455,14 +649,12 @@ export default function ApiReference() {
           <Typography.Title level={4}>
             Fetch visits data with optional query
           </Typography.Title>
-          <Typography.Title className="!tw-mt-4" level={5}>
+          <Typography.Title className="mt-4!" level={5}>
             Fetch visits of a link
           </Typography.Title>
-          <Typography.Paragraph className="!tw-mt-4">
-            Request
-          </Typography.Paragraph>
-          <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+          <Typography.Paragraph className="mt-4!">Request</Typography.Paragraph>
+          <Typography className="mt-4!">
+            <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
               {`curl ${apiUrl}/links/<org_id>/<link_id>/visits \\
   -X POST \\
   -H "Content-Type: application/json" \\
@@ -473,11 +665,11 @@ export default function ApiReference() {
   }'`}
             </Flex>
           </Typography>
-          <Typography.Paragraph className="!tw-mt-4">
+          <Typography.Paragraph className="mt-4!">
             Response
           </Typography.Paragraph>
-          <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+          <Typography className="mt-4!">
+            <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
               {`{
   "_id": str,
   "alias": str,
@@ -493,10 +685,10 @@ export default function ApiReference() {
   "uid": str
 }`}
             </Flex>
-            <Typography.Title className="!tw-mt-4" level={5}>
+            <Typography.Title className="mt-4!" level={5}>
               Body Parameters
             </Typography.Title>
-            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+            <Descriptions column={1} bordered={false} className="mt-4!">
               <Descriptions.Item
                 label={
                   <Row gutter={8} align="middle" wrap={false}>
@@ -519,8 +711,8 @@ export default function ApiReference() {
                 Pass in a Mail ID or an array of Mail IDs to fetch visits for.
               </Descriptions.Item>
             </Descriptions>
-            <Divider className="tw-my-2 !tw-mt-4" />
-            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+            <Divider className="my-2 mt-4!" />
+            <Descriptions column={1} bordered={false} className="mt-4!">
               <Descriptions.Item
                 label={
                   <Row gutter={8} align="middle" wrap={false}>
@@ -543,7 +735,7 @@ export default function ApiReference() {
                 Pass in a unique id or an array of User IDs to fetch visits for.
               </Descriptions.Item>
             </Descriptions>
-            <Divider className="tw-my-2 !tw-mt-4" />
+            <Divider className="my-2 mt-4!" />
           </Typography>
         </Typography>
       ),
@@ -554,14 +746,12 @@ export default function ApiReference() {
       children: (
         <Typography>
           <Typography.Title level={4}>Create Tracking Pixel</Typography.Title>
-          <Typography.Title className="!tw-mt-4" level={5}>
+          <Typography.Title className="mt-4!" level={5}>
             Creates a tracking pixel link within an organization
           </Typography.Title>
-          <Typography.Paragraph className="!tw-mt-4">
-            Request
-          </Typography.Paragraph>
-          <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+          <Typography.Paragraph className="mt-4!">Request</Typography.Paragraph>
+          <Typography className="mt-4!">
+            <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
               {`curl ${apiUrl}/tracking-pixels \\
   -X POST \\
   -H "Content-Type: application/json" \\
@@ -573,20 +763,20 @@ export default function ApiReference() {
   }'`}
             </Flex>
           </Typography>
-          <Typography.Paragraph className="!tw-mt-4">
+          <Typography.Paragraph className="mt-4!">
             Response
           </Typography.Paragraph>
-          <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+          <Typography className="mt-4!">
+            <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
               {`{
   "id": str,
   "alias": str
 }`}
             </Flex>
-            <Typography.Title className="!tw-mt-4" level={5}>
+            <Typography.Title className="mt-4!" level={5}>
               Body Parameters
             </Typography.Title>
-            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+            <Descriptions column={1} bordered={false} className="mt-4!">
               <Descriptions.Item
                 label={
                   <Row gutter={8} align="middle" wrap={false}>
@@ -608,8 +798,8 @@ export default function ApiReference() {
                 token&apos;s organization.
               </Descriptions.Item>
             </Descriptions>
-            <Divider className="tw-my-2 !tw-mt-4" />
-            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+            <Divider className="my-2 mt-4!" />
+            <Descriptions column={1} bordered={false} className="mt-4!">
               <Descriptions.Item
                 label={
                   <Row gutter={8} align="middle" wrap={false}>
@@ -631,8 +821,8 @@ export default function ApiReference() {
                 &quot;Untitled Link&quot;.
               </Descriptions.Item>
             </Descriptions>
-            <Divider className="tw-my-2 !tw-mt-4" />
-            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+            <Divider className="my-2 mt-4!" />
+            <Descriptions column={1} bordered={false} className="mt-4!">
               <Descriptions.Item
                 label={
                   <Row gutter={8} align="middle" wrap={false}>
@@ -667,24 +857,22 @@ export default function ApiReference() {
       children: (
         <Typography>
           <Typography.Title level={4}>Get Tracking Pixel</Typography.Title>
-          <Typography.Title className="!tw-mt-4" level={5}>
+          <Typography.Title className="mt-4!" level={5}>
             Retrieves a tracking pixel link by organization and link ID
           </Typography.Title>
-          <Typography.Paragraph className="!tw-mt-4">
-            Request
-          </Typography.Paragraph>
-          <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+          <Typography.Paragraph className="mt-4!">Request</Typography.Paragraph>
+          <Typography className="mt-4!">
+            <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
               {`curl ${apiUrl}/tracking-pixels/<org_id>/<link_id> \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $SHRUNK_API_KEY"`}
             </Flex>
           </Typography>
-          <Typography.Paragraph className="!tw-mt-4">
+          <Typography.Paragraph className="mt-4!">
             Response
           </Typography.Paragraph>
-          <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+          <Typography className="mt-4!">
+            <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
               {`{
   "_id": str,
   "title": str,
@@ -701,10 +889,10 @@ export default function ApiReference() {
   "is_tracking_pixel_link": true
 }`}
             </Flex>
-            <Typography.Title className="!tw-mt-4" level={5}>
+            <Typography.Title className="mt-4!" level={5}>
               Path Parameters
             </Typography.Title>
-            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+            <Descriptions column={1} bordered={false} className="mt-4!">
               <Descriptions.Item
                 label={
                   <Row gutter={8} align="middle" wrap={false}>
@@ -725,8 +913,8 @@ export default function ApiReference() {
                 Organization ID owning the tracking pixel link.
               </Descriptions.Item>
             </Descriptions>
-            <Divider className="tw-my-2 !tw-mt-4" />
-            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+            <Divider className="my-2 mt-4!" />
+            <Descriptions column={1} bordered={false} className="mt-4!">
               <Descriptions.Item
                 label={
                   <Row gutter={8} align="middle" wrap={false}>
@@ -759,24 +947,22 @@ export default function ApiReference() {
           <Typography.Title level={4}>
             List Organization Tracking Pixels
           </Typography.Title>
-          <Typography.Title className="!tw-mt-4" level={5}>
+          <Typography.Title className="mt-4!" level={5}>
             Returns all tracking pixel links owned by an organization
           </Typography.Title>
-          <Typography.Paragraph className="!tw-mt-4">
-            Request
-          </Typography.Paragraph>
-          <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+          <Typography.Paragraph className="mt-4!">Request</Typography.Paragraph>
+          <Typography className="mt-4!">
+            <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
               {`curl ${apiUrl}/tracking-pixels/<org_id> \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $SHRUNK_API_KEY"`}
             </Flex>
           </Typography>
-          <Typography.Paragraph className="!tw-mt-4">
+          <Typography.Paragraph className="mt-4!">
             Response
           </Typography.Paragraph>
-          <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+          <Typography className="mt-4!">
+            <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
               {`{
   "tracking-pixels": [
     {
@@ -797,10 +983,10 @@ export default function ApiReference() {
   ]
 }`}
             </Flex>
-            <Typography.Title className="!tw-mt-4" level={5}>
+            <Typography.Title className="mt-4!" level={5}>
               Path Parameters
             </Typography.Title>
-            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+            <Descriptions column={1} bordered={false} className="mt-4!">
               <Descriptions.Item
                 label={
                   <Row gutter={8} align="middle" wrap={false}>
@@ -832,24 +1018,22 @@ export default function ApiReference() {
       children: (
         <Typography>
           <Typography.Title level={4}>List All Organizations</Typography.Title>
-          <Typography.Title className="!tw-mt-4" level={5}>
+          <Typography.Title className="mt-4!" level={5}>
             Returns all organizations
           </Typography.Title>
-          <Typography.Paragraph className="!tw-mt-4">
-            Request
-          </Typography.Paragraph>
-          <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+          <Typography.Paragraph className="mt-4!">Request</Typography.Paragraph>
+          <Typography className="mt-4!">
+            <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
               {`curl ${apiUrl}/organizations \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $SHRUNK_API_KEY"`}
             </Flex>
           </Typography>
-          <Typography.Paragraph className="!tw-mt-4">
+          <Typography.Paragraph className="mt-4!">
             Response
           </Typography.Paragraph>
-          <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+          <Typography className="mt-4!">
+            <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
               {`{
   "organizations": [
     {
@@ -872,24 +1056,22 @@ export default function ApiReference() {
           <Typography.Title level={4}>
             List Organizations By NetID
           </Typography.Title>
-          <Typography.Title className="!tw-mt-4" level={5}>
+          <Typography.Title className="mt-4!" level={5}>
             Returns all organizations a user is a member of
           </Typography.Title>
-          <Typography.Paragraph className="!tw-mt-4">
-            Request
-          </Typography.Paragraph>
-          <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+          <Typography.Paragraph className="mt-4!">Request</Typography.Paragraph>
+          <Typography className="mt-4!">
+            <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
               {`curl ${apiUrl}/organizations/<netid> \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $SHRUNK_API_KEY"`}
             </Flex>
           </Typography>
-          <Typography.Paragraph className="!tw-mt-4">
+          <Typography.Paragraph className="mt-4!">
             Response
           </Typography.Paragraph>
-          <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+          <Typography className="mt-4!">
+            <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
               {`{
   "organizations": [
     {
@@ -899,10 +1081,10 @@ export default function ApiReference() {
   ]
 }`}
             </Flex>
-            <Typography.Title className="!tw-mt-4" level={5}>
+            <Typography.Title className="mt-4!" level={5}>
               Path Parameters
             </Typography.Title>
-            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+            <Descriptions column={1} bordered={false} className="mt-4!">
               <Descriptions.Item
                 label={
                   <Row gutter={8} align="middle" wrap={false}>
@@ -933,24 +1115,22 @@ export default function ApiReference() {
       children: (
         <Typography>
           <Typography.Title level={4}>Generate QRCode</Typography.Title>
-          <Typography.Title className="!tw-mt-4" level={5}>
+          <Typography.Title className="mt-4!" level={5}>
             Generates and returns a downloadable QR code image by link ID
           </Typography.Title>
-          <Typography.Paragraph className="!tw-mt-4">
-            Request
-          </Typography.Paragraph>
-          <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+          <Typography.Paragraph className="mt-4!">Request</Typography.Paragraph>
+          <Typography className="mt-4!">
+            <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
               {`curl -O -J ${apiUrl}/links/<link_id>/qrcode \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $SHRUNK_API_KEY"`}
             </Flex>
           </Typography>
-          <Typography.Paragraph className="!tw-mt-4">
+          <Typography.Paragraph className="mt-4!">
             Response
           </Typography.Paragraph>
-          <Typography className="!tw-mt-4">
-            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+          <Typography className="mt-4!">
+            <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
               PNG Image: alias-qrcode.png
             </Flex>
           </Typography>
@@ -959,60 +1139,68 @@ export default function ApiReference() {
     },
   ];
   return (
-    <>
-      <Typography>
-        <Typography.Title level={2} className="!tw-mt-4">
-          Introduction
-        </Typography.Title>
-        <Typography.Text className="!tw-mt-4">
-          This API reference describes the APIs you can use to interact with
-          Shrunk. If you have any questions, please email us{' '}
-          <Typography.Link
-            href="mailto:oss@oss.rutgers.edu"
-            target="_blank"
-            className="!tw-underline"
-          >
-            oss@oss.rutgers.edu
-          </Typography.Link>
-          .
-        </Typography.Text>
-        <Typography.Title level={2} className="!tw-mt-4">
-          Authentication
-        </Typography.Title>
-        <Typography.Paragraph className="!tw-mt-0">
-          The Shrunk API uses API keys for authentication. Create, manage, and
-          learn more about API keys in your{' '}
-          <Typography.Link
-            className="!tw-underline"
-            href={`${window.location.origin}/app/orgs`}
-            target="_blank"
-          >
-            organization managment page
-          </Typography.Link>{' '}
-          or the{' '}
-          <Typography.Link
-            className="!tw-underline"
-            href={`${window.location.origin}/app/admin?tab=super-tokens`}
-            target="_blank"
-          >
-            admin dashboard
-          </Typography.Link>
-          .
-        </Typography.Paragraph>
-        <Typography.Paragraph>
-          Authentication is performed via Bearer tokens.
-        </Typography.Paragraph>
-        <Typography.Paragraph code>
-          {' '}
-          Authorization: Bearer SHRUNK_API_KEY
-        </Typography.Paragraph>
-        <Typography.Paragraph>API Base URL:</Typography.Paragraph>
-        <Typography.Link href={apiUrl} target="_blank">
-          {`${window.location.origin}/api/v1`}
-        </Typography.Link>
-        .
-        <Collapse className="!tw-mt-4" items={items} />
-      </Typography>
-    </>
+    <div className="-mx-6 min-h-[calc(100dvh-var(--app-header-height,0px))] bg-[#1A1A1A] px-6 pb-8 text-foreground">
+      <div className="mx-auto max-w-[82rem]">
+        <div className="space-y-6 pt-0 pb-6">
+          <Typography>
+            <Typography.Title
+              level={1}
+              className="app-page-heading mt-4! text-[#f1f1f1]"
+            >
+              API Reference
+            </Typography.Title>
+            <Typography.Title level={2} className="mt-4!">
+              Introduction
+            </Typography.Title>
+            <Typography.Paragraph className="mt-4! max-w-[72rem]">
+              This API reference describes the APIs you can use to interact with
+              Shrunk. If you have any questions, please email us{' '}
+              <Typography.Link
+                href="mailto:oss@oss.rutgers.edu"
+                target="_blank"
+              >
+                oss@oss.rutgers.edu
+              </Typography.Link>
+              .
+            </Typography.Paragraph>
+            <Typography.Title level={2} className="mt-6!">
+              Authentication
+            </Typography.Title>
+            <Typography.Paragraph className="mt-4! max-w-[78rem]">
+              The Shrunk API uses API keys for authentication. Create, manage,
+              and learn more about API keys in your{' '}
+              <Typography.Link
+                href={`${window.location.origin}/app/orgs`}
+                target="_blank"
+              >
+                organization managment page
+              </Typography.Link>{' '}
+              or the{' '}
+              <Typography.Link
+                href={`${window.location.origin}/app/admin?tab=super-tokens`}
+                target="_blank"
+              >
+                admin dashboard
+              </Typography.Link>
+              .
+            </Typography.Paragraph>
+            <Typography.Paragraph className="mt-4!">
+              Authentication is performed via Bearer tokens.
+            </Typography.Paragraph>
+            <Typography.Paragraph code className="mt-3!">
+              Authorization: Bearer SHRUNK_API_KEY
+            </Typography.Paragraph>
+            <Typography.Paragraph className="mt-5!">
+              API Base URL:
+            </Typography.Paragraph>
+            <Typography.Link href={apiUrl} target="_blank">
+              {`${window.location.origin}/api/v1`}
+            </Typography.Link>
+            .
+            <Collapse className="mt-6!" items={items} />
+          </Typography>
+        </div>
+      </div>
+    </div>
   );
 }

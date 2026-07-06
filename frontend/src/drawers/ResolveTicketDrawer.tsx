@@ -1,10 +1,5 @@
-/**
- * Implement the [[ResolveTicketDrawer]] component
- * @packageDocumentation
- */
-
-import { App, Button, Divider, Drawer, Form, Input, Radio } from 'antd';
 import React from 'react';
+import { toast } from 'sonner';
 import { useHistory } from 'react-router-dom';
 import TicketDetails, { EntityDetails } from '@/components/TicketDetails';
 import {
@@ -14,46 +9,25 @@ import {
 } from '@/interfaces/tickets';
 import { resolveTicket, sendTicketEmail } from '@/api/tickets';
 import { addRoleToUser } from '@/api/users';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 
-/**
- * Props for the [[ResolveTicketModal]] component
- * @interface
- */
 interface Props {
-  /**
-   * Whether the drawer is visible
-   */
   open: boolean;
-
-  /**
-   * The ticket information
-   * @property
-   */
   ticketInfo: TicketInfo;
-
-  /**
-   * Entity position information. Null if no entity is associated with the ticket
-   * @property
-   */
   entityPositionInfo: EntityPositionInfo | null;
-
-  /**
-   * The text fields related to the help desk
-   * @property
-   */
   helpDeskText: Record<string, any>;
-
-  /**
-   * Callback for when the drawer is closed
-   * @property
-   */
   onClose: () => void;
 }
 
-/**
- * A modal for resolving a ticket
- * @component
- */
 const ResolveTicketDrawer: React.FC<Props> = ({
   open,
   ticketInfo,
@@ -61,59 +35,38 @@ const ResolveTicketDrawer: React.FC<Props> = ({
   helpDeskText,
   onClose,
 }) => {
-  /**
-   * State for the [[ResolveTicketDrawer]] component
-   *
-   * submitting: Whether the form submission is in progress
-   * form: The form instance
-   */
   const [submitting, setSubmitting] = React.useState<boolean>(false);
-  const [form] = Form.useForm();
+  const [adminReview, setAdminReview] = React.useState('');
+  const [isRoleGranted, setIsRoleGranted] = React.useState(false);
   const history = useHistory();
-  const { message } = App.useApp();
 
-  /**
-   * Resolve the ticket
-   * @method
-   *
-   * @param values - The values from the form
-   */
   const onResolveTicket = async (values: ResolveTicketInfo) => {
     setSubmitting(true);
     const response = await resolveTicket(ticketInfo._id, values);
     const data = await response.json();
 
     if (response.ok) {
-      message.success(data.message || 'Success', 2);
+      toast.success(data.message || 'Success');
       setSubmitting(false);
       history.push('/tickets');
     } else {
-      message.error(data.message || 'Error', 2);
+      toast.error(data.message || 'Error');
       setSubmitting(false);
     }
   };
 
-  /**
-   * Grant a role to an entity
-   *
-   * @param entity The entity to grant the role to
-   * @param role The role to grant
-   * @param comment The comment to add to the grant
-   */
   const grantRole = async (entity: string, role: string, comment?: string) => {
     await addRoleToUser(entity, role, comment);
   };
 
-  /**
-   * Handle the form submission when resolving; resolve the ticket, grant the role if necessary, and send the email
-   * @method
-   *
-   * @param values - The values from the form
-   */
-  const handleFormSubmit = async (values: ResolveTicketInfo) => {
+  const handleFormSubmit = async () => {
+    const values: ResolveTicketInfo = {
+      admin_review: adminReview,
+      is_role_granted: isRoleGranted,
+    };
+
     await onResolveTicket(values);
 
-    // Grant the role if it was approved
     if (values.is_role_granted && ticketInfo?.entity) {
       await grantRole(
         ticketInfo.entity,
@@ -126,37 +79,49 @@ const ResolveTicketDrawer: React.FC<Props> = ({
   };
 
   return (
-    <Drawer title="Resolve Ticket" open={open} width={720} onClose={onClose}>
-      <TicketDetails helpDeskText={helpDeskText} ticketInfo={ticketInfo} />
-      {entityPositionInfo && (
-        <EntityDetails entityPositionInfo={entityPositionInfo} />
-      )}
-      <Divider />
-      <Form
-        form={form}
-        layout="vertical"
-        initialValues={{ admin_review: '', is_role_granted: false }}
-        onFinish={handleFormSubmit}
-      >
-        <Form.Item label="Comment" name="admin_review">
-          <Input.TextArea rows={4} placeholder="Enter a comment" />
-        </Form.Item>
-        {(ticketInfo.reason === 'whitelisted' ||
-          ticketInfo.reason === 'power_user') && (
-          <Form.Item label="Decision" name="is_role_granted">
-            <Radio.Group optionType="button" buttonStyle="solid">
-              <Radio.Button value>Approve</Radio.Button>
-              <Radio.Button value={false}>Deny</Radio.Button>
-            </Radio.Group>
-          </Form.Item>
-        )}
-        <Form.Item>
-          <Button type="primary" htmlType="submit" loading={submitting}>
-            Resolve
+    <Sheet open={open} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent className="w-full sm:max-w-[720px]">
+        <SheetHeader>
+          <SheetTitle>Resolve Ticket</SheetTitle>
+        </SheetHeader>
+        <div className="mt-6 space-y-6">
+          <TicketDetails helpDeskText={helpDeskText} ticketInfo={ticketInfo} />
+          {entityPositionInfo && (
+            <EntityDetails entityPositionInfo={entityPositionInfo} />
+          )}
+          <hr className="border-border" />
+          <div className="space-y-2">
+            <Label htmlFor="resolve-comment">Comment</Label>
+            <Textarea
+              id="resolve-comment"
+              rows={4}
+              placeholder="Enter a comment"
+              value={adminReview}
+              onChange={(e) => setAdminReview(e.target.value)}
+            />
+          </div>
+          {(ticketInfo.reason === 'whitelisted' ||
+            ticketInfo.reason === 'power_user') && (
+            <div className="space-y-2">
+              <Label>Decision</Label>
+              <RadioGroup
+                value={String(isRoleGranted)}
+                onValueChange={(val) => setIsRoleGranted(val === 'true')}
+                className="flex gap-2"
+              >
+                <RadioGroupItem value="true" id="resolve-approve" />
+                <Label htmlFor="resolve-approve">Approve</Label>
+                <RadioGroupItem value="false" id="resolve-deny" />
+                <Label htmlFor="resolve-deny">Deny</Label>
+              </RadioGroup>
+            </div>
+          )}
+          <Button onClick={handleFormSubmit} disabled={submitting}>
+            {submitting ? 'Resolving...' : 'Resolve'}
           </Button>
-        </Form.Item>
-      </Form>
-    </Drawer>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 };
 

@@ -28,6 +28,7 @@ services:
     volumes:
       - ./development.env:/usr/shrunk/frontend/.env
       - ./frontend:/usr/shrunk/frontend
+      - /usr/shrunk/frontend/node_modules
     networks:
       - proxy-net
 

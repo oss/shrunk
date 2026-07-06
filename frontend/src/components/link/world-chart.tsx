@@ -1,5 +1,11 @@
 import React, { useState } from 'react';
-import { Select, Row, Col, Flex } from 'antd';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import HighchartsMapModule from 'highcharts/modules/map';
@@ -53,23 +59,22 @@ const GeoipChart: React.FC<{ data?: GeoipStats }> = (props) => {
   }
 
   return (
-    <Row gutter={[16, 16]}>
-      <Col span={24}>
-        <Flex justify="center">
-          <Select
-            defaultValue={StatMap.UnitedStates}
-            className="tw-w-36"
-            onChange={(value: StatMap) => {
-              setMapType(value);
-            }}
-            options={[
-              { value: StatMap.UnitedStates, label: 'United States' },
-              { value: StatMap.World, label: 'World' },
-            ]}
-          />
-        </Flex>
-      </Col>
-      <Col span={24}>
+    <div className="space-y-4">
+      <div className="flex justify-center">
+        <Select
+          defaultValue={StatMap.UnitedStates}
+          onValueChange={(value: StatMap) => setMapType(value)}
+        >
+          <SelectTrigger className="w-36">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={StatMap.UnitedStates}>United States</SelectItem>
+            <SelectItem value={StatMap.World}>World</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div>
         {mapType === StatMap.UnitedStates && (
           <VisitsMap
             join="postal-code"
@@ -80,8 +85,8 @@ const GeoipChart: React.FC<{ data?: GeoipStats }> = (props) => {
         {mapType === StatMap.World && (
           <VisitsMap join="iso-a2" map={worldData} data={props.data.world} />
         )}
-      </Col>
-    </Row>
+      </div>
+    </div>
   );
 };
 

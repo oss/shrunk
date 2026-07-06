@@ -1,20 +1,6 @@
-/**
- * Implement the [[Ticket]] component
- * @packageDocumentation
- */
-
-import {
-  App,
-  Button,
-  Card,
-  Col,
-  Popconfirm,
-  Row,
-  Space,
-  Typography,
-} from 'antd';
 import { CircleCheckIcon, CircleXIcon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { useHistory, useLocation } from 'react-router-dom';
 import {
   closeTicket,
@@ -25,39 +11,26 @@ import {
 import TicketDetails, { EntityDetails } from '@/components/TicketDetails';
 import ResolveTicketDrawer from '@/drawers/ResolveTicketDrawer';
 import { EntityPositionInfo, TicketInfo } from '@/interfaces/tickets';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
-/**
- * Props for the [[Ticket]] component
- * @interface
- */
 interface Props {
-  /**
-   * The ticket ID
-   * @property
-   */
   ticketID: string;
-
-  /**
-   * A set of the user's privileges.
-   * @property
-   */
   userPrivileges: Set<string>;
 }
 
-/**
- * Component for the ticket page
- */
 const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
-  /**
-   * State for the [[Ticket]] component
-   *
-   * ticketInfo: The ticket information
-   * entityPositionInfo: The entity position information
-   * helpDeskText: The text fields related to the help desk
-   * loading: Whether the component is loading
-   * closing: Whether the ticket is closing
-   * isResolveDrawerOpen: Whether the ResolveTicketModal is open
-   */
   const [ticketInfo, setTicketInfo] = useState<TicketInfo | null>(null);
   const [entityPositionInfo, setEntityPositionInfo] =
     useState<EntityPositionInfo | null>(null);
@@ -70,51 +43,35 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
     useState<boolean>(false);
 
   const history = useHistory();
-  const { message } = App.useApp();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const mode = queryParams.get('mode');
 
-  /**
-   * Get the entity position information
-   * @method
-   *
-   * @param entity - The entity to get the position for
-   */
   const onGetEntityPosition = async (entity: string) => {
     const data = await getEntityPosition(entity);
     setEntityPositionInfo(data);
   };
 
-  /**
-   * Get the ticket information
-   * @method
-   */
   const onGetTicket = async () => {
     const data = await getTicket(ticketID);
     setTicketInfo(data);
 
-    // Get the position information of the ticket's entity
     if (userPrivileges.has('admin') && data.entity) {
       await onGetEntityPosition(data.entity);
     }
   };
 
-  /**
-   * Close the ticket
-   * @method
-   */
   const onCloseTicket = async () => {
     setClosing(true);
     const response = await closeTicket(ticketID);
     const data = await response.json();
 
     if (response.ok) {
-      message.success(data.message || 'Success', 2);
+      toast.success(data.message || 'Success');
       setClosing(false);
       history.push('/tickets');
     } else {
-      message.error(data.message || 'Error', 2);
+      toast.error(data.message || 'Error');
       setClosing(false);
     }
   };
@@ -126,16 +83,12 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
 
   useEffect(() => {
     const initComponent = async () => {
-      // Open the resolve modal if the mode is 'resolve'
       switch (mode) {
         case 'resolve':
           setIsResolveDrawerOpen(true);
           break;
-        default:
-          break;
       }
 
-      // Perform fetches
       setLoading(true);
       const fetchPromises = [onGetHelpDeskText(), onGetTicket()];
       await Promise.all(fetchPromises);
@@ -160,74 +113,90 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
           />
         )}
 
-      <Row gutter={[16, 16]}>
-        <Col span={24}>
-          <Row justify="space-between" align="middle">
-            <Col>
-              <Typography.Title>Ticket {ticketID}</Typography.Title>
-            </Col>
-            <Col>
-              <Space>
-                {userPrivileges.has('admin') && (
-                  <Button
-                    icon={<CircleCheckIcon />}
-                    type="primary"
-                    onClick={() => setIsResolveDrawerOpen(true)}
-                    disabled={ticketInfo?.status !== 'open'}
-                  >
-                    Resolve
-                  </Button>
-                )}
-                <Popconfirm
-                  title="Are you sure you want to close this ticket?"
-                  onConfirm={onCloseTicket}
-                  okText="Yes"
-                  cancelText="No"
-                  okButtonProps={{ danger: true }}
-                >
-                  <Button
-                    icon={<CircleXIcon />}
-                    danger
-                    disabled={ticketInfo?.status !== 'open'}
-                    loading={closing}
-                  >
-                    Close
-                  </Button>
-                </Popconfirm>
-              </Space>
-            </Col>
-          </Row>
-        </Col>
-      </Row>
-      <Row gutter={[16, 16]}>
-        <Col span={userPrivileges.has('admin') && ticketInfo?.entity ? 12 : 24}>
-          <Card loading={loading} title="Ticket Details">
-            {ticketInfo && helpDeskText ? (
-              <TicketDetails
-                helpDeskText={helpDeskText}
-                ticketInfo={ticketInfo}
-              />
-            ) : (
-              <Typography.Text italic>
-                Failed to load ticket details
-              </Typography.Text>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h1 className="app-page-heading">Ticket {ticketID}</h1>
+          <div className="flex gap-2">
+            {userPrivileges.has('admin') && (
+              <Button
+                onClick={() => setIsResolveDrawerOpen(true)}
+                disabled={ticketInfo?.status !== 'open'}
+              >
+                <CircleCheckIcon />
+                Resolve
+              </Button>
             )}
-          </Card>
-        </Col>
-        <Col span={12}>
-          {userPrivileges.has('admin') && ticketInfo?.entity && (
-            <Card loading={loading} title="Associated NetID Details">
-              {entityPositionInfo ? (
-                <EntityDetails entityPositionInfo={entityPositionInfo} />
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  disabled={ticketInfo?.status !== 'open'}
+                >
+                  <CircleXIcon />
+                  {closing ? 'Closing...' : 'Close'}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    Are you sure you want to close this ticket?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>No</AlertDialogCancel>
+                  <AlertDialogAction onClick={onCloseTicket}>
+                    Yes
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Ticket Details</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="space-y-2">
+                  <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+                  <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
+                </div>
+              ) : ticketInfo && helpDeskText ? (
+                <TicketDetails
+                  helpDeskText={helpDeskText}
+                  ticketInfo={ticketInfo}
+                />
               ) : (
-                <Typography.Text>
-                  Failed to load associated NetID position details
-                </Typography.Text>
+                <p className="text-muted-foreground italic">
+                  Failed to load ticket details
+                </p>
               )}
+            </CardContent>
+          </Card>
+          {userPrivileges.has('admin') && ticketInfo?.entity && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Associated NetID Details</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {entityPositionInfo ? (
+                  <EntityDetails entityPositionInfo={entityPositionInfo} />
+                ) : (
+                  <p className="text-muted-foreground">
+                    Failed to load associated NetID position details
+                  </p>
+                )}
+              </CardContent>
             </Card>
           )}
-        </Col>
-      </Row>
+        </div>
+      </div>
     </>
   );
 };

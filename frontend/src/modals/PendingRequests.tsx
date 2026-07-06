@@ -2,10 +2,17 @@
 
 // TODO: Scheduled for deletion. See: https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/277
 
-import { Button, Col, Modal, Row } from 'antd';
 import dayjs from 'dayjs';
 import { CheckIcon, XIcon } from 'lucide-react';
 import React from 'react';
+
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 /**
  * Data describing a pending access request
@@ -55,37 +62,43 @@ const PendingRequestRow: React.FC<{
 }> = (props) => {
   const { request } = props;
   return (
-    <Row className={props.singletonRow ? '' : 'primary-row'}>
-      <Col span={20}>
-        <Row>
-          <Col>
-            <span className="tw-font-bold">{request.requesting_netid}</span> has
-            requested access to edit &ldquo;{request.title}&rdquo;
-          </Col>
-        </Row>
-        <Row>
-          <Col>
-            <span className="font-variant-caps uppercase text-sm text-gray-500">
-              Requested at{' '}
-              {dayjs(request.request_time).format('MMMM D, YYYY h:mm a')}
-            </span>
-          </Col>
-        </Row>
-      </Col>
-      <Col span={4} className="btn-col">
+    <div
+      className={
+        props.singletonRow
+          ? 'flex items-start justify-between gap-4 py-2'
+          : 'flex items-start justify-between gap-4 border-b py-4 last:border-b-0'
+      }
+    >
+      <div className="space-y-1">
+        <p>
+          <span className="font-bold">{request.requesting_netid}</span> has
+          requested access to edit &ldquo;{request.title}&rdquo;
+        </p>
+        <p className="text-sm text-muted-foreground uppercase">
+          Requested at{' '}
+          {dayjs(request.request_time).format('MMMM D, YYYY h:mm a')}
+        </p>
+      </div>
+      <div className="flex shrink-0 items-center gap-1">
         <Button
-          type="text"
-          icon={<CheckIcon />}
+          aria-label="Accept request"
+          size="icon"
+          variant="ghost"
           onClick={async (_ev) => props.onAccept(request.request_token)}
-        />
+        >
+          <CheckIcon />
+        </Button>
         <Button
-          danger
-          type="text"
-          icon={<XIcon />}
+          aria-label="Deny request"
+          size="icon"
+          variant="ghost"
+          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
           onClick={async (_ev) => props.onDeny(request.request_token)}
-        />
-      </Col>
-    </Row>
+        >
+          <XIcon />
+        </Button>
+      </div>
+    </div>
   );
 };
 
@@ -173,22 +186,29 @@ export class PendingRequests extends React.Component<Props, State> {
     }
 
     return (
-      <Modal
+      <Dialog
         open={!this.state.hidden && this.state.pendingRequests.length > 0}
-        title="You have pending access requests"
-        footer={null}
-        onCancel={() => this.setState({ hidden: true })}
+        onOpenChange={(open) => {
+          if (!open) {
+            this.setState({ hidden: true });
+          }
+        }}
       >
-        {this.state.pendingRequests.map((request) => (
-          <PendingRequestRow
-            singletonRow={this.state.pendingRequests!.length === 1}
-            key={request.request_token}
-            request={request}
-            onAccept={this.acceptRequest}
-            onDeny={this.denyRequest}
-          />
-        ))}
-      </Modal>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>You have pending access requests</DialogTitle>
+          </DialogHeader>
+          {this.state.pendingRequests.map((request) => (
+            <PendingRequestRow
+              singletonRow={this.state.pendingRequests!.length === 1}
+              key={request.request_token}
+              request={request}
+              onAccept={this.acceptRequest}
+              onDeny={this.denyRequest}
+            />
+          ))}
+        </DialogContent>
+      </Dialog>
     );
   }
 }

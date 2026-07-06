@@ -1,32 +1,12 @@
-/**
- * Implements the link stats view
- * @packageDocumentation
- */
-
-import {
-  Button,
-  Card,
-  Col,
-  Row,
-  Space,
-  Statistic,
-  Tag,
-  Typography,
-  message,
-  Tooltip,
-  Select,
-  Descriptions,
-  QRCode,
-  QRCodeProps,
-  Flex,
-} from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
+import { QRCodeCanvas } from 'qrcode.react';
 import {
   CloudDownloadIcon,
   CopyIcon,
   Download,
   PencilIcon,
   UsersIcon,
+  Loader2Icon,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
@@ -64,12 +44,25 @@ import ErrorPage from '@/pages/ErrorPage';
 import VisitsChart from '@/components/link/visits-chart';
 import GeoipChart from '@/components/link/world-chart';
 import ShrunkPieChart, { processData } from '@/components/pie-chart';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { toast } from 'sonner';
+import { ButtonGroup } from '@/components/ui/button-group';
 
 export interface Props {
-  /**
-   * The ID of the link
-   * @property
-   */
   id: string;
 
   netid: string;
@@ -120,8 +113,9 @@ export function Stats(props: Props): React.ReactElement {
   const [mayEdit, setMayEdit] = useState<boolean | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [statsKey, setStatsKey] = useState<StatChart>(StatChart.Visits);
-  const [qrcodeErrorLevel, setQrcodeErrorLevel] =
-    useState<QRCodeProps['errorLevel']>('H');
+  const [qrcodeErrorLevel, setQrcodeErrorLevel] = useState<
+    'L' | 'M' | 'Q' | 'H'
+  >('H');
 
   const [editModalVisible, setEditModalVisible] = useState<boolean>(false);
   const [collabModalVisible, setCollabModalVisible] = useState<boolean>(false);
@@ -132,6 +126,7 @@ export function Stats(props: Props): React.ReactElement {
   const [currentSource, setCurrentSource] = useState<string | undefined>(
     undefined,
   );
+  const [isExporting, setIsExporting] = useState(false);
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const mode = queryParams.get('mode');
@@ -198,8 +193,7 @@ export function Stats(props: Props): React.ReactElement {
   }
 
   const onVisitStateRangeChanged = async (
-    dates: null | (Dayjs | null)[],
-    _dateStrings: string[],
+    dates: [Dayjs | null, Dayjs | null] | null,
   ): Promise<void> => {
     setVisitStats(
       await getLinkVisitsStats(
@@ -238,17 +232,12 @@ export function Stats(props: Props): React.ReactElement {
     );
   }
 
-  /**
-   * Executes API requests to update a link
-   * @param values The form values from the edit link form
-   */
   async function doEditLink(values: EditLinkValues): Promise<void> {
     const oldLinkInfo = linkInfo;
     if (oldLinkInfo === null) {
       throw new Error('oldLinkInfo should not be null');
     }
 
-    // Create the request to edit title, long_url, and expiration_time
     const patchReq: Partial<EditLinkValues> = {};
     if (values.title !== oldLinkInfo.title) {
       patchReq.title = values.title;
@@ -274,28 +263,28 @@ export function Stats(props: Props): React.ReactElement {
 
     const patchRequest = await editLink(props.id, patchReq);
 
-    // //get the status and the json message
     const patchRequestStatus = patchRequest.status;
 
     if (patchRequestStatus !== 204) {
-      message.error('There was an error editing the link.', 4);
+      toast.error('There was an error editing the link.');
     } else {
       await updateLinkInfo();
-      message.success('Link edited successfully', 4);
+      toast.success('Link edited successfully');
       await updateStats();
     }
   }
 
-  /**
-   * Prompt the user to download a CSV file of visits to the selected alias
-   * @method
-   */
   const downloadCsv = async (): Promise<void> => {
     if (linkInfo === null) {
       return;
     }
 
-    await downloadVisits(props.id);
+    setIsExporting(true);
+    try {
+      await downloadVisits(props.id);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const downloadCanvasQRCode = () => {
@@ -360,11 +349,11 @@ export function Stats(props: Props): React.ReactElement {
       },
     })
       .then(() => {
-        message.success('Ownership transferred successfully');
+        toast.success('Ownership transferred successfully');
         updateLinkInfo();
       })
       .catch(() => {
-        message.error('Failed to transfer ownership');
+        toast.error('Failed to transfer ownership');
       });
   };
 
@@ -373,9 +362,6 @@ export function Stats(props: Props): React.ReactElement {
     entity: Collaborator,
     value: string,
   ) => {
-    // Remove viewer if they're an editor
-    // Search "# SHARING_ACL_REFACTOR" for the following comment
-
     if (activeTab === 'org' && value === 'owner') {
       transferOwnershipToOrg(activeTab, entity);
       return;
@@ -428,79 +414,81 @@ export function Stats(props: Props): React.ReactElement {
   const isTrackingPixel = linkInfo?.is_tracking_pixel_link;
 
   return (
-    <>
-      <Row justify="space-between" align="middle">
-        <Col span={16}>
-          <Row>
-            <Space style={{ marginBottom: 19, marginTop: 19 }}>
-              <Typography.Title style={{ margin: 0 }} ellipsis>
-                {!linkInfo?.is_tracking_pixel_link
-                  ? getLinkFromAlias(linkInfo?.alias || '', false)
-                  : linkInfo?.alias}
-              </Typography.Title>
+    <TooltipProvider>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="mt-[19px] mb-[19px] flex items-center gap-2">
+            <h1 className="m-0 truncate text-2xl font-bold">
+              {!linkInfo?.is_tracking_pixel_link
+                ? getLinkFromAlias(linkInfo?.alias || '', false)
+                : linkInfo?.alias}
+            </h1>
+            <Badge variant="destructive">
+              {linkInfo?.is_tracking_pixel_link ? 'Tracking Pixel' : 'Link'}
+            </Badge>
+          </div>
+        </div>
 
-              <Tag color="red">
-                {linkInfo?.is_tracking_pixel_link ? 'Tracking Pixel' : 'Link'}
-              </Tag>
-            </Space>
-          </Row>
-        </Col>
-
-        <Col>
-          <Space>
-            <Tooltip title="Copy link to clipboard">
-              <Button
-                icon={<CopyIcon />}
-                onClick={() =>
-                  navigator.clipboard.writeText(
-                    linkInfo
-                      ? getRedirectFromAlias(
-                          linkInfo.alias,
-                          linkInfo.is_tracking_pixel_link,
-                        )
-                      : '',
-                  )
-                }
-              >
-                Copy
-              </Button>
+        <div className="flex max-w-full gap-2 overflow-x-auto">
+          <ButtonGroup className="shrink-0">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    navigator.clipboard.writeText(
+                      linkInfo
+                        ? getRedirectFromAlias(
+                            linkInfo.alias,
+                            linkInfo.is_tracking_pixel_link,
+                          )
+                        : '',
+                    )
+                  }
+                >
+                  <CopyIcon />
+                  Copy
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Copy link to clipboard</TooltipContent>
             </Tooltip>
             {mayEdit && (
               <>
                 <Button
-                  icon={<PencilIcon />}
+                  variant="outline"
                   onClick={() => {
                     setEditModalVisible(true);
                   }}
                 >
+                  <PencilIcon />
                   Edit
                 </Button>
                 <Button
-                  icon={<UsersIcon />}
+                  variant="outline"
                   onClick={() => {
                     setCollabModalVisible(true);
                   }}
                 >
+                  <UsersIcon />
                   Collaborate
                 </Button>
               </>
             )}
-          </Space>
-        </Col>
-      </Row>
+          </ButtonGroup>
+        </div>
+      </div>
 
-      <Row justify="space-around" gutter={[16, 16]}>
-        <Col span={24}>
-          <Card title="Details">
-            <Row gutter={[16, 16]}>
+      <div className="mt-4 flex flex-wrap gap-4">
+        <div className="w-full">
+          <div className="rounded-lg border border-border p-6">
+            <div className="flex flex-col gap-4 lg:flex-row">
               {!linkInfo?.is_tracking_pixel_link && (
-                <Col>
-                  <Flex vertical gap="middle" align="center">
-                    <QRCode
-                      id="qrcode"
-                      errorLevel={qrcodeErrorLevel}
-                      size={size}
-                      iconSize={size / 4}
+                <div className="flex shrink-0 flex-col items-center gap-4">
+                  <div
+                    id="qrcode"
+                    className="rounded-md border border-border bg-background p-3"
+                  >
+                    <QRCodeCanvas
                       value={
                         linkInfo
                           ? getRedirectFromAlias(
@@ -509,178 +497,209 @@ export function Stats(props: Props): React.ReactElement {
                             )
                           : ''
                       }
+                      size={size}
+                      level={qrcodeErrorLevel}
                     />
-                    <Space>
+                  </div>
+
+                  <div className="flex w-full gap-2">
+                    <ButtonGroup className="w-full">
                       <Select
-                        className="tw-w-24"
-                        defaultValue={qrcodeErrorLevel}
-                        options={[
-                          { value: 'L', label: 'Low' },
-                          { value: 'M', label: 'Medium' },
-                          { value: 'Q', label: 'Quartile' },
-                          { value: 'H', label: 'High' },
-                        ]}
-                        onChange={(value: QRCodeProps['errorLevel']) => {
+                        value={qrcodeErrorLevel}
+                        onValueChange={(value: 'L' | 'M' | 'Q' | 'H') => {
                           setQrcodeErrorLevel(value);
                         }}
-                      />
+                      >
+                        <SelectTrigger className="h-8 min-w-24 flex-1 bg-background">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="L">Low</SelectItem>
+                          <SelectItem value="M">Medium</SelectItem>
+                          <SelectItem value="Q">Quartile</SelectItem>
+                          <SelectItem value="H">High</SelectItem>
+                        </SelectContent>
+                      </Select>
+
                       <Button
-                        icon={<Download />}
+                        variant="outline"
+                        size="sm"
+                        className="h-8 flex-1"
                         onClick={downloadCanvasQRCode}
                       >
+                        <Download className="mr-2 h-4 w-4" />
                         Download
                       </Button>
-                    </Space>
-                  </Flex>
-                </Col>
+                    </ButtonGroup>
+                  </div>
+                </div>
               )}
-              <Col flex="auto">
-                <Row gutter={[16, 16]} justify="space-between">
-                  <Col span={24}>
-                    <Descriptions
-                      bordered
-                      items={[
-                        ...(isTrackingPixel
-                          ? []
-                          : [
-                              {
-                                key: 'original_url',
-                                label: 'Original URL',
-                                children: linkInfo?.long_url,
-                                span: 3,
-                              },
-                            ]),
-                        {
-                          key: 'owner',
-                          label: 'Owner',
-                          children:
-                            linkInfo?.owner.type === 'org' ? (
-                              <RouterLink
-                                to={`/app/orgs/${linkInfo.owner._id}`}
-                              >
-                                {linkInfo.owner.org_name}
-                              </RouterLink>
-                            ) : (
-                              linkInfo?.owner._id
-                            ),
-                          span: isTrackingPixel ? 1 : 2,
-                        },
-                        {
-                          key: 'date_created',
-                          label: 'Date Created',
-                          children: dateCreatedText,
-                          span: 1,
-                        },
-                        ...(isTrackingPixel
-                          ? []
-                          : [
-                              {
-                                key: 'date_expires',
-                                label: 'Date Expires',
-                                children: dateExpiresText,
-                                span: 1,
-                              },
-                            ]),
-                      ]}
-                    />
-                  </Col>
-                </Row>
-              </Col>
-            </Row>
-          </Card>
-        </Col>
-        <Col span={24}>
-          <Row justify="start" style={{ marginTop: 16 }}>
+
+              <div className="min-w-0 flex-1 self-start overflow-hidden rounded-md border border-border">
+                {!isTrackingPixel && (
+                  <div className="grid grid-cols-1 border-b border-border sm:grid-cols-[180px_minmax(0,1fr)]">
+                    <div className="border-b border-border bg-muted/50 px-4 py-3 text-sm font-medium text-muted-foreground sm:border-r sm:border-b-0 sm:px-6 sm:py-4">
+                      Original URL
+                    </div>
+                    <div className="px-4 py-3 text-sm break-all sm:px-6 sm:py-4">
+                      {linkInfo?.long_url}
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 border-b border-border sm:grid-cols-[180px_minmax(0,1fr)]">
+                  <div className="border-b border-border bg-muted/50 px-4 py-3 text-sm font-medium text-muted-foreground sm:border-r sm:border-b-0 sm:px-6 sm:py-4">
+                    Owner
+                  </div>
+
+                  <div className="px-4 py-3 text-sm break-words sm:px-6 sm:py-4">
+                    {linkInfo?.owner.type === 'org' ? (
+                      <RouterLink
+                        to={`/app/orgs/${linkInfo.owner._id}`}
+                        className="underline underline-offset-4"
+                      >
+                        {linkInfo.owner.org_name}
+                      </RouterLink>
+                    ) : (
+                      linkInfo?.owner._id
+                    )}
+                  </div>
+                </div>
+
+                <div
+                  className={
+                    isTrackingPixel
+                      ? 'grid grid-cols-1 border-b border-border sm:grid-cols-[180px_minmax(0,1fr)]'
+                      : 'grid grid-cols-1 border-b border-border sm:grid-cols-[180px_minmax(0,1fr)] lg:grid-cols-[180px_minmax(0,1fr)_180px_minmax(0,1fr)]'
+                  }
+                >
+                  <div className="border-b border-border bg-muted/50 px-4 py-3 text-sm font-medium text-muted-foreground sm:border-r sm:border-b-0 sm:px-6 sm:py-4">
+                    Date Created
+                  </div>
+                  <div className="border-b border-border px-4 py-3 text-sm sm:border-b-0 sm:px-6 sm:py-4 lg:border-r">
+                    {dateCreatedText}
+                  </div>
+
+                  {!isTrackingPixel && (
+                    <>
+                      <div className="border-b border-border bg-muted/50 px-4 py-3 text-sm font-medium text-muted-foreground sm:border-r sm:border-b-0 sm:px-6 sm:py-4">
+                        Date Expires
+                      </div>
+                      <div className="px-4 py-3 text-sm sm:px-6 sm:py-4">
+                        {dateExpiresText}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="w-full">
+          <div className="flex justify-start">
             <Select
               value={currentSource ?? 'All'}
-              className="tw-w-40"
-              onChange={(value) =>
+              onValueChange={(value) =>
                 updateStats(value === 'All' ? undefined : value)
               }
-              options={[
-                { value: 'All', label: 'All sources' },
-                { value: 'qr', label: 'QR code' },
-              ]}
-            />
-          </Row>
-        </Col>
-        {overallStats === null || linkInfo === null ? (
-          <></>
-        ) : (
-          <>
-            <Col span={6}>
-              <Card>
-                <Statistic
-                  title="Total Clicks"
-                  value={overallStats.total_visits}
-                />
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card>
-                <Statistic
-                  title="Unique Clicks"
-                  value={overallStats.unique_visits}
-                />
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card>
-                <Statistic
-                  title="Avg. Clicks/Day"
-                  value={averageClicks()}
-                  precision={2}
-                />
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card>
-                <Statistic
-                  title="Most Popular Referrer"
-                  value={topReferrer !== null ? topReferrer : 'None'}
-                />
-              </Card>
-            </Col>
-          </>
+            >
+              <SelectTrigger className="w-40 bg-background">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All sources</SelectItem>
+                <SelectItem value="qr">QR code</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {overallStats === null || linkInfo === null ? null : (
+          <div className="grid w-full grid-cols-2 gap-4 md:grid-cols-4">
+            <div className="rounded-lg border border-border p-4">
+              <div className="text-sm text-muted-foreground">Total Clicks</div>
+              <div className="mt-1 text-2xl font-bold">
+                {overallStats.total_visits}
+              </div>
+            </div>
+            <div className="rounded-lg border border-border p-4">
+              <div className="text-sm text-muted-foreground">Unique Clicks</div>
+              <div className="mt-1 text-2xl font-bold">
+                {overallStats.unique_visits}
+              </div>
+            </div>
+            <div className="rounded-lg border border-border p-4">
+              <div className="text-sm text-muted-foreground">
+                Avg. Clicks/Day
+              </div>
+              <div className="mt-1 text-2xl font-bold">
+                {averageClicks().toFixed(2)}
+              </div>
+            </div>
+            <div className="rounded-lg border border-border p-4">
+              <div className="text-sm text-muted-foreground">
+                Most Popular Referrer
+              </div>
+              <div className="mt-1 text-2xl font-bold">
+                {topReferrer !== null ? topReferrer : 'None'}
+              </div>
+            </div>
+          </div>
         )}
-        <Col span={24}>
-          <Card
-            title="Statistics"
-            extra={
-              <Space>
-                <Select
-                  defaultValue={StatChart.Visits}
-                  className="tw-w-28"
-                  onChange={(value: StatChart) => {
-                    setStatsKey(value);
-                  }}
-                  options={[
-                    { value: StatChart.Visits, label: 'Visits' },
-                    { value: StatChart.GeoIP, label: 'Location' },
-                    { value: StatChart.Browser, label: 'Browser' },
-                    { value: StatChart.Platform, label: 'Platform' },
-                    {
-                      value: StatChart.Referral,
-                      label: 'Referral',
-                    },
-                  ]}
-                />
-                <Tooltip title="Export data as a CSV">
-                  <Button
-                    icon={<CloudDownloadIcon />}
-                    loading={loading}
-                    onClick={downloadCsv}
+
+        <div className="w-full">
+          <div className="rounded-lg border border-border">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
+              <h3 className="m-0 text-base font-semibold">Statistics</h3>
+              <div className="flex max-w-full items-center gap-2 overflow-x-auto">
+                <ButtonGroup className="shrink-0">
+                  <Select
+                    value={statsKey}
+                    onValueChange={(value: StatChart) => {
+                      setStatsKey(value);
+                    }}
                   >
-                    Export
-                  </Button>
-                </Tooltip>
-              </Space>
-            }
-          >
-            {statTabs[statsKey]}
-          </Card>
-        </Col>
-      </Row>
+                    <SelectTrigger className="w-28 bg-background">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={StatChart.Visits}>Visits</SelectItem>
+                      <SelectItem value={StatChart.GeoIP}>Location</SelectItem>
+                      <SelectItem value={StatChart.Browser}>Browser</SelectItem>
+                      <SelectItem value={StatChart.Platform}>
+                        Platform
+                      </SelectItem>
+                      <SelectItem value={StatChart.Referral}>
+                        Referral
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        disabled={isExporting}
+                        onClick={downloadCsv}
+                      >
+                        {isExporting ? (
+                          <Loader2Icon className="animate-spin" />
+                        ) : (
+                          <CloudDownloadIcon />
+                        )}
+                        Export
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Export data as a CSV</TooltipContent>
+                  </Tooltip>
+                </ButtonGroup>
+              </div>
+            </div>
+            <div className="p-4">{statTabs[statsKey]}</div>
+          </div>
+        </div>
+      </div>
+
       {linkInfo && (
         <>
           <EditLinkDrawer
@@ -718,6 +737,6 @@ export function Stats(props: Props): React.ReactElement {
           />
         </>
       )}
-    </>
+    </TooltipProvider>
   );
 }

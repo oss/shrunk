@@ -1,16 +1,10 @@
-/* eslint-disable tailwindcss/classnames-order */
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  Breadcrumb,
-  Drawer,
-  Flex,
-  Layout,
-  Space,
-  Button,
-  Empty,
-  Typography,
-} from 'antd';
-import { PlusCircleIcon, FilterIcon } from 'lucide-react';
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  FilterIcon,
+  PlusCircleIcon,
+} from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
 import { searchLinks } from '../api/links';
 import { getOrganizations } from '../api/organization';
@@ -20,6 +14,13 @@ import CreateLinkDrawer from '../drawers/CreateLinkDrawer';
 import { Link, SearchQuery, DEFAULT_QUERY } from '../interfaces/link';
 import { Organization } from '../interfaces/organizations';
 import LinkCard from '../components/LinkCard';
+import { Button } from '@/components/ui/button';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 
 interface Props {
   userPrivileges: Set<string>;
@@ -37,14 +38,12 @@ interface Filters {
 export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
   const [userOrgs, setUserOrgs] = useState<Organization[] | null>(null);
   const [linkInfo, setLinkInfo] = useState<Link[] | null>(
-    mockData === undefined ? null : mockData,
+    mockData === undefined ? null : mockData.slice(0, 10),
   );
   const [linksPerPage] = useState<number>(10);
   const [query, setQuery] = useState<SearchQuery>(DEFAULT_QUERY);
   const [totalLinks, setTotalLinks] = useState<number>(mockData?.length ?? 0);
-  const [hasMoreLinks, setHasMoreLinks] = useState<boolean>(false);
-  const [isFetchingMoreLinks, setIsFetchingMoreLinks] =
-    useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const [isCreateModalOpen, setCreateModalOpen] = useState<boolean>(false);
 
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState<boolean>(false);
@@ -57,11 +56,9 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
   });
 
   const contextHeaderRef = useRef<HTMLElement>(null);
-  const loadMoreSentinelRef = useRef<HTMLSpanElement>(null);
-  const nextSkipRef = useRef<number>(mockData?.length ?? 0);
   const queryVersionRef = useRef<number>(0);
-
-  const { Footer, Sider, Content } = Layout;
+  const hasLoadedInitialQueryRef = useRef<boolean>(false);
+  const totalPages = Math.max(1, Math.ceil(totalLinks / linksPerPage));
 
   const doQuery = useCallback(
     async (
@@ -89,7 +86,7 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
         req.end_time = newQuery.end_time.format();
       }
 
-      if (newQuery.owner !== null || newQuery.owner === '') {
+      if (newQuery.owner) {
         req.owner = newQuery.owner;
       }
 
@@ -128,7 +125,6 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
         setFilters({ title: '', alias: '', owner: '', url: '' });
       }
 
-      // only search for new owners if the netid is valid
       if (newQuery.owner && newQuery.owner !== query.owner) {
         try {
           await serverValidateNetId({}, newQuery.owner);
@@ -149,44 +145,74 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
       setLinkInfo(results.results);
       setQuery(newQuery);
       setTotalLinks(results.count);
-      nextSkipRef.current = results.results.length;
-      setHasMoreLinks(results.results.length < results.count);
-      setIsFetchingMoreLinks(false);
+      setCurrentPage(1);
     },
     [demo, query.owner, doQuery, linksPerPage],
   );
 
-  const loadMoreLinks = useCallback(async (): Promise<void> => {
-    if (demo || isFetchingMoreLinks || !hasMoreLinks) {
-      return;
-    }
+  const setPage = useCallback(
+    async (page: number): Promise<void> => {
+      if (demo || page < 1 || page > totalPages || page === currentPage) {
+        if (demo && mockData && page >= 1 && page <= totalPages) {
+          setLinkInfo(
+            mockData.slice((page - 1) * linksPerPage, page * linksPerPage),
+          );
+          setCurrentPage(page);
+        }
 
-    setIsFetchingMoreLinks(true);
-    const requestVersion = queryVersionRef.current;
+        return;
+      }
 
-    try {
-      const results = await doQuery(query, nextSkipRef.current, linksPerPage);
+      const requestVersion = queryVersionRef.current + 1;
+      queryVersionRef.current = requestVersion;
+
+      const results = await doQuery(
+        query,
+        (page - 1) * linksPerPage,
+        linksPerPage,
+      );
 
       if (queryVersionRef.current !== requestVersion) {
         return;
       }
 
-      setLinkInfo((prevLinks) => [...(prevLinks ?? []), ...results.results]);
-      nextSkipRef.current += results.results.length;
+      setLinkInfo(results.results);
       setTotalLinks(results.count);
-      setHasMoreLinks(nextSkipRef.current < results.count);
-    } finally {
-      if (queryVersionRef.current === requestVersion) {
-        setIsFetchingMoreLinks(false);
-      }
+      setCurrentPage(page);
+    },
+    [currentPage, demo, doQuery, linksPerPage, mockData, query, totalPages],
+  );
+
+  useEffect(() => {
+    if (currentPage <= totalPages) {
+      return;
     }
-  }, [demo, isFetchingMoreLinks, hasMoreLinks, doQuery, query, linksPerPage]);
+
+    setCurrentPage(totalPages);
+  }, [currentPage, totalPages]);
 
   const refreshResults = useCallback(async (): Promise<void> => {
-    await setNewQuery(query);
-  }, [query, setNewQuery]);
+    if (demo) {
+      return;
+    }
 
-  // functional component equivalent of componentDidMount
+    const requestVersion = queryVersionRef.current + 1;
+    queryVersionRef.current = requestVersion;
+
+    const results = await doQuery(
+      query,
+      (currentPage - 1) * linksPerPage,
+      linksPerPage,
+    );
+
+    if (queryVersionRef.current !== requestVersion) {
+      return;
+    }
+
+    setLinkInfo(results.results);
+    setTotalLinks(results.count);
+  }, [currentPage, demo, doQuery, linksPerPage, query]);
+
   useEffect(() => {
     const fetchUserOrgs = async (): Promise<void> => {
       if (demo) {
@@ -204,6 +230,11 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
   }, [demo]);
 
   useEffect(() => {
+    if (hasLoadedInitialQueryRef.current) {
+      return;
+    }
+
+    hasLoadedInitialQueryRef.current = true;
     setNewQuery(DEFAULT_QUERY);
   }, [setNewQuery]);
 
@@ -235,139 +266,129 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
     };
   }, []);
 
-  useEffect(() => {
-    const sentinel = loadMoreSentinelRef.current;
-    let observer: IntersectionObserver | null = null;
-
-    if (sentinel && !demo) {
-      const rootMargin = window.matchMedia('(min-width: 1024px)').matches
-        ? '600px 0px'
-        : '250px 0px';
-
-      observer = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting) {
-            loadMoreLinks();
-          }
-        },
-        {
-          root: null,
-          rootMargin,
-          threshold: 0,
-        },
-      );
-
-      observer.observe(sentinel);
-    }
-
-    return () => {
-      observer?.disconnect();
-    };
-  }, [demo, loadMoreLinks]);
-
   return (
-    <>
-      <Layout>
-        <section
-          ref={contextHeaderRef}
-          className="tw-sticky tw-z-30 tw-top-[var(--app-header-height,0px)] tw-bg-white dark:tw-bg-[#1f1f1f]"
-        >
-          <Breadcrumb
-            className="!tw-m-0 tw-py-2"
-            items={[
-              {
-                title: <RouterLink to="/app/dash">Home</RouterLink>,
-              },
-              {
-                title: 'URL Shortener',
-              },
-            ]}
-          />
-          <section className="tw-hidden tw-pb-2 lg:tw-block">
-            <Flex align="center" justify="space-between">
-              <Typography.Title className="!tw-m-0">
-                URL Shortener
-              </Typography.Title>
-              <Button
-                className="!tw-shadow-none"
-                type="primary"
-                icon={<PlusCircleIcon />}
-                onClick={() => setCreateModalOpen(true)}
-              >
-                Create
-              </Button>
-            </Flex>
-          </section>
-          <section className="tw-flex tw-flex-col tw-gap-3 tw-pb-2 lg:tw-hidden">
-            <Typography.Title level={2} className="!tw-m-0">
-              URL Shortener
-            </Typography.Title>
+    <div className="flex min-h-0 bg-background text-foreground lg:h-[calc(100dvh-var(--app-header-height,0px))] lg:flex-col lg:overflow-hidden">
+      <section
+        ref={contextHeaderRef}
+        className="sticky top-[var(--app-header-height,0px)] z-30 shrink-0 bg-background pt-5 lg:static"
+      >
+        <nav className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <RouterLink to="/app/dash" className="hover:text-foreground">
+            Home
+          </RouterLink>
+          <span>/</span>
+          <span className="text-foreground">URL Shortener</span>
+        </nav>
 
-            <Flex justify="space-between" gap="small">
-              <Button
-                type="primary"
-                icon={<FilterIcon />}
-                onClick={() => setMobileFiltersOpen(true)}
-              >
-                Filter
-              </Button>
-              <Button
-                type="primary"
-                icon={<PlusCircleIcon />}
-                onClick={() => setCreateModalOpen(true)}
-              >
-                Create
-              </Button>
-            </Flex>
-          </section>
-        </section>
-        <Content className="tw-pt-4 tw-bg-white dark:tw-bg-[#1f1f1f]">
-          <Layout className="tw-bg-white dark:tw-bg-[#1f1f1f]">
-            <Sider
-              className="tw-mt-[4px] tw-pr-4 tw-hidden lg:tw-block"
-              width={360}
+        <section className="hidden pt-6 pb-4 lg:block">
+          <div className="flex items-center justify-between">
+            <h1 className="m-0 text-4xl leading-none font-bold tracking-normal">
+              URL Shortener
+            </h1>
+            <Button
+              className="h-10 rounded-md px-5 text-base font-semibold shadow-none"
+              onClick={() => setCreateModalOpen(true)}
             >
-              <section className="tw-sticky tw-top-[calc(var(--app-header-height,0px)+var(--dashboard-context-height,0px)+16px)] tw-max-h-[calc(100vh-var(--app-header-height,0px)-var(--dashboard-context-height,0px)-40px)] tw-overflow-auto [scrollbar-color:#8c8c8c_#f2f2f2] dark:[scrollbar-color:#595959_#1f1f1f]">
-                <DashboardSearch
-                  query={query}
-                  filters={filters}
-                  setFilters={setFilters}
-                  setNewQuery={setNewQuery}
-                  userOrgs={userOrgs}
-                  userPrivileges={userPrivileges}
-                />
-              </section>
-            </Sider>
-            <Content className="dark:tw-bg-[#1f1f1f] tw-mt-4 md:tw-mt-0 tw-bg-white">
-              <section className="md:tw-mt-4 lg:tw-mt-0 dark:tw-bg-[#1f1f1f]">
-                {linkInfo === null || linkInfo.length === 0 ? (
-                  <Empty />
-                ) : (
-                  <Space
-                    className="dark:tw-bg-[#1f1f1f]"
-                    orientation="vertical"
+              <PlusCircleIcon />
+              Create
+            </Button>
+          </div>
+        </section>
+
+        <section className="flex flex-col gap-4 pt-6 pb-4 lg:hidden">
+          <h2 className="m-0 text-3xl font-bold">URL Shortener</h2>
+          <div className="flex justify-between gap-2">
+            <Button
+              variant="outline"
+              className="border-border bg-background shadow-none"
+              onClick={() => setMobileFiltersOpen(true)}
+            >
+              <FilterIcon />
+              Filter
+            </Button>
+            <Button
+              className="shadow-none"
+              onClick={() => setCreateModalOpen(true)}
+            >
+              <PlusCircleIcon />
+              Create
+            </Button>
+          </div>
+        </section>
+      </section>
+
+      <div className="flex min-h-0 flex-1 bg-background">
+        <div className="min-h-0 flex-1 bg-background lg:flex lg:gap-5 lg:overflow-hidden">
+          <aside className="hidden min-h-0 pr-4 lg:block lg:w-[390px] lg:shrink-0">
+            <section className="sticky top-0 max-h-full [scrollbar-color:hsl(var(--muted-foreground))_hsl(var(--muted))] overflow-y-auto pr-1">
+              <DashboardSearch
+                query={query}
+                filters={filters}
+                setFilters={setFilters}
+                setNewQuery={setNewQuery}
+                userOrgs={userOrgs}
+                userPrivileges={userPrivileges}
+              />
+            </section>
+          </aside>
+
+          <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
+            <section className="min-h-0 min-w-0 flex-1 [scrollbar-color:hsl(var(--muted-foreground))_hsl(var(--muted))] overflow-y-auto pr-1">
+              {linkInfo === null || linkInfo.length === 0 ? (
+                <div className="block py-8 text-muted-foreground">
+                  <p className="text-lg">No data</p>
+                  <p className="text-sm">No links found</p>
+                </div>
+              ) : (
+                <div className="flex w-full min-w-0 flex-col gap-3">
+                  {linkInfo.map((link: Link) => (
+                    <LinkCard key={link._id || link.alias} linkInfo={link} />
+                  ))}
+                </div>
+              )}
+            </section>
+            {totalLinks > 0 && (
+              <footer className="relative left-1/2 w-screen shrink-0 -translate-x-1/2 bg-background pt-5 pb-10">
+                <div className="flex items-center justify-center gap-5">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Previous page"
+                    className="h-8 w-8 text-muted-foreground hover:bg-transparent hover:text-foreground disabled:opacity-35"
+                    onClick={() => setPage(currentPage - 1)}
+                    disabled={currentPage === 1}
                   >
-                    {linkInfo.map((link: Link) => (
-                      <LinkCard key={link._id || link.alias} linkInfo={link} />
+                    <ChevronLeftIcon className="size-4" />
+                  </Button>
+                  <select
+                    aria-label="Current page"
+                    className="h-9 w-9 appearance-none rounded-md border border-primary bg-background text-center text-sm font-semibold text-primary outline-none"
+                    value={currentPage}
+                    onChange={(e) => setPage(Number(e.target.value))}
+                  >
+                    {Array.from({ length: totalPages }).map((_, i) => (
+                      <option key={i + 1} value={i + 1}>
+                        {i + 1}
+                      </option>
                     ))}
-                  </Space>
-                )}
-                <span ref={loadMoreSentinelRef} className="tw-block tw-h-px" />
-                {isFetchingMoreLinks && (
-                  <Typography.Text className="tw-mt-2 tw-block tw-text-center">
-                    Loading more links...
-                  </Typography.Text>
-                )}
-              </section>
-            </Content>
-          </Layout>
-        </Content>
-        <Footer className="dark:tw-bg-[#1f1f1f] lg:tw-pl-[25%]">
-          <Typography.Text className="tw-block tw-text-center">
-            Loaded {linkInfo?.length ?? 0} of {totalLinks} links
-          </Typography.Text>
-        </Footer>
-      </Layout>
+                  </select>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Next page"
+                    className="h-8 w-8 text-muted-foreground hover:bg-transparent hover:text-foreground disabled:opacity-35"
+                    onClick={() => setPage(currentPage + 1)}
+                    disabled={currentPage >= totalPages}
+                  >
+                    <ChevronRightIcon className="size-4" />
+                  </Button>
+                </div>
+              </footer>
+            )}
+          </main>
+        </div>
+      </div>
+
       <CreateLinkDrawer
         title="Create Link"
         visible={isCreateModalOpen}
@@ -379,21 +400,22 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
         userPrivileges={userPrivileges}
         userOrgs={userOrgs ?? []}
       />
-      <Drawer
-        title="Filters"
-        placement="left"
-        onClose={() => setMobileFiltersOpen(false)}
-        open={mobileFiltersOpen}
-      >
-        <DashboardSearch
-          query={query}
-          filters={filters}
-          setFilters={setFilters}
-          setNewQuery={setNewQuery}
-          userOrgs={userOrgs}
-          userPrivileges={userPrivileges}
-        />
-      </Drawer>
-    </>
+
+      <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+        <SheetContent side="left" className="bg-background">
+          <SheetHeader>
+            <SheetTitle>Filters</SheetTitle>
+          </SheetHeader>
+          <DashboardSearch
+            query={query}
+            filters={filters}
+            setFilters={setFilters}
+            setNewQuery={setNewQuery}
+            userOrgs={userOrgs}
+            userPrivileges={userPrivileges}
+          />
+        </SheetContent>
+      </Sheet>
+    </div>
   );
 }

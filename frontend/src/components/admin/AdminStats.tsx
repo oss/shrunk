@@ -1,44 +1,31 @@
-/**
- * Implements the [[AdminStats]] component
- * @packageDocumentation
- */
-
 import React, { useContext, useEffect, useState } from 'react';
 
-import {
-  Spin,
-  Card,
-  Statistic,
-  Flex,
-  Row,
-  Col,
-  Grid,
-  List,
-  Typography,
-} from 'antd';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 
 import { getEndpointData, getShrunkVersion } from '@/api/app';
 import { AdminStatsData, EndpointDatum } from '@/interfaces/app';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { adminSurfaceClass } from '@/lib/admin-styles';
 import { DarkModeContext } from '@/contexts/DarkModeContext';
 
-/**
- * The [[AdminStats]] component allows the user to view summary statistics
- * about the total number of links, users, and visits on Shrunk, as well
- * as to view statistics about the number of visits to each Flask endpoint
- * @function
- */
 export default function AdminStats(): React.ReactElement {
   const darkModeContext = useContext(DarkModeContext);
+  const darkMode = darkModeContext?.darkMode ?? false;
+  const [isMobile, setIsMobile] = useState(false);
 
-  if (!darkModeContext) {
-    throw new Error('DarkModeContext is missing.');
-  }
-
-  const { darkMode } = darkModeContext;
-  const screens = Grid.useBreakpoint();
-  const isMobile = !screens.md;
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   const [endpointData, setEndpointData] = useState<EndpointDatum[] | null>(
     null,
@@ -50,7 +37,6 @@ export default function AdminStats(): React.ReactElement {
   const updateAdminData = async () => {
     const req: Record<string, any> = {};
 
-    // TODO: Move this.
     // eslint-disable-next-line no-restricted-globals
     const json = await fetch('/api/core/admin/stats/overview', {
       method: 'POST',
@@ -81,12 +67,13 @@ export default function AdminStats(): React.ReactElement {
     return <></>;
   }
 
-  const axisLabelColor = darkMode ? '#d9d9d9' : '#4b5563';
-  const axisTitleColor = darkMode ? '#f5f5f5' : '#1f2937';
-  const gridLineColor = darkMode ? '#434343' : '#d9d9d9';
-  const legendTextColor = darkMode ? '#f5f5f5' : '#1f2937';
+  const axisLabelColor = darkMode ? '#d9d9d9' : '#64748b';
+  const axisTitleColor = darkMode ? '#f5f5f5' : '#0f172a';
+  const gridLineColor = darkMode ? '#434343' : '#e2e8f0';
+  const legendTextColor = darkMode ? '#f5f5f5' : '#0f172a';
   const tooltipBackgroundColor = darkMode ? '#262626' : '#ffffff';
-  const tooltipTextColor = darkMode ? '#f5f5f5' : '#1f2937';
+  const tooltipTextColor = darkMode ? '#f5f5f5' : '#0f172a';
+  const tooltipBorderColor = darkMode ? gridLineColor : '#cbd5e1';
 
   const options = {
     chart: {
@@ -121,13 +108,17 @@ export default function AdminStats(): React.ReactElement {
     },
     title: {
       text: 'Endpoint visits',
-      style: { color: axisTitleColor },
+      style: {
+        color: axisTitleColor,
+        fontSize: '18px',
+        fontWeight: '700',
+      },
     },
     xAxis: {
       categories: endpointData.map((datum) => datum.endpoint),
       title: {
         text: 'Endpoint',
-        style: { color: axisTitleColor },
+        style: { color: axisTitleColor, fontWeight: '600' },
       },
       gridLineColor,
       lineColor: gridLineColor,
@@ -140,7 +131,7 @@ export default function AdminStats(): React.ReactElement {
       min: 0,
       title: {
         text: 'Visits',
-        style: { color: axisTitleColor },
+        style: { color: axisTitleColor, fontWeight: '600' },
       },
       gridLineColor,
       labels: {
@@ -151,7 +142,7 @@ export default function AdminStats(): React.ReactElement {
     },
     tooltip: {
       backgroundColor: tooltipBackgroundColor,
-      borderColor: gridLineColor,
+      borderColor: tooltipBorderColor,
       style: { color: tooltipTextColor },
     },
     legend: {
@@ -159,8 +150,10 @@ export default function AdminStats(): React.ReactElement {
       align: 'right',
       verticalAlign: 'top',
       x: -40,
-      y: 80,
+      y: 42,
       borderWidth: 1,
+      borderColor: darkMode ? '#707070' : '#cbd5e1',
+      backgroundColor: 'transparent',
       itemStyle: { color: legendTextColor },
       itemHoverStyle: { color: legendTextColor },
     },
@@ -201,64 +194,73 @@ export default function AdminStats(): React.ReactElement {
     .slice(0, 8);
 
   return (
-    <>
-      <Flex gap="1rem" wrap="wrap" justify="space-between" vertical>
-        {adminData === null ? (
-          <Spin size="small" />
-        ) : (
-          <Row gutter={[16, 16]}>
-            <Col xs={12} sm={12} lg={6}>
-              <Card size={isMobile ? 'small' : 'default'}>
-                <Statistic title="Links" value={adminData.links} />
-              </Card>
-            </Col>
-            <Col xs={12} sm={12} lg={6}>
-              <Card size={isMobile ? 'small' : 'default'}>
-                <Statistic title="Visits" value={adminData.visits} />
-              </Card>
-            </Col>
-            <Col xs={12} sm={12} lg={6}>
-              <Card size={isMobile ? 'small' : 'default'}>
-                <Statistic title="Users" value={adminData.users} />
-              </Card>
-            </Col>
-            <Col xs={12} sm={12} lg={6}>
-              <Card size={isMobile ? 'small' : 'default'}>
-                <Statistic title="Version" value={version || ''} />
-              </Card>
-            </Col>
-          </Row>
-        )}
-        {isMobile ? (
-          <Card title="Endpoint visits" size="small">
-            <List
-              dataSource={mobileEndpointRows}
-              locale={{ emptyText: 'No endpoint visit data available' }}
-              renderItem={(datum) => (
-                <List.Item>
-                  <Flex vertical style={{ width: '100%', gap: '4px' }}>
-                    <Typography.Text ellipsis={{ tooltip: datum.endpoint }}>
-                      {datum.endpoint}
-                    </Typography.Text>
-                    <Flex justify="space-between" style={{ width: '100%' }}>
-                      <Typography.Text type="secondary">
-                        Total: {datum.total_visits}
-                      </Typography.Text>
-                      <Typography.Text type="secondary">
-                        Unique: {datum.unique_visits}
-                      </Typography.Text>
-                    </Flex>
-                  </Flex>
-                </List.Item>
-              )}
-            />
-          </Card>
-        ) : (
-          <Card style={{ overflowX: 'auto' }}>
-            <HighchartsReact highcharts={Highcharts} options={options} />
-          </Card>
-        )}
-      </Flex>
-    </>
+    <div className="flex flex-col gap-4">
+      {adminData === null ? (
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+      ) : (
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {[
+            { title: 'Links', value: adminData.links },
+            { title: 'Visits', value: adminData.visits },
+            { title: 'Users', value: adminData.users },
+            { title: 'Version', value: version || '' },
+          ].map((stat) => (
+            <div
+              key={stat.title}
+              className={`${adminSurfaceClass} px-6 py-6 ${isMobile ? 'min-h-28' : 'min-h-28'}`}
+            >
+              <p className="text-[1.05rem] text-muted-foreground dark:text-[#9d9d9d]">
+                {stat.title}
+              </p>
+              <p className="mt-3 text-[2.1rem] leading-none font-semibold text-foreground dark:text-[#efefef]">
+                {stat.value}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+      {isMobile ? (
+        <div className={`${adminSurfaceClass} px-5 py-5`}>
+          <div className="pb-4 text-xl font-semibold text-foreground dark:text-[#efefef]">
+            Endpoint visits
+          </div>
+          <div>
+            {mobileEndpointRows.length === 0 ? (
+              <p className="text-sm text-muted-foreground dark:text-[#9d9d9d]">
+                No endpoint visit data available
+              </p>
+            ) : (
+              <TooltipProvider>
+                <ul className="space-y-3">
+                  {mobileEndpointRows.map((datum) => (
+                    <li
+                      key={datum.endpoint}
+                      className="flex flex-col gap-1 border-b border-border pb-3 last:border-b-0 dark:border-white/10"
+                    >
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="truncate text-sm text-foreground dark:text-[#efefef]">
+                            {datum.endpoint}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>{datum.endpoint}</TooltipContent>
+                      </Tooltip>
+                      <div className="flex justify-between text-xs text-muted-foreground dark:text-[#9d9d9d]">
+                        <span>Total: {datum.total_visits}</span>
+                        <span>Unique: {datum.unique_visits}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </TooltipProvider>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className={`${adminSurfaceClass} overflow-x-auto px-6 py-6`}>
+          <HighchartsReact highcharts={Highcharts} options={options} />
+        </div>
+      )}
+    </div>
   );
 }

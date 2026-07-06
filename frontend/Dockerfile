@@ -1,10 +1,10 @@
 # Build base for production
-FROM node:20 as base
+FROM node:24 as base
 
 WORKDIR /usr/shrunk/frontend/
 
 # Install dependencies
-COPY package.json package-lock.json ./
+COPY package.json ./
 RUN npm install --frozen-lockfile
 
 # TODO: Openshift does not like --exclude, find out why
@@ -14,13 +14,13 @@ RUN npm run build
 
 # Development target, runs node server for hot reloading
 # TODO: can we do 'FROM base as dev' instead
-FROM node:20 as dev
+FROM node:24 as dev
 
 WORKDIR /usr/shrunk/frontend/
 EXPOSE 3000
 
 # Redownload dependencies since it is a new container
-COPY package.json package-lock.json ./
+COPY package.json ./
 RUN npm install
 
 COPY . .

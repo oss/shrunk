@@ -1,20 +1,7 @@
 import { useEffect, useState } from 'react';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
-import {
-  Button,
-  Col,
-  Row,
-  Space,
-  Typography,
-  Drawer,
-  Form,
-  Input,
-  Checkbox,
-  Alert,
-  Modal,
-  message,
-} from 'antd';
 import { CirclePlusIcon, PlusCircleIcon } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   generateAccessToken,
   getAccessTokens,
@@ -22,6 +9,26 @@ import {
 } from '@/api/organization';
 import AccessTokenCard from '@/components/access-token-card';
 import { AccessTokenData } from '@/interfaces/access-token';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 
 type RouteParams = {
   id: string;
@@ -34,10 +41,11 @@ function OrganizationToken(props: IOrganizationToken) {
   const [validPermissions, setValidPermissions] = useState<string[]>([]);
   const [isGeneratorDrawerOpen, setIsGeneratorDrawerOpen] =
     useState<boolean>(false);
-
   const [newAccessToken, setNewAccessToken] = useState<string | null>(null);
 
-  const [form] = Form.useForm();
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchOrganization = async () => {
@@ -51,39 +59,39 @@ function OrganizationToken(props: IOrganizationToken) {
       const data = await getValidAccessTokenPermissions();
       setValidPermissions(data);
     };
-    fetchValidPermissions();
 
+    fetchValidPermissions();
     fetchOrganization();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const onOpenGeneratorDrawer = () => {
-    setIsGeneratorDrawerOpen(true);
-  };
-
-  const onCloseGeneratorDrawer = () => {
-    setIsGeneratorDrawerOpen(false);
-  };
-
   const onGenerate = async () => {
-    form.validateFields().then(() => {
-      try {
-        generateAccessToken(
-          form.getFieldValue('title'),
-          form.getFieldValue('description'),
-          form.getFieldValue('permissions'),
-          props.match.params.id,
-        ).then((token) => {
-          setNewAccessToken(token);
-        });
-        form.resetFields();
-        onCloseGeneratorDrawer();
-      } catch {
-        message.error(
-          'There was an error generating your access token. Please try again.',
-        );
-      }
-    });
+    if (!title.trim()) {
+      toast.error('You must give this a title');
+      return;
+    }
+    if (!description.trim()) {
+      toast.error('What are you using this project for?');
+      return;
+    }
+
+    try {
+      const token = await generateAccessToken(
+        title,
+        description,
+        selectedPermissions,
+        props.match.params.id,
+      );
+      setNewAccessToken(token);
+      setTitle('');
+      setDescription('');
+      setSelectedPermissions([]);
+      setIsGeneratorDrawerOpen(false);
+    } catch {
+      toast.error(
+        'There was an error generating your access token. Please try again.',
+      );
+    }
   };
 
   const refreshAccessTokens = async () => {
@@ -94,122 +102,125 @@ function OrganizationToken(props: IOrganizationToken) {
   };
 
   return (
-    <>
-      <Row gutter={16} justify="space-between" align="middle">
-        <Col>
-          <Typography.Title>Access Tokens</Typography.Title>
-        </Col>
-        <Col>
-          <Space>
-            <Button
-              icon={<CirclePlusIcon />}
-              type="primary"
-              onClick={onOpenGeneratorDrawer}
-            >
-              Generate
-            </Button>
-          </Space>
-        </Col>
-        <Col span={24}>
-          <Row gutter={[16, 16]}>
-            {accessTokens.map((token) => (
-              <Col key={token.token} span={24}>
-                <AccessTokenCard accessTokenData={token} />
-              </Col>
-            ))}
-          </Row>
-        </Col>
-      </Row>
-      <Drawer
-        title="Access Token"
-        placement="right"
-        onClose={onCloseGeneratorDrawer}
-        width={720}
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="app-page-heading">Access Tokens</h1>
+        <Button onClick={() => setIsGeneratorDrawerOpen(true)}>
+          <CirclePlusIcon />
+          Generate
+        </Button>
+      </div>
+
+      <div className="space-y-3">
+        {accessTokens.map((token) => (
+          <AccessTokenCard key={token.token} accessTokenData={token} />
+        ))}
+        {accessTokens.length === 0 && (
+          <p className="text-sm text-muted-foreground">No access tokens.</p>
+        )}
+      </div>
+
+      <Sheet
         open={isGeneratorDrawerOpen}
-        extra={
-          <Space>
-            <Button
-              icon={<PlusCircleIcon />}
-              onClick={onGenerate}
-              type="primary"
-            >
+        onOpenChange={setIsGeneratorDrawerOpen}
+      >
+        <SheetContent className="w-full sm:max-w-[720px]">
+          <SheetHeader>
+            <SheetTitle>Access Token</SheetTitle>
+          </SheetHeader>
+          <div className="mt-6 space-y-6">
+            <Alert>
+              <AlertTitle>Secure your data.</AlertTitle>
+              <AlertDescription>
+                Keeping your access token private is your responsibility. We
+                salt and use Argon2, a quantum-safe and award-winning key
+                derivation function, to encrypt your access token and store it
+                in our database.
+              </AlertDescription>
+            </Alert>
+
+            <div className="space-y-2">
+              <Label htmlFor="org-token-title">Title</Label>
+              <Input
+                id="org-token-title"
+                placeholder="What is the name of your project?"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="org-token-description">Description</Label>
+              <Textarea
+                id="org-token-description"
+                placeholder="What are you using this token for?"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Permissions</Label>
+              <div className="grid gap-3">
+                {validPermissions.map((permission) => (
+                  <label
+                    key={permission}
+                    className="flex items-center gap-2 text-sm leading-none font-medium"
+                  >
+                    <Checkbox
+                      checked={selectedPermissions.includes(permission)}
+                      onCheckedChange={(checked) => {
+                        setSelectedPermissions((prev) =>
+                          checked
+                            ? [...prev, permission]
+                            : prev.filter((p) => p !== permission),
+                        );
+                      }}
+                    />
+                    {permission}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <Button onClick={onGenerate} className="w-full">
+              <PlusCircleIcon />
               Generate
             </Button>
-          </Space>
-        }
-      >
-        <Form layout="vertical" requiredMark={false} form={form}>
-          <Row gutter={16}>
-            <Col span={24} className="tw-mb-4">
-              <Alert
-                title="Secure your data."
-                description="Keeping your access token private is your responsibility. We salt and use Argon2, a quantum-safe and award-winning key derivation function, to encrypt your access token and store it in our database."
-                type="warning"
-              />
-            </Col>
-            <Col span={24}>
-              <Form.Item
-                label="Title"
-                name="title"
-                rules={[
-                  { required: true, message: 'You must give this a title' },
-                ]}
-              >
-                <Input placeholder="What is the name of your project?" />
-              </Form.Item>
-              <Form.Item
-                label="Description"
-                name="description"
-                rules={[
-                  {
-                    required: true,
-                    message: 'What are you using this project for?',
-                  },
-                ]}
-              >
-                <Input.TextArea placeholder="What are you using this token for?" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item label="Permissions" name="permissions">
-                <Checkbox.Group className="tw-w-full">
-                  <Row gutter={16}>
-                    {validPermissions.map((permission: string) => (
-                      <Col key={permission} span={24}>
-                        <Checkbox value={permission}>{permission}</Checkbox>
-                      </Col>
-                    ))}
-                  </Row>
-                </Checkbox.Group>
-              </Form.Item>
-            </Col>
-          </Row>
-        </Form>
-      </Drawer>
-      <Modal
-        title="Access Token Generated"
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Dialog
         open={newAccessToken !== null}
-        footer={
-          <Button
-            type="primary"
-            onClick={() => {
-              navigator.clipboard.writeText(newAccessToken as string);
-              refreshAccessTokens();
-              message.success('Access token copied to clipboard');
-              setNewAccessToken(null);
-            }}
-          >
-            Copy to Clipboard
-          </Button>
-        }
-        closable={false}
+        onOpenChange={(open) => {
+          if (!open) setNewAccessToken(null);
+        }}
       >
-        <Typography.Paragraph>
-          Your access token has been generated. Please copy it and store it
-          securely. It is impossible to retrieve it again through this website.
-        </Typography.Paragraph>
-      </Modal>
-    </>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Access Token Generated</DialogTitle>
+            <DialogDescription>
+              Your access token has been generated. Please copy it and store it
+              securely. It is impossible to retrieve it again through this
+              website.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                navigator.clipboard.writeText(newAccessToken as string);
+                refreshAccessTokens();
+                toast.success('Access token copied to clipboard');
+                setNewAccessToken(null);
+              }}
+            >
+              Copy to Clipboard
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
 

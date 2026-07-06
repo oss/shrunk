@@ -1,25 +1,7 @@
-/**
- * Implements the [[SuperTokens]] component
- * @packageDocumentation
- */
-
 import { useEffect, useState } from 'react';
-import {
-  Row,
-  Col,
-  Button,
-  Typography,
-  Space,
-  Drawer,
-  Form,
-  Input,
-  Checkbox,
-  Alert,
-  Modal,
-  message,
-  List,
-} from 'antd';
 import { CirclePlusIcon, PlusCircleIcon } from 'lucide-react';
+import { toast } from 'sonner';
+
 import { AccessTokenData } from '@/interfaces/access-token';
 import {
   getSuperTokens,
@@ -27,6 +9,26 @@ import {
   getValidAccessTokenPermissions,
 } from '@/api/organization';
 import AccessTokenCard from '@/components/access-token-card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 
 export default function SuperTokens(): JSX.Element {
   const [accessTokens, setAccessTokens] = useState<AccessTokenData[]>([]);
@@ -35,7 +37,9 @@ export default function SuperTokens(): JSX.Element {
     useState<boolean>(false);
   const [newAccessToken, setNewAccessToken] = useState<string | null>(null);
 
-  const [form] = Form.useForm();
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchTokens = async () => {
@@ -52,27 +56,32 @@ export default function SuperTokens(): JSX.Element {
     fetchValidPermissions();
   }, []);
 
-  const onOpenGeneratorDrawer = () => setIsGeneratorDrawerOpen(true);
-  const onCloseGeneratorDrawer = () => setIsGeneratorDrawerOpen(false);
-
   const onGenerate = async () => {
-    form.validateFields().then(() => {
-      try {
-        generateAccessToken(
-          form.getFieldValue('title'),
-          form.getFieldValue('description'),
-          form.getFieldValue('permissions'),
-        ).then((token) => {
-          setNewAccessToken(token);
-        });
-        form.resetFields();
-        onCloseGeneratorDrawer();
-      } catch {
-        message.error(
-          'There was an error generating your super access token. Please try again.',
-        );
-      }
-    });
+    if (!title.trim()) {
+      toast.error('You must give this a title');
+      return;
+    }
+    if (!description.trim()) {
+      toast.error('What are you using this project for?');
+      return;
+    }
+
+    try {
+      const token = await generateAccessToken(
+        title,
+        description,
+        selectedPermissions,
+      );
+      setNewAccessToken(token);
+      setTitle('');
+      setDescription('');
+      setSelectedPermissions([]);
+      setIsGeneratorDrawerOpen(false);
+    } catch {
+      toast.error(
+        'There was an error generating your super access token. Please try again.',
+      );
+    }
   };
 
   const refreshAccessTokens = async () => {
@@ -81,130 +90,141 @@ export default function SuperTokens(): JSX.Element {
   };
 
   return (
-    <>
-      <Row gutter={16} justify="space-between" align="middle">
-        <Col>
-          <Typography.Title>Super Access Tokens</Typography.Title>
-        </Col>
-        <Col>
-          <Space>
-            <Button
-              icon={<CirclePlusIcon />}
-              type="primary"
-              onClick={onOpenGeneratorDrawer}
-            >
-              Generate
-            </Button>
-          </Space>
-        </Col>
-        <Col span={24}>
-          <List
-            dataSource={accessTokens}
-            renderItem={(token) => (
-              <List.Item>
-                <AccessTokenCard accessTokenData={token} />
-              </List.Item>
-            )}
-            pagination={{
-              pageSize: 3,
-              position: 'bottom',
-              align: 'center',
-            }}
-          />
-        </Col>
-      </Row>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Super Access Tokens</h1>
+        <Button onClick={() => setIsGeneratorDrawerOpen(true)}>
+          <CirclePlusIcon />
+          Generate
+        </Button>
+      </div>
 
-      <Drawer
-        title="Super Access Token"
-        placement="right"
-        onClose={onCloseGeneratorDrawer}
-        width={720}
-        open={isGeneratorDrawerOpen}
-        extra={
-          <Space>
-            <Button
-              icon={<PlusCircleIcon />}
-              onClick={onGenerate}
-              type="primary"
-            >
-              Generate
-            </Button>
-          </Space>
-        }
-      >
-        <Form layout="vertical" requiredMark={false} form={form}>
-          <Row gutter={16}>
-            <Col span={24} className="tw-mb-4">
-              <Alert
-                title="Secure your data."
-                description="Keeping your access token private is your responsibility. We salt and use Argon2, a quantum-safe and award-winning key derivation function, to encrypt your super token and store it in our database."
-                type="warning"
-              />
-            </Col>
-            <Col span={24}>
-              <Form.Item
-                label="Title"
-                name="title"
-                rules={[
-                  { required: true, message: 'You must give this a title' },
-                ]}
-              >
-                <Input placeholder="What is the name of your project?" />
-              </Form.Item>
-              <Form.Item
-                label="Description"
-                name="description"
-                rules={[
-                  {
-                    required: true,
-                    message: 'What are you using this project for?',
-                  },
-                ]}
-              >
-                <Input.TextArea placeholder="What are you using this token for?" />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item label="Permissions" name="permissions">
-                <Checkbox.Group className="tw-w-full">
-                  <Row gutter={16}>
-                    {validPermissions.map((permission) => (
-                      <Col span={24} key={permission}>
-                        <Checkbox value={permission}>{permission}</Checkbox>
-                      </Col>
-                    ))}
-                  </Row>
-                </Checkbox.Group>
-              </Form.Item>
-            </Col>
-          </Row>
-        </Form>
-      </Drawer>
+      <div className="space-y-3">
+        {accessTokens.map((token) => (
+          <AccessTokenCard key={token.id} accessTokenData={token} />
+        ))}
+        {accessTokens.length === 0 && (
+          <p className="text-sm text-muted-foreground">No access tokens.</p>
+        )}
+      </div>
 
-      <Modal
-        title="Super Access Token Generated"
-        open={newAccessToken !== null}
-        footer={
+      {accessTokens.length > 3 && (
+        <div className="flex justify-center">
           <Button
-            type="primary"
-            onClick={() => {
-              navigator.clipboard.writeText(newAccessToken as string);
-              refreshAccessTokens();
-              message.success('Super access token copied to clipboard');
-              setNewAccessToken(null);
-            }}
+            variant="outline"
+            onClick={() =>
+              document
+                .getElementById('super-tokens-top')
+                ?.scrollIntoView({ behavior: 'smooth' })
+            }
           >
-            Copy to Clipboard
+            Show more
           </Button>
-        }
-        closable={false}
+        </div>
+      )}
+
+      <Sheet
+        open={isGeneratorDrawerOpen}
+        onOpenChange={setIsGeneratorDrawerOpen}
       >
-        <Typography.Paragraph>
-          Your super access token has been generated. Please copy it and store
-          it securely. It is impossible to retrieve it again through this
-          website.
-        </Typography.Paragraph>
-      </Modal>
-    </>
+        <SheetContent className="w-full sm:max-w-[720px]">
+          <SheetHeader>
+            <SheetTitle>Super Access Token</SheetTitle>
+          </SheetHeader>
+          <div className="mt-6 space-y-6">
+            <Alert>
+              <AlertTitle>Secure your data.</AlertTitle>
+              <AlertDescription>
+                Keeping your access token private is your responsibility. We
+                salt and use Argon2, a quantum-safe and award-winning key
+                derivation function, to encrypt your super token and store it in
+                our database.
+              </AlertDescription>
+            </Alert>
+
+            <div className="space-y-2">
+              <Label htmlFor="token-title">Title</Label>
+              <Input
+                id="token-title"
+                placeholder="What is the name of your project?"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="token-description">Description</Label>
+              <Textarea
+                id="token-description"
+                placeholder="What are you using this token for?"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Permissions</Label>
+              <div className="grid gap-3">
+                {validPermissions.map((permission) => (
+                  <label
+                    key={permission}
+                    className="flex items-center gap-2 text-sm leading-none font-medium"
+                  >
+                    <Checkbox
+                      checked={selectedPermissions.includes(permission)}
+                      onCheckedChange={(checked) => {
+                        setSelectedPermissions((prev) =>
+                          checked
+                            ? [...prev, permission]
+                            : prev.filter((p) => p !== permission),
+                        );
+                      }}
+                    />
+                    {permission}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <Button onClick={onGenerate} className="w-full">
+              <PlusCircleIcon />
+              Generate
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Dialog
+        open={newAccessToken !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setNewAccessToken(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Super Access Token Generated</DialogTitle>
+            <DialogDescription>
+              Your super access token has been generated. Please copy it and
+              store it securely. It is impossible to retrieve it again through
+              this website.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                navigator.clipboard.writeText(newAccessToken as string);
+                refreshAccessTokens();
+                toast.success('Super access token copied to clipboard');
+                setNewAccessToken(null);
+              }}
+            >
+              Copy to Clipboard
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

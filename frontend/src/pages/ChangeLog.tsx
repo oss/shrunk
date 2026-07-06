@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Col, Flex, Row, Tabs, Typography } from 'antd';
+
 import { getReleaseNotes } from '@/api/app';
+import { PageShell } from '@/components/page-shell';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Note,
   Contributor,
@@ -14,6 +16,37 @@ function getNotesLength(data: Note[], product: ProductDisplay) {
     : data.filter((obj) => obj.product === product).length;
 }
 
+function ContributorList({
+  contributors,
+  warning,
+}: {
+  contributors: Contributor[];
+  warning: boolean;
+}) {
+  if (contributors.length === 0) return null;
+
+  return (
+    <span className={warning ? 'text-destructive!' : 'text-muted-foreground!'}>
+      {' '}
+      by{' '}
+      {contributors.map((contributor, index) => (
+        <span key={contributor.firstName + contributor.lastName}>
+          {index > 0 ? ', ' : ''}
+          <a
+            className="underline!"
+            href={contributor.href ? contributor.href : undefined}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {contributor.firstName} {contributor.lastName}
+          </a>
+        </span>
+      ))}
+      .
+    </span>
+  );
+}
+
 const ReleaseSection = ({
   title,
   notes,
@@ -23,54 +56,26 @@ const ReleaseSection = ({
   notes: Note[];
   product: ProductDisplay;
 }) => (
-  <>
-    <Typography.Title level={2} className="!tw-mt-4">
-      {title}
-    </Typography.Title>
-    <Typography.Paragraph>
-      <ul>
-        {notes.map((note: Note) => {
-          const primaryColor = note.warning ? 'tw-text-red-600' : '';
-          const secondaryColor = note.warning
-            ? '!tw-text-red-500'
-            : '!tw-text-gray-500';
-
-          if (product !== note.product && product !== 'everything') {
-            return <></>;
-          }
-
-          /*
-           * The last period after span is NOT a mistake, it is to
-           * support Apple's VoiceOver for reading text outloud.
-           */
+  <section className="mt-6 space-y-2">
+    <h3 className="text-2xl font-semibold tracking-tight">{title}</h3>
+    <ul className="list-disc space-y-1 pl-6">
+      {notes
+        .filter((note) => product === 'everything' || product === note.product)
+        .map((note: Note) => {
+          const warning = note.warning === true;
 
           return (
-            <li key={note.text} className={primaryColor}>
-              {note.text}{' '}
-              {note.contributors.length !== 0 && (
-                <span className={secondaryColor}>
-                  by{' '}
-                  {note.contributors
-                    .map((contributor: Contributor) => (
-                      <Typography.Link
-                        key={contributor.firstName + contributor.lastName}
-                        className={`${secondaryColor} !tw-underline`}
-                        href={contributor.href ? contributor.href : undefined}
-                        target="_blank"
-                      >
-                        {contributor.firstName} {contributor.lastName}
-                      </Typography.Link>
-                    ))
-                    .reduce((prev, curr) => [prev, ', ', curr] as any)}
-                  .
-                </span>
-              )}
+            <li key={note.text} className={warning ? 'text-destructive' : ''}>
+              {note.text}
+              <ContributorList
+                contributors={note.contributors}
+                warning={warning}
+              />
             </li>
           );
         })}
-      </ul>
-    </Typography.Paragraph>
-  </>
+    </ul>
+  </section>
 );
 
 export default function ChangeLog() {
@@ -109,32 +114,16 @@ export default function ChangeLog() {
   }, []);
 
   return (
-    <>
-      <Flex justify="left" className="tw-pt-4">
-        <Tabs
-          onChange={onProductChange}
-          defaultActiveKey={product}
-          items={[
-            {
-              key: 'everything',
-              label: 'Everything',
-            },
-            {
-              key: 'website',
-              label: 'Website',
-            },
-            {
-              key: 'ms-office',
-              label: 'Microsoft Office',
-            },
-            {
-              key: 'public-api',
-              label: 'Developer API',
-            },
-          ]}
-        />
-      </Flex>
-      <Row gutter={[16, 16]}>
+    <PageShell className="space-y-8 py-0 pb-4">
+      <Tabs value={product} onValueChange={onProductChange}>
+        <TabsList className="flex h-auto flex-wrap justify-start">
+          <TabsTrigger value="everything">Everything</TabsTrigger>
+          <TabsTrigger value="website">Website</TabsTrigger>
+          <TabsTrigger value="ms-office">Microsoft Office</TabsTrigger>
+          <TabsTrigger value="public-api">Developer API</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      <div className="space-y-10">
         {releaseNotes.map((release: Release) => {
           const featuresCount = getNotesLength(
             release.categories.features,
@@ -154,14 +143,14 @@ export default function ChangeLog() {
           }
 
           return (
-            <Col
+            <article
               key={`${release.major}.${release.minor}.${release.patch}`}
-              span={24}
+              className="space-y-2"
             >
-              <Typography.Title className="tw-mt-2">
+              <h2 className="app-page-heading">
                 {release.major}.{release.minor}.{release.patch}
-              </Typography.Title>
-              <Typography.Text>{release.description}</Typography.Text>
+              </h2>
+              <p className="text-muted-foreground">{release.description}</p>
               {featuresCount !== 0 && (
                 <ReleaseSection
                   title="New Features"
@@ -183,10 +172,10 @@ export default function ChangeLog() {
                   product={product}
                 />
               )}
-            </Col>
+            </article>
           );
         })}
-      </Row>
-    </>
+      </div>
+    </PageShell>
   );
 }

@@ -1,99 +1,83 @@
-/**
- * Implements the [[EditLinkDrawer]] component
- * @packageDocumentation
- */
-
-import {
-  Button,
-  Col,
-  Drawer,
-  Form,
-  Input,
-  message,
-  Modal,
-  Popconfirm,
-  Row,
-  Space,
-  Tooltip,
-} from 'antd';
 import dayjs from 'dayjs';
-import { CircleAlertIcon, SaveIcon, TrashIcon } from 'lucide-react';
+import {
+  CalendarIcon,
+  CircleAlertIcon,
+  SaveIcon,
+  TrashIcon,
+  XIcon,
+} from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 import { deleteLink, isValidAlias, reverLinkExpirationDate } from '@/api/links';
-import { serverValidateLongUrl, serverValidateNetId } from '@/api/validators';
-import DatePicker from '@/components/date-picker';
+
 import { EditLinkValues, Link } from '@/interfaces/link';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
-/**
- * Props of the [[EditLinkDrawer]] component
- * @interface
- */
 export interface Props {
-  /**
-   * Whether the modal is visible
-   * @property
-   */
   visible: boolean;
-
-  /**
-   * The user's privileges, used to determine whether the user
-   * may create custom aliases
-   * @property
-   */
   userPrivileges: Set<string>;
-
-  /**
-   * NetID of the user
-   * @property
-   */
   netid: string;
-
-  /**
-   * The original [[LinkInfo]] of the link to edit
-   * @property
-   */
   linkInfo: Link;
-
-  /**
-   * Callback that will be called when the user clicks the "ok" button
-   * @property
-   */
   onOk: (values: EditLinkValues) => void;
-
-  /**
-   * Callback that will be called when the user closes the modal without
-   * saving their changes
-   * @property
-   */
   onCancel: () => void;
 }
 
-/**
- * The [[EditLinkDrawer]] component allows the user to edit a link's information. The user may
- *   * Change the title
- *   * Change the long URL
- *   * Change or remove the link's expiration time
- *   * Add, remove, or update aliases. If the user has the `"power_user"` privilege, the user may
- *     set the text of the alias
- * @param props The props
- */
 export const EditLinkDrawer: React.FC<Props> = (props) => {
-  const [form] = Form.useForm();
-  const initialValues: any = {
-    ...props.linkInfo,
-    expiration_time:
-      props.linkInfo.expiration_time === null
-        ? null
-        : dayjs(props.linkInfo.expiration_time),
-  };
   const mayEditOwner =
-    (props.netid === initialValues.owner._id ||
+    (props.netid === props.linkInfo.owner._id ||
       props.userPrivileges.has('admin')) &&
     props.linkInfo.owner.type !== 'org';
 
   const isTrackingPixelLink = props.linkInfo.is_tracking_pixel_link;
-  const [ownerInputVal, setOwnerInputVal] = useState(initialValues.owner._id);
+
+  const existingExpiry = props.linkInfo.expiration_time
+    ? dayjs(props.linkInfo.expiration_time)
+    : null;
+
+  const [title, setTitle] = useState(props.linkInfo.title || '');
+  const [longUrl, setLongUrl] = useState(props.linkInfo.long_url || '');
+  const [alias, setAlias] = useState(props.linkInfo.alias || '');
+  const [ownerInput, setOwnerInput] = useState(props.linkInfo.owner._id || '');
+  const [expirationDate, setExpirationDate] = useState<Date | undefined>(
+    existingExpiry ? existingExpiry.toDate() : undefined,
+  );
+  const [expirationTime, setExpirationTime] = useState(
+    existingExpiry ? existingExpiry.format('HH:mm') : '',
+  );
+  const [showOwnerConfirm, setShowOwnerConfirm] = useState(false);
 
   const currDate = new Date();
   const isExpired =
@@ -108,192 +92,294 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
     });
   });
 
-  const handleChange = (e: any) => {
-    setOwnerInputVal(e.target.value);
-  };
-
-  const handleSubmit = () => {
-    form.validateFields().then((values) => {
-      props.onOk(values as EditLinkValues);
-    });
-  };
-
   const handleDelete = async () => {
     try {
-      deleteLink(props.linkInfo._id);
-      message.success('Link deleted successfully');
+      await deleteLink(props.linkInfo._id);
+      toast.success('Link deleted successfully');
       setTimeout(() => {
         window.location.href = '/app/dash';
-      }, 1000); // 1-second delay
+      }, 1000);
     } catch {
-      message.error('Failed to delete link');
+      toast.error('Failed to delete link');
     }
   };
 
   const handleRevert = async () => {
     try {
-      reverLinkExpirationDate(props.linkInfo._id);
-      message.success('Link restored successfully');
+      await reverLinkExpirationDate(props.linkInfo._id);
+      toast.success('Link restored successfully');
     } catch {
-      message.error('Failed to restore link');
+      toast.error('Failed to restore link');
     }
   };
 
+  const handleSubmit = () => {
+    if (!alias.trim()) {
+      toast.error('Please input an alias.');
+      return;
+    }
+    if (alias.trim().length < 5) {
+      toast.error('Aliases may be no shorter than 5 characters.');
+      return;
+    }
+
+    let expirationValue: dayjs.Dayjs | null = null;
+    if (expirationDate) {
+      expirationValue = dayjs(
+        `${dayjs(expirationDate).format('YYYY-MM-DD')}T${expirationTime || '00:00'}`,
+      );
+    }
+
+    const values: EditLinkValues = {
+      title,
+      long_url: isTrackingPixelLink ? props.linkInfo.long_url : longUrl,
+      expiration_time: expirationValue,
+      owner: {
+        _id: ownerInput,
+        type: 'netid',
+      },
+      alias,
+    };
+
+    if (!isTrackingPixelLink && !values.long_url) {
+      toast.error('Please input a long URL.');
+      return;
+    }
+
+    props.onOk(values);
+  };
+
   const onSave = () => {
-    if (ownerInputVal !== initialValues.owner._id) {
-      Modal.confirm({
-        title: 'Link owner modification',
-        icon: <CircleAlertIcon />,
-        content:
-          'You are about to modify the link owner. Do you wish to proceed?',
-        okText: 'Yes',
-        onOk() {
-          handleSubmit();
-        },
-      });
+    if (ownerInput !== props.linkInfo.owner._id) {
+      setShowOwnerConfirm(true);
     } else {
       handleSubmit();
     }
   };
 
-  return (
-    <Drawer
-      open={props.visible}
-      title="Edit link"
-      width={720}
-      onClose={() => {
-        form.resetFields();
-        props.onCancel();
-      }}
-      extra={
-        <Space>
-          {isExpired && !isRestorable && (
-            <Button onClick={handleRevert}>Restore</Button>
-          )}
-          <Popconfirm
-            title="Are you sure you want to delete this link?"
-            onConfirm={handleDelete}
-            okText="Yes"
-            cancelText="No"
-            okButtonProps={{ danger: true }}
-          >
-            <Button
-              danger
-              icon={<TrashIcon />}
-              disabled={isDeleted || isExpired}
-            >
-              Delete
-            </Button>
-          </Popconfirm>
+  const originalOwnerLabel =
+    props.linkInfo.owner.type === 'org'
+      ? props.linkInfo.owner.org_name
+      : props.linkInfo.owner._id;
 
-          <Button icon={<SaveIcon />} onClick={onSave} type="primary">
-            Save
-          </Button>
-        </Space>
-      }
-    >
-      <Form
-        form={form}
-        layout="vertical"
-        initialValues={initialValues}
-        requiredMark={false}
+  return (
+    <TooltipProvider>
+      <Sheet
+        open={props.visible}
+        onOpenChange={(open) => {
+          if (!open) {
+            props.onCancel();
+          }
+        }}
       >
-        <Row gutter={16}>
-          <Col span={12}>
-            <Form.Item label="Title" name="title">
-              <Input />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              label="Alias"
-              name="alias"
-              rules={[
-                { required: true, message: 'Please input an alias.' },
-                {
-                  min: 5,
-                  message: 'Aliases may be no shorter than 5 characters.',
-                },
-              ]}
-            >
-              <Input
-                disabled={
-                  isTrackingPixelLink ||
-                  (!props.userPrivileges.has('admin') &&
-                    !props.userPrivileges.has('power_user'))
-                }
-              />
-            </Form.Item>
-          </Col>
-          {!isTrackingPixelLink && (
-            <Col span={24}>
-              <Form.Item
-                label="Long URL"
-                name="long_url"
-                rules={[
-                  { required: true, message: 'Please input a long URL.' },
-                  { type: 'url', message: 'Please enter a valid URL.' },
-                  { validator: serverValidateLongUrl },
-                ]}
-              >
-                <Input />
-              </Form.Item>
-            </Col>
-          )}
-          <Col span={12}>
-            <Form.Item
-              label="Owner"
-              name={['owner', '_id']}
-              rules={
-                mayEditOwner
-                  ? [
-                      { required: true, message: 'Please input a NetID.' },
-                      { validator: serverValidateNetId },
-                    ]
-                  : []
-              }
-            >
-              {mayEditOwner ? (
-                <Input
-                  placeholder="NetID"
-                  value={ownerInputVal}
-                  onChange={handleChange}
-                />
-              ) : (
-                <Tooltip title="This link is owned by an organization, please go to the organization's dashboard to edit it.">
-                  <Input
-                    placeholder="NetID"
-                    value={
-                      props.linkInfo.owner.type === 'org'
-                        ? props.linkInfo.owner.org_name
-                        : props.linkInfo.owner._id
-                    }
-                    disabled
-                  />
-                </Tooltip>
+        <SheetContent
+          className="w-full sm:max-w-[720px]"
+          showCloseButton={false}
+        >
+          <SheetHeader className="flex-row items-start justify-between gap-3 space-y-0 text-left">
+            <div className="flex min-w-0 items-center gap-2">
+              <SheetClose className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none disabled:pointer-events-none data-[state=open]:bg-secondary">
+                <XIcon className="h-4 w-4" />
+                <span className="sr-only">Close</span>
+              </SheetClose>
+              <SheetTitle className="min-w-0">Edit link</SheetTitle>
+            </div>
+            <div className="flex shrink-0 flex-wrap justify-end gap-2">
+              {isExpired && !isRestorable && (
+                <Button onClick={handleRevert}>Restore</Button>
               )}
-            </Form.Item>
-          </Col>
-          {!isTrackingPixelLink && (
-            <Col span={12}>
-              <Form.Item label="Expiration time" name="expiration_time">
-                <DatePicker
-                  className="tw-w-full"
-                  format="YYYY-MM-DD HH:mm:ss"
-                  disabledDate={(current) =>
-                    current && current < dayjs().startOf('day')
-                  }
-                  showTime={{
-                    defaultValue: props.linkInfo.expiration_time
-                      ? dayjs(props.linkInfo.expiration_time)
-                      : undefined,
-                  }}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    disabled={isDeleted || isExpired}
+                  >
+                    <TrashIcon />
+                    Delete
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Are you sure you want to delete this link?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>No</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete}>
+                      Yes
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              <Button onClick={onSave}>
+                <SaveIcon />
+                Save
+              </Button>
+            </div>
+          </SheetHeader>
+          <div className="mt-6 space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-title">Title</Label>
+                <Input
+                  id="edit-title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
                 />
-              </Form.Item>
-            </Col>
-          )}{' '}
-        </Row>
-      </Form>
-    </Drawer>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-alias">Alias</Label>
+                <Input
+                  id="edit-alias"
+                  value={alias}
+                  onChange={(e) => setAlias(e.target.value)}
+                  disabled={
+                    isTrackingPixelLink ||
+                    (!props.userPrivileges.has('admin') &&
+                      !props.userPrivileges.has('power_user'))
+                  }
+                />
+              </div>
+            </div>
+
+            {!isTrackingPixelLink && (
+              <div className="space-y-2">
+                <Label htmlFor="edit-url">Long URL</Label>
+                <Input
+                  id="edit-url"
+                  value={longUrl}
+                  onChange={(e) => setLongUrl(e.target.value)}
+                />
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-owner">Owner</Label>
+                {mayEditOwner ? (
+                  <Input
+                    id="edit-owner"
+                    placeholder="NetID"
+                    value={ownerInput}
+                    onChange={(e) => setOwnerInput(e.target.value)}
+                  />
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Input
+                        id="edit-owner"
+                        placeholder="NetID"
+                        value={originalOwnerLabel}
+                        disabled
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      This link is owned by an organization, please go to the
+                      organization&rsquo;s dashboard to edit it.
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+              {!isTrackingPixelLink && (
+                <div className="space-y-2">
+                  <Label htmlFor="edit-expiration">Expiration time</Label>
+                  <div className="flex gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          id="edit-expiration"
+                          type="button"
+                          variant="outline"
+                          className="h-9 flex-1 justify-start px-3 text-left text-sm font-normal"
+                        >
+                          <CalendarIcon className="size-4 shrink-0" />
+                          <span
+                            className={
+                              expirationDate ? '' : 'text-muted-foreground'
+                            }
+                          >
+                            {expirationDate
+                              ? dayjs(expirationDate).format('YYYY-MM-DD')
+                              : 'Pick a date'}
+                          </span>
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent align="start" className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={expirationDate}
+                          onSelect={setExpirationDate}
+                          defaultMonth={expirationDate}
+                          disabled={(date: Date) => {
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            return date < today;
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <Input
+                      type="time"
+                      value={expirationTime}
+                      onChange={(e) => setExpirationTime(e.target.value)}
+                      disabled={!expirationDate}
+                      className="h-9 w-28 px-3 text-sm"
+                    />
+                    {expirationDate && (
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="outline"
+                        aria-label="Clear expiration"
+                        className="h-9 w-9 shrink-0 px-0"
+                        onClick={() => {
+                          setExpirationDate(undefined);
+                          setExpirationTime('');
+                        }}
+                      >
+                        <XIcon className="size-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <AlertDialog
+            open={showOwnerConfirm}
+            onOpenChange={setShowOwnerConfirm}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Link owner modification</AlertDialogTitle>
+                <AlertDialogDescription>
+                  <CircleAlertIcon className="mr-2 inline h-4 w-4" />
+                  You are about to modify the link owner. Do you wish to
+                  proceed?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setShowOwnerConfirm(false)}>
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    setShowOwnerConfirm(false);
+                    handleSubmit();
+                  }}
+                >
+                  Yes
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </SheetContent>
+      </Sheet>
+    </TooltipProvider>
   );
 };

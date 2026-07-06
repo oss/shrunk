@@ -15,22 +15,11 @@ import {
   Sun,
   SunMoon,
   UsersIcon,
+  XIcon,
 } from 'lucide-react';
 
-import {
-  Alert,
-  App,
-  Breadcrumb,
-  Button,
-  ConfigProvider,
-  Dropdown,
-  Image,
-  Layout,
-  Tooltip,
-  Typography,
-  message,
-} from 'antd';
-import { useEffect, useRef, useState, useContext } from 'react';
+import { Toaster, toast } from 'sonner';
+import { Fragment, useEffect, useRef, useState, useContext } from 'react';
 import {
   BrowserRouter,
   Redirect,
@@ -62,18 +51,48 @@ import rutgersLogo from '@/images/rutgers.png';
 import { FeatureFlags } from '@/interfaces/app';
 import ChangeLog from '@/pages/ChangeLog';
 import Ticket from '@/pages/subpages/Ticket';
-import { darkTheme, lightTheme } from '@/theme';
 import OrganizationToken from '@/pages/organization-tokens';
 import { DarkModeContext, DarkModeProvider } from '@/contexts/DarkModeContext';
-
-const { Header, Content, Footer, Sider } = Layout;
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 interface Props {
   siderWidth: number;
 }
 
+type ShellNavItem = {
+  key: string;
+  label: string;
+  to?: string;
+  icon: JSX.Element;
+  onSelect?: () => void;
+  destructive?: boolean;
+};
+
 function ShrunkContent({
-  siderWidth,
   netid,
   userPrivileges,
   isLoading,
@@ -85,7 +104,6 @@ function ShrunkContent({
   ProtectedRoute,
   featureFlags,
 }: {
-  siderWidth: number;
   netid: string;
   userPrivileges: Set<string>;
   isLoading: boolean;
@@ -127,7 +145,22 @@ function ShrunkContent({
 
   const isApp = location.pathname.split('/').slice(1)[0] === 'app';
   const isDashboardRoute = location.pathname === '/app/dash';
-  const showMotd = motd !== '' && localStorage.getItem('alert-read') !== motd;
+  const isOrganizationsRoute = location.pathname === '/app/orgs';
+  const isApiReferenceRoute = location.pathname === '/app/api-reference';
+  const isAdminRoute = location.pathname === '/app/admin';
+  const isFaqRoute = location.pathname === '/app/faq';
+  const isDarkWorkspaceRoute =
+    isDashboardRoute ||
+    isOrganizationsRoute ||
+    isApiReferenceRoute ||
+    isAdminRoute ||
+    isFaqRoute;
+  const [showDeveloperAlert, setShowDeveloperAlert] = useState(true);
+  const [dismissedMotd, setDismissedMotd] = useState(false);
+  const showMotd =
+    motd !== '' &&
+    !dismissedMotd &&
+    localStorage.getItem('alert-read') !== motd;
   const appHeaderRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -150,52 +183,26 @@ function ShrunkContent({
     };
   }, [location.pathname]);
 
-  const menuItems: any[] = [
-    {
-      key: 'role-status',
-      disabled: true,
-      label: (
-        <p className="tw-m-0 tw-text-center !tw-text-gray-300">
-          {netid} ({role})
-        </p>
-      ),
-    },
-    { type: 'divider' },
+  const shellNavItems: ShellNavItem[] = [
     {
       key: 'dash',
-      icon: <HomeIcon color={darkMode ? '#ffffff' : '#000000'} />,
-      label: <Link to="/app/dash"> Dashboard </Link>,
+      icon: <HomeIcon />,
+      label: 'Dashboard',
+      to: '/app/dash',
     },
     {
       key: 'orgs',
-      icon: (
-        <UsersIcon
-          className={darkMode ? '!tw-text-white' : '!tw-text-black'}
-          color={darkMode ? '#ffffff' : '#000000'}
-        />
-      ),
-      label: (
-        <Link
-          className={darkMode ? '!tw-text-white' : '!tw-text-black'}
-          to="/app/orgs"
-        >
-          My Organizations
-        </Link>
-      ),
+      icon: <UsersIcon />,
+      label: 'My Organizations',
+      to: '/app/orgs',
     },
     ...(showAdminTab && featureFlags.helpDesk
       ? [
           {
             key: 'tickets',
-            icon: <BugIcon color={darkMode ? '#ffffff' : '#000000'} />,
-            label: (
-              <Link
-                className={darkMode ? '!tw-text-white' : '!tw-text-black'}
-                to="/app/tickets"
-              >
-                Help Desk
-              </Link>
-            ),
+            icon: <BugIcon />,
+            label: 'Help Desk',
+            to: '/app/tickets',
           },
         ]
       : []),
@@ -203,68 +210,46 @@ function ShrunkContent({
       ? [
           {
             key: 'admin-dashboard',
-            icon: (
-              <LayoutDashboardIcon color={darkMode ? '#ffffff' : '#000000'} />
-            ),
-            label: (
-              <Link
-                className={darkMode ? '!tw-text-white' : '!tw-text-black'}
-                to="/app/admin"
-              >
-                Admin Dashboard
-              </Link>
-            ),
+            icon: <LayoutDashboardIcon />,
+            label: 'Admin Dashboard',
+            to: '/app/admin',
           },
         ]
       : []),
-    { type: 'divider' },
     {
       key: 'api-reference',
-      icon: <CodeIcon color={darkMode ? '#ffffff' : '#000000'} />,
-      label: (
-        <Link
-          className={darkMode ? '!tw-text-white' : '!tw-text-black'}
-          to="/app/api-reference"
-        >
-          API Reference
-        </Link>
-      ),
+      icon: <CodeIcon />,
+      label: 'API Reference',
+      to: '/app/api-reference',
     },
-    { type: 'divider' },
     {
       key: 'releases',
-      icon: <RocketIcon color={darkMode ? '#ffffff' : '#000000'} />,
-      label: (
-        <Link
-          className={darkMode ? '!tw-text-white' : '!tw-text-black'}
-          to="/app/releases"
-        >
-          Release Notes
-        </Link>
-      ),
+      icon: <RocketIcon />,
+      label: 'Release Notes',
+      to: '/app/releases',
     },
     {
       key: 'faq',
-      icon: <CircleHelpIcon color={darkMode ? '#ffffff' : '#000000'} />,
-      label: (
-        <Link
-          className={darkMode ? '!tw-text-white' : '!tw-text-black'}
-          to="/app/faq"
-        >
-          FAQ
-        </Link>
-      ),
+      icon: <CircleHelpIcon />,
+      label: 'FAQ',
+      to: '/app/faq',
     },
-    { type: 'divider' },
     {
       key: 'logout',
       icon: <LogOutIcon />,
-      onClick: onLogout,
       label: 'Logout',
-      danger: true,
-      className: '!tw-text-red-600 hover:!tw-text-white',
+      onSelect: onLogout,
+      destructive: true,
     },
   ];
+
+  const primaryNavItems = shellNavItems.filter((item) =>
+    ['dash', 'orgs', 'tickets', 'admin-dashboard'].includes(item.key),
+  );
+  const userDropdownNavItemClass =
+    'text-foreground focus:bg-accent focus:text-accent-foreground dark:text-primary-foreground dark:focus:bg-primary-foreground/10 dark:focus:text-primary-foreground dark:[&_svg]:text-primary-foreground';
+
+  const breadcrumbParts = location.pathname.split('/').slice(1);
 
   const currentThemeKey = isFollowingSystem
     ? 'system'
@@ -300,123 +285,221 @@ function ShrunkContent({
   };
 
   return (
-    <Layout>
-      {domain === 'shrunk.rutgers.edu' && (
-        <Alert
-          title={
-            <Typography.Text>
+    <div className="flex min-h-dvh flex-col bg-background text-foreground">
+      {domain === 'shrunk.rutgers.edu' && showDeveloperAlert && (
+        <Alert className="rounded-none border-x-0 border-t-0 bg-yellow-50 text-yellow-950 dark:bg-yellow-950 dark:text-yellow-50">
+          <AlertDescription className="flex items-start justify-between gap-4">
+            <span>
               This is a developer environment, any progress you make on this
               site is prone to deletion. Please use the real site at{' '}
-              <a href="https://go.rutgers.edu">go.rutgers.edu</a>.
-            </Typography.Text>
-          }
-          type="warning"
-          showIcon
-          banner
-          closable
-        />
+              <a className="underline" href="https://go.rutgers.edu">
+                go.rutgers.edu
+              </a>
+              .
+            </span>
+            <Button
+              aria-label="Dismiss developer environment warning"
+              className="h-6 w-6 shrink-0 p-0"
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowDeveloperAlert(false)}
+            >
+              <XIcon />
+            </Button>
+          </AlertDescription>
+        </Alert>
       )}
 
       {showMotd && (
-        <Alert
-          title={<Markdown>{motd}</Markdown>}
-          type="info"
-          showIcon
-          closable
-          onClose={onAlertClose}
-          banner
-        />
+        <Alert className="rounded-none border-x-0 border-t-0">
+          <AlertDescription className="flex items-start justify-between gap-4">
+            <div>
+              <Markdown>{motd}</Markdown>
+            </div>
+            <Button
+              aria-label="Dismiss message of the day"
+              className="h-6 w-6 shrink-0 p-0"
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                onAlertClose();
+                setDismissedMotd(true);
+              }}
+            >
+              <XIcon />
+            </Button>
+          </AlertDescription>
+        </Alert>
       )}
 
-      <Header
+      <header
         ref={appHeaderRef}
-        className="tw-sticky tw-top-0 tw-z-50 tw-flex tw-items-center tw-justify-between"
+        className={cn(
+          'sticky top-0 z-50 flex h-20 items-center justify-between border-b px-6 text-primary-foreground',
+          isApiReferenceRoute || isFaqRoute
+            ? 'border-[#1f1f1f] bg-[#111111]'
+            : 'border-border bg-primary dark:bg-[#101010]',
+        )}
       >
-        <Link to={netid ? '/app/dash' : '/app/login'}>
-          <Image
-            preview={false}
+        <Link
+          to={netid ? '/app/dash' : '/app/login'}
+          className="flex items-center leading-none"
+        >
+          <img
             alt="Rutgers"
             src={rutgersLogo}
-            width="175px"
             srcSet={rutgersLogo}
+            className="block w-[205px]"
           />
         </Link>
-        <div className="tw-flex tw-items-center tw-gap-2">
+        <div className="flex items-center gap-2">
           {netid && (
-            <Dropdown menu={{ items: menuItems }}>
-              <Button
-                type="text"
-                className="!tw-text-white"
-                loading={isLoading}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="text-sm font-semibold text-primary-foreground/90 hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                  disabled={isLoading}
+                >
+                  {netid}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-56 border-border bg-popover text-popover-foreground shadow-md dark:border-primary-foreground/10"
               >
-                {netid}
-              </Button>
-            </Dropdown>
+                <DropdownMenuLabel className="text-center text-muted-foreground dark:text-primary-foreground/70">
+                  {netid} ({role})
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-border dark:bg-primary-foreground/10" />
+                {primaryNavItems.map((item) => (
+                  <DropdownMenuItem
+                    key={item.key}
+                    className={userDropdownNavItemClass}
+                    asChild
+                  >
+                    <Link to={item.to ?? '/app/dash'}>
+                      {item.icon}
+                      {item.label}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator className="bg-border dark:bg-primary-foreground/10" />
+                <DropdownMenuItem className={userDropdownNavItemClass} asChild>
+                  <Link to="/app/api-reference">
+                    <CodeIcon />
+                    API Reference
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-border dark:bg-primary-foreground/10" />
+                <DropdownMenuItem className={userDropdownNavItemClass} asChild>
+                  <Link to="/app/releases">
+                    <RocketIcon />
+                    Release Notes
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem className={userDropdownNavItemClass} asChild>
+                  <Link to="/app/faq">
+                    <CircleHelpIcon />
+                    FAQ
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-border dark:bg-primary-foreground/10" />
+                <DropdownMenuItem
+                  className="text-[#DC4446] focus:bg-[#DC4446] focus:text-destructive-foreground"
+                  onSelect={onLogout}
+                >
+                  <LogOutIcon />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
-          <Tooltip title={currentThemeLabel} placement="bottom">
-            <Button
-              icon={currentThemeIcon}
-              type="text"
-              aria-label={`Theme: ${currentThemeLabel}`}
-              className="tw-flex tw-h-9 tw-w-9 tw-items-center tw-justify-center tw-p-0 !tw-text-white"
-              onClick={handleThemeButtonClick}
-            />
-          </Tooltip>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Theme: ${currentThemeLabel}`}
+                  className="text-primary-foreground/90 hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                  onClick={handleThemeButtonClick}
+                >
+                  {currentThemeIcon}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{currentThemeLabel}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
-      </Header>
+      </header>
 
-      <Layout>
-        <Sider width={siderWidth} breakpoint="xxl" collapsedWidth="10" />
-        <Content
-          className={
-            isDashboardRoute
-              ? 'tw-m-0 tw-min-h-[90svh] tw-px-3 tw-pb-6 sm:tw-px-4 md:tw-min-h-[90vh] md:tw-px-6'
-              : 'tw-m-0 tw-min-h-[90svh] tw-p-6 md:tw-min-h-[90vh]'
-          }
+      <div className="grid flex-1 grid-cols-1 2xl:grid-cols-[150px_minmax(0,1fr)_150px]">
+        <aside className="hidden 2xl:block" />
+        <main
+          className={cn(
+            'min-h-0 flex-1',
+            isApiReferenceRoute
+              ? 'overflow-hidden bg-[#1A1A1A] px-6 pt-0 pb-6 text-[#efefef]'
+              : isAdminRoute
+                ? 'px-6 pt-0 pb-6'
+                : isFaqRoute
+                  ? 'overflow-hidden bg-[#1A1A1A] px-6 pt-0 pb-6 text-[#efefef]'
+                  : isDarkWorkspaceRoute
+                    ? 'overflow-hidden bg-background px-3 text-foreground sm:px-4 md:px-6'
+                    : 'px-6 pt-0 pb-6',
+          )}
         >
           <PendingRequests />
 
           {netid !== '' && isApp && !isDashboardRoute && (
-            <section>
-              <Breadcrumb
-                items={location.pathname
-                  .split('/')
-                  .slice(1)
-                  .map((part: string, index: number, arr: string[]) => {
-                    if (part === 'app') {
-                      return {
-                        title: <Link to="/app/dash">Home</Link>,
-                      };
-                    }
-
-                    if (!(part in partToName)) {
-                      return {
-                        title: part,
-                      };
-                    }
-
-                    const path =
-                      partToName[part].href === undefined
-                        ? arr.slice(0, index + 1).join('/')
-                        : partToName[part].href;
-
-                    const isClickable = partToName[part].clickable;
+            <Breadcrumb
+              className={cn(
+                'mt-6 mb-4',
+                (isApiReferenceRoute || isFaqRoute) &&
+                  'text-[#b8b8b8] [&_[aria-current=page]]:text-[#f1f1f1] [&_a]:text-[#b8b8b8] [&_a:hover]:text-[#f1f1f1] [&_li[role=presentation]]:text-[#8f8f8f]',
+              )}
+            >
+              <BreadcrumbList>
+                {breadcrumbParts.map(
+                  (part: string, index: number, arr: string[]) => {
                     const isLastItem = index === arr.length - 1;
 
-                    if (isLastItem || !isClickable) {
-                      return {
-                        title: partToName[part].name,
-                      };
+                    let label = part;
+                    let href = `/${arr.slice(0, index + 1).join('/')}`;
+                    let clickable = false;
+
+                    if (part === 'app') {
+                      label = 'Home';
+                      href = '/app/dash';
+                      clickable = true;
+                    } else if (part in partToName) {
+                      label = partToName[part].name;
+                      href =
+                        partToName[part].href === undefined
+                          ? `/${arr.slice(0, index + 1).join('/')}`
+                          : `/${partToName[part].href}`;
+                      clickable = partToName[part].clickable;
                     }
 
-                    return {
-                      title: (
-                        <Link to={`/${path}`}>{partToName[part].name}</Link>
-                      ),
-                    };
-                  })}
-              />
-            </section>
+                    return (
+                      <Fragment key={`${part}-${index}`}>
+                        <BreadcrumbItem>
+                          {isLastItem || !clickable ? (
+                            <BreadcrumbPage>{label}</BreadcrumbPage>
+                          ) : (
+                            <BreadcrumbLink asChild>
+                              <Link to={href}>{label}</Link>
+                            </BreadcrumbLink>
+                          )}
+                        </BreadcrumbItem>
+                        {!isLastItem && <BreadcrumbSeparator />}
+                      </Fragment>
+                    );
+                  },
+                )}
+              </BreadcrumbList>
+            </Breadcrumb>
           )}
 
           <Switch>
@@ -486,12 +569,12 @@ function ShrunkContent({
               />
             </Route>
           </Switch>
-        </Content>
-        <Sider width={siderWidth} breakpoint="xxl" collapsedWidth="10" />
-      </Layout>
+        </main>
+        <aside className="hidden 2xl:block" />
+      </div>
 
-      <Footer className="tw-flex tw-justify-center tw-bg-black tw-text-center">
-        <Typography.Paragraph className="tw-w-[70%] tw-text-gray-200">
+      <footer className="flex justify-center bg-black p-6 text-center">
+        <p className="w-[70%] text-primary-foreground/90">
           Rutgers is an equal access/equal opportunity institution. Individuals
           with disabilities are encouraged to direct suggestions, comments, or
           complaints concerning any accessibility issues with Rutgers websites
@@ -512,16 +595,14 @@ function ShrunkContent({
             Report Accessibility Barrier or Provide Feedback Form
           </a>
           .
-        </Typography.Paragraph>
-      </Footer>
-    </Layout>
+        </p>
+      </footer>
+    </div>
   );
 }
 
-export default function Shrunk(props: Props) {
+export default function Shrunk(_props: Props) {
   const featureFlags: FeatureFlags = useFeatureFlags();
-
-  const { siderWidth } = props;
 
   const [userPrivileges, setUserPrivileges] = useState<Set<string>>(new Set());
   const [netid, setNetid] = useState<string>('');
@@ -569,7 +650,7 @@ export default function Shrunk(props: Props) {
           }
         }
       } catch (error) {
-        message.error(`Something went wrong. ${error}`);
+        toast.error(`Something went wrong. ${error}`);
       } finally {
         setIsLoading(false);
       }
@@ -623,25 +704,23 @@ export default function Shrunk(props: Props) {
 
           return (
             <FeatureFlagsProvider>
-              <ConfigProvider theme={darkMode ? darkTheme : lightTheme}>
-                <App className={darkMode ? 'tw-dark' : ''}>
-                  <BrowserRouter>
-                    <ShrunkContent
-                      siderWidth={siderWidth}
-                      netid={netid}
-                      userPrivileges={userPrivileges}
-                      isLoading={isLoading}
-                      motd={motd}
-                      showAdminTab={showAdminTab}
-                      role={role}
-                      onLogout={onLogout}
-                      onAlertClose={onAlertClose}
-                      ProtectedRoute={ProtectedRoute}
-                      featureFlags={featureFlags}
-                    />
-                  </BrowserRouter>
-                </App>
-              </ConfigProvider>
+              <div className={darkMode ? 'dark' : ''}>
+                <BrowserRouter>
+                  <ShrunkContent
+                    netid={netid}
+                    userPrivileges={userPrivileges}
+                    isLoading={isLoading}
+                    motd={motd}
+                    showAdminTab={showAdminTab}
+                    role={role}
+                    onLogout={onLogout}
+                    onAlertClose={onAlertClose}
+                    ProtectedRoute={ProtectedRoute}
+                    featureFlags={featureFlags}
+                  />
+                </BrowserRouter>
+                <Toaster />
+              </div>
             </FeatureFlagsProvider>
           );
         }}

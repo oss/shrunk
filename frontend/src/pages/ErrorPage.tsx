@@ -1,4 +1,4 @@
-import { Row, Col } from 'antd';
+import { PageShell } from '@/components/page-shell';
 
 interface IErrorPage {
   title: string;
@@ -7,15 +7,13 @@ interface IErrorPage {
 
 export default function ErrorPage(props: IErrorPage) {
   return (
-    <>
-      <Row gutter={[16, 16]}>
-        <Col span={24} className="tw-mb-2 tw-mt-12 tw-size-2/3 tw-text-center">
-          <h1 className="tw-m-0 tw-text-balance tw-text-7xl tw-font-bold tw-tracking-tighter">
-            {props.title}
-          </h1>
-          <p className="tw-text-pretty">{props.description}</p>
-        </Col>
-      </Row>
-    </>
+    <PageShell className="flex min-h-[45vh] max-w-3xl flex-col items-center justify-center text-center">
+      <h1 className="m-0 text-7xl font-bold tracking-tighter text-balance">
+        {props.title}
+      </h1>
+      <p className="mt-4 text-pretty text-muted-foreground">
+        {props.description}
+      </p>
+    </PageShell>
   );
 }

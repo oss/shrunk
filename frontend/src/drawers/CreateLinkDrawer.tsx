@@ -1,72 +1,58 @@
-import {
-  Button,
-  Col,
-  Drawer,
-  Form,
-  Input,
-  Radio,
-  RadioChangeEvent,
-  Row,
-  Select,
-  Space,
-  Typography,
-  message,
-} from 'antd';
-import { FormInstance } from 'antd/lib/form';
 import dayjs from 'dayjs';
-import { SendHorizontalIcon } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { CalendarIcon, SendHorizontalIcon, XIcon } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { createLink } from '@/api/links';
 import {
   serverValidateDuplicateAlias,
   serverValidateLongUrl,
 } from '@/api/validators';
-import DatePicker from '@/components/date-picker';
 import { useFeatureFlags } from '@/contexts/FeatureFlags';
 import { FeatureFlags } from '@/interfaces/app';
 import { Organization } from '@/interfaces/organizations';
-/**
- * The final values of the create link form
- * @interface
- */
-interface CreateLinkDrawerValues {
-  title: string;
-  long_url: string;
-  expiration_time?: dayjs.Dayjs;
-  alias: string;
-  domain?: string;
-  is_tracking_pixel_link?: boolean;
-  tracking_pixel_extension?: string;
-}
+import { Button } from '@/components/ui/button';
+import { ButtonGroup } from '@/components/ui/button-group';
+import { Calendar } from '@/components/ui/calendar';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 
-/**
- * Props for the [[CreateLinkDrawer]] component
- * @interface
- */
-export interface Props {
+interface Props {
   title: string;
   visible: boolean;
-
   onCancel: () => void;
-
-  /** The user's privileges. Used to determine whether the user is allowed
-   * to set custom aliases
-   * @property
-   */
   userPrivileges: Set<string>;
-
-  /**
-   * Callback called after the user submits the form and the new link is created
-   * @property
-   */
   onFinish: () => Promise<void>;
-
   userOrgs: Organization[];
-  /**
-   * Pass org id as prop if creating a link for an org
-   */
   org_id?: string;
 }
+
+type LongUrlValidationStatus = 'idle' | 'validating' | 'valid' | 'invalid';
+
+const createDrawerInactiveSegmentClass =
+  'border border-border bg-muted text-foreground shadow-none hover:bg-accent hover:text-foreground';
+const createDrawerActiveSegmentClass =
+  'border border-primary bg-primary text-primary-foreground shadow-none hover:bg-primary/90 hover:text-primary-foreground';
+const createDrawerSegmentButtonClass =
+  'h-9 min-w-fit px-3 text-sm font-semibold';
 
 export default function CreateLinkDrawer(props: Props): JSX.Element {
   const featureFlags: FeatureFlags = useFeatureFlags();
@@ -75,202 +61,404 @@ export default function CreateLinkDrawer(props: Props): JSX.Element {
     'url',
   );
 
-  const formRef = useRef<FormInstance>(null);
+  const [linkTitle, setLinkTitle] = useState('');
+  const [longUrl, setLongUrl] = useState('');
+  const [alias, setAlias] = useState('');
+  const [domain, setDomain] = useState('');
+  const [expirationDate, setExpirationDate] = useState<Date | undefined>(
+    undefined,
+  );
+  const [expirationTime, setExpirationTime] = useState('');
+  const [trackingExtension, setTrackingExtension] = useState('.png');
+  const [longUrlValidation, setLongUrlValidation] =
+    useState<LongUrlValidationStatus>('idle');
+  const [longUrlValidationMessage, setLongUrlValidationMessage] = useState('');
+  const longUrlValidationVersionRef = useRef(0);
 
-  const onSubmitClick = async (): Promise<void> => {
-    formRef.current!.resetFields();
-    await props.onFinish();
-    setLoading(false);
-    setLinkCreationMode('url');
-  };
-
-  const onTrackingPixelChange = (e: RadioChangeEvent) => {
-    setLinkCreationMode(e.target.value);
-  };
-
-  const onCreateLink = async (): Promise<void> => {
-    const values: CreateLinkDrawerValues =
-      await formRef.current!.validateFields();
-
-    if (values.title === undefined && !values.is_tracking_pixel_link) {
-      values.title = 'No title provided';
-    }
-
-    setLoading(true);
-    try {
-      await createLink(
-        values.is_tracking_pixel_link as boolean,
-        values.title,
-        values.long_url,
-        values.alias === '' ? undefined : values.alias,
-        values.expiration_time,
-        values.tracking_pixel_extension as '.png' | '.gif',
-        props.org_id,
-      );
-    } catch (e: any) {
-      message.error(e.message);
-      setLoading(false);
-    }
-
-    onSubmitClick();
-  };
-
-  const initialValues = {
-    alias: '',
-    domain: '',
-    tracking_pixel_extension: '.png',
-  };
   const mayUseCustomAliases =
     props.userPrivileges.has('power_user') || props.userPrivileges.has('admin');
 
-  const uniqueDomains = new Set<string>();
-
+  const uniqueDomains: string[] = [];
   if (props.userOrgs.length !== 0) {
     props.userOrgs.forEach((org) => {
       if (org.domains !== undefined) {
-        org.domains.forEach((domain: string) => {
-          uniqueDomains.add(domain);
+        org.domains.forEach((domainName: string) => {
+          if (!uniqueDomains.includes(domainName)) {
+            uniqueDomains.push(domainName);
+          }
         });
       }
     });
   }
 
   const isCreatingTrackingPixel = linkCreationMode === 'pixel';
+  const isCreateButtonDisabled =
+    loading ||
+    (!isCreatingTrackingPixel &&
+      (longUrlValidation === 'validating' || longUrlValidation === 'invalid'));
+
+  const resetForm = () => {
+    longUrlValidationVersionRef.current += 1;
+    setLinkTitle('');
+    setLongUrl('');
+    setAlias('');
+    setDomain('');
+    setExpirationDate(undefined);
+    setExpirationTime('');
+    setTrackingExtension('.png');
+    setLinkCreationMode('url');
+    setLongUrlValidation('idle');
+    setLongUrlValidationMessage('');
+  };
+
+  useEffect(() => {
+    const trimmedLongUrl = longUrl.trim();
+    const validationVersion = longUrlValidationVersionRef.current + 1;
+    longUrlValidationVersionRef.current = validationVersion;
+
+    if (isCreatingTrackingPixel || !trimmedLongUrl) {
+      setLongUrlValidation('idle');
+      setLongUrlValidationMessage('');
+      return;
+    }
+
+    try {
+      const parsedUrl = new URL(trimmedLongUrl);
+      if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+        throw new Error('URL must start with http:// or https://');
+      }
+    } catch {
+      setLongUrlValidation('invalid');
+      setLongUrlValidationMessage('Enter a valid URL');
+      return;
+    }
+
+    setLongUrlValidation('validating');
+    setLongUrlValidationMessage('');
+
+    const timeoutId = window.setTimeout(() => {
+      serverValidateLongUrl(null, trimmedLongUrl)
+        .then(() => {
+          if (longUrlValidationVersionRef.current !== validationVersion) {
+            return;
+          }
+
+          setLongUrlValidation('valid');
+          setLongUrlValidationMessage('');
+        })
+        .catch((error: unknown) => {
+          if (longUrlValidationVersionRef.current !== validationVersion) {
+            return;
+          }
+
+          setLongUrlValidation('invalid');
+          setLongUrlValidationMessage(
+            error instanceof Error && error.message
+              ? error.message
+              : 'Invalid URL',
+          );
+        });
+    }, 400);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [isCreatingTrackingPixel, longUrl]);
+
+  const onSubmitClick = async (): Promise<void> => {
+    resetForm();
+    await props.onFinish();
+    setLoading(false);
+  };
+
+  const onCreateLink = async (): Promise<void> => {
+    if (!isCreatingTrackingPixel && !longUrl.trim()) {
+      toast.error('Please enter a URL');
+      return;
+    }
+
+    const resolvedAlias = alias.trim() || undefined;
+
+    if (resolvedAlias) {
+      try {
+        await serverValidateDuplicateAlias(null, resolvedAlias);
+      } catch {
+        toast.error('This alias is already taken');
+        return;
+      }
+    }
+
+    if (!isCreatingTrackingPixel) {
+      try {
+        await serverValidateLongUrl(null, longUrl);
+      } catch {
+        toast.error('Invalid URL');
+        return;
+      }
+    }
+
+    setLoading(true);
+    try {
+      await createLink(
+        isCreatingTrackingPixel,
+        linkTitle || (isCreatingTrackingPixel ? '' : 'No title provided'),
+        isCreatingTrackingPixel ? '' : longUrl,
+        resolvedAlias,
+        expirationDate
+          ? dayjs(
+              `${dayjs(expirationDate).format('YYYY-MM-DD')}T${expirationTime || '00:00'}`,
+            )
+          : undefined,
+        isCreatingTrackingPixel
+          ? (trackingExtension as '.png' | '.gif')
+          : undefined,
+        props.org_id,
+      );
+    } catch (e: any) {
+      toast.error(e.message);
+      setLoading(false);
+      return;
+    }
+
+    onSubmitClick();
+  };
 
   return (
-    <Drawer
-      title={props.title}
+    <Sheet
       open={props.visible}
-      size="large"
-      onClose={props.onCancel}
-      placement="right"
-      extra={
-        <Space>
-          <Button
-            icon={<SendHorizontalIcon />}
-            onClick={onCreateLink}
-            type="primary"
-            loading={loading}
-          >
-            Create
-          </Button>
-        </Space>
-      }
+      onOpenChange={(open) => !open && props.onCancel()}
     >
-      <Form
-        ref={formRef}
-        layout="vertical"
-        initialValues={initialValues}
-        requiredMark={false}
-      >
-        <Row gutter={16} justify="end">
-          <Col span={24}>
-            <Form.Item label="Name" name="title">
-              <Input placeholder="My awesome link that will be advertised somewhere" />
-            </Form.Item>
-            {!isCreatingTrackingPixel && (
-              <Form.Item
-                label="Original URL"
-                name="long_url"
-                rules={[
-                  { required: true },
-                  { type: 'url', message: 'Invalid URL' },
-                  { validator: serverValidateLongUrl },
-                ]}
-              >
-                <Input placeholder="https://example.rutgers.edu" />
-              </Form.Item>
-            )}
-          </Col>
-          <Col span={24}>
-            <Typography.Title level={4}>Advanced Options</Typography.Title>
-          </Col>
-          {!isCreatingTrackingPixel && mayUseCustomAliases && (
-            <Col span={24}>
-              <Form.Item
-                required
-                label="New Shortened URL"
-                name="alias"
-                rules={[
-                  { required: false, message: 'Please input an alias.' },
-                  { validator: serverValidateDuplicateAlias },
-                ]}
-              >
-                <Space.Compact className="tw-w-full">
-                  <Space.Addon>{`${window.location.host}/`}</Space.Addon>
-                  <Input placeholder="If left blank, it will be randomized" />
-                </Space.Compact>
-              </Form.Item>
-            </Col>
+      <SheetContent className="w-full sm:max-w-[720px]" showCloseButton={false}>
+        <SheetHeader className="flex-row items-start justify-between gap-3 space-y-0 text-left">
+          <div className="flex min-w-0 items-center gap-2">
+            <SheetClose className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none disabled:pointer-events-none data-[state=open]:bg-secondary">
+              <XIcon className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </SheetClose>
+            <SheetTitle className="min-w-0">{props.title}</SheetTitle>
+          </div>
+          <div className="flex shrink-0 flex-wrap justify-end gap-2">
+            <Button onClick={onCreateLink} disabled={isCreateButtonDisabled}>
+              <SendHorizontalIcon />
+              {loading ? 'Creating...' : 'Create'}
+            </Button>
+          </div>
+        </SheetHeader>
+        <div className="mt-6 space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="link-title">Name</Label>
+            <Input
+              id="link-title"
+              placeholder="My awesome link that will be advertised somewhere"
+              value={linkTitle}
+              onChange={(e) => setLinkTitle(e.target.value)}
+            />
+          </div>
+
+          {!isCreatingTrackingPixel && (
+            <div className="space-y-2">
+              <Label htmlFor="link-url">Original URL</Label>
+              <Input
+                id="link-url"
+                placeholder="https://example.rutgers.edu"
+                value={longUrl}
+                aria-invalid={longUrlValidation === 'invalid'}
+                aria-describedby="link-url-validation"
+                className={
+                  longUrlValidation === 'invalid'
+                    ? 'border-destructive focus-visible:ring-destructive'
+                    : undefined
+                }
+                onChange={(e) => setLongUrl(e.target.value)}
+              />
+              <div id="link-url-validation" aria-live="polite">
+                {longUrlValidation === 'validating' && (
+                  <p className="text-sm text-muted-foreground">
+                    Checking URL...
+                  </p>
+                )}
+                {longUrlValidation === 'invalid' && (
+                  <p className="text-sm text-destructive">
+                    {longUrlValidationMessage}
+                  </p>
+                )}
+              </div>
+            </div>
           )}
-          <Col span={12}>
+
+          <p className="mb-2 text-xl font-semibold text-foreground">
+            Advanced Options
+          </p>
+
+          {!isCreatingTrackingPixel && mayUseCustomAliases && (
+            <div className="space-y-2">
+              <label
+                htmlFor="link-alias"
+                className="text-sm leading-none font-medium"
+              >
+                New Shortened URL
+              </label>
+              <div className="flex items-center rounded-md border border-input bg-background text-sm">
+                <span className="border-r border-input px-3 py-2 text-muted-foreground">
+                  {window.location.host}/
+                </span>
+                <input
+                  id="link-alias"
+                  className="flex-1 bg-transparent px-3 py-2 outline-none placeholder:text-muted-foreground"
+                  placeholder="If left blank, it will be randomized"
+                  value={alias}
+                  onChange={(e) => setAlias(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
             {!isCreatingTrackingPixel &&
               featureFlags.domains &&
-              mayUseCustomAliases && (
-                <Form.Item label="Domain" name="domain">
-                  <Select
-                    showSearch
-                    options={Array.from(uniqueDomains).map(
-                      (domain: string) => ({
-                        value: domain,
-                        label: domain,
-                      }),
-                    )}
-                    placeholder="Select a domain"
-                  />
-                </Form.Item>
+              mayUseCustomAliases &&
+              uniqueDomains.length > 0 && (
+                <div className="space-y-2">
+                  <Label htmlFor="link-domain">Domain</Label>
+                  <Select value={domain} onValueChange={setDomain}>
+                    <SelectTrigger id="link-domain">
+                      <SelectValue placeholder="Select a domain" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {uniqueDomains.map((d) => (
+                        <SelectItem key={d} value={d}>
+                          {d}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               )}
 
             {featureFlags.trackingPixel && (
-              <>
-                <Form.Item
-                  required
-                  label="Link Type"
-                  name="is_tracking_pixel_link"
-                  valuePropName="checked"
-                >
-                  <Radio.Group
-                    value={linkCreationMode}
-                    onChange={onTrackingPixelChange}
-                    optionType="button"
-                    buttonStyle="solid"
+              <div className="space-y-2">
+                <Label htmlFor="link-type-url">Link Type</Label>
+                <ButtonGroup className="w-full">
+                  <Button
+                    id="link-type-url"
+                    type="button"
+                    variant={linkCreationMode === 'url' ? 'default' : 'outline'}
+                    onClick={() => setLinkCreationMode('url')}
+                    className={`flex-1 ${createDrawerSegmentButtonClass} ${linkCreationMode === 'url' ? createDrawerActiveSegmentClass : createDrawerInactiveSegmentClass}`}
                   >
-                    <Radio.Button value="url">URL</Radio.Button>
-                    <Radio.Button value="pixel">Tracking Pixel</Radio.Button>
-                  </Radio.Group>
-                </Form.Item>
-              </>
+                    URL
+                  </Button>
+                  <Button
+                    id="link-type-pixel"
+                    type="button"
+                    variant={
+                      linkCreationMode === 'pixel' ? 'default' : 'outline'
+                    }
+                    onClick={() => setLinkCreationMode('pixel')}
+                    className={`flex-1 ${createDrawerSegmentButtonClass} ${linkCreationMode === 'pixel' ? createDrawerActiveSegmentClass : createDrawerInactiveSegmentClass}`}
+                  >
+                    Tracking Pixel
+                  </Button>
+                </ButtonGroup>
+              </div>
             )}
-          </Col>
-          <Col span={12}>
+
             {isCreatingTrackingPixel && (
-              <Form.Item
-                required
-                label="Image Type"
-                name="tracking_pixel_extension"
-              >
-                <Radio.Group optionType="button" buttonStyle="solid">
-                  <Radio.Button value=".png">PNG</Radio.Button>
-                  <Radio.Button value=".gif">GIF</Radio.Button>
-                </Radio.Group>
-              </Form.Item>
+              <div className="space-y-2">
+                <Label htmlFor="tracking-png">Image Type</Label>
+                <ButtonGroup className="w-full">
+                  <Button
+                    id="tracking-png"
+                    type="button"
+                    variant={
+                      trackingExtension === '.png' ? 'default' : 'outline'
+                    }
+                    onClick={() => setTrackingExtension('.png')}
+                    className="flex-1 border-0"
+                  >
+                    PNG
+                  </Button>
+                  <Button
+                    id="tracking-gif"
+                    type="button"
+                    variant={
+                      trackingExtension === '.gif' ? 'default' : 'outline'
+                    }
+                    onClick={() => setTrackingExtension('.gif')}
+                    className="flex-1 border-0"
+                  >
+                    GIF
+                  </Button>
+                </ButtonGroup>
+              </div>
             )}
 
             {!isCreatingTrackingPixel && (
-              <Form.Item label="Expiration time" name="expiration_time">
-                <DatePicker
-                  className="tw-w-full"
-                  format="YYYY-MM-DD HH:mm:ss"
-                  disabledDate={(current) =>
-                    current && current < dayjs().startOf('day')
-                  }
-                  showTime={{ defaultValue: dayjs() }}
-                />
-              </Form.Item>
+              <div className="space-y-2">
+                <Label htmlFor="link-expiration">Expiration time</Label>
+                <div className="flex gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        id="link-expiration"
+                        type="button"
+                        variant="outline"
+                        className="h-9 flex-1 justify-start px-3 text-left text-sm font-normal"
+                      >
+                        <CalendarIcon className="size-4 shrink-0" />
+                        <span
+                          className={
+                            expirationDate ? '' : 'text-muted-foreground'
+                          }
+                        >
+                          {expirationDate
+                            ? dayjs(expirationDate).format('YYYY-MM-DD')
+                            : 'Pick a date'}
+                        </span>
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={expirationDate}
+                        onSelect={setExpirationDate}
+                        defaultMonth={expirationDate}
+                        disabled={(date: Date) => {
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          return date < today;
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <Input
+                    type="time"
+                    value={expirationTime}
+                    onChange={(e) => setExpirationTime(e.target.value)}
+                    disabled={!expirationDate}
+                    className="h-9 w-28 px-3 text-sm"
+                  />
+                  {expirationDate && (
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="outline"
+                      aria-label="Clear expiration"
+                      className="h-9 w-9 shrink-0 px-0"
+                      onClick={() => {
+                        setExpirationDate(undefined);
+                        setExpirationTime('');
+                      }}
+                    >
+                      <XIcon className="size-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
             )}
-          </Col>
-        </Row>
-      </Form>
-    </Drawer>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }

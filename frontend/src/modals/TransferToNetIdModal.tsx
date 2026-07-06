@@ -1,6 +1,28 @@
-import { Button, Form, Input, Modal, Popconfirm, message } from 'antd';
 import { useState } from 'react';
+
 import { serverValidateNetId } from '@/api/validators';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface ITransferModal {
   visible: boolean;
@@ -11,58 +33,114 @@ interface ITransferModal {
 
 const TransferToNetIdModal = (props: ITransferModal) => {
   const [loading, setLoading] = useState(false);
-  const [form] = Form.useForm();
-  const [disableSubmit, setDisabledSubmit] = useState(true);
+  const [netId, setNetId] = useState('');
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const handleFormChange = () => {
-    const hasErrors = form.getFieldsError().some(({ errors }) => errors.length);
-    setDisabledSubmit(hasErrors || form.getFieldsValue().netId === '');
+  const disableSubmit =
+    loading || netId.trim() === '' || validationError !== null;
+
+  const validateNetId = async (value: string) => {
+    if (value.trim() === '') {
+      setValidationError(null);
+      return false;
+    }
+
+    try {
+      await serverValidateNetId(null, value);
+      setValidationError(null);
+      return true;
+    } catch (error) {
+      setValidationError(
+        error instanceof Error ? error.message : 'Invalid NetID',
+      );
+      return false;
+    }
   };
 
   const handleSubmit = async () => {
+    const isValid = await validateNetId(netId);
+    if (!isValid) return;
+
     setLoading(true);
+    setSubmitError(null);
     try {
-      await props.onOk(form.getFieldValue('netId'), props.link_id);
-      form.resetFields();
+      await props.onOk(netId, props.link_id);
+      setNetId('');
+      setValidationError(null);
     } catch {
-      message.error('Failed to transfer ownership: ');
+      setSubmitError('Failed to transfer ownership.');
     } finally {
       setLoading(false);
     }
   };
+
+  const handleOpenChange = (open: boolean) => {
+    if (open) return;
+    props.onCancel();
+  };
+
   return (
-    <Modal
-      title="Transfer to Net ID"
-      open={props.visible}
-      onCancel={props.onCancel}
-      loading={loading}
-      footer={
-        <>
-          <Popconfirm
-            title="Are you sure you want to transfer ownership?"
-            onConfirm={handleSubmit}
-            okText="Yes"
-            cancelText="No"
-            okButtonProps={{ danger: true }}
-          >
-            <Button type="primary" disabled={disableSubmit} loading={loading}>
-              Confirm Transfer
-            </Button>
-          </Popconfirm>
-          <Button onClick={props.onCancel}>Cancel</Button>
-        </>
-      }
-    >
-      <Form layout="vertical" form={form} onFieldsChange={handleFormChange}>
-        <Form.Item
-          label="Net ID"
-          name="netId"
-          rules={[{ validator: serverValidateNetId }]}
-        >
-          <Input />
-        </Form.Item>
-      </Form>
-    </Modal>
+    <Dialog open={props.visible} onOpenChange={handleOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Transfer to NetID</DialogTitle>
+          <DialogDescription>
+            Enter the NetID that should become the new owner of this link.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-2">
+          <Label htmlFor="transfer-netid">NetID</Label>
+          <Input
+            id="transfer-netid"
+            value={netId}
+            onBlur={() => validateNetId(netId)}
+            onChange={(event) => {
+              setNetId(event.target.value);
+              setValidationError(null);
+              setSubmitError(null);
+            }}
+          />
+          {validationError ? (
+            <p className="text-sm text-destructive">{validationError}</p>
+          ) : null}
+          {submitError ? (
+            <p className="text-sm text-destructive">{submitError}</p>
+          ) : null}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={props.onCancel}>
+            Cancel
+          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button disabled={disableSubmit}>
+                {loading ? 'Transferring...' : 'Confirm Transfer'}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Transfer ownership?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will transfer ownership of the link to {netId}.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={handleSubmit}
+                >
+                  Yes, transfer
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 
