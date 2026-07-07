@@ -3,7 +3,6 @@ import {
   ChartLineIcon,
   CodeIcon,
   EllipsisIcon,
-  LinkIcon,
   PlusCircleIcon,
   SettingsIcon,
   TrashIcon,
@@ -98,7 +97,7 @@ interface VisitDatum {
   unique_visits: number;
 }
 
-const VALID_TABS = ['members', 'overview', 'links'];
+const VALID_TABS = ['members', 'overview'];
 const DEFAULT_TAB = 'overview';
 
 function ManageOrgBase({
@@ -136,10 +135,11 @@ function ManageOrgBase({
     const handleLocationChange = () => {
       const locationParam = new URLSearchParams(window.location.search);
       const tab = locationParam.get('tab');
-      if (tab && VALID_TABS.includes(tab)) {
-        setActiveTab(tab);
+      const normalizedTab = tab === 'links' ? DEFAULT_TAB : tab;
+      if (normalizedTab && VALID_TABS.includes(normalizedTab)) {
+        setActiveTab(normalizedTab);
         const baseUrl = window.location.pathname;
-        window.history.replaceState({}, '', `${baseUrl}?tab=${tab}`);
+        window.history.replaceState({}, '', `${baseUrl}?tab=${normalizedTab}`);
       } else {
         const baseUrl = window.location.pathname;
         window.history.pushState({}, '', `${baseUrl}?tab=${DEFAULT_TAB}`);
@@ -328,32 +328,28 @@ function ManageOrgBase({
                   <span>Members</span>
                 </span>
               </TabsTrigger>
-              <TabsTrigger value="links" className={adminTabTriggerClass}>
-                <span className="inline-flex items-center gap-2.5">
-                  <LinkIcon className="h-4 w-4 shrink-0" />
-                  <span>Links</span>
-                </span>
-              </TabsTrigger>
             </TabsList>
             <TabsContent
               value="overview"
               className={`${adminSectionTopClass} focus-visible:ring-0`}
             >
-              <OrgOverview
-                totalMembers={organization.members.length}
-                orgId={organization.id}
-                isMobile={isMobile}
-              />
-            </TabsContent>
-            <TabsContent
-              value="links"
-              className={`${adminSectionTopClass} focus-visible:ring-0`}
-            >
-              <CompactLinkTable
-                org_id={organization.id}
-                forceRefresh={forceRefresh}
-                isAdmin={isAdmin}
-              />
+              <div className="grid gap-4 xl:grid-cols-[18rem_minmax(0,1fr)] xl:items-start">
+                <div className="min-w-0">
+                  <OrgOverview
+                    totalMembers={organization.members.length}
+                    orgId={organization.id}
+                    isMobile={isMobile}
+                    orientation="stacked"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <CompactLinkTable
+                    org_id={organization.id}
+                    forceRefresh={forceRefresh}
+                    isAdmin={isAdmin}
+                  />
+                </div>
+              </div>
             </TabsContent>
             <TabsContent
               value="members"

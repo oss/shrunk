@@ -8,6 +8,7 @@ interface OrgOverviewProps {
   orgId: string;
   totalMembers: number;
   isMobile?: boolean;
+  orientation?: 'grid' | 'stacked';
 }
 
 function StatCard({
@@ -43,6 +44,7 @@ export default function OrgOverview({
   orgId,
   totalMembers,
   isMobile = false,
+  orientation = 'grid',
 }: OrgOverviewProps) {
   const [stats, setStats] = useState<OrganizationStats | undefined>(undefined);
   const isLoading = stats === undefined;
@@ -55,8 +57,13 @@ export default function OrgOverview({
     fetchStats();
   }, [orgId]);
 
+  const layoutClass =
+    orientation === 'stacked'
+      ? 'grid grid-cols-2 gap-4 xl:grid-cols-1'
+      : 'grid grid-cols-2 gap-4 lg:grid-cols-4';
+
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <div className={layoutClass}>
       <StatCard
         title="Links"
         value={stats?.total_links}
