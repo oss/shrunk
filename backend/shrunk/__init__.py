@@ -301,6 +301,7 @@ def create_app(**_kwargs: Any) -> Flask:
             "DEV_FACSTAFF",
             "DEV_PWR_USER",
             "DEV_ADMIN",
+            "DEV_GUEST",
         }:
             return jsonify({}), 200
 
