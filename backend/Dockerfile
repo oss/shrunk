@@ -1,6 +1,5 @@
 FROM python:3.14 AS base
 
-EXPOSE 3050
 WORKDIR /usr/shrunk/backend/
 
 # Install uv
@@ -26,7 +25,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 FROM python:3.14
 
+EXPOSE 3050
 ENV PATH="/usr/shrunk/backend/.venv/bin:$PATH"
+ENV SHRUNK_SEED_DATABASE=0
 
 COPY ./GeoLite2-City.mmdb /usr/share/GeoIP/GeoLite2-City.mmdb
 COPY --from=base /usr/shrunk/backend/ /usr/shrunk/backend/

@@ -34,6 +34,28 @@ cache:
   before_script:
     - skopeo login -u "$CI_REGISTRY_USER" --password "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
 
+.mongo-service:
+  services:
+    - name: mongo:7
+      alias: mongo
+      command:
+        - sh
+        - -c
+        - |
+          replicaset() {
+            while ! mongosh --eval 'db.version()' >/dev/null 2>/dev/null; do
+              echo "mongo not ready... waiting..."
+              sleep 1
+            done
+            echo "mongo version $(mongosh --eval 'db.version()') is ready..."
+            echo "creating mongo replica set..."
+            mongosh --eval 'rs.initiate()'
+            mongosh --eval 'rs.conf()'
+          }
+
+          replicaset &
+          exec mongod --bind_ip_all --replSet=rs0
+
 eslint:
   stage: lint
   image: node:latest
@@ -119,28 +141,10 @@ build:
     - buildah push "$CI_REGISTRY_IMAGE/${IMAGE}:${CI_COMMIT_SHA}"
 
 backend-test:
-  extends: .buildah
+  extends:
+    - .buildah
+    - .mongo-service
   stage: test
-  services:
-    - name: mongo:7
-      alias: mongo
-      command:
-        - sh
-        - -c
-        - |
-          replicaset() {
-            while ! mongosh --eval 'db.version()' >/dev/null 2>/dev/null; do
-              echo "mongo not ready... waiting..."
-              sleep 1
-            done
-            echo "mongo version $(mongosh --eval 'db.version()') is ready..."
-            echo "creating mongo replica set..."
-            mongosh --eval 'rs.initiate()'
-            mongosh --eval 'rs.conf()'
-          }
-
-          replicaset &
-          exec mongod --bind_ip_all --replSet=rs0
   script:
     - container=$(buildah from "$CI_REGISTRY_IMAGE/backend:${CI_COMMIT_SHA}")
     - container_root=$(buildah mount $container)
@@ -160,6 +164,41 @@ backend-test:
   artifacts:
     reports:
       junit: pytest.xml
+
+accessibility-test:
+  extends: .mongo-service
+  stage: test
+  image: quay.io/podman/stable
+  parallel:
+    matrix:
+      - THEME: ["light", "dark"]
+  when: manual
+  variables:
+    FF_NETWORK_PER_BUILD: true
+    SHRUNK_DB_HOST: mongo
+    SHRUNK_DB_PORT: 27017
+    SHRUNK_DB_NAME: shrunk_test
+    SHRUNK_DEV_LOGINS: 1
+    SHRUNK_SEED_DATABASE: 1
+    SHRUNK_SECRET_KEY: something_secret
+    FLASK_DEBUG: false
+    FLASK_APP: shrunk
+  before_script:
+    - podman login -u "$CI_REGISTRY_USER" --password $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  services:
+    - mongo
+    - name: $CI_REGISTRY_IMAGE/frontend:${CI_COMMIT_SHA}
+      alias: frontend
+    - name: $CI_REGISTRY_IMAGE/backend:${CI_COMMIT_SHA}
+      alias: backend
+  script: 
+    - mkdir workspace
+    - podman build -t pa11y-ci frontend/pa11y-ci
+    - podman run --network=${CI_BUILD_NETWORK_NAME} -e PA11Y_URL=frontend:4343 -e PA11Y_THEME=${THEME} -v ${PWD}/workspace:/workspace pa11y-ci
+  artifacts:
+    when: always
+    reports:
+      accessibility: workspace/accessibility-${THEME}.json
 
 promote-build:
   extends:
