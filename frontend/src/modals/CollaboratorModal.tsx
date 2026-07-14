@@ -111,7 +111,6 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
 
   const validateNetId = async (value: string) => {
     if (value.trim() === '') {
-      setValidationError('Please enter a valid NetID.');
       return false;
     }
 
@@ -169,7 +168,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
       open={props.visible}
       onOpenChange={(open) => {
         if (!open) {
-          setValidationError(null);
+          // setValidationError(null);
           props.onCancel();
         }
       }}
