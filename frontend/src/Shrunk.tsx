@@ -29,7 +29,7 @@ import {
   useLocation,
 } from 'react-router-dom';
 
-import Markdown from 'markdown-to-jsx';
+import Markdown from 'markdown-to-jsx/react';
 import Admin from '@/pages/Admin';
 import Dashboard from '@/pages/Dashboard';
 import Faq from '@/pages/Faq';
@@ -311,7 +311,7 @@ function ShrunkContent({
       )}
 
       {showMotd && (
-        <Alert className="rounded-none border-x-0 border-t-0">
+        <Alert className="rounded-none border-none bg-[#def0f9] dark:bg-[#7DBFD6]">
           <AlertDescription className="flex items-start justify-between gap-4">
             <div>
               <Markdown>{motd}</Markdown>
