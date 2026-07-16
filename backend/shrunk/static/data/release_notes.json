@@ -20,6 +20,24 @@
           "contributors": [
             "sb2787"
           ]
+        }, 
+        {
+          "text": "Improved the coloring of the message of the day (MOTD) banner to align with dark mode", 
+          "contributors": [
+            "jds508"
+          ]
+        }, 
+        {
+          "text": "Combined the overview and links tab in the organizations page in order to reduce clutter",
+          "contributors": [
+            "jds508"
+          ]
+        }, 
+        {
+          "text": "Modernized the frontend styling by switching from Ant Design to TailwindCSS V4 with Shadcn Components",
+          "contributors": [
+            "jds508"
+          ]
         }
       ],
       "fixes": [
@@ -40,8 +58,13 @@
           "contributors": [
             "ak2399"
           ]
+        },
+        {
+          "text": "Allowed users who are not in an organization to view the organization name when shared a link.",
+          "contributors": [
+            "jds508"
+          ]
         }
-       
       ]
     }
   },
