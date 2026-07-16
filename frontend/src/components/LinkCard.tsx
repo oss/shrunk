@@ -19,10 +19,19 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
+import { toast } from 'sonner';
 
 export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
   const onCopyOriginalLink = () => {
     navigator.clipboard.writeText(linkInfo.long_url);
+    toast('Copied to clipboard!');
+  };
+
+  const onCopyAlias = () => {
+    navigator.clipboard.writeText(
+      getRedirectFromAlias(linkInfo.alias, linkInfo.is_tracking_pixel_link),
+    );
+    toast('Copied to clipboard!');
   };
 
   const ownerLabel =
@@ -138,17 +147,10 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
             <TooltipTrigger asChild>
               <Button
                 variant="outline"
-                className="max-w-full justify-start border-dashed border-border bg-transparent px-4 text-sm shadow-none hover:bg-accent dark:bg-[#262626]"
-                onClick={() => {
-                  navigator.clipboard.writeText(
-                    getRedirectFromAlias(
-                      linkInfo.alias,
-                      linkInfo.is_tracking_pixel_link,
-                    ),
-                  );
-                }}
+                className="max-w-full justify-start border-dashed border-border bg-transparent px-4 text-sm shadow-none hover:border-[#cc0033] hover:bg-accent active:border-[#8e0d18] active:bg-transparent active:text-[#8e0d18] dark:bg-[#262626]"
+                onClick={onCopyAlias}
               >
-                <CopyIcon className="text-black dark:text-white" />
+                <CopyIcon data-icon="inline-start" />
                 <span className="truncate">
                   {getRedirectFromAlias(
                     linkInfo.alias,
@@ -166,7 +168,7 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
               <TooltipTrigger asChild>
                 <Button
                   variant="outline"
-                  className="max-w-full justify-start border-dashed border-border bg-transparent px-4 text-sm shadow-none hover:bg-accent lg:ml-auto dark:bg-[#262626]"
+                  className="max-w-full justify-start border-dashed border-border bg-transparent px-4 text-sm shadow-none hover:border-[#cc0033] hover:bg-accent active:border-[#8e0d18] active:bg-transparent active:text-[#8e0d18] dark:bg-[#262626]"
                   onClick={onCopyOriginalLink}
                 >
                   <CopyIcon />

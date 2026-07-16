@@ -64,6 +64,12 @@
           "contributors": [
             "jds508"
           ]
+        }, 
+        {
+          "text": "Implemented a toast on copy of original link or shortened link from link card",
+          "contributors": [
+            "jds508"
+          ]
         }
       ]
     }
