@@ -1,7 +1,7 @@
 """Implements API endpoints under ``/api/link``"""
 
 from datetime import datetime, timedelta
-from typing import Any, Optional, Dict, List
+from typing import Any, Optional, Dict, List, Mapping, Sequence
 
 import os
 import csv
@@ -11,15 +11,18 @@ from flask import Blueprint, jsonify, request, Response
 from flask_mailman import Mail
 from bson import ObjectId
 import bson
+import bson.errors
 from werkzeug.exceptions import abort
 
 from shrunk.client import ShrunkClient
+from shrunk.mongo_schema import MongoRef
 from shrunk.client.exceptions import (
     BadAliasException,
     BadLongURLException,
     NoSuchObjectException,
     InvalidACL,
     NotUserOrOrg,
+    OrgOwnedLinkNotSupported,
     SecurityRiskDetected,
     LinkIsPendingOrRejected,
 )
@@ -79,7 +82,7 @@ CREATE_LINK_SCHEMA = {
     },
 }
 
-if int(os.getenv("SHRUNK_FLASK_TESTING")):
+if int(os.getenv("SHRUNK_FLASK_TESTING", "0")):
     CREATE_LINK_SCHEMA["properties"]["bypass_security_measures"] = {"type": "boolean"}
 
 
@@ -122,7 +125,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
     else:
         expiration_time = None
 
-    owner = {}
+    owner: MongoRef = {"_id": netid, "type": "netid"}
 
     if client.users.has_role(netid, "guest"):  # force org link ownership for guest
         org = client.orgs.get_orgs(netid, True)[0]
@@ -139,8 +142,6 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
             return "No such org", 400
         if not client.orgs.is_member(req["org_id"], netid):
             return "Not a member of the specified org", 403
-    else:
-        owner = {"_id": netid, "type": "netid"}
 
     alias = req.get("alias", None)
 
@@ -154,7 +155,7 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
             alias,
             expiration_time,
             owner,
-            request.remote_addr,
+            request.remote_addr or "",
             domain=req["domain"],
             editors=req["editors"],
             viewers=req["viewers"],
@@ -231,7 +232,7 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     if not client.users.has_role(netid, "admin") and not client.links.may_view(link_id, netid):
         abort(403)
 
-    def enrich_acl_with_org_names(entries: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def enrich_acl_with_org_names(entries: Sequence[Mapping[str, Any]]) -> List[Dict[str, Any]]:
         enriched_entries: List[Dict[str, Any]] = []
         org_name_cache: Dict[str, Optional[str]] = {}
 
@@ -482,7 +483,13 @@ def post_request_edit(netid: str, client: ShrunkClient, mail: Mail, link_id: Obj
         abort(404)
     if not client.users.has_role(netid, "admin") and not client.links.may_view(link_id, netid):
         abort(403)
-    client.links.request_edit_access(mail, link_id, netid)
+    try:
+        client.links.request_edit_access(mail, link_id, netid)
+    except OrgOwnedLinkNotSupported:
+        return (
+            jsonify({"message": "Requesting edit access is not supported for links owned by an organization"}),
+            400,
+        )
     return "", 204
 
 
@@ -503,7 +510,7 @@ def cancel_request_edit(netid: str, client: ShrunkClient, mail: Mail, link_id: O
 @bp.route("/<ObjectId:link_id>/active_request_exists", methods=["GET"])
 @require_mail
 @require_login
-def request_exists(netid: str, client: ShrunkClient, mail: Mail, link_id: ObjectId) -> bool:
+def request_exists(netid: str, client: ShrunkClient, mail: Mail, link_id: ObjectId) -> Any:
     try:
         client.links.get_link_info(link_id)
     except NoSuchObjectException:
@@ -818,7 +825,7 @@ def revert_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         abort(403)
 
     alias = info["alias"]
-    if client.links.alias_is_reserved(alias) and client.links.alias_is_duplicate(alias, info.is_tracking_pixel_link):
+    if client.links.alias_is_reserved(alias) and client.links.alias_is_duplicate(alias, info["is_tracking_pixel_link"]):
         abort(400)
 
     try:

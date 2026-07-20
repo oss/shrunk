@@ -1,19 +1,21 @@
 """Development logins. We have one DEV_* user for each user class
 (regular, facstaff, power user, admin)."""
 
-from typing import Optional, Any
+from typing import Any
 
 import os
 
 from flask import Blueprint, current_app, session, jsonify
 from werkzeug.exceptions import abort
 
+from shrunk.client import ShrunkClient
+
 __all__ = ["bp"]
 
 bp = Blueprint("devlogins", __name__, url_prefix="/api/core/devlogins")
 
 
-def mk_dev_login(netid: str, display_name: str, role: Optional[str]) -> Any:
+def mk_dev_login(netid: str, display_name: str, role: str) -> Any:
 
     def view() -> Any:
         if not bool(int(os.getenv("SHRUNK_DEV_LOGINS", "0"))):
@@ -23,7 +25,8 @@ def mk_dev_login(netid: str, display_name: str, role: Optional[str]) -> Any:
         current_app.logger.info(f"successful dev login with netid {netid}")
         session.update({"user": {"netid": netid, "display_name": display_name}})
 
-        current_app.client.users.initialize_user(netid, role)
+        client: ShrunkClient = getattr(current_app, "client")
+        client.users.initialize_user(netid, role)
 
         return jsonify({"status": "success"})
 

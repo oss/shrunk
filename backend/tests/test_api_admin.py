@@ -11,6 +11,7 @@ from util import dev_login, create_link
 def test_endpoint_stats(client: Client) -> None:
     with dev_login(client, "admin"):
         resp = client.get("/api/core/admin/stats/endpoint")
+        assert resp.json is not None
         assert resp.status_code == 200
         assert "stats" in resp.json
         assert isinstance(resp.json["stats"], list)
@@ -54,6 +55,7 @@ def test_user_overview_stats(client: Client) -> None:
     with dev_login(client, "admin"):
         create_link(client, "title", "https://example.com")
         resp = client.post("/api/core/user/all", json={"operations": []})
+        assert resp.json is not None
         assert resp.status_code == 200
         response_data = resp.json
         assert len(response_data["users"]) == 1

@@ -2,11 +2,26 @@ import os
 from typing import Any, Dict, List, Optional
 
 import pymongo
+import pymongo.database
 from bson import ObjectId
 from flask import render_template_string
 from flask_mailman import Mail
+from typing_extensions import TypedDict
+
+from shrunk.mongo_schema import TicketDocument
 
 __all__ = ["TicketsClient"]
+
+
+class TicketReasonText(TypedDict):
+    prompt: str
+    placeholder: str
+    name: str
+
+
+class HelpDeskText(TypedDict):
+    reason: Dict[str, TicketReasonText]
+
 
 CATEGORY_TO_SUBJECT = {
     "confirmation": "Ticket Submitted",
@@ -14,8 +29,6 @@ CATEGORY_TO_SUBJECT = {
     "resolution": "Ticket Resolved",
     "closed": "Ticket Closed Without Resolution",
 }
-
-Ticket = Dict[str, Any]
 
 
 class TicketsClient:
@@ -31,7 +44,7 @@ class TicketsClient:
         """
         return bool(int(os.getenv("SHRUNK_HELP_DESK_ENABLED", "0")))
 
-    def get_help_desk_text(self) -> Dict[str, str]:
+    def get_help_desk_text(self) -> HelpDeskText:
         """Get the text-related attributes needed for messages, emails, and
         forms.
 
@@ -78,13 +91,14 @@ class TicketsClient:
         mail: Mail,
         ticket_id: str,
         category: str,
-    ):
+    ) -> None:
         """Send an email to the help desk with the ticket ID and action.
 
         :param ticket_id: the ID of the ticket
         :param category: the category of the ticket
         """
         ticket = self.get_ticket({"_id": ticket_id})
+        assert ticket is not None
 
         # Construct the email
         SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -95,7 +109,7 @@ class TicketsClient:
         recipient_list = [f"{ticket['reporter']}@rutgers.edu"]
         subject = f"Go: Rutgers University URL Shortener - {CATEGORY_TO_SUBJECT[category]}"
 
-        variables = ticket
+        variables: Dict[str, Any] = dict(ticket)
         if "is_role_granted" in ticket:
             variables["role_request_status"] = "APPROVED" if ticket["is_role_granted"] else "DENIED"
 
@@ -113,13 +127,13 @@ class TicketsClient:
         # Send the email
         mail.send_mail(
             subject=subject,
-            body=body,
+            message=body,
             html_message=html_message,
             from_email=from_email,
             recipient_list=recipient_list,
         )
 
-    def create_ticket(self, data: dict) -> str:
+    def create_ticket(self, data: dict) -> TicketDocument:
         """Create a ticket with the given data.
 
         :param data: the data for the new ticket
@@ -128,9 +142,11 @@ class TicketsClient:
         """
         result = self.db.tickets.insert_one(data)
 
-        return self.get_ticket({"_id": result.inserted_id})
+        ticket = self.get_ticket({"_id": result.inserted_id})
+        assert ticket is not None
+        return ticket
 
-    def update_ticket(self, query: dict, data: dict):
+    def update_ticket(self, query: dict, data: dict) -> None:
         """Update an existing ticket
 
         :param query: the query to match the ticket
@@ -141,7 +157,7 @@ class TicketsClient:
 
         self.db.tickets.update_one(query, {"$set": data})
 
-    def get_ticket(self, query: dict) -> Optional[Ticket]:
+    def get_ticket(self, query: dict) -> Optional[TicketDocument]:
         """Get a single ticket that matches the given criteria.
 
         :param query: the query to match the ticket
@@ -153,7 +169,7 @@ class TicketsClient:
 
         return self.db.tickets.find_one(query)
 
-    def get_tickets(self, query: dict, sort: Optional[List[tuple]] = None) -> List[Ticket]:
+    def get_tickets(self, query: dict, sort: Optional[List[tuple]] = None) -> List[TicketDocument]:
         """Get all tickets that match the given criteria and sort them if
         needed.
 
@@ -167,7 +183,7 @@ class TicketsClient:
 
         return list(self.db.tickets.find(query, sort=sort))
 
-    def delete_ticket(self, query: dict):
+    def delete_ticket(self, query: dict) -> None:
         """Delete a ticket that matches the given criteria.
 
         :param query: the query to match the ticket

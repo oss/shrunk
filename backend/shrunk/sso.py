@@ -20,12 +20,12 @@ def login(user_info: Any) -> Any:
     """Get the user's attributes from shibboleth, decide whether the user
     should be allowed to access Shrunk, and possibly grant roles. The
     roles system must be initialized before this function is called."""
-    client: ShrunkClient = current_app.client
+    client: ShrunkClient = getattr(current_app, "client")
     logger = current_app.logger
     types: List[str] = user_info.get("employeeType").split(";")
     netid: str = user_info.get("netid")
     twoFactorAuth = user_info.get("twoFactorAuth")
-    if not twoFactorAuth and bool(int(os.getenv("SHRUNK_REQUIRE_2FA"), 0)):
+    if not twoFactorAuth and bool(int(os.getenv("SHRUNK_REQUIRE_2FA", "0"))):
         return redirect("/app")
 
     def t(typ: str) -> bool:  # pylint: disable=invalid-name
@@ -54,7 +54,7 @@ def login(user_info: Any) -> Any:
         abort(403)
 
     # config-whitelisted users are automatically made admins
-    if netid == is_super_admin:
+    if is_super_admin:
         client.users.initialize_user(netid, "admin")
 
     # (if not blacklisted) facstaff can always login, but we need to grant a role

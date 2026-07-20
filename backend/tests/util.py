@@ -1,16 +1,15 @@
 import contextlib
-from typing import Any, Generator, Optional
+from typing import Any, Dict, Generator, Optional
 
-from flask import Response
-from werkzeug.test import Client
+from werkzeug.test import Client, TestResponse
 
 
-def assert_is_response_valid(resp: Response) -> bool:
+def assert_is_response_valid(resp: TestResponse) -> None:
     assert 200 <= resp.status_code < 300
 
 
-def create_link(client: Client, title: str, url: str, alias: Optional[str] = None) -> str:
-    body = {
+def create_link(client: Client, title: str, url: str, alias: Optional[str] = None) -> TestResponse:
+    body: Dict[str, str] = {
         "title": title,
         "long_url": url,
     }
@@ -24,7 +23,7 @@ def create_link(client: Client, title: str, url: str, alias: Optional[str] = Non
     )
 
 
-def create_tracking_pixel(client: Client, title: str, tracking_pixel_extension: str) -> str:
+def create_tracking_pixel(client: Client, title: str, tracking_pixel_extension: str) -> TestResponse:
     return client.post(
         "/api/core/link",
         json={
@@ -36,34 +35,35 @@ def create_tracking_pixel(client: Client, title: str, tracking_pixel_extension: 
     )
 
 
-def assert_redirect(resp: Response, location_pat: str) -> None:
+def assert_redirect(resp: TestResponse, location_pat: str) -> None:
     assert resp.status_code == 302
     assert location_pat in resp.headers["Location"]
 
 
-def assert_status(resp: Response, status: int) -> None:
+def assert_status(resp: TestResponse, status: int) -> None:
     assert resp.status_code == status
 
 
-def assert_ok(resp: Response) -> None:
+def assert_ok(resp: TestResponse) -> None:
     assert_status(resp, 200)
 
 
-def assert_not_500(resp: Response) -> None:
+def assert_not_500(resp: TestResponse) -> None:
     assert resp.status_code < 500
 
 
-def assert_in_resp(resp: Response, string: str) -> None:
+def assert_in_resp(resp: TestResponse, string: str) -> None:
     assert string in str(resp.get_data(), "utf8")
 
 
-def assert_json(resp: Response, expected: Any) -> None:
+def assert_json(resp: TestResponse, expected: Any) -> None:
     assert resp.get_json() == expected
 
 
 def setup_guest_user(client: Client) -> str:
     with dev_login(client, "admin"):
         resp = client.post("/api/core/org", json={"name": "Test Org"})
+        assert resp.json is not None
         org_id = resp.json["id"]
 
         resp = client.put(f"/api/core/org/{org_id}/guest/DEV_GUEST")

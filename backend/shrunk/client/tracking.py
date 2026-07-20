@@ -1,6 +1,9 @@
 """Implements the :py:class:`TrackingClient` class."""
 
 import pymongo
+import pymongo.database
+
+from shrunk.mongo_schema import TrackingIdDocument
 
 __all__ = ["TrackingClient"]
 
@@ -16,5 +19,6 @@ class TrackingClient:
 
         :returns: An opaque identifier, guaranteed to be distinct across multiple calls.
         """
-        oid = self.db.tracking_ids.insert_one({})
+        document: TrackingIdDocument = {}
+        oid = self.db.tracking_ids.insert_one(document)
         return str(oid.inserted_id)

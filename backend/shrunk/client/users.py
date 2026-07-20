@@ -1,10 +1,14 @@
 """Module for the user system client"""
 
-from typing import Any, Dict, List, Optional, Union
 from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional, Union, cast
 
 import pymongo
+import pymongo.database
+import pymongo.errors
 from shrunk.util.ldap import is_valid_netid, query_position_info
+
+from shrunk.mongo_schema import UserListDocument, UserSummaryDocument
 
 from .exceptions import InvalidEntity, NoSuchObjectException
 
@@ -63,14 +67,14 @@ class UserClient:
             except pymongo.errors.DuplicateKeyError:
                 pass  # concurrent request already initialized this user
 
-    def get_user(self, netid: str) -> Optional[Dict[str, Any]]:
+    def get_user(self, netid: str) -> Optional[UserSummaryDocument]:
         """Get a user from the database
         :param entity: The entity to get
         :returns: The user object if found, None otherwise
         :rtype: Optional[Dict[str, Any]]
         """
 
-        pipeline = [
+        pipeline: List[Dict[str, Any]] = [
             {
                 "$match": {
                     "netid": netid,
@@ -93,7 +97,7 @@ class UserClient:
                 "$lookup": {
                     "from": "urls",
                     "localField": "netid",
-                    "foreignField": "netid",
+                    "foreignField": "owner._id",
                     "as": "links",
                 }
             },
@@ -129,13 +133,16 @@ class UserClient:
             user_data = list(user_cursor)
 
             if user_data:
-                return {
-                    "netid": user_data[0]["netid"],
-                    "roles": user_data[0]["roles"],
-                    "date_created": user_data[0]["date_created"],
-                    "linksCreated": user_data[0]["linksCreated"],
-                    "organizations": user_data[0]["organizations"],
-                }
+                return cast(
+                    UserSummaryDocument,
+                    {
+                        "netid": user_data[0]["netid"],
+                        "roles": user_data[0]["roles"],
+                        "date_created": user_data[0]["date_created"],
+                        "linksCreated": user_data[0]["linksCreated"],
+                        "organizations": user_data[0]["organizations"],
+                    },
+                )
         return None
 
     def get_user_roles(self, netid: str) -> List[str]:
@@ -162,14 +169,14 @@ class UserClient:
 
         self.db["users"].delete_one({"netid": netid})
 
-    def get_all_users(self, operations: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def get_all_users(self, operations: List[Dict[str, Any]]) -> List[UserListDocument]:
         """Get all users from the database
 
         :param operations: The operations to perform on the users
         :returns: The users in the database
         """
 
-        pipeline = [
+        pipeline: List[Dict[str, Any]] = [
             {
                 "$match": {
                     "netid": {"$exists": True},
@@ -241,12 +248,12 @@ class UserClient:
         ]
 
         # Apply operations to filter and sort users
-        ops_pipeline = []
+        ops_pipeline: List[Dict[str, Any]] = []
         for operation in operations:
             op_type = operation.get("type")
             op_field = operation.get("field")
             op_spec = operation.get("specification")
-            op_fs = operation.get("filterString")
+            op_fs = cast(str, operation.get("filterString", ""))
 
             if op_type == "filter":
                 if op_field == "netid" and op_spec == "matches":
@@ -265,12 +272,23 @@ class UserClient:
                 sort_order = 1 if op_spec == "asc" else -1
                 ops_pipeline.append({"$sort": {op_field: sort_order}})
 
-        return [
-            {key: user[key] for key in ["netid", "roles", "linksCreated", "organizations"] if key in user}
-            for user in self.db["users"].aggregate(pipeline)
-        ]
+        pipeline.extend(ops_pipeline)
 
-        # Apply operations to filter and sort users
+        users: List[UserListDocument] = []
+        for user in self.db["users"].aggregate(pipeline):
+            users.append(
+                cast(
+                    UserListDocument,
+                    {
+                        "netid": user["netid"],
+                        "roles": user["roles"],
+                        "linksCreated": user["linksCreated"],
+                        "organizations": user["organizations"],
+                    },
+                )
+            )
+
+        return users
 
     def get_user_system_options(self) -> Dict[str, Any]:
         """Get options related to the user system"""
@@ -323,7 +341,7 @@ class UserClient:
         ]
         return role in roles
 
-    def grant_role(self, grantor: str, grantee: str, role: str, comment: Optional[str]) -> None:
+    def grant_role(self, grantor: str, grantee: str, role: str, comment: Optional[str] = None) -> None:
         """Grants a specific role to a user.
 
         Args:
@@ -435,16 +453,13 @@ class UserClient:
         }
         """
         position_info = query_position_info(entity)
-
-        # LDAP queries are disabled
-        if position_info is None:
+        if not position_info:
             return {
                 "titles": ["LDAP queries disabled"],
                 "departments": ["LDAP queries disabled"],
                 "employmentTypes": ["LDAP queries disabled"],
             }
 
-        # LDAP queries are enabled
         formatted_position_info = {
             "titles": position_info.get("title", ["No titles found"]),
             "departments": position_info.get("rutgersEduStaffDepartment", ["No departments found"]),

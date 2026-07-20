@@ -198,7 +198,7 @@ def get_ticket(netid: str, client: ShrunkClient, id: str) -> Response:  # pylint
 @bp.route("", methods=["POST"])
 @request_schema(CREATE_TICKET_SCHEMA)
 @require_login
-def create_ticket(netid: str, client: ShrunkClient, req: Any) -> Response:
+def create_ticket(netid: str, client: ShrunkClient, req: Any) -> Any:
     """``POST /api/ticket``
 
     Create a new ticket. New tickets have certain fields set by default, such
@@ -259,7 +259,7 @@ def create_ticket(netid: str, client: ShrunkClient, req: Any) -> Response:
 @bp.route("/<b32:id>", methods=["PATCH"])
 @request_schema(PATCH_TICKET_SCHEMA)
 @require_login
-def patch_ticket(netid: str, client: ShrunkClient, req: Any, id: str) -> Response:  # pylint: disable=redefined-builtin
+def patch_ticket(netid: str, client: ShrunkClient, req: Any, id: str) -> Any:  # pylint: disable=redefined-builtin
     """``PATCH /api/ticket/<id>``
 
     Update a ticket. This can be used to close or resolve a ticket. Note
@@ -281,6 +281,8 @@ def patch_ticket(netid: str, client: ShrunkClient, req: Any, id: str) -> Respons
     if not ticket:
         abort(404)
 
+    ticket_fields = {k: v for k, v in req.items() if k != "action"}
+
     # Action is close
     if req["action"] == "close":
         # Only the reporter or an admin can close the ticket
@@ -292,7 +294,7 @@ def patch_ticket(netid: str, client: ShrunkClient, req: Any, id: str) -> Respons
         client.tickets.update_ticket(
             {"_id": id},
             {
-                **req,
+                **ticket_fields,
                 "status": "closed",
                 "actioned_by": netid,
                 "actioned_time": time.time(),
@@ -311,7 +313,7 @@ def patch_ticket(netid: str, client: ShrunkClient, req: Any, id: str) -> Respons
         client.tickets.update_ticket(
             {"_id": id},
             {
-                **req,
+                **ticket_fields,
                 "status": "resolved",
                 "actioned_by": netid,
                 "actioned_time": time.time(),

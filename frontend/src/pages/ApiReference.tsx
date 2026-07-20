@@ -226,6 +226,9 @@ export default function ApiReference() {
           <Typography.Title className="mt-4!" level={5}>
             Returns all the Users registered on Shrunk
           </Typography.Title>
+          <Typography.Paragraph className="mt-4!">
+            Requires a Super Token. Org-scoped tokens will receive a 403.
+          </Typography.Paragraph>
           <Typography.Paragraph className="mt-4!">Request</Typography.Paragraph>
           <Typography className="mt-4!">
             <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
@@ -333,10 +336,17 @@ export default function ApiReference() {
             <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
               {`{
   "id": str,
-  "alias": str
+  "alias": str,
   "link": str
 }`}
             </Flex>
+            <Typography.Paragraph className="mt-4!">
+              If <Typography.Text code>check_existing</Typography.Text> is true
+              and a matching link already exists, the response omits{' '}
+              <Typography.Text code>link</Typography.Text> and only contains{' '}
+              <Typography.Text code>id</Typography.Text> and{' '}
+              <Typography.Text code>alias</Typography.Text>.
+            </Typography.Paragraph>
             <Typography.Title className="mt-4!" level={5}>
               Body Parameters
             </Typography.Title>
@@ -352,14 +362,16 @@ export default function ApiReference() {
                     </Col>
                     <Col>
                       <Typography.Text type="secondary">
-                        Required
+                        Required for Super Tokens
                       </Typography.Text>
                     </Col>
                   </Row>
                 }
               >
-                The organization to create the link in. Must match the
-                token&apos;s organization.
+                The organization to create the link in. Required when using a
+                Super Token. Optional when using an org-scoped token &mdash;
+                defaults to that token&apos;s organization, and must match it if
+                provided.
               </Descriptions.Item>
             </Descriptions>
             <Divider className="my-2 mt-4!" />
@@ -515,8 +527,8 @@ export default function ApiReference() {
   "alias": str,
   "deleted": bool,
   "deletion_info": { "deleted_by": str | null, "delete_time": str | null },
-  "editors": [str, ...],
-  "viewers": [str, ...],
+  "editors": [{ "_id": str, "type": "netid" | "org" }, ...],
+  "viewers": [{ "_id": str, "type": "netid" | "org" }, ...],
   "is_tracking_pixel_link": false
 }`}
             </Flex>
@@ -605,8 +617,8 @@ export default function ApiReference() {
       "alias": str,
       "deleted": bool,
       "deletion_info": { "deleted_by": str | null, "delete_time": str | null },
-      "editors": [str, ...],
-      "viewers": [str, ...],
+      "editors": [{ "_id": str, "type": "netid" | "org" }, ...],
+      "viewers": [{ "_id": str, "type": "netid" | "org" }, ...],
       "is_tracking_pixel_link": false
     }
   ]
@@ -643,7 +655,7 @@ export default function ApiReference() {
     },
     {
       key: 'visits-post',
-      label: 'POST /links/<org_id>/link_id/visits',
+      label: 'POST /links/<org_id>/<link_id>/visits',
       children: (
         <Typography>
           <Typography.Title level={4}>
@@ -671,18 +683,23 @@ export default function ApiReference() {
           <Typography className="mt-4!">
             <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
               {`{
-  "_id": str,
-  "alias": str,
-  "country_code": str,
-  "link_id": str,
-  "mid": str,
-  "referer": str | null,
-  "source_ip": str,
-  "state_code": str,
-  "time": str,
-  "tracking_id": str,
-  "user_agent": str,
-  "uid": str
+  "visits": [
+    {
+      "_id": str,
+      "alias": str,
+      "country_code": str | null,
+      "link_id": str,
+      "mid": str | null,
+      "referer": str | null,
+      "source": str | null,
+      "source_ip": str,
+      "state_code": str | null,
+      "time": str,
+      "tracking_id": str | null,
+      "user_agent": str | null,
+      "uid": str | null
+    }
+  ]
 }`}
             </Flex>
             <Typography.Title className="mt-4!" level={5}>
@@ -788,14 +805,16 @@ export default function ApiReference() {
                     </Col>
                     <Col>
                       <Typography.Text type="secondary">
-                        Required
+                        Required for Super Tokens
                       </Typography.Text>
                     </Col>
                   </Row>
                 }
               >
-                The organization to create the tracking pixel in. Must match the
-                token&apos;s organization.
+                The organization to create the tracking pixel in. Required when
+                using a Super Token. Optional when using an org-scoped token
+                &mdash; defaults to that token&apos;s organization, and must
+                match it if provided.
               </Descriptions.Item>
             </Descriptions>
             <Divider className="my-2 mt-4!" />
@@ -884,8 +903,8 @@ export default function ApiReference() {
   "alias": str,
   "deleted": bool,
   "deletion_info": { "deleted_by": str | null, "delete_time": str | null },
-  "editors": [str, ...],
-  "viewers": [str, ...],
+  "editors": [{ "_id": str, "type": "netid" | "org" }, ...],
+  "viewers": [{ "_id": str, "type": "netid" | "org" }, ...],
   "is_tracking_pixel_link": true
 }`}
             </Flex>
@@ -964,7 +983,7 @@ export default function ApiReference() {
           <Typography className="mt-4!">
             <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
               {`{
-  "tracking-pixels": [
+  "links": [
     {
       "_id": str,
       "title": str,
@@ -976,8 +995,8 @@ export default function ApiReference() {
       "alias": str,
       "deleted": bool,
       "deletion_info": { "deleted_by": str | null, "delete_time": str | null },
-      "editors": [str, ...],
-      "viewers": [str, ...],
+      "editors": [{ "_id": str, "type": "netid" | "org" }, ...],
+      "viewers": [{ "_id": str, "type": "netid" | "org" }, ...],
       "is_tracking_pixel_link": true
     }
   ]
@@ -1021,6 +1040,9 @@ export default function ApiReference() {
           <Typography.Title className="mt-4!" level={5}>
             Returns all organizations
           </Typography.Title>
+          <Typography.Paragraph className="mt-4!">
+            Requires a Super Token. Org-scoped tokens will receive a 403.
+          </Typography.Paragraph>
           <Typography.Paragraph className="mt-4!">Request</Typography.Paragraph>
           <Typography className="mt-4!">
             <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
@@ -1037,7 +1059,7 @@ export default function ApiReference() {
               {`{
   "organizations": [
     {
-      "_id": str,
+      "orgId": str,
       "name": str,
       "members": [str, ...]
     }
@@ -1059,6 +1081,9 @@ export default function ApiReference() {
           <Typography.Title className="mt-4!" level={5}>
             Returns all organizations a user is a member of
           </Typography.Title>
+          <Typography.Paragraph className="mt-4!">
+            Requires a Super Token. Org-scoped tokens will receive a 403.
+          </Typography.Paragraph>
           <Typography.Paragraph className="mt-4!">Request</Typography.Paragraph>
           <Typography className="mt-4!">
             <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
@@ -1075,8 +1100,8 @@ export default function ApiReference() {
               {`{
   "organizations": [
     {
-      "_id": str,
-      "name": str,
+      "orgId": str,
+      "name": str
     }
   ]
 }`}

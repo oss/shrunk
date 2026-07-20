@@ -5,7 +5,7 @@ import random
 import string
 import re
 import secrets
-from typing import Optional, List, Set, Any, Dict, Union, cast, Tuple
+from typing import Optional, List, Set, Any, Dict, Union, cast, Tuple, TYPE_CHECKING
 from functools import lru_cache
 
 import os
@@ -14,6 +14,8 @@ from flask import current_app, url_for
 from flask_mailman import Mail
 import requests
 import pymongo
+import pymongo.database
+import pymongo.errors
 from pymongo.collection import ReturnDocument
 from pymongo.results import UpdateResult
 from bson.objectid import ObjectId
@@ -21,6 +23,21 @@ from bson.objectid import ObjectId
 from shrunk.util.ldap import query_given_name
 from shrunk.util.string import get_domain
 from shrunk.util.ldap import is_valid_netid
+from shrunk.mongo_schema import (
+    AccessRequestDocument,
+    AdminStatsDocument,
+    EndpointStatsRow,
+    GeoIpStatsResult,
+    DailyVisitsRow,
+    LinkAclEntry,
+    LinkDocument,
+    LinkOwnerInfo,
+    MongoRef,
+    OrgDocument,
+    PendingAccessRequestDocument,
+    VisitCountSummary,
+    VisitDocument,
+)
 from . import aggregations
 
 from .geoip import GeoipClient
@@ -30,8 +47,12 @@ from .exceptions import (
     BadLongURLException,
     InvalidACL,
     NotUserOrOrg,
+    OrgOwnedLinkNotSupported,
     SecurityRiskDetected,
 )
+
+if TYPE_CHECKING:
+    from shrunk.client import ShrunkClient
 
 __all__ = ["LinksClient"]
 
@@ -65,7 +86,7 @@ class LinksClient:
         geoip: GeoipClient,
         RESERVED_WORDS: Set[str],
         BANNED_REGEXES: List[str],
-        other_clients: Any,
+        other_clients: "ShrunkClient",
     ):
         self.db = db
         self.geoip = geoip
@@ -147,11 +168,11 @@ class LinksClient:
         long_url: str,
         alias: Optional[str],
         expiration_time: Optional[datetime],
-        owner: Dict[str, Any],
+        owner: MongoRef,
         creator_ip: str,
         domain: str = "",
-        viewers: Optional[List[Dict[str, Any]]] = None,
-        editors: Optional[List[Dict[str, Any]]] = None,
+        viewers: Optional[List[LinkAclEntry]] = None,
+        editors: Optional[List[LinkAclEntry]] = None,
         bypass_security_measures: bool = False,
         is_tracking_pixel_link: bool = False,
         extension: Optional[str] = None,
@@ -171,8 +192,11 @@ class LinksClient:
 
         self.assert_valid_acl_entry("owner", owner)
 
+        org: Optional[OrgDocument] = None
         if created_using_api:
-            org = self.other_clients.orgs.get_org(owner["_id"])
+            org = self.other_clients.orgs.get_org(ObjectId(owner["_id"]))
+            if org is None:
+                raise NoSuchObjectException
 
         for member in viewers + editors:
             if member["type"] == "org":
@@ -191,6 +215,7 @@ class LinksClient:
 
         if alias is None:
             if created_using_api:
+                assert org is not None
                 if created_with_superToken:
                     alias = self.create_random_alias(extension=extension, orgAlias=None)
                 else:
@@ -202,9 +227,11 @@ class LinksClient:
             # (https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/205)
             alias = alias.lower()
             if created_using_api:
+                assert org is not None
                 if not created_with_superToken:
                     alias = org["name"].replace(" ", "") + "-" + alias
 
+            assert alias is not None
             if not bool(re.fullmatch(r"^[a-zA-Z0-9_\-\.]+$", alias)):
                 raise BadAliasException
 
@@ -243,6 +270,7 @@ class LinksClient:
         except pymongo.errors.DuplicateKeyError as exc:
             raise BadAliasException from exc
 
+        assert alias is not None
         return result.inserted_id, alias
 
     def modify(
@@ -252,7 +280,7 @@ class LinksClient:
         title: Optional[str] = None,
         long_url: Optional[str] = None,
         expiration_time: Optional[datetime] = None,
-        owner: Optional[str] = None,
+        owner: Optional[MongoRef] = None,
         alias: Optional[str] = None,
     ) -> None:
         if long_url is not None and self.long_url_is_blocked(long_url):
@@ -260,7 +288,7 @@ class LinksClient:
         if title is None and long_url is None and expiration_time is None and owner is None and alias is None:
             return
 
-        if self.other_clients.security.security_risk_detected(long_url):
+        if long_url is not None and self.other_clients.security.security_risk_detected(long_url):
             raise SecurityRiskDetected
 
         link_info = self.get_link_info(link_id)
@@ -276,7 +304,7 @@ class LinksClient:
         if alias is not None:
             fields["alias"] = alias
         if owner is not None:
-            if owner["type"] == "netid" and is_valid_netid(owner["_id"]):
+            if owner["type"] == "netid" and is_valid_netid(cast(str, owner["_id"])):
                 fields["owner"] = {"_id": owner["_id"], "type": "netid"}
                 update["$push"] = {
                     "ownership_transfer_history": {
@@ -287,10 +315,8 @@ class LinksClient:
                 }
                 if link_info["owner"]["type"] == "org":
                     # Push org to editors since it is no longer owner
-                    update["$push"] = {
-                        "editors": {"_id": link_info["owner"]["_id"], "type": "org"},
-                        "viewers": {"_id": link_info["owner"]["_id"], "type": "org"},
-                    }
+                    update["$push"]["editors"] = {"_id": link_info["owner"]["_id"], "type": "org"}
+                    update["$push"]["viewers"] = {"_id": link_info["owner"]["_id"], "type": "org"}
             else:
                 fields["owner"] = {"_id": ObjectId(owner["_id"]), "type": "org"}
                 update["$push"] = {
@@ -313,7 +339,7 @@ class LinksClient:
         if result.matched_count != 1:
             raise NoSuchObjectException
 
-    def check_link_exists(self, long_url: str, owner: Dict[str, Any]) -> Tuple[ObjectId, str]:
+    def check_link_exists(self, long_url: str, owner: MongoRef) -> Tuple[ObjectId, str]:
         self.assert_valid_acl_entry("owner", owner)
 
         query = {
@@ -336,7 +362,7 @@ class LinksClient:
             return result["_id"], result["alias"]
         raise NoSuchObjectException
 
-    def assert_valid_acl_entry(self, acl, entry):
+    def assert_valid_acl_entry(self, acl: str, entry: LinkAclEntry) -> None:
         target = entry["_id"]
         mtype = entry["type"]
         if mtype == "org":
@@ -345,12 +371,12 @@ class LinksClient:
             except Exception as exc:
                 raise NotUserOrOrg(f"{target} is not a valid {mtype}. can't add to {acl}") from exc
 
-        if (mtype == "netid" and not is_valid_netid(target)) or (
+        if (mtype == "netid" and not is_valid_netid(cast(str, target))) or (
             mtype == "org" and not self.other_clients.orgs.get_org(ObjectId(target))
         ):
             raise NotUserOrOrg(f"{target} is not a valid {mtype}. can't add to {acl}")
 
-    def modify_acl(self, link_id: ObjectId, entry: Dict[str, Any], add: bool, acl: str):
+    def modify_acl(self, link_id: ObjectId, entry: LinkAclEntry, add: bool, acl: str) -> None:
         info = self.get_link_info(link_id)
 
         # dont modify if they are owner
@@ -414,13 +440,14 @@ class LinksClient:
         alias: Optional[str] = None,
         date_range: Optional[Tuple[datetime, datetime]] = None,
         source: Optional[str] = None,
-    ) -> List[Any]:
+    ) -> List[DailyVisitsRow]:
         """Given a short URL, return how many visits and new unique
            visitors it gets per day for the given date range.
         :param short_url: A shortened URL
         :param date_range: Date range to consider, defaults to one year from today
         """
 
+        match: Dict[str, Any]
         if alias is None:
             match = {"$match": {"link_id": link_id}}
         else:
@@ -435,19 +462,20 @@ class LinksClient:
             date_match = {"$match": {"time": {"$gte": date_range[0], "$lte": date_range[1]}}}
 
         aggregation = [match] + [date_match] + cast(List[Any], aggregations.visits_aggregation)
-        return list(self.db.visits.aggregate(aggregation, allowDiskUse=True))
+        return cast(List[DailyVisitsRow], list(self.db.visits.aggregate(aggregation, allowDiskUse=True)))
 
     def get_geoip_stats(
         self,
         link_id: Optional[ObjectId] = None,
         alias: Optional[str] = None,
         source: Optional[str] = None,
-    ) -> Any:
+    ) -> GeoIpStatsResult:
         if alias is not None:
             assert link_id is not None
 
         aggregation = []
         if link_id is not None:
+            match: Dict[str, Any]
             if alias is None:
                 match = {"$match": {"link_id": link_id}}
             else:
@@ -480,14 +508,14 @@ class LinksClient:
                 },
             }
         )
-        return next(self.db.visits.aggregate(aggregation))
+        return cast(GeoIpStatsResult, next(self.db.visits.aggregate(aggregation)))
 
     def get_overall_visits(
         self,
         link_id: ObjectId,
         alias: Optional[str] = None,
         source: Optional[str] = None,
-    ) -> Any:
+    ) -> VisitCountSummary:
         if alias is None:
             info = self.get_link_info(link_id)
 
@@ -549,8 +577,8 @@ class LinksClient:
         mid: Optional[Union[str, List[str]]] = None,
         uid: Optional[Union[str, List[str]]] = None,
         source: Optional[str] = None,
-    ) -> List[Any]:
-        query = {"link_id": link_id}
+    ) -> List[VisitDocument]:
+        query: Dict[str, Any] = {"link_id": link_id}
         if alias is not None:
             query["alias"] = alias
         if mid is not None:
@@ -578,7 +606,7 @@ class LinksClient:
             if not self.alias_is_reserved(alias):
                 return alias
 
-    def get_owner(self, link_id: ObjectId) -> str:
+    def get_owner(self, link_id: ObjectId) -> LinkOwnerInfo:
 
         result = self.db.urls.find_one({"_id": link_id})
 
@@ -587,14 +615,16 @@ class LinksClient:
 
         if result["owner"]["type"] == "org":
             res = self.other_clients.orgs.get_org(ObjectId(result["owner"]["_id"]))
-            owner = {
+            if res is None:
+                raise NoSuchObjectException
+            owner: LinkOwnerInfo = {
                 "_id": result["owner"]["_id"],
                 "type": "org",
                 "org_name": res["name"],
             }
             return owner
 
-        return result["owner"]
+        return cast(LinkOwnerInfo, result["owner"])
 
     def is_owner(self, link_id: ObjectId, netid: str) -> bool:
         result = self.db.urls.find_one({"_id": link_id})
@@ -613,7 +643,7 @@ class LinksClient:
             return True
 
         orgs = self.other_clients.orgs.get_orgs(netid, only_member_orgs=True)
-        orgs = [org["id"] for org in orgs]
+        org_ids = [org["id"] for org in orgs]
 
         result = self.db.urls.find_one(
             {
@@ -625,11 +655,11 @@ class LinksClient:
                     },  # shared
                     {
                         "_id": link_id,
-                        "editors": {"$elemMatch": {"_id": {"$in": orgs}}},
+                        "editors": {"$elemMatch": {"_id": {"$in": org_ids}}},
                     },  # shared with org
                     {
                         "_id": link_id,
-                        "owner._id": {"$in": orgs},  # user is in org that owns the link
+                        "owner._id": {"$in": org_ids},  # user is in org that owns the link
                     },
                 ]
             }
@@ -638,7 +668,7 @@ class LinksClient:
 
     def may_view(self, link_id: ObjectId, netid: str) -> bool:
         orgs = self.other_clients.orgs.get_orgs(netid, True)
-        orgs = [org["id"] for org in orgs]
+        org_ids = [org["id"] for org in orgs]
         result = self.db.urls.find_one(
             {
                 "$or": [
@@ -653,29 +683,29 @@ class LinksClient:
                     },  # viewer
                     {
                         "_id": link_id,
-                        "viewers": {"$elemMatch": {"_id": {"$in": orgs}}},
+                        "viewers": {"$elemMatch": {"_id": {"$in": org_ids}}},
                     },  # shared with org
                     {
                         "_id": link_id,
-                        "owner._id": {"$in": orgs},  # user is in org that owns the link
+                        "owner._id": {"$in": org_ids},  # user is in org that owns the link
                     },
                 ]
             }
         )
         return result is not None
 
-    def get_admin_stats(self) -> Any:
+    def get_admin_stats(self) -> AdminStatsDocument:
         """Get some basic overall stats about Shrunk"""
         links = self.db.urls.count_documents({})
         visits = self.db.visits.estimated_document_count()
-        users = self.db.urls.aggregate(
+        users_cursor = self.db.urls.aggregate(
             [
                 {"$group": {"_id": "$netid"}},
                 {"$count": "count"},
             ]
         )
         try:
-            users = list(users)[0]["count"]
+            users = cast(int, list(users_cursor)[0]["count"])
         except IndexError, KeyError:
             users = 0
         return {
@@ -684,7 +714,7 @@ class LinksClient:
             "users": users,
         }
 
-    def get_endpoint_stats(self) -> List[Any]:
+    def get_endpoint_stats(self) -> List[EndpointStatsRow]:
         """Summarizes of the information in the endpoint_statistics collection."""
 
         def ignore_endpoint(endpoint: str) -> Any:
@@ -698,34 +728,40 @@ class LinksClient:
             "shrunk.render_login",
         ]
 
-        return list(
-            self.db.endpoint_statistics.aggregate(
-                [
-                    {
-                        "$group": {
-                            "_id": {"endpoint": "$endpoint"},
-                            "total_visits": {"$sum": "$count"},
-                            "unique_visits": {"$sum": 1},
-                        }
-                    },
-                    {"$addFields": {"endpoint": "$_id.endpoint"}},
-                    {"$project": {"_id": 0}},
-                ]
-                + [ignore_endpoint(ep) for ep in IGNORE_ENDPOINTS]
-            )
+        return cast(
+            List[EndpointStatsRow],
+            list(
+                self.db.endpoint_statistics.aggregate(
+                    [
+                        {
+                            "$group": {
+                                "_id": {"endpoint": "$endpoint"},
+                                "total_visits": {"$sum": "$count"},
+                                "unique_visits": {"$sum": 1},
+                            }
+                        },
+                        {"$addFields": {"endpoint": "$_id.endpoint"}},
+                        {"$project": {"_id": 0}},
+                    ]
+                    + [ignore_endpoint(ep) for ep in IGNORE_ENDPOINTS]
+                )
+            ),
         )
 
-    def get_link_info(self, link_id: ObjectId, is_tracking_pixel: Optional[bool] = None) -> Any:
+    def get_link_info(self, link_id: ObjectId, is_tracking_pixel: Optional[bool] = None) -> LinkDocument:
         if is_tracking_pixel:
             result = self.db.urls.find_one({"_id": link_id, "is_tracking_pixel_link": is_tracking_pixel})
         else:
             result = self.db.urls.find_one({"_id": link_id})
         if result is None:
             raise NoSuchObjectException
-        return result
+        return cast(LinkDocument, result)
 
-    def get_link_info_by_alias(self, alias: str) -> Any:
-        return self.db.urls.find_one({"alias": alias, "deleted": False})
+    def get_link_info_by_alias(self, alias: str) -> Optional[LinkDocument]:
+        return cast(
+            Optional[LinkDocument],
+            self.db.urls.find_one({"alias": alias, "deleted": False}),
+        )
 
     def _verify_link_alias_is_valid(self, alias):
         """
@@ -827,7 +863,7 @@ class LinksClient:
 
         """
         resp = self.get_link_info_by_alias(alias)
-        print(resp)
+        assert resp is not None
 
         if not self.db.visits.find_one({"link_id": resp["_id"], "tracking_id": tracking_id}):
             self.db.urls.update_one({"_id": resp["_id"]}, {"$inc": {"visits": 1, "unique_visits": 1}})
@@ -836,7 +872,7 @@ class LinksClient:
 
         state_code, country_code = self.geoip.get_location_codes(source_ip)
 
-        doc = {
+        doc: VisitDocument = {
             "link_id": resp["_id"],
             "alias": alias,
             "tracking_id": tracking_id,
@@ -875,11 +911,12 @@ class LinksClient:
             upsert=True,
             return_document=ReturnDocument.AFTER,
         )
+        assert res is not None
         return res["_id"]
 
     def blacklist_user_links(self, netid: str) -> UpdateResult:
         return self.db.urls.update_many(
-            {"netid": netid, "deleted": {"$ne": True}},
+            {"owner._id": netid, "owner.type": "netid", "deleted": {"$ne": True}},
             {
                 "$set": {
                     "deleted": True,
@@ -891,7 +928,7 @@ class LinksClient:
 
     def unblacklist_user_links(self, netid: str) -> None:
         self.db.urls.update_many(
-            {"netid": netid, "deleted": True, "deleted_by": "!BLACKLISTED"},
+            {"owner._id": netid, "owner.type": "netid", "deleted": True, "deleted_by": "!BLACKLISTED"},
             {
                 "$set": {"deleted": False},
                 "$unset": {"deleted_by": 1, "deleted_time": 1},
@@ -920,21 +957,22 @@ class LinksClient:
         )
 
     def request_edit_access(self, mail: Mail, link_id: ObjectId, requesting_netid: str) -> None:
-        token = secrets.token_bytes(16)
-        self.db.access_requests.insert_one(
-            {
-                "token": token,
-                "link_id": link_id,
-                "requesting_netid": requesting_netid,
-                "state": "pending",
-                "created_at": datetime.now(timezone.utc),
-                "resolved_at": None,
-            }
-        )
-
         link_info = self.get_link_info(link_id)
+        if link_info["owner"]["type"] != "netid":
+            raise OrgOwnedLinkNotSupported
 
-        owner_netid: str = link_info["netid"]
+        token = secrets.token_bytes(16)
+        document: AccessRequestDocument = {
+            "token": token,
+            "link_id": link_id,
+            "requesting_netid": requesting_netid,
+            "state": "pending",
+            "created_at": datetime.now(timezone.utc),
+            "resolved_at": None,
+        }
+        self.db.access_requests.insert_one(document)
+
+        owner_netid: str = cast(str, link_info["owner"]["_id"])
         owner_given_name = query_given_name(owner_netid)
         accept_url = url_for("shrunk.accept_access_request", token=token, _external=True)
         deny_url = url_for("shrunk.deny_access_request", token=token, _external=True)
@@ -1021,7 +1059,7 @@ Please do not reply to this email. You may direct any questions to oss@oit.rutge
 
         mail.send_mail(
             subject=f'{requesting_netid} is requesting edit access to "{link_info["title"]}"',
-            body=plaintext_message,
+            message=plaintext_message,
             html_message=html_message,
             from_email="go-support@oit.rutgers.edu",
             recipient_list=[f"{owner_netid}@rutgers.edu"],
@@ -1038,14 +1076,14 @@ Please do not reply to this email. You may direct any questions to oss@oit.rutge
         return request is not None
 
     def cancel_request_edit_access(self, _mail: Mail, link_id: ObjectId, requesting_netid: str) -> None:
-        self.db.access_requests.remove({"link_id": link_id, "requesting_netid": requesting_netid})
+        self.db.access_requests.delete_many({"link_id": link_id, "requesting_netid": requesting_netid})
 
     def check_access_request_permission(self, token: bytes, netid: str) -> bool:
         request = self.db.access_requests.find_one({"token": token})
         if request is None:
             raise NoSuchObjectException
         link_info = self.get_link_info(request["link_id"])
-        return cast(bool, link_info["netid"] == netid and request["state"] == "pending")
+        return cast(bool, link_info["owner"]["_id"] == netid and request["state"] == "pending")
 
     def accept_access_request(self, token: bytes) -> None:
         request = self.db.access_requests.find_one({"token": token})
@@ -1087,23 +1125,26 @@ Please do not reply to this email. You may direct any questions to oss@oit.rutge
             },
         )
 
-    def get_pending_access_requests(self, netid: str) -> List[Any]:
-        return list(
-            self.db.urls.aggregate(
-                [
-                    {"$match": {"netid": netid}},
-                    {
-                        "$lookup": {
-                            "from": "access_requests",
-                            "localField": "_id",
-                            "foreignField": "link_id",
-                            "as": "request",
-                        }
-                    },
-                    {"$unwind": "$request"},
-                    {"$match": {"request.state": "pending"}},
-                ]
-            )
+    def get_pending_access_requests(self, netid: str) -> List[PendingAccessRequestDocument]:
+        return cast(
+            List[PendingAccessRequestDocument],
+            list(
+                self.db.urls.aggregate(
+                    [
+                        {"$match": {"owner._id": netid, "owner.type": "netid"}},
+                        {
+                            "$lookup": {
+                                "from": "access_requests",
+                                "localField": "_id",
+                                "foreignField": "link_id",
+                                "as": "request",
+                            }
+                        },
+                        {"$unwind": "$request"},
+                        {"$match": {"request.state": "pending"}},
+                    ]
+                )
+            ),
         )
 
     def get_tracking_pixel_ui_status(self) -> bool:

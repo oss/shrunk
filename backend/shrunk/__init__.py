@@ -70,12 +70,13 @@ class Base32Converter(BaseConverter):
 
 
 class ShrunkJSONProvider(DefaultJSONProvider):
-    def default(self, o):
+    @staticmethod
+    def default(o: Any) -> Any:  # type: ignore[override]
         if isinstance(o, ObjectId):
             return str(o)
         if isinstance(o, datetime.datetime):
             return o.isoformat()
-        return super().default(o)
+        return DefaultJSONProvider.default(o)
 
 
 class HexTokenConverter(BaseConverter):
@@ -107,8 +108,8 @@ class RequestFormatter(logging.Formatter):
 
 def _init_logging() -> None:
     """Sets up self.logger with default settings."""
-    formatter = logging.Formatter(os.getenv("SHRUNK_LOG_FORMAT"))
-    handler = logging.FileHandler(os.getenv("SHRUNK_LOG_FILENAME"))
+    formatter = logging.Formatter(os.getenv("SHRUNK_LOG_FORMAT", ""))
+    handler = logging.FileHandler(os.getenv("SHRUNK_LOG_FILENAME", "shrunk.log"))
     handler.setLevel(logging.INFO)
     handler.setFormatter(formatter)
     current_app.logger.addHandler(handler)
@@ -118,11 +119,11 @@ def _init_logging() -> None:
 def _init_shrunk_client() -> None:
     """Connect to the database.
     self.logger must be initialized before this function is called."""
-    current_app.client = ShrunkClient()
+    setattr(current_app, "client", ShrunkClient())
 
 
 def _init_roles() -> None:
-    client: ShrunkClient = current_app.client
+    client: ShrunkClient = getattr(current_app, "client")
 
     def is_admin(netid: str) -> bool:
         return client.users.has_role(netid, "admin")
@@ -238,7 +239,7 @@ def create_app(**_kwargs: Any) -> Flask:
     # set up extensions
     mail = Mail()
     mail.init_app(app)
-    app.mail = mail
+    setattr(app, "mail", mail)
     sso.ext.init_app(app)
 
     @app.route("/", methods=["GET"])
@@ -250,7 +251,7 @@ def create_app(**_kwargs: Any) -> Flask:
         with open(
             os.path.join(
                 current_app.root_path,
-                current_app.static_folder,
+                current_app.static_folder or "",
                 "data",
                 "release_notes.json",
             ),
@@ -261,7 +262,7 @@ def create_app(**_kwargs: Any) -> Flask:
         with open(
             os.path.join(
                 current_app.root_path,
-                current_app.static_folder,
+                current_app.static_folder or "",
                 "data",
                 "contributors.json",
             ),
@@ -368,7 +369,7 @@ def create_app(**_kwargs: Any) -> Flask:
     # serve redirects
     @app.route("/<alias>", methods=["GET"])
     def _serve_shortened_links(alias: str) -> Any:
-        client: ShrunkClient = current_app.client
+        client: ShrunkClient = getattr(current_app, "client")
 
         # Check if the alias is a legacy tracking pixel link
         link_info = client.links.get_link_info_by_alias(alias)
@@ -452,7 +453,7 @@ def create_app(**_kwargs: Any) -> Flask:
         client.links.visit(
             alias,
             tracking_id,
-            request.remote_addr,
+            request.remote_addr or "",
             request.headers.get("User-Agent"),
             request.headers.get("Referer"),
             uid,
@@ -473,7 +474,7 @@ def create_app(**_kwargs: Any) -> Flask:
     # Redirect to the alias stats page if "/manage" is appended to the alias
     @app.route("/<alias>/manage", methods=["GET"])
     def _serve_shortened_links_manage(alias: str) -> Any:
-        client: ShrunkClient = current_app.client
+        client: ShrunkClient = getattr(current_app, "client")
         link_info = client.links.get_link_info_by_alias(alias)
         # might be legacy alias
         if link_info is None:
@@ -489,7 +490,7 @@ def create_app(**_kwargs: Any) -> Flask:
     # This will also make it easier for the NGINX server in the near future.
     @app.route("/api/core/t/<tracking_pixel>", methods=["GET"])
     def _serve_tracking_pixel(tracking_pixel: str) -> Any:
-        client: ShrunkClient = current_app.client
+        client: ShrunkClient = getattr(current_app, "client")
         tracking_id = request.cookies.get("shrunkid") or client.tracking.get_new_id()
 
         if client.links.get_link_info_by_alias(tracking_pixel) is None:
@@ -501,7 +502,7 @@ def create_app(**_kwargs: Any) -> Flask:
         client.links.visit(
             tracking_pixel,
             tracking_id,
-            request.remote_addr,
+            request.remote_addr or "",
             request.headers.get("User-Agent"),
             request.headers.get("Referer"),
             uid,
@@ -535,6 +536,6 @@ def create_app(**_kwargs: Any) -> Flask:
     def _record_visit() -> None:
         netid = flask.session["user"]["netid"] if "user" in flask.session else None
         endpoint = flask.request.endpoint or "error"
-        current_app.client.record_visit(netid, endpoint)
+        getattr(current_app, "client").record_visit(netid, endpoint)
 
     return app

@@ -4,6 +4,7 @@ from typing import Any, Dict
 
 from flask import Blueprint, jsonify, request
 from shrunk.client import ShrunkClient
+from shrunk.mongo_schema import MongoRef
 from shrunk.util.decorators import require_token
 
 __all__ = ["bp"]
@@ -12,7 +13,7 @@ bp = Blueprint("userv1", __name__, url_prefix="/api/v1/users")
 
 @bp.route("", methods=["GET"])
 @require_token(required_permission="read:users")
-def get_all_users(token_owner: Dict[str, Any], client: ShrunkClient) -> Dict[Any, Any]:
+def get_all_users(token_owner: MongoRef, client: ShrunkClient) -> Any:
     """GET /api/v1/users
 
     Args:

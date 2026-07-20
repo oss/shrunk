@@ -20,6 +20,7 @@ def test_search_types(client: Client) -> None:
                 "show_type": "links",
             },
         )
+        assert resp.json is not None
         assert resp.status_code == 200
         assert len(resp.json["results"]) == 1
         assert resp.json["results"][0]["title"] == "link"
@@ -36,6 +37,7 @@ def test_search_types(client: Client) -> None:
                 "show_type": "tracking_pixels",
             },
         )
+        assert resp.json is not None
         assert resp.status_code == 200
         assert len(resp.json["results"]) == 1
         assert resp.json["results"][0]["title"] == "tracking_pixel"

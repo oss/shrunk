@@ -7,6 +7,7 @@ from flask import Blueprint, jsonify, request, Response
 import segno
 from io import BytesIO
 from shrunk.client import ShrunkClient
+from shrunk.mongo_schema import MongoRef
 from bson.objectid import ObjectId
 import bson.errors
 from shrunk.util.decorators import require_token, request_schema
@@ -41,7 +42,7 @@ CREATE_LINK_SCHEMA = {
 @bp.route("", methods=["POST"])
 @request_schema(CREATE_LINK_SCHEMA)
 @require_token(required_permission="create:links")
-def create_link(token_owner: Dict[str, Any], client: ShrunkClient, req: Any) -> Dict[Any, Any]:
+def create_link(token_owner: MongoRef, client: ShrunkClient, req: Any) -> Any:
     """Creates a new link"""
 
     org_id = req.get("organization_id")
@@ -127,7 +128,7 @@ def create_link(token_owner: Dict[str, Any], client: ShrunkClient, req: Any) -> 
         expiration_time = None
 
     alias = req.get("alias", None)
-    owner = {"_id": ObjectId(org_id), "type": "org"}
+    owner: MongoRef = {"_id": ObjectId(org_id), "type": "org"}
     created_with_superToken = token_owner["type"] == "netid"
 
     if "check_existing" in req:
@@ -158,8 +159,8 @@ def create_link(token_owner: Dict[str, Any], client: ShrunkClient, req: Any) -> 
             alias,
             expiration_time,
             owner,
-            request.remote_addr,
-            domain=False,
+            request.remote_addr or "",
+            domain="",
             editors=[],
             viewers=[],
             bypass_security_measures=False,
@@ -246,7 +247,7 @@ def create_link(token_owner: Dict[str, Any], client: ShrunkClient, req: Any) -> 
 
 @bp.route("/<ObjectId:org_id>/<ObjectId:link_id>", methods=["GET"])
 @require_token(required_permission="read:links")
-def get_link(token_owner: str, client: ShrunkClient, org_id: ObjectId, link_id: ObjectId) -> Any:
+def get_link(token_owner: MongoRef, client: ShrunkClient, org_id: ObjectId, link_id: ObjectId) -> Any:
     """``GET /api/v1/links/<org_id>/<link_id>``
 
     Get information about a link. Basically just returns the Mongo document.
@@ -325,7 +326,7 @@ def get_link(token_owner: str, client: ShrunkClient, org_id: ObjectId, link_id: 
 
 @bp.route("/<ObjectId:org_id>", methods=["GET"])
 @require_token(required_permission="read:links")
-def get_org_links(token_owner: str, client: ShrunkClient, org_id: ObjectId) -> Any:
+def get_org_links(token_owner: MongoRef, client: ShrunkClient, org_id: ObjectId) -> Any:
     """``GET /api/v1/links/<org_id>``
 
     Get information about links owned by a org. Basically just returns the Mongo document.
@@ -350,7 +351,7 @@ def get_org_links(token_owner: str, client: ShrunkClient, org_id: ObjectId) -> A
 
     try:
         info = client.orgs.get_links(org_id, is_tracking_pixel=False)
-        info = [
+        links_response = [
             {
                 "_id": link["_id"],
                 "title": link["title"],
@@ -386,12 +387,12 @@ def get_org_links(token_owner: str, client: ShrunkClient, org_id: ObjectId) -> A
             404,
         )
 
-    return jsonify({"links": info}), 200
+    return jsonify({"links": links_response}), 200
 
 
 @bp.route("/<ObjectId:org_id>/<ObjectId:link_id>/visits", methods=["POST"])
 @require_token(required_permission="read:links")
-def get_link_visits(token_owner: str, client: ShrunkClient, org_id: ObjectId, link_id: ObjectId) -> Any:
+def get_link_visits(token_owner: MongoRef, client: ShrunkClient, org_id: ObjectId, link_id: ObjectId) -> Any:
     """``POST /api/v1/links/<org_id>/<link_id>/visits``
 
     Get advanced information about visits to a link.
@@ -453,7 +454,7 @@ def get_link_visits(token_owner: str, client: ShrunkClient, org_id: ObjectId, li
 
 @bp.route("/<ObjectId:link_id>/qrcode", methods=["GET"])
 @require_token(required_permission="read:links")
-def generate_qrcode(token_owner: str, client: ShrunkClient, link_id: ObjectId) -> Any:
+def generate_qrcode(token_owner: MongoRef, client: ShrunkClient, link_id: ObjectId) -> Any:
     """``GET /api/v1/link/qrcode``
 
     Get qr codes from links owned by a org.

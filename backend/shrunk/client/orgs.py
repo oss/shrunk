@@ -1,14 +1,25 @@
 """Implements the :py:class:`OrgsClient` class."""
 
 from datetime import datetime, timezone
-from typing import Any, Optional, List, cast
+from typing import Any, Dict, Optional, List, cast
 import re
 import os
 
 from bson import ObjectId
 import pymongo
+import pymongo.database
 import pymongo.errors
 from pymongo.collation import Collation
+
+from shrunk.mongo_schema import (
+    GeoIpStatsResult,
+    LinkDocument,
+    OrgDocument,
+    OrgMemberDocument,
+    OrgOverallStats,
+    OrgSummaryDocument,
+    OrgVisitStatsRow,
+)
 
 from .exceptions import (
     NoSuchObjectException,
@@ -24,7 +35,7 @@ class OrgsClient:
         self.db = db
         self.domain_enabled = bool(int(os.getenv("SHRUNK_DOMAINS_ENABLED", "0")))
 
-    def get_org(self, org_id: ObjectId) -> Optional[Any]:
+    def get_org(self, org_id: ObjectId) -> Optional[OrgDocument]:
         """Get information about a given org
 
         :param org_id: The org ID to query
@@ -32,12 +43,13 @@ class OrgsClient:
           exists with the provided ID
         """
 
-        org = self.db.organizations.find_one({"_id": org_id})
-        if org is None:
+        result = self.db.organizations.find_one({"_id": org_id})
+        if result is None:
             return None
+        org = cast(OrgDocument, result)
 
         # Organizations created before implementations of domains key do not have the `domains` field
-        if org is not None and org.get("domains") is None:
+        if org.get("domains") is None:
             org["domains"] = []
 
         if org.get("access_tokens") is None:
@@ -45,7 +57,7 @@ class OrgsClient:
 
         return org
 
-    def get_orgs(self, netid: str, only_member_orgs: bool) -> List[Any]:
+    def get_orgs(self, netid: str, only_member_orgs: bool) -> List[OrgSummaryDocument]:
         """Get a list of orgs
 
         :param netid: The NetID of the requesting user
@@ -54,7 +66,7 @@ class OrgsClient:
         :returns: See :py:func:`shrunk.api.org.get_orgs` for the format
           of the return value
         """
-        aggregation: List[Any] = []
+        aggregation: List[Dict[str, Any]] = []
         if only_member_orgs:
             aggregation.append(
                 {
@@ -97,7 +109,7 @@ class OrgsClient:
                 },
             },
         ]
-        return list(self.db.organizations.aggregate(aggregation))
+        return cast(List[OrgSummaryDocument], list(self.db.organizations.aggregate(aggregation)))
 
     def create(self, org_name: str) -> Optional[ObjectId]:
         """Create a new org
@@ -107,19 +119,18 @@ class OrgsClient:
           occurred
         """
         try:
-            result = self.db.organizations.insert_one(
-                {
-                    "name": org_name,
-                    "timeCreated": datetime.now(timezone.utc),
-                    "members": [],
-                    "guests": [],
-                    "domains": [],
-                    "deleted": False,
-                }
-            )
+            org = {
+                "name": org_name,
+                "timeCreated": datetime.now(timezone.utc),
+                "members": [],
+                "guests": [],
+                "domains": [],
+                "deleted": False,
+            }
+            result = self.db.organizations.insert_one(org)
         except pymongo.errors.DuplicateKeyError:
             return None
-        return result.inserted_id
+        return cast(ObjectId, result.inserted_id)
 
     def validate_name(self, org_name: str) -> bool:
         """Check whether a given name may be used as an org name
@@ -129,7 +140,7 @@ class OrgsClient:
         result = self.db.organizations.find_one({"name": org_name})
         return result is None
 
-    def rename_org(self, org_id: ObjectId, new_org_name: str) -> Optional[ObjectId]:
+    def rename_org(self, org_id: ObjectId, new_org_name: str) -> bool:
         """Renames an org to a new name given that the new name doesn't already exist.
 
         :param org_id:
@@ -140,7 +151,7 @@ class OrgsClient:
 
         result = self.db.organizations.update_one(matched, update)
 
-        return cast(int, result.modified_count) == 1
+        return result.modified_count == 1
 
     def has_associated_urls(self, org_id: ObjectId) -> bool:
         """check to see if orgs have any associations with urls before deletion
@@ -186,7 +197,11 @@ class OrgsClient:
             },
         )
 
-        for member in self.db.organizations.find_one({"_id": org_id})["members"]:
+        org = self.db.organizations.find_one({"_id": org_id})
+        if org is None:
+            return False
+
+        for member in org["members"]:
             if member["role"] == "guest":
                 self.db.grants.delete_many({"entity": member["netid"]})
                 self.db.organizations.update_one(
@@ -206,15 +221,18 @@ class OrgsClient:
         )
         return result.modified_count == 1
 
-    def get_members(self, org_id: ObjectId) -> List[Any]:
-        return list(
-            self.db.organizations.aggregate(
-                [
-                    {"$match": {"_id": org_id}},
-                    {"$unwind": "$members"},
-                    {"$replaceRoot": {"newRoot": "$members"}},
-                ]
-            )
+    def get_members(self, org_id: ObjectId) -> List[OrgMemberDocument]:
+        return cast(
+            List[OrgMemberDocument],
+            list(
+                self.db.organizations.aggregate(
+                    [
+                        {"$match": {"_id": org_id}},
+                        {"$unwind": "$members"},
+                        {"$replaceRoot": {"newRoot": "$members"}},
+                    ]
+                )
+            ),
         )
 
     def get_admin_count(self, org_id: ObjectId) -> int:
@@ -253,7 +271,7 @@ class OrgsClient:
         }
 
         result = self.db.organizations.update_one(match, update)
-        return cast(int, result.modified_count) == 1
+        return result.modified_count == 1
 
     def delete_member(self, org_id: ObjectId, netid: str) -> bool:
         if self.is_guest(org_id, netid):  # remove access to guest
@@ -263,7 +281,7 @@ class OrgsClient:
             {"$pull": {"members": {"netid": netid}}},
         )
 
-        return cast(int, result.modified_count) == 1
+        return result.modified_count == 1
 
     def set_member_role(self, org_id: ObjectId, netid: str, role: str) -> bool:
         result = self.db.organizations.update_one(
@@ -271,7 +289,7 @@ class OrgsClient:
             {"$set": {"members.$[elem].role": role}},
             array_filters=[{"elem.netid": netid}],
         )
-        return cast(int, result.modified_count) == 1
+        return result.modified_count == 1
 
     def is_member(self, org_id: ObjectId, netid: str) -> bool:
         return (
@@ -324,7 +342,7 @@ class OrgsClient:
             return False
 
         result = self.db.organizations.update_one(org, update)
-        return cast(int, result.modified_count) == 1
+        return result.modified_count == 1
 
     def delete_domain(self, org_name: str, domain: str) -> bool:
         org = self.db.organizations.find_one({"name": org_name})
@@ -339,12 +357,12 @@ class OrgsClient:
         except pymongo.errors.DuplicateKeyError:
             return False
         result = self.db.organizations.update_one({"name": org_name}, update)
-        return cast(int, result.modified_count) == 1
+        return result.modified_count == 1
 
     def get_domain_status(self) -> bool:
         return self.domain_enabled
 
-    def get_visit_stats(self, org_id: ObjectId) -> List[Any]:
+    def get_visit_stats(self, org_id: ObjectId) -> List[OrgVisitStatsRow]:
         pipeline = [
             {"$match": {"_id": org_id}},
             {"$unwind": {"path": "$members"}},
@@ -367,9 +385,9 @@ class OrgsClient:
             {"$project": {"links": 0}},
         ]
 
-        return list(self.db.organizations.aggregate(pipeline))
+        return cast(List[OrgVisitStatsRow], list(self.db.organizations.aggregate(pipeline)))
 
-    def get_links(self, org_id: ObjectId, is_tracking_pixel: Optional[bool] = None) -> List[Any]:
+    def get_links(self, org_id: ObjectId, is_tracking_pixel: Optional[bool] = None) -> List[LinkDocument]:
         """Get all links associated with an org
 
         :param org_id: The org ID
@@ -380,7 +398,7 @@ class OrgsClient:
 
             if result is None:
                 raise NoSuchObjectException
-            return list(result)
+            return cast(List[LinkDocument], list(result))
 
         pipeline = [
             {
@@ -439,9 +457,9 @@ class OrgsClient:
             },
             {"$project": {"owner_org": 0}},
         ]
-        return list(self.db.urls.aggregate(pipeline))
+        return cast(List[LinkDocument], list(self.db.urls.aggregate(pipeline)))
 
-    def get_org_overall_stats(self, org_id: ObjectId) -> List[Any]:
+    def get_org_overall_stats(self, org_id: ObjectId) -> OrgOverallStats:
         """Get overall stats for an org
 
         :param org_id: The org ID
@@ -475,14 +493,14 @@ class OrgsClient:
 
         results = list(self.db.urls.aggregate(pipeline))
         if not results or len(results) == 0:
-            return {"total_links": 0, "total_visits": 0, "total_users": 0}
-        return results[0]
+            return {"total_links": 0, "total_visits": 0, "unique_visits": 0}
+        return cast(OrgOverallStats, results[0])
 
-    def get_geoip_stats(self, org_id: ObjectId) -> Any:
-        def not_null(field: str) -> Any:
+    def get_geoip_stats(self, org_id: ObjectId) -> GeoIpStatsResult:
+        def not_null(field: str) -> List[Dict[str, Any]]:
             return [{"$match": {field: {"$exists": True, "$ne": None}}}]
 
-        def group_by(op: str) -> Any:
+        def group_by(op: str) -> List[Dict[str, Any]]:
             return [{"$group": {"_id": op, "value": {"$sum": 1}}}]
 
         filter_us = [{"$match": {"country_code": "US"}}]
@@ -523,15 +541,15 @@ class OrgsClient:
             },
         ]
 
-        return next(self.db.organizations.aggregate(aggregation))
+        return cast(GeoIpStatsResult, next(self.db.organizations.aggregate(aggregation)))
 
-    def search(self, netid: str, query: Any) -> Any:
+    def search(self, netid: str, query: Dict[str, Any]) -> Dict[str, Any]:
         """Execute an organization search query.
 
         :param netid: The NetID of the user performing the search
         :param query: The search query parameters
         """
-        pipeline: List[Any] = []
+        pipeline: List[Dict[str, Any]] = []
 
         # Match by name
         if "query" in query and query["query"]:

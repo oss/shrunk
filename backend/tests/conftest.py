@@ -26,7 +26,7 @@ def app() -> Flask:
 def db(
     app: Flask,  # pylint: disable=redefined-outer-name
 ) -> Generator[ShrunkClient, None, None]:
-    shrunk_db = app.client
+    shrunk_db: ShrunkClient = getattr(app, "client")
     shrunk_db.reset_database()
     try:
         yield shrunk_db
@@ -38,9 +38,10 @@ def db(
 def client(
     app: Flask,  # pylint: disable=redefined-outer-name
 ) -> Generator[Client, None, None]:
+    shrunk_db: ShrunkClient = getattr(app, "client")
     with app.test_client() as test_client:
-        app.client.reset_database()
+        shrunk_db.reset_database()
         try:
             yield test_client
         finally:
-            app.client.reset_database()
+            shrunk_db.reset_database()

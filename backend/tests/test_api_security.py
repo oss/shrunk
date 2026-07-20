@@ -1,7 +1,44 @@
 import base64
+from datetime import datetime, timezone
+
 import pytest
+from flask import Flask
 from werkzeug.test import Client
+
 from util import dev_login, create_link
+from shrunk.client import ShrunkClient
+
+
+def test_promote_link_creates_real_link(app: Flask, db: ShrunkClient) -> None:
+    """promote_link must actually create a fetchable link document, not just
+    flip the unsafe_links status while silently failing to create() one."""
+    with app.app_context():
+        oid = db.security.create_pending_link(
+            {
+                "title": "phish",
+                "alias": "regressionpromote1",
+                "long_url": "http://malicious.example.test/regression",
+                "timeCreated": datetime.now(timezone.utc),
+                "visits": 0,
+                "unique_visits": 0,
+                "deleted": False,
+                "creator_ip": "1.2.3.4",
+                "expiration_time": None,
+                "owner": {"_id": "DEV_USER", "type": "netid"},
+                "domain": "",
+                "viewers": [],
+                "editors": [],
+                "is_tracking_pixel_link": False,
+                "created_using_api": False,
+            }
+        )
+        assert oid is not None
+
+        new_link_id = db.security.promote_link("DEV_ADMIN", oid)
+        real_link = db.links.get_link_info(new_link_id)
+        assert real_link["title"] == "phish"
+        assert real_link["alias"] == "regressionpromote1"
+        assert real_link["owner"] == {"_id": "DEV_USER", "type": "netid"}
 
 
 def test_security_risk_client_method(client: Client) -> None:
@@ -14,11 +51,13 @@ def test_security_risk_client_method(client: Client) -> None:
     with dev_login(client, "admin"):
         # Create a link and get its message
         resp = client.get(f"/api/core/security/security_test/{unsafe_link_b32}")
+        assert resp.json is not None
         assert resp.status_code == 200
         assert resp.json["detected"]
 
         # Creating a link with a regular link should not be forbidden
         resp = client.get(f"/api/core/security/security_test/{regular_link_b32}")
+        assert resp.json is not None
         assert resp.status_code == 200
         assert not resp.json["detected"]
 
@@ -66,11 +105,13 @@ def test_user_and_admin_security_link_abilities(client: Client, permission: str)
                 "bypass_security_measures": True,
             },
         )
+        assert resp.json is not None
         assert resp.status_code == 201
         link_id = resp.json["id"]
 
         # test that the link was made successfully after forcing bypass
         resp = client.get(f"/api/core/link/{link_id}")
+        assert resp.json is not None
         assert resp.status_code == 200
         assert resp.json["title"] == unsafe_link_title
 
@@ -83,13 +124,14 @@ def test_security_api_permissions(client: Client, permission: str) -> None:
         # regular users cannot fetch pending list
         assert resp.status_code == 403
         with pytest.raises(TypeError):
-            assert resp.json["pendingLinks"]
+            assert resp.json["pendingLinks"]  # pyright: ignore[reportOptionalSubscript]
 
         # we post a random link so that we have an
         # objectID to work with. it does not matter what it is,
         # we just need an objectID to work with in order to call endpoints
         random_link = "http://google.com"
         resp = client.post("/api/core/link", json={"title": "random", "long_url": random_link})
+        assert resp.json is not None
         link_id = resp.json["id"]
 
         resp = client.patch(f"/api/core/security/promote/{link_id}")
@@ -116,6 +158,7 @@ def test_verification_process(client: Client) -> None:
 
     with dev_login(client, "admin"):
         resp = client.get("/api/core/security/pending_links")
+        assert resp.json is not None
         assert resp.status_code == 200
         assert resp.json["pendingLinks"]
         assert len(resp.json["pendingLinks"]) == 2
@@ -134,9 +177,11 @@ def test_verification_process(client: Client) -> None:
 
         # check that default status is pending for both unsafe links
         resp = client.get(f"/api/core/security/status/{unsafe_link_id}")
+        assert resp.json is not None
         assert resp.status_code == 200
         assert resp.json["status"] == "pending"
         resp = client.get(f"/api/core/security/status/{second_unsafe_link_id}")
+        assert resp.json is not None
         assert resp.status_code == 200
         assert resp.json["status"] == "pending"
 
@@ -149,6 +194,7 @@ def test_verification_process(client: Client) -> None:
         resp = client.patch(f"/api/core/security/promote/{unsafe_link_id}")
         assert resp.status_code == 200
         resp = client.get(f"/api/core/security/status/{unsafe_link_id}")
+        assert resp.json is not None
         assert resp.status_code == 200
         assert resp.json["status"] == "approved"
 
@@ -162,6 +208,7 @@ def test_verification_process(client: Client) -> None:
         resp = client.patch(f"/api/core/security/reject/{second_unsafe_link_id}")
         assert resp.status_code == 200
         resp = client.get(f"/api/core/security/status/{second_unsafe_link_id}")
+        assert resp.json is not None
         assert resp.status_code == 200
         assert resp.json["status"] == "denied"
         resp = client.get(f"/api/core/link/{second_unsafe_link_id}")

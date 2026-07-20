@@ -4,6 +4,8 @@ import pytest
 from util import dev_login
 from werkzeug.test import Client
 
+from shrunk.client import ShrunkClient
+
 general_tickets = [
     {
         "reason": "power_user",
@@ -36,6 +38,7 @@ def test_create_ticket(client: Client, ticket: dict):
     with dev_login(client, "user"):
         # Create the ticket
         resp = client.post("/api/core/ticket", json=ticket)
+        assert resp.json is not None
         assert resp.status_code == 201, "Failed to create ticket"
         ticket_id = resp.json["ticket"]["_id"]
 
@@ -59,6 +62,7 @@ def test_create_ticket_duplicate(client: Client):
     with dev_login(client, "user"):
         # Create the ticket
         resp = client.post("/api/core/ticket", json=ticket)
+        assert resp.json is not None
         assert resp.status_code == 201, "Failed to create ticket"
         ticket_id = resp.json["ticket"]["_id"]
 
@@ -100,6 +104,7 @@ def test_get_tickets(client: Client):
         # Create the tickets
         for ticket in general_tickets:
             resp = client.post("/api/core/ticket", json=ticket)
+            assert resp.json is not None
             assert resp.status_code == 201, "Failed to create ticket"
             ticket_ids.append(resp.json["ticket"]["_id"])
 
@@ -117,6 +122,7 @@ def test_get_tickets(client: Client):
 
         # Get the number of tickets
         resp = client.get("/api/core/ticket?filter=reporter:DEV_USER&count=true")
+        assert resp.json is not None
         assert resp.json["count"] == 3, "Failed to get tickets count"
 
     with dev_login(client, "admin"):
@@ -130,17 +136,19 @@ def test_get_tickets(client: Client):
     ("ticket"),
     general_tickets,
 )
-def test_close_ticket(client: Client, ticket: dict):
+def test_close_ticket(client: Client, db: ShrunkClient, ticket: dict):
     """Test closing a ticket
 
     Args:
         client (Client): The test client
+        db (ShrunkClient): The Shrunk client
         ticket (dict): The ticket to create
     """
     ticket_id = ""
     with dev_login(client, "user"):
         # Create the ticket
         resp = client.post("/api/core/ticket", json=ticket)
+        assert resp.json is not None
         assert resp.status_code == 201, "Failed to create ticket"
         ticket_id = resp.json["ticket"]["_id"]
 
@@ -150,6 +158,11 @@ def test_close_ticket(client: Client, ticket: dict):
             json={"action": "close", "actioned_by": "DEV_USER"},
         )
         assert resp.status_code == 200, "Failed to close ticket"
+
+        # The "action" field is a request-only concept and must not leak into the stored document
+        stored = db.tickets.get_ticket({"_id": ticket_id})
+        assert stored is not None
+        assert "action" not in stored
 
     with dev_login(client, "admin"):
         # Delete the ticket
@@ -172,6 +185,7 @@ def test_resolve_ticket(client: Client, ticket: dict):
     with dev_login(client, "user"):
         # Create the ticket
         resp = client.post("/api/core/ticket", json=ticket)
+        assert resp.json is not None
         assert resp.status_code == 201, "Failed to create ticket"
         ticket_id = resp.json["ticket"]["_id"]
 

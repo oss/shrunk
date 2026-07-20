@@ -1,10 +1,12 @@
 """Implements the :py:class:`ShrunkClient` class."""
 
 from datetime import datetime
-from typing import Any, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, cast
 
 import os
 import pymongo
+
+from shrunk.mongo_schema import AdminStatsDocument, EndpointStatsRow
 
 from .geoip import GeoipClient
 from .links import LinksClient
@@ -33,10 +35,15 @@ class ShrunkClient:
         BANNED_REGEXES: Optional[List[str]] = None,
         **_kwargs: Any,
     ):
+        db_port = os.getenv("SHRUNK_DB_PORT")
+        assert db_port is not None
+        db_name = os.getenv("SHRUNK_DB_NAME")
+        assert db_name is not None
+
         self.conn = pymongo.MongoClient(
             os.getenv("SHRUNK_DB_HOST"),
-            int(os.getenv("SHRUNK_DB_PORT")),
-            replicaSet=os.getenv("SRHUNK_REPLICA_SET_NAME"),
+            int(db_port),
+            replicaSet=os.getenv("SHRUNK_REPLICA_SET_NAME"),
             readPreference="secondaryPreferred",
             # NOTE: this is default false in pymongo 4.x, we are on pymongo 3.x
             directConnection=False,
@@ -46,7 +53,7 @@ class ShrunkClient:
             connect=False,
             tz_aware=True,
         )
-        self.db = self.conn[os.getenv("SHRUNK_DB_NAME")]
+        self.db = self.conn[db_name]
         self._ensure_indexes()
 
         self.geoip = GeoipClient(GEOLITE_PATH=os.getenv("SHRUNK_GEOLITE_PATH"))
@@ -127,7 +134,7 @@ class ShrunkClient:
         ]:
             self.db[col].delete_many({})
 
-    def admin_stats(self, begin: Optional[datetime] = None, end: Optional[datetime] = None) -> Any:
+    def admin_stats(self, begin: Optional[datetime] = None, end: Optional[datetime] = None) -> AdminStatsDocument:
         """Get basic Shrunk usage stats. An optional time range may be specified.
 
         :param begin:
@@ -153,7 +160,7 @@ class ShrunkClient:
 
         elif begin is not None and end is not None:
 
-            def match_range(field_name: str) -> Any:
+            def match_range(field_name: str) -> Dict[str, Any]:
                 return {
                     "$and": [
                         {field_name: {"$gte": begin}},
@@ -173,41 +180,44 @@ class ShrunkClient:
             "users": num_users,
         }
 
-    def endpoint_stats(self) -> List[Any]:
+    def endpoint_stats(self) -> List[EndpointStatsRow]:
         """Get statistics about visits to the different Flask endpoints."""
 
-        mongo_response = list(
-            self.db.endpoint_statistics.aggregate(
-                [
-                    {
-                        "$match": {
-                            "$and": [
-                                {"endpoint": {"$ne": "shrunk.render_index"}},
-                                {"endpoint": {"$ne": "shrunk.render_login"}},
-                                {"endpoint": {"$ne": "sso_login"}},
-                                {"endpoint": {"$ne": "static"}},
-                                {"endpoint": {"$ne": "redirect_link"}},
-                                {"endpoint": {"$ne": "error"}},
-                            ],
-                        }
-                    },
-                    {
-                        "$group": {
-                            "_id": "$endpoint",
-                            "total_visits": {"$sum": "$count"},
-                            "unique_visits": {"$sum": 1},
-                        }
-                    },
-                    {
-                        "$project": {
-                            "_id": 0,
-                            "endpoint": "$_id",
-                            "total_visits": 1,
-                            "unique_visits": 1,
-                        }
-                    },
-                ]
-            )
+        mongo_response = cast(
+            List[EndpointStatsRow],
+            list(
+                self.db.endpoint_statistics.aggregate(
+                    [
+                        {
+                            "$match": {
+                                "$and": [
+                                    {"endpoint": {"$ne": "shrunk.render_index"}},
+                                    {"endpoint": {"$ne": "shrunk.render_login"}},
+                                    {"endpoint": {"$ne": "sso_login"}},
+                                    {"endpoint": {"$ne": "static"}},
+                                    {"endpoint": {"$ne": "redirect_link"}},
+                                    {"endpoint": {"$ne": "error"}},
+                                ],
+                            }
+                        },
+                        {
+                            "$group": {
+                                "_id": "$endpoint",
+                                "total_visits": {"$sum": "$count"},
+                                "unique_visits": {"$sum": 1},
+                            }
+                        },
+                        {
+                            "$project": {
+                                "_id": 0,
+                                "endpoint": "$_id",
+                                "total_visits": 1,
+                                "unique_visits": 1,
+                            }
+                        },
+                    ]
+                )
+            ),
         )
 
         # Mongo return order is not guaranteed, so sort by endpoint to maintain consistent ordering

@@ -4,98 +4,15 @@ import base64
 from datetime import datetime, timezone, timedelta
 import random
 import csv
+from typing import Any, Dict, Tuple
 
+from bson import ObjectId
 from flask import Flask
 import pytest
 from werkzeug.test import Client
 
-from util import dev_login, create_link, setup_guest_user
-
-
-@pytest.fixture
-def test_link(client: Client) -> None:  # pylint: disable=too-many-statements
-    """This test simulates the process of creating a link, adding two random aliases
-    to it, deleting an alias, and then deleting the link."""
-    # pylint: disable=undefined-variable
-    with dev_login(client, "user"):
-        # Create a link and get its ID
-        resp = create_link(client, "title", "example.com")
-        assert 200 <= resp.status_code < 300
-        link_id = resp.json["id"]
-
-        # Get the link info back and make sure it's correct
-        resp = client.get(f"/api/core/link/{link_id}")
-        assert 200 <= resp.status_code < 300
-        assert resp.json["title"] == "title"
-        assert resp.json["long_url"] == "https://example.com"
-        assert len(resp.json["aliases"]) == 2
-        for alias in resp.json["aliases"]:
-            assert alias["alias"] in {alias0, alias1}
-            if alias["alias"] == alias0:
-                assert alias["description"] == "alias0"
-            elif alias["alias"] == alias1:
-                assert alias["description"] == "alias1"
-
-        # Check that alias0 redirects correctly
-        resp = client.get(f"/{alias0}")
-        assert resp.status_code == 302
-        assert resp.headers["Location"] == "https://example.com"
-
-        # Set the link to expire 200 ms in the future
-        expiration_time = datetime.now(timezone.utc) + timedelta(milliseconds=200)
-        resp = client.patch(
-            f"/api/core/link/{link_id}",
-            json={
-                "expiration_time": expiration_time.isoformat(),
-            },
-        )
-        assert resp.status_code == 204
-
-        # Wait 5 s
-        time.sleep(5)
-
-        # Check that alias0 does not redirect
-        resp = client.get(f"/{alias0}")
-        assert resp.status_code == 404
-
-        # Check that alias1 does not redirect
-        resp = client.get(f"/{alias1}")
-        assert resp.status_code == 404
-
-        # Unset the link expiration time
-        resp = client.patch(
-            f"/api/core/link/{link_id}",
-            json={
-                "expiration_time": None,
-            },
-        )
-        assert resp.status_code == 204
-
-        # Check that alias0 does not redirect (still deleted)
-        resp = client.get(f"/{alias0}")
-        assert resp.status_code == 404
-
-        # Check that alias1 redirects (no longer expired)
-        resp = client.get(f"/{alias1}")
-        assert resp.status_code == 302
-        assert resp.headers["Location"] == "https://example.com"
-
-        # Delete the link
-        resp = client.delete(f"/api/core/link/{link_id}")
-        assert 200 <= resp.status_code < 300
-
-        # Check that attempting to get the link info now results in a 404 error
-        resp = client.get(f"/api/core/link/{link_id}")
-        assert resp.status_code == 404
-
-        # Check that alias0 still doesn't redirect
-        resp = client.get(f"/{alias0}")
-        assert resp.status_code == 404
-
-        # Check that alias1 doesn't redirect
-        resp = client.get(f"/{alias1}")
-        assert resp.status_code == 404
-    # pylint: enable=undefined-variable
+from util import dev_login, create_link, setup_guest_user, assert_not_500
+from shrunk.client import ShrunkClient
 
 
 def test_create_link_expiration(client: Client) -> None:
@@ -120,6 +37,7 @@ def test_create_link_expiration(client: Client) -> None:
                 "expiration_time": expiration_time.isoformat(),
             },
         )
+        assert resp.json is not None
 
         assert resp.status_code == 201
         link_id = resp.json["id"]
@@ -159,6 +77,7 @@ def test_create_link_org(client: Client) -> None:
 
     with dev_login(client, "admin"):
         resp = client.post("/api/core/org", json={"name": "testorg10"})
+        assert resp.json is not None
         assert resp.status_code == 200
         org_id = resp.json["id"]
 
@@ -169,6 +88,7 @@ def test_create_link_org(client: Client) -> None:
                 "org_id": org_id,
             },
         )
+        assert resp.json is not None
         assert resp.status_code == 201
         link_id = resp.json["id"]
         alias = resp.json["alias"]
@@ -179,6 +99,7 @@ def test_create_link_org(client: Client) -> None:
         assert resp.headers["Location"] == "https://example.com"
 
         resp = client.get(f"/api/core/link/{link_id}")
+        assert resp.json is not None
         assert resp.status_code == 200
         assert resp.json["owner"]["_id"] == org_id
         assert resp.json["owner"]["type"] == "org"
@@ -190,6 +111,7 @@ def test_remove_acl_on_transfer_to_org(client: Client) -> None:
 
     with dev_login(client, "admin"):
         resp = client.post("/api/core/org", json={"name": "mycoolorg"})
+        assert resp.json is not None
         assert resp.status_code == 200
         org_id = resp.json["id"]
         resp = client.post(
@@ -204,12 +126,14 @@ def test_remove_acl_on_transfer_to_org(client: Client) -> None:
                 "editors": [{"_id": org_id, "type": "org"}],
             },
         )
+        assert resp.json is not None
         assert resp.status_code == 201
         link_id = resp.json["id"]
 
         resp = client.patch(f"/api/core/link/{link_id}", json={"owner": {"_id": org_id, "type": "org"}})
         assert resp.status_code == 204
         resp = client.get(f"/api/core/link/{link_id}")
+        assert resp.json is not None
         assert len(resp.json["editors"]) == 0
         assert len(resp.json["viewers"]) == 1
         assert resp.json["viewers"][0]["_id"] == "DEV_test_user"
@@ -218,6 +142,7 @@ def test_remove_acl_on_transfer_to_org(client: Client) -> None:
 def test_transfer_from_org_to_user(client: Client) -> None:
     with dev_login(client, "admin"):
         resp = client.post("/api/core/org", json={"name": "testorg"})
+        assert resp.json is not None
         org_id = resp.json["id"]
 
         resp = client.put(
@@ -231,6 +156,7 @@ def test_transfer_from_org_to_user(client: Client) -> None:
                 "org_id": org_id,
             },
         )
+        assert resp.json is not None
 
         assert resp.status_code == 201
         link_id = resp.json["id"]
@@ -249,6 +175,7 @@ def test_transfer_from_org_to_user(client: Client) -> None:
         )
         assert resp.status_code == 204
         resp = client.get(f"/api/core/link/{link_id}")
+        assert resp.json is not None
         assert resp.json["owner"]["_id"] == "DEV_USER"
         assert resp.json["owner"]["type"] == "netid"
 
@@ -279,6 +206,7 @@ def test_modify_link_bad_alias(client: Client) -> None:
     alias = "test"
     with dev_login(client, "user"):
         resp = create_link(client, "title", "https://rutgers.edu")
+        assert resp.json is not None
         assert resp.status_code == 201
         link_id = resp.json["id"]
         linkAlias = resp.json["alias"]
@@ -314,6 +242,7 @@ def test_modify_link_bad_long_url(client: Client) -> None:
 
     with dev_login(client, "user"):
         resp = create_link(client, "title", "https://rutgers.edu")
+        assert resp.json is not None
         assert resp.status_code == 201
         link_id = resp.json["id"]
 
@@ -348,6 +277,7 @@ def test_validate_long_url(client: Client, long_url: str, expected: bool) -> Non
     long_url_b32 = str(base64.b32encode(bytes(long_url, "utf8")), "utf8")
     with dev_login(client, "user"):
         resp = client.get(f"/api/core/link/validate_long_url/{long_url_b32}")
+        assert resp.json is not None
         assert resp.status_code == 200
         assert resp.json["valid"] is expected
 
@@ -363,6 +293,7 @@ def test_validate_alias(client: Client, alias: str, expected: bool) -> None:
     alias_b32 = str(base64.b32encode(bytes(alias, "utf8")), "utf8")
     with dev_login(client, "user"):
         resp = client.get(f"/api/core/link/validate_reserved_alias/{alias_b32}")
+        assert resp.json is not None
         assert resp.status_code == 200
         assert resp.json["valid"] is expected
 
@@ -422,6 +353,7 @@ def test_link_not_owner(client: Client) -> None:
     with dev_login(client, "admin"):
         # Create a link and get its ID
         resp = create_link(client, "title", "example.com")
+        assert resp.json is not None
         assert 200 <= resp.status_code < 300
         link_id = resp.json["id"]
 
@@ -504,6 +436,7 @@ def test_get_deleted(client: Client) -> None:
                 "long_url": "https://example.com",
             },
         )
+        assert resp.json is not None
         assert resp.status_code == 201
         link_id = resp.json["id"]
         alias0 = resp.json["alias"]
@@ -519,6 +452,7 @@ def test_get_deleted(client: Client) -> None:
     with dev_login(client, "admin"):
         # Get the link info as admin, check that the alias exists
         resp = client.get(f"/api/core/link/{link_id}")
+        assert resp.json is not None
         assert resp.status_code == 200
 
         info = resp.json
@@ -526,9 +460,68 @@ def test_get_deleted(client: Client) -> None:
         assert info["deleted"] is True
 
 
+def test_request_and_cancel_edit_access(client: Client) -> None:
+    with dev_login(client, "user"):
+        resp = create_link(client, "title", "https://example.com")
+        assert resp.json is not None
+        assert resp.status_code == 201
+        link_id = resp.json["id"]
+
+    with dev_login(client, "admin"):
+        resp = client.post(f"/api/core/link/{link_id}/request_edit_access")
+        assert_not_500(resp)
+        assert resp.status_code == 204
+
+        resp = client.post(f"/api/core/link/{link_id}/cancel_request_edit_access")
+        assert_not_500(resp)
+        assert resp.status_code == 204
+
+
+def test_request_edit_access_org_owned_link_returns_clean_error(client: Client) -> None:
+    """request_edit_access assumes a single netid owner to email; for an
+    org-owned link it must return a clean 4xx, not crash."""
+    with dev_login(client, "admin"):
+        resp = client.post("/api/core/org", json={"name": "edit access org"})
+        assert resp.json is not None
+        assert resp.status_code == 200
+        org_id = resp.json["id"]
+
+        resp = client.post(
+            "/api/core/link",
+            json={"title": "org link", "long_url": "https://example.com", "org_id": org_id},
+        )
+        assert resp.json is not None
+        assert resp.status_code == 201
+        link_id = resp.json["id"]
+
+        resp = client.post(f"/api/core/link/{link_id}/request_edit_access")
+        assert_not_500(resp)
+        assert resp.status_code == 400
+
+
+def test_pending_edit_access_requests_are_visible_to_owner(client: Client) -> None:
+    with dev_login(client, "user"):
+        resp = create_link(client, "title", "https://example.com")
+        assert resp.json is not None
+        assert resp.status_code == 201
+        link_id = resp.json["id"]
+
+    with dev_login(client, "admin"):
+        resp = client.post(f"/api/core/link/{link_id}/request_edit_access")
+        assert resp.status_code == 204
+
+    with dev_login(client, "user"):
+        resp = client.get("/api/core/request/pending")
+        assert resp.json is not None
+        assert resp.status_code == 200
+        pending_link_ids = [r["link_id"] for r in resp.json["requests"]]
+        assert link_id in pending_link_ids
+
+
 def test_visits(client: Client) -> None:  # pylint: disable=too-many-statements
     def assert_visits(url: str, total_visits: int, unique_visits: int) -> None:
         resp = client.get(url)
+        assert resp.json is not None
         assert resp.status_code == 200
         assert resp.json["total_visits"] == total_visits
         assert resp.json["unique_visits"] == unique_visits
@@ -541,6 +534,7 @@ def test_visits(client: Client) -> None:  # pylint: disable=too-many-statements
                 "long_url": "https://example.com",
             },
         )
+        assert resp.json is not None
         assert resp.status_code == 201
         link_id = resp.json["id"]
         alias0 = resp.json["alias"]
@@ -568,6 +562,7 @@ def test_visits(client: Client) -> None:  # pylint: disable=too-many-statements
 
         # Get the visit stats data
         resp = client.get(f"/api/core/link/{link_id}/stats/visits")
+        assert resp.json is not None
         assert resp.status_code == 200
         assert len(resp.json["visits"]) == 1
         assert resp.json["visits"][0]["first_time_visits"] == 1
@@ -594,15 +589,15 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
 
     with dev_login(client, "facstaff"):
 
-        def check_create(body):
+        def check_create(body: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
             resp = client.post("/api/core/link", json=body)
-            if resp.json is None:
-                return None, resp.status_code
+            assert resp.json is not None
             if "error" in resp.json:
                 return resp.json, resp.status_code
             link_id = resp.json["id"]
             status = resp.status_code
             resp = client.get(f"/api/core/link/{link_id}")
+            assert resp.json is not None
             return resp.json, status
 
         # make sure Editors are viewers
@@ -665,6 +660,7 @@ def test_create_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
 
         # org allows valid org
         resp = client.post("/api/core/org", json={"name": "testorg11"})
+        assert resp.json is not None
         assert 200 <= resp.status_code <= 300
         _id = resp.json["id"]
 
@@ -688,19 +684,22 @@ def test_update_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
             "/api/core/link",
             json={"title": "title", "long_url": "https://example.com"},
         )
+        assert resp.json is not None
         assert 200 <= resp.status_code <= 300
         link_id = resp.json["id"]
 
-        def mod_acl(action, entry, acl):
+        def mod_acl(action: str, entry: Dict[str, Any], acl: str) -> Tuple[Dict[str, Any], int]:
             resp = client.patch(
                 f"/api/core/link/{link_id}/acl",
                 json={"action": action, "acl": acl, "entry": entry},
             )
             print(resp.json)
             if resp.status_code >= 400:
+                assert resp.json is not None
                 return resp.json, resp.status_code
             status = resp.status_code
             resp = client.get(f"/api/core/link/{link_id}")
+            assert resp.json is not None
             return resp.json, status
 
         owner = {"_id": "DEV_FACSTAFF", "type": "netid"}
@@ -773,6 +772,7 @@ def test_update_link_acl(client: Client) -> None:  # pylint: disable=too-many-st
 
         # add valid org
         resp = client.post("/api/core/org", json={"name": "testorg11"})
+        assert resp.json is not None
         assert 200 <= resp.status_code <= 300
         org_id = resp.json["id"]
         link, status = mod_acl("add", {"_id": org_id, "type": "org"}, "viewers")
@@ -797,6 +797,7 @@ def test_acl(client: Client) -> None:  # pylint: disable=too-many-statements
     with dev_login(client, "admin"):
         # create org
         resp = client.post("/api/core/org", json={"name": "testorg12"})
+        assert resp.json is not None
         assert 200 <= resp.status_code <= 300
         org_id = resp.json["id"]
 
@@ -815,6 +816,7 @@ def test_acl(client: Client) -> None:  # pylint: disable=too-many-statements
                 "viewers": [{"_id": org_id, "type": "org"}],
             },
         )
+        assert resp.json is not None
         assert 200 <= resp.status_code <= 300
         link_id = resp.json["id"]
         _alias = resp.json["alias"]
@@ -951,6 +953,7 @@ def test_case_sensitive_duplicate_aliases(client: Client) -> None:
 
     with dev_login(client, "admin"):
         resp = create_link(client, "title", "https://playvalorant.com/", alias="VALORANT")
+        assert resp.json is not None
         assert resp.status_code == 201
         assert resp.json["alias"] == "valorant"
 
@@ -970,6 +973,7 @@ def test_revert_expiration_link(client: Client) -> None:
                 "expiration_time": expiration_time.isoformat(),
             },
         )
+        assert resp.json is not None
 
         assert resp.status_code == 201, "Failed to create link"
         link_id = resp.json["id"]
@@ -980,8 +984,27 @@ def test_revert_expiration_link(client: Client) -> None:
 
         # Fetch link and ensure expiration time field is set to None
         resp = client.get(f"/api/core/link/{link_id}")
+        assert resp.json is not None
         assert resp.status_code == 200, "Failed to fetch link"
         assert resp.json["expiration_time"] is None, "Expiration time is not None"
+
+
+def test_revert_expiration_link_reserved_alias(client: Client, db: ShrunkClient) -> None:
+    """revert_link reads info["is_tracking_pixel_link"] only when
+    alias_is_reserved(alias) is True -- force that branch so it's actually
+    exercised, since a normal (randomly generated) alias never is."""
+    with dev_login(client, "admin"):
+        resp = create_link(client, "title", "https://sample.com", alias="forcereserved")
+        assert resp.json is not None
+        assert resp.status_code == 201
+        link_id = resp.json["id"]
+
+        db.links.reserved_words.add("forcereserved")
+        try:
+            resp = client.post(f"/api/core/link/{link_id}/revert")
+            assert_not_500(resp)
+        finally:
+            db.links.reserved_words.discard("forcereserved")
 
 
 def test_visit_link_from_alias_with_caps(client: Client) -> None:
@@ -1007,10 +1030,12 @@ def test_org_to_org_transfer(client: Client) -> None:
     with dev_login(client, "admin"):
         # Create two organizations
         resp = client.post("/api/core/org", json={"name": "org1"})
+        assert resp.json is not None
         assert resp.status_code == 200
         org1_id = resp.json["id"]
 
         resp = client.post("/api/core/org", json={"name": "org2"})
+        assert resp.json is not None
         assert resp.status_code == 200
         org2_id = resp.json["id"]
 
@@ -1022,6 +1047,7 @@ def test_org_to_org_transfer(client: Client) -> None:
                 "org_id": org1_id,
             },
         )
+        assert resp.json is not None
         assert resp.status_code == 201
         link_id = resp.json["id"]
 
@@ -1034,6 +1060,7 @@ def test_org_to_org_transfer(client: Client) -> None:
 
         # Check that the link info reflects the new owner
         resp = client.get(f"/api/core/link/{link_id}")
+        assert resp.json is not None
         assert resp.status_code == 200
         assert resp.json["owner"]["_id"] == org2_id
         assert resp.json["owner"]["type"] == "org"
@@ -1042,10 +1069,12 @@ def test_org_to_org_transfer(client: Client) -> None:
 def test_owner_transfer(client: Client) -> None:
     with dev_login(client, "admin"):
         resp = client.post("/api/core/org", json={"name": "testorg"})
+        assert resp.json is not None
         assert resp.status_code == 200
         org_id = resp.json["id"]
 
         resp = client.post("/api/core/org", json={"name": "testorg2"})
+        assert resp.json is not None
         assert resp.status_code == 200
         org2_id = resp.json["id"]
 
@@ -1057,6 +1086,7 @@ def test_owner_transfer(client: Client) -> None:
                 "org_id": org_id,
             },
         )
+        assert resp.json is not None
         assert resp.status_code == 201
         link_id = resp.json["id"]
 
@@ -1072,6 +1102,7 @@ def test_owner_transfer(client: Client) -> None:
 
         # test transfer to org that user is not a member of
         resp = client.post("/api/core/link", json={"title": "title", "long_url": "https://example.com"})
+        assert resp.json is not None
         assert resp.status_code == 201
         link_id2 = resp.json["id"]
 
@@ -1080,6 +1111,35 @@ def test_owner_transfer(client: Client) -> None:
             json={"owner": {"_id": org2_id, "type": "org"}},
         )
         assert resp.status_code == 403
+
+
+def test_owner_transfer_records_history(client: Client, db: ShrunkClient) -> None:
+    """A transfer away from an org owner must not clobber the
+    ownership_transfer_history push with the editors/viewers push."""
+    with dev_login(client, "admin"):
+        resp = client.post("/api/core/org", json={"name": "history org"})
+        assert resp.json is not None
+        assert resp.status_code == 200
+        org_id = resp.json["id"]
+
+        resp = client.post(
+            "/api/core/link",
+            json={"title": "title", "long_url": "https://example.com", "org_id": org_id},
+        )
+        assert resp.json is not None
+        assert resp.status_code == 201
+        link_id = resp.json["id"]
+
+        resp = client.patch(
+            f"/api/core/link/{link_id}",
+            json={"owner": {"_id": "DEV_ADMIN", "type": "netid"}},
+        )
+        assert resp.status_code == 204
+
+        link_info = db.links.get_link_info(ObjectId(link_id))
+        transfer_history = link_info.get("ownership_transfer_history", [])
+        assert len(transfer_history) == 1
+        assert transfer_history[0]["to"] == {"_id": "DEV_ADMIN", "type": "netid"}
 
 
 def test_create_link_as_guest(client: Client) -> None:
@@ -1094,34 +1154,16 @@ def test_create_link_as_guest(client: Client) -> None:
                 "long_url": "https://example.com",
             },
         )
+        assert resp.json is not None
 
         assert resp.status_code == 201
 
         link_id = resp.json["id"]
         resp = client.get(f"/api/core/link/{link_id}")
+        assert resp.json is not None
         assert resp.status_code == 200
         assert resp.json["owner"]["_id"] == org_id
         assert resp.json["owner"]["type"] == "org"
-
-
-def attempt_to_transfer_link_ownership_guest(client: Client) -> int:
-    setup_guest_user(client)
-    with dev_login(client, "guest"):
-        resp = client.post(
-            "/api/core/link",
-            json={
-                "title": "title",
-                "long_url": "https://example.com",
-            },
-        )
-        assert resp.status_code == 201
-        link_id = resp.json["id"]
-        resp = client.patch(
-            f"/api/core/link/{link_id}",
-            json={"owner": {"_id": "DEV_GUEST", "type": "netid"}},
-        )
-
-        assert resp.status_code == 403
 
 
 @pytest.mark.parametrize(
@@ -1149,6 +1191,7 @@ def test_link_redirect_query_params(client: Client, query: str, expected: str) -
                 "long_url": "https://example.com",
             },
         )
+        assert resp.json is not None
         assert resp.status_code == 201
         alias = resp.json["alias"]
 
@@ -1159,13 +1202,13 @@ def test_link_redirect_query_params(client: Client, query: str, expected: str) -
 
 
 def test_same_alias_multiple_link(app: Flask) -> None:
-    def _create_link_helper(alias: str, results: list) -> str:
+    def _create_link_helper(alias: str, results: list) -> None:
         client = app.test_client()
         with dev_login(client, "admin"):
             resp = create_link(client, "title", "https://osu.ppy.sh", alias=alias)
             results.append(resp.status_code)
 
-    results = []
+    results: list = []
     threads = [threading.Thread(target=_create_link_helper, args=("osugame", results)) for i in range(3)]
     for thread in threads:
         thread.start()
@@ -1185,6 +1228,7 @@ def test_create_second_link_with_deleted_alias(client: Client) -> None:
             "https://www.instagram.com/reel/DV9CIqegXN_/?igsh=cTB6bnYxdHF3NHYz",
             alias="funny",
         )
+        assert resp.json is not None
         assert resp.status_code == 201
         link_id = resp.json["id"]
 
@@ -1193,5 +1237,6 @@ def test_create_second_link_with_deleted_alias(client: Client) -> None:
 
         # Create a new link with the same alias
         resp = create_link(client, "new title", "https://example.com", alias="funny")
+        assert resp.json is not None
         assert resp.status_code == 201
         assert resp.json["alias"] == "funny"

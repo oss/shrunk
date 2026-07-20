@@ -1,6 +1,6 @@
 """Implement API endpoints under ``/api/user``"""
 
-from typing import Any, Dict
+from typing import Any, cast
 import os
 
 from flask import Blueprint, jsonify, request, session, current_app
@@ -124,7 +124,7 @@ def add_user_role(netid: str, client: ShrunkClient) -> Any:
         abort(403)
 
     if role == "blacklisted":
-        client.links.blacklist_user_links(netid)
+        client.links.blacklist_user_links(grantee)
     return "", 204
 
 
@@ -163,13 +163,13 @@ def remove_user_role(netid: str, client: ShrunkClient) -> Any:
         abort(403)
 
     if role == "blacklisted":
-        client.links.unblacklist_user_links(netid)
+        client.links.unblacklist_user_links(grantee)
     return "", 204
 
 
 @bp.route("/all", methods=["POST"])
 @require_login
-def get_all_users(netid: str, client: ShrunkClient) -> Dict[Any, Any]:
+def get_all_users(netid: str, client: ShrunkClient) -> Any:
     """POST /api/core/user/all
 
     Args:
@@ -221,7 +221,7 @@ def get_all_users(netid: str, client: ShrunkClient) -> Dict[Any, Any]:
 
 @bp.route("/options", methods=["GET"])
 @require_login
-def get_user_system_options(netid: str, client: ShrunkClient) -> Dict[Any, Any]:
+def get_user_system_options(netid: str, client: ShrunkClient) -> Any:
     """GET /api/core/user/options
 
     Args:
@@ -242,7 +242,7 @@ def get_user_system_options(netid: str, client: ShrunkClient) -> Dict[Any, Any]:
 
 
 @bp.route("/info")
-def get_user_info():
+def get_user_info() -> Any:
     """GET /api/core/user/info
 
     Get current user info from session"""
@@ -250,14 +250,14 @@ def get_user_info():
         return jsonify({"netid": "", "privileges": []})
 
     user = session["user"]
-    client = current_app.client
+    client = cast(ShrunkClient, getattr(current_app, "client"))
     netid = user.get("netid", "")
     user_data = client.users.get_user(netid)
 
     return jsonify(
         {
             "netid": netid,
-            "privileges": user_data.get("roles", []),
+            "privileges": user_data.get("roles", []) if user_data is not None else [],
             "motd": os.getenv("SHRUNK_MOTD", None),
         }
     )

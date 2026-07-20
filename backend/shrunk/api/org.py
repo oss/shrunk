@@ -3,11 +3,13 @@
 from typing import Any, Dict
 
 import bson
+import bson.errors
 from flask import Blueprint, jsonify, request
 from werkzeug.exceptions import abort
 from bson import ObjectId
 
 from shrunk.client import ShrunkClient
+from shrunk.mongo_schema import MongoRef
 from shrunk.util.ldap import is_valid_netid, is_university_guest
 from shrunk.util.decorators import require_login, request_schema
 
@@ -169,17 +171,18 @@ def get_org(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
     if org is None:
         abort(404)
 
+    response_org: Dict[str, Any] = dict(org)
     if client.orgs.is_admin(org_id, netid):
-        org["role"] = "admin"
+        response_org["role"] = "admin"
     elif client.orgs.is_guest(org_id, netid):
-        org["role"] = "guest"
+        response_org["role"] = "guest"
     else:
-        org["role"] = "member"
+        response_org["role"] = "member"
 
-    org["id"] = org["_id"]
+    response_org["id"] = response_org["_id"]
 
-    del org["_id"]
-    return jsonify(org)
+    del response_org["_id"]
+    return jsonify(response_org)
 
 
 @bp.route("/<ObjectId:org_id>/links", methods=["GET"])
@@ -346,7 +349,7 @@ def get_org_stats(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
        {
          "total_links": "number",
          "total_visits": "number",
-         "total_users": "number",
+         "unique_visits": "number",
        }
 
     """
@@ -612,7 +615,7 @@ def create_access_token(netid: str, client: ShrunkClient, req: Any) -> Any:
         return "permissions is missing", 400
     valid_permissions = client.access_tokens.access_tokens_permissions
 
-    owner = {}
+    owner: MongoRef = {"_id": netid, "type": "netid"}
 
     if "organizationId" in req:
         try:
@@ -629,7 +632,6 @@ def create_access_token(netid: str, client: ShrunkClient, req: Any) -> Any:
     else:
         if not client.users.has_role(netid, "admin"):
             abort(403)
-        owner = {"_id": netid, "type": "netid"}
 
     for permission in req["permissions"]:
         if permission not in valid_permissions:
@@ -645,11 +647,9 @@ def get_access_tokens(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any
     if not client.orgs.is_admin(org_id, netid) and not client.users.has_role(netid, "admin"):
         abort(403)
 
-    owner = {}
-
     try:
         org_id = ObjectId(org_id)
-        owner = {"_id": ObjectId(org_id), "type": "org"}
+        owner: MongoRef = {"_id": ObjectId(org_id), "type": "org"}
     except bson.errors.InvalidId:
         return "Invalid org id", 400
 
@@ -676,7 +676,7 @@ def get_super_tokens(netid: str, client: ShrunkClient) -> Any:
 def delete_access_token(netid: str, client: ShrunkClient, token_id: ObjectId) -> Any:
     token_owner = client.access_tokens.get_owner(token_id)
     if token_owner["type"] == "org":
-        if not client.orgs.is_admin(token_owner["_id"], netid) and not client.users.has_role(netid, "admin"):
+        if not client.orgs.is_admin(ObjectId(token_owner["_id"]), netid) and not client.users.has_role(netid, "admin"):
             abort(403)
     else:
         if not client.users.has_role(netid, "admin"):

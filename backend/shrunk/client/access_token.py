@@ -1,11 +1,14 @@
 from datetime import datetime, timezone
-from typing import List, Dict, Any, Optional
+from typing import List, Optional, cast
 import uuid
 import hashlib
 
 from argon2 import PasswordHasher
 from bson import ObjectId
 import pymongo
+import pymongo.database
+
+from shrunk.mongo_schema import AccessTokenDocument, AccessTokenSummaryDocument, MongoRef
 
 from .exceptions import NoSuchObjectException
 
@@ -26,12 +29,12 @@ class AccessTokenClient:
 
     def create(
         self,
-        owner: Dict[str, Any],
+        owner: MongoRef,
         title: str,
         description: str,
         creator: str,
         permissions: List[str],
-    ):
+    ) -> str:
         """Currently, only organizations can have access tokens."""
         for permission in permissions:
             if permission not in self.access_tokens_permissions:
@@ -42,7 +45,7 @@ class AccessTokenClient:
         user_token = f"{lookup_key}.{token}"
         hashed_token = self.ph.hash(str(token))
 
-        document = {
+        document: AccessTokenDocument = {
             "owner": owner,
             "title": title,
             "description": description,
@@ -60,13 +63,13 @@ class AccessTokenClient:
 
         return str(user_token)
 
-    def get_tokens(self, owner: Optional[Dict[str, Any]] = None):
+    def get_tokens(self, owner: Optional[MongoRef] = None) -> List[AccessTokenSummaryDocument]:
         """Get all access tokens for a given owner."""
         if owner:
             found_tokens = self.db.access_tokens.find({"owner._id": owner["_id"]})
         else:
             found_tokens = self.db.access_tokens.find({"owner.type": "netid"})
-        tokens = []
+        tokens: List[AccessTokenSummaryDocument] = []
         for token in found_tokens:
             tokens.append(
                 {
@@ -85,7 +88,7 @@ class AccessTokenClient:
 
         return tokens
 
-    def verify_token(self, token: str) -> ObjectId:
+    def verify_token(self, token: str) -> Optional[ObjectId]:
         try:
             lookup_key, user_token = token.split(".", 1)
         except ValueError:
@@ -95,7 +98,7 @@ class AccessTokenClient:
         if found_token:
             try:
                 if self.ph.verify(found_token["hashed_token"], user_token):
-                    return found_token["_id"]
+                    return cast(Optional[ObjectId], found_token["_id"])
             except Exception:  # pylint: disable=broad-exception-caught
                 return None
         return None
@@ -124,10 +127,14 @@ class AccessTokenClient:
 
     def check_permissions(self, token_id: ObjectId, perm: str) -> bool:
         result = self.db.access_tokens.find_one({"_id": token_id})
+        if result is None:
+            return False
         if perm in result["permissions"]:
             return True
         return False
 
-    def get_owner(self, token_id: ObjectId) -> str:
+    def get_owner(self, token_id: ObjectId) -> MongoRef:
         result = self.db.access_tokens.find_one({"_id": token_id})
-        return result["owner"]
+        if result is None:
+            raise NoSuchObjectException
+        return cast(MongoRef, result["owner"])

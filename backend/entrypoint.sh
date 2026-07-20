@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 
-if $FLASK_DEBUG; then
+if [ "$#" -gt 0 ]; then
+    exec "$@"
+elif $FLASK_DEBUG; then
     export FLASK_APP=shrunk
     exec python -m flask run --host=0.0.0.0 -p 3050
 else

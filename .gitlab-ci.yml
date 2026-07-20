@@ -122,7 +122,25 @@ backend-test:
   extends: .buildah
   stage: test
   services:
-    - mongo
+    - name: mongo:7
+      alias: mongo
+      command:
+        - sh
+        - -c
+        - |
+          replicaset() {
+            while ! mongosh --eval 'db.version()' >/dev/null 2>/dev/null; do
+              echo "mongo not ready... waiting..."
+              sleep 1
+            done
+            echo "mongo version $(mongosh --eval 'db.version()') is ready..."
+            echo "creating mongo replica set..."
+            mongosh --eval 'rs.initiate()'
+            mongosh --eval 'rs.conf()'
+          }
+
+          replicaset &
+          exec mongod --bind_ip_all --replSet=rs0
   script:
     - container=$(buildah from "$CI_REGISTRY_IMAGE/backend:${CI_COMMIT_SHA}")
     - container_root=$(buildah mount $container)

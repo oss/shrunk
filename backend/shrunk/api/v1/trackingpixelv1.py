@@ -5,6 +5,7 @@ from datetime import datetime
 
 from flask import Blueprint, jsonify, request
 from shrunk.client import ShrunkClient
+from shrunk.mongo_schema import MongoRef
 from bson.objectid import ObjectId
 import bson.errors
 from shrunk.util.decorators import require_token, request_schema
@@ -33,7 +34,7 @@ CREATE_LINK_SCHEMA = {
 @bp.route("", methods=["POST"])
 @request_schema(CREATE_LINK_SCHEMA)
 @require_token(required_permission="create:tracking-pixels")
-def create_tracking_pixel(token_owner: Dict[str, Any], client: ShrunkClient, req: Any) -> Dict[Any, Any]:
+def create_tracking_pixel(token_owner: Dict[str, Any], client: ShrunkClient, req: Any) -> Any:
     """Creates a new link"""
 
     org_id = req.get("organization_id")
@@ -94,7 +95,7 @@ def create_tracking_pixel(token_owner: Dict[str, Any], client: ShrunkClient, req
         expiration_time = None
 
     alias = req.get("alias", None)
-    owner = {"_id": ObjectId(org_id), "type": "org"}
+    owner: MongoRef = {"_id": ObjectId(org_id), "type": "org"}
     created_with_superToken = token_owner["type"] == "netid"
     try:
         link_id, created_alias = client.links.create(
@@ -103,8 +104,8 @@ def create_tracking_pixel(token_owner: Dict[str, Any], client: ShrunkClient, req
             alias,
             expiration_time,
             owner,
-            request.remote_addr,
-            domain=False,
+            request.remote_addr or "",
+            domain="",
             editors=[],
             viewers=[],
             bypass_security_measures=False,
@@ -280,7 +281,7 @@ def get_org_tracking_pixels(token_owner: Dict[str, Any], client: ShrunkClient, o
 
     try:
         info = client.orgs.get_links(org_id, is_tracking_pixel=True)
-        info = [
+        links_response = [
             {
                 "_id": link["_id"],
                 "title": link["title"],
@@ -315,4 +316,4 @@ def get_org_tracking_pixels(token_owner: Dict[str, Any], client: ShrunkClient, o
             404,
         )
 
-    return jsonify({"links": info}), 200
+    return jsonify({"links": links_response}), 200

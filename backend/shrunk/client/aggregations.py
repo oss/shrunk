@@ -1,8 +1,8 @@
-from typing import Any
+from typing import Any, Dict
 from collections import OrderedDict
 
 
-def match_link_id(link_id: str) -> Any:
+def match_link_id(link_id: str) -> Dict[str, Any]:
     return {"$match": {"link_id": link_id}}
 
 

@@ -44,6 +44,7 @@ def test_initialize_user(client: Client, user: str, expected: dict) -> None:
             "queryString": "",
         }
         resp = client.get("/api/core/user/info")
+        assert resp.json is not None
         assert resp.status_code == 200
         assert resp.json["netid"] == expected["netid"]
         assert resp.json["privileges"] == expected["privileges"]
@@ -128,10 +129,45 @@ def test_add_role(client: Client, user: str, new_role: str, expected: int) -> No
             if expected == 204:
                 resp = client.get(f"/api/core/user/{test_account}")
                 json_data = resp.json
+                assert json_data is not None
                 assert new_role in json_data.get("roles", [])
         else:
             resp = client.post("/api/core/user", json={"netid": test_account, "roles": ["facstaff"]})
             assert resp.status_code == 403
+
+
+def test_blacklisting_user_hides_their_links(client: Client) -> None:
+    with dev_login(client, "user"):
+        resp = client.post(
+            "/api/core/link",
+            json={"title": "title", "long_url": "https://example.com"},
+        )
+        assert resp.json is not None
+        assert resp.status_code == 201
+        link_id = resp.json["id"]
+
+    with dev_login(client, "admin"):
+        resp = client.patch(
+            "/api/core/user/roles",
+            json={"netid": "DEV_USER", "role": "blacklisted", "comment": "test"},
+        )
+        assert resp.status_code == 204
+
+        resp = client.get(f"/api/core/link/{link_id}")
+        assert resp.json is not None
+        assert resp.status_code == 200
+        assert resp.json["deleted"] is True
+
+        resp = client.delete(
+            "/api/core/user/roles",
+            json={"netid": "DEV_USER", "role": "blacklisted"},
+        )
+        assert resp.status_code == 204
+
+        resp = client.get(f"/api/core/link/{link_id}")
+        assert resp.json is not None
+        assert resp.status_code == 200
+        assert resp.json["deleted"] is False
 
 
 @pytest.mark.parametrize(
@@ -162,6 +198,7 @@ def test_remove_role(client: Client, user: str, remove_role: str, expected: int)
             if expected == 204:
                 resp = client.get(f"/api/core/user/{test_account}")
                 json_data = resp.json
+                assert json_data is not None
                 assert remove_role not in json_data.get("roles", [])
         else:
             resp = client.delete(
@@ -190,6 +227,7 @@ def test_get_all_users(client: Client, user: str, num_users: int) -> None:
                     json={"netid": test_account, "roles": ["facstaff"]},
                 )
             resp = client.post("/api/core/user/all", json={})
+            assert resp.json is not None
             assert resp.status_code == 200
             assert len(resp.json["users"]) == num_users + 1  # +1 for the admin user
 
@@ -212,5 +250,21 @@ def test_get_user_info(client: Client, user: str, expected: int) -> None:
         resp = client.get("/api/core/user/DEV_ADMIN")
         assert resp.status_code == expected
         if expected == 200:
+            assert resp.json is not None
             assert resp.json["netid"] == "DEV_ADMIN"
             assert len(resp.json["roles"]) > 0
+
+
+def test_get_user_info_counts_links(client: Client) -> None:
+    with dev_login(client, "user"):
+        resp = client.post(
+            "/api/core/link",
+            json={"title": "title", "long_url": "https://example.com"},
+        )
+        assert resp.status_code == 201
+
+    with dev_login(client, "admin"):
+        resp = client.get("/api/core/user/DEV_USER")
+        assert resp.json is not None
+        assert resp.status_code == 200
+        assert resp.json["linksCreated"] == 1

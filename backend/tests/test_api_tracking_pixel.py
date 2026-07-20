@@ -8,10 +8,12 @@ def tracking_pixel_data(client: Client):
     """Fixture that creates tracking pixel and returns its data"""
     with dev_login(client, "user"):
         resp = create_tracking_pixel(client, "Tracking Pixel", ".png")
+        assert resp.json is not None
         assert_is_response_valid(resp)
         link_id = resp.json["id"]
 
         resp = client.get(f"/api/core/link/{link_id}")
+        assert resp.json is not None
         assert resp.status_code == 200
 
         return {
@@ -31,10 +33,12 @@ def test_create_tracking_pixel_gif(client: Client):
     """Test that verifies the creation worked"""
     with dev_login(client, "user"):
         resp = create_tracking_pixel(client, "Tracking Pixel", ".gif")
+        assert resp.json is not None
         assert_is_response_valid(resp)
         link_id = resp.json["id"]
 
         resp = client.get(f"/api/core/link/{link_id}")
+        assert resp.json is not None
         assert resp.status_code == 200
         assert resp.json["alias"].endswith(".gif")
 

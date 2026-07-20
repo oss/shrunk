@@ -1,7 +1,7 @@
 services:
   backend-test:
     build: ./backend
-    command: uv run pytest tests
+    command: python -m pytest tests
     volumes:
       - ./test.env:/usr/shrunk/backend/.env
       - ./backend:/usr/shrunk/backend
@@ -10,16 +10,33 @@ services:
     env_file:
       - ./test.env
     depends_on:
-      - mongodb-test
+      mongodb-test:
+        condition: service_healthy
 
   mongodb-test:
     hostname: mongodb-test
     container_name: shrunk-mongo-test
-    image: mongo:latest
+    image: mongo:7
     attach: false  # We don't care.
-    command: mongod --port 27018
+    command: >
+      bash -c "
+        (
+          until mongosh --port 27018 --eval 'db.version()' >/dev/null 2>&1; do
+            sleep 1
+          done
+          mongosh --port 27018 --eval 'rs.initiate()'
+        ) &
+        exec mongod --port 27018 --bind_ip_all --replSet rs0
+      "
     ports:
         - '27018:27018'
+    healthcheck:
+      test: >
+        mongosh --port 27018 --quiet --eval "db.hello().isWritablePrimary"
+        | grep -q true
+      interval: 2s
+      timeout: 5s
+      retries: 30
 
 volumes:
   backend_venv:

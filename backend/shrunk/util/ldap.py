@@ -1,8 +1,11 @@
-from typing import Dict, List, Optional, Tuple, cast
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, cast
 
 import os
 import ldap
 from flask import current_app
+
+if TYPE_CHECKING:
+    from shrunk.client import ShrunkClient
 
 __all__ = ["is_valid_netid", "query_given_name", "is_university_guest"]
 
@@ -21,14 +24,14 @@ def _query_netid(netid: str) -> Optional[List[Tuple[str, Dict[str, List[bytes]]]
 
     conn = ldap.initialize(ldap_uri)
     try:
-        conn.simple_bind_s(os.getenv("SHRUNK_LDAP_BIND_DN"), os.getenv("SHRUNK_LDAP_CRED"))
-        query = os.getenv("SHRUNK_LDAP_QUERY_STR").format(netid)
-        res = conn.search_s(os.getenv("SHRUNK_LDAP_BASE_DN"), ldap.SCOPE_ONELEVEL, query)  # pylint: disable=no-member
+        conn.simple_bind_s(os.getenv("SHRUNK_LDAP_BIND_DN", ""), os.getenv("SHRUNK_LDAP_CRED", ""))
+        query = os.getenv("SHRUNK_LDAP_QUERY_STR", "").format(netid)
+        res = conn.search_s(os.getenv("SHRUNK_LDAP_BASE_DN", ""), ldap.SCOPE_ONELEVEL, query)  # pyright: ignore[reportAttributeAccessIssue]  # pylint: disable=no-member
         return cast(List[Tuple[str, Dict[str, List[bytes]]]], res)
-    except ldap.INVALID_CREDENTIALS:  # pylint: disable=no-member
+    except ldap.INVALID_CREDENTIALS:  # pyright: ignore[reportAttributeAccessIssue]  # pylint: disable=no-member
         current_app.logger.error("could not bind to LDAP server!")
         return None
-    except ldap.SERVER_DOWN:  # pylint: disable=no-member
+    except ldap.SERVER_DOWN:  # pyright: ignore[reportAttributeAccessIssue]  # pylint: disable=no-member
         current_app.logger.error(f"LDAP server down: could not validate {netid}")
         return None
 
@@ -37,7 +40,8 @@ def is_valid_netid(netid: str) -> bool:
     if bool(int(os.getenv("SHRUNK_DEV_LOGINS", "0"))) and netid.upper().startswith("DEV_"):
         return True
 
-    if current_app.client.user_exists(netid):
+    client: "ShrunkClient" = getattr(current_app, "client")
+    if client.user_exists(netid):
         current_app.logger.debug(f"netid {netid} validated from DB")
         return True
 

@@ -1,22 +1,26 @@
 """Implements the :py:class:`SearchClient` class."""
 
-from typing import Any, List
+from typing import Any, Dict, List, TYPE_CHECKING
 from datetime import datetime, timezone
 
 from pymongo.collation import Collation
 import pymongo
+import pymongo.database
 
 __all__ = ["SearchClient"]
+
+if TYPE_CHECKING:
+    from shrunk.client import ShrunkClient
 
 
 class SearchClient:
     """This class executes search queries."""
 
-    def __init__(self, *, db: pymongo.database.Database, client: Any):
+    def __init__(self, *, db: pymongo.database.Database, client: "ShrunkClient"):
         self.db = db
         self.client = client
 
-    def execute_url(self, user_netid: str, query: Any) -> Any:  # pylint: disable=too-many-branches,too-many-statements
+    def execute_url(self, user_netid: str, query: Dict[str, Any]) -> Dict[str, Any]:  # pylint: disable=too-many-branches,too-many-statements
         """Execute a search query for shortened URLs.
 
         :param user_netid: The NetID of the user performing the search
@@ -27,7 +31,7 @@ class SearchClient:
         sets = [item["set"] for item in query["set"]]
 
         # We're going to build up an aggregation pipeline based on the submitted query.
-        pipeline: List[Any] = []
+        pipeline: List[Dict[str, Any]] = []
 
         # Independent field-based search
         search_filters = []
@@ -63,12 +67,12 @@ class SearchClient:
                 }
             )
 
-        set_filters = []
+        set_filters: List[Dict[str, Any]] = []
 
         if "user" in sets:
             set_filters.append({"owner._id": user_netid})
 
-        org_ids = []
+        org_ids: List[Any] = []
         for item in query["set"]:
             if item["set"] == "org":
                 org_ids.append(item["org"])
@@ -188,17 +192,19 @@ class SearchClient:
         # Always use urls collection since shared pipeline also queries urls
         cursor = self.db.urls.aggregate(pipeline, collation=Collation("en"))
 
-        def prepare_result(res: Any) -> Any:
+        def prepare_result(res: Dict[str, Any]) -> Dict[str, Any]:
             """Turn a result from the DB into something than can be JSON-serialized."""
 
-            def _is_alias_visible(alias: Any) -> bool:
+            def _is_alias_visible(alias: Dict[str, Any]) -> bool:
                 if query.get("show_deleted_links", False):
                     return True
                 return not alias["deleted"]
 
             if res["owner"]["type"] == "org":
                 # If the owner is an organization, get the organization name
-                res["owner"]["org_name"] = self.client.orgs.get_org(res["owner"]["_id"])["name"]
+                org = self.client.orgs.get_org(res["owner"]["_id"])
+                if org is not None:
+                    res["owner"]["org_name"] = org["name"]
 
             if res.get("expiration_time"):
                 expiration_time = res["expiration_time"]
@@ -244,7 +250,7 @@ class SearchClient:
             "results": unique_results,
         }
 
-    def _build_shared_pipeline(self, user_netid: str, _query: Any) -> List[Any]:
+    def _build_shared_pipeline(self, user_netid: str, _query: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Build a pipeline for searching shared links.
 
         This pipeline finds links that are shared with the user through organizations
@@ -254,13 +260,13 @@ class SearchClient:
         :param query: The search query
         :return: MongoDB aggregation pipeline stages (to be added to main pipeline)
         """
-        pipeline: List[Any] = []
+        pipeline: List[Dict[str, Any]] = []
 
         orgs_cursor = self.db.organizations.find({"members.netid": user_netid}, {"_id": 1})
         org_ids = [org["_id"] for org in orgs_cursor]
 
         # Build filter for shared links
-        shared_filter = {
+        shared_filter: Dict[str, Any] = {
             "$or": [
                 {"viewers._id": user_netid},
             ]

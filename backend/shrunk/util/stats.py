@@ -31,7 +31,10 @@ def get_human_readable_referer_domain(referer: str) -> str:
 
     if referer:
         try:
-            hostname = urllib.parse.urlparse(referer).hostname.lower()
+            hostname_opt = urllib.parse.urlparse(referer).hostname
+            if hostname_opt is None:
+                raise AttributeError("referer URL has no hostname")
+            hostname = hostname_opt.lower()
 
             # Strip off some subdomains that don't convey useful information.
             for pre in REFERER_STRIP_PREFIXES:
@@ -107,7 +110,7 @@ def get_browser_platform(user_agent: str) -> Tuple[str, str]:
             platform = detected["dist"]["name"]
         else:
             platform = detected["os"]["name"]
-        platform = get_human_readable_platform(platform)
+        platform = get_human_readable_platform(platform or "Unknown")
     except KeyError:
         platform = "Unknown"
 
@@ -116,7 +119,7 @@ def get_browser_platform(user_agent: str) -> Tuple[str, str]:
             browser = "Vivaldi"
         else:
             browser = detected["browser"]["name"]
-        browser = get_human_readable_browser(browser)
+        browser = get_human_readable_browser(browser or "Unknown")
     except KeyError:
         browser = "Unknown"
 

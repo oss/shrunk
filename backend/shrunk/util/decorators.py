@@ -1,12 +1,16 @@
 """Decorators to be used on view functions."""
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 import functools
 
 from flask import current_app, request, session, jsonify
 from flask_mailman import Mail
 from werkzeug.exceptions import abort
 import jsonschema
+import jsonschema.exceptions
+
+if TYPE_CHECKING:
+    from shrunk.client import ShrunkClient
 
 __all__ = ["require_login", "request_schema"]
 
@@ -16,7 +20,7 @@ def require_login(func: Any) -> Any:
 
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
-        client = current_app.client
+        client: "ShrunkClient" = getattr(current_app, "client")
         logger = current_app.logger
         if "user" not in session or "netid" not in session["user"]:
             logger.debug("require_login: user not logged in")
@@ -33,7 +37,7 @@ def require_login(func: Any) -> Any:
 def require_mail(func: Any) -> Any:
     @functools.wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
-        mail: Mail = current_app.mail
+        mail: Mail = getattr(current_app, "mail")
         return func(mail, *args, **kwargs)
 
     return wrapper
@@ -61,7 +65,7 @@ def require_token(required_permission: str):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            client = current_app.client
+            client: "ShrunkClient" = getattr(current_app, "client")
             header = request.headers.get("Authorization")
             if not header:
                 return (

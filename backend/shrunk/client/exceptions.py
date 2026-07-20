@@ -11,6 +11,7 @@ __all__ = [
     "InvalidStateChange",
     "NotUserOrOrg",
     "LinkIsPendingOrRejected",
+    "OrgOwnedLinkNotSupported",
 ]
 
 
@@ -60,3 +61,8 @@ class LinkIsPendingOrRejected(ShrunkException):
 
 class NotUserOrOrg(ShrunkException, ValueError):
     """raised if a viewer was not an org or netid"""
+
+
+class OrgOwnedLinkNotSupported(ShrunkException):
+    """Raised when an operation that assumes a single netid owner (e.g.
+    requesting edit access) is attempted on a link owned by an org."""

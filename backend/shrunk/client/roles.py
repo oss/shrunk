@@ -1,14 +1,51 @@
 """Implements the :py:class:`RolesClient` class."""
 
 from datetime import datetime, timezone
-from typing import Callable, Optional, List, Dict, Any
+from typing import Callable, Optional, List, Dict
 
 from flask import current_app, has_app_context
 import pymongo
+import pymongo.database
+from typing_extensions import TypedDict
+
+from shrunk.mongo_schema import GrantDocument
 
 from .exceptions import InvalidEntity
 
 __all__ = ["RolesClient"]
+
+
+class RoleFormText(TypedDict):
+    title: str
+    invalid: str
+    grant_title: str
+    grantee_text: str
+    grant_button: str
+    revoke_title: str
+    revoke_button: str
+    empty: str
+    granted_by: str
+    allow_comment: bool
+    comment_prompt: str
+
+
+class RoleFormTextOverrides(TypedDict, total=False):
+    title: str
+    invalid: str
+    grant_title: str
+    grantee_text: str
+    grant_button: str
+    revoke_title: str
+    revoke_button: str
+    empty: str
+    granted_by: str
+    allow_comment: bool
+    comment_prompt: str
+
+
+class RoleNameEntry(TypedDict):
+    name: str
+    display_name: str
 
 
 class RolesClient:
@@ -21,10 +58,10 @@ class RolesClient:
         self.valid_entity_for: Dict[str, Callable[[str], bool]] = {}
         self.oncreate_for: Dict[str, Callable[[str], None]] = {}
         self.onrevoke_for: Dict[str, Callable[[str], None]] = {}
-        self.form_text: Dict[str, Any] = {}
+        self.form_text: Dict[str, RoleFormText] = {}
 
     @staticmethod
-    def _default_text(role: str) -> Any:
+    def _default_text(role: str) -> RoleFormText:
         """Get the default text that apears in a role menu.
 
         :param role: Role name
@@ -48,7 +85,7 @@ class RolesClient:
         role: str,
         qualifier_func: Callable[[str], bool],
         validator_func: Callable[[str], bool] = lambda e: e != "",
-        custom_text: Any = None,
+        custom_text: Optional[RoleFormTextOverrides] = None,
         oncreate: Callable[[str], None] = lambda _: None,
         onrevoke: Callable[[str], None] = lambda _: None,
         process_entity: Callable[[str], str] = lambda e: e,
@@ -112,15 +149,14 @@ class RolesClient:
 
             # guard against double insertions
             if not self.has(role, grantee):
-                self.db.grants.insert_one(
-                    {
-                        "role": role,
-                        "entity": grantee,
-                        "granted_by": grantor,
-                        "comment": comment if comment is not None else "",
-                        "time_granted": datetime.now(timezone.utc),
-                    }
-                )
+                grant: GrantDocument = {
+                    "role": role,
+                    "entity": grantee,
+                    "granted_by": grantor,
+                    "comment": comment if comment is not None else "",
+                    "time_granted": datetime.now(timezone.utc),
+                }
+                self.db.grants.insert_one(grant)
             if role in self.oncreate_for:
                 self.oncreate_for[role](grantee)
         else:
@@ -154,7 +190,7 @@ class RolesClient:
         """
         return any(self.has(role, entity) for role in roles)
 
-    def get_role_names(self) -> List[Any]:
+    def get_role_names(self) -> List[RoleNameEntry]:
         """Get name and display name of all roles
 
         :returns: A list of objects of the form
@@ -165,14 +201,14 @@ class RolesClient:
         """
         return [{"name": name, "display_name": info["title"]} for (name, info) in self.form_text.items()]
 
-    def get_role_entities(self, role: str) -> List[Any]:
+    def get_role_entities(self, role: str) -> List[GrantDocument]:
         """Get all entities having the given role
 
         :param role: Role name
         """
         return list(self.db.grants.find({"role": role}))
 
-    def get_role_text(self, role: str) -> Any:
+    def get_role_text(self, role: str) -> RoleFormText:
         """Get the form text for a given role
 
         :param role: Role name

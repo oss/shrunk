@@ -11,11 +11,13 @@ def test_rename_org(client: Client) -> None:
     with dev_login(client, "admin"):
         # Create an org
         resp = client.post("/api/core/org", json={"name": "testorg12"})
+        assert resp.json is not None
         org_id = resp.json["id"]
         assert 200 <= resp.status_code <= 300
 
         # Create the second test org
         resp = client.post("api/core/org", json={"name": "renameorgtest"})
+        assert resp.json is not None
         org_rename_test_id = resp.json["id"]
         org_rename_test_name = resp.json["name"]
         assert 200 <= resp.status_code <= 300
@@ -28,6 +30,7 @@ def test_rename_org(client: Client) -> None:
 
         # Get the org name of org_id and check if it has changed
         resp = client.get(f"/api/core/org/{org_id}")
+        assert resp.json is not None
         assert 200 <= resp.status_code <= 300
         assert resp.json["name"] == new_name
 
@@ -45,6 +48,7 @@ def test_rename_org_permissions(client: Client) -> None:
     with dev_login(client, "admin"):
         # Create an org
         resp = client.post("/api/core/org", json={"name": "testorg12"})
+        assert resp.json is not None
         assert 200 <= resp.status_code <= 300
         org_id = resp.json["id"]
 
@@ -59,6 +63,7 @@ def test_restrict_last_admin_demotion(client: Client) -> None:
     with dev_login(client, "admin"):
         # Create an org. By default the creator is an admin of the org
         resp = client.post("/api/core/org", json={"name": "test123"})
+        assert resp.json is not None
         assert 200 <= resp.status_code <= 300
         org_id = resp.json["id"]
 
@@ -99,6 +104,7 @@ def test_restrict_last_admin_demotion(client: Client) -> None:
 def test_create_access_token_permissions(client: Client, permissions: List[str], expect_pass: bool) -> None:
     with dev_login(client, "admin"):
         resp = client.post("/api/core/org", json={"name": "test123"})
+        assert resp.json is not None
         org_id = resp.json["id"]
 
         resp = client.post(
@@ -132,9 +138,11 @@ def test_create_access_token_permissions(client: Client, permissions: List[str],
 def test_external_api_endpoints(client: Client) -> None:
     with dev_login(client, "admin"):
         resp = client.post("/api/core/org", json={"name": "test123"})
+        assert resp.json is not None
         org_id = resp.json["id"]
 
         resp = client.post("/api/core/org", json={"name": "test345"})
+        assert resp.json is not None
         invalid_org_id = resp.json["id"]
 
         # attempt endpoint with missing permissions
@@ -148,6 +156,7 @@ def test_external_api_endpoints(client: Client) -> None:
                 "organizationId": org_id,
             },
         )
+        assert resp.json is not None
         token = resp.json["access_token"]
 
         resp = client.get("/api/v1/users", headers={"Authorization": f"Bearer {token}"})
@@ -169,6 +178,7 @@ def test_external_api_endpoints(client: Client) -> None:
                 "organizationId": org_id,
             },
         )
+        assert resp.json is not None
         token = resp.json["access_token"]
         invalid_token = "9b598e36-839c-4f94-8a72-38892b0d74dc"
         # invalid_org_id already set above
@@ -208,6 +218,7 @@ def test_external_api_endpoints(client: Client) -> None:
             json=create_link_payload,
             headers={"Authorization": f"Bearer {token}"},
         )
+        assert resp.json is not None
         assert resp.status_code == 201
         link_id = resp.json["id"]
         # get link by id endpoint
@@ -215,6 +226,7 @@ def test_external_api_endpoints(client: Client) -> None:
             f"/api/v1/links/{org_id}/{link_id}",
             headers={"Authorization": f"Bearer {token}"},
         )
+        assert resp.json is not None
 
         assert resp.status_code == 200
         assert resp.json["_id"] == link_id
@@ -237,6 +249,7 @@ def test_external_api_endpoints(client: Client) -> None:
             json=create_tp_payload,
             headers={"Authorization": f"Bearer {token}"},
         )
+        assert resp.json is not None
         assert resp.status_code == 201
         tp_link_id = resp.json["id"]
 
@@ -245,6 +258,7 @@ def test_external_api_endpoints(client: Client) -> None:
             f"/api/v1/tracking-pixels/{org_id}/{tp_link_id}",
             headers={"Authorization": f"Bearer {token}"},
         )
+        assert resp.json is not None
         assert resp.status_code == 200
         assert resp.json["_id"] == tp_link_id
         assert resp.json["owner"]["_id"] == org_id
@@ -293,6 +307,7 @@ def test_external_api_endpoints(client: Client) -> None:
                 ],
             },
         )
+        assert resp.json is not None
         token = resp.json["access_token"]
 
         resp = client.get("/api/v1/users", headers={"Authorization": f"Bearer {token}"})
@@ -362,6 +377,7 @@ def test_external_api_endpoints(client: Client) -> None:
 def test_get_valid_access_permissions(client: Client) -> None:
     with dev_login(client, "admin"):
         resp = client.get("/api/core/org/valid-permissions")
+        assert resp.json is not None
         assert_is_response_valid(resp)
 
         assert isinstance(resp.json["permissions"], list)
@@ -370,6 +386,7 @@ def test_get_valid_access_permissions(client: Client) -> None:
 def test_org_get_link_permissions(client: Client) -> None:
     with dev_login(client, "admin"):
         resp = client.post("/api/core/org", json={"name": "testorg12"})
+        assert resp.json is not None
         assert 200 <= resp.status_code <= 300
         org_id = resp.json["id"]
         resp = client.get("/api/core/org/random/links")
@@ -389,14 +406,16 @@ def test_org_get_overall_stats_no_links(client: Client) -> None:
     """Tests that the overall stats endpoint returns 0s when there are no links."""
     with dev_login(client, "admin"):
         resp = client.post("/api/core/org", json={"name": "testorg12"})
+        assert resp.json is not None
         assert 200 <= resp.status_code <= 300
         org_id = resp.json["id"]
 
         resp = client.get(f"/api/core/org/{org_id}/stats")
+        assert resp.json is not None
         assert resp.status_code == 200
         assert resp.json["total_links"] == 0
         assert resp.json["total_visits"] == 0
-        assert resp.json["total_users"] == 0
+        assert resp.json["unique_visits"] == 0
 
 
 @pytest.mark.parametrize(
@@ -411,6 +430,7 @@ def test_add_guest_user_to_org(client: Client, guest_netid: str, expected_status
 
     with dev_login(client, "admin"):
         resp = client.post("/api/core/org", json={"name": "Test Org"})
+        assert resp.json is not None
         org_id = resp.json["id"]
 
         resp = client.put(f"/api/core/org/{org_id}/guest/{guest_netid}")
@@ -420,12 +440,14 @@ def test_add_guest_user_to_org(client: Client, guest_netid: str, expected_status
 def test_add_guest_to_multiple_org(client: Client) -> None:
     with dev_login(client, "admin"):
         resp = client.post("/api/core/org", json={"name": "Test Org"})
+        assert resp.json is not None
         org_id = resp.json["id"]
 
         resp = client.put(f"/api/core/org/{org_id}/guest/DEV_GUEST")
         assert resp.status_code == 204
 
         resp = client.post("/api/core/org", json={"name": "Test Org 2"})
+        assert resp.json is not None
         org_id = resp.json["id"]
         resp = client.put(f"/api/core/org/{org_id}/guest/DEV_GUEST")
         assert resp.status_code == 400
@@ -439,10 +461,12 @@ def delete_guest_user_from_org(client: Client) -> None:
         resp = client.delete(f"/api/core/org/{org_id}/guest/DEV_GUEST")
         assert resp.status_code == 204
         resp = client.get(f"/api/core/org/{org_id}")
+        assert resp.json is not None
         assert resp.status_code == 200
         assert "DEV_GUEST" not in [guest["netid"] for guest in resp.json["guests"]]
 
         resp = client.get("/api/core/user/DEV_GUEST")
+        assert resp.json is not None
         assert resp.status_code == 200
         assert len(resp.json["roles"]) == 0
 
@@ -459,5 +483,6 @@ def re_add_user_to_org(client: Client) -> None:
         assert resp.status_code == 204
 
         resp = client.get("/api/core/user/DEV_GUEST")
+        assert resp.json is not None
         assert resp.status_code == 200
         assert any(role["role"] == "guest" for role in resp.json["roles"])

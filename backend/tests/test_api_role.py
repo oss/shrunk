@@ -21,6 +21,7 @@ def test_get_role_entities(client: Client, user: str, role: str, expected: bool)
 
         if expected:
             assert resp.status_code == 200
+            assert resp.json is not None
             assert "entities" in resp.json
             assert isinstance(resp.json["entities"], list)
         else:
@@ -40,6 +41,7 @@ def test_validate_entity(client: Client, role: str, entity: str, expected: bool)
 
     with dev_login(client, "admin"):
         resp = client.get(f"/api/core/role/{role}/validate_entity/{entity_b32}")
+        assert resp.json is not None
         assert resp.status_code == 200
         assert resp.json["valid"] is expected
 
