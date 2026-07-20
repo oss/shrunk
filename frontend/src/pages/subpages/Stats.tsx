@@ -21,6 +21,7 @@ import {
   EditLinkValues,
   StatChart,
   GeoipStats,
+  PieDatum,
 } from '@/interfaces/link';
 
 import {
@@ -43,7 +44,7 @@ import CollaboratorModal, { Collaborator } from '@/modals/CollaboratorModal';
 import ErrorPage from '@/pages/ErrorPage';
 import VisitsChart from '@/components/link/visits-chart';
 import GeoipChart from '@/components/link/world-chart';
-import ShrunkPieChart, { processData } from '@/components/pie-chart';
+import ShrunkPieChart from '@/components/pie-chart';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -61,39 +62,131 @@ import {
 } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import { ButtonGroup } from '@/components/ui/button-group';
+import { type ChartConfig } from '@/components/ui/chart';
 
 export interface Props {
   id: string;
-
   netid: string;
   userPrivileges: Set<string>;
 }
 
-const browserColors: Map<string, string> = new Map([
-  ['Firefox', 'rgba(244,199,133,1.0)'],
-  ['Chrome', 'rgba(200,240,97,1.0)'],
-  ['Safari', 'rgba(155,186,238,1.0)'],
-  ['Microsoft Internet Explorer', 'rgba(136,198,247,1.0)'],
-  ['Microsoft Edge', 'rgba(136,198,247,1.0)'],
-  ['Opera', 'rgba(238,120,124,1.0)'],
-  ['Unknown', 'rgba(80,80,80,0.2)'],
-]);
+const browserChartConfig = {
+  firefox: {
+    label: 'Firefox',
+    theme: { light: '#e8893a', dark: '#fb923c' },
+  },
+  chrome: {
+    label: 'Chrome',
+    theme: { light: '#65a30d', dark: '#a3e635' },
+  },
+  ie: {
+    label: 'Internet Explorer',
+    theme: { light: '#0284c7', dark: '#38bdf8' },
+  },
+  safari: {
+    label: 'Safari',
+    theme: { light: '#4f6fd8', dark: '#93c5fd' },
+  },
+  opera: {
+    label: 'Opera',
+    theme: { light: '#c026d3', dark: '#e879f9' },
+  },
+  edge: {
+    label: 'Microsoft Edge',
+    theme: { light: '#dc2626', dark: '#fb7185' },
+  },
+  other: {
+    label: 'Other',
+    theme: { light: '#64748b', dark: '#cbd5e1' },
+  },
+} satisfies ChartConfig;
 
-const platformColors: Map<string, string> = new Map([
-  ['Linux', 'rgba(216,171,36,1.0)'],
-  ['Windows', 'rgba(129,238,208,1.0)'],
-  ['Mac', 'rgba(201,201,201,1.0)'],
-  ['Android', 'rgba(200,227,120,1.0)'],
-  ['Unknown', 'rgba(80,80,80,0.2)'],
-]);
+const platformChartConfig = {
+  linux: {
+    label: 'Linux',
+    theme: { light: '#b7791f', dark: '#fbbf24' },
+  },
+  windows: {
+    label: 'Windows',
+    theme: { light: '#0f9f8c', dark: '#5eead4' },
+  },
+  mac: {
+    label: 'Mac',
+    theme: { light: '#64748b', dark: '#cbd5e1' },
+  },
+  android: {
+    label: 'Android',
+    theme: { light: '#4d7c0f', dark: '#bef264' },
+  },
+  unknown: {
+    label: 'Unknown',
+    theme: { light: '#94a3b8', dark: '#e2e8f0' },
+  },
+} satisfies ChartConfig;
 
-const referralColors: Map<string, string> = new Map([
-  ['Facebook', 'rgba(0,75,150,1.0)'],
-  ['Twitter', 'rgba(147,191,241,1.0)'],
-  ['Instagram', 'rgba(193,131,212,1.0)'],
-  ['Reddit', 'rgba(241,155,123,1.0)'],
-  ['Unknown', 'rgba(80,80,80,0.2)'],
-]);
+const referralChartConfig = {
+  facebook: {
+    label: 'Facebook',
+    theme: { light: '#1877f2', dark: '#60a5fa' },
+  },
+  twitter: {
+    label: 'Twitter/X',
+    theme: { light: '#2563eb', dark: '#93c5fd' },
+  },
+  instagram: {
+    label: 'Instagram',
+    theme: { light: '#c13584', dark: '#f0abfc' },
+  },
+  reddit: {
+    label: 'Reddit',
+    theme: { light: '#d9480f', dark: '#fb923c' },
+  },
+  unknown: {
+    label: 'Unknown',
+    theme: { light: '#64748b', dark: '#cbd5e1' },
+  },
+} satisfies ChartConfig;
+
+const browserConfigKeys: Record<string, keyof typeof browserChartConfig> = {
+  Firefox: 'firefox',
+  Chrome: 'chrome',
+  'Microsoft Internet Explorer': 'ie',
+  Safari: 'safari',
+  Opera: 'opera',
+  'Microsoft Edge': 'edge',
+  Unknown: 'other',
+};
+
+const platformConfigKeys: Record<string, keyof typeof platformChartConfig> = {
+  Linux: 'linux',
+  Windows: 'windows',
+  Mac: 'mac',
+  Android: 'android',
+  Unknown: 'unknown',
+};
+
+const referralConfigKeys: Record<string, keyof typeof referralChartConfig> = {
+  Facebook: 'facebook',
+  Twitter: 'twitter',
+  Instagram: 'instagram',
+  Reddit: 'reddit',
+  Unknown: 'unknown',
+};
+
+function preparePieData<K extends string>(
+  data: PieDatum[],
+  configKeys: Record<string, K>,
+  fallbackKey: K,
+) {
+  return data.map((datum) => {
+    const configKey = configKeys[datum.name] ?? fallbackKey;
+    return {
+      ...datum,
+      configKey,
+      fill: `var(--color-${configKey})`,
+    };
+  });
+}
 
 function doDownload(url: string, fileName: string) {
   const a = document.createElement('a');
@@ -391,17 +484,32 @@ export function Stats(props: Props): React.ReactElement {
     GeoIP: <GeoipChart data={geoipStats} />,
     Browser: (
       <ShrunkPieChart
-        data={processData(browserStats?.browsers ?? [], browserColors)}
+        data={preparePieData(
+          browserStats?.browsers ?? [],
+          browserConfigKeys,
+          'other',
+        )}
+        chartConfig={browserChartConfig}
       />
     ),
     Platform: (
       <ShrunkPieChart
-        data={processData(browserStats?.platforms ?? [], platformColors)}
+        data={preparePieData(
+          browserStats?.platforms ?? [],
+          platformConfigKeys,
+          'unknown',
+        )}
+        chartConfig={platformChartConfig}
       />
     ),
     Referral: (
       <ShrunkPieChart
-        data={processData(browserStats?.referers ?? [], referralColors)}
+        data={preparePieData(
+          browserStats?.referers ?? [],
+          referralConfigKeys,
+          'unknown',
+        )}
+        chartConfig={referralChartConfig}
       />
     ),
   };

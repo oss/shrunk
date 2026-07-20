@@ -1,5 +1,10 @@
-import Highcharts from 'highcharts';
-import HighchartsReact from 'highcharts-react-official';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from '@/components/ui/chart';
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import React, { useState } from 'react';
 import dayjs, { Dayjs } from 'dayjs';
 import { CalendarIcon } from 'lucide-react';
@@ -77,66 +82,26 @@ const VisitsChart: React.FC<Props> = (props) => {
   const getMsSinceEpoch = (datum: VisitDatum) =>
     Date.UTC(datum._id.year, datum._id.month - 1, datum._id.day);
 
-  const options = {
-    chart: {
-      type: 'areaspline',
-      zooming: {
-        type: 'x',
-      },
+  const chartConfig = {
+    total: {
+      label: 'Total Visits',
+      color: '#279AF1',
     },
-    credits: { enabled: false },
-    plotOptions: {
-      areaspline: {
-        marker: {
-          enabled: visits.length === 1,
-          symbol: 'circle',
-          lineColor: null,
-        },
-        states: {
-          hover: {
-            enabled: true,
-            halo: {
-              size: 0,
-            },
-          },
-        },
-      },
+    unique: {
+      label: 'Unique Visits',
+      color: '#2b9720',
     },
-    title: { text: '' },
-    xAxis: {
-      title: { text: '' },
-      type: 'datetime',
-      dateTimeLabelFormats: {
-        day: '%b %e',
-      },
-    },
-    tooltip: {
-      shared: true,
-    },
-    yAxis: { title: { text: '' }, min: 0 },
-    series: [
-      {
-        name: 'Total visits',
-        lineColor: 'rgb(231, 110, 80)',
-        color: 'rgb(231, 110, 80)',
-        fillColor: {
-          linearGradient: [0, 0, 0, 300],
-          stops: [
-            [0, 'rgba(231, 110, 80, 1)'],
-            [1, 'rgba(231, 110, 80, 0)'],
-          ],
-        },
-        data: visits.map((el) => [getMsSinceEpoch(el), el.all_visits]),
-      },
-      {
-        name: 'Unique visits',
-        lineColor: 'rgb(50, 168, 82)',
-        color: 'rgb(50, 168, 82)',
-        fillOpacity: 0,
-        data: visits.map((el) => [getMsSinceEpoch(el), el.first_time_visits]),
-      },
-    ],
-  };
+  } satisfies ChartConfig;
+
+  const chartData = visits.map((el) => ({
+    date: new Date(getMsSinceEpoch(el)).toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }),
+    total: el.all_visits,
+    unique: el.first_time_visits,
+  }));
 
   return (
     <div className="space-y-4">
@@ -199,7 +164,68 @@ const VisitsChart: React.FC<Props> = (props) => {
           </PopoverContent>
         </Popover>
       </div>
-      <HighchartsReact highcharts={Highcharts} options={options} />
+      <ChartContainer
+        config={chartConfig}
+        className="aspect-auto h-[250px] w-full"
+      >
+        <AreaChart data={chartData}>
+          <defs>
+            <linearGradient id="fillTotal" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#2563eb" stopOpacity={0.8} />
+              <stop offset="95%" stopColor="#2563eb" stopOpacity={0.1} />
+            </linearGradient>
+            <linearGradient id="fillUnique" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#2B9720" stopOpacity={0.8} />
+              <stop offset="95%" stopColor="#2B9720" stopOpacity={0.1} />
+            </linearGradient>
+          </defs>
+          <Area
+            dataKey="total"
+            type="natural"
+            stackId="a"
+            fill="url(#fillTotal)"
+            stroke="#2563eb"
+          />
+          <Area
+            dataKey="unique"
+            type="natural"
+            stackId="a"
+            fill="url(#fillUnique)"
+            stroke="#2B9720"
+          />
+          <CartesianGrid vertical={false} />
+          <YAxis />
+          <XAxis
+            dataKey="date"
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+            minTickGap={32}
+            tickFormatter={(value) => {
+              const date = new Date(value);
+              return date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+              });
+            }}
+          />
+          <ChartTooltip
+            cursor={false}
+            content={
+              <ChartTooltipContent
+                labelFormatter={(value) =>
+                  new Date(value).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })
+                }
+                indicator="dot"
+              />
+            }
+          />
+        </AreaChart>
+      </ChartContainer>
     </div>
   );
 };
