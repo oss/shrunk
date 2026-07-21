@@ -34,7 +34,7 @@
           ]
         }, 
         {
-          "text": "Modernized the frontend styling by switching from Ant Design to TailwindCSS V4 with Shadcn Components",
+          "text": "Modernized the frontend styling by switching from Ant Design and Highcharts to TailwindCSS V4 with Shadcn Components",
           "contributors": [
             "jds508"
           ]

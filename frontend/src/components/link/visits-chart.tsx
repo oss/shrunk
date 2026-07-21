@@ -94,11 +94,7 @@ const VisitsChart: React.FC<Props> = (props) => {
   } satisfies ChartConfig;
 
   const chartData = visits.map((el) => ({
-    date: new Date(getMsSinceEpoch(el)).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    }),
+    date: getMsSinceEpoch(el),
     total: el.all_visits,
     unique: el.first_time_visits,
   }));
@@ -182,14 +178,12 @@ const VisitsChart: React.FC<Props> = (props) => {
           <Area
             dataKey="total"
             type="natural"
-            stackId="a"
             fill="url(#fillTotal)"
             stroke="#2563eb"
           />
           <Area
             dataKey="unique"
             type="natural"
-            stackId="a"
             fill="url(#fillUnique)"
             stroke="#2B9720"
           />
