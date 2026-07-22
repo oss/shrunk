@@ -5,6 +5,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { Link } from '@/interfaces/link';
 import { getRedirectFromAlias } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Card,
   CardContent,
@@ -21,7 +22,17 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 
-export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
+interface LinkCardProps {
+  linkInfo: Link;
+  checked?: boolean;
+  onCheckedChange?: (link: Link, checked: boolean) => void;
+}
+
+export default function LinkCard({
+  linkInfo,
+  checked = false,
+  onCheckedChange,
+}: LinkCardProps) {
   const onCopyOriginalLink = () => {
     navigator.clipboard.writeText(linkInfo.long_url);
     toast('Copied to clipboard!');
@@ -62,8 +73,22 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
 
   return (
     <Card className="shrink-0 overflow-hidden rounded-md border-border bg-card shadow-none">
-      <CardHeader className="flex-row items-center justify-between px-5 py-5">
-        <CardTitle className="text-foreground">{linkInfo.title}</CardTitle>
+      <CardHeader className="flex-row items-center justify-between px-5 pt-5 pb-3">
+        <div className="flex min-w-0 items-center gap-3">
+          {onCheckedChange ? (
+            <Checkbox
+              aria-label={`Select ${linkInfo.title}`}
+              checked={checked}
+              onCheckedChange={(value) => {
+                onCheckedChange(linkInfo, value === true);
+              }}
+              className="mb-2"
+            />
+          ) : null}
+          <CardTitle className="truncate pb-2 text-foreground">
+            {linkInfo.title}
+          </CardTitle>
+        </div>
         <TooltipProvider>
           <div className="flex gap-1">
             <Tooltip>
@@ -79,7 +104,7 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    <EditIcon className="text-black dark:text-white" />
+                    <EditIcon />
                   </a>
                 </Button>
               </TooltipTrigger>
@@ -100,7 +125,7 @@ export default function LinkCard({ linkInfo }: { linkInfo: Link }) {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    <EyeIcon className="text-black dark:text-white" />
+                    <EyeIcon />
                   </a>
                 </Button>
               </TooltipTrigger>

@@ -6,14 +6,38 @@ import {
   PlusCircleIcon,
 } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
-import { searchLinks } from '../api/links';
+import MultiLinkSelectPopup from '@/components/MultiLinkSelectPopup';
+import CollaboratorModal, { Collaborator } from '@/modals/CollaboratorModal';
+import {
+  addCollaboratorBulk,
+  deleteLinkBulk,
+  searchLinks,
+  transferLinksBulk,
+} from '../api/links';
 import { getOrganizations } from '../api/organization';
 import { serverValidateNetId } from '../api/validators';
 import DashboardSearch from '../components/DashboardSearch';
 import CreateLinkDrawer from '../drawers/CreateLinkDrawer';
-import { Link, SearchQuery, DEFAULT_QUERY } from '../interfaces/link';
+import {
+  Link,
+  SearchQuery,
+  DEFAULT_QUERY,
+  LinkSharedWith,
+} from '../interfaces/link';
 import { Organization } from '../interfaces/organizations';
 import LinkCard from '../components/LinkCard';
+import BulkTransferModal from '@/modals/BulkTransferModal';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -24,6 +48,7 @@ import {
 
 interface Props {
   userPrivileges: Set<string>;
+  netid: string;
   mockData?: Link[];
   demo?: boolean;
 }
@@ -35,7 +60,12 @@ interface Filters {
   url: string;
 }
 
-export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
+export default function Dashboard({
+  userPrivileges,
+  netid: _netid,
+  mockData,
+  demo,
+}: Props) {
   const [userOrgs, setUserOrgs] = useState<Organization[] | null>(null);
   const [linkInfo, setLinkInfo] = useState<Link[] | null>(
     mockData === undefined ? null : mockData.slice(0, 10),
@@ -45,7 +75,10 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
   const [totalLinks, setTotalLinks] = useState<number>(mockData?.length ?? 0);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [isCreateModalOpen, setCreateModalOpen] = useState<boolean>(false);
-
+  const [checkedLinks, setCheckedLinks] = useState<Link[]>([]);
+  const [collabModalVisible, setCollabModalVisible] = useState<boolean>(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkTransferOpen, setBulkTransferOpen] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState<boolean>(false);
 
   const [filters, setFilters] = useState<Filters>({
@@ -54,7 +87,6 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
     url: '',
     owner: '',
   });
-
   const contextHeaderRef = useRef<HTMLElement>(null);
   const queryVersionRef = useRef<number>(0);
   const hasLoadedInitialQueryRef = useRef<boolean>(false);
@@ -146,6 +178,7 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
       setQuery(newQuery);
       setTotalLinks(results.count);
       setCurrentPage(1);
+      setCheckedLinks([]);
     },
     [demo, query.owner, doQuery, linksPerPage],
   );
@@ -179,6 +212,7 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
       setLinkInfo(results.results);
       setTotalLinks(results.count);
       setCurrentPage(page);
+      setCheckedLinks([]);
     },
     [currentPage, demo, doQuery, linksPerPage, mockData, query, totalPages],
   );
@@ -211,7 +245,121 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
 
     setLinkInfo(results.results);
     setTotalLinks(results.count);
+    setCheckedLinks((selected) => {
+      const refreshedLinks = new Map(
+        results.results.map((result) => [result._id, result]),
+      );
+      return selected.flatMap((link) => {
+        const refreshed = refreshedLinks.get(link._id);
+        return refreshed ? [refreshed] : [];
+      });
+    });
   }, [currentPage, demo, doQuery, linksPerPage, query]);
+
+  const refreshAfterBulkAction = async (): Promise<void> => {
+    try {
+      await refreshResults();
+    } catch {
+      toast.error('Failed to refresh links');
+    }
+  };
+
+  const selectedLinkIds = checkedLinks.map((link) => link._id);
+  const visibleCheckedCount =
+    linkInfo?.filter((link) =>
+      checkedLinks.some((selected) => selected._id === link._id),
+    ).length ?? 0;
+  const allVisibleSelected =
+    !!linkInfo &&
+    linkInfo.length > 0 &&
+    visibleCheckedCount === linkInfo.length;
+  const someVisibleSelected =
+    !!linkInfo && visibleCheckedCount > 0 && !allVisibleSelected;
+  const shareDisabled = checkedLinks.some((link) => !link.may_edit);
+  const deleteDisabled = checkedLinks.some((link) => link.may_delete !== true);
+  const transferDisabled = checkedLinks.some(
+    (link) => link.may_transfer !== true,
+  );
+
+  const handleCheckedLinkChange = (link: Link, checked: boolean) => {
+    setCheckedLinks((current) => {
+      if (checked) {
+        if (current.some((selected) => selected._id === link._id)) {
+          return current;
+        }
+        return [...current, link];
+      }
+      return current.filter((selected) => selected._id !== link._id);
+    });
+  };
+
+  const toggleVisibleSelection = (checked: boolean) => {
+    if (!linkInfo) {
+      return;
+    }
+
+    setCheckedLinks((current) => {
+      if (checked) {
+        const currentIds = new Set(current.map((link) => link._id));
+        const next = [...current];
+        linkInfo.forEach((link) => {
+          if (!currentIds.has(link._id)) {
+            next.push(link);
+          }
+        });
+        return next;
+      }
+
+      const visibleIds = new Set(linkInfo.map((link) => link._id));
+      return current.filter((link) => !visibleIds.has(link._id));
+    });
+  };
+
+  const handleBulkShare = async (
+    activeTab: 'netid' | 'org',
+    entity: Collaborator,
+  ) => {
+    try {
+      await addCollaboratorBulk(
+        selectedLinkIds,
+        { _id: entity._id, type: activeTab },
+        entity.role as 'editor' | 'viewer',
+      );
+      toast.success('Selected links shared successfully');
+      setCollabModalVisible(false);
+      setCheckedLinks([]);
+    } catch {
+      toast.error('Failed to share selected links');
+    } finally {
+      await refreshAfterBulkAction();
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      await deleteLinkBulk(selectedLinkIds);
+      toast.success('Selected links deleted successfully');
+      setBulkDeleteOpen(false);
+      setCheckedLinks([]);
+    } catch {
+      toast.error('Failed to delete selected links');
+    } finally {
+      await refreshAfterBulkAction();
+    }
+  };
+
+  const handleBulkTransfer = async (owner: LinkSharedWith) => {
+    try {
+      await transferLinksBulk(selectedLinkIds, owner);
+      toast.success('Selected links transferred successfully');
+      setBulkTransferOpen(false);
+      setCheckedLinks([]);
+    } catch {
+      toast.error('Failed to transfer selected links');
+    } finally {
+      await refreshAfterBulkAction();
+    }
+  };
 
   useEffect(() => {
     const fetchUserOrgs = async (): Promise<void> => {
@@ -342,7 +490,14 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
               ) : (
                 <div className="flex w-full min-w-0 flex-col gap-3">
                   {linkInfo.map((link: Link) => (
-                    <LinkCard key={link._id || link.alias} linkInfo={link} />
+                    <LinkCard
+                      key={link._id || link.alias}
+                      linkInfo={link}
+                      checked={checkedLinks.some(
+                        (selected) => selected._id === link._id,
+                      )}
+                      onCheckedChange={handleCheckedLinkChange}
+                    />
                   ))}
                 </div>
               )}
@@ -416,6 +571,74 @@ export default function Dashboard({ userPrivileges, mockData, demo }: Props) {
           />
         </SheetContent>
       </Sheet>
+
+      <MultiLinkSelectPopup
+        selectedCount={checkedLinks.length}
+        onClear={() => setCheckedLinks([])}
+        onShare={{
+          disabled: shareDisabled,
+          disabledReason: 'Only links you can edit can be shared.',
+          onClick: () => setCollabModalVisible(true),
+        }}
+        onTransfer={{
+          disabled: transferDisabled,
+          disabledReason: 'Only links you own can be transferred.',
+          onClick: () => setBulkTransferOpen(true),
+        }}
+        onDelete={{
+          disabled: deleteDisabled,
+          disabledReason: 'Only links you own can be deleted.',
+          onClick: () => setBulkDeleteOpen(true),
+        }}
+        allVisibleSelected={allVisibleSelected}
+        someVisibleSelected={someVisibleSelected}
+        toggleVisibleSelection={toggleVisibleSelection}
+        totalLinks={linkInfo?.length}
+        visibleCheckedCount={visibleCheckedCount}
+      />
+
+      <CollaboratorModal
+        visible={collabModalVisible}
+        people={[]}
+        roles={[
+          { value: 'editor', label: 'Editor' },
+          { value: 'viewer', label: 'Viewer' },
+        ]}
+        onAddEntity={handleBulkShare}
+        onChangeEntity={() => {}}
+        onRemoveEntity={() => {}}
+        onOk={() => setCollabModalVisible(false)}
+        onCancel={() => setCollabModalVisible(false)}
+        multipleMasters
+      />
+
+      <BulkTransferModal
+        visible={bulkTransferOpen}
+        selectedCount={checkedLinks.length}
+        onOk={handleBulkTransfer}
+        onCancel={() => setBulkTransferOpen(false)}
+      />
+
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete selected links?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will delete {checkedLinks.length}{' '}
+              {checkedLinks.length === 1 ? 'link' : 'links'}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleBulkDelete}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

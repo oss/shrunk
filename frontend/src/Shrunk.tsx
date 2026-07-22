@@ -510,7 +510,7 @@ function ShrunkContent({
               <Login />
             </Route>
             <Route exact path="/app/dash">
-              <Dashboard userPrivileges={userPrivileges} />
+              <Dashboard userPrivileges={userPrivileges} netid={netid} />
             </Route>
             <Route
               exact

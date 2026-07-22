@@ -24,6 +24,8 @@ def test_search_types(client: Client) -> None:
         assert resp.status_code == 200
         assert len(resp.json["results"]) == 1
         assert resp.json["results"][0]["title"] == "link"
+        assert resp.json["results"][0]["may_delete"] is True
+        assert resp.json["results"][0]["may_transfer"] is True
 
         resp = client.post(
             "/api/core/search",

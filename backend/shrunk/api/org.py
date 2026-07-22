@@ -204,6 +204,16 @@ def get_org_links(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
     if not client.orgs.is_member(org_id, netid) and not client.users.has_role(netid, "admin"):
         abort(403)
     links = client.orgs.get_links(org_id)
+    is_admin = client.users.has_role(netid, "admin")
+    for link in links:
+        deleted = link.get("deleted", False)
+        if link["owner"]["type"] == "netid":
+            is_link_owner = link["owner"]["_id"] == netid
+        else:
+            is_link_owner = client.orgs.is_admin(link["owner"]["_id"], netid)
+        can_own_manage = is_admin or is_link_owner
+        link["canDelete"] = not deleted and can_own_manage
+        link["canTransfer"] = not deleted and can_own_manage
     return jsonify(links)
 
 

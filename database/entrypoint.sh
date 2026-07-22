@@ -3,7 +3,7 @@
 # Starts a replica set on member0, you must have three mongodb running.
 # They must be named the following
 #    mongo0
-#    mongo1 
+#    mongo1
 #    mongo2
 # Port 27017 should be open.
 

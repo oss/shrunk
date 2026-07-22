@@ -12,11 +12,31 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { OrganizationLink } from '@/interfaces/organizations';
+import { LinkSharedWith } from '@/interfaces/link';
 import { getOrganizationLinks } from '@/api/organization';
 import { getLinkFromAlias } from '@/lib/utils';
+import MultiLinkSelectPopup from '@/components/MultiLinkSelectPopup';
+import BulkTransferModal from '@/modals/BulkTransferModal';
+import CollaboratorModal, { Collaborator } from '@/modals/CollaboratorModal';
 import TransferToNetIdModal from '@/modals/TransferToNetIdModal';
-import { editLink } from '@/api/links';
+import {
+  addCollaboratorBulk,
+  deleteLinkBulk,
+  transferLink,
+  transferLinksBulk,
+} from '@/api/links';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
   TableBody,
@@ -61,6 +81,10 @@ const CompactLinkTable = ({
   const [pageSize, setPageSize] = useState(10);
   const [transferModalVisible, setTransferModalVisible] = useState(false);
   const [selectedLinkId, setSelectedLinkId] = useState<string>('');
+  const [selectedLinks, setSelectedLinks] = useState<OrganizationLink[]>([]);
+  const [bulkShareOpen, setBulkShareOpen] = useState(false);
+  const [bulkTransferOpen, setBulkTransferOpen] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
 
   const fetchLinks = async () => {
     const resp = await getOrganizationLinks(org_id);
@@ -75,7 +99,7 @@ const CompactLinkTable = ({
 
   const transferLinkOwnership = async (netid: string, link_id: string) => {
     try {
-      await editLink(link_id, { owner: { type: 'netid', _id: netid } });
+      await transferLink(link_id, { type: 'netid', _id: netid });
       toast.success('Link ownership transferred successfully');
     } catch {
       toast.error('Error transferring link ownership');
@@ -101,14 +125,116 @@ const CompactLinkTable = ({
   const sortedLinks = useMemo(() => sortLinks(links), [links]);
 
   const totalPages = Math.ceil(sortedLinks.length / pageSize);
-  const paginatedLinks = sortedLinks.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
+  const paginatedLinks = useMemo(
+    () =>
+      sortedLinks.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [currentPage, pageSize, sortedLinks],
   );
 
   useEffect(() => {
     setCurrentPage(1);
   }, [pageSize]);
+
+  useEffect(() => {
+    setSelectedLinks((selected) => {
+      const refreshedLinks = new Map(
+        paginatedLinks.map((link) => [link._id, link]),
+      );
+      return selected.flatMap((link) => {
+        const refreshed = refreshedLinks.get(link._id);
+        return refreshed ? [refreshed] : [];
+      });
+    });
+  }, [paginatedLinks]);
+
+  const selectedLinkIds = selectedLinks.map((link) => link._id);
+  const allPageLinksSelected =
+    paginatedLinks.length > 0 &&
+    paginatedLinks.every((link) =>
+      selectedLinks.some((selected) => selected._id === link._id),
+    );
+  const somePageLinksSelected =
+    !allPageLinksSelected &&
+    paginatedLinks.some((link) =>
+      selectedLinks.some((selected) => selected._id === link._id),
+    );
+  const shareDisabled = selectedLinks.some((link) => !link.canEdit);
+  const deleteDisabled = selectedLinks.some((link) => link.canDelete !== true);
+  const transferDisabled = selectedLinks.some(
+    (link) => link.canTransfer !== true,
+  );
+
+  const setLinkSelected = (link: OrganizationLink, checked: boolean) => {
+    setSelectedLinks((current) => {
+      if (checked) {
+        if (current.some((selected) => selected._id === link._id)) {
+          return current;
+        }
+        return [...current, link];
+      }
+      return current.filter((selected) => selected._id !== link._id);
+    });
+  };
+
+  const togglePageSelection = (checked: boolean) => {
+    setSelectedLinks(checked ? paginatedLinks : []);
+  };
+
+  const refreshAfterBulkAction = async () => {
+    setLoading(true);
+    try {
+      await fetchLinks();
+    } catch {
+      setLoading(false);
+      toast.error('Failed to refresh links');
+    }
+  };
+
+  const handleBulkShare = async (
+    activeTab: 'netid' | 'org',
+    entity: Collaborator,
+  ) => {
+    try {
+      await addCollaboratorBulk(
+        selectedLinkIds,
+        { _id: entity._id, type: activeTab },
+        entity.role as 'editor' | 'viewer',
+      );
+      toast.success('Selected links shared successfully');
+      setBulkShareOpen(false);
+      setSelectedLinks([]);
+    } catch {
+      toast.error('Failed to share selected links');
+    } finally {
+      await refreshAfterBulkAction();
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      await deleteLinkBulk(selectedLinkIds);
+      toast.success('Selected links deleted successfully');
+      setBulkDeleteOpen(false);
+      setSelectedLinks([]);
+    } catch {
+      toast.error('Failed to delete selected links');
+    } finally {
+      await refreshAfterBulkAction();
+    }
+  };
+
+  const handleBulkTransfer = async (owner: LinkSharedWith) => {
+    try {
+      await transferLinksBulk(selectedLinkIds, owner);
+      toast.success('Selected links transferred successfully');
+      setBulkTransferOpen(false);
+      setSelectedLinks([]);
+    } catch {
+      toast.error('Failed to transfer selected links');
+    } finally {
+      await refreshAfterBulkAction();
+    }
+  };
 
   return (
     <TooltipProvider>
@@ -117,6 +243,23 @@ const CompactLinkTable = ({
           <Table>
             <TableHeader className="bg-muted dark:bg-[#2a2a2a]">
               <TableRow className="border-b border-border hover:bg-transparent dark:border-white/10">
+                <TableHead
+                  className={`${adminTableHeadClass} w-12 ${adminTableHeadDividerClass}`}
+                >
+                  <Checkbox
+                    aria-label="Select all links on this page"
+                    checked={
+                      allPageLinksSelected
+                        ? true
+                        : somePageLinksSelected
+                          ? 'indeterminate'
+                          : false
+                    }
+                    onCheckedChange={(value) => {
+                      togglePageSelection(value === true);
+                    }}
+                  />
+                </TableHead>
                 <TableHead
                   className={`${adminTableHeadClass} ${adminTableHeadDividerClass}`}
                 >
@@ -151,7 +294,7 @@ const CompactLinkTable = ({
               {loading ? (
                 <TableRow className={adminTableRowClass}>
                   <TableCell
-                    colSpan={6}
+                    colSpan={7}
                     className="py-8 text-center text-muted-foreground dark:text-[#9d9d9d]"
                   >
                     Loading...
@@ -160,7 +303,7 @@ const CompactLinkTable = ({
               ) : paginatedLinks.length === 0 ? (
                 <TableRow className={adminTableRowClass}>
                   <TableCell
-                    colSpan={6}
+                    colSpan={7}
                     className="py-8 text-center text-muted-foreground dark:text-[#9d9d9d]"
                   >
                     No links found.
@@ -169,6 +312,17 @@ const CompactLinkTable = ({
               ) : (
                 paginatedLinks.map((link) => (
                   <TableRow key={link._id} className={adminTableRowClass}>
+                    <TableCell className={adminTableCellClass}>
+                      <Checkbox
+                        aria-label={`Select ${link.title}`}
+                        checked={selectedLinks.some(
+                          (selected) => selected._id === link._id,
+                        )}
+                        onCheckedChange={(value) => {
+                          setLinkSelected(link, value === true);
+                        }}
+                      />
+                    </TableCell>
                     <TableCell
                       className={`${adminTableCellClass} font-semibold text-foreground dark:text-[#f1f1f1]`}
                     >
@@ -412,6 +566,70 @@ const CompactLinkTable = ({
         onOk={transferLinkOwnership}
         link_id={selectedLinkId}
       />
+      <MultiLinkSelectPopup
+        selectedCount={selectedLinks.length}
+        onClear={() => setSelectedLinks([])}
+        onShare={{
+          disabled: shareDisabled,
+          disabledReason: 'Only links you can edit can be shared.',
+          onClick: () => setBulkShareOpen(true),
+        }}
+        onTransfer={{
+          disabled: transferDisabled,
+          disabledReason: 'Only links you own can be transferred.',
+          onClick: () => setBulkTransferOpen(true),
+        }}
+        onDelete={{
+          disabled: deleteDisabled,
+          disabledReason: 'Only links you own can be deleted.',
+          onClick: () => setBulkDeleteOpen(true),
+        }}
+        allVisibleSelected={allPageLinksSelected}
+        someVisibleSelected={somePageLinksSelected}
+        toggleVisibleSelection={togglePageSelection}
+        visibleCheckedCount={selectedLinks.length}
+        totalLinks={paginatedLinks.length}
+      />
+      <CollaboratorModal
+        visible={bulkShareOpen}
+        people={[]}
+        roles={[
+          { value: 'editor', label: 'Editor' },
+          { value: 'viewer', label: 'Viewer' },
+        ]}
+        onAddEntity={handleBulkShare}
+        onChangeEntity={() => {}}
+        onRemoveEntity={() => {}}
+        onOk={() => setBulkShareOpen(false)}
+        onCancel={() => setBulkShareOpen(false)}
+        multipleMasters
+      />
+      <BulkTransferModal
+        visible={bulkTransferOpen}
+        selectedCount={selectedLinks.length}
+        onOk={handleBulkTransfer}
+        onCancel={() => setBulkTransferOpen(false)}
+      />
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete selected links?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will delete {selectedLinks.length}{' '}
+              {selectedLinks.length === 1 ? 'link' : 'links'}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleBulkDelete}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TooltipProvider>
   );
 };

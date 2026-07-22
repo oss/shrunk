@@ -11,6 +11,25 @@ import {
   GeoipStats,
 } from '@/interfaces/link';
 
+async function throwApiError(resp: Response): Promise<never> {
+  let message = `Request failed with status ${resp.status}`;
+  try {
+    const data: unknown = await resp.json();
+    if (
+      typeof data === 'object' &&
+      data !== null &&
+      'errors' in data &&
+      Array.isArray(data.errors) &&
+      data.errors.every((error) => typeof error === 'string')
+    ) {
+      message = data.errors.join(', ');
+    }
+  } catch {
+    // Some Flask error responses are HTML or have no body.
+  }
+  throw new Error(message);
+}
+
 export async function getLink(linkId: string): Promise<Link> {
   const resp = await fetch(`/api/core/link/${linkId}`, {
     method: 'GET',
@@ -64,6 +83,17 @@ export async function deleteLink(linkId: string) {
   await fetch(`/api/core/link/${linkId}`, { method: 'DELETE' });
 }
 
+export async function deleteLinkBulk(linkIds: string[]) {
+  const resp = await fetch(`/api/core/link/delete_bulk`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ link_ids: linkIds }),
+  });
+  if (!resp.ok) {
+    await throwApiError(resp);
+  }
+}
+
 export async function addCollaborator(
   linkId: string,
   collaborator: LinkSharedWith,
@@ -114,6 +144,70 @@ export async function removeCollaborator(
       body: JSON.stringify(patchReq),
     });
   }
+}
+
+export async function addCollaboratorBulk(
+  linkIds: string[],
+  collaborator: LinkSharedWith,
+  role: 'editor' | 'viewer',
+) {
+  const resp = await fetch(`/api/core/link/acl_bulk`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      link_ids: linkIds,
+      acl: `${role}s`,
+      entry: collaborator,
+      action: 'add',
+    }),
+  });
+  if (!resp.ok) {
+    await throwApiError(resp);
+  }
+}
+
+export async function removeCollaboratorBulk(
+  linkIds: string[],
+  collaborator: LinkSharedWith,
+  role?: 'viewer' | 'editor',
+) {
+  const resp = await fetch(`/api/core/link/acl_bulk`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      link_ids: linkIds,
+      acl: role ? `${role}s` : 'viewers',
+      entry: { _id: collaborator._id, type: collaborator.type },
+      action: 'remove',
+    }),
+  });
+  if (!resp.ok) {
+    await throwApiError(resp);
+  }
+}
+
+export async function transferLinksBulk(
+  linkIds: string[],
+  owner: LinkSharedWith,
+) {
+  const resp = await fetch(`/api/core/link/transfer_bulk`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      link_ids: linkIds,
+      owner,
+    }),
+  });
+  if (!resp.ok) {
+    await throwApiError(resp);
+  }
+}
+
+export async function transferLink(
+  linkId: string,
+  owner: LinkSharedWith,
+): Promise<void> {
+  await transferLinksBulk([linkId], owner);
 }
 
 export async function reverLinkExpirationDate(linkId: string) {

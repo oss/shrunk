@@ -7,7 +7,15 @@
     "date": "TODO",
     "description": "Bug fixes and improvements following the 3.2.0 release.",
     "categories": {
-      "features": [],
+      "features": [
+        {
+          "text": "Allow for mass share, transfer, and deletion of links",
+          "contributors": [
+            "jds508",
+            "ah1371"
+          ]
+        }
+      ],
       "improvements": [
         {
           "text": "Added a card skeleton for the organization overview tab",
@@ -49,6 +57,12 @@
         },
         {
           "text": "Fixed the Collaborator Modal to allow for other users to be added with the Owner role as well as improving the modal for sharing between users and organizations.",
+          "contributors": [
+            "jds508"
+          ]
+        },
+        {
+          "text": "Fixed the Collaborator Modal to allow for it to be closed without validation errors when the input is empty.",
           "contributors": [
             "jds508"
           ]

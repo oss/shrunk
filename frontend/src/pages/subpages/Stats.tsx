@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { useLocation, Link as RouterLink } from 'react-router-dom';
+import { useHistory, useLocation, Link as RouterLink } from 'react-router-dom';
 import { downloadVisits } from '@/api/csv';
 import {
   BrowserStats,
@@ -33,6 +33,7 @@ import {
   getLinkStats,
   getLinkVisitsStats,
   removeCollaborator,
+  transferLink,
 } from '@/api/links';
 import { EditLinkDrawer } from '@/drawers/EditLinkDrawer';
 import {
@@ -63,6 +64,16 @@ import {
 import { toast } from 'sonner';
 import { ButtonGroup } from '@/components/ui/button-group';
 import { type ChartConfig } from '@/components/ui/chart';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export interface Props {
   id: string;
@@ -212,6 +223,8 @@ export function Stats(props: Props): React.ReactElement {
 
   const [editModalVisible, setEditModalVisible] = useState<boolean>(false);
   const [collabModalVisible, setCollabModalVisible] = useState<boolean>(false);
+  const [pendingOwner, setPendingOwner] = useState<LinkSharedWith | null>(null);
+  const [transferLoading, setTransferLoading] = useState(false);
 
   const [entities, setEntities] = useState<Collaborator[]>([]);
 
@@ -220,6 +233,7 @@ export function Stats(props: Props): React.ReactElement {
     undefined,
   );
   const [isExporting, setIsExporting] = useState(false);
+  const history = useHistory();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const mode = queryParams.get('mode');
@@ -431,23 +445,37 @@ export function Stats(props: Props): React.ReactElement {
     onRemoveCollaborator(entity);
   };
 
-  const transferOwnershipToOrg = (
-    activeTab: 'netid' | 'org',
-    entity: Collaborator,
-  ) => {
-    editLink(props.id, {
-      owner: {
-        _id: entity._id,
-        type: activeTab,
-      },
-    })
-      .then(() => {
-        toast.success('Ownership transferred successfully');
-        updateLinkInfo();
-      })
-      .catch(() => {
-        toast.error('Failed to transfer ownership');
-      });
+  const confirmOwnershipTransfer = async () => {
+    if (!pendingOwner) {
+      return;
+    }
+
+    const owner = pendingOwner;
+    setTransferLoading(true);
+    try {
+      await transferLink(props.id, owner);
+    } catch {
+      toast.error('Failed to transfer ownership');
+      setTransferLoading(false);
+      setPendingOwner(null);
+      return;
+    }
+
+    toast.success('Ownership transferred successfully');
+    setTransferLoading(false);
+    setPendingOwner(null);
+    setCollabModalVisible(false);
+
+    if (owner.type === 'netid' && !props.userPrivileges.has('admin')) {
+      history.push('/app/dash');
+      return;
+    }
+
+    try {
+      await updateLinkInfo();
+    } catch {
+      history.push('/app/dash');
+    }
   };
 
   const onChangeEntity = (
@@ -455,8 +483,8 @@ export function Stats(props: Props): React.ReactElement {
     entity: Collaborator,
     value: string,
   ) => {
-    if (activeTab === 'org' && value === 'owner') {
-      transferOwnershipToOrg(activeTab, entity);
+    if (value === 'owner') {
+      setPendingOwner({ _id: entity._id, type: activeTab });
       return;
     }
 
@@ -843,6 +871,37 @@ export function Stats(props: Props): React.ReactElement {
               setCollabModalVisible(false);
             }}
           />
+
+          <AlertDialog
+            open={pendingOwner !== null}
+            onOpenChange={(open) => {
+              if (!open && !transferLoading) {
+                setPendingOwner(null);
+              }
+            }}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Transfer ownership?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will transfer ownership of the link to{' '}
+                  {pendingOwner?._id}. You may lose access to this link.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={transferLoading}>
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  disabled={transferLoading}
+                  onClick={confirmOwnershipTransfer}
+                >
+                  {transferLoading ? 'Transferring...' : 'Yes, transfer'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </>
       )}
     </TooltipProvider>

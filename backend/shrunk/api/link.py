@@ -25,6 +25,7 @@ from shrunk.client.exceptions import (
     OrgOwnedLinkNotSupported,
     SecurityRiskDetected,
     LinkIsPendingOrRejected,
+    BulkLinkValidationError,
 )
 from shrunk.util.stats import (
     get_human_readable_referer_domain,
@@ -337,18 +338,9 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
             abort(403)
 
     if "owner" in req:
-        if not client.links.is_owner(link_id, netid) and not client.users.has_role(netid, "admin"):
+        if not client.users.has_role(netid, "admin") and not client.links.is_owner(link_id, netid):
             abort(403)
-        if req["owner"]["type"] == "netid":
-            if not is_valid_netid(req["owner"]["_id"]) or client.users.has_role(req["owner"]["_id"], "guest"):
-                abort(400)
-        elif req["owner"]["type"] == "org":
-            if not client.orgs.get_org(ObjectId(req["owner"]["_id"])):
-                abort(400)
-            if not client.orgs.is_member(ObjectId(req["owner"]["_id"]), netid) and not client.users.has_role(
-                netid, "admin"
-            ):
-                abort(403)
+        validate_modification(netid, client, req["owner"])
 
     try:
         client.links.modify(
@@ -369,6 +361,23 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
         return "Potential security risk. Please create a new link instead.", 403
 
     return "", 204
+
+
+def validate_modification(netid: str, client: ShrunkClient, owner: Dict[str, Any]) -> None:
+    if owner["type"] == "netid":
+        if not is_valid_netid(owner["_id"]) or client.users.has_role(owner["_id"], "guest"):
+            abort(400)
+        return
+
+    try:
+        org_id = ObjectId(owner["_id"])
+    except bson.errors.InvalidId:
+        abort(400)
+
+    if not client.orgs.get_org(org_id):
+        abort(400)
+    if not client.orgs.is_member(org_id, netid) and not client.users.has_role(netid, "admin"):
+        abort(403)
 
 
 MODIFY_ACL_SCHEMA = {
@@ -431,6 +440,84 @@ def modify_acl(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) ->
     return "", 204
 
 
+MODIFY_BULK_ACL_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["link_ids", "entry", "acl", "action"],
+    "properties": {
+        "link_ids": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": True,
+            "items": {
+                "type": "string",
+            },
+        },
+        "entry": ACL_ENTRY_SCHEMA,
+        "acl": {"type": "string", "enum": ["editors", "viewers"]},
+        "action": {"type": "string", "enum": ["add", "remove"]},
+    },
+}
+
+
+@bp.route("/acl_bulk", methods=["POST"])
+@request_schema(MODIFY_BULK_ACL_SCHEMA)
+@require_login
+def modify_acl_bulk(netid: str, client: ShrunkClient, req: Any) -> Any:
+    """``POST /api/link/acl_bulk``
+
+    Modifies a list of links' ACLs if the user has permission to edit them.
+    Returns 204 on success and 403 if any link could not be modified.
+    """
+
+    link_ids = req["link_ids"]
+    try:
+        if req["entry"]["type"] == "org":
+            req["entry"]["_id"] = ObjectId(req["entry"]["_id"])
+    except bson.errors.InvalidId as e:
+        abort(400)
+
+    try:
+        object_ids = [ObjectId(link_id) for link_id in link_ids]
+    except bson.errors.InvalidId:
+        invalid_ids = [link_id for link_id in link_ids if not ObjectId.is_valid(link_id)]
+        return (
+            jsonify(
+                {
+                    "errors": ["Unable to share one or more links."],
+                    "failed_ids": invalid_ids,
+                }
+            ),
+            403,
+        )
+
+    try:
+        client.links.modify_acl_bulk(
+            object_ids,
+            link_ids,
+            netid,
+            req["entry"],
+            req["action"] == "add",
+            req["acl"],
+        )
+    except BulkLinkValidationError as error:
+        return (
+            jsonify(
+                {
+                    "errors": ["Unable to share one or more links."],
+                    "failed_ids": error.failed_ids,
+                }
+            ),
+            403,
+        )
+    except InvalidACL:
+        return jsonify({"errors": ["invalid acl"]}), 400
+    except NotUserOrOrg as error:
+        return jsonify({"errors": ["not user or org: " + str(error)]}), 400
+
+    return "", 204
+
+
 @bp.route("/<ObjectId:link_id>", methods=["DELETE"])
 @require_login
 def delete_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
@@ -449,6 +536,127 @@ def delete_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     if not client.users.has_role(netid, "admin") and not client.links.is_owner(link_id, netid):
         abort(403)
     client.links.delete(link_id, netid)
+    return "", 204
+
+
+BULK_DELETE_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["link_ids"],
+    "properties": {
+        "link_ids": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": True,
+            "items": {
+                "type": "string",
+            },
+        }
+    },
+}
+
+
+TRANSFER_BULK_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": ["link_ids", "owner"],
+    "properties": {
+        "link_ids": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": True,
+            "items": {
+                "type": "string",
+            },
+        },
+        "owner": ACL_ENTRY_SCHEMA,
+    },
+}
+
+
+@bp.route("/transfer_bulk", methods=["POST"])
+@request_schema(TRANSFER_BULK_SCHEMA)
+@require_login
+def transfer_links_bulk(netid: str, client: ShrunkClient, req: Any) -> Any:
+    """``POST /api/link/transfer_bulk``
+
+    Transfers ownership for a list of links if the user has owner-level permission
+    for every link and the new owner is valid.
+    """
+    link_ids = req["link_ids"]
+
+    owner = req["owner"]
+    validate_modification(netid, client, owner)
+    if owner["type"] == "org":
+        owner = {**owner, "_id": ObjectId(owner["_id"])}
+    try:
+        object_ids = [ObjectId(link_id) for link_id in link_ids]
+    except bson.errors.InvalidId:
+        invalid_ids = [link_id for link_id in link_ids if not ObjectId.is_valid(link_id)]
+        return (
+            jsonify(
+                {
+                    "errors": ["Unable to transfer one or more links."],
+                    "failed_ids": invalid_ids,
+                }
+            ),
+            403,
+        )
+
+    try:
+        client.links.transfer_bulk(object_ids, link_ids, netid, owner)
+    except BulkLinkValidationError as error:
+        return (
+            jsonify(
+                {
+                    "errors": ["Unable to transfer one or more links."],
+                    "failed_ids": error.failed_ids,
+                }
+            ),
+            403,
+        )
+    except NotUserOrOrg as error:
+        return jsonify({"errors": ["not user or org: " + str(error)]}), 400
+
+    return "", 204
+
+
+@bp.route("/delete_bulk", methods=["POST"])
+@request_schema(BULK_DELETE_SCHEMA)
+@require_login
+def delete_links_bulk(netid: str, client: ShrunkClient, req: Any) -> Any:
+    """``POST /api/link/delete_bulk``
+
+    Deletes a list of links. From an array of link ids, deletes those links if the user has permission to delete them. Returns 204 on success and 403 on error
+
+    """
+    link_ids = req["link_ids"]
+    try:
+        object_ids = [ObjectId(link_id) for link_id in link_ids]
+    except bson.errors.InvalidId:
+        invalid_ids = [link_id for link_id in link_ids if not ObjectId.is_valid(link_id)]
+        return (
+            jsonify(
+                {
+                    "errors": ["Unable to delete one or more links."],
+                    "failed_ids": invalid_ids,
+                }
+            ),
+            403,
+        )
+
+    try:
+        client.links.delete_bulk_transactional(object_ids, link_ids, netid)
+    except BulkLinkValidationError as error:
+        return (
+            jsonify(
+                {
+                    "errors": ["Unable to delete one or more links."],
+                    "failed_ids": error.failed_ids,
+                }
+            ),
+            403,
+        )
     return "", 204
 
 

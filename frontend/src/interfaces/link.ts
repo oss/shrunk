@@ -35,6 +35,8 @@ export interface Link {
       };
   alias: string;
   may_edit: boolean;
+  may_delete?: boolean;
+  may_transfer?: boolean;
   is_tracking_pixel_link: boolean;
 
   editors: LinkSharedWith[];

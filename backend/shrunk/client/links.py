@@ -17,7 +17,11 @@ import pymongo
 import pymongo.database
 import pymongo.errors
 from pymongo.collection import ReturnDocument
+from pymongo.client_session import ClientSession
+from pymongo.read_concern import ReadConcern
+from pymongo.read_preferences import ReadPreference
 from pymongo.results import UpdateResult
+from pymongo.write_concern import WriteConcern
 from bson.objectid import ObjectId
 
 from shrunk.util.ldap import query_given_name
@@ -49,6 +53,7 @@ from .exceptions import (
     NotUserOrOrg,
     OrgOwnedLinkNotSupported,
     SecurityRiskDetected,
+    BulkLinkValidationError,
 )
 
 if TYPE_CHECKING:
@@ -405,6 +410,195 @@ class LinksClient:
 
         self.db.urls.update_one({"_id": link_id}, {operator: change})
 
+    def _bulk_permission_context(
+        self,
+        netid: str,
+        session: ClientSession,
+    ) -> Tuple[bool, Set[ObjectId], Set[ObjectId]]:
+        user = self.db.users.find_one({"netid": netid}, session=session) or {}
+        is_admin = any(role.get("role") == "admin" for role in user.get("roles", []))
+        organizations = self.db.organizations.find(
+            {"members.netid": netid, "deleted": False},
+            session=session,
+        )
+        member_org_ids: Set[ObjectId] = set()
+        admin_org_ids: Set[ObjectId] = set()
+        for organization in organizations:
+            member_org_ids.add(organization["_id"])
+            if any(
+                member.get("netid") == netid and member.get("role") == "admin"
+                for member in organization.get("members", [])
+            ):
+                admin_org_ids.add(organization["_id"])
+        return is_admin, member_org_ids, admin_org_ids
+
+    @staticmethod
+    def _may_bulk_edit(link: Dict[str, Any], netid: str, member_org_ids: Set[ObjectId]) -> bool:
+        owner = link["owner"]
+        if owner["type"] == "netid" and owner["_id"] == netid:
+            return True
+        if owner["type"] == "org" and owner["_id"] in member_org_ids:
+            return True
+        return any(
+            editor["_id"] == netid or (editor["type"] == "org" and editor["_id"] in member_org_ids)
+            for editor in link.get("editors", [])
+        )
+
+    @staticmethod
+    def _may_bulk_own(link: Dict[str, Any], netid: str, admin_org_ids: Set[ObjectId]) -> bool:
+        owner = link["owner"]
+        return (owner["type"] == "netid" and owner["_id"] == netid) or (
+            owner["type"] == "org" and owner["_id"] in admin_org_ids
+        )
+
+    def _validate_bulk_links(
+        self,
+        link_ids: List[ObjectId],
+        original_ids: List[str],
+        netid: str,
+        permission: str,
+        session: ClientSession,
+    ) -> List[Dict[str, Any]]:
+        is_admin, member_org_ids, admin_org_ids = self._bulk_permission_context(netid, session)
+        links_by_id = {link["_id"]: link for link in self.db.urls.find({"_id": {"$in": link_ids}}, session=session)}
+        failed_ids: List[str] = []
+        links: List[Dict[str, Any]] = []
+        for object_id, original_id in zip(link_ids, original_ids):
+            link = links_by_id.get(object_id)
+            allowed = False
+            if link is not None and not link.get("deleted", False):
+                allowed = is_admin or (
+                    self._may_bulk_edit(link, netid, member_org_ids)
+                    if permission == "edit"
+                    else self._may_bulk_own(link, netid, admin_org_ids)
+                )
+            if not allowed:
+                failed_ids.append(original_id)
+            else:
+                assert link is not None
+                links.append(link)
+        if failed_ids:
+            raise BulkLinkValidationError(failed_ids)
+        return links
+
+    def _run_bulk_transaction(self, callback: Any) -> None:
+        with self.other_clients.conn.start_session() as session:
+            session.with_transaction(
+                callback,
+                read_concern=ReadConcern("snapshot"),
+                write_concern=WriteConcern("majority"),
+                read_preference=ReadPreference.PRIMARY,
+            )
+
+    def modify_acl_bulk(
+        self,
+        link_ids: List[ObjectId],
+        original_ids: List[str],
+        netid: str,
+        entry: Dict[str, Any],
+        add: bool,
+        acl: str,
+    ) -> None:
+        if acl not in {"editors", "viewers"}:
+            raise InvalidACL("acl to modify must be editors or viewers")
+        self.assert_valid_acl_entry(acl, entry)
+
+        def transaction(session: ClientSession) -> None:
+            if (
+                entry["type"] == "org"
+                and self.db.organizations.find_one(
+                    {"_id": entry["_id"], "deleted": False},
+                    session=session,
+                )
+                is None
+            ):
+                raise NotUserOrOrg("collaborator is not an active organization")
+            links = self._validate_bulk_links(link_ids, original_ids, netid, "edit", session)
+            operator = "$addToSet" if add else "$pull"
+            change = {acl: entry}
+            if acl == "editors" and add:
+                change["viewers"] = entry
+            if acl == "viewers" and not add:
+                change["editors"] = entry
+            for link in links:
+                if entry["_id"] == link["owner"]["_id"] and entry["type"] == link["owner"]["type"]:
+                    continue
+                self.db.urls.update_one(
+                    {"_id": link["_id"]},
+                    {operator: change},
+                    session=session,
+                )
+
+        self._run_bulk_transaction(transaction)
+
+    def transfer_bulk(
+        self,
+        link_ids: List[ObjectId],
+        original_ids: List[str],
+        netid: str,
+        owner: Dict[str, Any],
+    ) -> None:
+        def transaction(session: ClientSession) -> None:
+            if owner["type"] == "org":
+                user = self.db.users.find_one({"netid": netid}, session=session) or {}
+                is_admin = any(role.get("role") == "admin" for role in user.get("roles", []))
+                owner_query: Dict[str, Any] = {"_id": owner["_id"], "deleted": False}
+                if not is_admin:
+                    owner_query["members.netid"] = netid
+                if self.db.organizations.find_one(owner_query, session=session) is None:
+                    raise NotUserOrOrg("new owner is not an active organization available to this user")
+            links = self._validate_bulk_links(link_ids, original_ids, netid, "owner", session)
+            timestamp = datetime.now(timezone.utc)
+            for link in links:
+                previous_owner = link["owner"]
+                update: Dict[str, Any] = {
+                    "$set": {"owner": owner},
+                    "$push": {
+                        "ownership_transfer_history": {
+                            "from": previous_owner,
+                            "to": owner,
+                            "timestamp": timestamp,
+                        }
+                    },
+                }
+                if owner["type"] == "org":
+                    update["$pull"] = {
+                        "editors": {"_id": owner["_id"]},
+                        "viewers": {"_id": owner["_id"]},
+                    }
+                elif previous_owner["type"] == "org":
+                    update["$addToSet"] = {
+                        "editors": previous_owner,
+                        "viewers": previous_owner,
+                    }
+                self.db.urls.update_one({"_id": link["_id"]}, update, session=session)
+
+        self._run_bulk_transaction(transaction)
+
+    def delete_bulk_transactional(
+        self,
+        link_ids: List[ObjectId],
+        original_ids: List[str],
+        netid: str,
+    ) -> None:
+        def transaction(session: ClientSession) -> None:
+            links = self._validate_bulk_links(link_ids, original_ids, netid, "owner", session)
+            result = self.db.urls.update_many(
+                {"_id": {"$in": [link["_id"] for link in links]}, "deleted": False},
+                {
+                    "$set": {
+                        "deleted": True,
+                        "deleted_by": netid,
+                        "deleted_time": datetime.now(timezone.utc),
+                    }
+                },
+                session=session,
+            )
+            if result.modified_count != len(links):
+                raise BulkLinkValidationError(original_ids)
+
+        self._run_bulk_transaction(transaction)
+
     def clear_visits(self, link_id: ObjectId) -> None:
         self.db.visits.delete_many({"link_id": link_id})
         self.db.urls.update_one({"_id": link_id}, {"$set": {"visits": 0, "unique_visits": 0}})
@@ -421,6 +615,20 @@ class LinksClient:
             },
         )
         if result.modified_count != 1:
+            raise NoSuchObjectException
+
+    def delete_bulk(self, link_ids: List[ObjectId], deleted_by: str) -> None:
+        result = self.db.urls.update_many(
+            {"_id": {"$in": link_ids}, "deleted": False},
+            {
+                "$set": {
+                    "deleted": True,
+                    "deleted_by": deleted_by,
+                    "deleted_time": datetime.now(timezone.utc),
+                }
+            },
+        )
+        if result.modified_count != len(link_ids):
             raise NoSuchObjectException
 
     def remove_expiration_time(self, link_id: ObjectId) -> None:

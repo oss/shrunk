@@ -42,6 +42,8 @@ export interface OrganizationLink extends Omit<Link, 'owner'> {
   };
   role: 'owner' | 'editor' | 'viewer';
   canEdit: boolean;
+  canDelete?: boolean;
+  canTransfer?: boolean;
 }
 
 export interface OrganizationStats {

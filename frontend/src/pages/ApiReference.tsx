@@ -214,8 +214,172 @@ function Collapse({
   );
 }
 
+type BulkOperationReferenceProps = {
+  apiUrl: string;
+  action: 'share' | 'transfer' | 'delete';
+};
+
+function BulkOperationReference({
+  apiUrl,
+  action,
+}: BulkOperationReferenceProps) {
+  const details = {
+    share: {
+      title: 'Share Links in Bulk',
+      description: 'Adds or removes a viewer or editor from multiple links',
+      endpoint: 'acl_bulk',
+      failureMessage: 'Unable to share one or more links.',
+      permission: 'The signed-in user must be able to edit every link.',
+      body: `{
+  "link_ids": ["<link_id>", "<link_id>"],
+  "entry": { "_id": "<netid_or_org_id>", "type": "netid" },
+  "acl": "viewers",
+  "action": "add"
+}`,
+    },
+    transfer: {
+      title: 'Transfer Links in Bulk',
+      description: 'Transfers multiple links to one user or organization',
+      endpoint: 'transfer_bulk',
+      failureMessage: 'Unable to transfer one or more links.',
+      permission: 'The signed-in user must own every link.',
+      body: `{
+  "link_ids": ["<link_id>", "<link_id>"],
+  "owner": { "_id": "<netid_or_org_id>", "type": "netid" }
+}`,
+    },
+    delete: {
+      title: 'Delete Links in Bulk',
+      description: 'Soft-deletes multiple links',
+      endpoint: 'delete_bulk',
+      failureMessage: 'Unable to delete one or more links.',
+      permission: 'The signed-in user must own every link.',
+      body: `{
+  "link_ids": ["<link_id>", "<link_id>"]
+}`,
+    },
+  }[action];
+
+  return (
+    <Typography>
+      <Typography.Title level={4}>{details.title}</Typography.Title>
+      <Typography.Title className="mt-4!" level={5}>
+        {details.description}
+      </Typography.Title>
+      <Typography.Paragraph className="mt-4!">
+        This endpoint requires an authenticated Shrunk web session. All links
+        are validated in one transaction before the operation is committed. If
+        any link is missing, deleted, or unauthorized, none of the selected
+        links are changed.
+      </Typography.Paragraph>
+      <Typography.Paragraph className="mt-4!">Request</Typography.Paragraph>
+      <Typography className="mt-4!">
+        <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
+          {`curl ${apiUrl}/${details.endpoint} \\
+  -X POST \\
+  -H "Content-Type: application/json" \\
+  -b "session=$SHRUNK_SESSION_COOKIE" \\
+  -d '${details.body}'`}
+        </Flex>
+      </Typography>
+      <Typography.Paragraph className="mt-4!">
+        Success response
+      </Typography.Paragraph>
+      <Typography.Paragraph code className="mt-3!">
+        204 No Content
+      </Typography.Paragraph>
+      <Typography.Paragraph className="mt-4!">
+        Validation or permission failure
+      </Typography.Paragraph>
+      <Typography className="mt-4!">
+        <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
+          {`HTTP 403
+{
+  "errors": ["${details.failureMessage}"],
+  "failed_ids": ["<link_id>", ...]
+}`}
+        </Flex>
+        <Typography.Title className="mt-4!" level={5}>
+          Body Parameters
+        </Typography.Title>
+        <Descriptions column={1} bordered={false} className="mt-4!">
+          <Descriptions.Item
+            label={
+              <Row gutter={8} align="middle" wrap={false}>
+                <Col>
+                  <Typography.Text code>link_ids</Typography.Text>
+                </Col>
+                <Col>
+                  <Typography.Text type="secondary">string[]</Typography.Text>
+                </Col>
+                <Col>
+                  <Typography.Text type="secondary">Required</Typography.Text>
+                </Col>
+              </Row>
+            }
+          >
+            A non-empty array of unique link IDs. {details.permission}
+          </Descriptions.Item>
+        </Descriptions>
+        {action === 'share' && (
+          <>
+            <Divider className="my-2 mt-4!" />
+            <Descriptions column={1} bordered={false} className="mt-4!">
+              <Descriptions.Item
+                label={<Typography.Text code>entry</Typography.Text>}
+              >
+                Required collaborator object with{' '}
+                <Typography.Text code>_id</Typography.Text> and{' '}
+                <Typography.Text code>type</Typography.Text> set to{' '}
+                <Typography.Text code>netid</Typography.Text> or{' '}
+                <Typography.Text code>org</Typography.Text>.
+              </Descriptions.Item>
+              <Descriptions.Item
+                label={<Typography.Text code>acl</Typography.Text>}
+              >
+                Required permission list:{' '}
+                <Typography.Text code>viewers</Typography.Text> or{' '}
+                <Typography.Text code>editors</Typography.Text>.
+              </Descriptions.Item>
+              <Descriptions.Item
+                label={<Typography.Text code>action</Typography.Text>}
+              >
+                Required operation: <Typography.Text code>add</Typography.Text>{' '}
+                or <Typography.Text code>remove</Typography.Text>.
+              </Descriptions.Item>
+            </Descriptions>
+          </>
+        )}
+        {action === 'transfer' && (
+          <>
+            <Divider className="my-2 mt-4!" />
+            <Descriptions column={1} bordered={false} className="mt-4!">
+              <Descriptions.Item
+                label={<Typography.Text code>owner</Typography.Text>}
+              >
+                Required destination object with{' '}
+                <Typography.Text code>_id</Typography.Text> and{' '}
+                <Typography.Text code>type</Typography.Text> set to{' '}
+                <Typography.Text code>netid</Typography.Text> or{' '}
+                <Typography.Text code>org</Typography.Text>. Organization
+                destinations must be available to the signed-in user.
+              </Descriptions.Item>
+            </Descriptions>
+          </>
+        )}
+        <Typography.Paragraph className="mt-4!">
+          Malformed requests, including empty or duplicate{' '}
+          <Typography.Text code>link_ids</Typography.Text>, return{' '}
+          <Typography.Text code>400 Bad Request</Typography.Text>.
+        </Typography.Paragraph>
+      </Typography>
+    </Typography>
+  );
+}
+
 export default function ApiReference() {
   const apiUrl = `${window.location.origin}/api/v1`;
+  const coreLinkApiUrl = `${window.location.origin}/api/core/link`;
   const items: ApiReferenceItem[] = [
     {
       key: '1',
@@ -651,6 +815,27 @@ export default function ApiReference() {
             </Descriptions>
           </Typography>
         </Typography>
+      ),
+    },
+    {
+      key: 'links-bulk-share',
+      label: 'POST /api/core/link/acl_bulk',
+      children: (
+        <BulkOperationReference apiUrl={coreLinkApiUrl} action="share" />
+      ),
+    },
+    {
+      key: 'links-bulk-transfer',
+      label: 'POST /api/core/link/transfer_bulk',
+      children: (
+        <BulkOperationReference apiUrl={coreLinkApiUrl} action="transfer" />
+      ),
+    },
+    {
+      key: 'links-bulk-delete',
+      label: 'POST /api/core/link/delete_bulk',
+      children: (
+        <BulkOperationReference apiUrl={coreLinkApiUrl} action="delete" />
       ),
     },
     {

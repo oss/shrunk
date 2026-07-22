@@ -160,7 +160,9 @@ def post_search_urls(netid: str, client: ShrunkClient, req: Any) -> Any:
             "deletion_info?": {
               "deleted_by": "string",
               "deleted_time": "date-time"
-            }
+            },
+            "editors": [ {"_id": "string", "type": "netid" | "org"} ],
+            "viewers": [ {"_id": "string", "type": "netid" | "org"} ]
           } ]
        }
 

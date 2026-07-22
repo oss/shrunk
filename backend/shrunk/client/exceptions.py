@@ -12,6 +12,7 @@ __all__ = [
     "NotUserOrOrg",
     "LinkIsPendingOrRejected",
     "OrgOwnedLinkNotSupported",
+    "BulkLinkValidationError",
 ]
 
 
@@ -21,6 +22,14 @@ class ShrunkException(Exception):
 
 class NoSuchObjectException(ShrunkException):
     """Raised when the requested object does not exist."""
+
+
+class BulkLinkValidationError(ShrunkException):
+    """Raised when one or more links make a bulk operation invalid."""
+
+    def __init__(self, failed_ids: list[str]):
+        super().__init__("Unable to modify one or more links.")
+        self.failed_ids = failed_ids
 
 
 class BadAliasException(ShrunkException):

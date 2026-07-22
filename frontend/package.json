@@ -38,7 +38,7 @@
     "history": "^5.0.0",
     "lucide-react": "^0.477.0",
     "markdown-to-jsx": "^9.8.2",
-    "motion": "^12.40.0",
+    "motion": "^12.42.2",
     "postcss": "^8.5.1",
     "qrcode.react": "^4.2.0",
     "react": "^18.3.1",

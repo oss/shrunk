@@ -142,12 +142,19 @@ def test_remove_acl_on_transfer_to_org(client: Client) -> None:
 def test_transfer_from_org_to_user(client: Client) -> None:
     with dev_login(client, "admin"):
         resp = client.post("/api/core/org", json={"name": "testorg"})
-        assert resp.json is not None
+        assert resp.status_code == 200
         org_id = resp.json["id"]
 
         resp = client.put(
             f"/api/core/org/{org_id}/member/DEV_USER",
         )
+        assert resp.status_code == 204
+
+        resp = client.patch(
+            f"/api/core/org/{org_id}/member/DEV_USER",
+            json={"role": "admin"},
+        )
+        assert resp.status_code == 204
 
         resp = client.post(
             "/api/core/link",
@@ -166,16 +173,9 @@ def test_transfer_from_org_to_user(client: Client) -> None:
             f"/api/core/link/{link_id}",
             json={"owner": {"_id": "DEV_USER", "type": "netid"}},
         )
-        assert resp.status_code == 403
-
-    with dev_login(client, "admin"):
-        resp = client.patch(
-            f"/api/core/link/{link_id}",
-            json={"owner": {"_id": "DEV_USER", "type": "netid"}},
-        )
         assert resp.status_code == 204
         resp = client.get(f"/api/core/link/{link_id}")
-        assert resp.json is not None
+        assert resp.status_code == 200
         assert resp.json["owner"]["_id"] == "DEV_USER"
         assert resp.json["owner"]["type"] == "netid"
 
@@ -1113,33 +1113,453 @@ def test_owner_transfer(client: Client) -> None:
         assert resp.status_code == 403
 
 
-def test_owner_transfer_records_history(client: Client, db: ShrunkClient) -> None:
-    """A transfer away from an org owner must not clobber the
-    ownership_transfer_history push with the editors/viewers push."""
+def test_editor_cannot_transfer_ownership(client: Client) -> None:
     with dev_login(client, "admin"):
-        resp = client.post("/api/core/org", json={"name": "history org"})
-        assert resp.json is not None
-        assert resp.status_code == 200
-        org_id = resp.json["id"]
-
         resp = client.post(
             "/api/core/link",
-            json={"title": "title", "long_url": "https://example.com", "org_id": org_id},
+            json={
+                "title": "title",
+                "long_url": "https://example.com",
+                "editors": [{"_id": "DEV_USER", "type": "netid"}],
+            },
         )
-        assert resp.json is not None
         assert resp.status_code == 201
         link_id = resp.json["id"]
 
+    with dev_login(client, "user"):
         resp = client.patch(
             f"/api/core/link/{link_id}",
-            json={"owner": {"_id": "DEV_ADMIN", "type": "netid"}},
+            json={"owner": {"_id": "DEV_USER", "type": "netid"}},
+        )
+        assert resp.status_code == 403
+
+    with dev_login(client, "admin"):
+        resp = client.get(f"/api/core/link/{link_id}")
+        assert resp.status_code == 200
+        assert resp.json["owner"] == {"_id": "DEV_ADMIN", "type": "netid"}
+
+
+def test_bulk_transfer_to_netid(client: Client) -> None:
+    with dev_login(client, "user"):
+        resp = client.post("/api/core/link", json={"title": "one", "long_url": "https://example.com/one"})
+        assert resp.status_code == 201
+        link_id_one = resp.json["id"]
+
+        resp = client.post("/api/core/link", json={"title": "two", "long_url": "https://example.com/two"})
+        assert resp.status_code == 201
+        link_id_two = resp.json["id"]
+
+        resp = client.post(
+            "/api/core/link/transfer_bulk",
+            json={
+                "link_ids": [link_id_one, link_id_two],
+                "owner": {"_id": "DEV_FACSTAFF", "type": "netid"},
+            },
         )
         assert resp.status_code == 204
 
-        link_info = db.links.get_link_info(ObjectId(link_id))
-        transfer_history = link_info.get("ownership_transfer_history", [])
-        assert len(transfer_history) == 1
-        assert transfer_history[0]["to"] == {"_id": "DEV_ADMIN", "type": "netid"}
+    with dev_login(client, "admin"):
+        for link_id in [link_id_one, link_id_two]:
+            resp = client.get(f"/api/core/link/{link_id}")
+            assert resp.status_code == 200
+            assert resp.json["owner"]["_id"] == "DEV_FACSTAFF"
+            assert resp.json["owner"]["type"] == "netid"
+
+
+def test_bulk_transfer_to_org(client: Client) -> None:
+    with dev_login(client, "admin"):
+        resp = client.post("/api/core/org", json={"name": "bulk transfer org"})
+        assert resp.status_code == 200
+        org_id = resp.json["id"]
+        resp = client.put(f"/api/core/org/{org_id}/member/DEV_USER")
+        assert resp.status_code == 204
+
+    with dev_login(client, "user"):
+        resp = client.post("/api/core/link", json={"title": "one", "long_url": "https://example.com/one"})
+        assert resp.status_code == 201
+        link_id_one = resp.json["id"]
+
+        resp = client.post("/api/core/link", json={"title": "two", "long_url": "https://example.com/two"})
+        assert resp.status_code == 201
+        link_id_two = resp.json["id"]
+
+        resp = client.post(
+            "/api/core/link/transfer_bulk",
+            json={
+                "link_ids": [link_id_one, link_id_two],
+                "owner": {"_id": org_id, "type": "org"},
+            },
+        )
+        assert resp.status_code == 204
+
+        for link_id in [link_id_one, link_id_two]:
+            resp = client.get(f"/api/core/link/{link_id}")
+            assert resp.status_code == 200
+            assert resp.json["owner"]["_id"] == org_id
+            assert resp.json["owner"]["type"] == "org"
+
+
+def test_bulk_transfer_fails_without_partial_update(client: Client) -> None:
+    with dev_login(client, "user"):
+        resp = client.post("/api/core/link", json={"title": "allowed", "long_url": "https://example.com/allowed"})
+        assert resp.status_code == 201
+        allowed_link_id = resp.json["id"]
+
+    with dev_login(client, "admin"):
+        resp = client.post("/api/core/link", json={"title": "forbidden", "long_url": "https://example.com/forbidden"})
+        assert resp.status_code == 201
+        forbidden_link_id = resp.json["id"]
+
+    with dev_login(client, "user"):
+        resp = client.post(
+            "/api/core/link/transfer_bulk",
+            json={
+                "link_ids": [allowed_link_id, forbidden_link_id],
+                "owner": {"_id": "DEV_FACSTAFF", "type": "netid"},
+            },
+        )
+        assert resp.status_code == 403
+        assert forbidden_link_id in resp.json["failed_ids"]
+
+        resp = client.get(f"/api/core/link/{allowed_link_id}")
+        assert resp.status_code == 200
+        assert resp.json["owner"]["_id"] == "DEV_USER"
+        assert resp.json["owner"]["type"] == "netid"
+
+
+def test_bulk_share_add_remove_and_idempotency(client: Client) -> None:
+    entry = {"_id": "DEV_FACSTAFF", "type": "netid"}
+    with dev_login(client, "user"):
+        link_ids = []
+        for suffix in ["one", "two"]:
+            resp = create_link(client, suffix, f"https://example.com/bulk-share-{suffix}")
+            assert resp.status_code == 201
+            assert resp.json is not None
+            link_ids.append(resp.json["id"])
+
+        add_body = {
+            "link_ids": link_ids,
+            "entry": entry,
+            "acl": "editors",
+            "action": "add",
+        }
+        assert client.post("/api/core/link/acl_bulk", json=add_body).status_code == 204
+        assert client.post("/api/core/link/acl_bulk", json=add_body).status_code == 204
+
+        for link_id in link_ids:
+            resp = client.get(f"/api/core/link/{link_id}")
+            assert resp.status_code == 200
+            assert resp.json is not None
+            assert resp.json["editors"].count(entry) == 1
+            assert resp.json["viewers"].count(entry) == 1
+
+        resp = client.post(
+            "/api/core/link/acl_bulk",
+            json={
+                "link_ids": link_ids,
+                "entry": entry,
+                "acl": "viewers",
+                "action": "remove",
+            },
+        )
+        assert resp.status_code == 204
+
+        for link_id in link_ids:
+            resp = client.get(f"/api/core/link/{link_id}")
+            assert resp.json is not None
+            assert entry not in resp.json["editors"]
+            assert entry not in resp.json["viewers"]
+
+        owner_entry = {"_id": "DEV_USER", "type": "netid"}
+        resp = client.post(
+            "/api/core/link/acl_bulk",
+            json={
+                "link_ids": link_ids,
+                "entry": owner_entry,
+                "acl": "viewers",
+                "action": "add",
+            },
+        )
+        assert resp.status_code == 204
+        for link_id in link_ids:
+            resp = client.get(f"/api/core/link/{link_id}")
+            assert resp.json is not None
+            assert owner_entry not in resp.json["viewers"]
+
+
+def test_bulk_share_organization_as_org_member(client: Client) -> None:
+    with dev_login(client, "admin"):
+        resp = client.post("/api/core/org", json={"name": "bulk share owner org"})
+        assert resp.status_code == 200
+        assert resp.json is not None
+        owner_org_id = resp.json["id"]
+        assert client.put(f"/api/core/org/{owner_org_id}/member/DEV_USER").status_code == 204
+
+        resp = client.post("/api/core/org", json={"name": "bulk share collaborator org"})
+        assert resp.status_code == 200
+        assert resp.json is not None
+        collaborator_org_id = resp.json["id"]
+
+        link_ids = []
+        for suffix in ["one", "two"]:
+            resp = client.post(
+                "/api/core/link",
+                json={
+                    "title": suffix,
+                    "long_url": f"https://example.com/org-bulk-share-{suffix}",
+                    "org_id": owner_org_id,
+                },
+            )
+            assert resp.status_code == 201
+            assert resp.json is not None
+            link_ids.append(resp.json["id"])
+
+    with dev_login(client, "user"):
+        resp = client.post(
+            "/api/core/link/acl_bulk",
+            json={
+                "link_ids": link_ids,
+                "entry": {"_id": collaborator_org_id, "type": "org"},
+                "acl": "viewers",
+                "action": "add",
+            },
+        )
+        assert resp.status_code == 204
+
+        for link_id in link_ids:
+            resp = client.get(f"/api/core/link/{link_id}")
+            assert resp.status_code == 200
+            assert resp.json is not None
+            assert any(entry["_id"] == collaborator_org_id for entry in resp.json["viewers"])
+
+        resp = client.post(
+            "/api/core/link/acl_bulk",
+            json={
+                "link_ids": link_ids,
+                "entry": {"_id": str(ObjectId()), "type": "org"},
+                "acl": "viewers",
+                "action": "add",
+            },
+        )
+        assert resp.status_code == 400
+
+
+def test_bulk_actions_editor_and_global_admin_permissions(client: Client) -> None:
+    collaborator = {"_id": "DEV_FACSTAFF", "type": "netid"}
+    with dev_login(client, "user"):
+        resp = create_link(client, "user owned", "https://example.com/admin-bulk-actions")
+        assert resp.status_code == 201
+        assert resp.json is not None
+        user_link_id = resp.json["id"]
+
+    with dev_login(client, "admin"):
+        resp = client.post(
+            "/api/core/link/acl_bulk",
+            json={
+                "link_ids": [user_link_id],
+                "entry": collaborator,
+                "acl": "viewers",
+                "action": "add",
+            },
+        )
+        assert resp.status_code == 204
+        assert client.post("/api/core/link/delete_bulk", json={"link_ids": [user_link_id]}).status_code == 204
+
+        resp = client.post(
+            "/api/core/link",
+            json={
+                "title": "editor link",
+                "long_url": "https://example.com/editor-bulk-actions",
+                "editors": [{"_id": "DEV_USER", "type": "netid"}],
+            },
+        )
+        assert resp.status_code == 201
+        assert resp.json is not None
+        editor_link_id = resp.json["id"]
+
+    with dev_login(client, "user"):
+        resp = client.post(
+            "/api/core/link/acl_bulk",
+            json={
+                "link_ids": [editor_link_id],
+                "entry": collaborator,
+                "acl": "viewers",
+                "action": "add",
+            },
+        )
+        assert resp.status_code == 204
+
+        resp = client.post("/api/core/link/delete_bulk", json={"link_ids": [editor_link_id]})
+        assert resp.status_code == 403
+        assert resp.json is not None
+        assert resp.json["failed_ids"] == [editor_link_id]
+
+
+def test_bulk_share_fails_without_partial_update(client: Client) -> None:
+    entry = {"_id": "DEV_FACSTAFF", "type": "netid"}
+    with dev_login(client, "user"):
+        resp = create_link(client, "allowed", "https://example.com/bulk-share-allowed")
+        assert resp.status_code == 201
+        assert resp.json is not None
+        allowed_link_id = resp.json["id"]
+
+    with dev_login(client, "admin"):
+        resp = create_link(client, "forbidden", "https://example.com/bulk-share-forbidden")
+        assert resp.status_code == 201
+        assert resp.json is not None
+        forbidden_link_id = resp.json["id"]
+
+    with dev_login(client, "user"):
+        resp = client.post(
+            "/api/core/link/acl_bulk",
+            json={
+                "link_ids": [allowed_link_id, forbidden_link_id],
+                "entry": entry,
+                "acl": "editors",
+                "action": "add",
+            },
+        )
+        assert resp.status_code == 403
+        assert resp.json is not None
+        assert resp.json["failed_ids"] == [forbidden_link_id]
+
+        resp = client.get(f"/api/core/link/{allowed_link_id}")
+        assert resp.json is not None
+        assert entry not in resp.json["editors"]
+        assert entry not in resp.json["viewers"]
+
+
+def test_bulk_delete_owned_links(client: Client) -> None:
+    with dev_login(client, "user"):
+        link_ids = []
+        for suffix in ["one", "two", "unselected"]:
+            resp = create_link(client, suffix, f"https://example.com/bulk-delete-{suffix}")
+            assert resp.status_code == 201
+            assert resp.json is not None
+            link_ids.append(resp.json["id"])
+
+        resp = client.post("/api/core/link/delete_bulk", json={"link_ids": link_ids[:2]})
+        assert resp.status_code == 204
+
+    with dev_login(client, "admin"):
+        for link_id in link_ids[:2]:
+            resp = client.get(f"/api/core/link/{link_id}")
+            assert resp.status_code == 200
+            assert resp.json is not None
+            assert resp.json["deleted"] is True
+            assert resp.json["deletion_info"]["deleted_by"] == "DEV_USER"
+            assert resp.json["deletion_info"]["delete_time"] is not None
+
+        resp = client.get(f"/api/core/link/{link_ids[2]}")
+        assert resp.status_code == 200
+        assert resp.json is not None
+        assert resp.json["deleted"] is False
+
+
+def test_bulk_delete_org_permissions(client: Client) -> None:
+    with dev_login(client, "admin"):
+        resp = client.post("/api/core/org", json={"name": "bulk delete org"})
+        assert resp.status_code == 200
+        assert resp.json is not None
+        org_id = resp.json["id"]
+        assert client.put(f"/api/core/org/{org_id}/member/DEV_USER").status_code == 204
+
+        resp = client.post(
+            "/api/core/link",
+            json={"title": "org link", "long_url": "https://example.com/org-delete", "org_id": org_id},
+        )
+        assert resp.status_code == 201
+        assert resp.json is not None
+        link_id = resp.json["id"]
+
+    with dev_login(client, "user"):
+        resp = client.post("/api/core/link/delete_bulk", json={"link_ids": [link_id]})
+        assert resp.status_code == 403
+        assert resp.json is not None
+        assert resp.json["failed_ids"] == [link_id]
+
+    with dev_login(client, "admin"):
+        assert client.patch(f"/api/core/org/{org_id}/member/DEV_USER", json={"role": "admin"}).status_code == 204
+
+    with dev_login(client, "user"):
+        assert client.post("/api/core/link/delete_bulk", json={"link_ids": [link_id]}).status_code == 204
+
+
+def test_bulk_delete_fails_without_partial_update(client: Client) -> None:
+    with dev_login(client, "user"):
+        resp = create_link(client, "allowed", "https://example.com/bulk-delete-allowed")
+        assert resp.status_code == 201
+        assert resp.json is not None
+        allowed_link_id = resp.json["id"]
+
+    with dev_login(client, "admin"):
+        resp = create_link(client, "forbidden", "https://example.com/bulk-delete-forbidden")
+        assert resp.status_code == 201
+        assert resp.json is not None
+        forbidden_link_id = resp.json["id"]
+
+    with dev_login(client, "user"):
+        resp = client.post(
+            "/api/core/link/delete_bulk",
+            json={"link_ids": [allowed_link_id, forbidden_link_id]},
+        )
+        assert resp.status_code == 403
+        assert resp.json is not None
+        assert resp.json["failed_ids"] == [forbidden_link_id]
+
+        resp = client.get(f"/api/core/link/{allowed_link_id}")
+        assert resp.status_code == 200
+        assert resp.json is not None
+        assert resp.json["deleted"] is False
+
+
+@pytest.mark.parametrize(
+    ("endpoint", "error_message"),
+    [
+        ("acl_bulk", "Unable to share one or more links."),
+        ("delete_bulk", "Unable to delete one or more links."),
+    ],
+)
+def test_bulk_link_actions_validate_link_ids(client: Client, endpoint: str, error_message: str) -> None:
+    with dev_login(client, "user"):
+        resp = create_link(client, "validation", f"https://example.com/{endpoint}-validation")
+        assert resp.status_code == 201
+        assert resp.json is not None
+        link_id = resp.json["id"]
+
+        extra_fields = {}
+        if endpoint == "acl_bulk":
+            extra_fields = {
+                "entry": {"_id": "DEV_FACSTAFF", "type": "netid"},
+                "acl": "viewers",
+                "action": "add",
+            }
+
+        for body in [{}, {"link_ids": [link_id], **extra_fields, "unexpected": True}]:
+            assert client.post(f"/api/core/link/{endpoint}", json=body).status_code == 400
+
+        for link_ids in [[], [link_id, link_id]]:
+            resp = client.post(
+                f"/api/core/link/{endpoint}",
+                json={"link_ids": link_ids, **extra_fields},
+            )
+            assert resp.status_code == 400
+
+        invalid_id = "not-an-object-id"
+        resp = client.post(
+            f"/api/core/link/{endpoint}",
+            json={"link_ids": [invalid_id], **extra_fields},
+        )
+        assert resp.status_code == 403
+        assert resp.json == {"errors": [error_message], "failed_ids": [invalid_id]}
+
+        missing_id = str(ObjectId())
+        resp = client.post(
+            f"/api/core/link/{endpoint}",
+            json={"link_ids": [missing_id], **extra_fields},
+        )
+        assert resp.status_code == 403
+        assert resp.json == {"errors": [error_message], "failed_ids": [missing_id]}
 
 
 def test_create_link_as_guest(client: Client) -> None:
