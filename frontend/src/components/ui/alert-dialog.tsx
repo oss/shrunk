@@ -1,14 +1,41 @@
 import * as React from 'react';
 import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog';
+import { motion } from 'motion/react';
 
 import { buttonVariants } from '@/components/ui/button';
 import {
-  modalContentAnimationClass,
-  modalOverlayAnimationClass,
+  modalContentMotionProps,
+  modalOverlayMotionProps,
 } from '@/lib/modal-animations';
 import { cn } from '@/lib/utils';
 
-const AlertDialog = AlertDialogPrimitive.Root;
+const MotionAlertDialogContent = motion.create(AlertDialogPrimitive.Content);
+const MotionAlertDialogOverlay = motion.create(AlertDialogPrimitive.Overlay);
+
+const AlertDialogOpenContext = React.createContext(false);
+
+const AlertDialog = ({
+  open: controlledOpen,
+  defaultOpen = false,
+  onOpenChange,
+  ...props
+}: React.ComponentProps<typeof AlertDialogPrimitive.Root>) => {
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(defaultOpen);
+  const open = controlledOpen ?? uncontrolledOpen;
+
+  return (
+    <AlertDialogOpenContext.Provider value={open}>
+      <AlertDialogPrimitive.Root
+        {...props}
+        open={open}
+        onOpenChange={(nextOpen) => {
+          if (controlledOpen === undefined) setUncontrolledOpen(nextOpen);
+          onOpenChange?.(nextOpen);
+        }}
+      />
+    </AlertDialogOpenContext.Provider>
+  );
+};
 
 const AlertDialogTrigger = AlertDialogPrimitive.Trigger;
 
@@ -18,14 +45,12 @@ const AlertDialogOverlay = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Overlay>
 >(({ className, ...props }, ref) => (
-  <AlertDialogPrimitive.Overlay
+  <MotionAlertDialogOverlay
     ref={ref}
-    className={cn(
-      'fixed inset-0 z-50 bg-black/80',
-      modalOverlayAnimationClass,
-      className,
-    )}
-    {...props}
+    className={cn('fixed inset-0 z-50 bg-black/80', className)}
+    {...modalOverlayMotionProps}
+    animate={React.useContext(AlertDialogOpenContext) ? 'open' : 'closed'}
+    {...(props as React.ComponentProps<typeof MotionAlertDialogOverlay>)}
   />
 ));
 AlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName;
@@ -33,20 +58,36 @@ AlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName;
 const AlertDialogContent = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
->(({ className, ...props }, ref) => (
-  <AlertDialogPortal>
-    <AlertDialogOverlay />
-    <AlertDialogPrimitive.Content
-      ref={ref}
-      className={cn(
-        'fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 rounded-md border border-border bg-muted p-6 text-foreground shadow-none',
-        modalContentAnimationClass,
-        className,
-      )}
-      {...props}
-    />
-  </AlertDialogPortal>
-));
+>(({ className, ...props }, ref) => {
+  const open = React.useContext(AlertDialogOpenContext);
+  const [shouldRender, setShouldRender] = React.useState(open);
+
+  React.useEffect(() => {
+    if (open) setShouldRender(true);
+  }, [open]);
+
+  if (!shouldRender) return null;
+
+  return (
+    <AlertDialogPortal forceMount>
+      <AlertDialogOverlay forceMount />
+      <MotionAlertDialogContent
+        ref={ref}
+        forceMount
+        className={cn(
+          'fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 rounded-md border border-border bg-muted p-6 text-foreground shadow-none',
+          className,
+        )}
+        {...modalContentMotionProps}
+        animate={open ? 'open' : 'closed'}
+        onAnimationComplete={() => {
+          if (!open) setShouldRender(false);
+        }}
+        {...(props as React.ComponentProps<typeof MotionAlertDialogContent>)}
+      />
+    </AlertDialogPortal>
+  );
+});
 AlertDialogContent.displayName = AlertDialogPrimitive.Content.displayName;
 
 const AlertDialogHeader = ({
