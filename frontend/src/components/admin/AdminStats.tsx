@@ -1,7 +1,12 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
-import Highcharts from 'highcharts';
-import HighchartsReact from 'highcharts-react-official';
+import { Bar, BarChart, XAxis, YAxis } from 'recharts';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from '@/components/ui/chart';
 
 import { getEndpointData, getShrunkVersion } from '@/api/app';
 import { AdminStatsData, EndpointDatum } from '@/interfaces/app';
@@ -12,11 +17,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { adminSurfaceClass } from '@/lib/admin-styles';
-import { DarkModeContext } from '@/contexts/DarkModeContext';
 
 export default function AdminStats(): React.ReactElement {
-  const darkModeContext = useContext(DarkModeContext);
-  const darkMode = darkModeContext?.darkMode ?? false;
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -67,127 +69,28 @@ export default function AdminStats(): React.ReactElement {
     return <></>;
   }
 
-  const axisLabelColor = darkMode ? '#d9d9d9' : '#64748b';
-  const axisTitleColor = darkMode ? '#f5f5f5' : '#0f172a';
-  const gridLineColor = darkMode ? '#434343' : '#e2e8f0';
-  const legendTextColor = darkMode ? '#f5f5f5' : '#0f172a';
-  const tooltipBackgroundColor = darkMode ? '#262626' : '#ffffff';
-  const tooltipTextColor = darkMode ? '#f5f5f5' : '#0f172a';
-  const tooltipBorderColor = darkMode ? gridLineColor : '#cbd5e1';
+  const chartConfig = {
+    total: {
+      label: 'Total visits',
+      theme: { light: '#ea580c', dark: '#fb923c' },
+    },
+    unique: {
+      label: 'Unique visits',
+      theme: { light: '#2563eb', dark: '#60a5fa' },
+    },
+  } satisfies ChartConfig;
 
-  const options = {
-    chart: {
-      type: 'bar',
-      height: Math.max(endpointData.length * 30, 320),
-      backgroundColor: 'transparent',
-      plotBackgroundColor: 'transparent',
-    },
-    plotOptions: {
-      bar: {
-        borderWidth: 0,
-        borderColor: 'transparent',
-        states: {
-          hover: {
-            animation: {
-              duration: 300,
-            },
-            brightness: 0,
-          },
-        },
-      },
-      series: {
-        states: {
-          inactive: {
-            animation: {
-              duration: 300,
-            },
-            opacity: 0,
-          },
-        },
-      },
-    },
-    title: {
-      text: 'Endpoint visits',
-      style: {
-        color: axisTitleColor,
-        fontSize: '18px',
-        fontWeight: '700',
-      },
-    },
-    xAxis: {
-      categories: endpointData.map((datum) => datum.endpoint),
-      title: {
-        text: 'Endpoint',
-        style: { color: axisTitleColor, fontWeight: '600' },
-      },
-      gridLineColor,
-      lineColor: gridLineColor,
-      tickColor: gridLineColor,
-      labels: {
-        style: { fontSize: '11px', color: axisLabelColor },
-      },
-    },
-    yAxis: {
-      min: 0,
-      title: {
-        text: 'Visits',
-        style: { color: axisTitleColor, fontWeight: '600' },
-      },
-      gridLineColor,
-      labels: {
-        overflow: 'justify',
-        step: 4,
-        style: { color: axisLabelColor },
-      },
-    },
-    tooltip: {
-      backgroundColor: tooltipBackgroundColor,
-      borderColor: tooltipBorderColor,
-      style: { color: tooltipTextColor },
-    },
-    legend: {
-      layout: 'vertical',
-      align: 'right',
-      verticalAlign: 'top',
-      x: -40,
-      y: 42,
-      borderWidth: 1,
-      borderColor: darkMode ? '#707070' : '#cbd5e1',
-      backgroundColor: 'transparent',
-      itemStyle: { color: legendTextColor },
-      itemHoverStyle: { color: legendTextColor },
-    },
-    responsive: {
-      rules: [
-        {
-          condition: { maxWidth: 768 },
-          chartOptions: {
-            chart: {
-              height: Math.max(endpointData.length * 22, 260),
-            },
-            legend: {
-              enabled: false,
-            },
-            yAxis: {
-              labels: { step: 2 },
-            },
-          },
-        },
-      ],
-    },
-    series: [
-      {
-        name: 'Total visits',
-        color: '#fc580c',
-        data: endpointData.map((datum) => datum.total_visits),
-      },
-      {
-        name: 'Unique visits',
-        color: '#fce2cc',
-        data: endpointData.map((datum) => datum.unique_visits),
-      },
-    ],
-  };
+  const chartData = endpointData.map((datum) => ({
+    endpoint: datum.endpoint,
+    total: datum.total_visits,
+    unique: datum.unique_visits,
+  }));
+  const yAxisWidth = Math.max(
+    80,
+    ...chartData.map(({ endpoint }) => endpoint.length * 7 + 16),
+  );
+  const chartHeight = Math.max(chartData.length * 32, 400);
+  const chartMinWidth = yAxisWidth + 500;
 
   const mobileEndpointRows = [...endpointData]
     .sort((a, b) => b.total_visits - a.total_visits)
@@ -258,7 +161,33 @@ export default function AdminStats(): React.ReactElement {
         </div>
       ) : (
         <div className={`${adminSurfaceClass} overflow-x-auto px-6 py-6`}>
-          <HighchartsReact highcharts={Highcharts} options={options} />
+          <ChartContainer
+            config={chartConfig}
+            className="aspect-auto"
+            style={{ height: chartHeight, minWidth: chartMinWidth }}
+          >
+            <BarChart
+              accessibilityLayer
+              data={chartData}
+              layout="vertical"
+              margin={{ left: 8, right: 16 }}
+            >
+              <XAxis type="number" />
+              <YAxis
+                type="category"
+                dataKey="endpoint"
+                width={yAxisWidth}
+                interval={0}
+                tick={{ fontSize: 12 }}
+              />
+              <Bar dataKey="total" fill="var(--color-total)" radius={4} />
+              <Bar dataKey="unique" fill="var(--color-unique)" radius={4} />
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent hideLabel />}
+              />
+            </BarChart>
+          </ChartContainer>
         </div>
       )}
     </div>

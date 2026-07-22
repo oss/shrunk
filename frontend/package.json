@@ -33,8 +33,6 @@
     "dayjs": "^1.11.21",
     "fuse.js": "^7.3.0",
     "hi-base32": "^0.5.0",
-    "highcharts": "^9.0.0",
-    "highcharts-react-official": "^3.0.0",
     "history": "^5.0.0",
     "lucide-react": "^0.477.0",
     "markdown-to-jsx": "^9.8.2",
