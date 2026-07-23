@@ -474,7 +474,7 @@ def modify_acl_bulk(netid: str, client: ShrunkClient, req: Any) -> Any:
     try:
         if req["entry"]["type"] == "org":
             req["entry"]["_id"] = ObjectId(req["entry"]["_id"])
-    except bson.errors.InvalidId as e:
+    except bson.errors.InvalidId:
         abort(400)
 
     try:

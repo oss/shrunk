@@ -1140,6 +1140,19 @@ wheels = [
 ]
 
 [[package]]
+name = "pymongo-migrate"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "click" },
+    { name = "pymongo" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b0/c6/57e64aa7f13e046e9b38897ae743930d455ad40625df25bcd0f3c8d4b5f0/pymongo-migrate-1.0.0.tar.gz", hash = "sha256:7021abd27c42dbc991adc667694c9dc89f22c9d9c4d191d0dd684f05d56798f6", size = 15249, upload-time = "2023-06-30T07:55:35.715Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/03/d7/e3fe8d07b85f31e8304c8723f03003dfcac5c68b6505cdb379418a08f5b1/pymongo_migrate-1.0.0-py3-none-any.whl", hash = "sha256:7b5303233ce7fab35618239f4737287185ec2abf10b5cdacf3c80ec88a09eac2", size = 13691, upload-time = "2023-06-30T07:55:34.202Z" },
+]
+
+[[package]]
 name = "pytest"
 version = "9.0.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1376,6 +1389,7 @@ dependencies = [
     { name = "mkdocs" },
     { name = "pillow" },
     { name = "pymongo" },
+    { name = "pymongo-migrate" },
     { name = "python-ldap" },
     { name = "requests" },
     { name = "segno" },
@@ -1422,6 +1436,7 @@ requires-dist = [
     { name = "mkdocs", specifier = ">=1.6.1" },
     { name = "pillow", specifier = ">=12.2.0" },
     { name = "pymongo", specifier = ">=4.16.0" },
+    { name = "pymongo-migrate", specifier = ">=1.0.0" },
     { name = "python-ldap", specifier = ">=3.4.4,<4" },
     { name = "requests", specifier = ">=2.33.1" },
     { name = "segno", specifier = ">=1.6.1,<2" },

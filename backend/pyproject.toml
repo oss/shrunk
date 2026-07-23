@@ -43,7 +43,8 @@ dependencies = [
     "argon2-cffi>=25.1.0",
     "MarkupSafe>=3.0.3",
     "mkdocs>=1.6.1",
-    "uwsgi>=2.0.31"
+    "uwsgi>=2.0.31",
+    "pymongo-migrate>=1.0.0",
 ]
 
 [project.urls]
