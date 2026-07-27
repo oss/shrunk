@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import { cn } from '@/lib/utils';
 import {
   ChartLineIcon,
   CodeIcon,
@@ -333,6 +334,18 @@ function ManageOrgBase({
               value="overview"
               className={`${adminSectionTopClass} focus-visible:ring-0`}
             >
+              <div>
+                <CompactLinkTable
+                  org_id={organization.id}
+                  forceRefresh={forceRefresh}
+                  isAdmin={isAdmin}
+                />
+              </div>
+            </TabsContent>
+            <TabsContent
+              value="members"
+              className={`${adminSectionTopClass} focus-visible:ring-0`}
+            >
               <div className="grid gap-4 xl:grid-cols-[18rem_minmax(0,1fr)] xl:items-start">
                 <div className="min-w-0">
                   <OrgOverview
@@ -342,91 +355,79 @@ function ManageOrgBase({
                     orientation="stacked"
                   />
                 </div>
-                <div className="min-w-0">
-                  <CompactLinkTable
-                    org_id={organization.id}
-                    forceRefresh={forceRefresh}
-                    isAdmin={isAdmin}
-                  />
-                </div>
-              </div>
-            </TabsContent>
-            <TabsContent
-              value="members"
-              className={`${adminSectionTopClass} focus-visible:ring-0`}
-            >
-              <div className={adminTableWrapperClass}>
-                <Table>
-                  <TableHeader className="bg-muted dark:bg-[#2a2a2a]">
-                    <TableRow className="border-b border-border hover:bg-transparent dark:border-white/10">
-                      <TableHead
-                        className={`${adminTableHeadClass} ${adminTableHeadDividerClass}`}
-                      >
-                        Member
-                      </TableHead>
-                      {isAdmin && (
+                <div className={cn(adminTableWrapperClass, 'min-w-0')}>
+                  <Table>
+                    <TableHeader className="bg-muted dark:bg-[#2a2a2a]">
+                      <TableRow className="border-b border-border hover:bg-transparent dark:border-white/10">
                         <TableHead
                           className={`${adminTableHeadClass} ${adminTableHeadDividerClass}`}
                         >
-                          Total Visits
+                          Member
                         </TableHead>
-                      )}
-                      {isAdmin && (
+                        {isAdmin && (
+                          <TableHead
+                            className={`${adminTableHeadClass} ${adminTableHeadDividerClass}`}
+                          >
+                            Total Visits
+                          </TableHead>
+                        )}
+                        {isAdmin && (
+                          <TableHead
+                            className={`${adminTableHeadClass} ${adminTableHeadDividerClass}`}
+                          >
+                            Unique Visits
+                          </TableHead>
+                        )}
                         <TableHead
                           className={`${adminTableHeadClass} ${adminTableHeadDividerClass}`}
                         >
-                          Unique Visits
+                          Role
                         </TableHead>
-                      )}
-                      <TableHead
-                        className={`${adminTableHeadClass} ${adminTableHeadDividerClass}`}
-                      >
-                        Role
-                      </TableHead>
-                      <TableHead className={adminTableHeadClass}>
-                        Date Added
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {organization.members.map((member) => (
-                      <TableRow
-                        key={member.netid}
-                        className={adminTableRowClass}
-                      >
-                        <TableCell
-                          className={`${adminTableCellClass} font-semibold text-foreground dark:text-[#f1f1f1]`}
-                        >
-                          {member.netid}
-                        </TableCell>
-                        {isAdmin && (
-                          <TableCell className={adminTableCellClass}>
-                            {visitStats?.find((v) => v.netid === member.netid)
-                              ?.total_visits || 0}
-                          </TableCell>
-                        )}
-                        {isAdmin && (
-                          <TableCell className={adminTableCellClass}>
-                            {visitStats?.find((v) => v.netid === member.netid)
-                              ?.unique_visits || 0}
-                          </TableCell>
-                        )}
-                        <TableCell
-                          className={`${adminTableCellClass} capitalize`}
-                        >
-                          {member.role === 'admin'
-                            ? 'Admin'
-                            : member.role === 'guest'
-                              ? 'Guest'
-                              : 'Member'}
-                        </TableCell>
-                        <TableCell className={adminTableCellClass}>
-                          {dayjs(member.timeCreated).format('MMM D, YYYY')}
-                        </TableCell>
+                        <TableHead className={adminTableHeadClass}>
+                          Date Added
+                        </TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {organization.members.map((member) => (
+                        <TableRow
+                          key={member.netid}
+                          className={adminTableRowClass}
+                        >
+                          <TableCell
+                            className={`${adminTableCellClass} font-semibold text-foreground dark:text-[#f1f1f1]`}
+                          >
+                            {member.netid}
+                          </TableCell>
+                          {isAdmin && (
+                            <TableCell className={adminTableCellClass}>
+                              {visitStats?.find((v) => v.netid === member.netid)
+                                ?.total_visits || 0}
+                            </TableCell>
+                          )}
+                          {isAdmin && (
+                            <TableCell className={adminTableCellClass}>
+                              {visitStats?.find((v) => v.netid === member.netid)
+                                ?.unique_visits || 0}
+                            </TableCell>
+                          )}
+                          <TableCell
+                            className={`${adminTableCellClass} capitalize`}
+                          >
+                            {member.role === 'admin'
+                              ? 'Admin'
+                              : member.role === 'guest'
+                                ? 'Guest'
+                                : 'Member'}
+                          </TableCell>
+                          <TableCell className={adminTableCellClass}>
+                            {dayjs(member.timeCreated).format('MMM D, YYYY')}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             </TabsContent>
           </Tabs>

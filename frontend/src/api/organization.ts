@@ -53,10 +53,21 @@ export async function getOrganizationStats(
 export async function getOrganizationLinks(
   id: string,
 ): Promise<OrganizationLink[]> {
-  const result: any = await fetch(`/api/core/org/${id}/links`).then((resp) =>
+  const result = await fetch(`/api/core/org/${id}/links`).then((resp) =>
     resp.json(),
   );
-  return result as OrganizationLink[];
+
+  return result.map(
+    ({
+      timeCreated,
+      ...link
+    }: Omit<OrganizationLink, 'created_time'> & {
+      timeCreated: string;
+    }) => ({
+      ...link,
+      created_time: new Date(timeCreated),
+    }),
+  );
 }
 
 export async function createOrg(name: string): Promise<void> {
