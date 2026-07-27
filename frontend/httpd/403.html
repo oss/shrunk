@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Access restricted | Go - Rutgers University URL Shortener</title>
+    <style>
+      :root {
+        color: #1f2937;
+        background: #f8fafc;
+        font-family: Arial, sans-serif;
+      }
+
+      body {
+        display: grid;
+        min-height: 100vh;
+        margin: 0;
+        place-items: center;
+      }
+
+      main {
+        box-sizing: border-box;
+        width: min(42rem, calc(100% - 2rem));
+        padding: 3rem;
+        border-top: 0.35rem solid #cc0033;
+        border-radius: 0.25rem;
+        background: #fff;
+        box-shadow: 0 0.5rem 1.5rem rgb(15 23 42 / 12%);
+      }
+
+      .wordmark {
+        margin: 0 0 2.5rem;
+        color: #cc0033;
+        font-size: 0.9rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+      }
+
+      h1 {
+        margin: 0 0 1rem;
+        font-size: clamp(2rem, 6vw, 3rem);
+      }
+
+      p {
+        margin: 0 0 1rem;
+        max-width: 38rem;
+        font-size: 1.1rem;
+        line-height: 1.6;
+      }
+
+      section {
+        margin: 2rem 0;
+        padding: 1.25rem 1.5rem;
+        border-radius: 0.25rem;
+        background: #f8fafc;
+      }
+
+      h2 {
+        margin: 0 0 0.5rem;
+        font-size: 1.1rem;
+      }
+
+      section p:last-child {
+        margin-bottom: 0;
+      }
+
+      a {
+        color: #8a0023;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="wordmark">Go - Rutgers University URL Shortener</p>
+      <h1>Access restricted</h1>
+      <p>Your Rutgers account is not currently authorized to use Go.</p>
+      <section aria-labelledby="access-heading">
+        <h2 id="access-heading">Who has access to Go?</h2>
+        <p>
+          All current Rutgers University faculty and staff members can log in to
+          go.rutgers.edu using their NetID and password. Undergraduate student
+          workers can be granted access to Go by a faculty or staff member.
+        </p>
+      </section>
+      <p>
+        If you believe you should have access,
+        <a
+          href="mailto:oss@oit.rutgers.edu?subject=Request%20access%20to%20Go&body=Hello%20OSS%2C%0A%0AI%20am%20requesting%20access%20to%20Go%2C%20Rutgers%20University%27s%20URL%20Shortener.%0A%0ANetID%3A%20%0AReason%20for%20access%3A%20%0A%0AThank%20you%2C"
+          >contact OSS</a
+        >.
+      </p>
+    </main>
+  </body>
+</html>

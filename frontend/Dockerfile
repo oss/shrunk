@@ -50,6 +50,7 @@ RUN sed -i "s/Listen 80/Listen 4343/g" /etc/apache2/ports.conf
 
 COPY --chown=1001:0 --from=base /usr/shrunk/frontend/dist /var/www/html
 COPY --chown=1001:0 --from=base /usr/shrunk/frontend/dist /etc/apache2/htdocs
+COPY --chown=1001:0 ./httpd/403.html /var/www/html/403.html
 COPY --chown=1001:0 ./httpd/httpd.conf /etc/apache2/conf-enabled/shrunk.conf
 
 USER 1001
