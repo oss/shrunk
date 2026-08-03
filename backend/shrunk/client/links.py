@@ -320,8 +320,14 @@ class LinksClient:
                 }
                 if link_info["owner"]["type"] == "org":
                     # Push org to editors since it is no longer owner
-                    update["$push"]["editors"] = {"_id": link_info["owner"]["_id"], "type": "org"}
-                    update["$push"]["viewers"] = {"_id": link_info["owner"]["_id"], "type": "org"}
+                    update["$push"]["editors"] = {
+                        "_id": link_info["owner"]["_id"],
+                        "type": "org",
+                    }
+                    update["$push"]["viewers"] = {
+                        "_id": link_info["owner"]["_id"],
+                        "type": "org",
+                    }
             else:
                 fields["owner"] = {"_id": ObjectId(owner["_id"]), "type": "org"}
                 update["$push"] = {
@@ -451,6 +457,13 @@ class LinksClient:
             owner["type"] == "org" and owner["_id"] in admin_org_ids
         )
 
+    @staticmethod
+    def _may_bulk_transfer(link: Dict[str, Any], netid: str, member_org_ids: Set[ObjectId]) -> bool:
+        owner = link["owner"]
+        return (owner["type"] == "netid" and owner["_id"] == netid) or (
+            owner["type"] == "org" and owner["_id"] in member_org_ids
+        )
+
     def _validate_bulk_links(
         self,
         link_ids: List[ObjectId],
@@ -467,11 +480,12 @@ class LinksClient:
             link = links_by_id.get(object_id)
             allowed = False
             if link is not None and not link.get("deleted", False):
-                allowed = is_admin or (
-                    self._may_bulk_edit(link, netid, member_org_ids)
-                    if permission == "edit"
-                    else self._may_bulk_own(link, netid, admin_org_ids)
-                )
+                if permission == "edit":
+                    allowed = is_admin or self._may_bulk_edit(link, netid, member_org_ids)
+                elif permission == "transfer":
+                    allowed = is_admin or self._may_bulk_transfer(link, netid, member_org_ids)
+                else:
+                    allowed = is_admin or self._may_bulk_own(link, netid, admin_org_ids)
             if not allowed:
                 failed_ids.append(original_id)
             else:
@@ -547,7 +561,7 @@ class LinksClient:
                     owner_query["members.netid"] = netid
                 if self.db.organizations.find_one(owner_query, session=session) is None:
                     raise NotUserOrOrg("new owner is not an active organization available to this user")
-            links = self._validate_bulk_links(link_ids, original_ids, netid, "owner", session)
+            links = self._validate_bulk_links(link_ids, original_ids, netid, "transfer", session)
             timestamp = datetime.now(timezone.utc)
             for link in links:
                 previous_owner = link["owner"]
@@ -561,17 +575,29 @@ class LinksClient:
                         }
                     },
                 }
-                if owner["type"] == "org":
-                    update["$pull"] = {
-                        "editors": {"_id": owner["_id"]},
-                        "viewers": {"_id": owner["_id"]},
-                    }
-                elif previous_owner["type"] == "org":
+                if previous_owner["type"] == "org":
                     update["$addToSet"] = {
                         "editors": previous_owner,
                         "viewers": previous_owner,
                     }
+
                 self.db.urls.update_one({"_id": link["_id"]}, update, session=session)
+                self.db.urls.update_one(
+                    {"_id": link["_id"]},
+                    {
+                        "$pull": {
+                            "editors": {
+                                "_id": owner["_id"],
+                                "type": owner["type"],
+                            },
+                            "viewers": {
+                                "_id": owner["_id"],
+                                "type": owner["type"],
+                            },
+                        }
+                    },
+                    session=session,
+                )
 
         self._run_bulk_transaction(transaction)
 
@@ -670,7 +696,10 @@ class LinksClient:
             date_match = {"$match": {"time": {"$gte": date_range[0], "$lte": date_range[1]}}}
 
         aggregation = [match] + [date_match] + cast(List[Any], aggregations.visits_aggregation)
-        return cast(List[DailyVisitsRow], list(self.db.visits.aggregate(aggregation, allowDiskUse=True)))
+        return cast(
+            List[DailyVisitsRow],
+            list(self.db.visits.aggregate(aggregation, allowDiskUse=True)),
+        )
 
     def get_geoip_stats(
         self,
@@ -845,6 +874,17 @@ class LinksClient:
         ):  # Org admins have "owner" permissions
             return True
         return False
+
+    def may_transfer(self, link_id: ObjectId, netid: str) -> bool:
+        result = self.db.urls.find_one({"_id": link_id, "deleted": False})
+        if result is None:
+            return False
+        if self.other_clients.users.has_role(netid, "admin"):
+            return True
+        owner = result["owner"]
+        if owner["type"] == "netid":
+            return owner["_id"] == netid
+        return self.other_clients.orgs.is_member(ObjectId(owner["_id"]), netid)
 
     def may_edit(self, link_id: ObjectId, netid: str) -> bool:
         if self.other_clients.users.has_role(netid, "admin"):
@@ -1136,7 +1176,12 @@ class LinksClient:
 
     def unblacklist_user_links(self, netid: str) -> None:
         self.db.urls.update_many(
-            {"owner._id": netid, "owner.type": "netid", "deleted": True, "deleted_by": "!BLACKLISTED"},
+            {
+                "owner._id": netid,
+                "owner.type": "netid",
+                "deleted": True,
+                "deleted_by": "!BLACKLISTED",
+            },
             {
                 "$set": {"deleted": False},
                 "$unset": {"deleted_by": 1, "deleted_time": 1},

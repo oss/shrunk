@@ -282,6 +282,7 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         "viewers": enrich_acl_with_org_names(info["viewers"] if "viewers" in info else []),
         "is_tracking_pixel_link": info.get("is_tracking_pixel_link", False),
         "may_edit": client.links.may_edit(link_id, netid),
+        "may_transfer": client.links.may_transfer(link_id, netid),
     }
     return jsonify(json_info), 200
 

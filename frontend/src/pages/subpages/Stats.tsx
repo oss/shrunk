@@ -47,6 +47,8 @@ import VisitsChart from '@/components/link/visits-chart';
 import GeoipChart from '@/components/link/world-chart';
 import ShrunkPieChart from '@/components/pie-chart';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Field, FieldLabel } from '@/components/ui/field';
 import { Badge } from '@/components/ui/badge';
 import {
   Select,
@@ -224,7 +226,10 @@ export function Stats(props: Props): React.ReactElement {
   const [editModalVisible, setEditModalVisible] = useState<boolean>(false);
   const [collabModalVisible, setCollabModalVisible] = useState<boolean>(false);
   const [pendingOwner, setPendingOwner] = useState<LinkSharedWith | null>(null);
-  const [transferLoading, setTransferLoading] = useState(false);
+  const [requestOwnership, setRequestOwnership] = useState<boolean>(false);
+  const [transferLoading, setTransferLoading] = useState<boolean>(false);
+  const [requestLoading, setRequestLoading] = useState<boolean>(false);
+  const [requestReason, setRequestReason] = useState<string>('');
 
   const [entities, setEntities] = useState<Collaborator[]>([]);
 
@@ -324,6 +329,7 @@ export function Stats(props: Props): React.ReactElement {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props.id]);
 
+  console.log(linkInfo);
   useEffect(() => {
     if (browserStats !== null && browserStats.referers.length > 0) {
       setTopReferrer(browserStats.referers[0].name);
@@ -431,7 +437,24 @@ export function Stats(props: Props): React.ReactElement {
     await updateLinkInfo();
   }
 
+  const stageOwnershipChange = (
+    activeTab: 'netid' | 'org',
+    entity: Collaborator,
+  ) => {
+    setRequestOwnership(linkInfo?.may_transfer !== true);
+    setPendingOwner({
+      _id: entity._id,
+      type: activeTab,
+      org_name: entity.org_name,
+    });
+  };
+
   const onAddEntity = (activeTab: 'netid' | 'org', entity: Collaborator) => {
+    if (entity.role === 'owner') {
+      stageOwnershipChange(activeTab, entity);
+      return;
+    }
+
     onAddCollaborator(
       {
         _id: entity._id,
@@ -445,6 +468,36 @@ export function Stats(props: Props): React.ReactElement {
     onRemoveCollaborator(entity);
   };
 
+  const confirmOwnershipRequest = async () => {
+    if (!pendingOwner) {
+      return;
+    }
+
+    const subject = encodeURIComponent(
+      `Ownership Request for go.rutgers.edu/${linkInfo?.alias}`,
+    );
+    const body = encodeURIComponent(
+      `Hello OSS, \n\nI am requesting ownership of the following Go Link: \n\nTitle ${linkInfo?.title} \nUrl: https://go.rutgers.edu/${linkInfo?.alias} \nCurrent Owner: ${linkInfo?.owner._id} \nRequested Owner: ${pendingOwner.type === 'netid' ? pendingOwner._id : (pendingOwner.org_name ?? pendingOwner._id)} \n\nReason for request: ${requestReason} \n\nThank you.`,
+    );
+
+    setRequestLoading(true);
+    try {
+      window.open(
+        `mailto:oss@oit.rutgers.edu?subject=${subject}&body=${body}`,
+        '_blank',
+      );
+      toast.success('Email client opened!');
+      setPendingOwner(null);
+      setRequestOwnership(false);
+      setRequestReason('');
+      setCollabModalVisible(false);
+    } catch {
+      toast.error('Something went wrong!');
+    } finally {
+      setRequestLoading(false);
+    }
+  };
+
   const confirmOwnershipTransfer = async () => {
     if (!pendingOwner) {
       return;
@@ -452,29 +505,28 @@ export function Stats(props: Props): React.ReactElement {
 
     const owner = pendingOwner;
     setTransferLoading(true);
+
     try {
       await transferLink(props.id, owner);
+      toast.success('Ownership transferred successfully');
+      setPendingOwner(null);
+      setCollabModalVisible(false);
+
+      if (owner.type === 'netid' && !props.userPrivileges.has('admin')) {
+        history.push('/app/dash');
+        return;
+      }
+
+      try {
+        await updateLinkInfo();
+      } catch {
+        history.push('/app/dash');
+      }
     } catch {
       toast.error('Failed to transfer ownership');
-      setTransferLoading(false);
       setPendingOwner(null);
-      return;
-    }
-
-    toast.success('Ownership transferred successfully');
-    setTransferLoading(false);
-    setPendingOwner(null);
-    setCollabModalVisible(false);
-
-    if (owner.type === 'netid' && !props.userPrivileges.has('admin')) {
-      history.push('/app/dash');
-      return;
-    }
-
-    try {
-      await updateLinkInfo();
-    } catch {
-      history.push('/app/dash');
+    } finally {
+      setTransferLoading(false);
     }
   };
 
@@ -484,7 +536,7 @@ export function Stats(props: Props): React.ReactElement {
     value: string,
   ) => {
     if (value === 'owner') {
-      setPendingOwner({ _id: entity._id, type: activeTab });
+      stageOwnershipChange(activeTab, entity);
       return;
     }
 
@@ -855,6 +907,8 @@ export function Stats(props: Props): React.ReactElement {
           <CollaboratorModal
             visible={collabModalVisible}
             multipleMasters
+            _id={props.netid}
+            canAssignMasterRole={linkInfo.may_transfer === true}
             roles={[
               { label: 'Owner', value: 'owner' },
               { label: 'Editor', value: 'editor' },
@@ -873,7 +927,7 @@ export function Stats(props: Props): React.ReactElement {
           />
 
           <AlertDialog
-            open={pendingOwner !== null}
+            open={pendingOwner !== null && requestOwnership == false}
             onOpenChange={(open) => {
               if (!open && !transferLoading) {
                 setPendingOwner(null);
@@ -898,6 +952,50 @@ export function Stats(props: Props): React.ReactElement {
                   onClick={confirmOwnershipTransfer}
                 >
                   {transferLoading ? 'Transferring...' : 'Yes, transfer'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <AlertDialog
+            open={pendingOwner !== null && requestOwnership == true}
+            onOpenChange={(open) => {
+              if (!open && !transferLoading) {
+                setPendingOwner(null);
+              }
+            }}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Request ownership?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will request for you to be added as an owner of the link.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogDescription>
+                <Field>
+                  <FieldLabel htmlFor="explain">
+                    Please explain why you need to be added as an owner to this
+                    link
+                  </FieldLabel>
+                  <Textarea
+                    id="explain"
+                    placeholder="Enter your message here"
+                    onChange={(e) => setRequestReason(e.target.value)}
+                    value={requestReason}
+                  />
+                </Field>
+              </AlertDialogDescription>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={requestLoading}>
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  disabled={requestLoading}
+                  onClick={confirmOwnershipRequest}
+                >
+                  {requestLoading ? 'Requesting...' : 'Yes, request ownership'}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

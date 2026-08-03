@@ -229,11 +229,7 @@ class SearchClient:
                     self.client.users.has_role(user_netid, "admin")
                     or self.client.links.is_owner(res["_id"], user_netid)
                 ),
-                "may_transfer": not res.get("deleted", False)
-                and (
-                    self.client.users.has_role(user_netid, "admin")
-                    or self.client.links.is_owner(res["_id"], user_netid)
-                ),
+                "may_transfer": self.client.links.may_transfer(res["_id"], user_netid),
                 "is_tracking_pixel_link": (res["is_tracking_pixel_link"] if "is_tracking_pixel_link" in res else False),
                 "editors": res["editors"],
                 "viewers": res["viewers"],

@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Organization } from '@/interfaces/organizations';
+import { ButtonGroup } from '@/components/ui/button-group';
 
 export interface Collaborator {
   _id: string;
@@ -42,7 +43,7 @@ export interface Collaborator {
 interface ICollaboratorModal {
   visible: boolean;
   people: Array<Collaborator>;
-
+  _id: string;
   // The first role should be the MASTER role (owner or admin),
   // while the second must be the DEFAULT role.
   roles: Array<{ value: string; label: string }>;
@@ -58,6 +59,7 @@ interface ICollaboratorModal {
   onCancel: () => void;
 
   multipleMasters?: boolean;
+  canAssignMasterRole?: boolean;
 
   onlyActiveTab?: 'netid' | 'org';
 }
@@ -108,6 +110,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
 
   const canAddMaster = props.multipleMasters || mastersCount === 0;
   const canDemoteMaster = props.multipleMasters && mastersCount > 1;
+  const canAssignMasterRole = props.canAssignMasterRole ?? true;
 
   const validateNetId = async (value: string) => {
     if (value.trim() === '') {
@@ -218,31 +221,36 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                 </Select>
               )}
             </div>
-            <Select
-              value={collaboratorRole}
-              onValueChange={setCollaboratorRole}
-            >
-              <SelectTrigger
-                className={`w-full sm:w-36 ${collaboratorControlBorderClass}`}
+            <ButtonGroup>
+              <Select
+                value={collaboratorRole}
+                onValueChange={setCollaboratorRole}
               >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {props.roles.map((role) => (
-                  <SelectItem
-                    key={role.value}
-                    value={role.value}
-                    disabled={role.value === masterRole && !canAddMaster}
-                  >
-                    {role.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button onClick={handleAddEntity}>
-              <PlusCircleIcon />
-              Add
-            </Button>
+                <SelectTrigger
+                  className={`w-24 pr-2 ${collaboratorControlBorderClass}`}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {props.roles.map((role) => (
+                    <SelectItem
+                      key={role.value}
+                      value={role.value}
+                      disabled={
+                        role.value === masterRole &&
+                        (!canAddMaster || !canAssignMasterRole)
+                      }
+                    >
+                      {role.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button onClick={handleAddEntity}>
+                <PlusCircleIcon />
+                Add
+              </Button>
+            </ButtonGroup>
           </div>
           {validationError ? (
             <p className="text-sm text-destructive">{validationError}</p>
@@ -303,72 +311,85 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                   >
                     <span className="min-w-0 truncate">{displayName}</span>
                     <div className="flex shrink-0 items-center gap-2">
-                      <Select
-                        value={entity.role}
-                        onValueChange={(value) => {
-                          props.onChangeEntity(activeTab, entity, value);
-                        }}
-                      >
-                        <SelectTrigger
-                          className={`w-32 ${collaboratorControlBorderClass}`}
+                      <ButtonGroup>
+                        <Select
+                          value={entity.role}
+                          onValueChange={(value) => {
+                            props.onChangeEntity(activeTab, entity, value);
+                          }}
                         >
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {props.roles.map((role) => (
-                            <SelectItem
-                              key={role.value}
-                              value={role.value}
-                              disabled={
-                                isDisabled(role) ||
-                                role.value === 'guest' ||
-                                entity.role === 'guest'
-                              }
-                            >
-                              {role.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            aria-label={
-                              isLastMaster
-                                ? `Cannot remove the only ${masterRole}`
-                                : 'Remove collaborator'
-                            }
-                            disabled={isLastMaster}
-                            size="icon"
-                            variant="ghost"
-                            className={collaboratorControlBorderClass}
+                          <SelectTrigger
+                            className={`w-32 ${collaboratorControlBorderClass}`}
                           >
-                            <XIcon />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>
-                              Remove collaborator?
-                            </AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to remove this collaborator?
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              onClick={() => {
-                                props.onRemoveEntity(activeTab, entity);
-                              }}
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {props.roles.map((role) => (
+                              <SelectItem
+                                key={role.value}
+                                value={role.value}
+                                disabled={
+                                  isDisabled(role) ||
+                                  role.value === 'guest' ||
+                                  entity.role === 'guest' ||
+                                  (activeTab === 'netid' &&
+                                    role.value === 'owner' &&
+                                    entity._id !== props._id &&
+                                    !sortedPeople
+                                      .filter(
+                                        (entity) => entity.role === 'owner',
+                                      )
+                                      .some(
+                                        (entity) => entity._id === props._id,
+                                      ))
+                                }
+                              >
+                                {role.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              aria-label={
+                                isLastMaster
+                                  ? `Cannot remove the only ${masterRole}`
+                                  : 'Remove collaborator'
+                              }
+                              disabled={isLastMaster}
+                              size="icon"
+                              variant="ghost"
+                              className={collaboratorControlBorderClass}
                             >
-                              Remove
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                              <XIcon />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Remove collaborator?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to remove this
+                                collaborator?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                onClick={() => {
+                                  props.onRemoveEntity(activeTab, entity);
+                                }}
+                              >
+                                Remove
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </ButtonGroup>
                     </div>
                   </div>
                 );

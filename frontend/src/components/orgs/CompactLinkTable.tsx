@@ -79,12 +79,14 @@ import {
 
 interface CompactLinkTableProps {
   org_id: string;
+  userNetid: string;
   forceRefresh: boolean;
   isAdmin?: boolean;
 }
 
 const CompactLinkTable = ({
   org_id,
+  userNetid,
   forceRefresh,
   isAdmin,
 }: CompactLinkTableProps) => {
@@ -138,7 +140,6 @@ const CompactLinkTable = ({
     const textMatches = (value: string | undefined, search: string) =>
       normalize(value).includes(normalize(search));
 
-    console.log(links);
     const filtered = links.filter((link) => {
       const createdTime = dayjs(link.created_time);
       const owner = link.owner.org_name ?? link.owner._id;
@@ -688,6 +689,7 @@ const CompactLinkTable = ({
               totalLinks={paginatedLinks.length}
             />
             <CollaboratorModal
+              _id={userNetid}
               visible={bulkShareOpen}
               people={[]}
               roles={[

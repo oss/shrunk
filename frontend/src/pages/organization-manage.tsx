@@ -154,6 +154,7 @@ function ManageOrgBase({
 
   const refreshOrganization = async () => {
     const info = await getOrganization(match.params.id);
+
     if (info.role === 'admin' || userPrivileges.has('admin')) {
       const visitData = await getOrganizationVisits(match.params.id);
       setVisitStats(visitData.visits);
@@ -337,6 +338,7 @@ function ManageOrgBase({
               <div>
                 <CompactLinkTable
                   org_id={organization.id}
+                  userNetid={userNetid}
                   forceRefresh={forceRefresh}
                   isAdmin={isAdmin}
                 />
@@ -520,6 +522,7 @@ function ManageOrgBase({
       </Sheet>
 
       <CollaboratorModal
+        _id={userNetid}
         onlyActiveTab="netid"
         multipleMasters={true}
         visible={shareModalVisible}

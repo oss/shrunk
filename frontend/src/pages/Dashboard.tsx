@@ -598,6 +598,7 @@ export default function Dashboard({
       />
 
       <CollaboratorModal
+        _id={_netid}
         visible={collabModalVisible}
         people={[]}
         roles={[

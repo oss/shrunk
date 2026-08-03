@@ -106,6 +106,51 @@ def test_create_link_org(client: Client) -> None:
         assert resp.json["owner"]["org_name"] == "testorg10"
 
 
+def test_get_link_transfer_permission_for_org_roles(client: Client) -> None:
+    with dev_login(client, "admin"):
+        resp = client.post("/api/core/org", json={"name": "transfer-permission-org"})
+        assert resp.status_code == 200
+        assert resp.json is not None
+        org_id = resp.json["id"]
+
+        resp = client.put(f"/api/core/org/{org_id}/member/DEV_USER")
+        assert resp.status_code == 204
+
+        resp = client.post(
+            "/api/core/link",
+            json={"long_url": "https://example.com", "org_id": org_id},
+        )
+        assert resp.status_code == 201
+        assert resp.json is not None
+        link_id = resp.json["id"]
+
+        resp = client.get(f"/api/core/link/{link_id}")
+        assert resp.status_code == 200
+        assert resp.json is not None
+        assert resp.json["may_transfer"] is True
+
+    with dev_login(client, "user"):
+        resp = client.get(f"/api/core/link/{link_id}")
+        assert resp.status_code == 200
+        assert resp.json is not None
+        assert resp.json["may_transfer"] is True
+
+        resp = client.post(
+            "/api/core/link/transfer_bulk",
+            json={
+                "link_ids": [link_id],
+                "owner": {"_id": "DEV_FACSTAFF", "type": "netid"},
+            },
+        )
+        assert resp.status_code == 204
+
+    with dev_login(client, "admin"):
+        resp = client.get(f"/api/core/link/{link_id}")
+        assert resp.status_code == 200
+        assert resp.json is not None
+        assert resp.json["owner"] == {"_id": "DEV_FACSTAFF", "type": "netid"}
+
+
 def test_remove_acl_on_transfer_to_org(client: Client) -> None:
     """Test that org is removed from viewers/editors when transferring link ownership from a user to an org."""
 
@@ -1166,7 +1211,7 @@ def test_bulk_transfer_to_netid(client: Client) -> None:
             assert resp.json["owner"]["type"] == "netid"
 
 
-def test_bulk_transfer_to_org(client: Client) -> None:
+def test_bulk_transfer_to_org(client: Client, db: ShrunkClient) -> None:
     with dev_login(client, "admin"):
         resp = client.post("/api/core/org", json={"name": "bulk transfer org"})
         assert resp.status_code == 200
@@ -1175,7 +1220,15 @@ def test_bulk_transfer_to_org(client: Client) -> None:
         assert resp.status_code == 204
 
     with dev_login(client, "user"):
-        resp = client.post("/api/core/link", json={"title": "one", "long_url": "https://example.com/one"})
+        resp = client.post(
+            "/api/core/link",
+            json={
+                "title": "one",
+                "long_url": "https://example.com/one",
+                "editors": [{"_id": org_id, "type": "org"}],
+                "viewers": [{"_id": org_id, "type": "org"}],
+            },
+        )
         assert resp.status_code == 201
         link_id_one = resp.json["id"]
 
@@ -1197,6 +1250,68 @@ def test_bulk_transfer_to_org(client: Client) -> None:
             assert resp.status_code == 200
             assert resp.json["owner"]["_id"] == org_id
             assert resp.json["owner"]["type"] == "org"
+            assert all(entry["_id"] != org_id for entry in resp.json["editors"])
+            assert all(entry["_id"] != org_id for entry in resp.json["viewers"])
+
+            link = db.links.get_link_info(ObjectId(link_id))
+            transfer = link["ownership_transfer_history"][-1]
+            assert transfer["from"] == {"_id": "DEV_USER", "type": "netid"}
+            assert transfer["to"] == {"_id": ObjectId(org_id), "type": "org"}
+
+
+def test_bulk_transfer_from_org_removes_new_owner_from_acls(client: Client, db: ShrunkClient) -> None:
+    with dev_login(client, "admin"):
+        resp = client.post("/api/core/org", json={"name": "bulk transfer source org"})
+        assert resp.status_code == 200
+        source_org_id = resp.json["id"]
+
+        resp = client.post("/api/core/org", json={"name": "bulk transfer target org"})
+        assert resp.status_code == 200
+        target_org_id = resp.json["id"]
+
+        destinations = [
+            {"_id": "DEV_FACSTAFF", "type": "netid"},
+            {"_id": target_org_id, "type": "org"},
+        ]
+        for index, destination in enumerate(destinations):
+            resp = client.post(
+                "/api/core/link",
+                json={
+                    "title": f"org transfer {index}",
+                    "long_url": f"https://example.com/org-transfer-{index}",
+                    "org_id": source_org_id,
+                    "editors": [destination],
+                    "viewers": [destination],
+                },
+            )
+            assert resp.status_code == 201
+            link_id = resp.json["id"]
+
+            resp = client.post(
+                "/api/core/link/transfer_bulk",
+                json={"link_ids": [link_id], "owner": destination},
+            )
+            assert resp.status_code == 204
+
+            resp = client.get(f"/api/core/link/{link_id}")
+            assert resp.status_code == 200
+            assert resp.json["owner"]["_id"] == destination["_id"]
+            assert resp.json["owner"]["type"] == destination["type"]
+            assert all(entry["_id"] != destination["_id"] for entry in resp.json["editors"])
+            assert all(entry["_id"] != destination["_id"] for entry in resp.json["viewers"])
+            assert any(entry["_id"] == source_org_id for entry in resp.json["editors"])
+            assert any(entry["_id"] == source_org_id for entry in resp.json["viewers"])
+
+            link = db.links.get_link_info(ObjectId(link_id))
+            transfer = link["ownership_transfer_history"][-1]
+            assert transfer["from"] == {
+                "_id": ObjectId(source_org_id),
+                "type": "org",
+            }
+            assert transfer["to"] == {
+                "_id": (ObjectId(destination["_id"]) if destination["type"] == "org" else destination["_id"]),
+                "type": destination["type"],
+            }
 
 
 def test_bulk_transfer_fails_without_partial_update(client: Client) -> None:
