@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 // @ts-ignore
 import react from '@vitejs/plugin-react';
 import tsconfigPaths from 'vite-tsconfig-paths';
+// @ts-ignore
 import eslint from 'vite-plugin-eslint';
 // @ts-ignore
 import tailwindcss from '@tailwindcss/vite';

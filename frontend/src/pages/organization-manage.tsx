@@ -11,7 +11,7 @@ import {
   UsersIcon,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 
 import {
   addGuestToOrganization,
@@ -83,14 +83,10 @@ import {
   adminTabTriggerClass,
 } from '@/lib/admin-styles';
 
-type RouteParams = {
-  id: string;
-};
-
 type Props = {
   userNetid: string;
   userPrivileges: Set<string>;
-} & RouteComponentProps<RouteParams>;
+};
 
 interface VisitDatum {
   netid: string;
@@ -101,12 +97,10 @@ interface VisitDatum {
 const VALID_TABS = ['members', 'overview'];
 const DEFAULT_TAB = 'overview';
 
-function ManageOrgBase({
-  userNetid,
-  userPrivileges,
-  match,
-  history,
-}: Props): React.ReactElement {
+function ManageOrg({ userNetid, userPrivileges }: Props): React.ReactElement {
+  const { id = '' } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [adminsCount, setAdminsCount] = useState(0);
   const [shareModalVisible, setShareModalVisible] = useState(false);
@@ -133,30 +127,40 @@ function ManageOrgBase({
   }, []);
 
   useEffect(() => {
-    const handleLocationChange = () => {
-      const locationParam = new URLSearchParams(window.location.search);
-      const tab = locationParam.get('tab');
-      const normalizedTab = tab === 'links' ? DEFAULT_TAB : tab;
-      if (normalizedTab && VALID_TABS.includes(normalizedTab)) {
-        setActiveTab(normalizedTab);
-        const baseUrl = window.location.pathname;
-        window.history.replaceState({}, '', `${baseUrl}?tab=${normalizedTab}`);
-      } else {
-        const baseUrl = window.location.pathname;
-        window.history.pushState({}, '', `${baseUrl}?tab=${DEFAULT_TAB}`);
-        setActiveTab(DEFAULT_TAB);
+    const tab = searchParams.get('tab');
+    const normalizedTab = tab === 'links' ? DEFAULT_TAB : tab;
+
+    if (normalizedTab && VALID_TABS.includes(normalizedTab)) {
+      setActiveTab(normalizedTab);
+      if (tab !== normalizedTab) {
+        setSearchParams(
+          (current) => {
+            const next = new URLSearchParams(current);
+            next.set('tab', normalizedTab);
+            return next;
+          },
+          { replace: true },
+        );
       }
-    };
-    window.addEventListener('hashchange', handleLocationChange);
-    handleLocationChange();
-    return () => window.removeEventListener('hashchange', handleLocationChange);
-  }, []);
+      return;
+    }
+
+    setActiveTab(DEFAULT_TAB);
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.set('tab', DEFAULT_TAB);
+        return next;
+      },
+      { replace: true },
+    );
+  }, [searchParams, setSearchParams]);
 
   const refreshOrganization = async () => {
-    const info = await getOrganization(match.params.id);
+    const info = await getOrganization(id);
 
     if (info.role === 'admin' || userPrivileges.has('admin')) {
-      const visitData = await getOrganizationVisits(match.params.id);
+      const visitData = await getOrganizationVisits(id);
       setVisitStats(visitData.visits);
     }
 
@@ -171,50 +175,53 @@ function ManageOrgBase({
   useEffect(() => {
     refreshOrganization();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [match.params.id]);
+  }, [id]);
 
   const onAddMember = async (netid: string, role: string) => {
     if (role === 'guest') {
-      await addGuestToOrganization(match.params.id, netid);
+      await addGuestToOrganization(id, netid);
     } else if (role === 'member') {
-      await addMemberToOrganization(match.params.id, netid);
+      await addMemberToOrganization(id, netid);
     }
     if (role === 'admin') {
-      await setAdminStatusOrganization(match.params.id, netid, 'admin');
+      await setAdminStatusOrganization(id, netid, 'admin');
     }
     await refreshOrganization();
   };
 
   const onDeleteMember = async (netid: string) => {
-    await removeMemberFromOrganization(match.params.id, netid);
+    await removeMemberFromOrganization(id, netid);
     await refreshOrganization();
   };
 
   const onChangeAdmin = async (netid: string, role: string) => {
-    await setAdminStatusOrganization(match.params.id, netid, role);
+    await setAdminStatusOrganization(id, netid, role);
     await refreshOrganization();
   };
 
   const onRenameOrg = async (newName: string) => {
-    await renameOrganization(match.params.id, newName);
-    history.push('/app/orgs');
+    await renameOrganization(id, newName);
+    navigate('/app/orgs');
   };
 
   const onLeaveOrg = async () => {
-    removeMemberFromOrganization(match.params.id, userNetid);
-    history.push('/app/orgs');
+    removeMemberFromOrganization(id, userNetid);
+    navigate('/app/orgs');
   };
 
   const onDeleteOrganization = async () => {
-    deleteOrganization(match.params.id);
-    history.push('/app/orgs');
+    deleteOrganization(id);
+    navigate('/app/orgs');
   };
 
   const handleTabChange = (key: string) => {
     if (VALID_TABS.includes(key)) {
       setActiveTab(key);
-      const baseUrl = window.location.pathname;
-      window.history.pushState({}, '', `${baseUrl}?tab=${key}`);
+      setSearchParams((current) => {
+        const next = new URLSearchParams(current);
+        next.set('tab', key);
+        return next;
+      });
     }
   };
 
@@ -291,7 +298,7 @@ function ManageOrgBase({
                   {isAdmin && (
                     <DropdownMenuItem
                       onClick={() => {
-                        history.push(`/app/orgs/${match.params.id}/tokens`);
+                        navigate(`/app/orgs/${id}/tokens`);
                       }}
                     >
                       <CodeIcon className="mr-2 h-4 w-4" />
@@ -562,10 +569,10 @@ function ManageOrgBase({
           setForceRefresh(!forceRefresh);
         }}
         userPrivileges={userPrivileges}
-        org_id={match.params.id}
+        org_id={id}
       />
     </>
   );
 }
 
-export default withRouter(ManageOrgBase);
+export default ManageOrg;

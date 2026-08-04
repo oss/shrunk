@@ -1,7 +1,7 @@
 import { CircleCheckIcon, CircleXIcon } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 import {
   closeTicket,
   getEntityPosition,
@@ -26,11 +26,11 @@ import {
 } from '@/components/ui/alert-dialog';
 
 interface Props {
-  ticketID: string;
   userPrivileges: Set<string>;
 }
 
-const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
+const Ticket: React.FC<Props> = ({ userPrivileges }) => {
+  const { id: ticketID = '' } = useParams<{ id: string }>();
   const [ticketInfo, setTicketInfo] = useState<TicketInfo | null>(null);
   const [entityPositionInfo, setEntityPositionInfo] =
     useState<EntityPositionInfo | null>(null);
@@ -42,10 +42,9 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
   const [isResolveDrawerOpen, setIsResolveDrawerOpen] =
     useState<boolean>(false);
 
-  const history = useHistory();
-  const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const mode = queryParams.get('mode');
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const mode = searchParams.get('mode');
 
   const onGetEntityPosition = async (entity: string) => {
     const data = await getEntityPosition(entity);
@@ -69,7 +68,7 @@ const Ticket: React.FC<Props> = ({ ticketID, userPrivileges }) => {
     if (response.ok) {
       toast.success(data.message || 'Success');
       setClosing(false);
-      history.push('/tickets');
+      navigate('/app/tickets');
     } else {
       toast.error(data.message || 'Error');
       setClosing(false);

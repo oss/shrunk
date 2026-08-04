@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import { CopyIcon, EditIcon, EyeIcon } from 'lucide-react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router';
 
 import { Link } from '@/interfaces/link';
 import { getRedirectFromAlias } from '@/lib/utils';

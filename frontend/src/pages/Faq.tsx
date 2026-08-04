@@ -5,7 +5,7 @@
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import { ChevronRightIcon } from 'lucide-react';
 import { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 import {
   Table,
@@ -231,7 +231,7 @@ function FaqAccordion() {
  * The [[Faq]] component is just a static FAQ page
  * @class
  */
-export default function Faq(): JSX.Element {
+export default function Faq(): React.JSX.Element {
   return (
     <div className="-mx-6 min-h-[calc(100dvh-var(--app-header-height,0px))] bg-[#1A1A1A] px-6 pb-8 text-[#efefef]">
       <div className="mx-auto max-w-[82rem]">

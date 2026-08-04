@@ -209,7 +209,7 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
   );
 };
 
-const renderOrganizations = (organizations: string[]): JSX.Element[] =>
+const renderOrganizations = (organizations: string[]): React.JSX.Element[] =>
   organizations.map((org) => (
     <Badge
       key={org}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { RouteComponentProps, withRouter } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { CirclePlusIcon, PlusCircleIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -30,13 +30,8 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 
-type RouteParams = {
-  id: string;
-};
-
-type IOrganizationToken = RouteComponentProps<RouteParams>;
-
-function OrganizationToken(props: IOrganizationToken) {
+function OrganizationToken() {
+  const { id = '' } = useParams<{ id: string }>();
   const [accessTokens, setAccessTokens] = useState<AccessTokenData[]>([]);
   const [validPermissions, setValidPermissions] = useState<string[]>([]);
   const [isGeneratorDrawerOpen, setIsGeneratorDrawerOpen] =
@@ -49,9 +44,7 @@ function OrganizationToken(props: IOrganizationToken) {
 
   useEffect(() => {
     const fetchOrganization = async () => {
-      const accessTokensData = (await getAccessTokens(
-        props.match.params.id,
-      )) as AccessTokenData[];
+      const accessTokensData = (await getAccessTokens(id)) as AccessTokenData[];
       setAccessTokens(accessTokensData);
     };
 
@@ -80,7 +73,7 @@ function OrganizationToken(props: IOrganizationToken) {
         title,
         description,
         selectedPermissions,
-        props.match.params.id,
+        id,
       );
       setNewAccessToken(token);
       setTitle('');
@@ -95,9 +88,7 @@ function OrganizationToken(props: IOrganizationToken) {
   };
 
   const refreshAccessTokens = async () => {
-    const accessTokensData = (await getAccessTokens(
-      props.match.params.id,
-    )) as AccessTokenData[];
+    const accessTokensData = (await getAccessTokens(id)) as AccessTokenData[];
     setAccessTokens(accessTokensData);
   };
 
@@ -224,4 +215,4 @@ function OrganizationToken(props: IOrganizationToken) {
   );
 }
 
-export default withRouter(OrganizationToken);
+export default OrganizationToken;

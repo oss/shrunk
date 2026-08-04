@@ -30,7 +30,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 
-export default function SuperTokens(): JSX.Element {
+export default function SuperTokens(): React.JSX.Element {
   const [accessTokens, setAccessTokens] = useState<AccessTokenData[]>([]);
   const [validPermissions, setValidPermissions] = useState<string[]>([]);
   const [isGeneratorDrawerOpen, setIsGeneratorDrawerOpen] =

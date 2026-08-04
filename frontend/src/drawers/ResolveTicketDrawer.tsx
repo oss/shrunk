@@ -1,6 +1,6 @@
 import React from 'react';
 import { toast } from 'sonner';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import TicketDetails, { EntityDetails } from '@/components/TicketDetails';
 import {
   EntityPositionInfo,
@@ -38,7 +38,7 @@ const ResolveTicketDrawer: React.FC<Props> = ({
   const [submitting, setSubmitting] = React.useState<boolean>(false);
   const [adminReview, setAdminReview] = React.useState('');
   const [isRoleGranted, setIsRoleGranted] = React.useState(false);
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const onResolveTicket = async (values: ResolveTicketInfo) => {
     setSubmitting(true);
@@ -48,7 +48,7 @@ const ResolveTicketDrawer: React.FC<Props> = ({
     if (response.ok) {
       toast.success(data.message || 'Success');
       setSubmitting(false);
-      history.push('/tickets');
+      navigate('/app/tickets');
     } else {
       toast.error(data.message || 'Error');
       setSubmitting(false);

@@ -54,7 +54,7 @@ const createDrawerActiveSegmentClass =
 const createDrawerSegmentButtonClass =
   'h-9 min-w-fit px-3 text-sm font-semibold';
 
-export default function CreateLinkDrawer(props: Props): JSX.Element {
+export default function CreateLinkDrawer(props: Props): React.JSX.Element {
   const featureFlags: FeatureFlags = useFeatureFlags();
   const [loading, setLoading] = useState<boolean>(false);
   const [linkCreationMode, setLinkCreationMode] = useState<'url' | 'pixel'>(

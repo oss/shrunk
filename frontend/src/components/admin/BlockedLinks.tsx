@@ -68,7 +68,7 @@ import {
   adminTextareaClass,
 } from '@/lib/admin-styles';
 
-const renderURLs = (url: string): JSX.Element => (
+const renderURLs = (url: string): React.JSX.Element => (
   <div className="flex items-center gap-4">
     <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-border text-[0.7rem] text-muted-foreground dark:border-white/20 dark:text-[#bcbcbc]">
       +

@@ -5,7 +5,7 @@ import {
   FilterIcon,
   PlusCircleIcon,
 } from 'lucide-react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router';
 import MultiLinkSelectPopup from '@/components/MultiLinkSelectPopup';
 import CollaboratorModal, { Collaborator } from '@/modals/CollaboratorModal';
 import {

@@ -10,7 +10,12 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { useHistory, useLocation, Link as RouterLink } from 'react-router-dom';
+import {
+  Link as RouterLink,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router';
 import { downloadVisits } from '@/api/csv';
 import {
   BrowserStats,
@@ -78,7 +83,6 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export interface Props {
-  id: string;
   netid: string;
   userPrivileges: Set<string>;
 }
@@ -211,6 +215,7 @@ function doDownload(url: string, fileName: string) {
 }
 
 export function Stats(props: Props): React.ReactElement {
+  const { id = '' } = useParams<{ id: string }>();
   const [linkInfo, setLinkInfo] = useState<Link | null>(null);
   const [overallStats, setOverallStats] = useState<OverallStats | null>(null);
   const [visitStats, setVisitStats] = useState<VisitStats | null>(null);
@@ -238,10 +243,9 @@ export function Stats(props: Props): React.ReactElement {
     undefined,
   );
   const [isExporting, setIsExporting] = useState(false);
-  const history = useHistory();
-  const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const mode = queryParams.get('mode');
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const mode = searchParams.get('mode');
   const size = 250;
 
   useEffect(() => {
@@ -258,7 +262,7 @@ export function Stats(props: Props): React.ReactElement {
   }, [mode]);
 
   async function updateLinkInfo() {
-    const templinkInfo = await getLink(props.id);
+    const templinkInfo = await getLink(id);
 
     setLinkInfo(templinkInfo);
     setMayEdit(templinkInfo.may_edit);
@@ -297,10 +301,10 @@ export function Stats(props: Props): React.ReactElement {
   }
 
   async function updateStats(source?: string) {
-    setOverallStats(await getLinkStats(props.id, source));
-    setVisitStats(await getLinkVisitsStats(props.id, source));
-    setGeoipStats(await getLinkGeoIpStats(props.id, source));
-    setBrowserStats(await getLinkBrowserStats(props.id, source));
+    setOverallStats(await getLinkStats(id, source));
+    setVisitStats(await getLinkVisitsStats(id, source));
+    setGeoipStats(await getLinkGeoIpStats(id, source));
+    setBrowserStats(await getLinkBrowserStats(id, source));
     setCurrentSource(source);
   }
 
@@ -309,7 +313,7 @@ export function Stats(props: Props): React.ReactElement {
   ): Promise<void> => {
     setVisitStats(
       await getLinkVisitsStats(
-        props.id,
+        id,
         currentSource,
         dates?.[0] || undefined,
         dates?.[1]?.endOf('day'),
@@ -327,7 +331,7 @@ export function Stats(props: Props): React.ReactElement {
       setLoading(false);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.id]);
+  }, [id]);
 
   console.log(linkInfo);
   useEffect(() => {
@@ -374,7 +378,7 @@ export function Stats(props: Props): React.ReactElement {
       patchReq.expiration_time = values.expiration_time;
     }
 
-    const patchRequest = await editLink(props.id, patchReq);
+    const patchRequest = await editLink(id, patchReq);
 
     const patchRequestStatus = patchRequest.status;
 
@@ -394,7 +398,7 @@ export function Stats(props: Props): React.ReactElement {
 
     setIsExporting(true);
     try {
-      await downloadVisits(props.id);
+      await downloadVisits(id);
     } finally {
       setIsExporting(false);
     }
@@ -425,7 +429,7 @@ export function Stats(props: Props): React.ReactElement {
     collaborator: LinkSharedWith,
     role: 'viewer' | 'editor',
   ) {
-    await addCollaborator(props.id, collaborator, role);
+    await addCollaborator(id, collaborator, role);
     await updateLinkInfo();
   }
 
@@ -433,7 +437,7 @@ export function Stats(props: Props): React.ReactElement {
     entity: LinkSharedWith,
     role?: 'viewer' | 'editor',
   ) {
-    await removeCollaborator(props.id, entity, role);
+    await removeCollaborator(id, entity, role);
     await updateLinkInfo();
   }
 
@@ -507,20 +511,20 @@ export function Stats(props: Props): React.ReactElement {
     setTransferLoading(true);
 
     try {
-      await transferLink(props.id, owner);
+      await transferLink(id, owner);
       toast.success('Ownership transferred successfully');
       setPendingOwner(null);
       setCollabModalVisible(false);
 
       if (owner.type === 'netid' && !props.userPrivileges.has('admin')) {
-        history.push('/app/dash');
+        navigate('/app/dash');
         return;
       }
 
       try {
         await updateLinkInfo();
       } catch {
-        history.push('/app/dash');
+        navigate('/app/dash');
       }
     } catch {
       toast.error('Failed to transfer ownership');

@@ -13,6 +13,7 @@ import {
   Key,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { getPendingLinksCount } from '@/api/google-safebrowse';
 import AdminStats from '@/components/admin/AdminStats';
 import BlockedLinks from '@/components/admin/BlockedLinks';
@@ -40,9 +41,11 @@ const DEFAULT_TAB = 'analytics';
 
 export default function Admin(): React.ReactElement {
   const [linksToBeVerified, setLinksToBeVerified] = useState(-1);
-
-  // Get the initial active tab from URL parameters, validate it, and fall back to default if invalid
-  const [activeTab, setActiveTab] = useState<string>(DEFAULT_TAB);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const activeTab = VALID_TABS.includes(tabParam ?? '')
+    ? (tabParam as string)
+    : DEFAULT_TAB;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -53,36 +56,27 @@ export default function Admin(): React.ReactElement {
   }, []);
 
   useEffect(() => {
-    const syncTabFromLocation = () => {
-      const searchParams = new URLSearchParams(window.location.search);
-      const tabParam = searchParams.get('tab');
+    if (VALID_TABS.includes(tabParam ?? '')) {
+      return;
+    }
 
-      if (!VALID_TABS.includes(tabParam || '')) {
-        searchParams.set('tab', DEFAULT_TAB);
-        const normalizedUrl = `${window.location.pathname}?${searchParams.toString()}`;
-        window.history.replaceState({}, '', normalizedUrl);
-        setActiveTab(DEFAULT_TAB);
-      } else {
-        setActiveTab(tabParam!);
-      }
-    };
-
-    window.addEventListener('popstate', syncTabFromLocation);
-    syncTabFromLocation();
-
-    return () => window.removeEventListener('popstate', syncTabFromLocation);
-  }, []);
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.set('tab', DEFAULT_TAB);
+        return next;
+      },
+      { replace: true },
+    );
+  }, [setSearchParams, tabParam]);
 
   const handleTabChange = (key: string) => {
     if (VALID_TABS.includes(key)) {
-      setActiveTab(key);
-      const searchParams = new URLSearchParams(window.location.search);
-      searchParams.set('tab', key);
-      window.history.pushState(
-        {},
-        '',
-        `${window.location.pathname}?${searchParams.toString()}`,
-      );
+      setSearchParams((current) => {
+        const next = new URLSearchParams(current);
+        next.set('tab', key);
+        return next;
+      });
     }
   };
 

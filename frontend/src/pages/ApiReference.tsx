@@ -52,7 +52,7 @@ function TypographyRoot({ children, className }: BaseProps) {
 }
 
 function TypographyTitle({ children, className, level = 1 }: TitleProps) {
-  const Tag = `h${level}` as keyof JSX.IntrinsicElements;
+  const Tag = `h${level}` as keyof React.JSX.IntrinsicElements;
   const titleClasses = {
     1: 'text-4xl font-bold tracking-normal text-[#f1f1f1]',
     2: 'text-[2.25rem] leading-tight font-bold tracking-normal text-[#f1f1f1]',

@@ -9,7 +9,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';

@@ -22,14 +22,14 @@ import { Toaster, toast } from 'sonner';
 import { Fragment, useEffect, useRef, useState, useContext } from 'react';
 import {
   BrowserRouter,
-  Redirect,
+  Navigate,
   Route,
-  Switch,
+  Routes,
   Link,
   useLocation,
-} from 'react-router-dom';
+} from 'react-router';
 
-import Markdown from 'markdown-to-jsx/react';
+import Markdown from 'markdown-to-jsx';
 import Admin from '@/pages/Admin';
 import Dashboard from '@/pages/Dashboard';
 import Faq from '@/pages/Faq';
@@ -87,7 +87,7 @@ type ShellNavItem = {
   key: string;
   label: string;
   to?: string;
-  icon: JSX.Element;
+  icon: React.JSX.Element;
   onSelect?: () => void;
   destructive?: boolean;
 };
@@ -115,7 +115,7 @@ function ShrunkContent({
   ProtectedRoute: (props: {
     children: any;
     requiredPrivilege: string;
-  }) => JSX.Element;
+  }) => React.JSX.Element;
   featureFlags: FeatureFlags;
 }) {
   const darkModeContext = useContext(DarkModeContext);
@@ -502,73 +502,66 @@ function ShrunkContent({
             </Breadcrumb>
           )}
 
-          <Switch>
-            <Route exact path="/app">
-              <Redirect to="/app/dash" />
-            </Route>
-            <Route exact path="/app/login">
-              <Login />
-            </Route>
-            <Route exact path="/app/dash">
-              <Dashboard userPrivileges={userPrivileges} netid={netid} />
-            </Route>
+          <Routes>
+            <Route path="/app" element={<Navigate to="/app/dash" replace />} />
+            <Route path="/app/login" element={<Login />} />
             <Route
-              exact
+              path="/app/dash"
+              element={
+                <Dashboard userPrivileges={userPrivileges} netid={netid} />
+              }
+            />
+            <Route
               path="/app/links/:id"
-              render={(route) => (
-                <Stats
-                  id={route.match.params.id}
-                  netid={netid}
-                  userPrivileges={userPrivileges}
-                />
-              )}
+              element={<Stats netid={netid} userPrivileges={userPrivileges} />}
             />
-            <Route exact path="/app/orgs">
-              <MyOrganizations userPrivileges={userPrivileges} />
-            </Route>
-
-            <Route exact path="/app/orgs/:id">
-              <ManageOrg userNetid={netid} userPrivileges={userPrivileges} />
-            </Route>
-            <Route exact path="/app/orgs/:id/tokens">
-              <OrganizationToken />
-            </Route>
-            <Route exact path="/app/tickets">
-              <HelpDesk netid={netid} userPrivileges={userPrivileges} />
-            </Route>
             <Route
-              exact
-              path="/app/tickets/:id"
-              render={(route) => (
-                <Ticket
-                  ticketID={route.match.params.id}
-                  userPrivileges={userPrivileges}
-                />
-              )}
+              path="/app/orgs"
+              element={<MyOrganizations userPrivileges={userPrivileges} />}
             />
-            <Route exact path="/app/faq">
-              <Faq />
-            </Route>
-            <Route exact path="/app/releases">
-              <ChangeLog />
-            </Route>
-            <Route exact path="/app/admin">
-              <ProtectedRoute requiredPrivilege="admin">
-                <Admin />
-              </ProtectedRoute>
-            </Route>
-            <Route exact path="/app/api-reference">
-              <ApiReference />
-            </Route>
-            <Route path="*">
-              <ErrorPage
-                title="Ooops!"
-                description="
-                      The page you are looking for is not found, are you sure you typed
-                      the URL correctly?"
-              />
-            </Route>
-          </Switch>
+            <Route
+              path="/app/orgs/:id"
+              element={
+                <ManageOrg userNetid={netid} userPrivileges={userPrivileges} />
+              }
+            />
+            <Route
+              path="/app/orgs/:id/tokens"
+              element={<OrganizationToken />}
+            />
+            <Route
+              path="/app/tickets"
+              element={
+                <HelpDesk netid={netid} userPrivileges={userPrivileges} />
+              }
+            />
+            <Route
+              path="/app/tickets/:id"
+              element={<Ticket userPrivileges={userPrivileges} />}
+            />
+            <Route path="/app/faq" element={<Faq />} />
+            <Route path="/app/releases" element={<ChangeLog />} />
+            <Route
+              path="/app/admin"
+              element={
+                <ProtectedRoute requiredPrivilege="admin">
+                  <Admin />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/app/api-reference" element={<ApiReference />} />
+            <Route
+              path="*"
+              element={
+                <ErrorPage
+                  title="Ooops!"
+                  description="
+                        The page you are looking for is not found, are you sure you typed
+                        the URL correctly?"
+                />
+              }
+            />
+          </Routes>
         </main>
         <aside className="hidden 2xl:block" />
       </div>
