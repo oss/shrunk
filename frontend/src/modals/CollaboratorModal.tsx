@@ -1,6 +1,6 @@
 import { PlusCircleIcon, XIcon } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-
+import { Link } from 'react-router-dom';
 import { getOrganizations } from '@/api/organization';
 import { serverValidateGuest, serverValidateNetId } from '@/api/validators';
 import {
@@ -47,7 +47,7 @@ interface ICollaboratorModal {
   // The first role should be the MASTER role (owner or admin),
   // while the second must be the DEFAULT role.
   roles: Array<{ value: string; label: string }>;
-
+  canCreate: boolean;
   onAddEntity: (activeTab: 'netid' | 'org', value: Collaborator) => void;
   onChangeEntity: (
     activeTab: 'netid' | 'org',
@@ -271,129 +271,159 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
           </Tabs>
 
           <div className="space-y-3">
-            {sortedPeople
-              .filter((entity) => entity.type === activeTab)
-              .map((entity) => {
-                const displayName =
-                  entity.type === 'netid'
-                    ? entity._id
-                    : entity.org_name ||
-                      organizations.find((org) => org.id === entity._id)
-                        ?.name ||
-                      entity._id;
+            {sortedPeople.filter((entity) => entity.type === activeTab).length >
+            0 ? (
+              sortedPeople
+                .filter((entity) => entity.type === activeTab)
+                .map((entity) => {
+                  const displayName =
+                    entity.type === 'netid'
+                      ? entity._id
+                      : entity.org_name ||
+                        organizations.find((org) => org.id === entity._id)
+                          ?.name ||
+                        entity._id;
 
-                const isMaster = entity.role === masterRole;
-                const isLastMaster = isMaster && mastersCount === 1;
-                const canChangeRole =
-                  !isLastMaster && (!isMaster || canDemoteMaster);
+                  const isMaster = entity.role === masterRole;
+                  const isLastMaster = isMaster && mastersCount === 1;
+                  const canChangeRole =
+                    !isLastMaster && (!isMaster || canDemoteMaster);
 
-                const isDisabled = (role: { value: string; label: string }) => {
-                  if (entity.type === 'org') {
-                    if (entity.role === masterRole && !canAddMaster) {
-                      return true;
+                  const isDisabled = (role: {
+                    value: string;
+                    label: string;
+                  }) => {
+                    if (entity.type === 'org') {
+                      if (entity.role === masterRole && !canAddMaster) {
+                        return true;
+                      }
+                      return !(
+                        canChangeRole ||
+                        (role.value === masterRole && !canAddMaster)
+                      );
                     }
-                    return !(
-                      canChangeRole ||
-                      (role.value === masterRole && !canAddMaster)
+                    return (
+                      (role.value === masterRole && !canAddMaster) ||
+                      (!canChangeRole && role.value !== entity.role) ||
+                      (isLastMaster && role.value !== masterRole)
                     );
-                  }
+                  };
+
                   return (
-                    (role.value === masterRole && !canAddMaster) ||
-                    (!canChangeRole && role.value !== entity.role) ||
-                    (isLastMaster && role.value !== masterRole)
-                  );
-                };
-
-                return (
-                  <div
-                    key={`${entity.type}-${entity._id}`}
-                    className="flex items-center justify-between gap-3 rounded-md border border-border bg-background p-3"
-                  >
-                    <span className="min-w-0 truncate">{displayName}</span>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <ButtonGroup>
-                        <Select
-                          value={entity.role}
-                          onValueChange={(value) => {
-                            props.onChangeEntity(activeTab, entity, value);
-                          }}
-                        >
-                          <SelectTrigger
-                            className={`w-32 ${collaboratorControlBorderClass}`}
+                    <div
+                      key={`${entity.type}-${entity._id}`}
+                      className="flex items-center justify-between gap-3 rounded-md border border-border bg-background p-3"
+                    >
+                      <span className="min-w-0 truncate">{displayName}</span>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <ButtonGroup>
+                          <Select
+                            value={entity.role}
+                            onValueChange={(value) => {
+                              props.onChangeEntity(activeTab, entity, value);
+                            }}
                           >
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {props.roles.map((role) => (
-                              <SelectItem
-                                key={role.value}
-                                value={role.value}
-                                disabled={
-                                  isDisabled(role) ||
-                                  role.value === 'guest' ||
-                                  entity.role === 'guest' ||
-                                  (activeTab === 'netid' &&
-                                    role.value === 'owner' &&
-                                    entity._id !== props._id &&
-                                    !sortedPeople
-                                      .filter(
-                                        (entity) => entity.role === 'owner',
-                                      )
-                                      .some(
-                                        (entity) => entity._id === props._id,
-                                      ))
-                                }
-                              >
-                                {role.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              aria-label={
-                                isLastMaster
-                                  ? `Cannot remove the only ${masterRole}`
-                                  : 'Remove collaborator'
-                              }
-                              disabled={isLastMaster}
-                              size="icon"
-                              variant="ghost"
-                              className={collaboratorControlBorderClass}
+                            <SelectTrigger
+                              className={`w-32 ${collaboratorControlBorderClass}`}
                             >
-                              <XIcon />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Remove collaborator?
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to remove this
-                                collaborator?
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                onClick={() => {
-                                  props.onRemoveEntity(activeTab, entity);
-                                }}
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {props.roles.map((role) => (
+                                <SelectItem
+                                  key={role.value}
+                                  value={role.value}
+                                  disabled={
+                                    isDisabled(role) ||
+                                    role.value === 'guest' ||
+                                    entity.role === 'guest' ||
+                                    (activeTab === 'netid' &&
+                                      role.value === 'owner' &&
+                                      entity._id !== props._id &&
+                                      !sortedPeople
+                                        .filter(
+                                          (entity) => entity.role === 'owner',
+                                        )
+                                        .some(
+                                          (entity) => entity._id === props._id,
+                                        ))
+                                  }
+                                >
+                                  {role.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                aria-label={
+                                  isLastMaster
+                                    ? `Cannot remove the only ${masterRole}`
+                                    : 'Remove collaborator'
+                                }
+                                disabled={isLastMaster}
+                                size="icon"
+                                variant="ghost"
+                                className={collaboratorControlBorderClass}
                               >
-                                Remove
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </ButtonGroup>
+                                <XIcon />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Remove collaborator?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to remove this
+                                  collaborator?
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  onClick={() => {
+                                    props.onRemoveEntity(activeTab, entity);
+                                  }}
+                                >
+                                  Remove
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </ButtonGroup>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+            ) : (
+              <div>
+                {props.canCreate ? (
+                  <span>
+                    {' '}
+                    You aren&apos;t currently apart of any organizations! Ask
+                    somebody to add you to one or{' '}
+                    <Link
+                      to="/app/orgs"
+                      className="text-[#cc0033] underline underline-offset-4"
+                    >
+                      <br />
+                      create your own
+                    </Link>
+                    .{' '}
+                  </span>
+                ) : (
+                  <span>
+                    {' '}
+                    You aren&apost currently apart of any organizations! Ask
+                    somebody to add you to one.{' '}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>

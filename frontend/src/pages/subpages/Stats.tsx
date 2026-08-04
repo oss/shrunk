@@ -906,6 +906,10 @@ export function Stats(props: Props): React.ReactElement {
 
           <CollaboratorModal
             visible={collabModalVisible}
+            canCreate={
+              props.userPrivileges.has('admin') ||
+              props.userPrivileges.has('facstaff')
+            }
             multipleMasters
             _id={props.netid}
             canAssignMasterRole={linkInfo.may_transfer === true}
