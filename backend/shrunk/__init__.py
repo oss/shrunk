@@ -7,6 +7,9 @@ import datetime
 import json
 import os
 import logging
+import sys
+import time
+import uuid
 from typing import Any
 
 from urllib.parse import parse_qsl, urlencode
@@ -16,6 +19,7 @@ import flask
 from flask import (
     Flask,
     current_app,
+    g,
     jsonify,
     redirect,
     request,
@@ -93,27 +97,57 @@ class HexTokenConverter(BaseConverter):
         return str(codecs.encode(value, encoding="hex"), "utf8")
 
 
-class RequestFormatter(logging.Formatter):
+class JsonFormatter(logging.Formatter):
     def format(self, record: Any) -> str:
-        record.url = None
-        record.remote_addr = None
-        record.user = None
+        entry = {
+            "timestamp": datetime.datetime.fromtimestamp(record.created, datetime.timezone.utc).isoformat(),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+            "event_type": getattr(record, "event_type", "application"),
+        }
         if flask.has_request_context():
-            record.url = flask.request.url
-            record.remote_addr = flask.request.remote_addr
+            entry.update(
+                {
+                    "request_id": getattr(g, "request_id", None),
+                    "method": request.method,
+                    "path": request.url_rule.rule if request.url_rule else request.path,
+                    "remote_addr": request.remote_addr,
+                }
+            )
             if "user" in flask.session:
-                record.user = flask.session["user"]["netid"]
-        return super().format(record)
+                entry["actor"] = flask.session["user"]["netid"]
+        for field in ("actor", "action", "operation", "status_code", "duration_ms", "outcome", "error_type"):
+            value = getattr(record, field, None)
+            if value is not None:
+                entry[field] = value
+        if record.exc_info:
+            entry["exception"] = self.formatException(record.exc_info)
+        return json.dumps(entry, default=str)
 
 
 def _init_logging() -> None:
     """Sets up self.logger with default settings."""
-    formatter = logging.Formatter(os.getenv("SHRUNK_LOG_FORMAT", ""))
-    handler = logging.FileHandler(os.getenv("SHRUNK_LOG_FILENAME", "shrunk.log"))
-    handler.setLevel(logging.INFO)
-    handler.setFormatter(formatter)
-    current_app.logger.addHandler(handler)
-    current_app.logger.setLevel(logging.INFO)
+    logger = current_app.logger
+    for existing_handler in list(logger.handlers):
+        logger.removeHandler(existing_handler)
+        if existing_handler is not default_handler:
+            existing_handler.close()
+
+    stream_handler = logging.StreamHandler(sys.stdout)
+    stream_handler.setLevel(logging.INFO)
+    stream_handler.setFormatter(JsonFormatter())
+    logger.addHandler(stream_handler)
+
+    log_filename = os.getenv("SHRUNK_LOG_FILENAME")
+    if log_filename:
+        file_handler = logging.FileHandler(log_filename)
+        file_handler.setLevel(logging.INFO)
+        file_handler.setFormatter(JsonFormatter())
+        logger.addHandler(file_handler)
+
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
 
 
 def _init_shrunk_client() -> None:
@@ -199,11 +233,6 @@ def create_app(**_kwargs: Any) -> Flask:
 
     app.json = ShrunkJSONProvider(app)
 
-    formatter = RequestFormatter(
-        "[%(asctime)s] [%(user)s@%(remote_addr)s] [%(url)s] %(levelname)s " + "in %(module)s: %(message)s",
-    )
-    default_handler.setFormatter(formatter)
-
     # install url converters
     app.url_map.converters["ObjectId"] = ObjectIdConverter
     app.url_map.converters["b32"] = Base32Converter
@@ -213,6 +242,44 @@ def create_app(**_kwargs: Any) -> Flask:
         _init_logging()
         _init_shrunk_client()
         _init_roles()
+
+    @app.before_request
+    def _start_request() -> None:
+        g.request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+        g.request_started = time.perf_counter()
+
+    @app.after_request
+    def _log_request(response: Any) -> Any:
+        mutation = request.method in {"POST", "PUT", "PATCH", "DELETE"}
+        failed = response.status_code >= 400
+        if mutation or failed:
+            current_app.logger.info(
+                "request completed",
+                extra={
+                    "event_type": "audit" if mutation else "security",
+                    "action": "request",
+                    "operation": request.method,
+                    "status_code": response.status_code,
+                    "duration_ms": round((time.perf_counter() - g.request_started) * 1000, 2),
+                    "outcome": "success" if response.status_code < 400 else "failure",
+                },
+            )
+        response.headers["X-Request-ID"] = g.request_id
+        return response
+
+    @app.teardown_request
+    def _log_request_exception(error: Any) -> None:
+        if error is not None:
+            current_app.logger.error(
+                "request failed with an unhandled exception",
+                exc_info=(type(error), error, error.__traceback__),
+                extra={
+                    "event_type": "error",
+                    "action": "request",
+                    "outcome": "failure",
+                    "error_type": type(error).__name__,
+                },
+            )
 
     # wsgi middleware
     app.wsgi_app = ProxyFix(app.wsgi_app)  # type: ignore
@@ -293,6 +360,9 @@ def create_app(**_kwargs: Any) -> Flask:
 
         # Get the current netid and clear the session.
         netid = session["user"]["netid"]
+        app.logger.info(
+            "user logged out", extra={"event_type": "authentication", "action": "logout", "outcome": "success"}
+        )
         session.clear()
 
         # If the user is a dev user, all we need to do to log out is to clear the session,

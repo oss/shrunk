@@ -8,6 +8,7 @@ from applying the same migration twice at once.
 
 import logging
 import os
+import sys
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -15,6 +16,8 @@ from pathlib import Path
 import pymongo
 from pymongo.errors import DuplicateKeyError
 from pymongo_migrate.mongo_migrate import MongoMigrate  # type: ignore[import-untyped]
+
+from shrunk import JsonFormatter
 
 MIGRATIONS_DIR = Path(__file__).parent / "migrations"
 
@@ -101,6 +104,9 @@ def run_migrations() -> None:
 
 
 if __name__ == "__main__":
-    logging_format = os.getenv("SHRUNK_LOG_FORMAT") or "[%(asctime)s] %(levelname)s: %(message)s"
-    logging.basicConfig(level=logging.INFO, format=logging_format)
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(JsonFormatter())
+    root_logger = logging.getLogger()
+    root_logger.addHandler(handler)
+    root_logger.setLevel(logging.INFO)
     run_migrations()

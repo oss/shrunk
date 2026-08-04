@@ -23,11 +23,14 @@ def require_login(func: Any) -> Any:
         client: "ShrunkClient" = getattr(current_app, "client")
         logger = current_app.logger
         if "user" not in session or "netid" not in session["user"]:
-            logger.debug("require_login: user not logged in")
+            logger.warning("authentication required", extra={"event_type": "security", "action": "authentication"})
             abort(401)
         netid = session["user"]["netid"]
         if client.users.has_role(netid, "blacklisted"):
-            logger.warning(f"require_login: user {netid} is blacklisted")
+            logger.warning(
+                f"require_login: user {netid} is blacklisted",
+                extra={"event_type": "security", "action": "authorization", "outcome": "failure"},
+            )
             abort(403)
         return func(netid, client, *args, **kwargs)
 
@@ -68,6 +71,9 @@ def require_token(required_permission: str):
             client: "ShrunkClient" = getattr(current_app, "client")
             header = request.headers.get("Authorization")
             if not header:
+                current_app.logger.warning(
+                    "authorization header missing", extra={"event_type": "security", "action": "authentication"}
+                )
                 return (
                     jsonify(
                         {
@@ -82,6 +88,9 @@ def require_token(required_permission: str):
                 )
 
             if not header.startswith("Bearer "):
+                current_app.logger.warning(
+                    "authorization header invalid", extra={"event_type": "security", "action": "authentication"}
+                )
                 return (
                     jsonify(
                         {
@@ -99,6 +108,9 @@ def require_token(required_permission: str):
             token = header.split()[1]
             token_id = client.access_tokens.verify_token(token)
             if not token_id:
+                current_app.logger.warning(
+                    "access token invalid or disabled", extra={"event_type": "security", "action": "authentication"}
+                )
                 return (
                     jsonify(
                         {
@@ -114,6 +126,10 @@ def require_token(required_permission: str):
 
             # Check permissions
             if not client.access_tokens.check_permissions(token_id, required_permission):
+                current_app.logger.warning(
+                    "access token lacks required permission",
+                    extra={"event_type": "security", "action": "authorization", "outcome": "failure"},
+                )
                 return (
                     jsonify(
                         {

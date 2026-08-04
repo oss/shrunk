@@ -75,6 +75,9 @@ def login(user_info: Any) -> Any:
 
     # If we get here, the user is allowed to login, and all necessary privs
     # have been granted.
-    logger.debug(f"login: SSO login by {netid}")
+    logger.info(
+        f"login: SSO login by {netid}",
+        extra={"event_type": "authentication", "action": "login", "actor": netid, "outcome": "success"},
+    )
     session["user"] = user_info
     return redirect("/app")
