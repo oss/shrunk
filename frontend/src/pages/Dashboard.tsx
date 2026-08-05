@@ -483,7 +483,7 @@ export default function Dashboard({
           <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
             <section className="min-h-0 min-w-0 flex-1 [scrollbar-color:hsl(var(--muted-foreground))_hsl(var(--muted))] overflow-y-auto pr-1">
               {linkInfo === null || linkInfo.length === 0 ? (
-                <div className="block py-8 text-muted-foreground">
+                <div className="justify-top flex min-h-full flex-col items-center py-6 text-center text-muted-foreground">
                   <p className="text-lg">No data</p>
                   <p className="text-sm">No links found</p>
                 </div>
