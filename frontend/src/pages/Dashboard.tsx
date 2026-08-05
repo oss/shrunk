@@ -599,6 +599,9 @@ export default function Dashboard({
 
       <CollaboratorModal
         _id={_netid}
+        canCreate={
+          userPrivileges.has('admin') || userPrivileges.has('facstaff')
+        }
         visible={collabModalVisible}
         people={[]}
         roles={[

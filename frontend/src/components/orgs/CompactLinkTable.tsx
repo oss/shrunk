@@ -82,6 +82,7 @@ interface CompactLinkTableProps {
   userNetid: string;
   forceRefresh: boolean;
   isAdmin?: boolean;
+  canCreate: boolean;
 }
 
 const CompactLinkTable = ({
@@ -89,6 +90,7 @@ const CompactLinkTable = ({
   userNetid,
   forceRefresh,
   isAdmin,
+  canCreate,
 }: CompactLinkTableProps) => {
   const [links, setLinks] = useState<OrganizationLink[]>([]);
   const [loading, setLoading] = useState(true);
@@ -689,6 +691,7 @@ const CompactLinkTable = ({
               totalLinks={paginatedLinks.length}
             />
             <CollaboratorModal
+              canCreate={canCreate}
               _id={userNetid}
               visible={bulkShareOpen}
               people={[]}

@@ -111,6 +111,9 @@ function ManageOrg({ userNetid, userPrivileges }: Props): React.ReactElement {
   const [forceRefresh, setForceRefresh] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
+  const canCreate: boolean =
+    userPrivileges.has('admin') || userPrivileges.has('facstaff');
+
   const {
     errors: nameErrors,
     submitting,
@@ -344,6 +347,7 @@ function ManageOrg({ userNetid, userPrivileges }: Props): React.ReactElement {
             >
               <div>
                 <CompactLinkTable
+                  canCreate={canCreate}
                   org_id={organization.id}
                   userNetid={userNetid}
                   forceRefresh={forceRefresh}
@@ -530,6 +534,7 @@ function ManageOrg({ userNetid, userPrivileges }: Props): React.ReactElement {
 
       <CollaboratorModal
         _id={userNetid}
+        canCreate={canCreate}
         onlyActiveTab="netid"
         multipleMasters={true}
         visible={shareModalVisible}
