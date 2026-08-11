@@ -145,6 +145,11 @@ backend-test:
     - .buildah
     - .mongo-service
   stage: test
+  needs:
+    - job: build
+      parallel:
+        matrix:
+          - IMAGE: backend
   script:
     - container=$(buildah from "$CI_REGISTRY_IMAGE/backend:${CI_COMMIT_SHA}")
     - container_root=$(buildah mount $container)

@@ -1,16 +1,15 @@
 """Implement API endpoints under ``/api/v1``"""
 
-from typing import Any, Dict, Optional
 from datetime import datetime
-
-from flask import Blueprint, jsonify, request, Response
-import segno
 from io import BytesIO
-from shrunk.client import ShrunkClient
-from shrunk.mongo_schema import MongoRef
-from bson.objectid import ObjectId
+from typing import Any, Dict, Optional
+
 import bson.errors
-from shrunk.util.decorators import require_token, request_schema
+import segno
+from bson.objectid import ObjectId
+from flask import Blueprint, Response, jsonify, request
+
+from shrunk.client import ShrunkClient
 from shrunk.client.exceptions import (
     BadAliasException,
     BadLongURLException,
@@ -18,7 +17,8 @@ from shrunk.client.exceptions import (
     NotUserOrOrg,
     SecurityRiskDetected,
 )
-
+from shrunk.mongo_schema import MongoRef
+from shrunk.util.decorators import request_schema, require_token
 from shrunk.util.string import validate_url
 
 __all__ = ["bp"]
@@ -35,6 +35,17 @@ CREATE_LINK_SCHEMA = {
         "expiration_time": {"type": "string", "format": "date-time"},
         "organization_id": {"type": "string", "minLength": 24},
         "check_existing": {"type": "boolean"},
+        "owner_netid": {"type": "string", "minLength": 1},
+    },
+}
+
+UPDATE_LINK_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "minProperties": 1,
+    "properties": {
+        "deleted": {"type": "boolean"},
+        "expiration_time": {"type": ["string", "null"], "format": "date-time"},
     },
 }
 
@@ -43,56 +54,113 @@ CREATE_LINK_SCHEMA = {
 @request_schema(CREATE_LINK_SCHEMA)
 @require_token(required_permission="create:links")
 def create_link(token_owner: MongoRef, client: ShrunkClient, req: Any) -> Any:
-    """Creates a new link"""
+    """``POST /api/v1/links``
+
+    Create a new link owned by an organization or, for supertokens, by a NetID.
+    Org tokens may omit ``organization_id`` to create under their token organization.
+    Supertokens must provide either ``organization_id`` or ``owner_netid``.
+    """
 
     org_id = req.get("organization_id")
-    if org_id is not None:
-        try:
-            ObjectId(org_id)
-        except bson.errors.InvalidId:
+    requested_owner_netid = req.get("owner_netid")
+
+    if requested_owner_netid is not None and org_id is not None:
+        return (
+            jsonify(
+                {
+                    "error": {
+                        "code": "CONFLICTING_FIELDS",
+                        "message": "Conflicting fields: owner_netid and organization_id",
+                        "details": "Provide either 'owner_netid' or 'organization_id', not both.",
+                    }
+                }
+            ),
+            400,
+        )
+
+    if requested_owner_netid is not None:
+        if token_owner["type"] != "netid":
             return (
                 jsonify(
                     {
                         "error": {
-                            "code": "INVALID_ORG_ID_FORMAT",
-                            "message": "Organization_id is not a valid ObjectId",
-                            "details": "The provided organization_id is not a valid ObjectId",
+                            "code": "INSUFFICIENT_PERMISSIONS",
+                            "message": "You do not have permission to create netid-owned links",
+                            "details": "This operation requires a Super Token",
                         }
                     }
                 ),
                 403,
             )
 
-    if token_owner["type"] == "netid":
-        if org_id is None:
+        validEntity = client.users.is_valid_entity(requested_owner_netid)
+
+        if not validEntity:
             return (
                 jsonify(
                     {
                         "error": {
-                            "code": "MISSING_FIELD",
-                            "message": "Missing required field: organization_id",
-                            "details": "Provide organization_id in the request body.",
+                            "code": "INVALID_OWNER_NETID",
+                            "message": "The provided owner netid is not valid",
+                            "details": "The netid must be a valid netid string.",
                         }
                     }
                 ),
                 400,
             )
+
+        owner = {"_id": requested_owner_netid, "type": "netid"}
+
     else:
-        if org_id is None:
-            org_id = token_owner["_id"]
-        elif ObjectId(org_id) != token_owner["_id"]:
-            return (
-                jsonify(
-                    {
-                        "error": {
-                            "code": "ORG_TOKEN_MISMATCH",
-                            "message": "Organization mismatch",
-                            "details": "The provided organization_id does not match the organization associated with your access token",
+        if org_id is not None:
+            try:
+                ObjectId(org_id)
+            except bson.errors.InvalidId:
+                return (
+                    jsonify(
+                        {
+                            "error": {
+                                "code": "INVALID_ORG_ID_FORMAT",
+                                "message": "Organization_id is not a valid ObjectId",
+                                "details": "The provided organization_id is not a valid ObjectId",
+                            }
                         }
-                    }
-                ),
-                403,
-            )
+                    ),
+                    400,
+                )
+
+        if token_owner["type"] == "org":
+            if org_id is None:
+                org_id = token_owner["_id"]
+            elif ObjectId(org_id) != token_owner["_id"]:
+                return (
+                    jsonify(
+                        {
+                            "error": {
+                                "code": "ORG_TOKEN_MISMATCH",
+                                "message": "Organization mismatch",
+                                "details": "The provided organization_id does not match the organization associated with your access token",
+                            }
+                        }
+                    ),
+                    403,
+                )
+        else:
+            if org_id is None:
+                return (
+                    jsonify(
+                        {
+                            "error": {
+                                "code": "MISSING_FIELD",
+                                "message": "Missing required field: organization_id",
+                                "details": "Provide organization_id for organization-owned links, or provide owner for netid-owned links.",
+                            }
+                        }
+                    ),
+                    400,
+                )
+
+        owner = {"_id": ObjectId(org_id), "type": "org"}
 
     if "long_url" not in req:
         return (
@@ -128,7 +196,7 @@ def create_link(token_owner: MongoRef, client: ShrunkClient, req: Any) -> Any:
         expiration_time = None
 
     alias = req.get("alias", None)
-    owner: MongoRef = {"_id": ObjectId(org_id), "type": "org"}
+
     created_with_superToken = token_owner["type"] == "netid"
 
     if "check_existing" in req:
@@ -247,11 +315,12 @@ def create_link(token_owner: MongoRef, client: ShrunkClient, req: Any) -> Any:
 
 @bp.route("/<ObjectId:org_id>/<ObjectId:link_id>", methods=["GET"])
 @require_token(required_permission="read:links")
-def get_link(token_owner: MongoRef, client: ShrunkClient, org_id: ObjectId, link_id: ObjectId) -> Any:
+def get_org_link(token_owner: MongoRef, client: ShrunkClient, org_id: ObjectId, link_id: ObjectId) -> Any:
     """``GET /api/v1/links/<org_id>/<link_id>``
 
-    Get information about a link. Basically just returns the Mongo document.
-    :param netid:
+    Legacy route for getting information about an organization-owned link.
+    Prefer ``GET /api/v1/organizations/<org_id>/links/<link_id>`` for new clients.
+    :param token_owner:
     :param client:
     :param org_id:
     :param link_id:
@@ -324,70 +393,68 @@ def get_link(token_owner: MongoRef, client: ShrunkClient, org_id: ObjectId, link
     return jsonify(json_info), 200
 
 
-@bp.route("/<ObjectId:org_id>", methods=["GET"])
+@bp.route("/<ObjectId:link_id>", methods=["GET"])
 @require_token(required_permission="read:links")
-def get_org_links(token_owner: MongoRef, client: ShrunkClient, org_id: ObjectId) -> Any:
-    """``GET /api/v1/links/<org_id>``
+def get_link(token_owner: MongoRef, client: ShrunkClient, link_id: ObjectId) -> Any:
+    """``GET /api/v1/links/<link_id>``
 
-    Get information about links owned by a org. Basically just returns the Mongo document.
-    :param netid:
+    Get information about any link by ID. Requires a supertoken.
+    :param token_owner:
     :param client:
-    :param org_id:
+    :param link_id:
     """
-    if token_owner["type"] == "org":
-        if org_id != token_owner["_id"]:
-            return (
-                jsonify(
-                    {
-                        "error": {
-                            "code": "ORG_TOKEN_MISMATCH",
-                            "message": "Organization mismatch",
-                            "details": "The provided organization_id does not match the organization associated with your access token",
-                        }
+    if token_owner["type"] != "netid":
+        return (
+            jsonify(
+                {
+                    "error": {
+                        "code": "INSUFFICIENT_PERMISSIONS",
+                        "message": "You do not have permission to view links",
+                        "details": "This operation requires a Super Token",
                     }
-                ),
-                403,
-            )
+                }
+            ),
+            403,
+        )
 
     try:
-        info = client.orgs.get_links(org_id, is_tracking_pixel=False)
-        links_response = [
-            {
-                "_id": link["_id"],
-                "title": link["title"],
-                "long_url": link["long_url"],
-                "owner": client.links.get_owner(link["_id"]),
-                "created_time": link["timeCreated"],
-                "expiration_time": link.get("expiration_time"),
-                "domain": link.get("domain"),
-                "alias": link["alias"],
-                "deleted": link.get("deleted", False),
-                "deletion_info": {
-                    "deleted_by": link.get("deleted_by"),
-                    "delete_time": link.get("deleted_time"),
-                },
-                "editors": link.get("editors", []),
-                "viewers": link.get("viewers", []),
-                "is_tracking_pixel_link": link.get("is_tracking_pixel_link", False),
-            }
-            for link in info
-        ]
-
+        info = client.links.get_link_info(link_id, is_tracking_pixel=False)
     except NoSuchObjectException:
         return (
             jsonify(
                 {
                     "error": {
                         "code": "NO_SUCH_OBJECT",
-                        "message": "No links found for organization",
-                        "details": "The organization does not contain any links or the id is invalid.",
+                        "message": "Link not found",
+                        "details": "This link does not exist or the id is invalid.",
                     }
                 }
             ),
             404,
         )
 
-    return jsonify({"links": links_response}), 200
+    json_info = {
+        "_id": info["_id"],
+        "title": info["title"],
+        "long_url": info["long_url"],
+        "owner": client.links.get_owner(link_id),
+        "created_time": info["timeCreated"],
+        "expiration_time": info.get("expiration_time", None),
+        "domain": info.get("domain", None),
+        "alias": info["alias"],
+        "deleted": info.get("deleted", False),
+        "deletion_info": {
+            "deleted_by": info.get("deleted_by", None),
+            "delete_time": info.get("deleted_time", None),
+        },
+        "editors": info.get("editors", []),
+        "viewers": info.get("viewers", []),
+        "is_tracking_pixel_link": info.get("is_tracking_pixel_link", False),
+        "visits": info.get("visits", 0),
+        "unique_visits": info.get("unique_visits", 0),
+    }
+
+    return jsonify(json_info), 200
 
 
 @bp.route("/<ObjectId:org_id>/<ObjectId:link_id>/visits", methods=["POST"])
@@ -395,9 +462,10 @@ def get_org_links(token_owner: MongoRef, client: ShrunkClient, org_id: ObjectId)
 def get_link_visits(token_owner: MongoRef, client: ShrunkClient, org_id: ObjectId, link_id: ObjectId) -> Any:
     """``POST /api/v1/links/<org_id>/<link_id>/visits``
 
-    Get advanced information about visits to a link.
-    :param netid:
+    Get advanced information about visits to an organization-owned link.
+    :param token_owner:
     :param client:
+    :param org_id:
     :param link_id:
 
     ```query: {
@@ -450,6 +518,106 @@ def get_link_visits(token_owner: MongoRef, client: ShrunkClient, org_id: ObjectI
         )
 
     return jsonify({"visits": list(info)}), 200
+
+
+@bp.route("/<ObjectId:link_id>", methods=["PATCH"])
+@request_schema(UPDATE_LINK_SCHEMA)
+@require_token(required_permission="update:links")
+def update_link(token_owner: Dict[str, Any], client: ShrunkClient, req: Any, link_id: ObjectId) -> Any:
+    """``PATCH /api/v1/links/<link_id>``
+
+    Update a link. Requires a supertoken.
+    Accepted fields: deleted (bool), expiration_time (ISO string or null).
+    :param token_owner:
+    :param client:
+    :param req:
+    :param link_id:
+    """
+    if token_owner["type"] != "netid":
+        return (
+            jsonify(
+                {
+                    "error": {
+                        "code": "INSUFFICIENT_PERMISSIONS",
+                        "message": "You do not have permission to update links",
+                        "details": "This operation requires a Super Token",
+                    }
+                }
+            ),
+            403,
+        )
+
+    try:
+        client.links.get_link_info(link_id, is_tracking_pixel=False)
+    except NoSuchObjectException:
+        return (
+            jsonify(
+                {
+                    "error": {
+                        "code": "NO_SUCH_OBJECT",
+                        "message": "Link not found",
+                        "details": "This link does not exist or the id is invalid.",
+                    }
+                }
+            ),
+            404,
+        )
+
+    try:
+        if "deleted" in req:
+            if req["deleted"] is False:
+                client.links.restore(link_id)
+            elif req["deleted"] is True:
+                client.links.delete(link_id, deleted_by=str(token_owner["_id"]))
+
+        if "expiration_time" in req:
+            if req["expiration_time"] is None:
+                client.links.remove_expiration_time(link_id)
+            else:
+                try:
+                    parsed_expiration = datetime.fromisoformat(req["expiration_time"].replace("Z", ""))
+                except ValueError:
+                    return (
+                        jsonify(
+                            {
+                                "error": {
+                                    "code": "INVALID_EXPIRATION_TIME",
+                                    "message": "Invalid expiration_time format",
+                                    "details": "Provide a valid ISO 8601 datetime string.",
+                                }
+                            }
+                        ),
+                        400,
+                    )
+                client.links.modify(link_id, expiration_time=parsed_expiration)
+    except NoSuchObjectException:
+        return (
+            jsonify(
+                {
+                    "error": {
+                        "code": "NO_SUCH_OBJECT",
+                        "message": "Link not found",
+                        "details": "This link does not exist or has already been deleted.",
+                    }
+                }
+            ),
+            404,
+        )
+    except BadLongURLException, SecurityRiskDetected:
+        return (
+            jsonify(
+                {
+                    "error": {
+                        "code": "INVALID_LONG_URL",
+                        "message": "Invalid long_url",
+                        "details": "The provided URL is blocked or flagged as a security risk.",
+                    }
+                }
+            ),
+            400,
+        )
+
+    return jsonify({"status": "updated"}), 200
 
 
 @bp.route("/<ObjectId:link_id>/qrcode", methods=["GET"])

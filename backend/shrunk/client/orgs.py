@@ -66,7 +66,7 @@ class OrgsClient:
         :returns: See :py:func:`shrunk.api.org.get_orgs` for the format
           of the return value
         """
-        aggregation: List[Dict[str, Any]] = []
+        aggregation: List[Dict[str, Any]] = [{"$match": {"name": {"$not": {"$regex": "^who-"}}}}]
         if only_member_orgs:
             aggregation.append(
                 {
@@ -394,7 +394,14 @@ class OrgsClient:
         :returns: A list of links associated with the org
         """
         if is_tracking_pixel is not None:
-            result = self.db.urls.find({"owner._id": org_id, "is_tracking_pixel_link": is_tracking_pixel})
+            result = self.db.urls.find(
+                {
+                    "owner._id": org_id,
+                    "is_tracking_pixel_link": is_tracking_pixel,
+                    "deleted": False,
+                    "alias": {"$not": {"$regex": "^who-"}},
+                }
+            )
 
             if result is None:
                 raise NoSuchObjectException
@@ -403,12 +410,14 @@ class OrgsClient:
         pipeline = [
             {
                 "$match": {
+                    "deleted": False,
+                    "alias": {"$not": {"$regex": "^who-"}},
                     "$or": [
                         {
                             "$and": [{"owner.type": "org"}, {"owner._id": org_id}],
                         },
                         {"viewers._id": org_id},
-                    ]
+                    ],
                 }
             },
             {
@@ -549,7 +558,7 @@ class OrgsClient:
         :param netid: The NetID of the user performing the search
         :param query: The search query parameters
         """
-        pipeline: List[Dict[str, Any]] = []
+        pipeline: List[Dict[str, Any]] = [{"$match": {"name": {"$not": {"$regex": "^who-"}}}}]
 
         # Match by name
         if "query" in query and query["query"]:

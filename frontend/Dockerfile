@@ -30,6 +30,8 @@ CMD ["npm", "run", "dev"]
 # Production target, strips nodejs out and serve files directly using proxy
 FROM debian:bookworm-slim as prod
 
+ENV BACKEND_URL backend
+
 # Install apache httpd and its shibboleth module
 RUN apt-get update && apt-get install -y apache2 libapache2-mod-shib ca-certificates
 # Enable some modules (some of these are already enabled)

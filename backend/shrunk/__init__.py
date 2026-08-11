@@ -16,6 +16,7 @@ from urllib.parse import parse_qsl, urlencode
 
 import bson.errors
 import flask
+import pymongo.errors
 from flask import (
     Flask,
     current_app,
@@ -606,6 +607,9 @@ def create_app(**_kwargs: Any) -> Flask:
     def _record_visit() -> None:
         netid = flask.session["user"]["netid"] if "user" in flask.session else None
         endpoint = flask.request.endpoint or "error"
-        getattr(current_app, "client").record_visit(netid, endpoint)
+        try:
+            getattr(current_app, "client").record_visit(netid, endpoint)
+        except pymongo.errors.PyMongoError:
+            current_app.logger.exception("Unable to record endpoint visit")
 
     return app

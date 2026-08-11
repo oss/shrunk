@@ -330,6 +330,8 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
 
     if not client.users.has_role(netid, "admin") and not client.links.may_edit(link_id, netid):
         abort(403)
+    if link.get("alias", "").startswith("who-") and not client.users.has_role(netid, "admin"):
+        abort(403)
     if "alias" in req:
         if client.links.alias_is_duplicate(req["alias"], link.get("is_tracking_pixel_link", False)):
             abort(400)
@@ -531,10 +533,12 @@ def delete_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     :param link_id:
     """
     try:
-        client.links.get_link_info(link_id)
+        link = client.links.get_link_info(link_id)
     except NoSuchObjectException:
         abort(404)
     if not client.users.has_role(netid, "admin") and not client.links.is_owner(link_id, netid):
+        abort(403)
+    if link.get("alias", "").startswith("who-") and not client.users.has_role(netid, "admin"):
         abort(403)
     client.links.delete(link_id, netid)
     return "", 204

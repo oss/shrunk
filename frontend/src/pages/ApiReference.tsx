@@ -660,17 +660,177 @@ export default function ApiReference() {
     },
     {
       key: 'links-get',
-      label: 'GET /links/<org_id>/<link_id>',
+      label: 'GET /links/<link_id>',
       children: (
         <Typography>
           <Typography.Title level={4}>Get Link</Typography.Title>
           <Typography.Title className="mt-4!" level={5}>
-            Retrieves a link by organization and link ID
+            Retrieves a link by ID. Requires a Super Token.
           </Typography.Title>
           <Typography.Paragraph className="mt-4!">Request</Typography.Paragraph>
           <Typography className="mt-4!">
             <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
-              {`curl ${apiUrl}/links/<org_id>/<link_id> \\
+              {`curl ${apiUrl}/links/<link_id> \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer $SHRUNK_API_KEY"`}
+            </Flex>
+          </Typography>
+          <Typography.Paragraph className="mt-4!">
+            Response
+          </Typography.Paragraph>
+          <Typography className="mt-4!">
+            <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
+              {`{
+  "_id": str,
+  "title": str,
+  "long_url": str,
+  "owner": { "_id": str, "type": "netid" | "org" },
+  "created_time": str,
+  "expiration_time": str | null,
+  "domain": str | null,
+  "alias": str,
+  "deleted": bool,
+  "deletion_info": { "deleted_by": str | null, "delete_time": str | null },
+  "editors": [str, ...],
+  "viewers": [str, ...],
+  "is_tracking_pixel_link": false,
+  "visits": int,
+  "unique_visits": int
+}`}
+            </Flex>
+            <Typography.Title className="mt-4!" level={5}>
+              Path Parameters
+            </Typography.Title>
+            <Descriptions column={1} bordered={false} className="mt-4!">
+              <Descriptions.Item
+                label={
+                  <Row gutter={8} align="middle" wrap={false}>
+                    <Col>
+                      <Typography.Text code>link_id</Typography.Text>
+                    </Col>
+                    <Col>
+                      <Typography.Text type="secondary">string</Typography.Text>
+                    </Col>
+                    <Col>
+                      <Typography.Text type="secondary">
+                        Required
+                      </Typography.Text>
+                    </Col>
+                  </Row>
+                }
+              >
+                ID of the link to retrieve.
+              </Descriptions.Item>
+            </Descriptions>
+          </Typography>
+        </Typography>
+      ),
+    },
+    {
+      key: 'links-patch',
+      label: 'PATCH /links/<link_id>',
+      children: (
+        <Typography>
+          <Typography.Title level={4}>Update Link</Typography.Title>
+          <Typography.Title className="!tw-mt-4" level={5}>
+            Updates a link&apos;s deleted state or expiration time. Requires a
+            Super Token with{' '}
+            <Typography.Text code>update:links</Typography.Text> permission.
+          </Typography.Title>
+          <Typography.Paragraph className="!tw-mt-4">
+            Request
+          </Typography.Paragraph>
+          <Typography className="!tw-mt-4">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+              {`curl ${apiUrl}/links/<link_id> \\
+  -X PATCH \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer $SHRUNK_API_KEY" \\
+  -d '{
+    "deleted": false,
+    "expiration_time": "2099-01-01T00:00:00Z"
+  }'`}
+            </Flex>
+          </Typography>
+          <Typography.Paragraph className="!tw-mt-4">
+            Response
+          </Typography.Paragraph>
+          <Typography className="!tw-mt-4">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+              {`{ "status": "updated" }`}
+            </Flex>
+            <Typography.Title className="!tw-mt-4" level={5}>
+              Body Parameters
+            </Typography.Title>
+            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+              <Descriptions.Item
+                label={
+                  <Row gutter={8} align="middle" wrap={false}>
+                    <Col>
+                      <Typography.Text code>deleted</Typography.Text>
+                    </Col>
+                    <Col>
+                      <Typography.Text type="secondary">
+                        boolean
+                      </Typography.Text>
+                    </Col>
+                    <Col>
+                      <Typography.Text type="secondary">
+                        Optional
+                      </Typography.Text>
+                    </Col>
+                  </Row>
+                }
+              >
+                Set <Typography.Text code>true</Typography.Text> to soft-delete
+                the link; <Typography.Text code>false</Typography.Text> to
+                restore a previously deleted link.
+              </Descriptions.Item>
+            </Descriptions>
+            <Divider className="tw-my-2 !tw-mt-4" />
+            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+              <Descriptions.Item
+                label={
+                  <Row gutter={8} align="middle" wrap={false}>
+                    <Col>
+                      <Typography.Text code>expiration_time</Typography.Text>
+                    </Col>
+                    <Col>
+                      <Typography.Text type="secondary">
+                        string (ISO 8601) | null
+                      </Typography.Text>
+                    </Col>
+                    <Col>
+                      <Typography.Text type="secondary">
+                        Optional
+                      </Typography.Text>
+                    </Col>
+                  </Row>
+                }
+              >
+                New expiration time for the link. Pass{' '}
+                <Typography.Text code>null</Typography.Text> to remove the
+                expiration entirely.
+              </Descriptions.Item>
+            </Descriptions>
+          </Typography>
+        </Typography>
+      ),
+    },
+    {
+      key: 'org-links-get',
+      label: 'GET /organizations/<org_id>/links/<link_id>',
+      children: (
+        <Typography>
+          <Typography.Title level={4}>Get Organization Link</Typography.Title>
+          <Typography.Title className="mt-4!" level={5}>
+            Retrieves a link owned by a specific organization by org ID and link
+            ID.
+          </Typography.Title>
+          <Typography.Paragraph className="mt-4!">Request</Typography.Paragraph>
+          <Typography className="mt-4!">
+            <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
+              {`curl ${apiUrl}/organizations/<org_id>/links/<link_id> \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $SHRUNK_API_KEY"`}
             </Flex>
@@ -747,18 +907,18 @@ export default function ApiReference() {
       ),
     },
     {
-      key: 'links-list',
-      label: 'GET /links/<org_id>',
+      key: 'org-links-list',
+      label: 'GET /organizations/<org_id>/links',
       children: (
         <Typography>
           <Typography.Title level={4}>List Organization Links</Typography.Title>
           <Typography.Title className="mt-4!" level={5}>
-            Returns all links owned by an organization
+            Returns all links owned by an organization.
           </Typography.Title>
           <Typography.Paragraph className="mt-4!">Request</Typography.Paragraph>
           <Typography className="mt-4!">
             <Flex className="overflow-x-auto rounded-md bg-muted p-6 font-mono whitespace-pre">
-              {`curl ${apiUrl}/links/<org_id> \\
+              {`curl ${apiUrl}/organizations/<org_id>/links \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer $SHRUNK_API_KEY"`}
             </Flex>
@@ -809,8 +969,7 @@ export default function ApiReference() {
                   </Row>
                 }
               >
-                Organization ID whose links to list. Must match the token&apos;s
-                organization.
+                Organization ID whose links to list.
               </Descriptions.Item>
             </Descriptions>
           </Typography>
@@ -1286,7 +1445,8 @@ export default function ApiReference() {
   "organizations": [
     {
       "orgId": str,
-      "name": str
+      "name": str,
+      "role": str
     }
   ]
 }`}
@@ -1313,6 +1473,169 @@ export default function ApiReference() {
                 }
               >
                 NetID of the user whose organizations to list.
+              </Descriptions.Item>
+            </Descriptions>
+          </Typography>
+        </Typography>
+      ),
+    },
+    {
+      key: 'orgs-post',
+      label: 'POST /organizations',
+      children: (
+        <Typography>
+          <Typography.Title level={4}>Create Organization</Typography.Title>
+          <Typography.Title className="!tw-mt-4" level={5}>
+            Creates a new organization. Requires a Super Token with{' '}
+            <Typography.Text code>create:organizations</Typography.Text>{' '}
+            permission.
+          </Typography.Title>
+          <Typography.Paragraph className="!tw-mt-4">
+            Request
+          </Typography.Paragraph>
+          <Typography className="!tw-mt-4">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+              {`curl ${apiUrl}/organizations \\
+  -X POST \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer $SHRUNK_API_KEY" \\
+  -d '{
+    "name": "My Organization",
+    "owner_netid": "netid123"
+  }'`}
+            </Flex>
+          </Typography>
+          <Typography.Paragraph className="!tw-mt-4">
+            Response
+          </Typography.Paragraph>
+          <Typography className="!tw-mt-4">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+              {`{
+  "organization": {
+    "_id": str,
+    "name": str
+  }
+}`}
+            </Flex>
+            <Typography.Title className="!tw-mt-4" level={5}>
+              Body Parameters
+            </Typography.Title>
+            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+              <Descriptions.Item
+                label={
+                  <Row gutter={8} align="middle" wrap={false}>
+                    <Col>
+                      <Typography.Text code>name</Typography.Text>
+                    </Col>
+                    <Col>
+                      <Typography.Text type="secondary">string</Typography.Text>
+                    </Col>
+                    <Col>
+                      <Typography.Text type="secondary">
+                        Required
+                      </Typography.Text>
+                    </Col>
+                  </Row>
+                }
+              >
+                Name of the organization to create.
+              </Descriptions.Item>
+            </Descriptions>
+            <Divider className="tw-my-2 !tw-mt-4" />
+            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+              <Descriptions.Item
+                label={
+                  <Row gutter={8} align="middle" wrap={false}>
+                    <Col>
+                      <Typography.Text code>owner_netid</Typography.Text>
+                    </Col>
+                    <Col>
+                      <Typography.Text type="secondary">string</Typography.Text>
+                    </Col>
+                    <Col>
+                      <Typography.Text type="secondary">
+                        Required
+                      </Typography.Text>
+                    </Col>
+                  </Row>
+                }
+              >
+                NetID of the user who will own the organization.
+              </Descriptions.Item>
+            </Descriptions>
+          </Typography>
+        </Typography>
+      ),
+    },
+    {
+      key: 'users-links-get',
+      label: 'GET /users/<netid>/links',
+      children: (
+        <Typography>
+          <Typography.Title level={4}>
+            List Accessible Links for User
+          </Typography.Title>
+          <Typography.Title className="!tw-mt-4" level={5}>
+            Returns all non-tracking-pixel links accessible to a user (personal
+            and org-owned). Requires a Super Token.
+          </Typography.Title>
+          <Typography.Paragraph className="!tw-mt-4">
+            Request
+          </Typography.Paragraph>
+          <Typography className="!tw-mt-4">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+              {`curl ${apiUrl}/users/<netid>/links \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer $SHRUNK_API_KEY"`}
+            </Flex>
+          </Typography>
+          <Typography.Paragraph className="!tw-mt-4">
+            Response
+          </Typography.Paragraph>
+          <Typography className="!tw-mt-4">
+            <Flex className="tw-overflow-x-auto tw-whitespace-pre tw-rounded-[4px] tw-bg-[#f5f5f5] tw-p-6 tw-font-mono dark:tw-bg-[#4c4c4c]">
+              {`{
+  "links": [
+    {
+      "_id": str,
+      "title": str,
+      "long_url": str,
+      "owner": { "_id": str, "type": "netid" | "org" },
+      "created_time": str,
+      "expiration_time": str | null,
+      "domain": str | null,
+      "alias": str,
+      "deleted": bool,
+      "deletion_info": { "deleted_by": str | null, "delete_time": str | null },
+      "editors": [str, ...],
+      "viewers": [str, ...],
+      "is_tracking_pixel_link": false
+    }
+  ]
+}`}
+            </Flex>
+            <Typography.Title className="!tw-mt-4" level={5}>
+              Path Parameters
+            </Typography.Title>
+            <Descriptions column={1} bordered={false} className="!tw-mt-4">
+              <Descriptions.Item
+                label={
+                  <Row gutter={8} align="middle" wrap={false}>
+                    <Col>
+                      <Typography.Text code>netid</Typography.Text>
+                    </Col>
+                    <Col>
+                      <Typography.Text type="secondary">string</Typography.Text>
+                    </Col>
+                    <Col>
+                      <Typography.Text type="secondary">
+                        Required
+                      </Typography.Text>
+                    </Col>
+                  </Row>
+                }
+              >
+                NetID of the user whose accessible links to return.
               </Descriptions.Item>
             </Descriptions>
           </Typography>

@@ -183,3 +183,69 @@ def get_all_users(token_owner: MongoRef, client: ShrunkClient) -> Any:
         users = filtered_users
 
     return jsonify({"users": users}), 200
+
+
+@bp.route("/<netid>/links", methods=["GET"])
+@require_token(required_permission="read:links")
+def get_user_accessible_links(token_owner: Dict[str, Any], client: ShrunkClient, netid: str) -> Any:
+    """``GET /api/v1/users/<netid>/links``
+
+    Get all non-tracking-pixel links that ``netid`` can access.
+    Requires a supertoken with ``read:links`` permission.
+    :param token_owner:
+    :param client:
+    :param netid:
+    """
+
+    if token_owner["type"] != "netid":
+        return (
+            jsonify(
+                {
+                    "error": {
+                        "code": "INSUFFICIENT_PERMISSIONS",
+                        "message": "You do not have permission to view this user's links",
+                        "details": "This operation requires a Super Token",
+                    }
+                }
+            ),
+            403,
+        )
+
+    if not client.users.is_valid_entity(netid):
+        return (
+            jsonify(
+                {
+                    "error": {
+                        "code": "INVALID_NETID",
+                        "message": "Invalid netid",
+                        "details": "The provided netid does not exist",
+                    }
+                }
+            ),
+            400,
+        )
+
+    links = client.links.get_accessible_links_for_user(netid)
+    filtered_links = [
+        {
+            "_id": link["_id"],
+            "title": link["title"],
+            "long_url": link["long_url"],
+            "owner": client.links.get_owner(link["_id"]),
+            "created_time": link["timeCreated"],
+            "expiration_time": link.get("expiration_time"),
+            "domain": link.get("domain"),
+            "alias": link["alias"],
+            "deleted": link.get("deleted", False),
+            "deletion_info": {
+                "deleted_by": link.get("deleted_by"),
+                "delete_time": link.get("deleted_time"),
+            },
+            "editors": link.get("editors", []),
+            "viewers": link.get("viewers", []),
+            "is_tracking_pixel_link": link.get("is_tracking_pixel_link", False),
+        }
+        for link in links
+    ]
+
+    return jsonify({"links": filtered_links}), 200

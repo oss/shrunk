@@ -31,7 +31,7 @@ class SearchClient:
         sets = [item["set"] for item in query["set"]]
 
         # We're going to build up an aggregation pipeline based on the submitted query.
-        pipeline: List[Dict[str, Any]] = []
+        pipeline: List[Dict[str, Any]] = [{"$match": {"alias": {"$not": {"$regex": "^who-"}}}}]
 
         # Independent field-based search
         search_filters = []

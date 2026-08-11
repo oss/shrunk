@@ -234,7 +234,7 @@ def test_external_api_endpoints(client: Client) -> None:
 
         # get org links endpoint
         resp = client.get(
-            f"/api/v1/links/{org_id}",
+            f"/api/v1/organizations/{org_id}/links",
             headers={"Authorization": f"Bearer {token}"},
         )
         assert resp.status_code == 200
@@ -321,7 +321,7 @@ def test_external_api_endpoints(client: Client) -> None:
         assert resp.status_code == 201
 
         resp = client.get(
-            f"/api/v1/links/{org_id}",
+            f"/api/v1/organizations/{org_id}/links",
             headers={"Authorization": f"Bearer {token}"},
         )
 

@@ -198,7 +198,7 @@ class LinksClient:
         self.assert_valid_acl_entry("owner", owner)
 
         org: Optional[OrgDocument] = None
-        if created_using_api:
+        if created_using_api and owner["type"] == "org":
             org = self.other_clients.orgs.get_org(ObjectId(owner["_id"]))
             if org is None:
                 raise NoSuchObjectException
@@ -217,24 +217,23 @@ class LinksClient:
 
         # Ban the creation of links with multiple aliases
         # (https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/274)
-
         if alias is None:
-            if created_using_api:
+            if created_using_api and owner["type"] == "org" and not created_with_superToken:
                 assert org is not None
-                if created_with_superToken:
-                    alias = self.create_random_alias(extension=extension, orgAlias=None)
-                else:
-                    alias = self.create_random_alias(extension=extension, orgAlias=org["name"].replace(" ", ""))
+                alias = self.create_random_alias(extension=extension, prefix=org["name"].replace(" ", ""))
+            elif created_using_api and created_with_superToken:
+                alias = self.create_random_alias(extension=extension, prefix="who")
             else:
-                alias = self.create_random_alias(extension=extension, orgAlias=None)
+                alias = self.create_random_alias(extension=extension, prefix=None)
         else:
             # Ban the future use of creating case-sensitive aliases
             # (https://gitlab.rutgers.edu/MaCS/OSS/shrunk/-/issues/205)
             alias = alias.lower()
-            if created_using_api:
+            if created_using_api and owner["type"] == "org" and not created_with_superToken:
                 assert org is not None
-                if not created_with_superToken:
-                    alias = org["name"].replace(" ", "") + "-" + alias
+                alias = org["name"].replace(" ", "") + "-" + alias
+            elif created_using_api and created_with_superToken:
+                alias = "who-" + alias
 
             assert alias is not None
             if not bool(re.fullmatch(r"^[a-zA-Z0-9_\-\.]+$", alias)):
@@ -643,6 +642,14 @@ class LinksClient:
         if result.modified_count != 1:
             raise NoSuchObjectException
 
+    def restore(self, link_id: ObjectId) -> None:
+        result = self.db.urls.update_one(
+            {"_id": link_id, "deleted": True},
+            {"$set": {"deleted": False, "deleted_by": None, "deleted_time": None}},
+        )
+        if result.modified_count != 1:
+            raise NoSuchObjectException
+
     def delete_bulk(self, link_ids: List[ObjectId], deleted_by: str) -> None:
         result = self.db.urls.update_many(
             {"_id": {"$in": link_ids}, "deleted": False},
@@ -833,11 +840,11 @@ class LinksClient:
         result = self.db.visits.find(query)
         return list(result)
 
-    def create_random_alias(self, extension: Optional[str] = None, orgAlias: Optional[str] = None) -> str:
+    def create_random_alias(self, extension: Optional[str] = None, prefix: Optional[str] = None) -> str:
         while True:
             alias = self._generate_unique_key()
-            if orgAlias:
-                alias = orgAlias + "-" + alias
+            if prefix:
+                alias = prefix + "-" + alias
             if extension:
                 alias += extension
             if not self.alias_is_reserved(alias):
@@ -941,6 +948,48 @@ class LinksClient:
             }
         )
         return result is not None
+
+    def get_accessible_links_for_user(self, netid: str) -> List[Any]:
+        """Return non-deleted, non-tracking links visible to a user.
+
+        Access includes direct ownership, direct viewer/editor ACL entries,
+        organization ownership, and organization viewer/editor ACL entries.
+        """
+        orgs = self.other_clients.orgs.get_orgs(netid, only_member_orgs=True)
+        org_ids = [org["id"] for org in orgs]
+
+        access_clauses = [
+            {"owner": {"_id": netid, "type": "netid"}},
+            {"viewers": {"$elemMatch": {"_id": netid, "type": "netid"}}},
+            {"editors": {"$elemMatch": {"_id": netid, "type": "netid"}}},
+        ]
+
+        if org_ids:
+            access_clauses.extend(
+                [
+                    {"owner._id": {"$in": org_ids}, "owner.type": "org"},
+                    {"viewers": {"$elemMatch": {"_id": {"$in": org_ids}, "type": "org"}}},
+                    {"editors": {"$elemMatch": {"_id": {"$in": org_ids}, "type": "org"}}},
+                ]
+            )
+
+        return list(
+            self.db.urls.find(
+                {
+                    "deleted": False,
+                    "alias": {"$not": {"$regex": "^who-"}},
+                    "$and": [
+                        {
+                            "$or": [
+                                {"is_tracking_pixel_link": False},
+                                {"is_tracking_pixel_link": {"$exists": False}},
+                            ]
+                        },
+                        {"$or": access_clauses},
+                    ],
+                }
+            )
+        )
 
     def get_admin_stats(self) -> AdminStatsDocument:
         """Get some basic overall stats about Shrunk"""

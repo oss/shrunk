@@ -21,8 +21,10 @@ class AccessTokenClient:
         self.access_tokens_permissions = [
             "read:users",
             "read:organizations",
+            "create:organizations",
             "read:links",
             "create:links",
+            "update:links",
             "read:tracking-pixels",
             "create:tracking-pixels",
         ]
