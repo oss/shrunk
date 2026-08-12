@@ -36,7 +36,8 @@ cache:
 
 .mongo-service:
   services:
-    - name: mongo:7
+    - &mongo_service
+      name: mongo:7
       alias: mongo
       command:
         - sh
@@ -127,9 +128,6 @@ prettier:
     - cd frontend
     - npm ci --cache .npm --prefer-offline
     - npx prettier --check .
-  artifacts:
-    reports:
-      junit: eslint.xml
   
 build:
   extends:
@@ -170,19 +168,18 @@ backend-test:
     reports:
       junit: pytest.xml
 
-accessibility-test:
+.accessibility-test:
   extends: .mongo-service
   stage: test
   image: quay.io/podman/stable
-  parallel:
-    matrix:
-      - THEME: ["light", "dark"]
-  when: manual
+  when: on_success
+  allow_failure: false
   variables:
     FF_NETWORK_PER_BUILD: true
     SHRUNK_DB_HOST: mongo
     SHRUNK_DB_PORT: 27017
     SHRUNK_DB_NAME: shrunk_test
+    SHRUNK_REPLICA_SET_NAME: rs0
     SHRUNK_DEV_LOGINS: 1
     SHRUNK_SEED_DATABASE: 1
     SHRUNK_SECRET_KEY: something_secret
@@ -191,7 +188,7 @@ accessibility-test:
   before_script:
     - podman login -u "$CI_REGISTRY_USER" --password $CI_REGISTRY_PASSWORD $CI_REGISTRY
   services:
-    - mongo
+    - *mongo_service
     - name: $CI_REGISTRY_IMAGE/frontend:${CI_COMMIT_SHA}
       alias: frontend
     - name: $CI_REGISTRY_IMAGE/backend:${CI_COMMIT_SHA}
@@ -204,6 +201,15 @@ accessibility-test:
     when: always
     reports:
       accessibility: workspace/accessibility-${THEME}.json
+    paths:
+      - workspace/accessibility-${THEME}.json
+
+accessibility-test:
+  extends: .accessibility-test
+  parallel:
+    matrix:
+      - THEME: light
+      - THEME: dark
 
 promote-build:
   extends:

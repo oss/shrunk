@@ -45,7 +45,10 @@ function PendingLinkRow(props: PendingRowProps) {
         </p>
         <p className="text-sm break-all text-muted-foreground">
           long url:{' '}
-          <a className="text-primary underline" href={document.long_url}>
+          <a
+            className="text-primary underline decoration-primary dark:text-foreground"
+            href={document.long_url}
+          >
             {document.long_url}
           </a>
         </p>

@@ -85,7 +85,7 @@ const TransferToNetIdModal = (props: ITransferModal) => {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Transfer to NetID</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-foreground/80">
             Enter the NetID that should become the new owner of this link.
           </DialogDescription>
         </DialogHeader>

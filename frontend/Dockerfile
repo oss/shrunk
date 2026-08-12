@@ -4,8 +4,8 @@ FROM node:24 as base
 WORKDIR /usr/shrunk/frontend/
 
 # Install dependencies
-COPY package.json ./
-RUN npm install --frozen-lockfile
+COPY package.json package-lock.json ./
+RUN npm ci
 
 # TODO: Openshift does not like --exclude, find out why
 COPY . .
@@ -19,12 +19,16 @@ FROM node:24 as dev
 WORKDIR /usr/shrunk/frontend/
 EXPOSE 3000
 
-# Redownload dependencies since it is a new container
-COPY package.json ./
-RUN npm install
+# Install dependencies in the image. The dev entrypoint also refreshes the
+# mounted node_modules volume when package-lock.json changes.
+COPY package.json package-lock.json ./
+RUN npm ci
 
 COPY . .
+COPY docker-entrypoint.sh /usr/local/bin/shrunk-frontend-entrypoint
+RUN chmod +x /usr/local/bin/shrunk-frontend-entrypoint
 
+ENTRYPOINT ["shrunk-frontend-entrypoint"]
 CMD ["npm", "run", "dev"]
 
 # Production target, strips nodejs out and serve files directly using proxy

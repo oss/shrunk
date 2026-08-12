@@ -304,6 +304,7 @@ const CompactLinkTable = ({
       <div className="lg:hidden">
         <Button
           variant="outline"
+          aria-label="Open organization link filters"
           className="border-border bg-background shadow-none"
           onClick={() => setMobileFiltersOpen(true)}
         >
@@ -442,6 +443,7 @@ const CompactLinkTable = ({
                                     asChild
                                   >
                                     <a
+                                      aria-label={`View ${link.title}`}
                                       href={`/app/links/${link._id}`}
                                       target="_blank"
                                       rel="noreferrer"
@@ -462,6 +464,7 @@ const CompactLinkTable = ({
                                       <Button
                                         variant="ghost"
                                         size="icon"
+                                        aria-label={`Copy ${link.title}`}
                                         className={adminIconGhostButtonClass}
                                         onClick={() => {
                                           navigator.clipboard.writeText(
@@ -492,6 +495,7 @@ const CompactLinkTable = ({
                                         asChild
                                       >
                                         <a
+                                          aria-label={`Open QR code for ${link.title}`}
                                           href={`/app/links/${link._id}?mode=qrcode`}
                                           target="_blank"
                                           rel="noreferrer"
@@ -518,6 +522,7 @@ const CompactLinkTable = ({
                                         asChild
                                       >
                                         <a
+                                          aria-label={`Edit ${link.title}`}
                                           href={`/app/links/${link._id}?mode=edit`}
                                           target="_blank"
                                           rel="noreferrer"
@@ -540,6 +545,7 @@ const CompactLinkTable = ({
                                         asChild
                                       >
                                         <a
+                                          aria-label={`Share ${link.title}`}
                                           href={`/app/links/${link._id}?mode=collaborate`}
                                           target="_blank"
                                           rel="noreferrer"
@@ -563,6 +569,7 @@ const CompactLinkTable = ({
                                       <Button
                                         variant="ghost"
                                         size="icon"
+                                        aria-label={`Transfer ${link.title}`}
                                         className={adminIconGhostButtonClass}
                                         onClick={() => {
                                           setTransferModalVisible(true);
@@ -591,6 +598,7 @@ const CompactLinkTable = ({
                                       }
                                     >
                                       <a
+                                        aria-label={`Delete ${link.title}`}
                                         href={`/app/links/${link._id}?mode=edit`}
                                         target="_blank"
                                         rel="noreferrer"
@@ -618,6 +626,7 @@ const CompactLinkTable = ({
                 <Button
                   variant="ghost"
                   size="icon"
+                  aria-label="Previous organization links page"
                   className={adminPaginationButtonClass}
                   disabled={currentPage <= 1}
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
@@ -630,6 +639,7 @@ const CompactLinkTable = ({
                 <Button
                   variant="ghost"
                   size="icon"
+                  aria-label="Next organization links page"
                   className={adminPaginationButtonClass}
                   disabled={currentPage >= totalPages}
                   onClick={() =>
@@ -640,6 +650,7 @@ const CompactLinkTable = ({
                 </Button>
                 <div className="ml-3 flex items-center gap-2">
                   <select
+                    aria-label="Organization links per page"
                     className={adminPageSizeClass}
                     value={pageSize}
                     onChange={(e) => {

@@ -323,6 +323,7 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
                       </PopoverContent>
                     </Popover>
                     <Input
+                      aria-label="Expiration time"
                       type="time"
                       value={expirationTime}
                       onChange={(e) => setExpirationTime(e.target.value)}

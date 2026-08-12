@@ -151,6 +151,7 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
           </Button>
           <Button
             className={adminPrimaryButtonClass}
+            aria-label="Add user"
             onClick={() => setShowCreateUserModal(true)}
           >
             <PlusCircleIcon />
@@ -202,7 +203,8 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
                     className="flex items-center gap-2 text-sm leading-none font-medium text-foreground dark:text-[#efefef]"
                   >
                     <Checkbox
-                      className="border-border data-[state=checked]:border-primary data-[state=checked]:bg-primary dark:border-white/16 dark:data-[state=checked]:border-[#d21524] dark:data-[state=checked]:bg-[#d21524]"
+                      aria-label={`Assign ${role.label} role`}
+                      className="border-border data-[state=checked]:border-primary data-[state=checked]:bg-primary dark:border-white/16 dark:data-[state=checked]:border-primary dark:data-[state=checked]:bg-primary"
                       checked={roles.includes(role.value)}
                       onCheckedChange={(checked) => {
                         toggleRole(role.value, checked === true);
@@ -243,7 +245,11 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
             >
               Cancel
             </Button>
-            <Button className={adminPrimaryButtonClass} onClick={handleConfirm}>
+            <Button
+              aria-label="Confirm add user"
+              className={adminPrimaryButtonClass}
+              onClick={handleConfirm}
+            >
               Confirm
             </Button>
           </DialogFooter>

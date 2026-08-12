@@ -65,7 +65,7 @@ export default function Developer() {
             <AccordionTrigger>
               I found a bug, who can I contact?
             </AccordionTrigger>
-            <AccordionContent className="leading-6 text-muted-foreground [&_a]:text-primary [&_a]:underline">
+            <AccordionContent className="leading-6 text-muted-foreground [&_a]:text-primary [&_a]:underline [&_a]:decoration-primary dark:[&_a]:text-foreground">
               Please <a href="mailto:oss@oit.rutgers.edu">send us an email</a>{' '}
               describing your bug and how to reproduce it.
             </AccordionContent>

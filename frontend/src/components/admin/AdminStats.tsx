@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { Bar, BarChart, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import {
   ChartContainer,
   ChartTooltip,
@@ -17,6 +17,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { adminSurfaceClass } from '@/lib/admin-styles';
+
+// The chart's horizontal scroll region must be keyboard reachable.
+/* eslint-disable jsx-a11y/no-noninteractive-tabindex */
+// Recharts and its accessible label overlay need runtime dimensions calculated from the data.
+/* eslint-disable react/forbid-dom-props */
 
 export default function AdminStats(): React.ReactElement {
   const [isMobile, setIsMobile] = useState(false);
@@ -72,11 +77,17 @@ export default function AdminStats(): React.ReactElement {
   const chartConfig = {
     total: {
       label: 'Total visits',
-      theme: { light: '#ea580c', dark: '#fb923c' },
+      theme: {
+        light: 'hsl(var(--chart-total))',
+        dark: 'hsl(var(--chart-total))',
+      },
     },
     unique: {
       label: 'Unique visits',
-      theme: { light: '#2563eb', dark: '#60a5fa' },
+      theme: {
+        light: 'hsl(var(--chart-unique))',
+        dark: 'hsl(var(--chart-unique))',
+      },
     },
   } satisfies ChartConfig;
 
@@ -91,6 +102,8 @@ export default function AdminStats(): React.ReactElement {
   );
   const chartHeight = Math.max(chartData.length * 32, 400);
   const chartMinWidth = yAxisWidth + 500;
+  const endpointRowHeight =
+    chartData.length > 0 ? (chartHeight - 30) / chartData.length : 0;
 
   const mobileEndpointRows = [...endpointData]
     .sort((a, b) => b.total_visits - a.total_visits)
@@ -160,34 +173,116 @@ export default function AdminStats(): React.ReactElement {
           </div>
         </div>
       ) : (
-        <div className={`${adminSurfaceClass} overflow-x-auto px-6 py-6`}>
-          <ChartContainer
-            config={chartConfig}
-            className="aspect-auto"
+        <div
+          className={`${adminSurfaceClass} overflow-x-auto px-6 py-6`}
+          tabIndex={0}
+        >
+          <h2 className="pb-4 text-center text-xl font-semibold text-chart-title">
+            Endpoint visits
+          </h2>
+          <div
+            aria-hidden="true"
+            className="flex justify-end gap-4 pb-2 text-xs text-chart-title"
+          >
+            <span className="flex items-center gap-1.5">
+              <span className="size-2 rounded-full bg-chart-total" />
+              Total visits
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="size-2 rounded-full bg-chart-unique" />
+              Unique visits
+            </span>
+          </div>
+          <div
+            aria-hidden="true"
+            className="flex items-center pb-1 text-xs font-semibold text-chart-title"
+          >
+            <span className="shrink-0 text-right" style={{ width: yAxisWidth }}>
+              Endpoint
+            </span>
+            <span className="flex-1 text-center">Visits</span>
+          </div>
+          <div
+            className="relative max-h-[70vh] overflow-y-auto"
+            tabIndex={0}
             style={{ height: chartHeight, minWidth: chartMinWidth }}
           >
-            <BarChart
-              accessibilityLayer
-              data={chartData}
-              layout="vertical"
-              margin={{ left: 8, right: 16 }}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute top-0 left-0 z-10 flex flex-col bg-card text-chart-label"
+              style={{ width: yAxisWidth }}
             >
-              <XAxis type="number" />
-              <YAxis
-                type="category"
-                dataKey="endpoint"
-                width={yAxisWidth}
-                interval={0}
-                tick={{ fontSize: 12 }}
-              />
-              <Bar dataKey="total" fill="var(--color-total)" radius={4} />
-              <Bar dataKey="unique" fill="var(--color-unique)" radius={4} />
-              <ChartTooltip
-                cursor={false}
-                content={<ChartTooltipContent hideLabel />}
-              />
-            </BarChart>
-          </ChartContainer>
+              {chartData.map(({ endpoint }) => (
+                <div
+                  key={endpoint}
+                  className="flex shrink-0 items-center justify-end pr-2 text-xs text-chart-label"
+                  style={{ height: endpointRowHeight }}
+                >
+                  {endpoint}
+                </div>
+              ))}
+            </div>
+            <div aria-hidden="true">
+              <ChartContainer
+                config={chartConfig}
+                className="aspect-auto bg-card [&_.recharts-cartesian-axis-tick_text]:!fill-chart-title [&_.recharts-surface]:bg-card"
+                style={{ height: chartHeight, minWidth: chartMinWidth }}
+              >
+                <BarChart
+                  data={chartData}
+                  layout="vertical"
+                  margin={{ left: 8, right: 16, bottom: 24 }}
+                >
+                  <CartesianGrid
+                    horizontal={false}
+                    stroke="hsl(var(--chart-grid))"
+                  />
+                  <XAxis
+                    type="number"
+                    axisLine={{ stroke: 'hsl(var(--chart-grid))' }}
+                    tickLine={{ stroke: 'hsl(var(--chart-grid))' }}
+                    tick={false}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="endpoint"
+                    width={yAxisWidth}
+                    interval={0}
+                    tick={false}
+                  />
+                  <Bar dataKey="total" fill="var(--color-total)" radius={4} />
+                  <Bar dataKey="unique" fill="var(--color-unique)" radius={4} />
+                  <ChartTooltip
+                    cursor={false}
+                    content={<ChartTooltipContent hideLabel />}
+                  />
+                </BarChart>
+              </ChartContainer>
+            </div>
+            <div className="sr-only">
+              <table>
+                <caption>
+                  Endpoint visits with total and unique visit counts
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Endpoint</th>
+                    <th scope="col">Total visits</th>
+                    <th scope="col">Unique visits</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {chartData.map((datum) => (
+                    <tr key={datum.endpoint}>
+                      <th scope="row">{datum.endpoint}</th>
+                      <td>{datum.total}</td>
+                      <td>{datum.unique}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
     </div>

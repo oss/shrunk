@@ -434,6 +434,8 @@ export default function Dashboard({
               URL Shortener
             </h1>
             <Button
+              id="dashboard-create-desktop"
+              aria-label="Create link"
               className="h-10 rounded-md px-5 text-base font-semibold shadow-none"
               onClick={() => setCreateModalOpen(true)}
             >
@@ -448,6 +450,7 @@ export default function Dashboard({
           <div className="flex justify-between gap-2">
             <Button
               variant="outline"
+              aria-label="Open dashboard filters"
               className="border-border bg-background shadow-none"
               onClick={() => setMobileFiltersOpen(true)}
             >
@@ -455,6 +458,8 @@ export default function Dashboard({
               Filter
             </Button>
             <Button
+              id="dashboard-create-mobile"
+              aria-label="Create link"
               className="shadow-none"
               onClick={() => setCreateModalOpen(true)}
             >
@@ -517,7 +522,7 @@ export default function Dashboard({
                   </Button>
                   <select
                     aria-label="Current page"
-                    className="h-9 w-9 appearance-none rounded-md border border-primary bg-background text-center text-sm font-semibold text-primary outline-none"
+                    className="h-9 w-9 appearance-none rounded-md border border-primary bg-background text-center text-sm font-semibold text-[#0f172a] outline-none dark:text-[#f1f1f1]"
                     value={currentPage}
                     onChange={(e) => setPage(Number(e.target.value))}
                   >

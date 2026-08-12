@@ -37,7 +37,45 @@ const AlertDialog = ({
   );
 };
 
-const AlertDialogTrigger = AlertDialogPrimitive.Trigger;
+const AlertDialogTrigger = React.forwardRef<
+  React.ElementRef<typeof AlertDialogPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Trigger>
+>((props, ref) => {
+  const triggerRef = React.useRef<HTMLButtonElement | null>(null);
+
+  React.useEffect(() => {
+    const trigger = triggerRef.current;
+    if (!trigger || typeof MutationObserver === 'undefined') return;
+
+    // Radix leaves aria-controls on a closed trigger while the dialog content
+    // is unmounted. Remove only the stale IDREF; keep it while open.
+    const removeClosedControls = () => {
+      if (trigger.getAttribute('aria-expanded') === 'false') {
+        trigger.removeAttribute('aria-controls');
+      }
+    };
+
+    removeClosedControls();
+    const observer = new MutationObserver(removeClosedControls);
+    observer.observe(trigger, {
+      attributes: true,
+      attributeFilter: ['aria-controls', 'aria-expanded'],
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  const setRefs = (node: HTMLButtonElement | null) => {
+    triggerRef.current = node;
+    if (typeof ref === 'function') {
+      ref(node);
+    } else if (ref) {
+      ref.current = node;
+    }
+  };
+
+  return <AlertDialogPrimitive.Trigger {...props} ref={setRefs} />;
+});
+AlertDialogTrigger.displayName = AlertDialogPrimitive.Trigger.displayName;
 
 const AlertDialogPortal = AlertDialogPrimitive.Portal;
 

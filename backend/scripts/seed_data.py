@@ -18,6 +18,7 @@ DEFAULT_OWNER = "DEV_ADMIN"
 USER_COUNT = 100
 ORGANIZATION_COUNT = 10
 LINK_COUNT = 500
+SEEDED_TICKET_ID = ObjectId("665200000000000000000001")
 ENDPOINTS = (
     "link.create_link",
     "link.get_link",
@@ -386,6 +387,20 @@ def build_endpoint_statistics(
     return statistics
 
 
+def build_tickets(now: datetime) -> list[dict[str, Any]]:
+    return [
+        {
+            "_id": SEEDED_TICKET_ID,
+            "reporter": "DEV_PWR_USER",
+            "reason": "other",
+            "user_comment": "Seeded accessibility ticket for UI checks.",
+            "status": "open",
+            "created_time": now.timestamp(),
+            "seed_fixture": FIXTURE_ID,
+        }
+    ]
+
+
 def build_documents(
     owner: str,
     now: datetime,
@@ -395,10 +410,12 @@ def build_documents(
     list[dict[str, Any]],
     list[dict[str, Any]],
     list[dict[str, Any]],
+    list[dict[str, Any]],
 ]:
     users = build_users(owner, now)
     organizations = build_organizations(users, now)
     endpoint_statistics = build_endpoint_statistics(users)
+    tickets = build_tickets(now)
     links: list[dict[str, Any]] = []
     visits: list[dict[str, Any]] = []
     today = now.replace(hour=12, minute=0, second=0, microsecond=0)
@@ -479,7 +496,7 @@ def build_documents(
     if len(links) != LINK_COUNT:
         raise AssertionError(f"Expected {LINK_COUNT} links, built {len(links)}")
 
-    return users, organizations, links, visits, endpoint_statistics
+    return users, organizations, links, visits, endpoint_statistics, tickets
 
 
 def print_summary(
@@ -488,6 +505,7 @@ def print_summary(
     links: list[dict[str, Any]],
     visits: list[dict[str, Any]],
     endpoint_statistics: list[dict[str, Any]],
+    tickets: list[dict[str, Any]],
 ) -> None:
     print(f"Test users: {len(users)}")
     print("  " + ", ".join(user["netid"] for user in users[:5]))
@@ -507,6 +525,7 @@ def print_summary(
     print(f"  ... and {len(links) - len(CORE_FIXTURES)} generated links")
     print(f"Visit documents: {len(visits)}")
     print(f"Endpoint statistics: {len(endpoint_statistics)} documents across {len(ENDPOINTS)} endpoints")
+    print(f"Tickets: {len(tickets)}")
     print("Development logins: /api/core/devlogins/admin, user, facstaff, power, guest")
     print("Run again from the repository root with:")
     print("  docker compose exec backend python scripts/seed_data.py")
@@ -518,6 +537,7 @@ def seed_database(
     links: list[dict[str, Any]],
     visits: list[dict[str, Any]],
     endpoint_statistics: list[dict[str, Any]],
+    tickets: list[dict[str, Any]],
 ) -> None:
     if os.getenv("SHRUNK_DEV_LOGINS") != "1":
         raise SystemExit("Refusing to seed unless SHRUNK_DEV_LOGINS=1")
@@ -540,6 +560,7 @@ def seed_database(
     link_ids = [link["_id"] for link in links]
     organization_ids = [organization["_id"] for organization in organizations]
     organization_names = [organization["name"] for organization in organizations]
+    ticket_ids = [ticket["_id"] for ticket in tickets]
 
     conflict = database.urls.find_one(
         {
@@ -571,6 +592,15 @@ def seed_database(
             f"Refusing to replace non-fixture organization {organization_conflict['name']!r}",
         )
 
+    ticket_conflict = database.tickets.find_one(
+        {"_id": {"$in": ticket_ids}, "seed_fixture": {"$ne": FIXTURE_ID}},
+        {"_id": 1},
+    )
+    if ticket_conflict:
+        raise SystemExit(
+            f"Refusing to replace non-fixture ticket {ticket_conflict['_id']!r}",
+        )
+
     old_link_ids = [link["_id"] for link in database.urls.find({"seed_fixture": FIXTURE_ID}, {"_id": 1})]
     visit_filters: list[dict[str, Any]] = [{"seed_fixture": FIXTURE_ID}]
     if old_link_ids:
@@ -580,6 +610,7 @@ def seed_database(
     database.endpoint_statistics.delete_many({"seed_fixture": FIXTURE_ID})
     database.urls.delete_many({"seed_fixture": FIXTURE_ID})
     database.organizations.delete_many({"seed_fixture": FIXTURE_ID})
+    database.tickets.delete_many({"seed_fixture": FIXTURE_ID})
 
     for user in users:
         database.users.update_one(
@@ -593,18 +624,20 @@ def seed_database(
         database.visits.insert_many(visits)
     if endpoint_statistics:
         database.endpoint_statistics.insert_many(endpoint_statistics)
+    if tickets:
+        database.tickets.insert_many(tickets)
     client.close()
 
 
 def main() -> None:
     args = parse_args()
-    users, organizations, links, visits, endpoint_statistics = build_documents(
+    users, organizations, links, visits, endpoint_statistics, tickets = build_documents(
         args.owner,
         datetime.now(timezone.utc),
     )
     if not args.dry_run:
-        seed_database(users, organizations, links, visits, endpoint_statistics)
-    print_summary(users, organizations, links, visits, endpoint_statistics)
+        seed_database(users, organizations, links, visits, endpoint_statistics, tickets)
+    print_summary(users, organizations, links, visits, endpoint_statistics, tickets)
 
 
 if __name__ == "__main__":

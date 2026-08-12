@@ -148,19 +148,21 @@ const CreateTicketDrawer: React.FC<Props> = ({
                 <SelectValue placeholder="Select a reason for the ticket" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="power_user">
+                <SelectItem id="ticket-reason-power-user" value="power_user">
                   Grant me the power user role
                 </SelectItem>
-                <SelectItem value="whitelisted">
+                <SelectItem id="ticket-reason-whitelisted" value="whitelisted">
                   Whitelist another person to Go services
                 </SelectItem>
-                <SelectItem value="other">Other</SelectItem>
+                <SelectItem id="ticket-reason-other" value="other">
+                  Other
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {reasonField && (
-            <p className="text-sm text-muted-foreground">
+            <p className="contents text-sm text-foreground">
               {helpDeskText.reason[reasonField].prompt}
             </p>
           )}
@@ -193,7 +195,11 @@ const CreateTicketDrawer: React.FC<Props> = ({
                   maxLength={300}
                 />
               </div>
-              <Button onClick={handleFormSubmit} disabled={submitting}>
+              <Button
+                aria-label="Submit ticket"
+                onClick={handleFormSubmit}
+                disabled={submitting}
+              >
                 {submitting ? 'Submitting...' : 'Submit'}
               </Button>
             </>

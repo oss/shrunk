@@ -83,7 +83,7 @@ export default function Admin(): React.ReactElement {
   return (
     <div className={adminShellClass}>
       <div className={adminContentWidthClass}>
-        <h1 className="app-page-heading text-foreground">
+        <h1 className="app-page-heading text-[#0f172a] dark:text-[#f1f5f9]">
           Administrator Controls
         </h1>
         <Tabs

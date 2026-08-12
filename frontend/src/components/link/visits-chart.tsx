@@ -108,6 +108,7 @@ const VisitsChart: React.FC<Props> = (props) => {
               key={p.label}
               type="button"
               variant="outline"
+              aria-label={`Set date range to ${p.label}`}
               className="px-3 py-1 text-sm"
               onClick={() => handlePreset(p.days)}
             >
@@ -127,7 +128,11 @@ const VisitsChart: React.FC<Props> = (props) => {
               {dayjs(startDate).format('YYYY-MM-DD')}
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="start" className="w-auto p-0">
+          <PopoverContent
+            aria-label="Start date calendar"
+            align="start"
+            className="w-auto p-0"
+          >
             <Calendar
               mode="single"
               selected={startDate}
@@ -149,7 +154,11 @@ const VisitsChart: React.FC<Props> = (props) => {
               {dayjs(endDate).format('YYYY-MM-DD')}
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="start" className="w-auto p-0">
+          <PopoverContent
+            aria-label="End date calendar"
+            align="start"
+            className="w-auto p-0"
+          >
             <Calendar
               mode="single"
               selected={endDate}
@@ -160,8 +169,13 @@ const VisitsChart: React.FC<Props> = (props) => {
           </PopoverContent>
         </Popover>
       </div>
+      <p className="sr-only">
+        The chart below visualizes total visits and unique visits over the
+        selected date range.
+      </p>
       <ChartContainer
         config={chartConfig}
+        aria-hidden="true"
         className="aspect-auto h-[250px] w-full"
       >
         <AreaChart data={chartData}>
@@ -188,9 +202,10 @@ const VisitsChart: React.FC<Props> = (props) => {
             stroke="#2B9720"
           />
           <CartesianGrid vertical={false} />
-          <YAxis />
+          <YAxis tick={false} />
           <XAxis
             dataKey="date"
+            tick={false}
             tickLine={false}
             axisLine={false}
             tickMargin={8}

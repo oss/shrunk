@@ -84,6 +84,8 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
   };
 
   useEffect(() => {
+    if (!netid) return;
+
     const initComponent = async () => {
       setLoading(true);
       const fetchPromises = [onGetHelpDeskText(), onGetTickets()];
@@ -98,7 +100,7 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
 
     initComponent();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [netid, userPrivileges]);
 
   const renderEntity = (entity: string | undefined) => {
     if (!entity) {
@@ -134,7 +136,10 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
       <Tooltip>
         <TooltipTrigger asChild>
           <Button variant="ghost" size="icon" asChild>
-            <a href={`/app/tickets/${record._id}`}>
+            <a
+              aria-label={`View ticket ${record._id}`}
+              href={`/app/tickets/${record._id}`}
+            >
               <EyeIcon />
             </a>
           </Button>
@@ -145,7 +150,10 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
         <Tooltip>
           <TooltipTrigger asChild>
             <Button variant="ghost" size="icon" asChild>
-              <a href={`/app/tickets/${record._id}?mode=resolve`}>
+              <a
+                aria-label={`Resolve ticket ${record._id}`}
+                href={`/app/tickets/${record._id}?mode=resolve`}
+              >
                 <CircleCheckIcon />
               </a>
             </Button>
@@ -155,7 +163,11 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
       )}
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button variant="ghost" size="icon">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={`Close ticket ${record._id}`}
+          >
             <CircleXIcon />
           </Button>
         </AlertDialogTrigger>
@@ -185,7 +197,10 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
         <div className="flex items-center justify-between">
           <h1 className="app-page-heading">Help Desk</h1>
           {!isAdmin && (
-            <Button onClick={() => setIsCreateDrawerOpen(true)}>
+            <Button
+              aria-label="Create new ticket"
+              onClick={() => setIsCreateDrawerOpen(true)}
+            >
               <CirclePlusIcon />
               New Ticket
             </Button>
@@ -314,6 +329,7 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>Rows per page:</span>
               <select
+                aria-label="Tickets per page"
                 className="rounded border bg-background px-2 py-1 text-sm"
                 value={pageSize}
                 onChange={(e) => handlePageSizeChange(Number(e.target.value))}

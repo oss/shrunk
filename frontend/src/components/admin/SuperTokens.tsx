@@ -93,7 +93,10 @@ export default function SuperTokens(): React.JSX.Element {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Super Access Tokens</h1>
-        <Button onClick={() => setIsGeneratorDrawerOpen(true)}>
+        <Button
+          aria-label="Generate super access token"
+          onClick={() => setIsGeneratorDrawerOpen(true)}
+        >
           <CirclePlusIcon />
           Generate
         </Button>
@@ -134,7 +137,7 @@ export default function SuperTokens(): React.JSX.Element {
           <div className="mt-6 space-y-6">
             <Alert>
               <AlertTitle>Secure your data.</AlertTitle>
-              <AlertDescription>
+              <AlertDescription className="contents text-[#0f172a] dark:text-[#efefef]">
                 Keeping your access token private is your responsibility. We
                 salt and use Argon2, a quantum-safe and award-winning key
                 derivation function, to encrypt your super token and store it in
@@ -171,6 +174,7 @@ export default function SuperTokens(): React.JSX.Element {
                     className="flex items-center gap-2 text-sm leading-none font-medium"
                   >
                     <Checkbox
+                      aria-label={permission}
                       checked={selectedPermissions.includes(permission)}
                       onCheckedChange={(checked) => {
                         setSelectedPermissions((prev) =>

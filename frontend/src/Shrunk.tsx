@@ -286,9 +286,15 @@ function ShrunkContent({
 
   return (
     <div className="flex min-h-dvh flex-col bg-background text-foreground">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-foreground"
+      >
+        Skip to main content
+      </a>
       {domain === 'shrunk.rutgers.edu' && showDeveloperAlert && (
         <Alert className="rounded-none border-x-0 border-t-0 bg-yellow-50 text-yellow-950 dark:bg-yellow-950 dark:text-yellow-50">
-          <AlertDescription className="flex items-start justify-between gap-4">
+          <AlertDescription className="flex items-start justify-between gap-4 [&_a]:font-medium [&_a]:underline [&_a]:underline-offset-2">
             <span>
               This is a developer environment, any progress you make on this
               site is prone to deletion. Please use the real site at{' '}
@@ -311,8 +317,8 @@ function ShrunkContent({
       )}
 
       {showMotd && (
-        <Alert className="rounded-none border-none bg-[#def0f9] dark:bg-[#7DBFD6]">
-          <AlertDescription className="flex items-start justify-between gap-4">
+        <Alert className="rounded-none border-none bg-[#def0f9] text-[#0f172a] dark:bg-[#7DBFD6] dark:text-[#0f172a]">
+          <AlertDescription className="flex items-start justify-between gap-4 text-[#0f172a] [&_a]:font-medium [&_a]:underline [&_a]:underline-offset-2">
             <div>
               <Markdown>{motd}</Markdown>
             </div>
@@ -336,9 +342,7 @@ function ShrunkContent({
         ref={appHeaderRef}
         className={cn(
           'sticky top-0 z-50 flex h-20 items-center justify-between border-b px-6 text-primary-foreground',
-          isApiReferenceRoute || isFaqRoute
-            ? 'border-[#1f1f1f] bg-[#111111]'
-            : 'border-border bg-primary dark:bg-[#101010]',
+          'border-border bg-primary dark:bg-[#101010]',
         )}
       >
         <Link
@@ -358,6 +362,7 @@ function ShrunkContent({
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
+                  aria-label="Open account menu"
                   className="text-sm font-semibold text-primary-foreground/90 hover:bg-primary-foreground/10 hover:text-primary-foreground"
                   disabled={isLoading}
                 >
@@ -406,6 +411,7 @@ function ShrunkContent({
                 </DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-border dark:bg-primary-foreground/10" />
                 <DropdownMenuItem
+                  aria-label="Logout"
                   className="text-[#DC4446] focus:bg-[#DC4446] focus:text-destructive-foreground"
                   onSelect={onLogout}
                 >
@@ -437,27 +443,30 @@ function ShrunkContent({
       <div className="grid flex-1 grid-cols-1 2xl:grid-cols-[150px_minmax(0,1fr)_150px]">
         <aside className="hidden 2xl:block" />
         <main
+          id="main-content"
           className={cn(
             'min-h-0 flex-1',
             isApiReferenceRoute
-              ? 'overflow-hidden bg-[#1A1A1A] px-6 pt-0 pb-6 text-[#efefef]'
+              ? 'overflow-hidden bg-background px-6 pt-0 pb-6 text-foreground'
               : isAdminRoute
                 ? 'px-6 pt-0 pb-6'
                 : isFaqRoute
-                  ? 'overflow-hidden bg-[#1A1A1A] px-6 pt-0 pb-6 text-[#efefef]'
+                  ? 'overflow-hidden bg-background px-6 pt-0 pb-6 text-foreground'
                   : isDarkWorkspaceRoute
                     ? 'overflow-hidden bg-background px-3 text-foreground sm:px-4 md:px-6'
                     : 'px-6 pt-0 pb-6',
           )}
         >
-          <PendingRequests />
+          {netid !== '' && <PendingRequests />}
 
           {netid !== '' && isApp && !isDashboardRoute && (
             <Breadcrumb
               className={cn(
                 'mt-6 mb-4',
-                (isApiReferenceRoute || isFaqRoute) &&
-                  'text-[#b8b8b8] [&_[aria-current=page]]:text-[#f1f1f1] [&_a]:text-[#b8b8b8] [&_a:hover]:text-[#f1f1f1] [&_li[role=presentation]]:text-[#8f8f8f]',
+                isApiReferenceRoute &&
+                  'text-muted-foreground [&_[aria-current=page]]:text-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_li[role=presentation]]:text-muted-foreground',
+                isFaqRoute &&
+                  'text-muted-foreground [&_[aria-current=page]]:text-foreground [&_a]:text-muted-foreground [&_a:hover]:text-foreground [&_li[role=presentation]]:text-muted-foreground',
               )}
             >
               <BreadcrumbList>
@@ -567,7 +576,7 @@ function ShrunkContent({
       </div>
 
       <footer className="flex justify-center bg-black p-6 text-center">
-        <p className="w-[70%] text-primary-foreground/90">
+        <p className="w-[70%] bg-black text-white">
           Rutgers is an equal access/equal opportunity institution. Individuals
           with disabilities are encouraged to direct suggestions, comments, or
           complaints concerning any accessibility issues with Rutgers websites
@@ -576,6 +585,7 @@ function ShrunkContent({
             target="_blank"
             rel="noreferrer"
             href="mailto:accessibility@rutgers.edu"
+            className="underline underline-offset-2"
           >
             accessibility@rutgers.edu
           </a>{' '}
@@ -584,6 +594,7 @@ function ShrunkContent({
             target="_blank"
             rel="noreferrer"
             href="https://rutgers.ca1.qualtrics.com/jfe/form/SV_57iH6Rfeocz51z0"
+            className="underline underline-offset-2"
           >
             Report Accessibility Barrier or Provide Feedback Form
           </a>

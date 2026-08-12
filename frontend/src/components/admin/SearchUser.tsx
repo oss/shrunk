@@ -53,6 +53,7 @@ const SearchUser: React.FC<SearchUserProps> = ({
         className={`absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 ${iconClassName ?? ''}`}
       />
       <Input
+        aria-label={placeholder}
         value={value}
         className={`pl-9 ${inputClassName ?? ''}`}
         onChange={(e) => handleSearch(e.target.value)}

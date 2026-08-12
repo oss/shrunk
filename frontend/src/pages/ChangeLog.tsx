@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 
 import { getReleaseNotes } from '@/api/app';
 import { PageShell } from '@/components/page-shell';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Note,
   Contributor,
@@ -115,14 +114,32 @@ export default function ChangeLog() {
 
   return (
     <PageShell className="space-y-8 py-0 pb-4">
-      <Tabs value={product} onValueChange={onProductChange}>
-        <TabsList className="flex h-auto flex-wrap justify-start">
-          <TabsTrigger value="everything">Everything</TabsTrigger>
-          <TabsTrigger value="website">Website</TabsTrigger>
-          <TabsTrigger value="ms-office">Microsoft Office</TabsTrigger>
-          <TabsTrigger value="public-api">Developer API</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <div
+        role="group"
+        aria-label="Filter releases by product"
+        className="flex h-auto flex-wrap justify-start gap-1 rounded-lg bg-muted p-1"
+      >
+        {(
+          [
+            ['everything', 'Everything'],
+            ['website', 'Website'],
+            ['ms-office', 'Microsoft Office'],
+            ['public-api', 'Developer API'],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            aria-label={label}
+            aria-pressed={product === value}
+            className="rounded-md px-3 py-1 text-sm font-medium text-foreground data-[active=true]:bg-background data-[active=true]:shadow"
+            data-active={product === value}
+            onClick={() => onProductChange(value)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
       <div className="space-y-10">
         {releaseNotes.map((release: Release) => {
           const featuresCount = getNotesLength(

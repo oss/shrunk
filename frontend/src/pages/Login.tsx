@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/select';
 import { useFeatureFlags } from '@/contexts/FeatureFlags';
 import { FeatureFlags } from '@/interfaces/app';
-import BlurFade from '@/components/magicui/blur-fade';
 
 type LoginLink =
   | 'guest'
@@ -99,26 +98,31 @@ export default function Login() {
   return (
     <PageShell className="space-y-10">
       <section className="text-center">
-        <BlurFade delay={0.25} inView className="mx-auto max-w-5xl">
+        <div className="mx-auto max-w-5xl">
           <h1 className="m-0 text-4xl font-bold tracking-tighter text-balance sm:text-5xl md:text-6xl lg:text-7xl">
             Shorten Links for the Rutgers Community
           </h1>
-        </BlurFade>
+        </div>
       </section>
 
-      <BlurFade delay={0.25 * 1.5} inView>
+      <div>
         <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
           {featureFlags.devLogins && (
             <Select
               value={loginLink}
               onValueChange={(value) => setLoginLink(value as LoginLink)}
             >
-              <SelectTrigger className="w-40">
+              <SelectTrigger aria-label="Login type" className="w-40">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {Object.entries(loginTypes).map(([key, value]) => (
-                  <SelectItem key={key} value={key}>
+                  <SelectItem
+                    key={key}
+                    value={key}
+                    id={`pa11y-login-${value.loginMessage}`}
+                    data-pa11y-login={value.loginMessage}
+                  >
                     {value.loginMessage}
                   </SelectItem>
                 ))}
@@ -126,6 +130,7 @@ export default function Login() {
             </Select>
           )}
           <Button
+            id="pa11y-login-submit"
             size="lg"
             onClick={async () => {
               if (loginTypes[loginLink].loginMessage === 'PROD_SAML') {
@@ -144,9 +149,9 @@ export default function Login() {
             {featureFlags.devLogins ? 'Developer Login' : 'Login with CAS'}
           </Button>
         </div>
-      </BlurFade>
+      </div>
 
-      <BlurFade delay={0.25 * 2} inView>
+      <div>
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {featureCards.map((feature) => (
             <SectionCard
@@ -156,7 +161,7 @@ export default function Login() {
             />
           ))}
         </section>
-      </BlurFade>
+      </div>
     </PageShell>
   );
 }

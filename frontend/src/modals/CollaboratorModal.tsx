@@ -29,7 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Organization } from '@/interfaces/organizations';
 import { ButtonGroup } from '@/components/ui/button-group';
 
@@ -186,6 +186,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
             <div className="min-w-0 flex-1">
               {activeTab === 'netid' ? (
                 <Input
+                  aria-label="Collaborator NetID"
                   value={netid}
                   placeholder="Search by NetID"
                   className={collaboratorControlBorderClass}
@@ -208,7 +209,10 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                     setValidationError(null);
                   }}
                 >
-                  <SelectTrigger className={collaboratorControlBorderClass}>
+                  <SelectTrigger
+                    aria-label="Collaborator organization"
+                    className={collaboratorControlBorderClass}
+                  >
                     <SelectValue placeholder="Your Organizations" />
                   </SelectTrigger>
                   <SelectContent>
@@ -227,6 +231,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                 onValueChange={setCollaboratorRole}
               >
                 <SelectTrigger
+                  aria-label="Collaborator role"
                   className={`w-24 pr-2 ${collaboratorControlBorderClass}`}
                 >
                   <SelectValue />
@@ -268,6 +273,9 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                 <TabsTrigger value="org">Organizations</TabsTrigger>
               )}
             </TabsList>
+            {availableTabs.map((tab) => (
+              <TabsContent key={tab} value={tab} className="hidden" />
+            ))}
           </Tabs>
 
           <div className="space-y-3">
@@ -324,6 +332,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                             }}
                           >
                             <SelectTrigger
+                              aria-label={`Role for ${displayName}`}
                               className={`w-32 ${collaboratorControlBorderClass}`}
                             >
                               <SelectValue />
@@ -408,7 +417,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                     somebody to add you to one or{' '}
                     <Link
                       to="/app/orgs"
-                      className="text-[#cc0033] underline underline-offset-4"
+                      className="text-primary underline decoration-primary underline-offset-4 dark:text-foreground"
                     >
                       <br />
                       create your own

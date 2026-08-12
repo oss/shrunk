@@ -176,112 +176,101 @@ function VisitsMap({
   const viewBox = `${bounds.minX - padding} ${bounds.minY - padding} ${spanX + padding * 2} ${spanY + padding * 2}`;
   const legendWidth = spanX * 0.18;
   const legendHeight = spanY * 0.025;
-  const legendX = bounds.minX + padding;
-  const legendY = bounds.maxY - padding - legendHeight;
   const labelSize = spanY * 0.025;
 
   return (
-    <ChartContainer
-      config={mapChartConfig}
-      className="aspect-auto h-[clamp(18rem,50vw,32rem)] w-full"
-    >
-      <svg
-        viewBox={viewBox}
-        preserveAspectRatio="xMidYMid meet"
-        role="img"
-        aria-label="Visits by geographic region"
+    <div className="w-full">
+      <ChartContainer
+        config={mapChartConfig}
+        className="aspect-auto h-[clamp(18rem,50vw,32rem)] w-full"
       >
-        <defs>
-          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="var(--color-low)" />
-            <stop offset="100%" stopColor="var(--color-high)" />
-          </linearGradient>
-        </defs>
-        <g fillRule="evenodd">
-          {paths.map(({ feature, key, path }) => {
-            if (feature.geometry.type === 'MultiLineString') {
-              return (
-                <path
-                  key={key}
-                  d={path}
-                  fill="none"
-                  stroke="hsl(var(--muted-foreground))"
-                  strokeWidth={1}
-                  vectorEffect="non-scaling-stroke"
-                  pointerEvents="none"
-                />
-              );
-            }
-
-            const code = String(
-              feature.properties[joinProperty] ?? '',
-            ).toUpperCase();
-            const name = String(feature.properties.name ?? code ?? 'Unknown');
-            const visits = visitsByCode.get(code) ?? 0;
-            const visitLabel = `${visits.toLocaleString()} ${visits === 1 ? 'visit' : 'visits'}`;
-
-            return (
-              <Tooltip key={key}>
-                <TooltipTrigger asChild>
+        <svg
+          viewBox={viewBox}
+          preserveAspectRatio="xMidYMid meet"
+          role="img"
+          aria-label="Visits by geographic region"
+        >
+          <defs>
+            <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="var(--color-low)" />
+              <stop offset="100%" stopColor="var(--color-high)" />
+            </linearGradient>
+          </defs>
+          <g aria-hidden="true" fillRule="evenodd">
+            {paths.map(({ feature, key, path }) => {
+              if (feature.geometry.type === 'MultiLineString') {
+                return (
                   <path
+                    key={key}
                     d={path}
-                    fill={visitColor(visits, maximum)}
-                    stroke="hsl(var(--border))"
-                    strokeWidth={0.75}
+                    fill="none"
+                    stroke="hsl(var(--muted-foreground))"
+                    strokeWidth={1}
                     vectorEffect="non-scaling-stroke"
-                    tabIndex={0}
-                    aria-label={`${name}: ${visitLabel}`}
-                    className="transition-[fill,stroke] outline-none hover:stroke-foreground focus:stroke-foreground"
+                    pointerEvents="none"
                   />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <span className="font-medium">{name}</span>: {visitLabel}
-                </TooltipContent>
-              </Tooltip>
-            );
-          })}
-        </g>
-        <g aria-label={`Color scale from ${minimum} to ${maximum} visits`}>
-          <rect
-            x={legendX}
-            y={legendY}
-            width={legendWidth}
-            height={legendHeight}
-            rx={legendHeight / 4}
-            fill={`url(#${gradientId})`}
-          />
-          <text
-            x={legendX}
-            y={legendY - labelSize * 0.35}
-            fontSize={labelSize}
-            fill="hsl(var(--foreground))"
-          >
-            {minimum.toLocaleString()}
-          </text>
-          <text
-            x={legendX + legendWidth}
-            y={legendY - labelSize * 0.35}
-            textAnchor="end"
-            fontSize={labelSize}
-            fill="hsl(var(--foreground))"
-          >
-            {maximum.toLocaleString()}
-          </text>
-        </g>
-        {maximum === 0 && (
-          <text
-            x={bounds.minX + spanX / 2}
-            y={bounds.minY + spanY / 2}
-            textAnchor="middle"
-            fontSize={labelSize * 1.25}
-            fontWeight="600"
-            fill="hsl(var(--foreground))"
-          >
-            No visit data
-          </text>
-        )}
-      </svg>
-    </ChartContainer>
+                );
+              }
+
+              const code = String(
+                feature.properties[joinProperty] ?? '',
+              ).toUpperCase();
+              const name = String(feature.properties.name ?? code ?? 'Unknown');
+              const visits = visitsByCode.get(code) ?? 0;
+              const visitLabel = `${visits.toLocaleString()} ${visits === 1 ? 'visit' : 'visits'}`;
+
+              return (
+                <Tooltip key={key}>
+                  <TooltipTrigger asChild>
+                    <path
+                      d={path}
+                      fill={visitColor(visits, maximum)}
+                      stroke="hsl(var(--border))"
+                      strokeWidth={0.75}
+                      vectorEffect="non-scaling-stroke"
+                      className="transition-[fill,stroke] outline-none hover:stroke-foreground focus:stroke-foreground"
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <span className="font-medium">{name}</span>: {visitLabel}
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </g>
+          <g aria-hidden="true">
+            <rect
+              x={bounds.minX + padding}
+              y={bounds.maxY - padding - legendHeight}
+              width={legendWidth}
+              height={legendHeight}
+              rx={legendHeight / 4}
+              fill={`url(#${gradientId})`}
+            />
+          </g>
+          {maximum === 0 && (
+            <text
+              x={bounds.minX + spanX / 2}
+              y={bounds.minY + spanY / 2}
+              textAnchor="middle"
+              fontSize={labelSize * 1.25}
+              fontWeight="600"
+              fill="hsl(var(--foreground))"
+            >
+              No visit data
+            </text>
+          )}
+        </svg>
+      </ChartContainer>
+      <div
+        role="img"
+        className="flex justify-between px-2 text-xs font-medium text-[#0f172a] dark:text-[#f8fafc]"
+        aria-label="Visit scale"
+      >
+        <span>{minimum.toLocaleString()}</span>
+        <span>{maximum.toLocaleString()}</span>
+      </div>
+    </div>
   );
 }
 
@@ -301,12 +290,16 @@ export default function GeoipChart({ data }: { data?: GeoipStats }) {
           value={mapType}
           onValueChange={(value: StatMap) => setMapType(value)}
         >
-          <SelectTrigger className="w-36">
+          <SelectTrigger aria-label="Map region" className="w-36">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={StatMap.UnitedStates}>United States</SelectItem>
-            <SelectItem value={StatMap.World}>World</SelectItem>
+            <SelectItem id="stats-map-us" value={StatMap.UnitedStates}>
+              United States
+            </SelectItem>
+            <SelectItem id="stats-map-world" value={StatMap.World}>
+              World
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>

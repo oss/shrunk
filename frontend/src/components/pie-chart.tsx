@@ -21,24 +21,54 @@ interface props {
 
 export default function ShrunkPieChart({ data, chartConfig }: props) {
   return (
-    <ChartContainer
-      config={chartConfig}
-      className="ph-0 mx-auto aspect-square max-h-[300px] [&_.recharts-pie-label-text]:fill-foreground"
-    >
-      <PieChart>
-        <ChartTooltip
-          content={<ChartTooltipContent hideLabel nameKey="configKey" />}
-        />
-        <Pie data={data} dataKey="y" label nameKey="name" />
-        <ChartLegend
-          content={
-            <ChartLegendContent
-              nameKey="configKey"
-              className="-translate-y-2 flex-wrap gap-2 *:basis-1/4 *:justify-center"
+    <>
+      <div aria-hidden="true">
+        <ChartContainer
+          config={chartConfig}
+          className="ph-0 mx-auto aspect-square max-h-[300px] [&_.recharts-pie-label-text]:fill-foreground"
+        >
+          <PieChart>
+            <ChartTooltip
+              content={<ChartTooltipContent hideLabel nameKey="configKey" />}
             />
-          }
-        />
-      </PieChart>
-    </ChartContainer>
+            <Pie
+              data={data}
+              dataKey="y"
+              isAnimationActive={false}
+              label={false}
+              nameKey="name"
+              rootTabIndex={-1}
+            />
+            <ChartLegend
+              content={
+                <ChartLegendContent
+                  nameKey="configKey"
+                  className="-translate-y-2 flex-wrap gap-2 bg-background text-foreground *:basis-1/4 *:justify-center [&>div]:text-foreground"
+                />
+              }
+            />
+          </PieChart>
+        </ChartContainer>
+      </div>
+      <div className="sr-only">
+        <table>
+          <caption>Link statistics by category</caption>
+          <thead>
+            <tr>
+              <th scope="col">Category</th>
+              <th scope="col">Visits</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((datum) => (
+              <tr key={datum.name}>
+                <th scope="row">{datum.name}</th>
+                <td>{datum.y}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }

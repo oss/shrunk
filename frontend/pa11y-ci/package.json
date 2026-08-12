@@ -1,0 +1,8 @@
+{
+  "name": "shrunk-pa11y-ci",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "pa11y-ci": "4.1.1"
+  }
+}

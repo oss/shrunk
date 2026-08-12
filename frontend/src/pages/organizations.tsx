@@ -130,7 +130,10 @@ const FilterForm = ({
           }))
         }
       >
-        <SelectTrigger className={`h-9 ${organizationControlBorderClass}`}>
+        <SelectTrigger
+          aria-label="Sort organizations by"
+          className={`h-9 ${organizationControlBorderClass}`}
+        >
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -143,11 +146,9 @@ const FilterForm = ({
     </div>
 
     <div className="space-y-2">
-      <Label htmlFor="filter-member" className={organizationLabelClass}>
-        Has Member
-      </Label>
+      <Label className={organizationLabelClass}>Has Member</Label>
       <Input
-        id="filter-member"
+        aria-label="Filter organizations by member"
         placeholder="NetID"
         className={`h-9 ${organizationInputClass}`}
         value={query.filter_member}
@@ -176,6 +177,7 @@ const FilterForm = ({
             className="flex min-h-4 cursor-pointer items-center gap-2 text-sm leading-none font-semibold text-foreground"
           >
             <Checkbox
+              aria-label={`${role.charAt(0).toUpperCase() + role.slice(1)} role`}
               className="border-border data-[state=checked]:border-primary"
               checked={query.filter_role?.includes(role) ?? false}
               onCheckedChange={(checked) => {
@@ -475,11 +477,16 @@ export default function MyOrganizations({
     <TooltipProvider>
       <div className="min-h-[calc(100dvh-var(--app-header-height,0px))] space-y-5 bg-background pb-7">
         <div className="flex items-center justify-between">
-          <h1 className="app-page-heading">My Organizations</h1>
+          <h1 className="m-0 text-4xl leading-none font-bold tracking-normal text-foreground">
+            <span className="inline bg-background text-foreground">
+              My Organizations
+            </span>
+          </h1>
           <div className="hidden lg:block">
             {mayCreateOrg && (
               <Button
                 className="h-9 bg-primary px-4 font-semibold text-primary-foreground shadow-none hover:bg-primary/90"
+                aria-label="Create organization"
                 onClick={() => setIsCreateModalOpen(true)}
               >
                 <PlusCircleIcon />
@@ -493,6 +500,7 @@ export default function MyOrganizations({
           {mayCreateOrg && (
             <Button
               size="icon"
+              aria-label="Create organization"
               className="bg-primary text-primary-foreground shadow-none hover:bg-primary/90"
               onClick={() => setIsCreateModalOpen(true)}
             >
@@ -501,6 +509,7 @@ export default function MyOrganizations({
           )}
           <Button
             size="icon"
+            aria-label="Open organization filters"
             variant="outline"
             className={organizationControlBorderClass}
             onClick={() => setMobileFiltersOpen(true)}
@@ -509,6 +518,7 @@ export default function MyOrganizations({
           </Button>
           <div className="flex flex-1">
             <Input
+              aria-label="Search organizations"
               placeholder="Search organizations..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
@@ -519,6 +529,7 @@ export default function MyOrganizations({
             />
             <Button
               variant="outline"
+              aria-label="Search organizations"
               className={`rounded-l-none border-l-0 px-3 ${organizationControlBorderClass}`}
               onClick={onSearch}
             >
@@ -532,6 +543,8 @@ export default function MyOrganizations({
             <div className="sticky top-[calc(var(--app-header-height,80px)+1.75rem)] max-h-[calc(100dvh-var(--app-header-height,80px)-3.5rem)] overflow-hidden">
               <div className="mb-3 flex">
                 <Input
+                  id="organizations-search"
+                  aria-label="Search organizations"
                   placeholder="Search organizations..."
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
@@ -541,6 +554,7 @@ export default function MyOrganizations({
                   className={`h-9 rounded-r-none ${organizationInputClass}`}
                 />
                 <Button
+                  id="organizations-search-submit"
                   variant="outline"
                   className={`h-9 w-12 rounded-l-none border-l-0 px-0 ${organizationControlBorderClass}`}
                   onClick={onSearch}
@@ -681,6 +695,7 @@ export default function MyOrganizations({
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Link
+                                  aria-label={`View ${org.name}`}
                                   to={`/app/orgs/${org.id}`}
                                   className="flex h-8 w-8 items-center justify-center text-foreground/80 hover:text-foreground"
                                 >
@@ -699,6 +714,7 @@ export default function MyOrganizations({
                                 <Button
                                   variant="ghost"
                                   size="icon"
+                                  aria-label={`Delete ${org.name}`}
                                   className="h-8 w-8 text-primary hover:bg-primary/10 hover:text-primary"
                                   disabled={org.deleted}
                                   onClick={() => handleDeleteClick(org.id)}
@@ -748,7 +764,7 @@ export default function MyOrganizations({
               </Button>
               <select
                 aria-label="Current page"
-                className="h-9 w-9 appearance-none rounded-md border border-primary bg-background text-center text-sm font-semibold text-primary outline-none"
+                className="h-9 w-9 appearance-none rounded-md border border-primary bg-background text-center text-sm font-semibold text-foreground outline-none"
                 value={currentPage}
                 onChange={(e) => setPage(Number(e.target.value))}
               >

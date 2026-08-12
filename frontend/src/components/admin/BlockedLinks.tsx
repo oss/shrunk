@@ -76,7 +76,7 @@ const renderURLs = (url: string): React.JSX.Element => (
     <a
       key={url}
       href={url}
-      className="text-primary hover:text-primary/80 dark:text-[#ff2634] dark:hover:text-[#ff5360]"
+      className="text-primary underline decoration-primary underline-offset-2 hover:text-primary/80 dark:text-foreground dark:hover:text-foreground"
     >
       {url}
     </a>
@@ -115,6 +115,7 @@ const SearchBannedLinks: React.FC<SearchBannedLinksProps> = ({ onSearch }) => {
         className={`absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 ${adminSearchIconClass}`}
       />
       <Input
+        aria-label="Search blocked links"
         value={value}
         onChange={(e) => handleSearch(e.target.value)}
         placeholder="Search by URL or NetID"
@@ -123,6 +124,7 @@ const SearchBannedLinks: React.FC<SearchBannedLinksProps> = ({ onSearch }) => {
       {value && (
         <button
           type="button"
+          aria-label="Clear blocked links search"
           className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground hover:text-foreground dark:text-[#8f8f8f] dark:hover:text-[#efefef]"
           onClick={() => handleSearch('')}
         >
@@ -214,6 +216,7 @@ const BlockedLinks = () => {
                     <Button
                       variant="ghost"
                       size="icon"
+                      aria-label={`Unblock ${record.url}`}
                       className={adminIconGhostButtonClass}
                     >
                       <TrashIcon />
@@ -335,6 +338,7 @@ const BlockedLinks = () => {
             </Button>
             <Button
               className={adminPrimaryButtonClass}
+              aria-label="Block link"
               onClick={() => setShowBlockLinkModal(true)}
             >
               <PlusCircleIcon />
@@ -427,6 +431,7 @@ const BlockedLinks = () => {
             className={adminPaginationButtonClass}
             disabled={currentPage <= 1}
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            aria-label="Previous blocked links page"
           >
             <ChevronLeftIcon className="size-4" />
           </Button>
@@ -437,11 +442,13 @@ const BlockedLinks = () => {
             className={adminPaginationButtonClass}
             disabled={currentPage >= totalPages}
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            aria-label="Next blocked links page"
           >
             <ChevronRightIcon className="size-4" />
           </Button>
           <div className="ml-3 flex items-center gap-2">
             <select
+              aria-label="Blocked links per page"
               className={adminPageSizeClass}
               value={pageSize}
               onChange={(e) => {
@@ -519,6 +526,7 @@ const BlockedLinks = () => {
               Cancel
             </Button>
             <Button
+              aria-label="Confirm block link"
               className={adminPrimaryButtonClass}
               onClick={handleConfirm}
               disabled={modalLoading}

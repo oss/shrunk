@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LinkSharedWith } from '@/interfaces/link';
 import { Organization } from '@/interfaces/organizations';
 
@@ -131,7 +131,7 @@ export default function BulkTransferModal({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Transfer Selected Links</DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-foreground/80">
             Choose the new owner for {selectedCount}{' '}
             {selectedCount === 1 ? 'link' : 'links'}.
           </DialogDescription>
@@ -150,6 +150,8 @@ export default function BulkTransferModal({
               <TabsTrigger value="netid">NetID</TabsTrigger>
               <TabsTrigger value="org">Organization</TabsTrigger>
             </TabsList>
+            <TabsContent value="netid" className="hidden" />
+            <TabsContent value="org" className="hidden" />
           </Tabs>
 
           {targetType === 'netid' ? (
@@ -176,7 +178,10 @@ export default function BulkTransferModal({
                   setSubmitError(null);
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger
+                  aria-label="Transfer organization"
+                  className="text-foreground data-[placeholder]:text-foreground"
+                >
                   <SelectValue placeholder="Select organization" />
                 </SelectTrigger>
                 <SelectContent>

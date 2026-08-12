@@ -3,9 +3,9 @@ set -e
 
 if [ "$#" -gt 0 ]; then
     exec "$@"
-elif $FLASK_DEBUG; then
+elif [ "${FLASK_DEBUG:-false}" = "true" ] || [ "${FLASK_DEBUG:-0}" = "1" ]; then
     python -m shrunk.migrate
-    if $SHRUNK_SEED_DATABASE; then
+    if [ "${SHRUNK_SEED_DATABASE:-0}" = "1" ]; then
 	python scripts/seed_data.py
     fi
 
@@ -17,10 +17,12 @@ else
     # Without this we would need to modify the frontend container to handle both
     # uswgi and http cases for the backend, which is unclean, this is still not
     # as clean, but is it bit more transparent compared with the other option.
-    if $SHRUNK_SEED_DATABASE; then
+    if [ "${SHRUNK_SEED_DATABASE:-0}" = "1" ]; then
 	python scripts/seed_data.py
     fi
 
+    # Initialize the Flask app independently in each worker. PyMongo clients
+    # must not be shared across forked workers.
     exec uwsgi --module "${FLASK_APP}:create_app()" --master --lazy-apps --processes 4 --threads 2 --socket 0.0.0.0:3050
     # exec gunicorn --bind 0.0.0.0:3050 --worker-tmp-dir /dev/shm  --workers=2 --threads=4 --worker-class=gthread --worker-class asgi --protocol uwsgi --uwsgi-allow-from '*' "${FLASK_APP}:create_app()"
 fi

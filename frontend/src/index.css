@@ -45,6 +45,12 @@
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
 
+  --color-chart-total: hsl(var(--chart-total));
+  --color-chart-unique: hsl(var(--chart-unique));
+  --color-chart-label: hsl(var(--chart-label));
+  --color-chart-title: hsl(var(--chart-title));
+  --color-chart-grid: hsl(var(--chart-grid));
+
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
   --animate-border-beam: border-beam calc(var(--duration) * 1s) infinite linear;
@@ -96,7 +102,18 @@
 
 @layer components {
   .app-page-heading {
-    @apply text-4xl font-bold tracking-normal;
+    @apply pt-1 text-4xl font-bold tracking-normal;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
@@ -132,13 +149,20 @@
     --primary: 345 100% 40%;
     --primary-foreground: 0 0% 100%;
 
+    /* Preserved from the original Highcharts admin dashboard. */
+    --chart-total: 19 97.561% 51.765%;
+    --chart-unique: 27.5 88.889% 89.412%;
+    --chart-label: 215.385 16.318% 46.863%;
+    --chart-title: 222.222 47.368% 11.176%;
+    --chart-grid: 214.286 31.818% 91.373%;
+
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
 
-    --destructive: oklch(0.606 0.189 24.104);
+    --destructive: oklch(0.48 0.18 24.104);
     --destructive-foreground: 210 40% 98%;
 
     --ring: 215 20.2% 65.1%;
@@ -147,11 +171,12 @@
   }
 
   .dark {
+    color-scheme: dark;
     --background: 0 0% 10%;
     --foreground: 213 31% 91%;
 
     --muted: 0 0% 13%;
-    --muted-foreground: 0 0% 58%;
+    --muted-foreground: 0 0% 62%;
 
     --accent: 0 0% 18%;
     --accent-foreground: 210 40% 98%;
@@ -168,11 +193,16 @@
     --primary: 345 100% 40%;
     --primary-foreground: 0 0% 100%;
 
+    /* Original dark chart label/title colors: #d9d9d9 and #f5f5f5. */
+    --chart-label: 0 0% 85.098%;
+    --chart-title: 0 0% 96.078%;
+    --chart-grid: 0 0% 26.275%;
+
     --secondary: 222.2 47.4% 11.2%;
     --secondary-foreground: 210 40% 98%;
 
-    --destructive: oklch(0.606 0.189 24.104);
-    --destructive-foreground: 210 40% 98%;
+    --destructive: oklch(0.72 0.16 24.104);
+    --destructive-foreground: 0 0% 5%;
 
     --ring: 216 34% 17%;
 

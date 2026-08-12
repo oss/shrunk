@@ -259,13 +259,14 @@ function ManageOrg({ userNetid, userPrivileges }: Props): React.ReactElement {
       <div className={adminShellClass}>
         <div className={adminContentWidthClass}>
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <h1 className="app-page-heading text-foreground">
+            <h1 className="app-page-heading text-[#0f172a] dark:text-[#f1f5f9]">
               {organization.name}
             </h1>
             <div className="flex items-center gap-2">
               {isAdmin && (
                 <Button
                   variant="outline"
+                  aria-label="Collaborate with organization members"
                   className={`inline-flex items-center gap-2 ${adminOutlineButtonClass}`}
                   onClick={() => setShareModalVisible(true)}
                 >
@@ -274,6 +275,7 @@ function ManageOrg({ userNetid, userPrivileges }: Props): React.ReactElement {
                 </Button>
               )}
               <Button
+                aria-label="Create organization link"
                 className={`inline-flex items-center gap-2 ${adminPrimaryButtonClass}`}
                 onClick={() => setShowCreateLinkDrawer(true)}
               >
@@ -285,6 +287,7 @@ function ManageOrg({ userNetid, userPrivileges }: Props): React.ReactElement {
                   <Button
                     variant="ghost"
                     size="icon"
+                    aria-label="Organization actions"
                     className={`${adminOutlineButtonClass} w-9 p-0`}
                   >
                     <EllipsisIcon className="h-4 w-4 shrink-0" />

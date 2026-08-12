@@ -27,9 +27,6 @@ export default defineConfig({
     watch: {
       usePolling: true,
     },
-    hmr: {
-      clientPort: 4343,
-    },
     // DEV: Proxy /api and urls not starting with /app/ to backend,
     // PROD: httpd is used
     proxy: {

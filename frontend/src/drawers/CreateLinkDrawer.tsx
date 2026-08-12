@@ -432,6 +432,7 @@ export default function CreateLinkDrawer(props: Props): React.JSX.Element {
                     </PopoverContent>
                   </Popover>
                   <Input
+                    aria-label="Expiration time"
                     type="time"
                     value={expirationTime}
                     onChange={(e) => setExpirationTime(e.target.value)}

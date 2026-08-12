@@ -48,18 +48,22 @@ type LinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
 };
 
 function TypographyRoot({ children, className }: BaseProps) {
-  return <div className={cn('space-y-1.5', className)}>{children}</div>;
+  return (
+    <div className={cn('space-y-1.5 bg-background text-foreground', className)}>
+      {children}
+    </div>
+  );
 }
 
 function TypographyTitle({ children, className, level = 1 }: TitleProps) {
   const Tag = `h${level}` as keyof React.JSX.IntrinsicElements;
   const titleClasses = {
-    1: 'text-4xl font-bold tracking-normal text-[#f1f1f1]',
-    2: 'text-[2.25rem] leading-tight font-bold tracking-normal text-[#f1f1f1]',
-    3: 'text-[1.9rem] leading-tight font-bold tracking-normal text-[#f1f1f1]',
-    4: 'text-[1.05rem] font-semibold tracking-normal text-[#f1f1f1]',
-    5: 'text-base font-semibold tracking-normal text-[#dbdbdb]',
-    6: 'text-sm font-semibold tracking-tight',
+    1: 'text-4xl font-bold tracking-normal text-foreground',
+    2: 'text-[2.25rem] leading-tight font-bold tracking-normal text-foreground',
+    3: 'text-[1.9rem] leading-tight font-bold tracking-normal text-foreground',
+    4: 'text-[1.05rem] font-semibold tracking-normal text-foreground',
+    5: 'text-base font-semibold tracking-normal text-foreground',
+    6: 'text-sm font-semibold tracking-tight text-foreground',
   };
 
   return <Tag className={cn(titleClasses[level], className)}>{children}</Tag>;
@@ -70,7 +74,7 @@ function TypographyParagraph({ children, className, code }: TextProps) {
     return (
       <CodeBlock
         className={cn(
-          'w-fit rounded-sm border border-white/10 bg-white/10 px-2 py-1 text-[0.95rem] text-[#f1f1f1]',
+          'w-fit rounded-sm border border-border bg-muted px-2 py-1 text-[0.95rem] text-foreground',
           className,
         )}
       >
@@ -80,7 +84,7 @@ function TypographyParagraph({ children, className, code }: TextProps) {
   }
 
   return (
-    <p className={cn('text-[1.02rem] leading-8 text-[#d4d4d4]', className)}>
+    <p className={cn('text-[1.02rem] leading-8 text-foreground', className)}>
       {children}
     </p>
   );
@@ -91,7 +95,7 @@ function TypographyText({ children, className, code, type }: TextProps) {
     return (
       <code
         className={cn(
-          'rounded-sm border border-white/10 bg-white/10 px-1.5 py-0.5 font-mono text-[0.92rem] text-[#f1f1f1]',
+          'rounded-sm border border-border bg-muted px-1.5 py-0.5 font-mono text-[0.92rem] text-foreground',
           className,
         )}
       >
@@ -101,7 +105,9 @@ function TypographyText({ children, className, code, type }: TextProps) {
   }
 
   return (
-    <span className={cn(type === 'secondary' && 'text-[#9c9c9c]', className)}>
+    <span
+      className={cn(type === 'secondary' && 'text-muted-foreground', className)}
+    >
       {children}
     </span>
   );
@@ -113,7 +119,7 @@ function TypographyLink({ children, className, ...props }: LinkProps) {
   return (
     <a
       className={cn(
-        'text-[#d62929] underline underline-offset-2 hover:text-[#ee3a3a]',
+        'text-primary underline decoration-primary underline-offset-2 hover:text-primary/80 dark:text-foreground dark:hover:text-foreground',
         className,
       )}
       {...props}
@@ -133,7 +139,7 @@ const Typography = Object.assign(TypographyRoot, {
 
 function Flex({ children }: BaseProps) {
   return (
-    <CodeBlock className="rounded-sm border border-white/8 bg-white/16 px-6 py-6 text-[0.95rem] leading-8 text-[#f1f1f1]">
+    <CodeBlock className="rounded-sm border border-border bg-muted px-6 py-6 text-[0.95rem] leading-8 text-foreground">
       {children}
     </CodeBlock>
   );
@@ -141,7 +147,7 @@ function Flex({ children }: BaseProps) {
 
 function DescriptionList({ children, className }: DescriptionListProps) {
   return (
-    <dl className={cn('divide-y divide-white/10', className)}>{children}</dl>
+    <dl className={cn('divide-y divide-border', className)}>{children}</dl>
   );
 }
 
@@ -155,7 +161,7 @@ function DescriptionItem({
   return (
     <div className="grid gap-2 py-5 sm:grid-cols-[minmax(0,22rem)_1fr] sm:items-start">
       <dt>{label}</dt>
-      <dd className="leading-7 text-[#d4d4d4]">{children}</dd>
+      <dd className="leading-7 text-foreground">{children}</dd>
     </div>
   );
 }
@@ -165,7 +171,7 @@ const Descriptions = Object.assign(DescriptionList, {
 });
 
 function Divider({ className }: { className?: string }) {
-  return <hr className={cn('border-white/10', className)} />;
+  return <hr className={cn('border-border', className)} />;
 }
 
 function Row({ children }: RowProps) {
@@ -189,7 +195,7 @@ function Collapse({
     <AccordionPrimitive.Root
       type="multiple"
       className={cn(
-        'w-full overflow-hidden rounded-md border border-white/10 bg-[#2a2a2a]',
+        'w-full overflow-hidden rounded-md border border-border',
         className,
       )}
     >
@@ -197,15 +203,18 @@ function Collapse({
         <AccordionPrimitive.Item
           key={item.key}
           value={item.key}
-          className="border-b border-white/10 last:border-b-0"
+          className="border-b border-border last:border-b-0"
         >
           <AccordionPrimitive.Header className="flex">
-            <AccordionPrimitive.Trigger className="group flex w-full items-center gap-3 px-5 py-4 text-left text-[1.05rem] font-semibold text-[#efefef] transition-colors hover:bg-white/[0.03]">
-              <ChevronRightIcon className="size-4 shrink-0 text-[#a7a7a7] transition-transform duration-200 group-data-[state=open]:rotate-90" />
+            <AccordionPrimitive.Trigger
+              aria-label={item.label}
+              className="group flex w-full items-center gap-3 px-5 py-4 text-left text-[1.05rem] font-semibold text-foreground transition-colors hover:bg-muted"
+            >
+              <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-90" />
               <span>{item.label}</span>
             </AccordionPrimitive.Trigger>
           </AccordionPrimitive.Header>
-          <AccordionPrimitive.Content className="overflow-hidden border-t border-white/10 text-sm data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+          <AccordionPrimitive.Content className="overflow-hidden border-t border-border text-sm data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
             <div className="space-y-5 px-5 pt-10 pb-14">{item.children}</div>
           </AccordionPrimitive.Content>
         </AccordionPrimitive.Item>
@@ -1672,15 +1681,17 @@ export default function ApiReference() {
     },
   ];
   return (
-    <div className="-mx-6 min-h-[calc(100dvh-var(--app-header-height,0px))] bg-[#1A1A1A] px-6 pb-8 text-foreground">
+    <div className="-mx-6 min-h-[calc(100dvh-var(--app-header-height,0px))] bg-background px-6 pb-8 text-foreground">
       <div className="mx-auto max-w-[82rem]">
         <div className="space-y-6 pt-0 pb-6">
           <Typography>
             <Typography.Title
               level={1}
-              className="app-page-heading mt-4! text-[#f1f1f1]"
+              className="app-page-heading m-0 mt-4! text-4xl leading-none font-bold tracking-normal text-foreground"
             >
-              API Reference
+              <span className="inline bg-background text-foreground">
+                API Reference
+              </span>
             </Typography.Title>
             <Typography.Title level={2} className="mt-4!">
               Introduction

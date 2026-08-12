@@ -140,21 +140,21 @@ const accessRows: AccessRow[] = [
 
 function AccessMatrix() {
   return (
-    <div className="overflow-hidden rounded-md border border-white/10">
+    <div className="overflow-hidden rounded-md border border-border">
       <Table>
-        <TableHeader className="bg-[#2b2b2b]">
-          <TableRow className="border-b border-white/10 hover:bg-transparent">
-            <TableHead className="h-11 px-4 text-[#d4d4d4]">Action</TableHead>
-            <TableHead className="h-11 px-4 text-center text-[#d4d4d4]">
+        <TableHeader className="bg-muted">
+          <TableRow className="border-b border-border hover:bg-transparent">
+            <TableHead className="h-11 px-4 text-foreground">Action</TableHead>
+            <TableHead className="h-11 px-4 text-center text-foreground">
               Owner
             </TableHead>
-            <TableHead className="h-11 px-4 text-center text-[#d4d4d4]">
+            <TableHead className="h-11 px-4 text-center text-foreground">
               Editor
             </TableHead>
-            <TableHead className="h-11 px-4 text-center text-[#d4d4d4]">
+            <TableHead className="h-11 px-4 text-center text-foreground">
               Viewer
             </TableHead>
-            <TableHead className="h-11 px-4 text-center text-[#d4d4d4]">
+            <TableHead className="h-11 px-4 text-center text-foreground">
               Everyone
             </TableHead>
           </TableRow>
@@ -163,21 +163,21 @@ function AccessMatrix() {
           {accessRows.map((row) => (
             <TableRow
               key={row.key}
-              className="border-b border-white/10 hover:bg-white/[0.02]"
+              className="border-b border-border hover:bg-muted/50"
             >
-              <TableCell className="px-4 text-[#efefef]">
+              <TableCell className="px-4 text-foreground">
                 {row.action}
               </TableCell>
-              <TableCell className="px-4 text-center text-[#efefef]">
+              <TableCell className="px-4 text-center text-foreground">
                 {row.owner}
               </TableCell>
-              <TableCell className="px-4 text-center text-[#efefef]">
+              <TableCell className="px-4 text-center text-foreground">
                 {row.editor}
               </TableCell>
-              <TableCell className="px-4 text-center text-[#efefef]">
+              <TableCell className="px-4 text-center text-foreground">
                 {row.viewer}
               </TableCell>
-              <TableCell className="px-4 text-center text-[#efefef]">
+              <TableCell className="px-4 text-center text-foreground">
                 {row.everyone}
               </TableCell>
             </TableRow>
@@ -190,7 +190,7 @@ function AccessMatrix() {
 
 function FaqAnswer({ children }: { children: ReactNode }) {
   return (
-    <div className="text-[1.05rem] leading-8 text-[#dfdfdf] [&_a]:text-[#d62929] [&_a]:underline [&_a]:underline-offset-2 [&_b]:font-semibold [&_b]:text-[#efefef]">
+    <div className="text-[1.05rem] leading-8 text-foreground [&_a]:text-primary [&_a]:underline [&_a]:decoration-primary [&_a]:underline-offset-2 dark:[&_a]:text-foreground dark:[&_a:hover]:text-foreground [&_b]:font-semibold [&_b]:text-foreground">
       {children}
     </div>
   );
@@ -202,21 +202,26 @@ function FaqAccordion() {
       type="single"
       collapsible
       defaultValue="1"
-      className="overflow-hidden rounded-lg border border-white/10 bg-[#2a2a2a]"
+      className="overflow-hidden rounded-lg border border-border bg-card"
     >
       {faqItems.map((item) => (
         <AccordionPrimitive.Item
           key={item.key}
           value={item.key}
-          className="border-b border-white/10 last:border-b-0"
+          className="border-b border-border last:border-b-0"
         >
-          <AccordionPrimitive.Header className="flex">
-            <AccordionPrimitive.Trigger className="group flex w-full items-center gap-4 px-5 py-4 text-left text-[1.05rem] font-medium text-[#efefef] transition-colors hover:bg-white/[0.02]">
-              <ChevronRightIcon className="size-4 shrink-0 text-[#bdbdbd] transition-transform duration-200 group-data-[state=open]:rotate-90" />
-              <span>{item.question}</span>
-            </AccordionPrimitive.Trigger>
+          <AccordionPrimitive.Header asChild>
+            <h2 className="flex">
+              <AccordionPrimitive.Trigger
+                aria-label={`FAQ: ${item.question}`}
+                className="group flex w-full items-center gap-4 px-5 py-4 text-left text-[1.05rem] font-medium text-foreground transition-colors hover:bg-muted"
+              >
+                <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-90" />
+                <span>{item.question}</span>
+              </AccordionPrimitive.Trigger>
+            </h2>
           </AccordionPrimitive.Header>
-          <AccordionPrimitive.Content className="overflow-hidden border-t border-white/10 bg-[#1F1F1F] data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
+          <AccordionPrimitive.Content className="overflow-hidden border-t border-border bg-background data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
             <div className="px-5 py-4">
               <FaqAnswer>{item.answer}</FaqAnswer>
             </div>
@@ -233,11 +238,13 @@ function FaqAccordion() {
  */
 export default function Faq(): React.JSX.Element {
   return (
-    <div className="-mx-6 min-h-[calc(100dvh-var(--app-header-height,0px))] bg-[#1A1A1A] px-6 pb-8 text-[#efefef]">
+    <div className="-mx-6 min-h-[calc(100dvh-var(--app-header-height,0px))] bg-background px-6 pb-8 text-foreground">
       <div className="mx-auto max-w-[82rem]">
         <div className="space-y-7">
-          <h1 className="app-page-heading text-[#efefef]">
-            Frequently Asked Questions
+          <h1 className="m-0 text-4xl leading-none font-bold tracking-normal text-foreground">
+            <span className="inline bg-background text-foreground">
+              Frequently Asked Questions
+            </span>
           </h1>
           <FaqAccordion />
         </div>

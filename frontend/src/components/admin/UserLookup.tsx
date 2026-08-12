@@ -75,7 +75,7 @@ const roleChipClass: Record<string, string> = {
   facstaff:
     'border border-purple-200 bg-purple-50 text-purple-700 dark:border-[#4f2b77] dark:bg-[#25153c] dark:text-[#b07af6]',
   guest:
-    'border border-border bg-muted text-muted-foreground dark:border-white/10 dark:bg-[#303030] dark:text-[#cccccc]',
+    'border border-border bg-muted text-slate-700 dark:border-white/10 dark:bg-[#303030] dark:text-[#cccccc]',
   blacklisted:
     'border border-red-200 bg-red-50 text-red-700 dark:border-[#74242b] dark:bg-[#3e171b] dark:text-[#ff868d]',
 };
@@ -169,13 +169,14 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
       {selectedRoles.map((role) => (
         <span
           key={role}
-          className={`inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-xs font-medium ${roleChipClass[role] ?? 'border border-border bg-muted text-muted-foreground dark:border-white/10 dark:bg-[#303030] dark:text-[#d5d5d5]'}`}
+          className={`inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-xs font-medium ${roleChipClass[role] ?? 'border border-border bg-muted text-slate-700 dark:border-white/10 dark:bg-[#303030] dark:text-[#d5d5d5]'}`}
         >
           {labelCase[role.toLowerCase()] || role}
           {!(isSelf && role === highestRole) && selectedRoles.length > 1 && (
             <button
               type="button"
-              className="ml-0.5 rounded-full text-current opacity-85 hover:opacity-100"
+              aria-label={`Remove ${labelCase[role.toLowerCase()] || role} role`}
+              className="ml-0.5 rounded-full text-foreground opacity-100 hover:opacity-100"
               onClick={() => removeRole(role)}
               disabled={loading}
             >
@@ -213,7 +214,7 @@ const renderOrganizations = (organizations: string[]): React.JSX.Element[] =>
   organizations.map((org) => (
     <Badge
       key={org}
-      className="border-0 bg-muted px-2 py-0.5 text-muted-foreground shadow-none dark:bg-[#3a3a3a] dark:text-[#d8d8d8]"
+      className="border-0 bg-muted px-2 py-0.5 text-slate-700 shadow-none dark:bg-[#3a3a3a] dark:text-[#d8d8d8]"
     >
       {org}
     </Badge>
@@ -488,6 +489,7 @@ const UserLookup: React.FC = () => {
                                 <Button
                                   variant="ghost"
                                   size="icon"
+                                  aria-label={`Ban user ${record.netid}`}
                                   className={adminIconGhostButtonClass}
                                 >
                                   <TrashIcon />
@@ -532,6 +534,7 @@ const UserLookup: React.FC = () => {
             className={adminPaginationButtonClass}
             disabled={currentPage <= 1}
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            aria-label="Previous users page"
           >
             <ChevronLeftIcon className="size-4" />
           </Button>
@@ -542,11 +545,13 @@ const UserLookup: React.FC = () => {
             className={adminPaginationButtonClass}
             disabled={currentPage >= totalPages}
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            aria-label="Next users page"
           >
             <ChevronRightIcon className="size-4" />
           </Button>
           <div className="ml-3 flex items-center gap-2">
             <select
+              aria-label="Users per page"
               className={adminPageSizeClass}
               value={pageSize}
               onChange={(e) => {

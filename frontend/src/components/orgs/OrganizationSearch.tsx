@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   XIcon,
   SearchIcon,
@@ -13,7 +13,6 @@ import { ButtonGroup } from '@/components/ui/button-group';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import {
   Popover,
@@ -95,6 +94,24 @@ export default function OrganizationSearch({
   className,
 }: Props) {
   const [filterOpen, setFilterOpen] = useState(false);
+  const filterTriggerRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const trigger = filterTriggerRef.current;
+    if (!trigger || typeof MutationObserver === 'undefined') return;
+
+    const removeStaleControls = () => {
+      trigger.removeAttribute('aria-controls');
+    };
+
+    removeStaleControls();
+    const observer = new MutationObserver(removeStaleControls);
+    observer.observe(trigger, {
+      attributes: true,
+      attributeFilter: ['aria-controls', 'aria-expanded'],
+    });
+    return () => observer.disconnect();
+  }, []);
 
   const roleItems: Array<{
     label: string;
@@ -185,12 +202,13 @@ export default function OrganizationSearch({
             <Button
               type="button"
               variant="outline"
+              aria-label={`${label} picker`}
               className={`h-9 min-w-0 flex-1 justify-start px-3 text-left font-normal ${selectedDate ? 'rounded-r-none' : ''} ${dashboardControlBorderClass}`}
             >
               <CalendarIcon className="size-4" />
               <span
                 className={
-                  selectedDate ? 'truncate' : 'truncate text-muted-foreground'
+                  selectedDate ? 'truncate' : 'truncate text-foreground'
                 }
               >
                 {selectedDate
@@ -212,7 +230,11 @@ export default function OrganizationSearch({
             </Button>
           )}
         </div>
-        <PopoverContent align="start" className="w-auto p-0">
+        <PopoverContent
+          aria-label={`${label} calendar`}
+          align="start"
+          className="w-auto p-0"
+        >
           <Calendar
             mode="single"
             selected={selectedDate}
@@ -238,47 +260,52 @@ export default function OrganizationSearch({
     <div className={className}>
       <Popover open={filterOpen} onOpenChange={setFilterOpen}>
         <div className="mb-3 flex w-full items-stretch">
-          <PopoverTrigger asChild>
-            <div
-              role="button"
-              tabIndex={0}
+          <div className="flex min-w-0 flex-1 items-stretch">
+            <PopoverTrigger
+              ref={filterTriggerRef}
+              id="organization-filter-trigger"
+              type="button"
+              aria-label="Open organization link filters"
+              aria-controls={undefined}
               className={`flex min-h-11 min-w-0 flex-1 cursor-pointer flex-wrap items-center gap-1 rounded-md rounded-r-none px-4 py-2 text-left text-base font-normal text-muted-foreground outline-none focus-visible:ring-1 focus-visible:ring-ring ${dashboardControlBorderClass}`}
             >
               {activeFilterCount === 0 ? (
-                <span>Click to search</span>
+                <span className="text-foreground">Click to search</span>
               ) : (
                 activeFilterKeys.map((key) => (
-                  <Badge
+                  <span
                     key={key}
-                    variant="secondary"
-                    className="max-w-full gap-1 border border-border bg-background px-2 py-0.5 text-foreground"
+                    className="inline-flex max-w-full items-center rounded-md border border-border bg-background px-2 py-0.5 text-xs font-semibold text-foreground"
                   >
                     <span className="max-w-[14rem] truncate">
                       {key}: {query[key]}
                     </span>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      aria-label={`Clear ${key} filter`}
-                      className="h-5 w-5 shrink-0"
-                      onClick={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        clearFilter(key);
-                      }}
-                    >
-                      <XIcon />
-                    </Button>
-                  </Badge>
+                  </span>
                 ))
               )}
-            </div>
-          </PopoverTrigger>
+            </PopoverTrigger>
+            {activeFilterCount > 0 && (
+              <div className="flex shrink-0 items-center gap-1 border-y border-border bg-muted px-1">
+                {activeFilterKeys.map((key) => (
+                  <Button
+                    key={key}
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    aria-label={`Clear ${key} filter`}
+                    className="h-7 w-7 shrink-0 text-foreground"
+                    onClick={() => clearFilter(key)}
+                  >
+                    <XIcon />
+                  </Button>
+                ))}
+              </div>
+            )}
+          </div>
           <Button
             size="lg"
             variant="outline"
-            className="h-auto min-h-11 w-11 rounded-l-none border-l-0 bg-[#CF1322] px-0 hover:bg-[#F4222D]"
+            className="h-auto min-h-11 w-11 rounded-l-none border-l-0 bg-primary px-0 hover:bg-primary/90"
             aria-label="Search links"
             onClick={handleSearch}
             disabled={!textFiltersChanged}
@@ -290,6 +317,7 @@ export default function OrganizationSearch({
         <PopoverContent
           align="start"
           sideOffset={6}
+          aria-label="Organization link filters"
           className="w-[var(--radix-popover-trigger-width)] min-w-[20rem] border-border bg-muted p-3 text-foreground shadow-lg"
         >
           <div className="space-y-2">
@@ -297,6 +325,7 @@ export default function OrganizationSearch({
               <div key={key} className="flex gap-2">
                 <Input
                   className="border-border bg-background text-foreground shadow-none placeholder:text-muted-foreground"
+                  aria-label={`${key.charAt(0).toUpperCase() + key.slice(1)} filter`}
                   placeholder={key.charAt(0).toUpperCase() + key.slice(1)}
                   value={filters[key]}
                   onChange={(e) =>
@@ -335,6 +364,7 @@ export default function OrganizationSearch({
                 className="flex min-h-5 cursor-pointer items-center gap-3 text-sm leading-none font-semibold text-foreground"
               >
                 <Checkbox
+                  aria-label={item.label}
                   className="border-border data-[state=checked]:border-primary"
                   checked={query.roles.includes(item.value)}
                   onCheckedChange={(checked) =>
@@ -360,6 +390,7 @@ export default function OrganizationSearch({
                 }
               >
                 <SelectTrigger
+                  aria-label="Sort links by"
                   className={`h-9 flex-1 ${dashboardControlBorderClass}`}
                 >
                   <SelectValue />
@@ -373,6 +404,7 @@ export default function OrganizationSearch({
               </Select>
               <Button
                 variant="outline"
+                aria-label={`Sort order: ${query.sort.order}`}
                 onClick={sortLinkOrder}
                 className={`h-9 w-[138px] ${dashboardControlBorderClass}`}
               >
@@ -394,9 +426,7 @@ export default function OrganizationSearch({
             {renderDatePicker('Start date', beginDate, (date) =>
               showLinksInRange(date, endDate),
             )}
-            <span className="flex items-center px-1 text-muted-foreground">
-              →
-            </span>
+            <span aria-hidden="true" className="mx-1 h-px w-3 bg-border" />
             {renderDatePicker('End date', endDate, (date) =>
               showLinksInRange(beginDate, date),
             )}
@@ -409,6 +439,8 @@ export default function OrganizationSearch({
             <ButtonGroup className="w-fit max-w-full">
               <Button
                 variant={query.showExpiredLinks ? 'default' : 'outline'}
+                aria-label="Show expired organization links"
+                aria-pressed={query.showExpiredLinks}
                 onClick={() =>
                   setQuery((current) => ({
                     ...current,
@@ -421,6 +453,8 @@ export default function OrganizationSearch({
               </Button>
               <Button
                 variant={!query.showExpiredLinks ? 'default' : 'outline'}
+                aria-label="Hide expired organization links"
+                aria-pressed={!query.showExpiredLinks}
                 onClick={() =>
                   setQuery((current) => ({
                     ...current,
@@ -438,6 +472,8 @@ export default function OrganizationSearch({
             <ButtonGroup className="w-fit max-w-full">
               <Button
                 variant={query.showType === 'links' ? 'default' : 'outline'}
+                aria-label="Show organization links"
+                aria-pressed={query.showType === 'links'}
                 onClick={() =>
                   setQuery((current) => ({ ...current, showType: 'links' }))
                 }
@@ -449,6 +485,8 @@ export default function OrganizationSearch({
                 variant={
                   query.showType === 'tracking_pixels' ? 'default' : 'outline'
                 }
+                aria-label="Show organization tracking pixels"
+                aria-pressed={query.showType === 'tracking_pixels'}
                 onClick={() =>
                   setQuery((current) => ({
                     ...current,
@@ -469,6 +507,8 @@ export default function OrganizationSearch({
             <ButtonGroup className="w-fit max-w-full">
               <Button
                 variant={query.showDeletedLinks ? 'default' : 'outline'}
+                aria-label="Show deleted organization links"
+                aria-pressed={query.showDeletedLinks}
                 onClick={() =>
                   setQuery((current) => ({
                     ...current,
@@ -481,6 +521,8 @@ export default function OrganizationSearch({
               </Button>
               <Button
                 variant={!query.showDeletedLinks ? 'default' : 'outline'}
+                aria-label="Hide deleted organization links"
+                aria-pressed={!query.showDeletedLinks}
                 onClick={() =>
                   setQuery((current) => ({
                     ...current,
@@ -497,6 +539,7 @@ export default function OrganizationSearch({
 
         <Button
           variant="ghost"
+          aria-label="Reset organization link filters"
           onClick={resetFilters}
           className="h-9 bg-primary text-primary-foreground shadow-none hover:bg-primary/80"
         >

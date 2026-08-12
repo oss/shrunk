@@ -75,11 +75,58 @@ export default function DashboardSearch({
   );
   const [filterOpen, setFilterOpen] = useState(false);
   const [orgsExpanded, setOrgsExpanded] = useState(false);
+  const filterTriggerRef = useRef<HTMLButtonElement>(null);
 
   const titleInputRef = useRef<HTMLInputElement>(null);
   const aliasInputRef = useRef<HTMLInputElement>(null);
   const urlInputRef = useRef<HTMLInputElement>(null);
   const ownerInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const trigger = filterTriggerRef.current;
+    if (!trigger || typeof MutationObserver === 'undefined') return;
+
+    // Radix assigns an aria-controls ID that axe cannot reliably resolve for
+    // its portaled popover. aria-haspopup and aria-expanded still describe the
+    // control state, so keep the trigger free of a stale IDREF.
+    const removeStaleControls = () => {
+      trigger.removeAttribute('aria-controls');
+    };
+
+    removeStaleControls();
+    const observer = new MutationObserver(removeStaleControls);
+    observer.observe(trigger, {
+      attributes: true,
+      attributeFilter: ['aria-controls', 'aria-expanded'],
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const triggers = Array.from(
+      document.querySelectorAll<HTMLButtonElement>(
+        'button[aria-label$="date picker"]',
+      ),
+    );
+    if (triggers.length === 0 || typeof MutationObserver === 'undefined') {
+      return;
+    }
+
+    const observers = triggers.map((trigger) => {
+      const removeStaleControls = () => {
+        trigger.removeAttribute('aria-controls');
+      };
+      removeStaleControls();
+      const observer = new MutationObserver(removeStaleControls);
+      observer.observe(trigger, {
+        attributes: true,
+        attributeFilter: ['aria-controls', 'aria-expanded'],
+      });
+      return observer;
+    });
+
+    return () => observers.forEach((observer) => observer.disconnect());
+  }, []);
 
   const treeItems: { key: string; label: string; value: string }[] = [
     { key: '0-0', label: 'My Links', value: 'user' },
@@ -246,12 +293,13 @@ export default function DashboardSearch({
             <Button
               type="button"
               variant="outline"
+              aria-label={`${label} picker`}
               className={`h-9 min-w-0 flex-1 justify-start px-3 text-left font-normal ${selectedDate ? 'rounded-r-none' : ''} ${dashboardControlBorderClass}`}
             >
               <CalendarIcon className="size-4" />
               <span
                 className={
-                  selectedDate ? 'truncate' : 'truncate text-muted-foreground'
+                  selectedDate ? 'truncate' : 'truncate text-foreground'
                 }
               >
                 {selectedDate
@@ -273,7 +321,12 @@ export default function DashboardSearch({
             </Button>
           )}
         </div>
-        <PopoverContent align="start" className="w-auto p-0">
+        <PopoverContent
+          forceMount
+          aria-label={`${label} calendar`}
+          align="start"
+          className="w-auto p-0"
+        >
           <Calendar
             mode="single"
             selected={selectedDate}
@@ -290,13 +343,15 @@ export default function DashboardSearch({
       <Popover open={filterOpen} onOpenChange={setFilterOpen}>
         <div className="mb-3 flex w-full items-stretch">
           <PopoverTrigger asChild>
-            <div
-              role="button"
-              tabIndex={0}
+            <button
+              ref={filterTriggerRef}
+              id="dashboard-filter-trigger"
+              type="button"
+              aria-label="Open link filters"
               className={`flex min-h-11 min-w-0 flex-1 cursor-pointer flex-wrap items-center gap-1 rounded-md rounded-r-none px-4 py-2 text-left text-base font-normal text-muted-foreground outline-none focus-visible:ring-1 focus-visible:ring-ring ${dashboardControlBorderClass}`}
             >
               {activeFilterCount === 0 ? (
-                <span>Click to search</span>
+                <span className="text-foreground">Click to search</span>
               ) : (
                 activeFilterKeys.map((key) => (
                   <Badge
@@ -307,29 +362,15 @@ export default function DashboardSearch({
                     <span className="max-w-[14rem] truncate">
                       {key}: {filters[key]}
                     </span>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      aria-label={`Clear ${key} filter`}
-                      className="h-5 w-5 shrink-0"
-                      onClick={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        clearFilter(key);
-                      }}
-                    >
-                      <XIcon />
-                    </Button>
                   </Badge>
                 ))
               )}
-            </div>
+            </button>
           </PopoverTrigger>
           <Button
             size="lg"
             variant="outline"
-            className="h-auto min-h-11 w-11 rounded-l-none border-l-0 bg-[#CF1322] px-0 hover:bg-[#F4222D]"
+            className="h-auto min-h-11 w-11 rounded-l-none border-l-0 bg-primary px-0 hover:bg-primary/90"
             aria-label="Search links"
             onClick={handleSearch}
             disabled={
@@ -346,6 +387,7 @@ export default function DashboardSearch({
         <PopoverContent
           align="start"
           sideOffset={6}
+          aria-label="Link search filters"
           className="w-[var(--radix-popover-trigger-width)] min-w-[20rem] border-border bg-muted p-3 text-foreground shadow-lg"
         >
           <div className="space-y-2">
@@ -353,6 +395,7 @@ export default function DashboardSearch({
               <div key={key} className="flex gap-2">
                 <Input
                   className="border-border bg-background text-foreground shadow-none placeholder:text-muted-foreground"
+                  aria-label={`${key.charAt(0).toUpperCase() + key.slice(1)} filter`}
                   ref={
                     key === 'title'
                       ? titleInputRef
@@ -394,6 +437,7 @@ export default function DashboardSearch({
                 className="flex min-h-5 cursor-pointer items-center gap-3 text-sm leading-none font-semibold text-foreground"
               >
                 <Checkbox
+                  aria-label={item.label}
                   className="border-border data-[state=checked]:border-primary"
                   checked={selectedSets.includes(item.value)}
                   onCheckedChange={(checked) =>
@@ -409,6 +453,8 @@ export default function DashboardSearch({
                 <div className="-ml-5 flex min-h-5 items-center gap-1">
                   <button
                     type="button"
+                    aria-label={`${orgsExpanded ? 'Collapse' : 'Expand'} organization links`}
+                    aria-expanded={orgsExpanded}
                     className="flex size-4 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground"
                     onClick={() => setOrgsExpanded(!orgsExpanded)}
                   >
@@ -424,7 +470,7 @@ export default function DashboardSearch({
                     className="flex cursor-pointer items-center gap-3 text-sm leading-none font-semibold text-foreground"
                   >
                     <Checkbox
-                      id="dashboard-organization-links-filter"
+                      aria-label="Organization Links"
                       className="border-border data-[state=checked]:border-primary"
                       checked={allOrganizationsSelected}
                       onCheckedChange={(checked) =>
@@ -443,6 +489,7 @@ export default function DashboardSearch({
                         className="flex min-h-5 cursor-pointer items-center gap-3 text-sm leading-none font-semibold text-foreground"
                       >
                         <Checkbox
+                          aria-label={child.label}
                           className="border-border data-[state=checked]:border-primary"
                           checked={selectedSets.includes(child.value)}
                           onCheckedChange={(checked) =>
@@ -469,6 +516,7 @@ export default function DashboardSearch({
             <ButtonGroup className="w-full">
               <Select value={query.sort.key} onValueChange={sortLinksByKey}>
                 <SelectTrigger
+                  aria-label="Sort links by"
                   className={`h-9 flex-1 ${dashboardControlBorderClass}`}
                 >
                   <SelectValue />
@@ -476,12 +524,15 @@ export default function DashboardSearch({
                 <SelectContent>
                   <SelectItem value="relevance">Relevance</SelectItem>
                   <SelectItem value="created_time">Time created</SelectItem>
-                  <SelectItem value="title">Title</SelectItem>
+                  <SelectItem id="dashboard-sort-title" value="title">
+                    Title
+                  </SelectItem>
                   <SelectItem value="visits">Number of visits</SelectItem>
                 </SelectContent>
               </Select>
               <Button
                 variant="outline"
+                aria-label={`Sort order: ${sortOrder}`}
                 onClick={sortLinkOrder}
                 className={`h-9 w-[138px] ${dashboardControlBorderClass}`}
               >
@@ -502,9 +553,7 @@ export default function DashboardSearch({
             {renderDatePicker('Start date', beginDate, (date) =>
               showLinksInRange(date, endDate),
             )}
-            <span className="flex items-center px-1 text-muted-foreground">
-              →
-            </span>
+            <span aria-hidden="true" className="mx-1 h-px w-3 bg-border" />
             {renderDatePicker('End date', endDate, (date) =>
               showLinksInRange(beginDate, date),
             )}
@@ -517,6 +566,8 @@ export default function DashboardSearch({
             <ButtonGroup className="w-fit max-w-full">
               <Button
                 variant={query.show_expired_links ? 'default' : 'outline'}
+                aria-label="Show expired links"
+                aria-pressed={query.show_expired_links}
                 onClick={() => showExpiredLinks(true)}
                 className={`${dashboardSegmentButtonClass} ${query.show_expired_links ? activeDashboardButtonClass : inactiveDashboardButtonClass}`}
               >
@@ -524,6 +575,8 @@ export default function DashboardSearch({
               </Button>
               <Button
                 variant={!query.show_expired_links ? 'default' : 'outline'}
+                aria-label="Hide expired links"
+                aria-pressed={!query.show_expired_links}
                 onClick={() => showExpiredLinks(false)}
                 className={`${dashboardSegmentButtonClass} ${!query.show_expired_links ? activeDashboardButtonClass : inactiveDashboardButtonClass}`}
               >
@@ -536,6 +589,8 @@ export default function DashboardSearch({
             <ButtonGroup className="w-fit max-w-full">
               <Button
                 variant={query.showType === 'links' ? 'default' : 'outline'}
+                aria-label="Show links"
+                aria-pressed={query.showType === 'links'}
                 onClick={() => sortByType('links')}
                 className={`${dashboardSegmentButtonClass} ${query.showType === 'links' ? activeDashboardButtonClass : inactiveDashboardButtonClass}`}
               >
@@ -545,6 +600,8 @@ export default function DashboardSearch({
                 variant={
                   query.showType === 'tracking_pixels' ? 'default' : 'outline'
                 }
+                aria-label="Show tracking pixels"
+                aria-pressed={query.showType === 'tracking_pixels'}
                 onClick={() => sortByType('tracking_pixels')}
                 className={`${dashboardSegmentButtonClass} whitespace-nowrap ${query.showType === 'tracking_pixels' ? activeDashboardButtonClass : inactiveDashboardButtonClass}`}
               >
@@ -560,6 +617,8 @@ export default function DashboardSearch({
             <ButtonGroup className="w-fit max-w-full">
               <Button
                 variant={query.show_deleted_links ? 'default' : 'outline'}
+                aria-label="Show deleted links"
+                aria-pressed={query.show_deleted_links}
                 onClick={() => showDeletedLinks(true)}
                 className={`${dashboardSegmentButtonClass} ${query.show_deleted_links ? activeDashboardButtonClass : inactiveDashboardButtonClass}`}
               >
@@ -567,6 +626,8 @@ export default function DashboardSearch({
               </Button>
               <Button
                 variant={!query.show_deleted_links ? 'default' : 'outline'}
+                aria-label="Hide deleted links"
+                aria-pressed={!query.show_deleted_links}
                 onClick={() => showDeletedLinks(false)}
                 className={`${dashboardSegmentButtonClass} ${!query.show_deleted_links ? activeDashboardButtonClass : inactiveDashboardButtonClass}`}
               >
@@ -578,6 +639,7 @@ export default function DashboardSearch({
 
         <Button
           variant="ghost"
+          aria-label="Reset link filters"
           onClick={resetFilters}
           className="h-9 bg-primary text-primary-foreground shadow-none hover:bg-primary/80"
         >

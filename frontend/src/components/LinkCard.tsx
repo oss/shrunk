@@ -100,6 +100,7 @@ export default function LinkCard({
                   asChild
                 >
                   <a
+                    aria-label={`Edit ${linkInfo.title}`}
                     href={`/app/links/${linkInfo._id}?mode=edit`}
                     target="_blank"
                     rel="noreferrer"
@@ -121,6 +122,7 @@ export default function LinkCard({
                   asChild
                 >
                   <a
+                    aria-label={`View ${linkInfo.title}`}
                     href={`/app/links/${linkInfo._id}`}
                     target="_blank"
                     rel="noreferrer"
@@ -138,32 +140,18 @@ export default function LinkCard({
       </CardHeader>
       <Separator />
       <CardContent className="px-7 py-7">
-        <div className="xl:hidden">
-          <dl className="grid gap-4 sm:grid-cols-2">
-            {descriptionRows.map((row) => (
-              <div key={row.label} className="flex gap-3">
-                <dt className="shrink-0 text-base font-semibold text-muted-foreground">
-                  {row.label}
-                </dt>
-                <dd className="min-w-0 text-base text-foreground">
-                  {row.value}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-        <div className="hidden xl:block">
-          <dl className="grid grid-cols-[1.3fr_1fr_1fr_1.35fr_1.1fr] gap-8">
-            {descriptionRows.map((row) => (
-              <div key={row.label} className="flex min-w-0 gap-3">
-                <dt className="shrink-0 text-sm font-semibold text-muted-foreground">
-                  {row.label}
-                </dt>
-                <dd className="min-w-0 text-sm text-foreground">{row.value}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
+        <dl className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-8">
+          {descriptionRows.map((row) => (
+            <div key={row.label} className="flex min-w-0 gap-3">
+              <dt className="min-w-0 text-base font-semibold text-muted-foreground xl:text-sm">
+                {row.label}
+              </dt>
+              <dd className="min-w-0 flex-1 bg-card text-base text-card-foreground xl:text-sm">
+                {row.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
       </CardContent>
       <Separator />
       <CardFooter className="flex flex-col items-stretch gap-4 px-7 py-7 lg:flex-row lg:items-center lg:justify-between">
@@ -172,7 +160,7 @@ export default function LinkCard({
             <TooltipTrigger asChild>
               <Button
                 variant="outline"
-                className="max-w-full justify-start border-dashed border-border bg-transparent px-4 text-sm shadow-none hover:border-[#cc0033] hover:bg-accent active:border-[#8e0d18] active:bg-transparent active:text-[#8e0d18] dark:bg-[#262626]"
+                className="max-w-full justify-start border-dashed border-border bg-transparent px-4 text-sm shadow-none hover:border-primary hover:bg-accent active:border-primary active:bg-transparent active:text-primary dark:bg-[#262626]"
                 onClick={onCopyAlias}
               >
                 <CopyIcon data-icon="inline-start" />
@@ -193,7 +181,7 @@ export default function LinkCard({
               <TooltipTrigger asChild>
                 <Button
                   variant="outline"
-                  className="max-w-full justify-start border-dashed border-border bg-transparent px-4 text-sm shadow-none hover:border-[#cc0033] hover:bg-accent active:border-[#8e0d18] active:bg-transparent active:text-[#8e0d18] dark:bg-[#262626]"
+                  className="max-w-full justify-start border-dashed border-border bg-transparent px-4 text-sm shadow-none hover:border-primary hover:bg-accent active:border-primary active:bg-transparent active:text-primary dark:bg-[#262626]"
                   onClick={onCopyOriginalLink}
                 >
                   <CopyIcon />

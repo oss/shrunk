@@ -648,6 +648,7 @@ export function Stats(props: Props): React.ReactElement {
               <>
                 <Button
                   variant="outline"
+                  aria-label="Edit link"
                   onClick={() => {
                     setEditModalVisible(true);
                   }}
@@ -657,6 +658,7 @@ export function Stats(props: Props): React.ReactElement {
                 </Button>
                 <Button
                   variant="outline"
+                  aria-label="Collaborate on link"
                   onClick={() => {
                     setCollabModalVisible(true);
                   }}
@@ -681,6 +683,7 @@ export function Stats(props: Props): React.ReactElement {
                     className="rounded-md border border-border bg-background p-3"
                   >
                     <QRCodeCanvas
+                      title={`QR code for ${linkInfo?.alias ?? 'link'}`}
                       value={
                         linkInfo
                           ? getRedirectFromAlias(
@@ -702,14 +705,25 @@ export function Stats(props: Props): React.ReactElement {
                           setQrcodeErrorLevel(value);
                         }}
                       >
-                        <SelectTrigger className="h-8 min-w-24 flex-1 bg-background">
+                        <SelectTrigger
+                          aria-label="QR code error correction level"
+                          className="h-8 min-w-24 flex-1 bg-background"
+                        >
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="L">Low</SelectItem>
-                          <SelectItem value="M">Medium</SelectItem>
-                          <SelectItem value="Q">Quartile</SelectItem>
-                          <SelectItem value="H">High</SelectItem>
+                          <SelectItem id="stats-qr-low" value="L">
+                            Low
+                          </SelectItem>
+                          <SelectItem id="stats-qr-medium" value="M">
+                            Medium
+                          </SelectItem>
+                          <SelectItem id="stats-qr-quartile" value="Q">
+                            Quartile
+                          </SelectItem>
+                          <SelectItem id="stats-qr-high" value="H">
+                            High
+                          </SelectItem>
                         </SelectContent>
                       </Select>
 
@@ -796,12 +810,17 @@ export function Stats(props: Props): React.ReactElement {
                 updateStats(value === 'All' ? undefined : value)
               }
             >
-              <SelectTrigger className="w-40 bg-background">
+              <SelectTrigger
+                aria-label="Filter statistics by source"
+                className="w-40 bg-background"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="All">All sources</SelectItem>
-                <SelectItem value="qr">QR code</SelectItem>
+                <SelectItem id="stats-source-qr" value="qr">
+                  QR code
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -852,17 +871,41 @@ export function Stats(props: Props): React.ReactElement {
                       setStatsKey(value);
                     }}
                   >
-                    <SelectTrigger className="w-28 bg-background">
+                    <SelectTrigger
+                      aria-label="Statistic to chart"
+                      className="w-28 bg-background"
+                    >
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={StatChart.Visits}>Visits</SelectItem>
-                      <SelectItem value={StatChart.GeoIP}>Location</SelectItem>
-                      <SelectItem value={StatChart.Browser}>Browser</SelectItem>
-                      <SelectItem value={StatChart.Platform}>
+                      <SelectItem
+                        id="stats-chart-visits"
+                        value={StatChart.Visits}
+                      >
+                        Visits
+                      </SelectItem>
+                      <SelectItem
+                        id="stats-chart-location"
+                        value={StatChart.GeoIP}
+                      >
+                        Location
+                      </SelectItem>
+                      <SelectItem
+                        id="stats-chart-browser"
+                        value={StatChart.Browser}
+                      >
+                        Browser
+                      </SelectItem>
+                      <SelectItem
+                        id="stats-chart-platform"
+                        value={StatChart.Platform}
+                      >
                         Platform
                       </SelectItem>
-                      <SelectItem value={StatChart.Referral}>
+                      <SelectItem
+                        id="stats-chart-referral"
+                        value={StatChart.Referral}
+                      >
                         Referral
                       </SelectItem>
                     </SelectContent>
