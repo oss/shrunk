@@ -139,9 +139,10 @@ build:
     - buildah push "$CI_REGISTRY_IMAGE/${IMAGE}:${CI_COMMIT_SHA}"
 
 backend-test:
-  extends:
-    - .buildah
-    - .mongo-service
+  extends: .mongo-service
+  image:
+    name: $CI_REGISTRY_IMAGE/backend:${CI_COMMIT_SHA}
+    entrypoint: [""]
   stage: test
   needs:
     - job: build
@@ -149,21 +150,17 @@ backend-test:
         matrix:
           - IMAGE: backend
   script:
-    - container=$(buildah from "$CI_REGISTRY_IMAGE/backend:${CI_COMMIT_SHA}")
-    - container_root=$(buildah mount $container)
-
-    - cp .env.example ${container_root}/usr/shrunk/backend/test.env
-    - export PATH="${container_root}/usr/local/bin:${PATH}"; curl -fsS "https://dotenvx.sh?directory=${container_root}/usr/local/bin" | sh
-    - buildah run $container -- sh -c
-        "dotenvx set SHRUNK_DB_HOST mongo -f test.env &&
-         dotenvx set SHRUNK_DB_NAME shrunk_test -f test.env &&
-         dotenvx set SHRUNK_FLASK_TESTING 1 -f test.env &&
-         dotenvx set SHRUNK_GOOGLE_SAFEBROWSE_ENABLED 1 -f test.env &&
-         dotenvx set SHRUNK_GOOGLE_SAFEBROWSE_API_KEY "$GOOGLE_SAFE_BROWSING_API" -f test.env &&
-         dotenvx run -f test.env -- pytest --junitxml=pytest.xml tests"
-    - cp ${container_root}/usr/shrunk/backend/pytest.xml .
-
-    - buildah unmount $container
+    - set -a
+    - . .env.example
+    - set +a
+    - export SHRUNK_DB_HOST=mongo
+    - export SHRUNK_DB_NAME=shrunk_test
+    - export SHRUNK_DB_PORT=27017
+    - export SHRUNK_FLASK_TESTING=1
+    - export SHRUNK_GOOGLE_SAFEBROWSE_ENABLED=1
+    - export SHRUNK_GOOGLE_SAFEBROWSE_API_KEY=$GOOGLE_SAFE_BROWSING_API
+    - export SHRUNK_REPLICA_SET_NAME="rs0"
+    - pytest --junitxml=pytest.xml backend/tests
   artifacts:
     reports:
       junit: pytest.xml

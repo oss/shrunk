@@ -29,8 +29,6 @@ class ShrunkClient:
 
     def __init__(
         self,
-        DB_USERNAME: Optional[str] = None,
-        DB_PASSWORD: Optional[str] = None,
         RESERVED_WORDS: Optional[Set[str]] = None,
         BANNED_REGEXES: Optional[List[str]] = None,
         **_kwargs: Any,
@@ -40,18 +38,20 @@ class ShrunkClient:
         db_name = os.getenv("SHRUNK_DB_NAME")
         assert db_name is not None
 
+        cert_file = os.getenv("SHRUNK_DB_CERT", "")
         self.conn = pymongo.MongoClient(
             os.getenv("SHRUNK_DB_HOST"),
             int(db_port),
-            replicaSet=os.getenv("SHRUNK_REPLICA_SET_NAME"),
+            replicaSet=os.getenv("SHRUNK_REPLICA_SET_NAME") or None,
             readPreference="secondaryPreferred",
             # NOTE: this is default false in pymongo 4.x, we are on pymongo 3.x
             directConnection=False,
-            username=DB_USERNAME,
-            password=DB_PASSWORD,
+            username=os.getenv("SHRUNK_DB_USERNAME") or None,
+            password=os.getenv("SHRUNK_DB_PASSWORD") or None,
             authSource="admin",
             connect=False,
             tz_aware=True,
+            **({"tls": True, "tlsCertificateKeyFile": cert_file} if cert_file else {}),
         )
         self.db = self.conn[db_name]
         self._ensure_indexes()
