@@ -1,10 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  FilterIcon,
-  PlusCircleIcon,
-} from 'lucide-react';
+import { FilterIcon, PlusCircleIcon } from 'lucide-react';
 import { Link as RouterLink } from 'react-router';
 import MultiLinkSelectPopup from '@/components/MultiLinkSelectPopup';
 import CollaboratorModal, { Collaborator } from '@/modals/CollaboratorModal';
@@ -60,6 +55,8 @@ interface Filters {
   url: string;
 }
 
+const LINKS_PER_BATCH = 10;
+
 export default function Dashboard({
   userPrivileges,
   netid: _netid,
@@ -68,12 +65,15 @@ export default function Dashboard({
 }: Props) {
   const [userOrgs, setUserOrgs] = useState<Organization[] | null>(null);
   const [linkInfo, setLinkInfo] = useState<Link[] | null>(
-    mockData === undefined ? null : mockData.slice(0, 10),
+    mockData === undefined ? null : mockData.slice(0, LINKS_PER_BATCH),
   );
-  const [linksPerPage] = useState<number>(10);
   const [query, setQuery] = useState<SearchQuery>(DEFAULT_QUERY);
-  const [totalLinks, setTotalLinks] = useState<number>(mockData?.length ?? 0);
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [nextOffset, setNextOffset] = useState<number>(LINKS_PER_BATCH);
+  const [hasMore, setHasMore] = useState<boolean>(
+    (mockData?.length ?? 0) > LINKS_PER_BATCH,
+  );
+  const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
+  const [failedOffset, setFailedOffset] = useState<number | null>(null);
   const [isCreateModalOpen, setCreateModalOpen] = useState<boolean>(false);
   const [checkedLinks, setCheckedLinks] = useState<Link[]>([]);
   const [collabModalVisible, setCollabModalVisible] = useState<boolean>(false);
@@ -88,9 +88,12 @@ export default function Dashboard({
     owner: '',
   });
   const contextHeaderRef = useRef<HTMLElement>(null);
+  const loadMoreSentinelRef = useRef<HTMLSpanElement>(null);
   const queryVersionRef = useRef<number>(0);
+  const activeQueryRequestRef = useRef<number | null>(null);
+  const loadRequestSequenceRef = useRef<number>(0);
+  const activeLoadRequestRef = useRef<number | null>(null);
   const hasLoadedInitialQueryRef = useRef<boolean>(false);
-  const totalPages = Math.max(1, Math.ceil(totalLinks / linksPerPage));
 
   const doQuery = useCallback(
     async (
@@ -167,63 +170,92 @@ export default function Dashboard({
 
       const requestVersion = queryVersionRef.current + 1;
       queryVersionRef.current = requestVersion;
+      activeQueryRequestRef.current = requestVersion;
 
-      const results = await doQuery(newQuery, 0, linksPerPage);
+      try {
+        const results = await doQuery(newQuery, 0, LINKS_PER_BATCH);
 
-      if (queryVersionRef.current !== requestVersion) {
-        return;
-      }
-
-      setLinkInfo(results.results);
-      setQuery(newQuery);
-      setTotalLinks(results.count);
-      setCurrentPage(1);
-      setCheckedLinks([]);
-    },
-    [demo, query.owner, doQuery, linksPerPage],
-  );
-
-  const setPage = useCallback(
-    async (page: number): Promise<void> => {
-      if (demo || page < 1 || page > totalPages || page === currentPage) {
-        if (demo && mockData && page >= 1 && page <= totalPages) {
-          setLinkInfo(
-            mockData.slice((page - 1) * linksPerPage, page * linksPerPage),
-          );
-          setCurrentPage(page);
+        if (queryVersionRef.current !== requestVersion) {
+          return;
         }
 
-        return;
+        setLinkInfo(results.results);
+        setQuery(newQuery);
+        setNextOffset(LINKS_PER_BATCH);
+        setHasMore(
+          results.results.length > 0 && LINKS_PER_BATCH < results.count,
+        );
+        activeLoadRequestRef.current = null;
+        setIsLoadingMore(false);
+        setFailedOffset(null);
+        setCheckedLinks([]);
+        window.scrollTo({ top: 0 });
+      } finally {
+        if (activeQueryRequestRef.current === requestVersion) {
+          activeQueryRequestRef.current = null;
+        }
       }
-
-      const requestVersion = queryVersionRef.current + 1;
-      queryVersionRef.current = requestVersion;
-
-      const results = await doQuery(
-        query,
-        (page - 1) * linksPerPage,
-        linksPerPage,
-      );
-
-      if (queryVersionRef.current !== requestVersion) {
-        return;
-      }
-
-      setLinkInfo(results.results);
-      setTotalLinks(results.count);
-      setCurrentPage(page);
-      setCheckedLinks([]);
     },
-    [currentPage, demo, doQuery, linksPerPage, mockData, query, totalPages],
+    [demo, query.owner, doQuery],
   );
 
-  useEffect(() => {
-    if (currentPage <= totalPages) {
+  const loadMore = useCallback(async (): Promise<void> => {
+    if (
+      !hasMore ||
+      activeQueryRequestRef.current !== null ||
+      activeLoadRequestRef.current !== null ||
+      failedOffset !== null
+    ) {
       return;
     }
 
-    setCurrentPage(totalPages);
-  }, [currentPage, totalPages]);
+    const offset = nextOffset;
+
+    if (demo) {
+      const nextLinks = mockData?.slice(offset, offset + LINKS_PER_BATCH) ?? [];
+      setLinkInfo((current) => [...(current ?? []), ...nextLinks]);
+      setNextOffset(offset + LINKS_PER_BATCH);
+      setHasMore(
+        nextLinks.length > 0 &&
+          offset + LINKS_PER_BATCH < (mockData?.length ?? 0),
+      );
+      return;
+    }
+
+    const loadRequestId = loadRequestSequenceRef.current + 1;
+    loadRequestSequenceRef.current = loadRequestId;
+    activeLoadRequestRef.current = loadRequestId;
+    setIsLoadingMore(true);
+    const requestVersion = queryVersionRef.current;
+
+    try {
+      const results = await doQuery(query, offset, LINKS_PER_BATCH);
+
+      if (queryVersionRef.current !== requestVersion) {
+        return;
+      }
+
+      setLinkInfo((current) => [...(current ?? []), ...results.results]);
+      setNextOffset(offset + LINKS_PER_BATCH);
+      setHasMore(
+        results.results.length > 0 && offset + LINKS_PER_BATCH < results.count,
+      );
+      setFailedOffset(null);
+    } catch {
+      if (queryVersionRef.current === requestVersion) {
+        setFailedOffset(offset);
+      }
+    } finally {
+      if (activeLoadRequestRef.current === loadRequestId) {
+        activeLoadRequestRef.current = null;
+        setIsLoadingMore(false);
+      }
+    }
+  }, [demo, doQuery, failedOffset, hasMore, mockData, nextOffset, query]);
+
+  const retryLoadMore = useCallback(() => {
+    setFailedOffset(null);
+  }, []);
 
   const refreshResults = useCallback(async (): Promise<void> => {
     if (demo) {
@@ -232,29 +264,35 @@ export default function Dashboard({
 
     const requestVersion = queryVersionRef.current + 1;
     queryVersionRef.current = requestVersion;
+    activeQueryRequestRef.current = requestVersion;
 
-    const results = await doQuery(
-      query,
-      (currentPage - 1) * linksPerPage,
-      linksPerPage,
-    );
+    const refreshLimit = Math.max(LINKS_PER_BATCH, nextOffset);
+    try {
+      const results = await doQuery(query, 0, refreshLimit);
 
-    if (queryVersionRef.current !== requestVersion) {
-      return;
-    }
+      if (queryVersionRef.current !== requestVersion) {
+        return;
+      }
 
-    setLinkInfo(results.results);
-    setTotalLinks(results.count);
-    setCheckedLinks((selected) => {
-      const refreshedLinks = new Map(
-        results.results.map((result) => [result._id, result]),
-      );
-      return selected.flatMap((link) => {
-        const refreshed = refreshedLinks.get(link._id);
-        return refreshed ? [refreshed] : [];
+      setLinkInfo(results.results);
+      setHasMore(results.results.length > 0 && refreshLimit < results.count);
+      setNextOffset(refreshLimit);
+      setFailedOffset(null);
+      setCheckedLinks((selected) => {
+        const refreshedLinks = new Map(
+          results.results.map((result) => [result._id, result]),
+        );
+        return selected.flatMap((link) => {
+          const refreshed = refreshedLinks.get(link._id);
+          return refreshed ? [refreshed] : [];
+        });
       });
-    });
-  }, [currentPage, demo, doQuery, linksPerPage, query]);
+    } finally {
+      if (activeQueryRequestRef.current === requestVersion) {
+        activeQueryRequestRef.current = null;
+      }
+    }
+  }, [demo, doQuery, nextOffset, query]);
 
   const refreshAfterBulkAction = async (): Promise<void> => {
     try {
@@ -387,6 +425,30 @@ export default function Dashboard({
   }, [setNewQuery]);
 
   useEffect(() => {
+    const sentinel = loadMoreSentinelRef.current;
+
+    if (!sentinel || !hasMore || failedOffset !== null) {
+      return undefined;
+    }
+
+    const rootMargin = window.matchMedia('(min-width: 1024px)').matches
+      ? '600px 0px'
+      : '250px 0px';
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          void loadMore();
+        }
+      },
+      { root: null, rootMargin, threshold: 0 },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [failedOffset, hasMore, loadMore]);
+
+  useEffect(() => {
     let lastContextHeaderHeight = -1;
 
     const setContextHeaderHeight = () => {
@@ -407,18 +469,23 @@ export default function Dashboard({
     };
 
     setContextHeaderHeight();
+    const resizeObserver = new ResizeObserver(setContextHeaderHeight);
+    if (contextHeaderRef.current) {
+      resizeObserver.observe(contextHeaderRef.current);
+    }
     window.addEventListener('resize', setContextHeaderHeight);
 
     return () => {
+      resizeObserver.disconnect();
       window.removeEventListener('resize', setContextHeaderHeight);
     };
   }, []);
 
   return (
-    <div className="flex min-h-0 bg-background text-foreground lg:h-[calc(100dvh-var(--app-header-height,0px))] lg:flex-col lg:overflow-hidden">
+    <div className="flex min-h-0 flex-col bg-background text-foreground">
       <section
         ref={contextHeaderRef}
-        className="sticky top-[var(--app-header-height,0px)] z-30 shrink-0 bg-background pt-5 lg:static"
+        className="sticky top-[var(--app-header-height,0px)] z-30 shrink-0 bg-background pt-5"
       >
         <nav className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           <RouterLink to="/app/dash" className="hover:text-foreground">
@@ -471,9 +538,9 @@ export default function Dashboard({
       </section>
 
       <div className="flex min-h-0 flex-1 bg-background">
-        <div className="min-h-0 flex-1 bg-background lg:flex lg:gap-5 lg:overflow-hidden">
+        <div className="flex min-h-0 flex-1 bg-background lg:gap-5">
           <aside className="hidden min-h-0 pr-4 lg:block lg:w-[390px] lg:shrink-0">
-            <section className="sticky top-0 max-h-full [scrollbar-color:hsl(var(--muted-foreground))_hsl(var(--muted))] overflow-y-auto pr-1">
+            <section className="sticky top-[calc(var(--app-header-height,80px)+var(--dashboard-context-height,0px)+1rem)] max-h-[calc(100dvh-var(--app-header-height,80px)-var(--dashboard-context-height,0px)-2rem)] [scrollbar-color:hsl(var(--muted-foreground))_hsl(var(--muted))] overflow-y-auto pr-1">
               <DashboardSearch
                 query={query}
                 filters={filters}
@@ -485,9 +552,16 @@ export default function Dashboard({
             </section>
           </aside>
 
-          <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
-            <section className="min-h-0 min-w-0 flex-1 [scrollbar-color:hsl(var(--muted-foreground))_hsl(var(--muted))] overflow-y-auto pr-1">
-              {linkInfo === null || linkInfo.length === 0 ? (
+          <main className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
+            <section className="min-h-0 min-w-0 flex-1 pr-1">
+              {linkInfo === null ? (
+                <div
+                  className="flex min-h-full items-center justify-center py-6 text-center text-sm text-muted-foreground"
+                  role="status"
+                >
+                  Loading links…
+                </div>
+              ) : linkInfo.length === 0 ? (
                 <div className="justify-top flex min-h-full flex-col items-center py-6 text-center text-muted-foreground">
                   <p className="text-lg">No data</p>
                   <p className="text-sm">No links found</p>
@@ -504,47 +578,36 @@ export default function Dashboard({
                       onCheckedChange={handleCheckedLinkChange}
                     />
                   ))}
+                  <span
+                    ref={loadMoreSentinelRef}
+                    className="block h-px"
+                    aria-hidden="true"
+                  />
+                  <div
+                    className="flex items-center justify-center py-4 text-sm text-muted-foreground"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    {failedOffset !== null ? (
+                      <div className="flex flex-col items-center gap-2">
+                        <span>Couldn’t load more links.</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={retryLoadMore}
+                        >
+                          Retry
+                        </Button>
+                      </div>
+                    ) : isLoadingMore ? (
+                      'Loading more links…'
+                    ) : hasMore ? null : (
+                      'All links loaded'
+                    )}
+                  </div>
                 </div>
               )}
             </section>
-            {totalLinks > 0 && (
-              <footer className="relative left-1/2 w-screen shrink-0 -translate-x-1/2 bg-background pt-5 pb-10">
-                <div className="flex items-center justify-center gap-5">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Previous page"
-                    className="h-8 w-8 text-muted-foreground hover:bg-transparent hover:text-foreground disabled:opacity-35"
-                    onClick={() => setPage(currentPage - 1)}
-                    disabled={currentPage === 1}
-                  >
-                    <ChevronLeftIcon className="size-4" />
-                  </Button>
-                  <select
-                    aria-label="Current page"
-                    className="h-9 w-9 appearance-none rounded-md border border-primary bg-background text-center text-sm font-semibold text-[#0f172a] outline-none dark:text-[#f1f1f1]"
-                    value={currentPage}
-                    onChange={(e) => setPage(Number(e.target.value))}
-                  >
-                    {Array.from({ length: totalPages }).map((_, i) => (
-                      <option key={i + 1} value={i + 1}>
-                        {i + 1}
-                      </option>
-                    ))}
-                  </select>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Next page"
-                    className="h-8 w-8 text-muted-foreground hover:bg-transparent hover:text-foreground disabled:opacity-35"
-                    onClick={() => setPage(currentPage + 1)}
-                    disabled={currentPage >= totalPages}
-                  >
-                    <ChevronRightIcon className="size-4" />
-                  </Button>
-                </div>
-              </footer>
-            )}
           </main>
         </div>
       </div>

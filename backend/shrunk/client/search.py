@@ -129,7 +129,8 @@ class SearchClient:
             # This should never happen
             raise RuntimeError(f"Bad sort key {query['sort']['key']}")
 
-        pipeline.append({"$sort": {sort_key: sort_order, "_id": sort_order}})
+        result_sort = {sort_key: sort_order, "_id": sort_order}
+        pipeline.append({"$sort": result_sort})
 
         # Add is_expired field
         now = datetime.now(timezone.utc)
@@ -175,6 +176,19 @@ class SearchClient:
 
         if "owner" in query and query["owner"]:
             pipeline.append({"$match": {"owner._id": query["owner"]}})
+
+        # A link can match more than one selected set (for example, an org link
+        # that is also returned by the shared-links pipeline). Deduplicate the
+        # complete result set before counting and paginating it. $group does not
+        # preserve input order, so restore the requested stable ordering after
+        # replacing each group with its first document.
+        pipeline.extend(
+            [
+                {"$group": {"_id": "$_id", "document": {"$first": "$$ROOT"}}},
+                {"$replaceRoot": {"newRoot": "$document"}},
+                {"$sort": result_sort},
+            ]
+        )
 
         # Pagination.
         facet = {
@@ -247,15 +261,9 @@ class SearchClient:
         count = result["count"][0]["count"] if result["count"] else 0
         results = [prepare_result(res) for res in result["result"]]
 
-        # Remove possible duplicates in results and update total count
-        unique = {each["_id"]: each for each in results}.values()
-        unique_results = list(unique)
-        diff = len(results) - len(unique_results)
-        count = count - diff
-
         return {
             "count": count,
-            "results": unique_results,
+            "results": results,
         }
 
     def _build_shared_pipeline(self, user_netid: str, _query: Dict[str, Any]) -> List[Dict[str, Any]]:

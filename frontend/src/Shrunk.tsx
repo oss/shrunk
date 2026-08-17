@@ -446,15 +446,17 @@ function ShrunkContent({
           id="main-content"
           className={cn(
             'min-h-0 flex-1',
-            isApiReferenceRoute
-              ? 'overflow-hidden bg-background px-6 pt-0 pb-6 text-foreground'
-              : isAdminRoute
-                ? 'px-6 pt-0 pb-6'
-                : isFaqRoute
-                  ? 'overflow-hidden bg-background px-6 pt-0 pb-6 text-foreground'
-                  : isDarkWorkspaceRoute
-                    ? 'overflow-hidden bg-background px-3 text-foreground sm:px-4 md:px-6'
-                    : 'px-6 pt-0 pb-6',
+            isDashboardRoute
+              ? 'bg-background px-3 text-foreground sm:px-4 md:px-6'
+              : isApiReferenceRoute
+                ? 'overflow-hidden bg-background px-6 pt-0 pb-6 text-foreground'
+                : isAdminRoute
+                  ? 'px-6 pt-0 pb-6'
+                  : isFaqRoute
+                    ? 'overflow-hidden bg-background px-6 pt-0 pb-6 text-foreground'
+                    : isDarkWorkspaceRoute
+                      ? 'overflow-hidden bg-background px-3 text-foreground sm:px-4 md:px-6'
+                      : 'px-6 pt-0 pb-6',
           )}
         >
           {netid !== '' && <PendingRequests />}
