@@ -7,6 +7,7 @@ import {
   XIcon,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 
 import { deleteLink, isValidAlias, reverLinkExpirationDate } from '@/api/links';
@@ -56,6 +57,8 @@ export interface Props {
 }
 
 export const EditLinkDrawer: React.FC<Props> = (props) => {
+  const navigate = useNavigate();
+
   const mayEditOwner =
     (props.netid === props.linkInfo.owner._id ||
       props.userPrivileges.has('admin')) &&
@@ -96,9 +99,7 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
     try {
       await deleteLink(props.linkInfo._id);
       toast.success('Link deleted successfully');
-      setTimeout(() => {
-        window.location.href = '/app/dash';
-      }, 1000);
+      navigate('/app/dash');
     } catch {
       toast.error('Failed to delete link');
     }

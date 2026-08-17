@@ -345,6 +345,7 @@ export default function MyOrganizations({
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newOrgName, setNewOrgName] = useState('');
+  const [isCreatingOrg, setIsCreatingOrg] = useState(false);
 
   const [deleteConfirmOrgId, setDeleteConfirmOrgId] = useState<string | null>(
     null,
@@ -423,8 +424,13 @@ export default function MyOrganizations({
   };
 
   const onCreate = async () => {
+    const cleanedName = newOrgName.trim().replace(/\s+/g, ' ');
+    if (!cleanedName) {
+      return;
+    }
+
+    setIsCreatingOrg(true);
     try {
-      const cleanedName = newOrgName.trim().replace(/\s+/g, ' ');
       await createOrg(cleanedName);
       toast.success('Organization created successfully');
       setIsCreateModalOpen(false);
@@ -432,6 +438,8 @@ export default function MyOrganizations({
       await refreshOrgs();
     } catch {
       toast.error('Failed to create organization.');
+    } finally {
+      setIsCreatingOrg(false);
     }
   };
 
@@ -858,6 +866,7 @@ export default function MyOrganizations({
               <Button
                 variant="outline"
                 className={`h-9 px-5 ${organizationControlBorderClass}`}
+                disabled={isCreatingOrg}
                 onClick={() => {
                   setIsCreateModalOpen(false);
                   setNewOrgName('');
@@ -867,6 +876,7 @@ export default function MyOrganizations({
               </Button>
               <Button
                 className="h-9 bg-primary px-5 font-semibold text-primary-foreground shadow-none hover:bg-primary/90"
+                disabled={isCreatingOrg || !newOrgName.trim()}
                 onClick={onCreate}
               >
                 Create

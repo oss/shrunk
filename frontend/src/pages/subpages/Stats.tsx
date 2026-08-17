@@ -333,7 +333,6 @@ export function Stats(props: Props): React.ReactElement {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  console.log(linkInfo);
   useEffect(() => {
     if (browserStats !== null && browserStats.referers.length > 0) {
       setTopReferrer(browserStats.referers[0].name);
@@ -627,7 +626,7 @@ export function Stats(props: Props): React.ReactElement {
               <TooltipTrigger asChild>
                 <Button
                   variant="outline"
-                  onClick={() =>
+                  onClick={() => {
                     navigator.clipboard.writeText(
                       linkInfo
                         ? getRedirectFromAlias(
@@ -635,8 +634,9 @@ export function Stats(props: Props): React.ReactElement {
                             linkInfo.is_tracking_pixel_link,
                           )
                         : '',
-                    )
-                  }
+                    );
+                    toast.success('Link copied to clipboard');
+                  }}
                 >
                   <CopyIcon />
                   Copy

@@ -9,7 +9,6 @@ import {
 } from '@/lib/modal-animations';
 import { cn } from '@/lib/utils';
 
-const MotionAlertDialogContent = motion.create(AlertDialogPrimitive.Content);
 const MotionAlertDialogOverlay = motion.create(AlertDialogPrimitive.Overlay);
 
 const AlertDialogOpenContext = React.createContext(false);
@@ -85,7 +84,7 @@ const AlertDialogOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <MotionAlertDialogOverlay
     ref={ref}
-    className={cn('fixed inset-0 z-50 bg-black/80', className)}
+    className={cn('fixed inset-0 z-[60] bg-black/80', className)}
     {...modalOverlayMotionProps}
     animate={React.useContext(AlertDialogOpenContext) ? 'open' : 'closed'}
     {...(props as React.ComponentProps<typeof MotionAlertDialogOverlay>)}
@@ -96,7 +95,7 @@ AlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName;
 const AlertDialogContent = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
->(({ className, ...props }, ref) => {
+>(({ className, children, ...props }, ref) => {
   const open = React.useContext(AlertDialogOpenContext);
   const [shouldRender, setShouldRender] = React.useState(open);
 
@@ -109,20 +108,26 @@ const AlertDialogContent = React.forwardRef<
   return (
     <AlertDialogPortal forceMount>
       <AlertDialogOverlay forceMount />
-      <MotionAlertDialogContent
+      <AlertDialogPrimitive.Content
         ref={ref}
         forceMount
-        className={cn(
-          'fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 rounded-md border border-border bg-muted p-6 text-foreground shadow-none',
-          className,
-        )}
-        {...modalContentMotionProps}
-        animate={open ? 'open' : 'closed'}
-        onAnimationComplete={() => {
-          if (!open) setShouldRender(false);
-        }}
-        {...(props as React.ComponentProps<typeof MotionAlertDialogContent>)}
-      />
+        className="fixed top-[50%] left-[50%] z-[60] w-full max-w-lg translate-x-[-50%] translate-y-[-50%]"
+        {...props}
+      >
+        <motion.div
+          className={cn(
+            'grid gap-4 rounded-md border border-border bg-muted p-6 text-foreground shadow-none',
+            className,
+          )}
+          {...modalContentMotionProps}
+          animate={open ? 'open' : 'closed'}
+          onAnimationComplete={() => {
+            if (!open) setShouldRender(false);
+          }}
+        >
+          {children}
+        </motion.div>
+      </AlertDialogPrimitive.Content>
     </AlertDialogPortal>
   );
 });
