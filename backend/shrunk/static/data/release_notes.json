@@ -5,7 +5,7 @@
     "patch": 2,
     "projectDirector": "ah1371",
     "date": "TODO",
-    "description": "Bug fixes and improvements following the 3.2.0 release.",
+    "description": "New features, accessibility improvements, and bug fixes following the 3.2.1 release.",
     "categories": {
       "features": [
         {
@@ -13,6 +13,12 @@
           "contributors": [
             "jds508",
             "ak2399"
+          ]
+        },
+        {
+          "text": "Expand the public API to support Linktree integrations",
+          "contributors": [
+            "ys973"
           ]
         }
       ],
@@ -43,6 +49,36 @@
         }, 
         {
           "text": "Modernized the frontend styling by switching from Ant Design and Highcharts to TailwindCSS V4 with Shadcn Components",
+          "contributors": [
+            "jds508"
+          ]
+        },
+        {
+          "text": "Add searching to organization link tables",
+          "contributors": [
+            "jds508"
+          ]
+        },
+        {
+          "text": "Make link ownership transfers respect the current user's permissions",
+          "contributors": [
+            "jds508"
+          ]
+        },
+        {
+          "text": "Add guidance when no organizations are available in the collaborator modal",
+          "contributors": [
+            "jds508"
+          ]
+        },
+        {
+          "text": "Update the frontend to React 19",
+          "contributors": [
+            "jds508"
+          ]
+        },
+        {
+          "text": "Improve accessibility throughout the application",
           "contributors": [
             "jds508"
           ]
@@ -81,6 +117,30 @@
         }, 
         {
           "text": "Implemented a toast on copy of original link or shortened link from link card",
+          "contributors": [
+            "jds508"
+          ]
+        },
+        {
+          "text": "Add an access denied page for unauthorized requests",
+          "contributors": [
+            "sb2787"
+          ]
+        },
+        {
+          "text": "Prevent duplicate links while loading the dashboard with infinite scrolling",
+          "contributors": [
+            "jds508"
+          ]
+        },
+        {
+          "text": "Fix alert dialog animations and link and organization interface issues",
+          "contributors": [
+            "sb2787"
+          ]
+        },
+        {
+          "text": "Center the dashboard's empty-state message",
           "contributors": [
             "jds508"
           ]
