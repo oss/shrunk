@@ -99,6 +99,8 @@ const VisitsChart: React.FC<Props> = (props) => {
     unique: el.first_time_visits,
   }));
 
+  console.log(chartData);
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-center gap-2">
@@ -222,12 +224,15 @@ const VisitsChart: React.FC<Props> = (props) => {
             cursor={false}
             content={
               <ChartTooltipContent
-                labelFormatter={(value) =>
-                  new Date(value).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })
+                labelFormatter={(_, payload) =>
+                  new Date(payload[0].payload.date).toLocaleDateString(
+                    'en-US',
+                    {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    },
+                  )
                 }
                 indicator="dot"
               />
