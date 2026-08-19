@@ -1,0 +1,69 @@
+import { Link } from '@/Interfaces/Link';
+
+export interface OrganizationMember {
+  /**
+   * Whether the member is an admin of the org
+   * @property
+   */
+  role: 'admin' | 'member' | 'guest';
+
+  /**
+   * The NetID of the member
+   * @property
+   */
+  netid: string;
+
+  /**
+   * When the member was added to the org
+   * @property
+   */
+  timeCreated: Date;
+}
+
+export interface Organization {
+  id: string;
+  name: string;
+  members: OrganizationMember[];
+  timeCreated: Date;
+  memberCount?: number;
+  dateAdded?: Date;
+
+  role?: 'admin' | 'member' | 'guest';
+
+  domains: string[];
+  deleted?: boolean;
+}
+
+export interface OrganizationLink extends Omit<Link, 'owner'> {
+  owner: {
+    _id: string;
+    type: string;
+    org_name?: string;
+  };
+  role: 'owner' | 'editor' | 'viewer';
+  canEdit: boolean;
+  canDelete?: boolean;
+  canTransfer?: boolean;
+}
+
+export interface OrganizationStats {
+  total_links: number;
+  total_visits: number;
+  unique_visits: number;
+}
+
+export interface OrgSearchQuery {
+  query?: string;
+  show_all?: boolean;
+  filter_deleted?: boolean;
+  filter_role?: ('admin' | 'member' | 'guest' | 'not_member')[];
+  filter_member?: string;
+  sort: {
+    key: 'name' | 'timeCreated' | 'memberCount' | 'role' | 'dateAdded';
+    order: 'ascending' | 'descending';
+  };
+  pagination: {
+    skip: number;
+    limit: number;
+  };
+}

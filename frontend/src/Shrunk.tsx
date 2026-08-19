@@ -30,30 +30,28 @@ import {
 } from 'react-router';
 
 import Markdown from 'markdown-to-jsx';
-import Admin from '@/pages/Admin';
-import Dashboard from '@/pages/Dashboard';
-import Faq from '@/pages/Faq';
-import ApiReference from '@/pages/ApiReference';
-import MyOrganizations from '@/pages/organizations';
+import Admin from '@/Pages/Admin';
+import Dashboard from '@/Pages/Dashboard';
+import Faq from '@/Pages/Faq';
+import ApiReference from '@/Pages/ApiReference';
+import MyOrganizations from '@/Pages/Organizations';
 
-import Login from '@/pages/Login';
-import ManageOrg from '@/pages/organization-manage';
-import { Stats } from '@/pages/subpages/Stats';
+import Login from '@/Pages/Login';
+import ManageOrg from '@/Pages/OrganizationManage';
+import { Stats } from '@/Pages/Subpages/Stats';
 
-import { PendingRequests } from '@/modals/PendingRequests';
+import ErrorPage from '@/Pages/ErrorPage';
+import HelpDesk from '@/Pages/HelpDesk';
 
-import ErrorPage from '@/pages/ErrorPage';
-import HelpDesk from '@/pages/HelpDesk';
-
-import { getUserInfo, logout } from '@/api/app';
-import { FeatureFlagsProvider, useFeatureFlags } from '@/contexts/FeatureFlags';
-import rutgersLogo from '@/images/rutgers.png';
-import { FeatureFlags } from '@/interfaces/app';
-import ChangeLog from '@/pages/ChangeLog';
-import Ticket from '@/pages/subpages/Ticket';
-import OrganizationToken from '@/pages/organization-tokens';
-import { DarkModeContext, DarkModeProvider } from '@/contexts/DarkModeContext';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { getUserInfo, logout } from '@/Api/App';
+import { FeatureFlagsProvider, useFeatureFlags } from '@/Contexts/FeatureFlags';
+import rutgersLogo from '@/Images/rutgers.png';
+import { FeatureFlags } from '@/Interfaces/App';
+import ChangeLog from '@/Pages/ChangeLog';
+import Ticket from '@/Pages/Subpages/Ticket';
+import OrganizationToken from '@/Pages/OrganizationTokens';
+import { DarkModeContext, DarkModeProvider } from '@/Contexts/DarkModeContext';
+import { Alert, AlertDescription } from '@/Components/ui/alert';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -61,8 +59,8 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
-import { Button } from '@/components/ui/button';
+} from '@/Components/ui/breadcrumb';
+import { Button } from '@/Components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -70,14 +68,14 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@/Components/ui/dropdown-menu';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+} from '@/Components/ui/tooltip';
+import { cn } from '@/Lib/Utils';
 
 interface Props {
   siderWidth: number;
@@ -459,8 +457,6 @@ function ShrunkContent({
                       : 'px-6 pt-0 pb-6',
           )}
         >
-          {netid !== '' && <PendingRequests />}
-
           {netid !== '' && isApp && !isDashboardRoute && (
             <Breadcrumb
               className={cn(
@@ -473,11 +469,11 @@ function ShrunkContent({
             >
               <BreadcrumbList>
                 {breadcrumbParts.map(
-                  (part: string, index: number, arr: string[]) => {
-                    const isLastItem = index === arr.length - 1;
+                  (part: string, Index: number, arr: string[]) => {
+                    const isLastItem = Index === arr.length - 1;
 
                     let label = part;
-                    let href = `/${arr.slice(0, index + 1).join('/')}`;
+                    let href = `/${arr.slice(0, Index + 1).join('/')}`;
                     let clickable = false;
 
                     if (part === 'app') {
@@ -488,13 +484,13 @@ function ShrunkContent({
                       label = partToName[part].name;
                       href =
                         partToName[part].href === undefined
-                          ? `/${arr.slice(0, index + 1).join('/')}`
+                          ? `/${arr.slice(0, Index + 1).join('/')}`
                           : `/${partToName[part].href}`;
                       clickable = partToName[part].clickable;
                     }
 
                     return (
-                      <Fragment key={`${part}-${index}`}>
+                      <Fragment key={`${part}-${Index}`}>
                         <BreadcrumbItem>
                           {isLastItem || !clickable ? (
                             <BreadcrumbPage>{label}</BreadcrumbPage>
