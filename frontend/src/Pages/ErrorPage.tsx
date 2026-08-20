@@ -1,8 +1,10 @@
 import { PageShell } from '@/Components/PageShell';
+import { Button } from '@/Components/ui/button';
 
 interface IErrorPage {
   title: string;
   description: string;
+  onRetry?: () => void;
 }
 
 export default function ErrorPage(props: IErrorPage) {
@@ -14,6 +16,11 @@ export default function ErrorPage(props: IErrorPage) {
       <p className="mt-4 text-pretty text-muted-foreground">
         {props.description}
       </p>
+      {props.onRetry && (
+        <Button className="mt-6" variant="outline" onClick={props.onRetry}>
+          Try again
+        </Button>
+      )}
     </PageShell>
   );
 }

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
+import { toast } from 'sonner';
 
 import {
   addGuestToOrganization,
@@ -22,10 +23,12 @@ import {
   renameOrganization,
   setAdminStatusOrganization,
 } from '@/Api/Organization';
+import { getErrorMessage, getFieldError } from '@/Api/Client';
 import { serverValidateOrgName } from '@/Api/Validators';
 import CompactLinkTable from '@/Components/Orgs/CompactLinkTable';
 import CreateLinkDrawer from '@/Drawers/CreateLinkDrawer';
 import OrgOverview from '@/Components/Orgs/OrgOverview';
+import ErrorPage from '@/Pages/ErrorPage';
 import { Organization } from '@/Interfaces/Organizations';
 import CollaboratorModal, { Collaborator } from '@/Modals/CollaboratorModal';
 import {
@@ -94,6 +97,8 @@ function ManageOrg({ userNetid, userPrivileges }: Props): React.ReactElement {
   const [isMobile, setIsMobile] = useState(false);
   const [nameError, setNameError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const canCreate: boolean =
     userPrivileges.has('admin') || userPrivileges.has('facstaff');
@@ -153,9 +158,11 @@ function ManageOrg({ userNetid, userPrivileges }: Props): React.ReactElement {
   };
 
   useEffect(() => {
-    refreshOrganization();
+    refreshOrganization().catch((error) => {
+      setLoadError(getErrorMessage(error, 'Unable to load the organization.'));
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, reloadKey]);
 
   const onAddMember = async (netid: string, role: string) => {
     if (role === 'guest') {
@@ -185,13 +192,21 @@ function ManageOrg({ userNetid, userPrivileges }: Props): React.ReactElement {
   };
 
   const onLeaveOrg = async () => {
-    removeMemberFromOrganization(id, userNetid);
-    navigate('/app/orgs');
+    try {
+      await removeMemberFromOrganization(id, userNetid);
+      navigate('/app/orgs');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Unable to leave the organization.'));
+    }
   };
 
   const onDeleteOrganization = async () => {
-    deleteOrganization(id);
-    navigate('/app/orgs');
+    try {
+      await deleteOrganization(id);
+      navigate('/app/orgs');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Unable to delete the organization.'));
+    }
   };
 
   const handleTabChange = (key: string) => {
@@ -234,14 +249,26 @@ function ManageOrg({ userNetid, userPrivileges }: Props): React.ReactElement {
       await serverValidateOrgName(newName);
       await onRenameOrg(newName);
       setEditModalVisible(false);
-    } catch {
-      setNameError('Organization name is already taken');
+    } catch (error) {
+      setNameError(
+        getFieldError(error, 'name') ??
+          getErrorMessage(error, 'Unable to rename the organization.'),
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
   if (!organization) {
+    if (loadError) {
+      return (
+        <ErrorPage
+          title="Unable to load organization"
+          description={loadError}
+          onRetry={() => setReloadKey((key) => key + 1)}
+        />
+      );
+    }
     return (
       <div className="flex justify-center py-8">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary" />
@@ -440,10 +467,20 @@ function ManageOrg({ userNetid, userPrivileges }: Props): React.ReactElement {
                       id="newName"
                       name="newName"
                       placeholder={organization.name}
+                      aria-invalid={Boolean(nameError)}
+                      aria-describedby={
+                        nameError ? 'organization-name-error' : undefined
+                      }
                       onChange={() => setNameError('')}
                     />
                     {nameError && (
-                      <p className="text-sm text-destructive">{nameError}</p>
+                      <p
+                        id="organization-name-error"
+                        role="alert"
+                        className="text-sm text-destructive"
+                      >
+                        {nameError}
+                      </p>
                     )}
                   </div>
                   <Button type="submit" disabled={submitting}>
@@ -508,19 +545,17 @@ function ManageOrg({ userNetid, userPrivileges }: Props): React.ReactElement {
           type: 'netid',
           role: member.role,
         }))}
-        onAddEntity={(_activeTab: 'netid' | 'org', value: Collaborator) => {
-          onAddMember(value._id, value.role!);
-        }}
-        onRemoveEntity={(_activeTab: 'netid' | 'org', value: Collaborator) => {
-          onDeleteMember(value._id);
-        }}
+        onAddEntity={(_activeTab: 'netid' | 'org', value: Collaborator) =>
+          onAddMember(value._id, value.role!)
+        }
+        onRemoveEntity={(_activeTab: 'netid' | 'org', value: Collaborator) =>
+          onDeleteMember(value._id)
+        }
         onChangeEntity={(
           _activeTab: 'netid' | 'org',
           value: Collaborator,
           newRole: string,
-        ) => {
-          onChangeAdmin(value._id, newRole);
-        }}
+        ) => onChangeAdmin(value._id, newRole)}
         onCancel={() => setShareModalVisible(false)}
         onOk={() => setShareModalVisible(false)}
       />

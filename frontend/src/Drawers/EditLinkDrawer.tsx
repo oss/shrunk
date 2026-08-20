@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 
 import { deleteLink, isValidAlias, reverLinkExpirationDate } from '@/Api/Links';
+import { getErrorMessage } from '@/Api/Client';
 import { serverValidateLongUrl } from '@/Api/Validators';
 import useDebounce from '@/Lib/Hooks/useDebounce';
 
@@ -54,7 +55,7 @@ export interface Props {
   userPrivileges: Set<string>;
   netid: string;
   linkInfo: Link;
-  onOk: (values: EditLinkValues) => void;
+  onOk: (values: EditLinkValues) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -90,6 +91,7 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
   const longUrlValidationVersionRef = useRef(0);
   const debouncedLongUrl = useDebounce(longUrl.trim(), 400);
   const [showOwnerConfirm, setShowOwnerConfirm] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const currDate = new Date();
   const isExpired =
@@ -99,9 +101,19 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
 
   const [isRestorable, setIsRestorable] = useState(false);
   useEffect(() => {
-    isValidAlias(props.linkInfo.alias).then((value: boolean) => {
-      setIsRestorable(value);
-    });
+    isValidAlias(props.linkInfo.alias)
+      .then((value: boolean) => {
+        setIsRestorable(value);
+      })
+      .catch((error) => {
+        setIsRestorable(false);
+        toast.error(
+          getErrorMessage(
+            error,
+            'Unable to check whether this link can be restored.',
+          ),
+        );
+      });
   }, [props.linkInfo.alias]);
 
   useEffect(() => {
@@ -139,11 +151,7 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
       .catch((error: unknown) => {
         if (longUrlValidationVersionRef.current !== validationVersion) return;
         setLongUrlValidation('invalid');
-        setLongUrlValidationMessage(
-          error instanceof Error && error.message
-            ? error.message
-            : 'Invalid URL',
-        );
+        setLongUrlValidationMessage(getErrorMessage(error, 'Invalid URL.'));
       });
   }, [
     debouncedLongUrl,
@@ -157,8 +165,8 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
       await deleteLink(props.linkInfo._id);
       toast.success('Link deleted successfully');
       navigate('/app/dash');
-    } catch {
-      toast.error('Failed to delete link');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to delete the link.'));
     }
   };
 
@@ -166,8 +174,8 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
     try {
       await reverLinkExpirationDate(props.linkInfo._id);
       toast.success('Link restored successfully');
-    } catch {
-      toast.error('Failed to restore link');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to restore the link.'));
     }
   };
 
@@ -207,13 +215,20 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
     if (!isTrackingPixelLink) {
       try {
         await serverValidateLongUrl(values.long_url);
-      } catch {
-        toast.error('Invalid URL');
+      } catch (error) {
+        toast.error(getErrorMessage(error, 'Invalid URL.'));
         return;
       }
     }
 
-    props.onOk(values);
+    setIsSaving(true);
+    try {
+      await props.onOk(values);
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Unable to update the link.'));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const onSave = () => {
@@ -285,13 +300,14 @@ export const EditLinkDrawer: React.FC<Props> = (props) => {
               <Button
                 onClick={onSave}
                 disabled={
-                  !isTrackingPixelLink &&
-                  (longUrlValidation === 'validating' ||
-                    longUrlValidation === 'invalid')
+                  isSaving ||
+                  (!isTrackingPixelLink &&
+                    (longUrlValidation === 'validating' ||
+                      longUrlValidation === 'invalid'))
                 }
               >
                 <SaveIcon />
-                Save
+                {isSaving ? 'Saving...' : 'Save'}
               </Button>
             </div>
           </SheetHeader>

@@ -44,6 +44,7 @@ import ErrorPage from '@/Pages/ErrorPage';
 import HelpDesk from '@/Pages/HelpDesk';
 
 import { getUserInfo, logout } from '@/Api/App';
+import { getErrorMessage } from '@/Api/Client';
 import { FeatureFlagsProvider, useFeatureFlags } from '@/Contexts/FeatureFlags';
 import rutgersLogo from '@/Images/rutgers.png';
 import { FeatureFlags } from '@/Interfaces/App';
@@ -652,7 +653,7 @@ export default function Shrunk(_props: Props) {
           }
         }
       } catch (error) {
-        toast.error(`Something went wrong. ${error}`);
+        toast.error(getErrorMessage(error, 'Unable to restore your session.'));
       } finally {
         setIsLoading(false);
       }
@@ -674,7 +675,11 @@ export default function Shrunk(_props: Props) {
             : 'Administrator';
 
   const onLogout = async () => {
-    window.location.href = await logout();
+    try {
+      window.location.href = await logout();
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Unable to sign out.'));
+    }
   };
 
   const onAlertClose = (): void => {

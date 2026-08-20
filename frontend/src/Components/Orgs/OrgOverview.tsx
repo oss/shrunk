@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 
 import { getOrganizationStats } from '@/Api/Organization';
+import { getErrorMessage } from '@/Api/Client';
 import { OrganizationStats } from '@/Interfaces/Organizations';
+import { Button } from '@/Components/ui/button';
 import { Card } from '@/Components/ui/card';
 
 interface OrgOverviewProps {
@@ -45,15 +47,51 @@ export default function OrgOverview({
   orientation = 'grid',
 }: OrgOverviewProps) {
   const [stats, setStats] = useState<OrganizationStats | undefined>(undefined);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const isLoading = stats === undefined;
 
   useEffect(() => {
-    const fetchStats = async () => {
-      const data = await getOrganizationStats(orgId);
-      setStats(data);
+    let cancelled = false;
+
+    const fetchStats = async (): Promise<void> => {
+      setStats(undefined);
+      setLoadError(null);
+      try {
+        const data = await getOrganizationStats(orgId);
+        if (!cancelled) {
+          setStats(data);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setLoadError(
+            getErrorMessage(error, 'Unable to load organization statistics.'),
+          );
+        }
+      }
     };
-    fetchStats();
-  }, [orgId]);
+
+    void fetchStats();
+    return () => {
+      cancelled = true;
+    };
+  }, [orgId, reloadKey]);
+
+  if (loadError) {
+    return (
+      <Card className="space-y-3 p-6" role="alert">
+        <p className="font-medium">Unable to load organization statistics</p>
+        <p className="text-sm text-muted-foreground">{loadError}</p>
+        <Button
+          className="w-fit"
+          variant="outline"
+          onClick={() => setReloadKey((key) => key + 1)}
+        >
+          Try again
+        </Button>
+      </Card>
+    );
+  }
 
   const layoutClass =
     orientation === 'stacked'

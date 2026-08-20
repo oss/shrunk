@@ -144,6 +144,7 @@ export default function OrganizationSearch({
         draft={filters}
         applied={query}
         disabled={!textFiltersChanged}
+        ownerDisabled={false}
         ariaLabel="Open organization link filters"
         onDraftChange={setFilters}
         onClear={clearFilter}

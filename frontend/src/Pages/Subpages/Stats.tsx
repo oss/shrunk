@@ -41,6 +41,7 @@ import {
   removeCollaborator,
   transferLink,
 } from '@/Api/Links';
+import { getErrorMessage } from '@/Api/Client';
 import { EditLinkDrawer } from '@/Drawers/EditLinkDrawer';
 import {
   daysBetween,
@@ -215,6 +216,8 @@ export function Stats(props: Props): React.ReactElement {
   const [browserStats, setBrowserStats] = useState<BrowserStats | null>(null);
   const [mayEdit, setMayEdit] = useState<boolean | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [statsKey, setStatsKey] = useState<StatChart>(StatChart.Visits);
   const [qrcodeErrorLevel, setQrcodeErrorLevel] = useState<
     'L' | 'M' | 'Q' | 'H'
@@ -303,33 +306,52 @@ export function Stats(props: Props): React.ReactElement {
   const onVisitStateRangeChanged = async (
     dates: [Dayjs | null, Dayjs | null] | null,
   ): Promise<void> => {
-    setVisitStats(
-      await getLinkVisitsStats(
-        id,
-        currentSource,
-        dates?.[0] || undefined,
-        dates?.[1]?.endOf('day'),
-      ),
-    );
+    try {
+      setVisitStats(
+        await getLinkVisitsStats(
+          id,
+          currentSource,
+          dates?.[0] || undefined,
+          dates?.[1]?.endOf('day'),
+        ),
+      );
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Unable to update visit statistics.'));
+    }
   };
 
   useEffect(() => {
     const fetchData = async () => {
-      await updateLinkInfo();
-      await updateStats();
+      setLoadError(null);
+      try {
+        await updateLinkInfo();
+        await updateStats();
+      } catch (error) {
+        setLoadError(getErrorMessage(error, 'Unable to load this link.'));
+      } finally {
+        setLoading(false);
+      }
     };
 
-    fetchData().then(() => {
-      setLoading(false);
-    });
+    void fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, reloadKey]);
 
   useEffect(() => {
     if (browserStats !== null && browserStats.referers.length > 0) {
       setTopReferrer(browserStats.referers[0].name);
     }
   }, [browserStats]);
+
+  if (!loading && loadError !== null) {
+    return (
+      <ErrorPage
+        title="Unable to load link"
+        description={loadError}
+        onRetry={() => setReloadKey((key) => key + 1)}
+      />
+    );
+  }
 
   if (!loading && linkInfo === null) {
     return (
@@ -369,17 +391,10 @@ export function Stats(props: Props): React.ReactElement {
       patchReq.expiration_time = values.expiration_time;
     }
 
-    const patchRequest = await editLink(id, patchReq);
-
-    const patchRequestStatus = patchRequest.status;
-
-    if (patchRequestStatus !== 204) {
-      toast.error('There was an error editing the link.');
-    } else {
-      await updateLinkInfo();
-      toast.success('Link edited successfully');
-      await updateStats();
-    }
+    await editLink(id, patchReq);
+    await updateLinkInfo();
+    await updateStats();
+    toast.success('Link edited successfully');
   }
 
   const downloadCsv = async (): Promise<void> => {
@@ -390,6 +405,8 @@ export function Stats(props: Props): React.ReactElement {
     setIsExporting(true);
     try {
       await downloadVisits(id);
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Unable to download visits.'));
     } finally {
       setIsExporting(false);
     }
@@ -444,13 +461,16 @@ export function Stats(props: Props): React.ReactElement {
     });
   };
 
-  const onAddEntity = (activeTab: 'netid' | 'org', entity: Collaborator) => {
+  const onAddEntity = async (
+    activeTab: 'netid' | 'org',
+    entity: Collaborator,
+  ): Promise<void> => {
     if (entity.role === 'owner') {
       stageOwnershipChange(activeTab, entity);
       return;
     }
 
-    onAddCollaborator(
+    await onAddCollaborator(
       {
         _id: entity._id,
         type: activeTab,
@@ -459,8 +479,11 @@ export function Stats(props: Props): React.ReactElement {
     );
   };
 
-  const onRemoveEntity = (activeTab: 'netid' | 'org', entity: Collaborator) => {
-    onRemoveCollaborator(entity);
+  const onRemoveEntity = async (
+    _activeTab: 'netid' | 'org',
+    entity: Collaborator,
+  ): Promise<void> => {
+    await onRemoveCollaborator(entity);
   };
 
   const confirmOwnershipRequest = async () => {
@@ -486,8 +509,8 @@ export function Stats(props: Props): React.ReactElement {
       setRequestOwnership(false);
       setRequestReason('');
       setCollabModalVisible(false);
-    } catch {
-      toast.error('Something went wrong!');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Unable to open the email client.'));
     } finally {
       setRequestLoading(false);
     }
@@ -517,30 +540,30 @@ export function Stats(props: Props): React.ReactElement {
       } catch {
         navigate('/app/dash');
       }
-    } catch {
-      toast.error('Failed to transfer ownership');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to transfer ownership.'));
       setPendingOwner(null);
     } finally {
       setTransferLoading(false);
     }
   };
 
-  const onChangeEntity = (
+  const onChangeEntity = async (
     activeTab: 'netid' | 'org',
     entity: Collaborator,
     value: string,
-  ) => {
+  ): Promise<void> => {
     if (value === 'owner') {
       stageOwnershipChange(activeTab, entity);
       return;
     }
 
     if (value === 'viewer' && entity.role === 'editor') {
-      onRemoveCollaborator(entity, 'editor');
+      await onRemoveCollaborator(entity, 'editor');
       return;
     }
 
-    onAddCollaborator(
+    await onAddCollaborator(
       {
         _id: entity._id,
         type: activeTab,

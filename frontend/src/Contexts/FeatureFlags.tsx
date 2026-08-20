@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { FeatureFlags } from '@/Interfaces/App';
 import { getFeatureFlags } from '@/Api/App';
+import { getErrorMessage } from '@/Api/Client';
 
 const FeatureFlagsContext = createContext<FeatureFlags>({
   devLogins: false,
@@ -27,11 +29,27 @@ export const FeatureFlagsProvider = ({
   });
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchFeatureFlags = async () => {
-      getFeatureFlags().then((data) => setFlags(data));
+      try {
+        const data = await getFeatureFlags();
+        if (!cancelled) {
+          setFlags(data);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          toast.error(
+            getErrorMessage(error, 'Unable to load application features.'),
+          );
+        }
+      }
     };
 
-    fetchFeatureFlags();
+    void fetchFeatureFlags();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (

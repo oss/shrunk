@@ -78,14 +78,14 @@ export default defineConfig(
   },
   {
     files: ['**/*.ts', '**/*.tsx'],
-    ignores: ['src/Api/**'],
+    ignores: ['src/Api/Client.ts'],
     rules: {
       'no-restricted-globals': [
         'error',
         {
           name: 'fetch',
           message:
-            'Use a dedicated API client or a wrapper around fetch() or define a function utilizing fetch in src/Api/**.ts',
+            'Use the shared API client instead of calling fetch() directly.',
         },
       ],
     },

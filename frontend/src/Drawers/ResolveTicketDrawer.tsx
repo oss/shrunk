@@ -9,6 +9,7 @@ import {
 } from '@/Interfaces/Tickets';
 import { resolveTicket, sendTicketEmail } from '@/Api/Tickets';
 import { addRoleToUser } from '@/Api/Users';
+import { getErrorMessage } from '@/Api/Client';
 import { Button } from '@/Components/ui/button';
 import { Textarea } from '@/Components/ui/textarea';
 import { Label } from '@/Components/ui/label';
@@ -42,15 +43,14 @@ const ResolveTicketDrawer: React.FC<Props> = ({
 
   const onResolveTicket = async (values: ResolveTicketInfo) => {
     setSubmitting(true);
-    const response = await resolveTicket(ticketInfo._id, values);
-    const data = await response.json();
-
-    if (response.ok) {
-      toast.success(data.message || 'Success');
-      setSubmitting(false);
-      navigate('/app/tickets');
-    } else {
-      toast.error(data.message || 'Error');
+    try {
+      const data = await resolveTicket(ticketInfo._id, values);
+      toast.success(data.message || 'Ticket resolved successfully');
+      return true;
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Unable to resolve the ticket.'));
+      return false;
+    } finally {
       setSubmitting(false);
     }
   };
@@ -65,17 +65,30 @@ const ResolveTicketDrawer: React.FC<Props> = ({
       is_role_granted: isRoleGranted,
     };
 
-    await onResolveTicket(values);
-
-    if (values.is_role_granted && ticketInfo?.entity) {
-      await grantRole(
-        ticketInfo.entity,
-        ticketInfo.reason,
-        values.admin_review,
-      );
+    const resolved = await onResolveTicket(values);
+    if (!resolved) {
+      return;
     }
 
-    await sendTicketEmail(ticketInfo._id, 'resolution');
+    try {
+      if (values.is_role_granted && ticketInfo.entity) {
+        await grantRole(
+          ticketInfo.entity,
+          ticketInfo.reason,
+          values.admin_review,
+        );
+      }
+
+      await sendTicketEmail(ticketInfo._id, 'resolution');
+      navigate('/app/tickets');
+    } catch (error) {
+      toast.error(
+        getErrorMessage(
+          error,
+          'The ticket was resolved, but the follow-up action could not be completed.',
+        ),
+      );
+    }
   };
 
   return (

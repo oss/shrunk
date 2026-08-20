@@ -1,11 +1,15 @@
-export async function removeRoleFromUser(netid: string, role: string) {
-  await fetch(`/api/core/user/roles`, {
+import { requestJson, requestVoid } from '@/Api/Client';
+
+const jsonHeaders = { 'Content-Type': 'application/json' };
+
+export async function removeRoleFromUser(
+  netid: string,
+  role: string,
+): Promise<void> {
+  await requestVoid('/api/core/user/roles', {
     method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      netid,
-      role,
-    }),
+    headers: jsonHeaders,
+    body: JSON.stringify({ netid, role }),
   });
 }
 
@@ -13,51 +17,46 @@ export async function addRoleToUser(
   netid: string,
   role: string,
   comment?: string,
-) {
-  return fetch(`/api/core/user/roles`, {
+): Promise<void> {
+  await requestVoid('/api/core/user/roles', {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      role,
-      comment,
-      netid,
-    }),
+    headers: jsonHeaders,
+    body: JSON.stringify({ role, comment, netid }),
   });
 }
 
-export async function getAllUsers() {
-  const response = await fetch('/api/core/user/all', {
+export async function getAllUsers(operations: unknown[] = []): Promise<any[]> {
+  const data = await requestJson<{ users: any[] }>('/api/core/user/all', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: jsonHeaders,
+    body: JSON.stringify({ operations }),
   });
-  const data = await response.json();
   return data.users;
+}
+
+export async function getUserOptions(): Promise<Record<string, any>> {
+  const data = await requestJson<{ options: Record<string, any> }>(
+    '/api/core/user/options',
+  );
+  return data.options;
 }
 
 export async function createUser(
   netid: string,
   roles: string[],
   comment?: string,
-) {
-  return fetch(`/api/core/user`, {
+): Promise<void> {
+  await requestVoid('/api/core/user', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      netid,
-      roles,
-      comment,
-    }),
+    headers: jsonHeaders,
+    body: JSON.stringify({ netid, roles, comment }),
   });
 }
 
-export async function removeUser(netid: string) {
-  return fetch(`/api/core/user`, {
+export async function removeUser(netid: string): Promise<void> {
+  await requestVoid('/api/core/user', {
     method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      netid,
-    }),
+    headers: jsonHeaders,
+    body: JSON.stringify({ netid }),
   });
 }

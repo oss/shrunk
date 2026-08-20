@@ -29,6 +29,12 @@ export function downloadUrl(filename: string, url: string): void {
   link.remove();
 }
 
+export function downloadBlob(filename: string, contents: Blob): void {
+  const url = URL.createObjectURL(contents);
+  downloadUrl(filename, url);
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
 export function toCsv(rows: ReadonlyArray<ReadonlyArray<unknown>>): string {
   return rows
     .map((row) =>

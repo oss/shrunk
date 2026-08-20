@@ -9,9 +9,11 @@ import { downloadCsv, toCsv } from '@/Lib/Utils';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { blockLink, getBlockedLinks, unBlockLink } from '@/Api/App';
+import { getErrorMessage } from '@/Api/Client';
 import { GrantedBy } from '@/Interfaces/Csv';
 import useFuzzySearch from '@/Lib/Hooks/useFuzzySearch';
 import { Button } from '@/Components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/Components/ui/alert';
 import PaginationControls from '@/Components/PaginationControls';
 import { Input } from '@/Components/ui/input';
 import { Textarea } from '@/Components/ui/textarea';
@@ -155,6 +157,7 @@ const SearchBannedLinks: React.FC<SearchBannedLinksProps> = ({ onSearch }) => {
 
 const BlockedLinks = () => {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [blockedLinks, setBlockedLinks] = useState<BlockedLink[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [refetchBlockedLinks, setRefetchBlockedLinks] = useState(false);
@@ -197,7 +200,7 @@ const BlockedLinks = () => {
       toast.success('Link unblocked successfully');
       rehydrateData();
     } catch (error) {
-      toast.error(`Failed to unblock link: ${error}`);
+      toast.error(getErrorMessage(error, 'Failed to unblock the link.'));
     }
   };
 
@@ -216,18 +219,26 @@ const BlockedLinks = () => {
 
   useEffect(() => {
     const updateBlockedLinks = async (): Promise<void> => {
-      const result = await getBlockedLinks();
-      setBlockedLinks(
-        result.entities.map((entity: GrantedBy) => ({
-          url: entity.entity,
-          comment: entity.comment ?? '',
-          blockedBy: entity.granted_by ?? '',
-          timeBlocked: entity.time_granted ?? dayjs.unix(0).format(),
-        })),
-      );
+      setLoading(true);
+      setLoadError(null);
+      try {
+        const result = await getBlockedLinks();
+        setBlockedLinks(
+          result.entities.map((entity: GrantedBy) => ({
+            url: entity.entity,
+            comment: entity.comment ?? '',
+            blockedBy: entity.granted_by ?? '',
+            timeBlocked: entity.time_granted ?? dayjs.unix(0).format(),
+          })),
+        );
+      } catch (error) {
+        setLoadError(getErrorMessage(error, 'Unable to load blocked links.'));
+      } finally {
+        setLoading(false);
+      }
     };
 
-    Promise.all([updateBlockedLinks()]).then(() => setLoading(false));
+    void updateBlockedLinks();
   }, [refetchBlockedLinks]);
 
   const handleSearch = (value: string) => {
@@ -252,8 +263,8 @@ const BlockedLinks = () => {
       setNewComment('');
       setShowBlockLinkModal(false);
       rehydrateData();
-    } catch {
-      toast.error('Failed to block link');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to block the link.'));
     } finally {
       setModalLoading(false);
     }
@@ -262,6 +273,12 @@ const BlockedLinks = () => {
   return (
     <TooltipProvider>
       <div className="space-y-4">
+        {loadError && (
+          <Alert variant="destructive">
+            <AlertTitle>Unable to load blocked links</AlertTitle>
+            <AlertDescription>{loadError}</AlertDescription>
+          </Alert>
+        )}
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="w-full lg:w-auto">
             <SearchBannedLinks onSearch={handleSearch} />

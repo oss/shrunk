@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { OrganizationLink } from '@/Interfaces/Organizations';
 import { LinkSharedWith } from '@/Interfaces/Link';
 import { getOrganizationLinks } from '@/Api/Organization';
+import { getErrorMessage } from '@/Api/Client';
 import { getLinkFromAlias } from '@/Lib/Utils';
 import BulkLinkActions from '@/Components/BulkLinkActions';
 import PaginationControls from '@/Components/PaginationControls';
@@ -37,6 +38,7 @@ import OrganizationSearch, {
   OrganizationLinkSearchQuery,
 } from '@/Components/Orgs/OrganizationSearch';
 import { Button } from '@/Components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/Components/ui/alert';
 import { Checkbox } from '@/Components/ui/checkbox';
 import {
   Sheet,
@@ -76,6 +78,7 @@ const CompactLinkTable = ({
 }: CompactLinkTableProps) => {
   const [links, setLinks] = useState<OrganizationLink[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [transferModalVisible, setTransferModalVisible] = useState(false);
@@ -98,20 +101,45 @@ const CompactLinkTable = ({
   };
 
   useEffect(() => {
-    fetchLinks();
+    const load = async () => {
+      setLoading(true);
+      setLoadError(null);
+      try {
+        await fetchLinks();
+      } catch (error) {
+        setLoadError(
+          getErrorMessage(error, 'Unable to load organization links.'),
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+    void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [org_id, forceRefresh]);
 
   const transferLinkOwnership = async (owner: LinkSharedWith) => {
-    try {
-      await transferLink(selectedLinkId, owner);
-      toast.success('Link ownership transferred successfully');
-    } catch {
-      toast.error('Error transferring link ownership');
-    }
+    await transferLink(selectedLinkId, owner);
     setTransferModalVisible(false);
+    toast.success('Link ownership transferred successfully');
+
     setLoading(true);
-    await fetchLinks();
+    setLoadError(null);
+    try {
+      await fetchLinks();
+    } catch (error) {
+      setLoadError(
+        getErrorMessage(error, 'Unable to refresh organization links.'),
+      );
+      toast.error(
+        getErrorMessage(
+          error,
+          'The link was transferred, but the list could not be refreshed.',
+        ),
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const visibleLinks = useMemo(() => {
@@ -196,9 +224,9 @@ const CompactLinkTable = ({
     setLoading(true);
     try {
       await fetchLinks();
-    } catch {
+    } catch (error) {
       setLoading(false);
-      toast.error('Failed to refresh links');
+      toast.error(getErrorMessage(error, 'Failed to refresh links.'));
     }
   };
 
@@ -207,13 +235,41 @@ const CompactLinkTable = ({
       await deleteLink(_id);
       toast.success('Link deleted successfully');
       await refreshAfterBulkAction();
-    } catch {
-      toast.error('Failed to delete link');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to delete the link.'));
     }
   };
 
   return (
     <div className="space-y-4">
+      {loadError && (
+        <Alert variant="destructive">
+          <AlertTitle>Unable to load organization links</AlertTitle>
+          <AlertDescription className="flex flex-wrap items-center gap-3">
+            <span>{loadError}</span>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setLoading(true);
+                setLoadError(null);
+                fetchLinks()
+                  .catch((error) =>
+                    setLoadError(
+                      getErrorMessage(
+                        error,
+                        'Unable to load organization links.',
+                      ),
+                    ),
+                  )
+                  .finally(() => setLoading(false));
+              }}
+            >
+              Try again
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
       <div className="lg:hidden">
         <Button
           variant="outline"

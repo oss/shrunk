@@ -2,6 +2,7 @@ import { PlusCircleIcon, XIcon } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { getOrganizations } from '@/Api/Organization';
+import { getErrorMessage } from '@/Api/Client';
 import { serverValidateGuest, serverValidateNetId } from '@/Api/Validators';
 import {
   AlertDialog,
@@ -48,13 +49,19 @@ interface ICollaboratorModal {
   // while the second must be the DEFAULT role.
   roles: Array<{ value: string; label: string }>;
   canCreate: boolean;
-  onAddEntity: (activeTab: 'netid' | 'org', value: Collaborator) => void;
+  onAddEntity: (
+    activeTab: 'netid' | 'org',
+    value: Collaborator,
+  ) => void | Promise<void>;
   onChangeEntity: (
     activeTab: 'netid' | 'org',
     value: Collaborator,
     newRole: string,
-  ) => void;
-  onRemoveEntity: (activeTab: 'netid' | 'org', value: Collaborator) => void;
+  ) => void | Promise<void>;
+  onRemoveEntity: (
+    activeTab: 'netid' | 'org',
+    value: Collaborator,
+  ) => void | Promise<void>;
   onOk: () => void;
   onCancel: () => void;
 
@@ -81,7 +88,13 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
   const masterRole = props.roles[0].value;
 
   useEffect(() => {
-    getOrganizations('user').then((orgs) => setOrganizations(orgs));
+    getOrganizations('user')
+      .then((orgs) => setOrganizations(orgs))
+      .catch((error) => {
+        setValidationError(
+          getErrorMessage(error, 'Unable to load your organizations.'),
+        );
+      });
   }, []);
 
   useEffect(() => {
@@ -126,9 +139,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
       setValidationError(null);
       return true;
     } catch (error) {
-      setValidationError(
-        error instanceof Error ? error.message : 'Invalid NetID',
-      );
+      setValidationError(getErrorMessage(error, 'Invalid NetID.'));
       return false;
     }
   };
@@ -138,12 +149,19 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
       const isValid = await validateNetId(netid);
       if (!isValid) return;
 
-      props.onAddEntity(activeTab, {
-        _id: netid,
-        type: activeTab,
-        role: collaboratorRole,
-      });
-      setNetid('');
+      try {
+        await props.onAddEntity(activeTab, {
+          _id: netid,
+          type: activeTab,
+          role: collaboratorRole,
+        });
+        setNetid('');
+        setValidationError(null);
+      } catch (error) {
+        setValidationError(
+          getErrorMessage(error, 'Unable to add this collaborator.'),
+        );
+      }
       return;
     }
 
@@ -152,13 +170,41 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
       return;
     }
 
-    props.onAddEntity(activeTab, {
-      _id: organizationId,
-      type: activeTab,
-      role: collaboratorRole,
-    });
-    setOrganizationId('');
-    setValidationError(null);
+    try {
+      await props.onAddEntity(activeTab, {
+        _id: organizationId,
+        type: activeTab,
+        role: collaboratorRole,
+      });
+      setOrganizationId('');
+      setValidationError(null);
+    } catch (error) {
+      setValidationError(
+        getErrorMessage(error, 'Unable to add this collaborator.'),
+      );
+    }
+  };
+
+  const handleChangeEntity = async (entity: Collaborator, newRole: string) => {
+    try {
+      await props.onChangeEntity(activeTab, entity, newRole);
+      setValidationError(null);
+    } catch (error) {
+      setValidationError(
+        getErrorMessage(error, 'Unable to update this collaborator.'),
+      );
+    }
+  };
+
+  const handleRemoveEntity = async (entity: Collaborator) => {
+    try {
+      await props.onRemoveEntity(activeTab, entity);
+      setValidationError(null);
+    } catch (error) {
+      setValidationError(
+        getErrorMessage(error, 'Unable to remove this collaborator.'),
+      );
+    }
   };
 
   const availableTabs = [
@@ -328,7 +374,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                           <Select
                             value={entity.role}
                             onValueChange={(value) => {
-                              props.onChangeEntity(activeTab, entity, value);
+                              void handleChangeEntity(entity, value);
                             }}
                           >
                             <SelectTrigger
@@ -395,7 +441,7 @@ export default function CollaboratorModal(props: ICollaboratorModal) {
                                 <AlertDialogAction
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                   onClick={() => {
-                                    props.onRemoveEntity(activeTab, entity);
+                                    void handleRemoveEntity(entity);
                                   }}
                                 >
                                   Remove

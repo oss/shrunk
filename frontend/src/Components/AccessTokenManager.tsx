@@ -3,6 +3,7 @@ import { CirclePlusIcon, PlusCircleIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { getValidAccessTokenPermissions } from '@/Api/Organization';
+import { getErrorMessage } from '@/Api/Client';
 import AccessTokenCard from '@/Components/AccessTokenCard';
 import { Alert, AlertDescription, AlertTitle } from '@/Components/ui/alert';
 import { Button } from '@/Components/ui/button';
@@ -61,7 +62,14 @@ export default function AccessTokenManager({
         setTokens(loadedTokens);
         setValidPermissions(loadedPermissions);
       })
-      .catch(() => toast.error(`Failed to load ${tokenLabel.toLowerCase()}s`));
+      .catch((error) =>
+        toast.error(
+          getErrorMessage(
+            error,
+            `Failed to load ${tokenLabel.toLowerCase()}s.`,
+          ),
+        ),
+      );
   }, [loadTokens, tokenLabel]);
 
   const onGenerate = async () => {
@@ -82,8 +90,13 @@ export default function AccessTokenManager({
       setPermissions([]);
       setGeneratorOpen(false);
       setTokens(await loadTokens());
-    } catch {
-      toast.error(`Failed to generate ${tokenLabel.toLowerCase()}`);
+    } catch (error) {
+      toast.error(
+        getErrorMessage(
+          error,
+          `Failed to generate ${tokenLabel.toLowerCase()}.`,
+        ),
+      );
     }
   };
 

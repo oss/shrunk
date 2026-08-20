@@ -4,6 +4,7 @@ import { Link as RouterLink } from 'react-router';
 import BulkLinkActions from '@/Components/BulkLinkActions';
 import { searchLinks } from '../Api/Links';
 import { getOrganizations } from '../Api/Organization';
+import { getErrorMessage } from '@/Api/Client';
 import { serverValidateNetId } from '../Api/Validators';
 import DashboardSearch from '../Components/DashboardSearch';
 import CreateLinkDrawer from '../Drawers/CreateLinkDrawer';
@@ -13,6 +14,7 @@ import LinkCard from '../Components/LinkCard';
 import { toast } from 'sonner';
 import { useLinkSelection } from '@/Hooks/useLinkSelection';
 import { Button } from '@/Components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/Components/ui/alert';
 import {
   Sheet,
   SheetContent,
@@ -54,6 +56,8 @@ export default function Dashboard({
   );
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
   const [failedOffset, setFailedOffset] = useState<number | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
   const [isCreateModalOpen, setCreateModalOpen] = useState<boolean>(false);
   const {
     selectedItems: checkedLinks,
@@ -157,6 +161,7 @@ export default function Dashboard({
       const requestVersion = queryVersionRef.current + 1;
       queryVersionRef.current = requestVersion;
       activeQueryRequestRef.current = requestVersion;
+      setLoadError(null);
 
       try {
         const results = await doQuery(newQuery, 0, LINKS_PER_BATCH);
@@ -174,8 +179,14 @@ export default function Dashboard({
         activeLoadRequestRef.current = null;
         setIsLoadingMore(false);
         setFailedOffset(null);
+        setLoadMoreError(null);
         clearSelection();
         window.scrollTo({ top: 0 });
+      } catch (error) {
+        if (queryVersionRef.current === requestVersion) {
+          setLoadError(getErrorMessage(error, 'Unable to load links.'));
+          setLinkInfo([]);
+        }
       } finally {
         if (activeQueryRequestRef.current === requestVersion) {
           activeQueryRequestRef.current = null;
@@ -227,9 +238,10 @@ export default function Dashboard({
         results.results.length > 0 && offset + LINKS_PER_BATCH < results.count,
       );
       setFailedOffset(null);
-    } catch {
+    } catch (error) {
       if (queryVersionRef.current === requestVersion) {
         setFailedOffset(offset);
+        setLoadMoreError(getErrorMessage(error, 'Couldn’t load more links.'));
       }
     } finally {
       if (activeLoadRequestRef.current === loadRequestId) {
@@ -241,6 +253,7 @@ export default function Dashboard({
 
   const retryLoadMore = useCallback(() => {
     setFailedOffset(null);
+    setLoadMoreError(null);
   }, []);
 
   const refreshResults = useCallback(async (): Promise<void> => {
@@ -274,8 +287,8 @@ export default function Dashboard({
   const refreshAfterBulkAction = async (): Promise<void> => {
     try {
       await refreshResults();
-    } catch {
-      toast.error('Failed to refresh links');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to refresh links.'));
     }
   };
 
@@ -294,11 +307,14 @@ export default function Dashboard({
         const getUserOrgs = await getOrganizations('user');
         setUserOrgs(getUserOrgs);
       } catch (error) {
-        throw new Error(`Failed to set user orgs: ${error}`);
+        setUserOrgs([]);
+        toast.error(
+          getErrorMessage(error, 'Unable to load your organizations.'),
+        );
       }
     };
 
-    fetchUserOrgs();
+    void fetchUserOrgs();
   }, [demo]);
 
   useEffect(() => {
@@ -440,7 +456,23 @@ export default function Dashboard({
 
           <main className="flex min-h-0 min-w-0 flex-1 flex-col bg-background">
             <section className="min-h-0 min-w-0 flex-1 pr-1">
-              {linkInfo === null ? (
+              {loadError ? (
+                <div className="p-4">
+                  <Alert variant="destructive">
+                    <AlertTitle>Unable to load links</AlertTitle>
+                    <AlertDescription className="flex flex-wrap items-center gap-3">
+                      <span>{loadError}</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => void setNewQuery(query)}
+                      >
+                        Try again
+                      </Button>
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              ) : linkInfo === null ? (
                 <div
                   className="flex min-h-full items-center justify-center py-6 text-center text-sm text-muted-foreground"
                   role="status"
@@ -476,7 +508,9 @@ export default function Dashboard({
                   >
                     {failedOffset !== null ? (
                       <div className="flex flex-col items-center gap-2">
-                        <span>Couldn’t load more links.</span>
+                        <span>
+                          {loadMoreError ?? 'Couldn’t load more links.'}
+                        </span>
                         <Button
                           variant="outline"
                           size="sm"
@@ -504,7 +538,7 @@ export default function Dashboard({
         onCancel={() => setCreateModalOpen(false)}
         onFinish={async () => {
           setCreateModalOpen(false);
-          refreshResults();
+          await refreshResults();
         }}
         userPrivileges={userPrivileges}
         userOrgs={userOrgs ?? []}

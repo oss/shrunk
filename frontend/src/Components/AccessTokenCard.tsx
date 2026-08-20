@@ -3,6 +3,7 @@ import { Trash2Icon } from 'lucide-react';
 import { useState } from 'react';
 
 import { deleteToken } from '@/Api/Organization';
+import { getErrorMessage } from '@/Api/Client';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,8 +45,8 @@ export default function AccessTokenCard({
       await deleteToken(accessTokenData.id);
       setIsDeleted(true);
       setDeleteStatus('Token deleted successfully.');
-    } catch {
-      setDeleteStatus('Failed to delete token.');
+    } catch (error) {
+      setDeleteStatus(getErrorMessage(error, 'Failed to delete token.'));
     }
   };
 

@@ -1,34 +1,41 @@
 /**
- * Implements some functions used to perform field validation in certain cases where
- * the validation cannot be implemented client-side
+ * Implements some functions used to perform field validation in cases where
+ * the validation cannot be implemented client-side.
  * @packageDocumentation
  */
 
 import base32 from 'hi-base32';
+import { ApiError, requestJson } from '@/Api/Client';
 
 interface ValidationResult {
   valid: boolean;
-  reason: string;
+  reason?: string;
 }
 
-/**
- * Check whether an alias is allowed
- * @function
- * @param value The alias
- * @throws Error if the alias already exists
- */
+const jsonHeaders = { 'Content-Type': 'application/json' };
 
+function validationMessage(result: ValidationResult, fallback: string): string {
+  return result.reason || fallback;
+}
+
+function validationError(message: string): ApiError {
+  return new ApiError({ code: 'VALIDATION_ERROR', message });
+}
+
+/** Check whether an alias is allowed. */
 export const serverValidateDuplicateAlias = async (
   value: string,
 ): Promise<void> => {
   if (!value) {
     return;
   }
-  const result: ValidationResult = await fetch(
+  const result = await requestJson<ValidationResult>(
     `/api/core/link/validate_duplicate_alias/${base32.encode(value)}`,
-  ).then((resp) => resp.json());
+  );
   if (!result.valid && value.length >= 5) {
-    throw new Error(result.reason);
+    throw validationError(
+      validationMessage(result, 'That alias already exists.'),
+    );
   }
 };
 
@@ -38,86 +45,87 @@ export const serverValidateReservedAlias = async (
   if (!value) {
     return;
   }
-  const result: ValidationResult = await fetch(
+  const result = await requestJson<ValidationResult>(
     `/api/core/link/validate_reserved_alias/${base32.encode(value)}`,
-  ).then((resp) => resp.json());
+  );
   if (!result.valid) {
-    throw new Error(result.reason);
+    throw validationError(
+      validationMessage(result, 'That alias cannot be used.'),
+    );
   }
 };
 
-/**
- * Check whether a long URL is allowed
- * @function
- * @param value The long URL
- * @throws Error if the long URL is not allowed
- */
-
+/** Check whether a long URL is allowed. */
 export const serverValidateLongUrl = async (value: string): Promise<void> => {
   if (!value) {
     return;
   }
-  const result: ValidationResult = await fetch(
+  const result = await requestJson<ValidationResult>(
     `/api/core/link/validate_long_url/${base32.encode(value)}`,
-  ).then((resp) => resp.json());
+  );
   if (!result.valid) {
-    throw new Error(result.reason);
+    throw validationError(
+      validationMessage(result, 'That destination URL is not allowed.'),
+    );
   }
 };
 
-/**
- * Check whether a NetID is valid
- * @function
- * @param value The NetID
- * @throws [[Error]] if the NetID is invalid
- */
-
+/** Check whether a NetID is valid. */
 export const serverValidateNetId = async (value: string): Promise<void> => {
   if (!value) {
     return;
   }
-  const result: ValidationResult = await fetch('/api/core/org/validate_netid', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ netid: value }),
-  }).then((resp) => resp.json());
+  const result = await requestJson<ValidationResult>(
+    '/api/core/org/validate_netid',
+    {
+      method: 'POST',
+      headers: jsonHeaders,
+      body: JSON.stringify({ netid: value }),
+    },
+  );
   if (!result.valid) {
-    throw new Error(result.reason);
+    throw validationError(
+      validationMessage(result, 'That NetID is not valid.'),
+    );
   }
 };
 
-/**
- * Check whether a NetID is a university guest
- * @function
- * @param value The NetID
- * @returns [[Error]] if the user is not a university guest
- */
-
+/** Check whether a NetID belongs to a university guest. */
 export const serverValidateGuest = async (value: string): Promise<void> => {
   if (!value) {
     return;
   }
-  const result: ValidationResult = await fetch('/api/core/org/validate_guest', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ netid: value }),
-  }).then((resp) => resp.json());
+  const result = await requestJson<ValidationResult>(
+    '/api/core/org/validate_guest',
+    {
+      method: 'POST',
+      headers: jsonHeaders,
+      body: JSON.stringify({ netid: value }),
+    },
+  );
   if (!result.valid) {
-    throw new Error(result.reason);
+    throw validationError(
+      validationMessage(result, 'That NetID does not have the guest role.'),
+    );
   }
 };
 
-// checks if an organization name is used
+/** Check whether an organization name is available. */
 export const serverValidateOrgName = async (value: string): Promise<void> => {
   if (!value) {
     return;
   }
-  const result: ValidationResult = await fetch('/api/core/org/validate_name', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: value }),
-  }).then((resp) => resp.json());
+  const result = await requestJson<ValidationResult>(
+    '/api/core/org/validate_name',
+    {
+      method: 'POST',
+      headers: jsonHeaders,
+      body: JSON.stringify({ name: value }),
+    },
+  );
   if (!result.valid) {
-    throw new Error(result.reason);
+    throw validationError(
+      validationMessage(result, 'That name is already taken.'),
+    );
   }
 };

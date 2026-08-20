@@ -2,38 +2,34 @@ import base32 from 'hi-base32';
 import { Dayjs } from 'dayjs';
 import { AdminStatsData, EndpointDatum, FeatureFlags } from '@/Interfaces/App';
 import { Release } from '@/Interfaces/Releases';
+import { requestJson, requestText, requestVoid } from '@/Api/Client';
+
+const jsonHeaders = { 'Content-Type': 'application/json' };
 
 export async function getReleaseNotes(): Promise<Release[]> {
-  const resp = await fetch('/api/core/release-notes', {
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
-  });
-  const data = await resp.json();
-  return data as Release[];
+  return requestJson<Release[]>('/api/core/release-notes');
 }
 
 export async function getFeatureFlags(): Promise<FeatureFlags> {
-  const resp = await fetch('/api/core/enabled');
-  const data = await resp.json();
-  return data as FeatureFlags;
+  return requestJson<FeatureFlags>('/api/core/enabled');
 }
 
 export async function getShrunkVersion(): Promise<string> {
-  const resp = await fetch('/api/core/admin/app-version');
-  const data = await resp.json();
-  return data.version as string;
+  const data = await requestJson<{ version: string }>(
+    '/api/core/admin/app-version',
+  );
+  return data.version;
 }
 
-export async function getUserInfo() {
-  const response = await fetch('/api/core/user/info');
-  const data = await response.json();
-  return data as any;
+export async function getUserInfo(): Promise<any> {
+  return requestJson('/api/core/user/info');
 }
 
-export async function getEndpointData() {
-  const response = await fetch('/api/core/admin/stats/endpoint');
-  const data = await response.json();
-  return data.stats as EndpointDatum[];
+export async function getEndpointData(): Promise<EndpointDatum[]> {
+  const data = await requestJson<{ stats: EndpointDatum[] }>(
+    '/api/core/admin/stats/endpoint',
+  );
+  return data.stats;
 }
 
 export async function getAppStats(
@@ -48,67 +44,47 @@ export async function getAppStats(
     };
   }
 
-  const resp = await fetch('/api/core/admin/stats/overview', {
+  return requestJson<AdminStatsData>('/api/core/admin/stats/overview', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: jsonHeaders,
     body: JSON.stringify(req),
   });
-  const data = await resp.json();
-
-  return data as AdminStatsData;
 }
 
-export async function logout() {
-  const resp = await fetch('/api/core/logout', {
-    method: 'POST',
+export async function logout(): Promise<string> {
+  const data = await requestJson<{ 'redirect-to'?: string }>(
+    '/api/core/logout',
+    {
+      method: 'POST',
+    },
+  );
+  return data['redirect-to'] ?? '/app/login';
+}
+
+export async function loginWithDeveloperAccount(url: string): Promise<void> {
+  await requestVoid(url, { method: 'POST' });
+}
+
+export async function unBlockLink(url: string): Promise<void> {
+  await requestVoid(`/api/core/role/blocked_url/entity/${base32.encode(url)}`, {
+    method: 'DELETE',
   });
-  const data = await resp.json();
-  if ('redirect-to' in data) {
-    return data['redirect-to'];
-  }
-
-  return '/app/login';
 }
 
-export async function unBlockLink(url: string) {
-  const encodedUrl = base32.encode(url);
-  const response = await fetch(
-    `/api/core/role/blocked_url/entity/${encodedUrl}`,
-    {
-      method: 'DELETE',
-    },
-  );
-
-  if (!response.ok) {
-    throw new Error('Failed to unblock link');
-  }
+export async function blockLink(url: string, comment?: string): Promise<void> {
+  await requestVoid(`/api/core/role/blocked_url/entity/${base32.encode(url)}`, {
+    method: 'PUT',
+    headers: jsonHeaders,
+    body: JSON.stringify({
+      comment: comment || 'Link blocked via Link Management interface',
+    }),
+  });
 }
 
-export async function blockLink(url: string, comment?: string) {
-  const encodedUrl = base32.encode(url);
-  const response = await fetch(
-    `/api/core/role/blocked_url/entity/${encodedUrl}`,
-    {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        comment: comment || 'Link blocked via Link Management interface',
-      }),
-    },
-  );
-
-  if (!response.ok) {
-    throw new Error('Failed to block link');
-  }
+export async function getBlockedLinks(): Promise<any> {
+  return requestJson('/api/core/role/blocked_url/entity');
 }
 
-export async function getBlockedLinks() {
-  const resp = await fetch(`/api/core/role/blocked_url/entity`);
-  const data = resp.json();
-  return data;
-}
-
-export async function getMOTD() {
-  const resp = await fetch(`/api/core/motd`);
-  return resp.text;
+export async function getMOTD(): Promise<string> {
+  return requestText('/api/core/motd');
 }

@@ -19,6 +19,7 @@ import flask
 import pymongo.errors
 from flask import (
     Flask,
+    Response,
     current_app,
     g,
     jsonify,
@@ -33,12 +34,15 @@ from flask.logging import default_handler
 from backports import datetime_fromisoformat
 from bson import ObjectId
 from flask_mailman import Mail
+from werkzeug.exceptions import HTTPException, InternalServerError
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.routing import BaseConverter, ValidationError
+from werkzeug.wrappers import Response as WerkzeugResponse
 
 # Extensions
 # Blueprints
 from . import api, dev_logins, sso, views
+from .api_errors import ApiProblem, http_error_payload
 from .client import ShrunkClient
 from .util.github import pull_outlook_assets_from_github
 from .util.ldap import is_university_guest, is_valid_netid, query_position_info
@@ -118,7 +122,15 @@ class JsonFormatter(logging.Formatter):
             )
             if "user" in flask.session:
                 entry["actor"] = flask.session["user"]["netid"]
-        for field in ("actor", "action", "operation", "status_code", "duration_ms", "outcome", "error_type"):
+        for field in (
+            "actor",
+            "action",
+            "operation",
+            "status_code",
+            "duration_ms",
+            "outcome",
+            "error_type",
+        ):
             value = getattr(record, field, None)
             if value is not None:
                 entry[field] = value
@@ -233,6 +245,104 @@ def create_app(**_kwargs: Any) -> Flask:
     app.config["SSO_ATTRIBUTE_MAP"] = SSO_ATTRIBUTE_MAP
 
     app.json = ShrunkJSONProvider(app)
+
+    def is_core_api_request() -> bool:
+        """Whether the current request belongs to the browser API contract."""
+        return request.path == "/api/core" or request.path.startswith("/api/core/")
+
+    def core_api_error_response(payload: dict[str, Any], status_code: int) -> tuple[Response, int]:
+        """Build a JSON response without changing the status code."""
+        return jsonify(payload), status_code
+
+    @app.errorhandler(ApiProblem)
+    def handle_api_problem(error: ApiProblem) -> tuple[Response, int]:
+        """Serialize expected domain errors for the browser API."""
+        return core_api_error_response(error.to_dict(), error.status_code)
+
+    @app.errorhandler(InternalServerError)
+    def handle_internal_server_error(
+        error: InternalServerError,
+    ) -> Response | tuple[Response, int] | InternalServerError:
+        """Keep unexpected core API failures safe and machine-readable."""
+        if not is_core_api_request():
+            return error
+
+        original_error = error.original_exception
+        if original_error is not None:
+            current_app.logger.error(
+                "core API request failed with an internal server error",
+                exc_info=(
+                    type(original_error),
+                    original_error,
+                    original_error.__traceback__,
+                ),
+                extra={
+                    "event_type": "error",
+                    "action": "request",
+                    "outcome": "failure",
+                    "error_type": type(original_error).__name__,
+                },
+            )
+
+        return core_api_error_response(
+            {
+                "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "The server could not complete this request. Please try again.",
+                }
+            },
+            500,
+        )
+
+    @app.errorhandler(Exception)
+    def handle_core_api_exception(error: Exception) -> tuple[Response, int]:
+        """Keep core API failures safe even when Flask debug propagation is on.
+
+        Flask re-raises unhandled exceptions while ``debug`` or
+        ``PROPAGATE_EXCEPTIONS`` is enabled.  The browser API must still return
+        its public error contract in that mode; non-core routes retain Flask's
+        normal debugger/error behavior.
+        """
+        if not is_core_api_request():
+            raise error
+
+        current_app.logger.error(
+            "core API request failed with an unhandled exception",
+            exc_info=(type(error), error, error.__traceback__),
+            extra={
+                "event_type": "error",
+                "action": "request",
+                "outcome": "failure",
+                "error_type": type(error).__name__,
+            },
+        )
+        return core_api_error_response(
+            {
+                "error": {
+                    "code": "INTERNAL_SERVER_ERROR",
+                    "message": "The server could not complete this request. Please try again.",
+                }
+            },
+            500,
+        )
+
+    @app.errorhandler(HTTPException)
+    def handle_core_api_http_exception(
+        error: HTTPException,
+    ) -> Response | WerkzeugResponse | HTTPException:
+        """Return JSON for core API HTTP errors while preserving HTTP headers.
+
+        ``get_response`` retains headers supplied by Werkzeug, notably the
+        ``Allow`` header for 405 responses.  Non-core routes intentionally keep
+        their existing HTML or legacy API response behavior.
+        """
+        if not is_core_api_request():
+            return error
+
+        response = error.get_response()
+        response.set_data(current_app.json.dumps(http_error_payload(error.code or 500)))
+        response.mimetype = "application/json"
+        return response
 
     # install url converters
     app.url_map.converters["ObjectId"] = ObjectIdConverter
@@ -362,7 +472,12 @@ def create_app(**_kwargs: Any) -> Flask:
         # Get the current netid and clear the session.
         netid = session["user"]["netid"]
         app.logger.info(
-            "user logged out", extra={"event_type": "authentication", "action": "logout", "outcome": "success"}
+            "user logged out",
+            extra={
+                "event_type": "authentication",
+                "action": "logout",
+                "outcome": "success",
+            },
         )
         session.clear()
 

@@ -3,12 +3,14 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { downloadCsv, toCsv } from '@/Lib/Utils';
 import { addRoleToUser, removeRoleFromUser } from '@/Api/Users';
+import { getErrorMessage } from '@/Api/Client';
 import { User, useUsers } from '@/Contexts/Users';
 import useFuzzySearch from '@/Lib/Hooks/useFuzzySearch';
 import LookupTableHeader from '@/Components/Admin/LookupTableHeader';
 import PaginationControls from '@/Components/PaginationControls';
 import { getUserInfo } from '@/Api/App';
 import { Button } from '@/Components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/Components/ui/alert';
 import { Badge } from '@/Components/ui/badge';
 import {
   Table,
@@ -129,7 +131,7 @@ const RolesSelect: React.FC<RolesSelectProps> = ({
       toast.success('Roles updated successfully');
       rehydrateData();
     } catch (error) {
-      toast.error(`Failed to update roles: ${error}`);
+      toast.error(getErrorMessage(error, 'Failed to update roles.'));
     } finally {
       setLoading(false);
     }
@@ -211,7 +213,13 @@ const renderOrganizations = (organizations: string[]): React.JSX.Element[] =>
   ));
 
 const UserLookup: React.FC = () => {
-  const { users, loading: usersLoading, rehydrateUsers } = useUsers();
+  const {
+    users,
+    loading: usersLoading,
+    error: usersError,
+    rehydrateUsers,
+    retry,
+  } = useUsers();
   const [currentNetid, setCurrentNetid] = useState('');
   const [filteredData, setFilteredData] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
@@ -294,7 +302,7 @@ const UserLookup: React.FC = () => {
         ),
       );
     } catch (error) {
-      toast.error(`Error updating roles: ${error}`);
+      toast.error(getErrorMessage(error, 'Error updating roles.'));
       throw error;
     } finally {
       setLoading(false);
@@ -323,7 +331,7 @@ const UserLookup: React.FC = () => {
 
       toast.success('User banned successfully');
     } catch (error) {
-      toast.error(`Failed to ban user ${error}`);
+      toast.error(getErrorMessage(error, 'Failed to ban user.'));
     }
   };
 
@@ -391,6 +399,17 @@ const UserLookup: React.FC = () => {
   return (
     <TooltipProvider>
       <div className="space-y-4">
+        {usersError && (
+          <Alert variant="destructive">
+            <AlertTitle>Unable to load users</AlertTitle>
+            <AlertDescription className="flex flex-wrap items-center gap-3">
+              <span>{usersError}</span>
+              <Button size="sm" variant="outline" onClick={retry}>
+                Try again
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
         <LookupTableHeader
           rehydrateData={rehydrateUsers}
           onExportClick={exportToCSV}

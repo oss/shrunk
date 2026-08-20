@@ -4,12 +4,14 @@
  */
 
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 import {
   getPendingLinks,
   getStatus,
   updateLinkSecurity,
 } from '@/Api/GoogleSafebrowse';
+import { getErrorMessage } from '@/Api/Client';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +24,7 @@ import {
   AlertDialogTrigger,
 } from '@/Components/ui/alert-dialog';
 import { Button } from '@/Components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/Components/ui/alert';
 import { PendingLink } from '@/Interfaces/GoogleSafebrowse';
 
 interface PendingRowProps {
@@ -30,10 +33,18 @@ interface PendingRowProps {
 
 function PendingLinkRow(props: PendingRowProps) {
   const { document } = props;
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  function updateLink(action: 'promote' | 'reject') {
-    updateLinkSecurity(document._id, action);
-    window.location.reload();
+  async function updateLink(action: 'promote' | 'reject') {
+    setIsUpdating(true);
+    try {
+      await updateLinkSecurity(document._id, action);
+      window.location.reload();
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Unable to update link security.'));
+    } finally {
+      setIsUpdating(false);
+    }
   }
 
   return (
@@ -56,7 +67,9 @@ function PendingLinkRow(props: PendingRowProps) {
       <div className="flex shrink-0 gap-2">
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="destructive">Deny</Button>
+            <Button variant="destructive" disabled={isUpdating}>
+              Deny
+            </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -78,7 +91,7 @@ function PendingLinkRow(props: PendingRowProps) {
         </AlertDialog>
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button>Approve</Button>
+            <Button disabled={isUpdating}>Approve</Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -106,19 +119,51 @@ export default function LinkSecurity() {
   );
 
   const [securityStatus, setSecurityStatus] = useState<string>('OFF');
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
-    getPendingLinks().then((links: PendingLink[]) => {
-      setPendingLinks(links);
-    });
+    let cancelled = false;
+    const load = async () => {
+      setLoadError(null);
+      try {
+        const [links, status] = await Promise.all([
+          getPendingLinks(),
+          getStatus(),
+        ]);
+        if (cancelled) return;
+        setPendingLinks(links);
+        setSecurityStatus(status);
+      } catch (error) {
+        if (!cancelled) {
+          setLoadError(getErrorMessage(error, 'Unable to load link security.'));
+        }
+      }
+    };
 
-    getStatus().then((status: string) => {
-      setSecurityStatus(status);
-    });
-  }, []);
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [reloadKey]);
 
   return (
     <div className="space-y-4">
+      {loadError && (
+        <Alert variant="destructive">
+          <AlertTitle>Unable to load link security</AlertTitle>
+          <AlertDescription className="flex flex-wrap items-center gap-3">
+            <span>{loadError}</span>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setReloadKey((key) => key + 1)}
+            >
+              Try again
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
       <p>
         <strong>Current Security Status</strong>: {securityStatus}
       </p>

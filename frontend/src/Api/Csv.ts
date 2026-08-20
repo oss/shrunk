@@ -1,15 +1,16 @@
-import { downloadCsv, downloadUrl, toCsv } from '../Lib/Utils';
-import { GrantedUser } from '../Interfaces/Stats';
+import { downloadBlob, downloadCsv, toCsv } from '@/Lib/Utils';
+import { GrantedUser } from '@/Interfaces/Stats';
+import { requestBlob, requestJson } from '@/Api/Client';
 
-export function downloadVisits(link_id: string): void {
-  const url = `/api/core/link/${link_id}/visits`;
-  downloadUrl(`${link_id}.csv`, url);
+export async function downloadVisits(linkId: string): Promise<void> {
+  const contents = await requestBlob(`/api/core/link/${linkId}/visits`);
+  downloadBlob(`${linkId}.csv`, contents);
 }
 
-export async function downloadGrantedUsers(role_name: string): Promise<void> {
-  const users = await fetch(`/api/core/role/${role_name}/entity`)
-    .then((resp) => resp.json())
-    .then((json) => json.entities as GrantedUser[]);
+export async function downloadGrantedUsers(roleName: string): Promise<void> {
+  const data = await requestJson<{ entities: GrantedUser[] }>(
+    `/api/core/role/${roleName}/entity`,
+  );
   const headers = [
     { id: 'entity', title: 'Grantee NetID' },
     { id: 'granted_by', title: 'Granter NetID' },
@@ -19,9 +20,9 @@ export async function downloadGrantedUsers(role_name: string): Promise<void> {
 
   const csv = toCsv([
     headers.map((header) => header.title),
-    ...users.map((user) =>
+    ...data.entities.map((user) =>
       headers.map((header) => user[header.id as keyof GrantedUser]),
     ),
   ]);
-  downloadCsv(`${role_name}.csv`, csv);
+  downloadCsv(`${roleName}.csv`, csv);
 }

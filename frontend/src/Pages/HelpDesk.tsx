@@ -13,9 +13,11 @@ import {
   getTickets,
   getTicketsResolvedCount,
 } from '@/Api/Tickets';
+import { getErrorMessage } from '@/Api/Client';
 import CreateTicketDrawer from '@/Drawers/CreateTicketDrawer';
 import { TicketInfo } from '@/Interfaces/Tickets';
 import { Button } from '@/Components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/Components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import {
   Table,
@@ -58,6 +60,8 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState<boolean>(false);
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const onGetHelpDeskText = async () => {
     const data = await getHelpDeskText();
@@ -73,13 +77,14 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
   };
 
   const onCloseTicket = async (ticketID: string) => {
-    const response = await closeTicket(ticketID);
-
-    if (response.ok) {
-      setTickets(tickets.filter((ticket) => ticket._id !== ticketID));
-      toast.success('Ticket closed successfully');
-    } else {
-      toast.error('Failed to close ticket');
+    try {
+      const data = await closeTicket(ticketID);
+      setTickets((currentTickets) =>
+        currentTickets.filter((ticket) => ticket._id !== ticketID),
+      );
+      toast.success(data.message || 'Ticket closed successfully');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Unable to close the ticket.'));
     }
   };
 
@@ -88,19 +93,27 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
 
     const initComponent = async () => {
       setLoading(true);
-      const fetchPromises = [onGetHelpDeskText(), onGetTickets()];
+      setLoadError(null);
+      try {
+        const fetchPromises = [onGetHelpDeskText(), onGetTickets()];
 
-      if (userPrivileges.has('admin')) {
-        fetchPromises.push(getNumTicketsResolved());
+        if (userPrivileges.has('admin')) {
+          fetchPromises.push(getNumTicketsResolved());
+        }
+
+        await Promise.all(fetchPromises);
+      } catch (error) {
+        setLoadError(
+          getErrorMessage(error, 'Unable to load help desk tickets.'),
+        );
+      } finally {
+        setLoading(false);
       }
-
-      await Promise.all(fetchPromises);
-      setLoading(false);
     };
 
-    initComponent();
+    void initComponent();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [netid, userPrivileges]);
+  }, [netid, userPrivileges, reloadKey]);
 
   const renderEntity = (entity: string | undefined) => {
     if (!entity) {
@@ -194,6 +207,21 @@ const HelpDesk: React.FC<Props> = ({ netid, userPrivileges }) => {
   return (
     <TooltipProvider>
       <div className="space-y-4">
+        {loadError && (
+          <Alert variant="destructive">
+            <AlertTitle>Unable to load help desk tickets</AlertTitle>
+            <AlertDescription className="flex flex-wrap items-center gap-3">
+              <span>{loadError}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setReloadKey((key) => key + 1)}
+              >
+                Try again
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
         <div className="flex items-center justify-between">
           <h1 className="app-page-heading">Help Desk</h1>
           {!isAdmin && (

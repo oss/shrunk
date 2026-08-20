@@ -3,6 +3,7 @@ import { CalendarIcon, SendHorizontalIcon, XIcon } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { createLink } from '@/Api/Links';
+import { getErrorMessage } from '@/Api/Client';
 import useDebounce from '@/Lib/Hooks/useDebounce';
 import {
   serverValidateDuplicateAlias,
@@ -148,18 +149,24 @@ export default function CreateLinkDrawer(props: Props): React.JSX.Element {
       .catch((error: unknown) => {
         if (longUrlValidationVersionRef.current !== validationVersion) return;
         setLongUrlValidation('invalid');
-        setLongUrlValidationMessage(
-          error instanceof Error && error.message
-            ? error.message
-            : 'Invalid URL',
-        );
+        setLongUrlValidationMessage(getErrorMessage(error, 'Invalid URL.'));
       });
   }, [debouncedLongUrl, isCreatingTrackingPixel]);
 
   const onSubmitClick = async (): Promise<void> => {
     resetForm();
-    await props.onFinish();
-    setLoading(false);
+    try {
+      await props.onFinish();
+    } catch (error) {
+      toast.error(
+        getErrorMessage(
+          error,
+          'The link was created, but the page could not be refreshed.',
+        ),
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const onCreateLink = async (): Promise<void> => {
@@ -172,23 +179,14 @@ export default function CreateLinkDrawer(props: Props): React.JSX.Element {
     if (resolvedAlias) {
       try {
         await serverValidateReservedAlias(resolvedAlias);
-      } catch {
-        toast.error('This alias cannot be used');
+      } catch (error) {
+        toast.error(getErrorMessage(error, 'This alias cannot be used.'));
         return;
       }
       try {
         await serverValidateDuplicateAlias(resolvedAlias);
-      } catch {
-        toast.error('This alias is already taken');
-        return;
-      }
-    }
-
-    if (resolvedAlias) {
-      try {
-        await serverValidateDuplicateAlias(resolvedAlias);
-      } catch {
-        toast.error('This alias is already taken');
+      } catch (error) {
+        toast.error(getErrorMessage(error, 'This alias is already taken.'));
         return;
       }
     }
@@ -196,8 +194,8 @@ export default function CreateLinkDrawer(props: Props): React.JSX.Element {
     if (!isCreatingTrackingPixel) {
       try {
         await serverValidateLongUrl(longUrl);
-      } catch {
-        toast.error('Invalid URL');
+      } catch (error) {
+        toast.error(getErrorMessage(error, 'Invalid URL.'));
         return;
       }
     }
@@ -219,8 +217,8 @@ export default function CreateLinkDrawer(props: Props): React.JSX.Element {
           : undefined,
         props.org_id,
       );
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Unable to create the link.'));
       setLoading(false);
       return;
     }

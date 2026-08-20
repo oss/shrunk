@@ -8,7 +8,8 @@ import {
   type ChartConfig,
 } from '@/Components/ui/chart';
 
-import { getEndpointData, getShrunkVersion } from '@/Api/App';
+import { getAppStats, getEndpointData, getShrunkVersion } from '@/Api/App';
+import { getErrorMessage } from '@/Api/Client';
 import { AdminStatsData, EndpointDatum } from '@/Interfaces/App';
 import {
   Tooltip,
@@ -17,6 +18,7 @@ import {
   TooltipTrigger,
 } from '@/Components/ui/tooltip';
 import { Card } from '@/Components/ui/card';
+import { Button } from '@/Components/ui/button';
 
 // The chart's horizontal scroll region must be keyboard reachable.
 /* eslint-disable jsx-a11y/no-noninteractive-tabindex */
@@ -40,38 +42,59 @@ export default function AdminStats(): React.ReactElement {
 
   const [adminData, setAdminData] = useState<AdminStatsData | null>(null);
   const [version, setVersion] = useState<string | null>(null);
-
-  const updateAdminData = async () => {
-    const req: Record<string, any> = {};
-
-    // eslint-disable-next-line no-restricted-globals
-    const json = await fetch('/api/core/admin/stats/overview', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(req),
-    }).then((resp) => resp.json());
-
-    setAdminData(json as AdminStatsData);
-  };
-
-  const updateEndpointData = async () => {
-    setEndpointData(await getEndpointData());
-  };
-
-  const updateShrunkVersion = async () => {
-    setVersion(await getShrunkVersion());
-  };
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
-    Promise.all([
-      updateAdminData(),
-      updateEndpointData(),
-      updateShrunkVersion(),
-    ]);
-  }, []);
+    let cancelled = false;
+
+    const loadStats = async () => {
+      setLoadError(null);
+      try {
+        const [nextAdminData, nextEndpointData, nextVersion] =
+          await Promise.all([
+            getAppStats(),
+            getEndpointData(),
+            getShrunkVersion(),
+          ]);
+        if (cancelled) return;
+        setAdminData(nextAdminData);
+        setEndpointData(nextEndpointData);
+        setVersion(nextVersion);
+      } catch (error) {
+        if (!cancelled) {
+          setLoadError(
+            getErrorMessage(error, 'Failed to load admin statistics.'),
+          );
+        }
+      }
+    };
+
+    void loadStats();
+    return () => {
+      cancelled = true;
+    };
+  }, [reloadKey]);
 
   if (endpointData === null) {
-    return <></>;
+    if (loadError) {
+      return (
+        <Card className="space-y-3 p-6" role="alert">
+          <p className="font-medium">Unable to load admin statistics</p>
+          <p className="text-sm text-muted-foreground">{loadError}</p>
+          <Button
+            className="w-fit"
+            variant="outline"
+            onClick={() => setReloadKey((key) => key + 1)}
+          >
+            Try again
+          </Button>
+        </Card>
+      );
+    }
+    return (
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary" />
+    );
   }
 
   const chartConfig = {

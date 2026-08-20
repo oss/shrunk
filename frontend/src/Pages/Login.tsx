@@ -1,6 +1,9 @@
 import { LogInIcon } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
+import { loginWithDeveloperAccount } from '@/Api/App';
+import { getErrorMessage } from '@/Api/Client';
 import { PageShell } from '@/Components/PageShell';
 import { SectionCard } from '@/Components/SectionCard';
 import { Button } from '@/Components/ui/button';
@@ -79,6 +82,7 @@ export default function Login() {
   const featureFlags: FeatureFlags = useFeatureFlags();
 
   const [loginLink, setLoginLink] = useState<LoginLink>('default');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const loginTypes: Record<LoginLink, LoginType> = {
     user: { href: '/api/core/devlogins/user', loginMessage: 'DEV_USER' },
@@ -132,22 +136,30 @@ export default function Login() {
           <Button
             id="pa11y-login-submit"
             size="lg"
+            disabled={isLoggingIn}
             onClick={async () => {
               if (loginTypes[loginLink].loginMessage === 'PROD_SAML') {
                 window.location.href = loginTypes[loginLink].href;
                 return;
               }
 
-              // eslint-disable-next-line no-restricted-globals
-              await fetch(loginTypes[loginLink].href, {
-                method: 'POST',
-              }).then(() => {
+              setIsLoggingIn(true);
+              try {
+                await loginWithDeveloperAccount(loginTypes[loginLink].href);
                 window.location.pathname = '/app/dash';
-              });
+              } catch (error) {
+                toast.error(getErrorMessage(error, 'Unable to sign in.'));
+              } finally {
+                setIsLoggingIn(false);
+              }
             }}
           >
             <LogInIcon />
-            {featureFlags.devLogins ? 'Developer Login' : 'Login with CAS'}
+            {isLoggingIn
+              ? 'Signing in...'
+              : featureFlags.devLogins
+                ? 'Developer Login'
+                : 'Login with CAS'}
           </Button>
         </div>
       </div>

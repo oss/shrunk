@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { getOrganizations } from '@/Api/Organization';
+import { getErrorMessage } from '@/Api/Client';
 import { serverValidateNetId } from '@/Api/Validators';
 import {
   AlertDialog,
@@ -60,7 +61,13 @@ export default function BulkTransferModal({
 
   useEffect(() => {
     if (!visible || !allowOrganizations) return;
-    getOrganizations('user').then((orgs) => setOrganizations(orgs));
+    getOrganizations('user')
+      .then((orgs) => setOrganizations(orgs))
+      .catch((error) => {
+        setSubmitError(
+          getErrorMessage(error, 'Unable to load your organizations.'),
+        );
+      });
   }, [allowOrganizations, visible]);
 
   const validateNetId = async (value: string) => {
@@ -74,9 +81,7 @@ export default function BulkTransferModal({
       setValidationError(null);
       return true;
     } catch (error) {
-      setValidationError(
-        error instanceof Error ? error.message : 'Invalid NetID',
-      );
+      setValidationError(getErrorMessage(error, 'Invalid NetID.'));
       return false;
     }
   };
@@ -116,8 +121,10 @@ export default function BulkTransferModal({
     try {
       await onOk(selectedOwner);
       reset();
-    } catch {
-      setSubmitError('Failed to transfer selected links.');
+    } catch (error) {
+      setSubmitError(
+        getErrorMessage(error, 'Failed to transfer selected links.'),
+      );
     } finally {
       setLoading(false);
     }

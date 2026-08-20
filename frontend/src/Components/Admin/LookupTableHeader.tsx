@@ -7,6 +7,7 @@ import { CloudDownloadIcon, PlusCircleIcon } from 'lucide-react';
 import React from 'react';
 
 import { createUser } from '@/Api/Users';
+import { getErrorMessage } from '@/Api/Client';
 import SearchUser from '@/Components/Admin/SearchUser';
 import { Button } from '@/Components/ui/button';
 import { Checkbox } from '@/Components/ui/checkbox';
@@ -94,19 +95,14 @@ const LookupTableHeader: React.FC<LookupTableHeaderProps> = ({
         facultyStaff: 'facstaff',
       };
       const backendRoles = roles.map((role: string) => roleMapping[role]);
-      const response = await createUser(netid, backendRoles, comment);
-
-      if (!response.ok) {
-        setStatus('Failed to create user.');
-        return;
-      }
+      await createUser(netid, backendRoles, comment);
 
       setStatus('User created successfully.');
       setShowCreateUserModal(false);
       resetForm();
       rehydrateData();
     } catch (error) {
-      setStatus(`Failed to assign user roles ${error}`);
+      setStatus(getErrorMessage(error, 'Failed to create user.'));
     }
   };
 

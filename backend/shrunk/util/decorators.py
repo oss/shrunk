@@ -9,6 +9,8 @@ from werkzeug.exceptions import abort
 import jsonschema
 import jsonschema.exceptions
 
+from shrunk.api_errors import ApiProblem
+
 if TYPE_CHECKING:
     from shrunk.client import ShrunkClient
 
@@ -23,13 +25,20 @@ def require_login(func: Any) -> Any:
         client: "ShrunkClient" = getattr(current_app, "client")
         logger = current_app.logger
         if "user" not in session or "netid" not in session["user"]:
-            logger.warning("authentication required", extra={"event_type": "security", "action": "authentication"})
+            logger.warning(
+                "authentication required",
+                extra={"event_type": "security", "action": "authentication"},
+            )
             abort(401)
         netid = session["user"]["netid"]
         if client.users.has_role(netid, "blacklisted"):
             logger.warning(
                 f"require_login: user {netid} is blacklisted",
-                extra={"event_type": "security", "action": "authorization", "outcome": "failure"},
+                extra={
+                    "event_type": "security",
+                    "action": "authorization",
+                    "outcome": "failure",
+                },
             )
             abort(403)
         return func(netid, client, *args, **kwargs)
@@ -47,16 +56,35 @@ def require_mail(func: Any) -> Any:
 
 
 def request_schema(schema: Any) -> Any:
+    def reject_invalid_request(
+        error_code: str,
+        message: str,
+        *,
+        fields: dict[str, str] | None = None,
+    ) -> None:
+        """Use the browser error contract without changing public API v1."""
+        if request.path == "/api/core" or request.path.startswith("/api/core/"):
+            raise ApiProblem(400, error_code, message, fields=fields)
+        abort(400)
+
     def check_body(func: Any) -> Any:
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             req = request.get_json(silent=True)
             if req is None:
-                abort(400)
+                reject_invalid_request(
+                    "INVALID_JSON",
+                    "The request body must contain valid JSON.",
+                )
             try:
                 jsonschema.validate(req, schema, format_checker=jsonschema.draft7_format_checker)
-            except jsonschema.exceptions.ValidationError:
-                abort(400)
+            except jsonschema.exceptions.ValidationError as error:
+                field_name = ".".join(str(part) for part in error.absolute_path) or "_form"
+                reject_invalid_request(
+                    "INVALID_REQUEST",
+                    "Some submitted information is invalid.",
+                    fields={field_name: error.message},
+                )
             return func(req, *args, **kwargs)
 
         return wrapper
@@ -72,7 +100,8 @@ def require_token(required_permission: str):
             header = request.headers.get("Authorization")
             if not header:
                 current_app.logger.warning(
-                    "authorization header missing", extra={"event_type": "security", "action": "authentication"}
+                    "authorization header missing",
+                    extra={"event_type": "security", "action": "authentication"},
                 )
                 return (
                     jsonify(
@@ -89,7 +118,8 @@ def require_token(required_permission: str):
 
             if not header.startswith("Bearer "):
                 current_app.logger.warning(
-                    "authorization header invalid", extra={"event_type": "security", "action": "authentication"}
+                    "authorization header invalid",
+                    extra={"event_type": "security", "action": "authentication"},
                 )
                 return (
                     jsonify(
@@ -109,7 +139,8 @@ def require_token(required_permission: str):
             token_id = client.access_tokens.verify_token(token)
             if not token_id:
                 current_app.logger.warning(
-                    "access token invalid or disabled", extra={"event_type": "security", "action": "authentication"}
+                    "access token invalid or disabled",
+                    extra={"event_type": "security", "action": "authentication"},
                 )
                 return (
                     jsonify(
@@ -128,7 +159,11 @@ def require_token(required_permission: str):
             if not client.access_tokens.check_permissions(token_id, required_permission):
                 current_app.logger.warning(
                     "access token lacks required permission",
-                    extra={"event_type": "security", "action": "authorization", "outcome": "failure"},
+                    extra={
+                        "event_type": "security",
+                        "action": "authorization",
+                        "outcome": "failure",
+                    },
                 )
                 return (
                     jsonify(

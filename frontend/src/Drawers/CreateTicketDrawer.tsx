@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { CreateTicketInfo, TicketInfo } from '@/Interfaces/Tickets';
 import { createTicket, sendTicketEmail } from '@/Api/Tickets';
+import { getErrorMessage } from '@/Api/Client';
 import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
 import { Textarea } from '@/Components/ui/textarea';
@@ -69,24 +70,21 @@ const CreateTicketDrawer: React.FC<Props> = ({
     values: CreateTicketInfo,
   ): Promise<TicketInfo | null> => {
     setSubmitting(true);
-
-    const response = await createTicket(
-      values.reason,
-      values.user_comment,
-      values.entity,
-    );
-    const data = await response.json();
-
-    if (response.ok) {
+    try {
+      const data = await createTicket(
+        values.reason,
+        values.user_comment,
+        values.entity,
+      );
       setTickets((tickets) => [data.ticket, ...tickets]);
-      toast.success(data.message || 'Success');
-      setSubmitting(false);
+      toast.success(data.message || 'Ticket created successfully');
       return data.ticket;
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Unable to create the ticket.'));
+      return null;
+    } finally {
+      setSubmitting(false);
     }
-
-    toast.error(data.message || 'Error');
-    setSubmitting(false);
-    return null;
   };
 
   const handleFormSubmit = async () => {
@@ -119,9 +117,20 @@ const CreateTicketDrawer: React.FC<Props> = ({
     };
 
     const ticket = await onCreateTicket(values);
-    if (ticket) {
+    if (!ticket) {
+      return;
+    }
+
+    try {
       await sendTicketEmail(ticket._id, 'confirmation');
       await sendTicketEmail(ticket._id, 'notification');
+    } catch (error) {
+      toast.error(
+        getErrorMessage(
+          error,
+          'The ticket was created, but its notification email could not be sent.',
+        ),
+      );
     }
 
     resetForm();

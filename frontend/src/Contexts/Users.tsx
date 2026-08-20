@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getAllUsers, getUserOptions } from '@/Api/Users';
+import { getErrorMessage } from '@/Api/Client';
 
 /**
  * The representation of a user row in the table
@@ -75,20 +77,24 @@ interface UsersContextType {
   options: { [key: string]: any } | null;
   users: User[];
   loading: boolean;
+  error: string | null;
   appliedOperations: Operation[];
   addOperation: (operation: Operation) => void;
   deleteOperation: (key: string) => void;
   rehydrateUsers: () => void;
+  retry: () => void;
 }
 
 const UsersContext = createContext<UsersContextType>({
   options: null,
   users: [],
   loading: false,
+  error: null,
   appliedOperations: [],
   addOperation: () => {},
   deleteOperation: () => {},
   rehydrateUsers: () => {},
+  retry: () => {},
 });
 
 export const useUsers = (): UsersContextType => {
@@ -105,6 +111,7 @@ const UsersProvider: React.FC<{ children: React.ReactNode }> = ({
   const [users, setUsers] = useState<User[]>([]);
   const [options, setOptions] = useState<{ [key: string]: any } | null>(null); // null to prevent TypeError
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [appliedOperations, setAppliedOperations] = useState<Operation[]>([
     {
       type: 'sort',
@@ -123,23 +130,12 @@ const UsersProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const fetchUsers = async (): Promise<void> => {
       setLoading(true);
+      setError(null);
       try {
-        // eslint-disable-next-line no-restricted-globals
-        const response = await fetch('/api/core/user/all', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ operations: appliedOperations }),
-        });
-        if (!response.ok) {
-          setUsers([]);
-          throw new Error('Something went wrong');
-        }
-        const data = await response.json();
-        setUsers(data.users);
-      } catch (error) {
-        throw new Error(`Failed to fetch users: ${String(error)}`);
+        setUsers(await getAllUsers(appliedOperations));
+      } catch (fetchError) {
+        setUsers([]);
+        setError(getErrorMessage(fetchError, 'Failed to fetch users.'));
       } finally {
         setLoading(false);
       }
@@ -151,17 +147,14 @@ const UsersProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const fetchOptions = async (): Promise<void> => {
       try {
-        // eslint-disable-next-line no-restricted-globals
-        const response = await fetch('/api/core/user/options', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        const data = await response.json();
-        setOptions(data.options);
-      } catch {
+        setOptions(await getUserOptions());
+      } catch (fetchError) {
         setOptions(null);
+        setError(
+          (currentError) =>
+            currentError ??
+            getErrorMessage(fetchError, 'Failed to load user lookup options.'),
+        );
       }
     };
 
@@ -189,10 +182,12 @@ const UsersProvider: React.FC<{ children: React.ReactNode }> = ({
         users,
         options,
         loading,
+        error,
         appliedOperations,
         addOperation,
         deleteOperation,
         rehydrateUsers,
+        retry: rehydrateUsers,
       }}
     >
       {children}

@@ -7,6 +7,7 @@ import {
   deleteLinkBulk,
   transferLinksBulk,
 } from '@/Api/Links';
+import { getErrorMessage } from '@/Api/Client';
 import { Button } from '@/Components/ui/button';
 import { Checkbox } from '@/Components/ui/checkbox';
 import {
@@ -67,18 +68,16 @@ export default function BulkLinkActions({
   const runAction = async (
     action: () => Promise<unknown>,
     success: string,
-    failure: string,
     close: () => void,
   ) => {
+    await action();
+    toast.success(success);
+    close();
+    onClear();
     try {
-      await action();
-      toast.success(success);
-      close();
-      onClear();
-    } catch {
-      toast.error(failure);
-    } finally {
       await onRefresh();
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to refresh links.'));
     }
   };
 
@@ -91,7 +90,6 @@ export default function BulkLinkActions({
           entity.role as 'editor' | 'viewer',
         ),
       'Selected links shared successfully',
-      'Failed to share selected links',
       () => setShareOpen(false),
     );
 
@@ -99,7 +97,6 @@ export default function BulkLinkActions({
     runAction(
       () => transferLinksBulk(selectedIds, owner),
       'Selected links transferred successfully',
-      'Failed to transfer selected links',
       () => setTransferOpen(false),
     );
 
@@ -107,7 +104,6 @@ export default function BulkLinkActions({
     runAction(
       () => deleteLinkBulk(selectedIds),
       'Selected links deleted successfully',
-      'Failed to delete selected links',
       () => setDeleteOpen(false),
     );
 
@@ -240,7 +236,13 @@ export default function BulkLinkActions({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={remove}
+              onClick={() => {
+                void remove().catch((error) =>
+                  toast.error(
+                    getErrorMessage(error, 'Failed to delete selected links.'),
+                  ),
+                );
+              }}
             >
               Delete
             </AlertDialogAction>

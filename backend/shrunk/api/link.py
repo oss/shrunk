@@ -14,6 +14,7 @@ import bson
 import bson.errors
 from werkzeug.exceptions import abort
 
+from shrunk.api_errors import ApiProblem
 from shrunk.client import ShrunkClient
 from shrunk.mongo_schema import MongoRef
 from shrunk.client.exceptions import (
@@ -166,25 +167,35 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
         )
 
     except BadLongURLException:
-        return "Bad long_url", 403
-
-    except SecurityRiskDetected:
-        return (
-            "Link is detected as a potential security risk. Please contact system administration.",
+        raise ApiProblem(
             403,
+            "INVALID_LONG_URL",
+            "That destination URL is not allowed.",
+            fields={"long_url": "Enter an allowed destination URL."},
         )
 
-    except LinkIsPendingOrRejected:
-        return (
-            "Link is detected as a potential security risk. Please contact system administration.",
+    except SecurityRiskDetected, LinkIsPendingOrRejected:
+        raise ApiProblem(
             403,
+            "SECURITY_RISK_DETECTED",
+            "This link was identified as a potential security risk. Please contact an administrator if you believe this is incorrect.",
         )
 
-    except NotUserOrOrg as e:
-        return jsonify({"error": str(e)}), 400
+    except NotUserOrOrg as error:
+        raise ApiProblem(
+            400,
+            "INVALID_OWNER",
+            "The selected owner is not a valid user or organization.",
+            fields={"owner": "Select a valid user or organization."},
+        ) from error
 
     except BadAliasException:
-        return "Bad alias", 400
+        raise ApiProblem(
+            400,
+            "INVALID_ALIAS",
+            "That custom alias cannot be used.",
+            fields={"alias": "Choose a different alias."},
+        )
 
     return jsonify({"id": str(link_id), "alias": created_alias}), 201
 
@@ -233,7 +244,9 @@ def get_link(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
     if not client.users.has_role(netid, "admin") and not client.links.may_view(link_id, netid):
         abort(403)
 
-    def enrich_acl_with_org_names(entries: Sequence[Mapping[str, Any]]) -> List[Dict[str, Any]]:
+    def enrich_acl_with_org_names(
+        entries: Sequence[Mapping[str, Any]],
+    ) -> List[Dict[str, Any]]:
         enriched_entries: List[Dict[str, Any]] = []
         org_name_cache: Dict[str, Optional[str]] = {}
 
@@ -334,9 +347,19 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
         abort(403)
     if "alias" in req:
         if client.links.alias_is_duplicate(req["alias"], link.get("is_tracking_pixel_link", False)):
-            abort(400)
+            raise ApiProblem(
+                400,
+                "ALIAS_TAKEN",
+                "That alias already exists. Choose a different alias.",
+                fields={"alias": "Choose a different alias."},
+            )
         if client.links.alias_is_reserved(req["alias"]):
-            abort(400)
+            raise ApiProblem(
+                400,
+                "ALIAS_RESERVED",
+                "That alias is reserved and cannot be used.",
+                fields={"alias": "Choose a different alias."},
+            )
         if not client.users.has_role(netid, "admin") and not client.users.has_role(netid, "power_user"):
             abort(403)
 
@@ -357,11 +380,18 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
         if "expiration_time" in req and req["expiration_time"] is None:
             client.links.remove_expiration_time(link_id)
     except BadLongURLException:
-        abort(400)
-    except SecurityRiskDetected:
-        return "Potential security risk. Please create a new link instead.", 403
-    except LinkIsPendingOrRejected:
-        return "Potential security risk. Please create a new link instead.", 403
+        raise ApiProblem(
+            400,
+            "INVALID_LONG_URL",
+            "That destination URL is not allowed.",
+            fields={"long_url": "Enter an allowed destination URL."},
+        )
+    except SecurityRiskDetected, LinkIsPendingOrRejected:
+        raise ApiProblem(
+            403,
+            "SECURITY_RISK_DETECTED",
+            "This link was identified as a potential security risk. Please create a new link instead.",
+        )
 
     return "", 204
 
@@ -429,17 +459,27 @@ def modify_acl(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) ->
     try:
         if req["entry"]["type"] == "org":
             req["entry"]["_id"] = ObjectId(req["entry"]["_id"])
-    except bson.errors.InvalidId as e:
-        return (
-            jsonify({"errors": ["org entry requires _id to be ObjectId: " + str(e)]}),
+    except bson.errors.InvalidId as error:
+        raise ApiProblem(
             400,
-        )
+            "INVALID_ORGANIZATION",
+            "Select a valid organization.",
+            fields={"entry._id": "Select a valid organization."},
+        ) from error
     try:
         client.links.modify_acl(link_id, req["entry"], req["action"] == "add", req["acl"])
-    except InvalidACL:
-        return jsonify({"errors": ["invalid acl"]})
-    except NotUserOrOrg as e:
-        return jsonify({"errors": ["not user or org: " + str(e)]}), 400
+    except InvalidACL as error:
+        raise ApiProblem(
+            400,
+            "INVALID_COLLABORATOR_REQUEST",
+            "The collaborator request is invalid.",
+        ) from error
+    except NotUserOrOrg as error:
+        raise ApiProblem(
+            400,
+            "INVALID_COLLABORATOR",
+            "The selected collaborator is not a valid user or organization.",
+        ) from error
     return "", 204
 
 
@@ -513,10 +553,18 @@ def modify_acl_bulk(netid: str, client: ShrunkClient, req: Any) -> Any:
             ),
             403,
         )
-    except InvalidACL:
-        return jsonify({"errors": ["invalid acl"]}), 400
+    except InvalidACL as error:
+        raise ApiProblem(
+            400,
+            "INVALID_COLLABORATOR_REQUEST",
+            "The collaborator request is invalid.",
+        ) from error
     except NotUserOrOrg as error:
-        return jsonify({"errors": ["not user or org: " + str(error)]}), 400
+        raise ApiProblem(
+            400,
+            "INVALID_COLLABORATOR",
+            "The selected collaborator is not a valid user or organization.",
+        ) from error
 
     return "", 204
 
@@ -621,7 +669,12 @@ def transfer_links_bulk(netid: str, client: ShrunkClient, req: Any) -> Any:
             403,
         )
     except NotUserOrOrg as error:
-        return jsonify({"errors": ["not user or org: " + str(error)]}), 400
+        raise ApiProblem(
+            400,
+            "INVALID_OWNER",
+            "The selected owner is not a valid user or organization.",
+            fields={"owner": "Select a valid user or organization."},
+        ) from error
 
     return "", 204
 
@@ -903,7 +956,12 @@ def get_link_visit_stats(netid: str, client: ShrunkClient, link_id: ObjectId) ->
     start_date = datetime.fromisoformat(request.args.get("start_date", (end_date - timedelta(days=365)).isoformat()))
 
     if start_date > end_date:
-        return jsonify({"error": "start_date must be before end_date"})
+        raise ApiProblem(
+            400,
+            "INVALID_DATE_RANGE",
+            "The start date must be before the end date.",
+            fields={"start_date": "Choose a date before the end date."},
+        )
 
     source = request.args.get("source")
 

@@ -123,8 +123,8 @@ def test_security_api_permissions(client: Client, permission: str) -> None:
 
         # regular users cannot fetch pending list
         assert resp.status_code == 403
-        with pytest.raises(TypeError):
-            assert resp.json["pendingLinks"]  # pyright: ignore[reportOptionalSubscript]
+        assert resp.json is not None
+        assert resp.json["error"]["code"] == "PERMISSION_DENIED"
 
         # we post a random link so that we have an
         # objectID to work with. it does not matter what it is,

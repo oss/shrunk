@@ -8,6 +8,7 @@ from flask import Blueprint, jsonify, request
 from werkzeug.exceptions import abort
 from bson import ObjectId
 
+from shrunk.api_errors import ApiProblem
 from shrunk.client import ShrunkClient
 from shrunk.mongo_schema import MongoRef
 from shrunk.util.ldap import is_valid_netid, is_university_guest
@@ -114,7 +115,12 @@ def post_org(netid: str, client: ShrunkClient, req: Any) -> Any:
         abort(403)
     org_id = client.orgs.create(req["name"])
     if org_id is None:
-        abort(409)
+        raise ApiProblem(
+            409,
+            "ORGANIZATION_NAME_TAKEN",
+            "An organization with this name already exists. Choose a different name.",
+            fields={"name": "Choose a different organization name."},
+        )
     client.orgs.create_member(org_id, netid, "admin")
     return jsonify({"id": org_id, "name": req["name"]})
 
@@ -476,29 +482,33 @@ def put_domain(netid: str, client: ShrunkClient) -> Any:
         "domain_name": "..."
     }
     """
-    if not request.is_json:
-        return jsonify({"error": "Missing JSON data"}), 400
-
-    data = request.get_json()
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        raise ApiProblem(
+            400,
+            "INVALID_JSON",
+            "The request body must contain valid JSON.",
+        )
     org_name = data.get("org_name")
     domain_name = data.get("domain_name")
 
     if not org_name or not domain_name:
-        return (
-            jsonify({"error": "Missing org_name or domain_name in request body"}),
+        raise ApiProblem(
             400,
+            "MISSING_DOMAIN_DETAILS",
+            "Provide both an organization name and a domain name.",
         )
 
     if not client.users.has_role(netid, "admin"):
         abort(403)
 
-    try:
-        res = client.orgs.create_domain(org_name, domain_name)
-        if not res:
-            return "There was an unexpected error creating a domain", 500
-        return str(res), 204
-    except Exception as e:  # pylint: disable=broad-exception-caught
-        return jsonify({"error": str(e)}), 500
+    if not client.orgs.create_domain(org_name, domain_name):
+        raise ApiProblem(
+            500,
+            "DOMAIN_CREATION_FAILED",
+            "The domain could not be created. Please try again.",
+        )
+    return "", 204
 
 
 @bp.route("/domain", methods=["DELETE"])
@@ -512,29 +522,33 @@ def delete_domain(netid: str, client: ShrunkClient) -> Any:
         "domain_name": "..."
     }
     """
-    if not request.is_json:
-        return jsonify({"error": "Missing JSON data"}), 400
-
-    data = request.get_json()
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        raise ApiProblem(
+            400,
+            "INVALID_JSON",
+            "The request body must contain valid JSON.",
+        )
     domain_name = data.get("domain_name")
     org_name = data.get("org_name")
 
     if not org_name or not domain_name:
-        return (
-            jsonify({"error": "Missing org_name or domain_name in request body"}),
+        raise ApiProblem(
             400,
+            "MISSING_DOMAIN_DETAILS",
+            "Provide both an organization name and a domain name.",
         )
 
     if not client.users.has_role(netid, "admin"):
         abort(403)
 
-    try:
-        res = client.orgs.delete_domain(org_name, domain_name)
-        if res is not True:
-            return jsonify({"error": res}), 500
-        return "", 204
-    except Exception as e:  # pylint: disable=broad-exception-caught
-        return jsonify({"error": str(e)}), 500
+    if client.orgs.delete_domain(org_name, domain_name) is not True:
+        raise ApiProblem(
+            500,
+            "DOMAIN_DELETION_FAILED",
+            "The domain could not be deleted. Please try again.",
+        )
+    return "", 204
 
 
 @bp.route("/<ObjectId:org_id>/member/<member_netid>", methods=["DELETE"])

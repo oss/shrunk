@@ -14,7 +14,9 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
+import { toast } from 'sonner';
 import { getPendingLinksCount } from '@/Api/GoogleSafebrowse';
+import { getErrorMessage } from '@/Api/Client';
 import AdminStats from '@/Components/Admin/AdminStats';
 import BlockedLinks from '@/Components/Admin/BlockedLinks';
 import Security from '@/Components/Admin/Security';
@@ -42,10 +44,17 @@ export default function Admin(): React.ReactElement {
 
   useEffect(() => {
     const fetchData = async () => {
-      setLinksToBeVerified(await getPendingLinksCount());
+      try {
+        setLinksToBeVerified(await getPendingLinksCount());
+      } catch (error) {
+        setLinksToBeVerified(0);
+        toast.error(
+          getErrorMessage(error, 'Unable to load the pending-links count.'),
+        );
+      }
     };
 
-    fetchData();
+    void fetchData();
   }, []);
 
   useEffect(() => {

@@ -19,6 +19,7 @@ import {
   searchOrgs,
   hasAssociatedUrls,
 } from '@/Api/Organization';
+import { getErrorMessage, getFieldError } from '@/Api/Client';
 import { serverValidateNetId } from '@/Api/Validators';
 import { Organization, OrgSearchQuery } from '@/Interfaces/Organizations';
 import { Button } from '@/Components/ui/button';
@@ -327,10 +328,12 @@ export default function MyOrganizations({
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [showAssociatedUrlsAlert, setShowAssociatedUrlsAlert] = useState(false);
   const [memberNetidError, setMemberNetidError] = useState<string | null>(null);
+  const [orgLoadError, setOrgLoadError] = useState<string | null>(null);
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newOrgName, setNewOrgName] = useState('');
   const [isCreatingOrg, setIsCreatingOrg] = useState(false);
+  const [createOrgError, setCreateOrgError] = useState<string | null>(null);
 
   const [deleteConfirmOrgId, setDeleteConfirmOrgId] = useState<string | null>(
     null,
@@ -368,8 +371,10 @@ export default function MyOrganizations({
         try {
           await serverValidateNetId(memberNetid);
           setMemberNetidError(null);
-        } catch {
-          setMemberNetidError('That NetID is not valid.');
+        } catch (error) {
+          setMemberNetidError(
+            getErrorMessage(error, 'That NetID is not valid.'),
+          );
           return;
         }
       } else {
@@ -379,8 +384,9 @@ export default function MyOrganizations({
       const data = await searchOrgs(normalizedQuery);
       setOrgs(data.results);
       setTotalOrgs(data.count);
-    } catch {
-      toast.error('Failed to fetch organizations');
+      setOrgLoadError(null);
+    } catch (error) {
+      setOrgLoadError(getErrorMessage(error, 'Unable to load organizations.'));
     }
   }, [debouncedQuery]);
 
@@ -411,18 +417,24 @@ export default function MyOrganizations({
   const onCreate = async () => {
     const cleanedName = newOrgName.trim().replace(/\s+/g, ' ');
     if (!cleanedName) {
+      setCreateOrgError('Enter an organization name.');
       return;
     }
 
     setIsCreatingOrg(true);
+    setCreateOrgError(null);
     try {
       await createOrg(cleanedName);
       toast.success('Organization created successfully');
       setIsCreateModalOpen(false);
       setNewOrgName('');
       await refreshOrgs();
-    } catch {
-      toast.error('Failed to create organization.');
+    } catch (error) {
+      const message =
+        getFieldError(error, 'name') ??
+        getErrorMessage(error, 'Unable to create the organization.');
+      setCreateOrgError(message);
+      toast.error(message);
     } finally {
       setIsCreatingOrg(false);
     }
@@ -443,8 +455,10 @@ export default function MyOrganizations({
       if (res) {
         setShowAssociatedUrlsAlert(true);
       }
-    } catch {
-      toast.error('Failed to search for associated urls');
+    } catch (error) {
+      toast.error(
+        getErrorMessage(error, 'Failed to search for associated URLs.'),
+      );
     }
     setDeleteConfirmOrgId(orgId);
   };
@@ -455,11 +469,11 @@ export default function MyOrganizations({
     try {
       await onDeleteOrg(orgId);
       toast.success('Organization deleted successfully');
-    } catch {
-      toast.error('Failed to delete organization');
+      setShowAssociatedUrlsAlert(false);
+      setDeleteConfirmOrgId(null);
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to delete organization.'));
     }
-    setShowAssociatedUrlsAlert(false);
-    setDeleteConfirmOrgId(null);
   };
 
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -568,6 +582,21 @@ export default function MyOrganizations({
           </div>
 
           <div className="min-w-0 flex-1">
+            {orgLoadError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertTitle>Unable to load organizations</AlertTitle>
+                <AlertDescription className="flex flex-wrap items-center gap-3">
+                  <span>{orgLoadError}</span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void refreshOrgs()}
+                  >
+                    Try again
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
             {showAssociatedUrlsAlert && (
               <Alert className="mb-4">
                 <div className="flex items-center justify-between">
@@ -824,6 +853,7 @@ export default function MyOrganizations({
             if (!open) {
               setIsCreateModalOpen(false);
               setNewOrgName('');
+              setCreateOrgError(null);
             }
           }}
         >
@@ -841,10 +871,30 @@ export default function MyOrganizations({
                 <Input
                   id="org-name"
                   placeholder="Enter organization name..."
-                  className={`h-9 ${organizationInputClass}`}
+                  aria-invalid={createOrgError !== null}
+                  aria-describedby={
+                    createOrgError ? 'org-name-error' : undefined
+                  }
+                  className={`h-9 ${organizationInputClass} ${
+                    createOrgError
+                      ? 'border-destructive focus-visible:ring-destructive'
+                      : ''
+                  }`}
                   value={newOrgName}
-                  onChange={(e) => setNewOrgName(e.target.value)}
+                  onChange={(e) => {
+                    setNewOrgName(e.target.value);
+                    setCreateOrgError(null);
+                  }}
                 />
+                {createOrgError && (
+                  <p
+                    id="org-name-error"
+                    role="alert"
+                    className="text-sm text-destructive"
+                  >
+                    {createOrgError}
+                  </p>
+                )}
               </div>
             </div>
             <DialogFooter className="gap-2 sm:justify-end sm:space-x-0">
@@ -855,6 +905,7 @@ export default function MyOrganizations({
                 onClick={() => {
                   setIsCreateModalOpen(false);
                   setNewOrgName('');
+                  setCreateOrgError(null);
                 }}
               >
                 Cancel

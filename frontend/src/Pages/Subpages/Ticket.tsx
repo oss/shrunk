@@ -8,10 +8,12 @@ import {
   getHelpDeskText,
   getTicket,
 } from '@/Api/Tickets';
+import { getErrorMessage } from '@/Api/Client';
 import TicketDetails, { EntityDetails } from '@/Components/TicketDetails';
 import ResolveTicketDrawer from '@/Drawers/ResolveTicketDrawer';
 import { EntityPositionInfo, TicketInfo } from '@/Interfaces/Tickets';
 import { Button } from '@/Components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/Components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import {
   AlertDialog,
@@ -41,6 +43,7 @@ const Ticket: React.FC<Props> = ({ userPrivileges }) => {
   const [closing, setClosing] = useState<boolean>(false);
   const [isResolveDrawerOpen, setIsResolveDrawerOpen] =
     useState<boolean>(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -62,15 +65,13 @@ const Ticket: React.FC<Props> = ({ userPrivileges }) => {
 
   const onCloseTicket = async () => {
     setClosing(true);
-    const response = await closeTicket(ticketID);
-    const data = await response.json();
-
-    if (response.ok) {
-      toast.success(data.message || 'Success');
-      setClosing(false);
+    try {
+      const data = await closeTicket(ticketID);
+      toast.success(data.message || 'Ticket closed successfully');
       navigate('/app/tickets');
-    } else {
-      toast.error(data.message || 'Error');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Unable to close the ticket.'));
+    } finally {
       setClosing(false);
     }
   };
@@ -89,9 +90,14 @@ const Ticket: React.FC<Props> = ({ userPrivileges }) => {
       }
 
       setLoading(true);
-      const fetchPromises = [onGetHelpDeskText(), onGetTicket()];
-      await Promise.all(fetchPromises);
-      setLoading(false);
+      setLoadError(null);
+      try {
+        await Promise.all([onGetHelpDeskText(), onGetTicket()]);
+      } catch (error) {
+        setLoadError(getErrorMessage(error, 'Unable to load ticket details.'));
+      } finally {
+        setLoading(false);
+      }
     };
 
     initComponent();
@@ -113,6 +119,12 @@ const Ticket: React.FC<Props> = ({ userPrivileges }) => {
         )}
 
       <div className="space-y-4">
+        {loadError && (
+          <Alert variant="destructive">
+            <AlertTitle>Unable to load this ticket</AlertTitle>
+            <AlertDescription>{loadError}</AlertDescription>
+          </Alert>
+        )}
         <div className="flex items-center justify-between">
           <h1 className="app-page-heading">Ticket {ticketID}</h1>
           <div className="flex gap-2">

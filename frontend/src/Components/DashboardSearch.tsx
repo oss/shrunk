@@ -25,7 +25,7 @@ interface Props {
   query: SearchQuery;
   filters: Filters;
   setFilters: React.Dispatch<React.SetStateAction<Filters>>;
-  setNewQuery: (query: SearchQuery) => void;
+  setNewQuery: (query: SearchQuery) => Promise<void>;
   userOrgs: Organization[] | null;
   userPrivileges: Set<string>;
   className?: string;
