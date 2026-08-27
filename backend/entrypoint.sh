@@ -1,5 +1,13 @@
 #!/usr/bin/env sh
+
 set -e
+
+# This is temporary and should probably be removed when the backend gets  rewritten
+if [ -n "$SHRUNK_CONFIG_FILE" ]; then
+    set -a
+    . "$SHRUNK_CONFIG_FILE"
+    set +a
+fi
 
 if [ "$#" -gt 0 ]; then
     exec "$@"

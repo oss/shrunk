@@ -33,4 +33,4 @@ COPY ./GeoLite2-City.mmdb /usr/share/GeoIP/GeoLite2-City.mmdb
 COPY --from=base /usr/shrunk/backend/ /usr/shrunk/backend/
 WORKDIR /usr/shrunk/backend/
 
-ENTRYPOINT ["sh", "entrypoint.sh"]
+ENTRYPOINT ["./entrypoint.sh"]
