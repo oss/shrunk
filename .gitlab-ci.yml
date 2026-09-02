@@ -153,8 +153,8 @@ backend-test:
     - container_root=$(buildah mount $container)
 
     - cp .env.example ${container_root}/usr/shrunk/backend/test.env
-    - curl -fsS "https://dotenvx.sh?directory=${container_root}/usr/local/bin" | sh
-    - buildah run $container -- sh -c 
+    - export PATH="${container_root}/usr/local/bin:${PATH}"; curl -fsS "https://dotenvx.sh?directory=${container_root}/usr/local/bin" | sh
+    - buildah run $container -- sh -c
         "dotenvx set SHRUNK_DB_HOST mongo -f test.env &&
          dotenvx set SHRUNK_DB_NAME shrunk_test -f test.env &&
          dotenvx set SHRUNK_FLASK_TESTING 1 -f test.env &&
