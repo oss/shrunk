@@ -1,11 +1,11 @@
 [
   {
     "major": 3,
-    "minor": 2,
-    "patch": 2,
+    "minor": 3,
+    "patch": 0,
     "projectDirector": "ah1371",
     "date": "TODO",
-    "description": "New features, accessibility improvements, and bug fixes following the 3.2.1 release.",
+    "description": "New features, accessibility improvements, and bug fixes following the 3.3.0 release.",
     "categories": {
       "features": [
         {

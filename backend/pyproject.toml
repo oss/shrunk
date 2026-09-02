@@ -1,6 +1,6 @@
 [project]
 name = "shrunk"
-version = "3.2.1"
+version = "3.3.0"
 description = "URL Shortener for Rutgers University"
 authors = [{ name = "Rutgers Open System Solutions", email = "oss@oit.rutgers.edu" }]
 requires-python = ">=3.14"
