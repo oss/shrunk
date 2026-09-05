@@ -39,9 +39,10 @@ def _make_client() -> pymongo.MongoClient:
     return pymongo.MongoClient(
         os.getenv("SHRUNK_DB_HOST"),
         int(db_port),
-        replicaSet=os.getenv("SHRUNK_REPLICA_SET_NAME"),
-        directConnection=False,
-        authSource="admin",
+        replicaSet=os.getenv("SHRUNK_REPLICA_SET_NAME") or None,
+        username=os.getenv("SHRUNK_DB_USERNAME") or None,
+        password=os.getenv("SHRUNK_DB_PASSWORD") or None,
+        authSource=os.getenv("SHRUNK_DB_AUTHSOURCE") or "admin",
         tz_aware=True,
     )
 

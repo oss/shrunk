@@ -38,17 +38,15 @@ class ShrunkClient:
         db_name = os.getenv("SHRUNK_DB_NAME")
         assert db_name is not None
 
-        cert_file = os.getenv("SHRUNK_DB_CERT", "")
+        cert_file = os.getenv("SHRUNK_DB_CERT") or None
         self.conn = pymongo.MongoClient(
             os.getenv("SHRUNK_DB_HOST"),
             int(db_port),
             replicaSet=os.getenv("SHRUNK_REPLICA_SET_NAME") or None,
             readPreference="secondaryPreferred",
-            # NOTE: this is default false in pymongo 4.x, we are on pymongo 3.x
-            directConnection=False,
             username=os.getenv("SHRUNK_DB_USERNAME") or None,
             password=os.getenv("SHRUNK_DB_PASSWORD") or None,
-            authSource="admin",
+            authSource=os.getenv("SHRUNK_DB_AUTHSOURCE") or "admin",
             connect=False,
             tz_aware=True,
             **({"tls": True, "tlsCertificateKeyFile": cert_file} if cert_file else {}),
