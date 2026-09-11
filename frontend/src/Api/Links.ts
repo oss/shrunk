@@ -36,21 +36,34 @@ export async function createLink(
       'trackingPixelImageType should be set only for tracking pixel links',
     );
   }
-
-  const data = await requestJson<{ id: string }>('/api/core/link', {
-    method: 'POST',
-    headers: jsonHeaders,
-    body: JSON.stringify({
-      is_tracking_pixel_link: isTrackingPixel,
-      title,
-      alias,
-      long_url: url,
-      expiration_time: expirationTime?.toISOString(),
-      tracking_pixel_extension: trackingPixelImageType,
-      org_id: orgId,
-    }),
-  });
-  return data.id;
+  if (isTrackingPixel) {
+    const data = await requestJson<{ id: string }>('/api/core/link', {
+      method: 'POST',
+      headers: jsonHeaders,
+      body: JSON.stringify({
+        is_tracking_pixel_link: isTrackingPixel,
+        title,
+        tracking_pixel_extension: trackingPixelImageType,
+        org_id: orgId,
+      }),
+    });
+    return data.id;
+  } else {
+    const data = await requestJson<{ id: string }>('/api/core/link', {
+      method: 'POST',
+      headers: jsonHeaders,
+      body: JSON.stringify({
+        is_tracking_pixel_link: isTrackingPixel,
+        title,
+        alias,
+        long_url: url,
+        expiration_time: expirationTime?.toISOString(),
+        tracking_pixel_extension: trackingPixelImageType,
+        org_id: orgId,
+      }),
+    });
+    return data.id;
+  }
 }
 
 export async function deleteLink(linkId: string): Promise<void> {
