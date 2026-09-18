@@ -64,3 +64,6 @@ httpd/*.log
 
 # Older Shrunk Builds
 backend/shrunk/config.py
+
+# Claude
+.claude/

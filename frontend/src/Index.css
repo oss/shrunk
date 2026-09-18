@@ -33,6 +33,9 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: hsl(var(--destructive-foreground));
 
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
 
@@ -91,12 +94,23 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
+  :is(button, [role='button'], select):not(:disabled):not(
+      [aria-disabled='true']
+    ):not([data-disabled]),
+  label:has(
+    :is([role='checkbox'], [role='radio']):not(:disabled):not(
+        [aria-disabled='true']
+      ):not([data-disabled])
+  ) {
+    @apply cursor-pointer;
+  }
+
   *,
   ::after,
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
+    border-color: var(--color-border);
   }
 }
 
@@ -110,6 +124,16 @@
   *,
   *::before,
   *::after {
+    /*
+      animation-name: none (not just a near-zero duration) so Radix's
+      Presence component sees no active animation and unmounts exit
+      animations immediately, instead of waiting on an animationend event
+      that a near-zero-duration animation can still fire moments later —
+      which left document.body's pointer-events briefly stuck at "none"
+      after closing a Select/Popover/Dialog, silently swallowing the next
+      click (see the pa11y-ci login smoke test).
+    */
+    animation-name: none !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
@@ -165,6 +189,9 @@
     --destructive: oklch(0.48 0.18 24.104);
     --destructive-foreground: 210 40% 98%;
 
+    --info: #def0f9;
+    --info-foreground: #0f172a;
+
     --ring: 215 20.2% 65.1%;
 
     --radius: 0.5rem;
@@ -203,6 +230,9 @@
 
     --destructive: oklch(0.72 0.16 24.104);
     --destructive-foreground: 0 0% 5%;
+
+    --info: #7dbfd6;
+    --info-foreground: #0f172a;
 
     --ring: 216 34% 17%;
 

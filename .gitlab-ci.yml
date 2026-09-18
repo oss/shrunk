@@ -68,6 +68,14 @@ eslint:
     reports:
       junit: eslint.xml
 
+type-check:
+  stage: lint
+  image: node:latest
+  script:
+    - cd frontend
+    - npm ci --cache .npm --prefer-offline
+    - npm run type-check
+
 pylint:
   stage: lint
   image: python:latest
@@ -165,6 +173,14 @@ backend-test:
     reports:
       junit: pytest.xml
 
+frontend-test:
+  stage: test
+  image: node:latest
+  script:
+    - cd frontend
+    - npm ci --cache .npm --prefer-offline
+    - npm test
+
 .accessibility-test:
   extends: .mongo-service
   stage: test
@@ -193,7 +209,7 @@ backend-test:
   script: 
     - mkdir workspace
     - podman build -t pa11y-ci frontend/pa11y-ci
-    - podman run --network=${CI_BUILD_NETWORK_NAME} -e PA11Y_URL=frontend:4343 -e PA11Y_THEME=${THEME} -v ${PWD}/workspace:/workspace pa11y-ci
+    - podman run --network=${CI_BUILD_NETWORK_NAME} -e PA11Y_URL=frontend:4343 -e PA11Y_THEME=${THEME} -e PA11Y_RAW=${PA11Y_RAW} -v ${PWD}/workspace:/workspace pa11y-ci
   artifacts:
     when: always
     reports:
@@ -207,6 +223,22 @@ accessibility-test:
     matrix:
       - THEME: light
       - THEME: dark
+
+accessibility-needs-review:
+  extends: .accessibility-test
+  allow_failure: true
+  variables:
+    PA11Y_RAW: "1"
+  parallel:
+    matrix:
+      - THEME: light
+      - THEME: dark
+  artifacts:
+    when: always
+    reports:
+      accessibility: workspace/accessibility-needs-review-${THEME}.json
+    paths:
+      - workspace/accessibility-needs-review-${THEME}.json
 
 promote-build:
   extends:

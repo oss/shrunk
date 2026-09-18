@@ -677,10 +677,14 @@ def create_app(**_kwargs: Any) -> Flask:
     @app.route("/api/core/t/<tracking_pixel>", methods=["GET"])
     def _serve_tracking_pixel(tracking_pixel: str) -> Any:
         client: ShrunkClient = getattr(current_app, "client")
-        tracking_id = request.cookies.get("shrunkid") or client.tracking.get_new_id()
+        extension = tracking_pixel.rsplit(".", 1)[-1].lower() if "." in tracking_pixel else "gif"
+        if extension not in {"gif", "png"}:
+            return "Bad Request. Invalid file extension.", 400
 
-        if client.links.get_link_info_by_alias(tracking_pixel) is None:
+        if not client.links.is_tracking_pixel_link(tracking_pixel):
             return "There was an error trying to find your tracking pixel.", 404
+
+        tracking_id = request.cookies.get("shrunkid") or client.tracking.get_new_id()
 
         mid = request.args.get("mid", None)
         uid = request.args.get("uid", None)
@@ -694,18 +698,6 @@ def create_app(**_kwargs: Any) -> Flask:
             uid,
             mid,
         )
-
-        ALLOWED_EXTENSIONS = {"gif", "png"}
-        extension = None
-
-        if "." in tracking_pixel:
-            ext = tracking_pixel.split(".")[-1].lower()
-            if ext in ALLOWED_EXTENSIONS:
-                extension = ext
-            else:
-                return "Bad Request. Invalid file extension.", 400
-        else:
-            extension = "gif"
 
         filename = f"./static/img/pixel.{extension}"
         response = send_file(filename, mimetype=f"image/{extension}")

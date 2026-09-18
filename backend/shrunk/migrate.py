@@ -33,6 +33,7 @@ class MigrationLockTimeout(RuntimeError):
 
 
 def _make_client() -> pymongo.MongoClient:
+    cert_file = os.getenv("SHRUNK_DB_CERT") or None
     db_port = os.getenv("SHRUNK_DB_PORT")
     assert db_port is not None, "SHRUNK_DB_PORT must be set"
 
@@ -44,6 +45,7 @@ def _make_client() -> pymongo.MongoClient:
         password=os.getenv("SHRUNK_DB_PASSWORD") or None,
         authSource=os.getenv("SHRUNK_DB_AUTHSOURCE") or "admin",
         tz_aware=True,
+        **({"tls": True, "tlsCertificateKeyFile": cert_file} if cert_file else {}),
     )
 
 
