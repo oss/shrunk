@@ -35,6 +35,7 @@ CMD ["npm", "run", "dev"]
 FROM debian:bookworm-slim as prod
 
 ENV BACKEND_URL backend
+ENV SHRUNK_FRONTEND_HOSTNAME=shrunk.rutgers.edu
 
 # Install apache httpd and its shibboleth module
 RUN apt-get update && apt-get install -y apache2 libapache2-mod-shib ca-certificates
