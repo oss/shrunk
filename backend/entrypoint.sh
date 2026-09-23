@@ -31,6 +31,9 @@ else
 
     # Initialize the Flask app independently in each worker. PyMongo clients
     # must not be shared across forked workers.
-    exec uwsgi --module "${FLASK_APP}:create_app()" --master --lazy-apps --processes 4 --threads 2 --socket 0.0.0.0:3050
+    exec uwsgi --module "${FLASK_APP}:create_app()" \
+      --master --lazy-apps --processes 4 --threads 2 \
+      --socket 0.0.0.0:3050 \
+      --http-socket 0.0.0.0:3051
     # exec gunicorn --bind 0.0.0.0:3050 --worker-tmp-dir /dev/shm  --workers=2 --threads=4 --worker-class=gthread --worker-class asgi --protocol uwsgi --uwsgi-allow-from '*' "${FLASK_APP}:create_app()"
 fi

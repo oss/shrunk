@@ -10,6 +10,7 @@ import logging
 import sys
 import time
 import uuid
+from threading import Lock
 from typing import Any
 
 from urllib.parse import parse_qsl, urlencode
@@ -351,8 +352,6 @@ def create_app(**_kwargs: Any) -> Flask:
 
     with app.app_context():
         _init_logging()
-        _init_shrunk_client()
-        _init_roles()
 
     @app.before_request
     def _start_request() -> None:
@@ -404,6 +403,7 @@ def create_app(**_kwargs: Any) -> Flask:
     app.register_blueprint(api.role.bp)
     app.register_blueprint(api.search.bp)
     app.register_blueprint(api.admin.bp)
+    app.register_blueprint(api.health.bp)
     app.register_blueprint(api.motd.bp)
     app.register_blueprint(api.request.bp)
     app.register_blueprint(api.security.bp)
@@ -710,12 +710,34 @@ def create_app(**_kwargs: Any) -> Flask:
 
         return response
 
+    initialized = False
+    init_lock = Lock()
+
     @app.before_request
-    def _record_visit() -> None:
+    def _record_visit() -> Any:
+        nonlocal initialized
+        endpoint = flask.request.endpoint
+        if endpoint == "health.health":
+            return None
+
+        if not initialized:
+            with init_lock:
+                if not initialized:
+                    try:
+                        _init_shrunk_client()
+                        _init_roles()
+                    except pymongo.errors.PyMongoError:
+                        if endpoint == "health.ready":
+                            return jsonify({}), 503
+                        raise
+                    initialized = True
+
+        if endpoint == "health.ready":
+            return None
+
         netid = flask.session["user"]["netid"] if "user" in flask.session else None
-        endpoint = flask.request.endpoint or "error"
         try:
-            getattr(current_app, "client").record_visit(netid, endpoint)
+            getattr(current_app, "client").record_visit(netid, endpoint or "error")
         except pymongo.errors.PyMongoError:
             current_app.logger.exception("Unable to record endpoint visit")
 

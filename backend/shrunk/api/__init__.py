@@ -10,6 +10,7 @@ from . import (
     security,
     ticket,
     user,
+    health,
 )
 
 __all__ = [
@@ -27,4 +28,5 @@ __all__ = [
     "linkv1",
     "trackingpixelv1",
     "orgv1",
+    "health",
 ]
