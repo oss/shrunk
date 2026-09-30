@@ -289,6 +289,8 @@ class LinksClient:
     ) -> None:
         if long_url is not None and self.long_url_is_blocked(long_url):
             raise BadLongURLException
+        if long_url is not None and self.redirects_to_blocked_url(long_url):
+            raise BadLongURLException
         if title is None and long_url is None and expiration_time is None and owner is None and alias is None:
             return
 
@@ -306,6 +308,17 @@ class LinksClient:
         if expiration_time is not None:
             fields["expiration_time"] = expiration_time
         if alias is not None:
+            alias = alias.lower()
+
+            if not bool(re.fullmatch(r"^[a-zA-Z0-9_\-\.]+$", alias)):
+                raise BadAliasException
+
+            if self.alias_is_reserved(alias):
+                raise BadAliasException
+
+            if self.alias_is_duplicate(alias, link_info.get("is_tracking_pixel_link", False)):
+                raise BadAliasException
+
             fields["alias"] = alias
         if owner is not None:
             if owner["type"] == "netid" and is_valid_netid(cast(str, owner["_id"])):

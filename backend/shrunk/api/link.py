@@ -386,6 +386,10 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
             "That destination URL is not allowed.",
             fields={"long_url": "Enter an allowed destination URL."},
         )
+    except BadAliasException:
+        raise ApiProblem(
+            400, "INVALID_ALIAS", "That custom alias cannot be used.", fields={"alias": "Choose a different alias."}
+        )
     except SecurityRiskDetected, LinkIsPendingOrRejected:
         raise ApiProblem(
             403,
