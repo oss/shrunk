@@ -44,7 +44,7 @@ def test_rename_org(client: Client) -> None:
 
 
 def test_rename_org_permissions(client: Client) -> None:
-    """Tests that a user cannot rename an org if they are not an admin"""
+    """Tests that a user cannot rename an org if they are not an admin or admin of the org"""
     with dev_login(client, "admin"):
         # Create an org
         resp = client.post("/api/core/org", json={"name": "testorg12"})
@@ -54,6 +54,16 @@ def test_rename_org_permissions(client: Client) -> None:
 
     with dev_login(client, "user"):
         # Check that can't rename the org
+        resp = client.put(f"/api/core/org/{org_id}/rename/kevinwasheretestrename")
+        assert resp.status_code == 403
+
+    """Tests that a user cannot rename an org if they are user of org"""
+
+    with dev_login(client, "admin"):
+        resp = client.put(f"/api/core/org/{org_id}/member/DEV_USER")
+        assert resp.status_code == 204
+
+    with dev_login(client, "user"):
         resp = client.put(f"/api/core/org/{org_id}/rename/kevinwasheretestrename")
         assert resp.status_code == 403
 

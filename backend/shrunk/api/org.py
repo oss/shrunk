@@ -237,7 +237,7 @@ def rename_org(netid: str, client: ShrunkClient, org_id: ObjectId, new_org_name:
     if org is None:
         abort(404)
     if (
-        not client.orgs.is_member(org_id, netid) and not client.orgs.is_admin(org_id, netid)
+        not (client.orgs.is_admin(org_id, netid) or client.users.has_role(netid, "admin"))
     ) or not client.orgs.validate_name(new_org_name):
         abort(403)
     client.orgs.rename_org(org_id, new_org_name)
