@@ -13,11 +13,14 @@ import {
 function isPendingLink(value: unknown): value is PendingLink {
   if (typeof value !== 'object' || value === null) return false;
   const link = value as Record<string, unknown>;
+  if (typeof link.owner !== 'object' || link.owner === null) return false;
+  const owner = link.owner as Record<string, unknown>;
   return (
     typeof link._id === 'string' &&
     typeof link.title === 'string' &&
     typeof link.long_url === 'string' &&
-    typeof link.netid === 'string'
+    typeof owner._id === 'string' &&
+    (owner.type === 'netid' || owner.type === 'org')
   );
 }
 

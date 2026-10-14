@@ -60,11 +60,29 @@ def test_invalid_urls(url: str) -> None:
 )
 def test_domain_excludes_query_fragment_and_port(url: str) -> None:
     actual = get_domain(url)
-    known_incorrect_results = {
-        "one.example.com?x=1",
-        "one.example.com#section",
-        "one.example.com:443",
-    }
-    if actual in known_incorrect_results:
-        pytest.xfail("Known domain-parsing bug: query, fragment or port remains in the hostname")
     assert actual == "example.com"
+
+
+@pytest.mark.parametrize(
+    ("url", "expected"),
+    [
+        ("one.EXAMPLE.com:443/path?x=1#section", "example.com"),
+        ("https://user:password@one.example.com:443?x=1#section", "example.com"),
+        ("//one.example.com?x=1", "example.com"),
+        ("http://LOCALHOST:8080?x=1", "localhost"),
+        ("https://[2001:db8::1]:443/path?x=1", "2001:db8::1"),
+        ("https://a.b.example.co.uk/path", "co.uk"),
+    ],
+)
+def test_hostname_parsing_preserves_domain_policy(url: str, expected: str) -> None:
+    assert get_domain(url) == expected
+
+
+@pytest.mark.parametrize("url", ["https://[broken", "https://example.test\uff0fother.test"])
+def test_malformed_authority_has_no_hostname(url: str) -> None:
+    assert get_domain(url) == ""
+
+
+def test_canonical_ipv6_blocklist_host_remains_parseable() -> None:
+    assert get_domain("2001:DB8::1") == "2001:db8::1"
+    assert get_domain(get_domain("https://[2001:DB8::1]/path")) == "2001:db8::1"

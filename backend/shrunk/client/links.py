@@ -136,13 +136,14 @@ class LinksClient:
             return True
         domain = get_domain(long_url)
         if not domain:
-            return False
+            # A missing or unparseable hostname must not skip the blocklist check.
+            return True
         return bool(
             list(
                 self.db.grants.aggregate(
                     [
                         {"$match": {"role": "blocked_url"}},
-                        {"$addFields": {"idx": {"$indexOfCP": ["$entity", domain]}}},
+                        {"$addFields": {"idx": {"$indexOfCP": [{"$toLower": "$entity"}, domain.lower()]}}},
                         {"$match": {"idx": {"$ne": -1}}},
                     ]
                 )

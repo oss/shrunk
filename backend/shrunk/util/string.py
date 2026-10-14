@@ -1,4 +1,6 @@
 import re
+from ipaddress import IPv6Address
+from urllib.parse import urlsplit
 
 __all__ = ["get_domain", "validate_url"]
 
@@ -11,15 +13,21 @@ def get_domain(long_url: str) -> str:
     :param long_url: The URL from which to extract the domain
     """
 
-    protocol_location = long_url.find("://")
-    base_url = long_url[(protocol_location + 3) :]  # Strip any protocol
-    if protocol_location < 0:
-        base_url = long_url
+    # Blocklist callbacks also pass the already-normalized, unbracketed IPv6 host.
+    try:
+        IPv6Address(long_url)
+        return long_url.lower()
+    except ValueError:
+        pass
 
-    slash = base_url.find("/")
-    domain = base_url[: base_url.find("/")]  # Strip path
-    if slash < 0:
-        domain = base_url
+    # Parse the authority before applying the existing last-two-label policy.
+    # The same helper normalizes blocklist entries and candidate URLs.
+    try:
+        parsed = urlsplit(long_url if "://" in long_url or long_url.startswith("//") else "//" + long_url)
+        domain = parsed.hostname or ""
+    except ValueError:
+        # Malformed brackets or an ambiguous Unicode authority have no safe hostname.
+        return ""
     # url can contain a-z a hyphen or 0-9 and is seprated by dots.
     # this regex gets rid of any subdomains
     # memes.facebook.com matches facebook.com

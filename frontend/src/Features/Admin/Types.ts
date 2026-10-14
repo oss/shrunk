@@ -22,10 +22,10 @@ export interface PendingLink {
   long_url: string;
 
   /**
-   * netid of the creator
+   * Owner of the pending link
    * @property
    */
-  netid: string;
+  owner: { _id: string; type: 'netid' | 'org' };
 }
 
 /**

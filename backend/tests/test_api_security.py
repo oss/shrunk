@@ -338,3 +338,76 @@ def test_toggle_security(client: Client) -> None:
             },
         )
         assert resp.status_code == 403
+
+
+@pytest.mark.parametrize("owner_type", ["netid", "org"])
+def test_pending_links_return_owner_and_preserve_it_on_approval(client: Client, owner_type: str) -> None:
+    unsafe_url = "http://malware.testing.google.test/testing/malware/*"
+    with dev_login(client, "facstaff" if owner_type == "org" else "user"):
+        owner_id = "DEV_FACSTAFF" if owner_type == "org" else "DEV_USER"
+        body = {"title": "Owner contract", "long_url": unsafe_url}
+        if owner_type == "org":
+            org = client.post("/api/core/org", json={"name": "Security review organization"})
+            assert org.status_code == 200
+            assert org.json is not None
+            owner_id = org.json["id"]
+            body["org_id"] = owner_id
+        assert client.post("/api/core/link", json=body).status_code == 403
+    with dev_login(client, "admin"):
+        pending = client.get("/api/core/security/pending_links")
+        assert pending.status_code == 200
+        assert pending.json is not None
+        assert len(pending.json["pendingLinks"]) == 1
+        link = pending.json["pendingLinks"][0]
+        assert isinstance(link["_id"], str)
+        assert link["owner"] == {"_id": owner_id, "type": owner_type}
+        assert "netid" not in link
+        approved = client.patch(f"/api/core/security/promote/{link['_id']}")
+        assert approved.status_code == 200
+        assert approved.json is not None
+        real = client.get(f"/api/core/link/{approved.json['_id']}")
+        assert real.status_code == 200
+        assert real.json is not None
+        assert real.json["owner"]["_id"] == owner_id
+        assert real.json["owner"]["type"] == owner_type
+        assert client.get("/api/core/security/pending_links").json == {"pendingLinks": []}
+
+    with dev_login(client, "facstaff" if owner_type == "org" else "user"):
+        recreated = client.post("/api/core/link", json=body)
+        assert recreated.status_code == 201
+        assert recreated.json is not None
+        real = client.get(f"/api/core/link/{recreated.json['id']}")
+        assert real.status_code == 200
+        assert real.json is not None
+        assert real.json["owner"]["_id"] == owner_id
+        assert real.json["owner"]["type"] == owner_type
+
+
+@pytest.mark.parametrize("failure", ["http", "timeout", "connection"])
+def test_google_failure_api_creation_never_logs_key(
+    client: Client, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture, failure: str
+) -> None:
+    dummy_url = "https://safebrowsing.googleapis.com/v4/threatMatches:find?key=test-api-key"
+
+    def lookup(*_args: object, **_kwargs: object) -> requests.Response:
+        if failure == "timeout":
+            raise requests.Timeout(dummy_url)
+        if failure == "connection":
+            raise requests.ConnectionError(dummy_url)
+        result = requests.Response()
+        result.status_code = 403
+        result.url = dummy_url
+        result._content = b"{}"
+        return result
+
+    def head(*_args: object, **_kwargs: object) -> None:
+        raise requests.Timeout("Simulated HEAD failure")
+
+    monkeypatch.setattr("shrunk.client.security.requests.post", lookup)
+    monkeypatch.setattr("shrunk.client.links.requests.head", head)
+    with dev_login(client, "user"):
+        created = create_link(client, "Google failure control", "https://allowed.example.test")
+        assert created.status_code == 201
+    assert "test-api-key" not in caplog.text
+    assert dummy_url not in caplog.text
+    assert all(record.exc_info is None for record in caplog.records)

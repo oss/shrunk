@@ -182,7 +182,7 @@ def _init_roles() -> None:
         current_app.logger.info(f"url {url} has been blocked. removing all urls with domain {domain}")
 
         # . needs to be escaped in the domain because it is regex wildcard
-        contains_domain = urls.find({"long_url": {"$regex": "%s*" % domain.replace(".", r"\.")}})
+        contains_domain = urls.find({"long_url": {"$regex": "%s*" % domain.replace(".", r"\."), "$options": "i"}})
 
         matches_domain = [link for link in contains_domain if get_domain(link["long_url"]) == domain]
 
@@ -194,9 +194,17 @@ def _init_roles() -> None:
     def unblock(url: str) -> None:
         urls = client.db.urls
         domain = get_domain(url)
+        # Revoke deletes one exact listed grant after this callback. Ignore only
+        # that record when deciding whether other grants still block this domain.
+        revoked_grant = client.db.grants.find_one({"role": "blocked_url", "entity": url})
+        remaining = client.db.grants.find(
+            {"role": "blocked_url", "_id": {"$ne": revoked_grant["_id"] if revoked_grant else None}}
+        )
+        if any(domain.lower() in grant["entity"].lower() for grant in remaining):
+            return
         contains_domain = urls.find(
             {
-                "long_url": {"$regex": "%s*" % domain.replace(".", r"\.")},
+                "long_url": {"$regex": "%s*" % domain.replace(".", r"\."), "$options": "i"},
                 "deleted": True,
                 "deleted_by": "!BLOCKED",
             }
@@ -208,7 +216,7 @@ def _init_roles() -> None:
     client.roles.create(
         "blocked_url",
         is_admin,
-        validate_url,
+        lambda url: validate_url(url) and bool(get_domain(url)),
         custom_text={
             "title": "Blocked URLs",
             "invalid": "Bad URL",

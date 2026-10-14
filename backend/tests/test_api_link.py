@@ -265,8 +265,6 @@ def test_blocked_domain_variants_remain_blocked_when_head_fails(
         # The existing control blocks the domain without these URL components.
         assert create_link(client, "Blocked control", blocked).status_code == 403
         response = create_link(client, "Blocked variant", blocked + suffix)
-    if response.status_code == 201:
-        pytest.xfail("Known domain-parsing bug: a blocked URL variant is accepted after HEAD failure")
     assert response.status_code == 403
 
 
@@ -1822,3 +1820,204 @@ def test_create_second_link_with_deleted_alias(client: Client) -> None:
         assert resp.json is not None
         assert resp.status_code == 201
         assert resp.json["alias"] == "funny"
+
+
+@pytest.mark.parametrize("permission", ["user", "power"])
+@pytest.mark.parametrize("blocked_suffix", ["", "?x=1", "#section", ":443/path"])
+def test_blocklist_registration_and_link_updates_share_hostname_policy(
+    client: Client, app: Flask, monkeypatch: pytest.MonkeyPatch, permission: str, blocked_suffix: str
+) -> None:
+    def unavailable(*_args: Any, **_kwargs: Any) -> None:
+        raise requests.Timeout("Simulated HEAD failure")
+
+    monkeypatch.setattr("shrunk.client.links.requests.head", unavailable)
+    monkeypatch.setattr(getattr(app, "client").security, "security_measures_on", False)
+    blocked = "https://one.blocked.example.test"
+    encoded = base64.b32encode((blocked + blocked_suffix).encode()).decode()
+    with dev_login(client, "admin"):
+        assert client.put(f"/api/core/role/blocked_url/entity/{encoded}", json={}).status_code == 204
+        grants = client.get("/api/core/role/blocked_url/entity").json
+        assert grants is not None
+        assert [grant["entity"] for grant in grants["entities"]] == ["example.test"]
+    with dev_login(client, permission):
+        allowed = create_link(client, "Allowed control", "https://allowed.other.test/path")
+        assert allowed.status_code == 201
+        assert allowed.json is not None
+        for suffix in ["", "?x=1", "#section", ":443/path"]:
+            candidate = "https://another.example.test" + suffix
+            assert create_link(client, "Blocked sibling", candidate).status_code == 403
+            rejected = client.patch(f"/api/core/link/{allowed.json['id']}", json={"long_url": candidate})
+            assert rejected.status_code == 400
+            assert rejected.json is not None
+            assert rejected.json["error"]["code"] == "INVALID_LONG_URL"
+        unchanged = client.get(f"/api/core/link/{allowed.json['id']}")
+        assert unchanged.json is not None
+        assert unchanged.json["long_url"] == "https://allowed.other.test/path"
+    with dev_login(client, "admin"):
+        # The admin UI revokes the normalized entity returned by the list API.
+        normalized = base64.b32encode(b"example.test").decode()
+        assert client.delete(f"/api/core/role/blocked_url/entity/{normalized}").status_code == 204
+        assert client.get("/api/core/role/blocked_url/entity").json == {"entities": []}
+    with dev_login(client, permission):
+        assert create_link(client, "Unblocked", blocked + blocked_suffix).status_code == 201
+
+
+@pytest.mark.parametrize("url", ["https://[broken", "https://example.test\uff0fother.test"])
+def test_malformed_authority_is_rejected_without_server_error(
+    client: Client, app: Flask, monkeypatch: pytest.MonkeyPatch, url: str
+) -> None:
+    def unavailable(*_args: Any, **_kwargs: Any) -> None:
+        raise requests.Timeout("Simulated HEAD failure")
+
+    monkeypatch.setattr("shrunk.client.links.requests.head", unavailable)
+    monkeypatch.setattr(getattr(app, "client").security, "security_measures_on", False)
+    with dev_login(client, "user"):
+        allowed = create_link(client, "Allowed control", "https://allowed.example.test/path")
+        assert allowed.status_code == 201
+        assert allowed.json is not None
+        rejected = create_link(client, "Malformed authority", url)
+        assert rejected.status_code == 403
+        assert rejected.json is not None
+        assert rejected.json["error"]["code"] == "INVALID_LONG_URL"
+        updated = client.patch(f"/api/core/link/{allowed.json['id']}", json={"long_url": url})
+        assert updated.status_code == 400
+        assert updated.json is not None
+        assert updated.json["error"]["code"] == "INVALID_LONG_URL"
+        encoded = base64.b32encode(url.encode()).decode()
+        validated = client.get(f"/api/core/link/validate_long_url/{encoded}")
+        assert validated.status_code == 200
+        assert validated.json is not None
+        assert validated.json["valid"] is False
+
+
+@pytest.mark.parametrize("permission", ["user", "power"])
+@pytest.mark.parametrize(
+    ("legacy_entity", "base_url"),
+    [
+        ("blocked.example.test:443", "https://blocked.example.test"),
+        ("blocked.example.test?x=1", "https://blocked.example.test"),
+        ("blocked.example.test#section", "https://blocked.example.test"),
+        ("LOCALHOST", "http://LOCALHOST"),
+        ("[2001:DB8::1]", "https://[2001:DB8::1]"),
+    ],
+)
+def test_legacy_blocklist_records_can_be_listed_and_revoked_exactly(
+    client: Client, app: Flask, monkeypatch: pytest.MonkeyPatch, legacy_entity: str, base_url: str, permission: str
+) -> None:
+    def unavailable(*_args: Any, **_kwargs: Any) -> None:
+        raise requests.Timeout("Simulated HEAD failure")
+
+    monkeypatch.setattr("shrunk.client.links.requests.head", unavailable)
+    database = getattr(app, "client")
+    monkeypatch.setattr(database.security, "security_measures_on", False)
+    url = base_url + "/path"
+    with dev_login(client, permission):
+        created = create_link(client, "Pre-upgrade link", url)
+        assert created.status_code == 201
+        assert created.json is not None
+        link_id = created.json["id"]
+    # Seed the exact shape stored before hostname parsing was corrected.
+    database.db.grants.insert_many(
+        [
+            {"role": "blocked_url", "entity": legacy_entity, "granted_by": "DEV_ADMIN"},
+            {"role": "blocked_url", "entity": "unrelated.test", "granted_by": "DEV_ADMIN"},
+            {"role": "blacklisted", "entity": legacy_entity, "granted_by": "DEV_ADMIN"},
+        ]
+    )
+    database.links.block_urls([ObjectId(link_id)])
+    with dev_login(client, permission):
+        for suffix in ["", "?x=1", "#section", ":443/path"]:
+            assert create_link(client, "Still blocked", base_url + suffix).status_code == 403
+        assert client.get(f"/api/core/link/{link_id}").status_code == 404
+        encoded = base64.b32encode(legacy_entity.encode()).decode()
+        assert client.delete(f"/api/core/role/blocked_url/entity/{encoded}").status_code == 403
+    with dev_login(client, "admin"):
+        listed = client.get("/api/core/role/blocked_url/entity")
+        assert listed.status_code == 200
+        assert listed.json is not None
+        raw_entity = next(g["entity"] for g in listed.json["entities"] if g["entity"] == legacy_entity)
+        encoded = base64.b32encode(raw_entity.encode()).decode()
+        assert client.delete(f"/api/core/role/blocked_url/entity/{encoded}").status_code == 204
+        remaining = client.get("/api/core/role/blocked_url/entity")
+        assert remaining.json is not None
+        assert [g["entity"] for g in remaining.json["entities"]] == ["unrelated.test"]
+        assert database.db.grants.count_documents({"role": "blacklisted", "entity": legacy_entity}) == 1
+    with dev_login(client, permission):
+        restored = client.get(f"/api/core/link/{link_id}")
+        assert restored.status_code == 200
+        assert restored.json is not None
+        assert restored.json["long_url"] == url
+        assert create_link(client, "Recreated", url).status_code == 201
+        assert create_link(client, "Unrelated still blocked", "https://unrelated.test").status_code == 403
+
+
+@pytest.mark.parametrize(
+    "url", ["http://LOCALHOST/path", "https://[2001:DB8::1]/path", "https://ONE.EXAMPLE.TEST/path"]
+)
+def test_new_block_and_unblock_restore_uppercase_urls(
+    client: Client, app: Flask, monkeypatch: pytest.MonkeyPatch, url: str
+) -> None:
+    def unavailable(*_args: Any, **_kwargs: Any) -> None:
+        raise requests.Timeout("Simulated HEAD failure")
+
+    monkeypatch.setattr("shrunk.client.links.requests.head", unavailable)
+    monkeypatch.setattr(getattr(app, "client").security, "security_measures_on", False)
+    with dev_login(client, "user"):
+        created = create_link(client, "Before block", url)
+        assert created.status_code == 201
+        assert created.json is not None
+        link_id = created.json["id"]
+    with dev_login(client, "admin"):
+        encoded = base64.b32encode(url.encode()).decode()
+        assert client.put(f"/api/core/role/blocked_url/entity/{encoded}", json={}).status_code == 204
+    with dev_login(client, "user"):
+        assert client.get(f"/api/core/link/{link_id}").status_code == 404
+        assert create_link(client, "Blocked", url).status_code == 403
+    with dev_login(client, "admin"):
+        listed = client.get("/api/core/role/blocked_url/entity")
+        assert listed.json is not None
+        encoded = base64.b32encode(listed.json["entities"][0]["entity"].encode()).decode()
+        assert client.delete(f"/api/core/role/blocked_url/entity/{encoded}").status_code == 204
+    with dev_login(client, "user"):
+        assert client.get(f"/api/core/link/{link_id}").status_code == 200
+        assert create_link(client, "After unblock", url).status_code == 201
+
+
+@pytest.mark.parametrize(
+    ("url", "legacy", "canonical"),
+    [
+        ("http://LOCALHOST/path", "LOCALHOST", "localhost"),
+        ("https://[2001:DB8::1]/path", "[2001:DB8::1]", "2001:db8::1"),
+        ("https://blocked.example.test/path", "blocked.example.test:443", "example.test"),
+    ],
+)
+def test_revoking_one_block_keeps_other_applicable_blocks(
+    client: Client, app: Flask, monkeypatch: pytest.MonkeyPatch, url: str, legacy: str, canonical: str
+) -> None:
+    def unavailable(*_args: Any, **_kwargs: Any) -> None:
+        raise requests.Timeout("Simulated HEAD failure")
+
+    monkeypatch.setattr("shrunk.client.links.requests.head", unavailable)
+    database = getattr(app, "client")
+    monkeypatch.setattr(database.security, "security_measures_on", False)
+    with dev_login(client, "user"):
+        created = create_link(client, "Before block", url)
+        assert created.status_code == 201
+        assert created.json is not None
+        link_id = created.json["id"]
+    database.db.grants.insert_many(
+        [{"role": "blocked_url", "entity": e, "granted_by": "DEV_ADMIN"} for e in [legacy, canonical]]
+    )
+    database.links.block_urls([ObjectId(link_id)])
+    with dev_login(client, "admin"):
+        encoded = base64.b32encode(legacy.encode()).decode()
+        assert client.delete(f"/api/core/role/blocked_url/entity/{encoded}").status_code == 204
+    with dev_login(client, "user"):
+        assert client.get(f"/api/core/link/{link_id}").status_code == 404
+        assert create_link(client, "Still blocked", url).status_code == 403
+    with dev_login(client, "admin"):
+        encoded = base64.b32encode(canonical.encode()).decode()
+        assert client.delete(f"/api/core/role/blocked_url/entity/{encoded}").status_code == 204
+    with dev_login(client, "user"):
+        assert client.get(f"/api/core/link/{link_id}").status_code == 200
+        assert create_link(client, "After last unblock", url).status_code == 201

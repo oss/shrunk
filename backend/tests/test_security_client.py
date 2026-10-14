@@ -101,8 +101,6 @@ def test_google_error_does_not_log_the_api_key(
     monkeypatch.setattr("shrunk.client.security.requests.post", Mock(return_value=failed))
     with Flask(__name__).app_context():
         assert security.security_risk_detected("https://example.com") is False
-    if "test-api-key" in caplog.text:
-        pytest.xfail("Known credential-logging bug: HTTPError includes the API key in its URL")
     assert "test-api-key" not in caplog.text
 
 
@@ -218,3 +216,21 @@ def test_missing_link_cannot_be_read_or_promoted(security: SecurityClient) -> No
     with pytest.raises(NoSuchObjectException):
         security.promote_link("reviewer", ObjectId())
     cast(Mock, security.other_clients).links.create.assert_not_called()
+
+
+@pytest.mark.parametrize("error_type", [requests.Timeout, requests.ConnectionError, requests.HTTPError, KeyError])
+def test_google_exception_details_never_expose_credentials(
+    security: SecurityClient,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    error_type: type[Exception],
+) -> None:
+    url = "https://safebrowsing.googleapis.com/v4/threatMatches:find?key=test-api-key"
+    monkeypatch.setattr("shrunk.client.security.requests.post", Mock(side_effect=error_type(url)))
+    with Flask(__name__).app_context():
+        assert security.security_risk_detected("https://example.com") is False
+    assert "test-api-key" not in caplog.text
+    assert url not in caplog.text
+    assert "test-api-key" not in security.get_security_status()
+    assert caplog.records
+    assert all(record.exc_info is None for record in caplog.records)

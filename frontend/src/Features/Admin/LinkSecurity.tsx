@@ -60,7 +60,10 @@ function PendingLinkRow(props: PendingRowProps) {
       <div className="min-w-0 space-y-1">
         <p className="font-semibold">{document.title}</p>
         <p className="text-sm text-muted-foreground">
-          netID of creator: {document.netid}
+          {document.owner.type === 'netid'
+            ? 'Owner NetID'
+            : 'Owner organization'}
+          : {document.owner._id}
         </p>
         <p className="text-sm break-all text-muted-foreground">
           long url:{' '}

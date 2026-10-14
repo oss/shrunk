@@ -5,6 +5,7 @@ from typing import Any, Dict
 from flask import Blueprint, jsonify
 from werkzeug.exceptions import abort
 
+from shrunk.api_errors import ApiProblem
 from shrunk.client import ShrunkClient
 from shrunk.util.decorators import require_login, request_schema
 
@@ -142,6 +143,8 @@ def put_role_entity(netid: str, client: ShrunkClient, req: Any, role_name: str, 
         abort(403)
     if role_name == "whitelisted" and not client.users.has_role(netid, "facstaff"):
         abort(403)
+    if role_name == "blocked_url" and not client.roles.is_valid_entity_for(role_name, entity):
+        raise ApiProblem(400, "INVALID_BLOCKED_URL", "Enter a URL with a valid hostname.")
     client.roles.grant(role_name, netid, entity, comment=req.get("comment", ""))
     return "", 204
 

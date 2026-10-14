@@ -253,19 +253,18 @@ class SecurityClient:
             r.raise_for_status()
             self.latest_status = message
             return len(r.json().get("matches", [])) > 0
-        except requests.exceptions.HTTPError as err:
+        except requests.exceptions.HTTPError:
             message = (
                 f"Google Safe Browsing API request failed. Status code: {r.status_code if r is not None else 'unknown'}"
             )
             current_app.logger.warning(message)
-            current_app.logger.warning(err)
-        except KeyError as err:
-            message = f"ERROR: The key {err} did not exist in the JSON response"
+        except KeyError:
+            message = "ERROR: A required key did not exist in the JSON response"
             current_app.logger.warning(message)
         except Exception as err:  # pylint: disable=broad-exception-caught
             message = "An unknown error was detected when calling Google Safe Browsing API"
-            current_app.logger.warning(message)
-            current_app.logger.warning(err)
+            # Exception messages and tracebacks can include the key-bearing request URL.
+            current_app.logger.warning("%s (%s)", message, type(err).__name__)
 
         self.latest_status = message
 

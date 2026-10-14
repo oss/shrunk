@@ -60,3 +60,18 @@ def test_validate_entity_unauthorized(client: Client, user: str, role: str) -> N
     with dev_login(client, user):
         resp = client.get(f"/api/core/role/{role}/validate_entity/{entity_b32}")
         assert resp.status_code == 403
+
+
+@pytest.mark.parametrize("url", ["https://[broken", "https://example.test\uff0fother.test"])
+def test_blocked_role_rejects_unparseable_authority_without_partial_grant(client: Client, url: str) -> None:
+    encoded = base64.b32encode(url.encode()).decode()
+    with dev_login(client, "admin"):
+        before = client.get("/api/core/role/blocked_url/entity")
+        assert before.status_code == 200
+        validated = client.get(f"/api/core/role/blocked_url/validate_entity/{encoded}")
+        assert validated.status_code == 200
+        assert validated.json is not None
+        rejected = client.put(f"/api/core/role/blocked_url/entity/{encoded}", json={})
+        assert client.get("/api/core/role/blocked_url/entity").json == before.json
+        assert validated.json["valid"] is False
+        assert rejected.status_code == 400

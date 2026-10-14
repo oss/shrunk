@@ -41,7 +41,7 @@ describe('admin API response validation', () => {
           _id: 'pending-id',
           title: 'Review me',
           long_url: 'https://example.com',
-          netid: 'owner',
+          owner: { _id: 'owner', type: 'netid' },
         },
       ],
     },
@@ -54,7 +54,7 @@ describe('admin API response validation', () => {
     );
   });
 
-  it.each(['_id', 'title', 'long_url', 'netid'])(
+  it.each(['_id', 'title', 'long_url', 'owner'])(
     'rejects a pending link with invalid %s',
     async (field) => {
       mockResponse({
@@ -63,7 +63,7 @@ describe('admin API response validation', () => {
             _id: 'id',
             title: 'Title',
             long_url: 'https://example.com',
-            netid: 'owner',
+            owner: { _id: 'owner', type: 'netid' },
             [field]: 42,
           },
         ],
@@ -73,6 +73,42 @@ describe('admin API response validation', () => {
       );
     },
   );
+
+  it.each(['netid', 'org'])('accepts a %s owner', async (type) => {
+    const pendingLinks = [
+      {
+        _id: 'id',
+        title: 'Title',
+        long_url: 'https://example.com',
+        owner: { _id: 'owner-id', type },
+      },
+    ];
+    mockResponse({ pendingLinks });
+    await expect(getPendingLinks()).resolves.toEqual(pendingLinks);
+  });
+
+  it.each([
+    null,
+    {},
+    { _id: 42, type: 'netid' },
+    { _id: 'id' },
+    { _id: 'id', type: 'admin' },
+  ])('rejects an invalid pending-link owner: %j', async (owner) => {
+    mockResponse({
+      pendingLinks: [
+        {
+          _id: 'id',
+          title: 'Title',
+          long_url: 'https://example.com',
+          netid: 'legacy',
+          owner,
+        },
+      ],
+    });
+    await expect(getPendingLinks()).rejects.toThrow(
+      'Invalid pending links response',
+    );
+  });
 
   it.each([0, 3])('accepts a numeric pending-link count: %i', async (count) => {
     mockResponse({ pending_links_count: count });
@@ -96,24 +132,19 @@ describe('admin API response validation', () => {
     await expect(getStatus()).rejects.toThrow('Invalid security status');
   });
 
-  // Known backend/frontend mismatch: newly blocked links expose owner, not netid.
-  // Keep the desired behavior explicit while the application fix is discussed separately.
-  it.fails(
-    'accepts the owner-based pending-link response produced by the backend',
-    async () => {
-      const pendingLinks = [
-        {
-          _id: 'pending-id',
-          title: 'Review me',
-          long_url: 'http://malware.testing.google.test/testing/malware/*',
-          owner: { _id: 'DEV_USER', type: 'netid' },
-          status: 'pending',
-        },
-      ];
-      mockResponse({ pendingLinks });
-      await expect(getPendingLinks()).resolves.toEqual(pendingLinks);
-    },
-  );
+  it('accepts the owner-based pending-link response produced by the backend', async () => {
+    const pendingLinks = [
+      {
+        _id: 'pending-id',
+        title: 'Review me',
+        long_url: 'http://malware.testing.google.test/testing/malware/*',
+        owner: { _id: 'DEV_USER', type: 'netid' },
+        status: 'pending',
+      },
+    ];
+    mockResponse({ pendingLinks });
+    await expect(getPendingLinks()).resolves.toEqual(pendingLinks);
+  });
 
   it.each([
     null,
