@@ -1,6 +1,6 @@
 """Implements API endpoints under ``/api/link``"""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional, Dict, List, Mapping, Sequence
 
 import os
@@ -956,8 +956,11 @@ def get_link_visit_stats(netid: str, client: ShrunkClient, link_id: ObjectId) ->
     # If start_date exists but not end_date, we default to <start_date, today>
     # If end_date exists but not start_date, we default to <year from end_date, end_date>
     # If neither exists, then it is just, <year from today, today>
-    end_date = datetime.fromisoformat(request.args.get("end_date", datetime.now().isoformat()))
+    end_date = datetime.fromisoformat(request.args.get("end_date", datetime.now(timezone.utc).isoformat()))
     start_date = datetime.fromisoformat(request.args.get("start_date", (end_date - timedelta(days=365)).isoformat()))
+    # MongoDB interprets naive datetimes as UTC; use the same convention for input dates.
+    start_date = start_date.replace(tzinfo=start_date.tzinfo or timezone.utc)
+    end_date = end_date.replace(tzinfo=end_date.tzinfo or timezone.utc)
 
     if start_date > end_date:
         raise ApiProblem(

@@ -1,12 +1,71 @@
 import base64
+import json
 from datetime import datetime, timezone
 
 import pytest
+import requests
+from bson import ObjectId
 from flask import Flask
 from werkzeug.test import Client
 
 from util import dev_login, create_link
 from shrunk.client import ShrunkClient
+
+
+@pytest.fixture(autouse=True)
+def safe_browsing(app: Flask, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Exercise the security workflow without depending on Google or a real key."""
+    security = getattr(app, "client").security
+    monkeypatch.setattr(security, "security_measures_on", True)
+    monkeypatch.setattr(security, "latest_status", "ON")
+    monkeypatch.setattr(security, "google_safe_browsing_api", "test-api-key")
+
+    def lookup(url: str, *, data: str, timeout: int) -> requests.Response:
+        assert url == "https://safebrowsing.googleapis.com/v4/threatMatches:find?key=test-api-key"
+        assert timeout == 30
+        entries = json.loads(data)["threatInfo"]["threatEntries"]
+        unsafe_urls = {
+            "http://malware.testing.google.test/testing/malware/*",
+            "http://malware.testing.google.test/testing/malware/*/",
+        }
+        body = {"matches": [{"threatType": "MALWARE"}]} if any(e["url"] in unsafe_urls for e in entries) else {}
+        response = requests.Response()
+        response.status_code = 200
+        response._content = json.dumps(body).encode()
+        return response
+
+    monkeypatch.setattr("shrunk.client.security.requests.post", lookup)
+
+
+def test_pending_links_are_deduplicated_and_audited(app: Flask, db: ShrunkClient) -> None:
+    security = db.security
+    link = {"long_url": "https://unsafe.example.test", "title": "unsafe"}
+    link_id = security.create_pending_link(link.copy())
+    assert link_id is not None
+    assert security.create_pending_link(link.copy()) is None
+    assert db.db.unsafe_links.count_documents({}) == 1
+    assert security.get_number_of_pending_links() == 1
+    assert security.get_link_status(link_id) == "pending"
+    assert security.get_unsafe_link_document(link_id)["netid_of_last_modifier"] is None
+
+    with app.app_context():
+        before = datetime.now(timezone.utc)
+        security.reject_link("DEV_ADMIN", link_id)
+        security.consider_link(link_id, "DEV_REVIEWER")
+        after = datetime.now(timezone.utc)
+
+    stored = security.get_unsafe_link_document(link_id)
+    assert stored["status"] == "pending"
+    history = stored["security_update_history"]
+    assert len(history) == 2
+    for event, old, new, actor in zip(
+        history, ["pending", "denied"], ["denied", "pending"], ["DEV_ADMIN", "DEV_REVIEWER"], strict=True
+    ):
+        assert event["status_changed_from"] == old
+        assert event["status_changed_to"] == new
+        assert event["netid_of_modifier"] == actor
+        # BSON stores datetime values with millisecond precision.
+        assert before.replace(microsecond=(before.microsecond // 1000) * 1000) <= event["timestamp"] <= after
 
 
 def test_promote_link_creates_real_link(app: Flask, db: ShrunkClient) -> None:
@@ -39,6 +98,27 @@ def test_promote_link_creates_real_link(app: Flask, db: ShrunkClient) -> None:
         assert real_link["title"] == "phish"
         assert real_link["alias"] == "regressionpromote1"
         assert real_link["owner"] == {"_id": "DEV_USER", "type": "netid"}
+
+
+def test_pending_queries_filter_by_status_and_url(db: ShrunkClient) -> None:
+    security = db.security
+    ids: list[ObjectId] = []
+    for i in range(3):
+        link_id = security.create_pending_link({"long_url": f"https://example.com/{i}", "title": str(i)})
+        assert link_id is not None
+        ids.append(link_id)
+    security.reject_link("reviewer", ids[0])
+    security.change_link_status(ids[1], "reviewer", "approved")
+    assert [link["_id"] for link in security.get_pending_links()] == [ids[2]]
+    assert security.get_number_of_pending_links() == 1
+    for i, status in enumerate(["denied", "approved", "pending"]):
+        assert security.get_link_status(ids[i]) == status
+        assert security.get_status_of_url(f"https://example.com/{i}") == status
+        assert security.url_exists_in_collection(f"https://example.com/{i}") is True
+        assert security.url_not_approved(f"https://example.com/{i}") is (status != "approved")
+    assert security.get_status_of_url("https://example.com/missing") is None
+    assert security.url_exists_in_collection("https://example.com/missing") is False
+    assert security.url_not_approved("https://example.com/missing") is False
 
 
 def test_security_risk_client_method(client: Client) -> None:

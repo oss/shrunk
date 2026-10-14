@@ -254,7 +254,9 @@ class SecurityClient:
             self.latest_status = message
             return len(r.json().get("matches", [])) > 0
         except requests.exceptions.HTTPError as err:
-            message = f"Google Safe Browsing API request failed. Status code: {r.status_code if r else 'unknown'}"
+            message = (
+                f"Google Safe Browsing API request failed. Status code: {r.status_code if r is not None else 'unknown'}"
+            )
             current_app.logger.warning(message)
             current_app.logger.warning(err)
         except KeyError as err:

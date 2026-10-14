@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { toast } from 'sonner';
+import { FetchError } from 'ofetch';
 import {
   api,
   getErrorMessage,
@@ -30,6 +31,63 @@ describe('api (Shared/Lib/Http ofetch client)', () => {
     expect(data).toEqual({ hello: 'world' });
   });
 
+  it.each([
+    null,
+    undefined,
+    'text',
+    42,
+    { data: { error: { message: 'untrusted' } } },
+    new Error('private'),
+  ])('does not treat an arbitrary value as a parsed API error: %j', (error) => {
+    expect(getErrorMessage(error, 'Safe fallback')).toBe('Safe fallback');
+    expect(getFieldError(error, 'alias')).toBeUndefined();
+  });
+
+  it.each([
+    { body: null, expected: 'fallback' },
+    {
+      body: { errors: [42, null, 'First real message', 'Second message'] },
+      expected: 'First real message',
+    },
+    {
+      body: {
+        error: { message: 'Core message' },
+        message: 'Legacy message',
+        reason: 'Reason',
+      },
+      expected: 'Core message',
+    },
+    {
+      body: { error: { message: 42 }, message: 'Legacy message' },
+      expected: 'Legacy message',
+    },
+    { body: { errors: { message: 'Not an array' } }, expected: 'fallback' },
+  ])(
+    'extracts the first valid error message without trusting malformed bodies: %j',
+    async ({ body, expected }) => {
+      mockFetchOnce(400, body);
+      let caught: unknown;
+      try {
+        await api('ping', { headers: suppressToastHeader });
+      } catch (error) {
+        caught = error;
+      }
+      expect(getErrorMessage(caught, 'fallback')).toBe(expected);
+      expect(getFieldError(caught, 'alias')).toBeUndefined();
+    },
+  );
+
+  it('handles a cyclic non-abort cause without hanging or suppressing the network error', async () => {
+    const cycle = new Error('offline') as Error & { cause: unknown };
+    cycle.cause = cycle;
+    globalThis.fetch = vi.fn(async () => {
+      throw cycle;
+    });
+    const notify = vi.spyOn(toast, 'error');
+    await expect(api('ping')).rejects.toThrow('offline');
+    expect(notify).toHaveBeenCalledOnce();
+  });
+
   it('throws on a non-2xx response', async () => {
     mockFetchOnce(400, { error: { code: 'BAD_REQUEST', message: 'nope' } });
 
@@ -44,10 +102,9 @@ describe('api (Shared/Lib/Http ofetch client)', () => {
 
     await expect(api('ping')).rejects.toThrow();
 
-    expect(toastErrorSpy).toHaveBeenCalledWith(
-      'bad request',
-      expect.objectContaining({ id: expect.any(String) }),
-    );
+    expect(toastErrorSpy).toHaveBeenCalledWith('bad request', {
+      id: 'api:GET:/api/core/ping',
+    });
   });
 
   it('extracts field errors via getFieldError, without duplicating the toast when suppressed', async () => {
@@ -72,18 +129,63 @@ describe('api (Shared/Lib/Http ofetch client)', () => {
     expect(toastErrorSpy).not.toHaveBeenCalled();
   });
 
-  it('surfaces network failures', async () => {
-    globalThis.fetch = vi.fn(async () => {
-      throw new TypeError('offline');
-    }) as unknown as typeof fetch;
-    const toastErrorSpy = vi.spyOn(toast, 'error');
+  it.each([
+    ['Choose a different alias.', 'Choose a different alias.'],
+    ['', ''],
+    [undefined, undefined],
+    [42, undefined],
+    [false, undefined],
+    [null, undefined],
+    [{ message: 'Not a string' }, undefined],
+    [['Not a string'], undefined],
+  ])(
+    'returns only string field errors for value %j',
+    async (value, expected) => {
+      mockFetchOnce(400, { error: { fields: { alias: value } } });
+      let caught: unknown;
+      try {
+        await api('ping', { headers: suppressToastHeader });
+      } catch (error) {
+        caught = error;
+      }
+      expect(caught).toBeInstanceOf(FetchError);
+      expect(getFieldError(caught, 'alias')).toBe(expected);
+      expect(getFieldError(caught, 'missing')).toBeUndefined();
+    },
+  );
 
-    await expect(api('ping')).rejects.toThrow('offline');
+  it.each([undefined, null])(
+    'surfaces network failures with cause=%s',
+    async (cause) => {
+      globalThis.fetch = vi.fn(async () => {
+        const error = new TypeError('offline') as TypeError & {
+          cause: unknown;
+        };
+        error.cause = cause;
+        throw error;
+      }) as unknown as typeof fetch;
+      const toastErrorSpy = vi.spyOn(toast, 'error');
 
-    expect(toastErrorSpy).toHaveBeenCalledWith(
-      'Something went wrong. Please try again.',
-      expect.objectContaining({ id: expect.any(String) }),
-    );
+      await expect(api('ping')).rejects.toThrow('offline');
+
+      expect(toastErrorSpy).toHaveBeenCalledWith(
+        'Something went wrong. Please try again.',
+        { id: 'api:/api/core/ping' },
+      );
+    },
+  );
+
+  it('keeps error toast identities distinct across request methods and paths', async () => {
+    mockFetchOnce(400, {});
+    const notify = vi.spyOn(toast, 'error');
+
+    await expect(api('link/one', { method: 'PATCH' })).rejects.toThrow();
+    await expect(api('link/two', { method: 'DELETE' })).rejects.toThrow();
+
+    expect(notify.mock.calls).toEqual([
+      ['Something went wrong. 400', { id: 'api:PATCH:/api/core/link/one' }],
+      ['Something went wrong. 400', { id: 'api:DELETE:/api/core/link/two' }],
+    ]);
   });
 
   it('suppresses network failure toasts when the caller handles them', async () => {
