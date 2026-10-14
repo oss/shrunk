@@ -78,7 +78,7 @@ type-check:
 
 pylint:
   stage: lint
-  image: python:latest
+  image: python:3.14
   script:
     - apt-get update
     - apt-get install -y gcc libldap-common libldap2-dev libsasl2-dev
@@ -94,7 +94,7 @@ pylint:
 mypy:
   # stage: lint
   when: manual
-  image: python:latest
+  image: python:3.14
   script:
     - cd backend
     - curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -107,7 +107,7 @@ mypy:
 
 ruff-lint:
   stage: lint
-  image: python:latest
+  image: python:3.14
   script:
     - apt-get update
     - apt-get install -y gcc libldap-common libldap2-dev libsasl2-dev
@@ -119,7 +119,7 @@ ruff-lint:
 
 ruff-format:
   stage: lint
-  image: python:latest
+  image: python:3.14
   script:
     - apt-get update
     - apt-get install -y gcc libldap-common libldap2-dev libsasl2-dev
@@ -143,13 +143,26 @@ build:
     - .images
   stage: build
   script:
-    - buildah build -t "$CI_REGISTRY_IMAGE/${IMAGE}:${CI_COMMIT_SHA}" ${IMAGE}
-    - buildah push "$CI_REGISTRY_IMAGE/${IMAGE}:${CI_COMMIT_SHA}"
+    - mkdir -p .ci/image-digests
+    - buildah build -t "$CI_REGISTRY_IMAGE/${IMAGE}:${CI_JOB_ID}-ci"
+        --label "org.opencontainers.image.revision=${CI_COMMIT_SHA}"
+        --label "edu.rutgers.shrunk.pipeline-iid=${CI_PIPELINE_IID}" ${IMAGE}
+    - buildah push --digestfile ".ci/image-digests/${IMAGE}" "$CI_REGISTRY_IMAGE/${IMAGE}:${CI_JOB_ID}-ci"
+    - buildah push "$CI_REGISTRY_IMAGE/${IMAGE}:${CI_JOB_ID}-ci" "docker://$CI_REGISTRY_IMAGE/${IMAGE}:${CI_COMMIT_SHA}"
+    - |
+      component=$(printf '%s' "$IMAGE" | tr '[:lower:]-' '[:upper:]_')
+      digest=$(cat ".ci/image-digests/${IMAGE}")
+      printf 'SHRUNK_%s_TEST_IMAGE=%s/%s:%s-ci@%s\n' "$component" "$CI_REGISTRY_IMAGE" "$IMAGE" "$CI_JOB_ID" "$digest" > ".ci/${IMAGE}.env"
+  artifacts:
+    reports:
+      dotenv: .ci/${IMAGE}.env
+    paths:
+      - .ci/image-digests/
 
 backend-test:
   extends: .mongo-service
   image:
-    name: $CI_REGISTRY_IMAGE/backend:${CI_COMMIT_SHA}
+    name: $SHRUNK_BACKEND_TEST_IMAGE
     entrypoint: [""]
   stage: test
   needs:
@@ -169,9 +182,12 @@ backend-test:
     - export SHRUNK_GOOGLE_SAFEBROWSE_API_KEY=$GOOGLE_SAFE_BROWSING_API
     - export SHRUNK_REPLICA_SET_NAME="rs0"
     - pytest --junitxml=pytest.xml backend/tests
+    - cp .ci/image-digests/backend .ci/backend-tested
   artifacts:
     reports:
       junit: pytest.xml
+    paths:
+      - .ci/backend-tested
 
 frontend-test:
   stage: test
@@ -184,11 +200,14 @@ frontend-test:
 .accessibility-test:
   extends: .mongo-service
   stage: test
-  image: quay.io/podman/stable
+  image: docker.io/timbru31/node-chrome@sha256:8bf8949f7f14851e274a6ef7d3e214b6a6610c57fc7cc31635521879aa00a5f4
   when: on_success
   allow_failure: false
   variables:
     FF_NETWORK_PER_BUILD: true
+    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
+    PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium
+    PA11Y_URL: frontend:4343
     SHRUNK_DB_HOST: mongo
     SHRUNK_DB_PORT: 27017
     SHRUNK_DB_NAME: shrunk_test
@@ -198,18 +217,18 @@ frontend-test:
     SHRUNK_SECRET_KEY: something_secret
     FLASK_DEBUG: false
     FLASK_APP: shrunk
-  before_script:
-    - podman login -u "$CI_REGISTRY_USER" --password $CI_REGISTRY_PASSWORD $CI_REGISTRY
   services:
     - *mongo_service
-    - name: $CI_REGISTRY_IMAGE/frontend:${CI_COMMIT_SHA}
+    - name: $SHRUNK_FRONTEND_TEST_IMAGE
       alias: frontend
-    - name: $CI_REGISTRY_IMAGE/backend:${CI_COMMIT_SHA}
+    - name: $SHRUNK_BACKEND_TEST_IMAGE
       alias: backend
   script: 
     - mkdir workspace
-    - podman build -t pa11y-ci frontend/pa11y-ci
-    - podman run --network=${CI_BUILD_NETWORK_NAME} -e PA11Y_URL=frontend:4343 -e PA11Y_THEME=${THEME} -e PA11Y_RAW=${PA11Y_RAW} -v ${PWD}/workspace:/workspace pa11y-ci
+    - npm ci --prefix frontend/pa11y-ci --omit=dev --ignore-scripts
+    - PA11Y_THEME=${THEME} sh frontend/pa11y-ci/entrypoint.sh --config frontend/pa11y-ci/.pa11yci.js
+    - mkdir -p ".ci/tested-${THEME}"
+    - cp .ci/image-digests/frontend .ci/image-digests/backend ".ci/tested-${THEME}/"
   artifacts:
     when: always
     reports:
@@ -219,6 +238,10 @@ frontend-test:
 
 accessibility-test:
   extends: .accessibility-test
+  artifacts:
+    paths:
+      - workspace/accessibility-${THEME}.json
+      - .ci/tested-${THEME}/
   parallel:
     matrix:
       - THEME: light
@@ -259,3 +282,38 @@ promote-prod:
   script:
     - skopeo copy "docker://$CI_REGISTRY_IMAGE/${IMAGE}:${CI_COMMIT_SHA}"
                   "docker://$CI_REGISTRY_IMAGE/${IMAGE}:${CI_COMMIT_TAG}"
+
+promote-milestone:
+  extends: .skopeo
+  resource_group: shrunk-milestone-images
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" && $SHRUNK_DEV_TRACKING_BRANCH && $CI_COMMIT_BRANCH == $SHRUNK_DEV_TRACKING_BRANCH'
+  script:
+    - |
+      set -eu
+      printf '%s\n' "$CI_COMMIT_BRANCH" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'
+      release_tag="${CI_COMMIT_BRANCH}-build-${CI_PIPELINE_IID}"
+      test -s .ci/backend-tested
+      test "$(cat .ci/image-digests/backend)" = "$(cat .ci/backend-tested)"
+      for theme in light dark; do
+        for component in frontend backend; do
+          test -s ".ci/tested-${theme}/${component}"
+          test "$(cat ".ci/image-digests/${component}")" = "$(cat ".ci/tested-${theme}/${component}")"
+        done
+      done
+      for component in frontend backend; do
+        repository="${CI_REGISTRY_IMAGE}/${component}"
+        digest=$(cat ".ci/image-digests/${component}")
+        skopeo list-tags "docker://${repository}" > ".ci/${component}-tags.json"
+        if grep -Fq "\"${release_tag}\"" ".ci/${component}-tags.json"; then
+          existing=$(skopeo inspect --format '{{.Digest}}' "docker://${repository}:${release_tag}")
+          test "$existing" = "$digest" || {
+            echo "Refusing to overwrite ${component}:${release_tag}" >&2
+            exit 1
+          }
+        else
+          skopeo copy --preserve-digests "docker://${repository}@${digest}" "docker://${repository}:${release_tag}"
+        fi
+        published=$(skopeo inspect --format '{{.Digest}}' "docker://${repository}:${release_tag}")
+        test "$published" = "$digest"
+      done

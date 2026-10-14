@@ -5,4 +5,4 @@ until node -e "Promise.all(['/api/core/enabled', '/api/core/user/info'].map((pat
   sleep 1
 done
 
-exec /opt/shrunk-pa11y-ci/node_modules/.bin/pa11y-ci "$@"
+exec "$(dirname "$0")/node_modules/.bin/pa11y-ci" "$@"
