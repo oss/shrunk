@@ -16,10 +16,46 @@
           ]
         },
         {
+          "product": "public-api",
           "text": "Expand the public API to support Linktree integrations",
           "contributors": [
+            "sb2787",
             "ys973"
           ]
+        },
+        {
+          "text": "Open an ownership request email when a direct transfer is unavailable",
+          "contributors": [
+            "jds508"
+          ]
+        },
+        {
+          "text": "Add health and readiness endpoints; health checks remain available during database outages",
+          "contributors": [
+            "jds508",
+            "sb2787"
+          ]
+        },
+        {
+          "text": "Let Super Tokens create organizations and NetID-owned links, and fetch links by ID",
+          "contributors": [
+            "ys973"
+          ],
+          "product": "public-api"
+        },
+        {
+          "text": "Let Super Tokens list links a user owns or can access through collaboration or organization membership",
+          "contributors": [
+            "sb2787"
+          ],
+          "product": "public-api"
+        },
+        {
+          "text": "Let Super Tokens delete and restore links, and set or clear expiration dates",
+          "contributors": [
+            "sb2787"
+          ],
+          "product": "public-api"
         }
       ],
       "improvements": [
@@ -44,12 +80,14 @@
         {
           "text": "Combined the overview and links tab in the organizations page in order to reduce clutter",
           "contributors": [
+            "hz675",
             "jds508"
           ]
         }, 
         {
           "text": "Modernized the frontend styling by switching from Ant Design and Highcharts to TailwindCSS V4 with Shadcn Components",
           "contributors": [
+            "sb2787",
             "jds508"
           ]
         },
@@ -81,6 +119,60 @@
           "text": "Improve accessibility throughout the application",
           "contributors": [
             "jds508"
+          ]
+        },
+        {
+          "text": "Run database migrations automatically at startup",
+          "contributors": [
+            "sb2787"
+          ]
+        },
+        {
+          "text": "Load backend configuration from a mounted environment file",
+          "contributors": [
+            "iz80"
+          ]
+        },
+        {
+          "text": "Support MongoDB TLS certificates and a configurable authentication database",
+          "contributors": [
+            "iz80"
+          ]
+        },
+        {
+          "text": "Include users' roles in organization responses",
+          "contributors": [
+            "sb2787"
+          ],
+          "product": "public-api"
+        },
+        {
+          "text": "List organization links at /api/v1/organizations/<org_id>/links. The /api/v1/links/<id> route now fetches one link and requires a Super Token. The legacy organization-and-link detail route remains available",
+          "contributors": [
+            "ys973"
+          ],
+          "product": "public-api",
+          "warning": true
+        },
+        {
+          "text": "Upgrade the backend to Python 3.14 and Flask 3",
+          "contributors": [
+            "ak2399"
+          ]
+        },
+        {
+          "text": "Add OpenShift deployment support and switch to MongoDB replica sets",
+          "contributors": [
+            "sb2787",
+            "iz80"
+          ],
+          "warning": true
+        },
+        {
+          "text": "Configure startup, readiness, and liveness probes so database outages stop backend traffic without triggering repeated restarts",
+          "contributors": [
+            "jds508",
+            "sb2787"
           ]
         }
       ],
@@ -143,6 +235,111 @@
           "text": "Center the dashboard's empty-state message",
           "contributors": [
             "jds508"
+          ]
+        },
+        {
+          "text": "Show consistent request errors and form validation messages",
+          "contributors": [
+            "sb2787",
+            "jds508"
+          ]
+        },
+        {
+          "text": "Fix tracking pixel creation when no destination URL is provided",
+          "contributors": [
+            "ak2399"
+          ]
+        },
+        {
+          "text": "Validate tracking pixel requests before recording visits",
+          "contributors": [
+            "jds508"
+          ]
+        },
+        {
+          "text": "Use the Shibboleth hostname configured at runtime for sign-in",
+          "contributors": [
+            "sb2787"
+          ]
+        },
+        {
+          "text": "Keep requests working when endpoint usage logging fails",
+          "contributors": [
+            "sb2787"
+          ]
+        },
+        {
+          "text": "Include legacy links without a tracking-pixel flag in user-accessible link results",
+          "contributors": [
+            "sb2787"
+          ],
+          "product": "public-api"
+        },
+        {
+          "text": "Reject unsupported access requests for organization-owned links without crashing, and fix blacklisting of user-owned links",
+          "contributors": [
+            "sb2787"
+          ]
+        },
+        {
+          "text": "Trim destination URLs before creating links and show validation errors for short custom aliases",
+          "contributors": [
+            "jds508"
+          ]
+        },
+        {
+          "text": "Prevent stale organization search results from overwriting newer results. Show errors with recovery options when page loading fails",
+          "contributors": [
+            "jds508",
+            "sb2787"
+          ]
+        },
+        {
+          "text": "Validate destinations and aliases when editing links. Check reserved and duplicate aliases after converting them to lowercase",
+          "contributors": [
+            "ys973"
+          ]
+        },
+        {
+          "text": "Allow only organization administrators and Shrunk administrators to rename organizations",
+          "contributors": [
+            "ys973"
+          ]
+        },
+        {
+          "text": "Use UTC for default link visit date ranges",
+          "contributors": [
+            "sb2787"
+          ]
+        },
+        {
+          "text": "Check blocked hostnames consistently, even when destination checks fail",
+          "contributors": [
+            "sb2787"
+          ]
+        },
+        {
+          "text": "Reject malformed URL blocks. Restore links only after all applicable blocks are removed",
+          "contributors": [
+            "sb2787"
+          ]
+        },
+        {
+          "text": "Keep Google Safe Browsing API keys out of error logs",
+          "contributors": [
+            "sb2787"
+          ]
+        },
+        {
+          "text": "Show the NetID or organization owner of links awaiting security review",
+          "contributors": [
+            "sb2787"
+          ]
+        },
+        {
+          "text": "Fix Shibboleth configuration loading in OpenShift to prevent sign-in from returning HTTP 500",
+          "contributors": [
+            "sb2787"
           ]
         }
       ]
