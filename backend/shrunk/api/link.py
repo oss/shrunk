@@ -166,20 +166,20 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
             extension=req["tracking_pixel_extension"],
         )
 
-    except BadLongURLException:
+    except BadLongURLException as error:
         raise ApiProblem(
             403,
             "INVALID_LONG_URL",
             "That destination URL is not allowed.",
             fields={"long_url": "Enter an allowed destination URL."},
-        )
+        ) from error
 
-    except SecurityRiskDetected, LinkIsPendingOrRejected:
+    except (SecurityRiskDetected, LinkIsPendingOrRejected) as error:
         raise ApiProblem(
             403,
             "SECURITY_RISK_DETECTED",
             "This link was identified as a potential security risk. Please contact an administrator if you believe this is incorrect.",
-        )
+        ) from error
 
     except NotUserOrOrg as error:
         raise ApiProblem(
@@ -189,13 +189,13 @@ def create_link(netid: str, client: ShrunkClient, req: Any) -> Any:
             fields={"owner": "Select a valid user or organization."},
         ) from error
 
-    except BadAliasException:
+    except BadAliasException as error:
         raise ApiProblem(
             400,
             "INVALID_ALIAS",
             "That custom alias cannot be used.",
             fields={"alias": "Choose a different alias."},
-        )
+        ) from error
 
     return jsonify({"id": str(link_id), "alias": created_alias}), 201
 
@@ -379,23 +379,23 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
         )
         if "expiration_time" in req and req["expiration_time"] is None:
             client.links.remove_expiration_time(link_id)
-    except BadLongURLException:
+    except BadLongURLException as error:
         raise ApiProblem(
             400,
             "INVALID_LONG_URL",
             "That destination URL is not allowed.",
             fields={"long_url": "Enter an allowed destination URL."},
-        )
-    except BadAliasException:
+        ) from error
+    except BadAliasException as error:
         raise ApiProblem(
             400, "INVALID_ALIAS", "That custom alias cannot be used.", fields={"alias": "Choose a different alias."}
-        )
-    except SecurityRiskDetected, LinkIsPendingOrRejected:
+        ) from error
+    except (SecurityRiskDetected, LinkIsPendingOrRejected) as error:
         raise ApiProblem(
             403,
             "SECURITY_RISK_DETECTED",
             "This link was identified as a potential security risk. Please create a new link instead.",
-        )
+        ) from error
 
     return "", 204
 

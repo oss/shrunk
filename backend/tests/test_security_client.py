@@ -2,6 +2,7 @@
 
 import json
 from datetime import datetime, timezone
+from io import BytesIO
 from typing import cast
 from unittest.mock import Mock
 
@@ -14,8 +15,8 @@ from shrunk.client.security import SecurityClient
 from shrunk.client.exceptions import InvalidStateChange, LinkIsPendingOrRejected, NoSuchObjectException
 
 
-@pytest.fixture
-def security(monkeypatch: pytest.MonkeyPatch) -> SecurityClient:
+@pytest.fixture(name="security")
+def security_client(monkeypatch: pytest.MonkeyPatch) -> SecurityClient:
     monkeypatch.setenv("SHRUNK_GOOGLE_SAFEBROWSE_ENABLED", "1")
     monkeypatch.setenv("SHRUNK_GOOGLE_SAFEBROWSE_API_KEY", "test-api-key")
     database = Mock()
@@ -26,7 +27,7 @@ def security(monkeypatch: pytest.MonkeyPatch) -> SecurityClient:
 def response(body: object, status: int = 200) -> requests.Response:
     result = requests.Response()
     result.status_code = status
-    result._content = json.dumps(body).encode()
+    result.raw = BytesIO(json.dumps(body).encode())
     return result
 
 
@@ -86,7 +87,7 @@ def test_google_transport_errors_allow_creation(
 
 def test_invalid_google_json_allows_creation(security: SecurityClient, monkeypatch: pytest.MonkeyPatch) -> None:
     invalid = response({})
-    invalid._content = b"not-json"
+    invalid.raw = BytesIO(b"not-json")
     monkeypatch.setattr("shrunk.client.security.requests.post", Mock(return_value=invalid))
     with Flask(__name__).app_context():
         assert security.security_risk_detected("https://example.com") is False

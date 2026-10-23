@@ -182,9 +182,11 @@ function VisitsMap({
     <div className="w-full">
       <ChartContainer
         config={mapChartConfig}
+        responsive={false}
         className="aspect-auto h-[clamp(18rem,50vw,32rem)] w-full"
       >
         <svg
+          className="size-full"
           viewBox={viewBox}
           preserveAspectRatio="xMidYMid meet"
           role="img"
@@ -269,6 +271,45 @@ function VisitsMap({
       >
         <span>{minimum.toLocaleString()}</span>
         <span>{maximum.toLocaleString()}</span>
+      </div>
+      <div className="sr-only">
+        <table>
+          <caption>
+            {joinProperty === 'postal-code'
+              ? 'Visits by US state'
+              : 'Visits by country'}
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Region</th>
+              <th scope="col">Visits</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.length ? (
+              data.map((datum) => {
+                const feature = map.features.find(
+                  (item) =>
+                    String(
+                      item.properties[joinProperty] ?? '',
+                    ).toUpperCase() === datum.code.toUpperCase(),
+                );
+                return (
+                  <tr key={datum.code}>
+                    <th scope="row">
+                      {feature?.properties.name ?? (datum.code || 'Unknown')}
+                    </th>
+                    <td>{datum.value}</td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan={2}>No visit data.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

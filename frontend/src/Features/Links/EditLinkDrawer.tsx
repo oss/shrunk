@@ -56,6 +56,7 @@ export interface Props {
   linkInfo: Link;
   onOk: (values: EditLinkValues) => Promise<void>;
   onCancel: () => void;
+  onRestored: () => void;
 }
 
 export const EditLinkDrawer: React.FC<Props> = ({
@@ -65,6 +66,7 @@ export const EditLinkDrawer: React.FC<Props> = ({
   linkInfo,
   onOk,
   onCancel,
+  onRestored,
 }) => {
   const navigate = useNavigate();
 
@@ -95,6 +97,8 @@ export const EditLinkDrawer: React.FC<Props> = ({
   );
   const [showOwnerConfirm, setShowOwnerConfirm] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
+  const isPending = isSaving || isRestoring;
 
   const currDate = new Date();
   const isExpired =
@@ -120,11 +124,17 @@ export const EditLinkDrawer: React.FC<Props> = ({
   };
 
   const handleRevert = async () => {
+    setIsRestoring(true);
     try {
       await reverLinkExpirationDate(linkInfo._id);
+      setExpirationDate(undefined);
+      setExpirationTime('');
+      onRestored();
       toast.success('Link restored successfully');
     } catch {
       toast.error('Failed to restore link');
+    } finally {
+      setIsRestoring(false);
     }
   };
 
@@ -161,17 +171,16 @@ export const EditLinkDrawer: React.FC<Props> = ({
       return;
     }
 
-    if (!isTrackingPixelLink) {
-      try {
-        await serverValidateLongUrl(values.long_url);
-      } catch {
-        toast.error('Invalid URL');
-        return;
-      }
-    }
-
     setIsSaving(true);
     try {
+      if (!isTrackingPixelLink) {
+        try {
+          await serverValidateLongUrl(values.long_url);
+        } catch {
+          toast.error('Invalid URL');
+          return;
+        }
+      }
       await onOk(values);
     } catch {
       // The caller reports the request failure; keep the drawer open.
@@ -198,7 +207,7 @@ export const EditLinkDrawer: React.FC<Props> = ({
       <Sheet
         open={visible}
         onOpenChange={(open) => {
-          if (!open) {
+          if (!open && !isPending) {
             onCancel();
           }
         }}
@@ -209,7 +218,10 @@ export const EditLinkDrawer: React.FC<Props> = ({
         >
           <SheetHeader className="flex-row items-start justify-between gap-3 space-y-0 text-left">
             <div className="flex min-w-0 items-center gap-2">
-              <SheetClose className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none disabled:pointer-events-none data-[state=open]:bg-secondary">
+              <SheetClose
+                disabled={isPending}
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none disabled:pointer-events-none data-[state=open]:bg-secondary"
+              >
                 <XIcon className="h-4 w-4" />
                 <span className="sr-only">Close</span>
               </SheetClose>
@@ -217,13 +229,15 @@ export const EditLinkDrawer: React.FC<Props> = ({
             </div>
             <div className="flex shrink-0 flex-wrap justify-end gap-2">
               {isExpired && !isRestorable && (
-                <Button onClick={handleRevert}>Restore</Button>
+                <Button onClick={handleRevert} disabled={isPending}>
+                  {isRestoring ? 'Restoring…' : 'Restore'}
+                </Button>
               )}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
                     variant="destructive"
-                    disabled={isDeleted || isExpired}
+                    disabled={isDeleted || isExpired || isPending}
                   >
                     <TrashIcon />
                     Delete
@@ -249,7 +263,7 @@ export const EditLinkDrawer: React.FC<Props> = ({
               <Button
                 onClick={onSave}
                 disabled={
-                  isSaving ||
+                  isPending ||
                   (!isTrackingPixelLink &&
                     (longUrlValidation.status === 'validating' ||
                       longUrlValidation.status === 'invalid'))
@@ -350,6 +364,7 @@ export const EditLinkDrawer: React.FC<Props> = ({
                       <PopoverTrigger asChild>
                         <Button
                           id="edit-expiration"
+                          disabled={isPending}
                           type="button"
                           variant="outline"
                           className="h-9 flex-1 justify-start px-3 text-left text-sm font-normal"
@@ -385,7 +400,7 @@ export const EditLinkDrawer: React.FC<Props> = ({
                       type="time"
                       value={expirationTime}
                       onChange={(e) => setExpirationTime(e.target.value)}
-                      disabled={!expirationDate}
+                      disabled={isPending || !expirationDate}
                       className="h-9 w-28 px-3 text-sm"
                     />
                     {expirationDate && (
@@ -394,6 +409,7 @@ export const EditLinkDrawer: React.FC<Props> = ({
                         size="icon"
                         variant="outline"
                         aria-label="Clear expiration"
+                        disabled={isPending}
                         className="h-9 w-9 shrink-0 px-0"
                         onClick={() => {
                           setExpirationDate(undefined);

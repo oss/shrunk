@@ -1,4 +1,4 @@
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import { QRCodeCanvas } from 'qrcode.react';
 import {
   CloudDownloadIcon,
@@ -25,6 +25,8 @@ import { downloadVisits } from '@/Shared/Lib/Csv';
 import { downloadUrl } from '@/Shared/Lib/Utils';
 import {
   EditLinkValues,
+  Link,
+  VisitDateRange,
   LinkSharedWith,
   StatChart,
   PieDatum,
@@ -232,10 +234,10 @@ export function Stats(): React.ReactElement {
   const [currentSource, setCurrentSource] = useState<string | undefined>(
     undefined,
   );
-  const [visitDateRange, setVisitDateRange] = useState<{
-    start?: Dayjs;
-    end?: Dayjs;
-  } | null>(null);
+  const [visitDateRange, setVisitDateRange] = useState<VisitDateRange>(() => ({
+    start: dayjs().subtract(30, 'day').startOf('day'),
+    end: dayjs().endOf('day'),
+  }));
   const [isExporting, setIsExporting] = useState(false);
 
   const linkQuery = useQuery({
@@ -257,15 +259,15 @@ export function Stats(): React.ReactElement {
       'link-visits',
       id,
       currentSource,
-      visitDateRange?.start?.toISOString(),
-      visitDateRange?.end?.toISOString(),
+      visitDateRange.start.toISOString(),
+      visitDateRange.end.toISOString(),
     ],
     queryFn: () =>
       getLinkVisitsStats(
         id,
         currentSource,
-        visitDateRange?.start,
-        visitDateRange?.end,
+        visitDateRange.start,
+        visitDateRange.end,
       ),
     enabled: linkQuery.isSuccess,
     placeholderData: keepPreviousData,
@@ -339,15 +341,6 @@ export function Stats(): React.ReactElement {
     queryClient.invalidateQueries({ queryKey: ['link-visits', id] });
     queryClient.invalidateQueries({ queryKey: ['link-geoip', id] });
     queryClient.invalidateQueries({ queryKey: ['link-browser', id] });
-  };
-
-  const onVisitStateRangeChanged = (
-    dates: [Dayjs | null, Dayjs | null] | null,
-  ): void => {
-    setVisitDateRange({
-      start: dates?.[0] ?? undefined,
-      end: dates?.[1]?.endOf('day'),
-    });
   };
 
   if (linkQuery.isError) {
@@ -594,7 +587,8 @@ export function Stats(): React.ReactElement {
     Visits: (
       <VisitsChart
         visitStats={visitStats}
-        onRangeChange={onVisitStateRangeChanged}
+        dateRange={visitDateRange}
+        onRangeChange={setVisitDateRange}
       />
     ),
     GeoIP: <GeoipChart data={geoipStats} />,
@@ -990,10 +984,23 @@ export function Stats(): React.ReactElement {
       {linkInfo && (
         <>
           <EditLinkDrawer
+            key={id}
             visible={editModalVisible}
             userPrivileges={userPrivileges}
             netid={netid}
             linkInfo={linkInfo}
+            onRestored={() => {
+              queryClient.setQueryData<Link>(['link', id], (link) =>
+                link
+                  ? { ...link, expiration_time: null, is_expired: false }
+                  : link,
+              );
+              void invalidateLink();
+              void queryClient.invalidateQueries({ queryKey: ['links'] });
+              void queryClient.invalidateQueries({
+                queryKey: ['organization-links'],
+              });
+            }}
             onOk={async (values) => {
               await doEditLink(values);
               setEditModalVisible(false);

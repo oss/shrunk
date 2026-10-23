@@ -1,6 +1,7 @@
 import base64
 import json
 from datetime import datetime, timezone
+from io import BytesIO
 
 import pytest
 import requests
@@ -31,7 +32,7 @@ def safe_browsing(app: Flask, monkeypatch: pytest.MonkeyPatch) -> None:
         body = {"matches": [{"threatType": "MALWARE"}]} if any(e["url"] in unsafe_urls for e in entries) else {}
         response = requests.Response()
         response.status_code = 200
-        response._content = json.dumps(body).encode()
+        response.raw = BytesIO(json.dumps(body).encode())
         return response
 
     monkeypatch.setattr("shrunk.client.security.requests.post", lookup)
@@ -397,7 +398,7 @@ def test_google_failure_api_creation_never_logs_key(
         result = requests.Response()
         result.status_code = 403
         result.url = dummy_url
-        result._content = b"{}"
+        result.raw = BytesIO(b"{}")
         return result
 
     def head(*_args: object, **_kwargs: object) -> None:

@@ -57,7 +57,7 @@ def test_rename_org_permissions(client: Client) -> None:
         resp = client.put(f"/api/core/org/{org_id}/rename/kevinwasheretestrename")
         assert resp.status_code == 403
 
-    """Tests that a user cannot rename an org if they are user of org"""
+    # A regular organization member cannot rename the organization.
 
     with dev_login(client, "admin"):
         resp = client.put(f"/api/core/org/{org_id}/member/DEV_USER")

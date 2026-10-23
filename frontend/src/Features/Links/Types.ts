@@ -75,6 +75,11 @@ export interface VisitDatum {
  * Time-series visit statistics
  * @property
  */
+export interface VisitDateRange {
+  start: Dayjs;
+  end: Dayjs;
+}
+
 export interface VisitStats {
   /**
    * A [[VisitDatum]] for every day in the link's history

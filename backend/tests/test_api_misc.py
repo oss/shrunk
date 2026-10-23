@@ -4,8 +4,9 @@ from types import SimpleNamespace
 from flask import current_app
 import pymongo.errors
 import pytest
-import shrunk
 from werkzeug.test import Client
+
+import shrunk
 
 
 def test_motd(client: Client) -> None:

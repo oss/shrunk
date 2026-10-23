@@ -43,7 +43,7 @@ def test_health_and_ready_without_login_or_database(monkeypatch):
         state["ping_down"] = True
         assert client.get("/api/core/ready").status_code == 503
         assert client.get("/api/core/health").status_code == 200
-        assert visits == []
+        assert not visits
 
         assert client.get("/api/core/enabled").status_code == 200
         assert visits == [(None, "get_features_flag")]

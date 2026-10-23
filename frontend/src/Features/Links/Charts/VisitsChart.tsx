@@ -5,10 +5,10 @@ import {
   type ChartConfig,
 } from '@/Shared/ui/chart';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import React, { useState } from 'react';
-import dayjs, { Dayjs } from 'dayjs';
+import React from 'react';
+import dayjs from 'dayjs';
 import { CalendarIcon } from 'lucide-react';
-import { VisitDatum, VisitStats } from '@/Features/Links/Types';
+import { VisitDatum, VisitDateRange, VisitStats } from '@/Features/Links/Types';
 import { Button } from '@/Shared/ui/button';
 import { ButtonGroup } from '@/Shared/ui/button-group';
 import { Calendar } from '@/Shared/ui/calendar';
@@ -16,10 +16,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/Shared/ui/popover';
 
 type Props = {
   visitStats: VisitStats | null;
-  onRangeChange: (
-    dates: [Dayjs | null, Dayjs | null] | null,
-    dateStrings: [string, string],
-  ) => void;
+  dateRange: VisitDateRange;
+  onRangeChange: (range: VisitDateRange) => void;
 };
 
 const presets = [
@@ -29,11 +27,21 @@ const presets = [
   { label: 'Last year', days: -365 },
 ];
 
-const VisitsChart: React.FC<Props> = ({ visitStats, onRangeChange }) => {
-  const [startDate, setStartDate] = useState<Date>(
-    dayjs().add(-30, 'd').toDate(),
-  );
-  const [endDate, setEndDate] = useState<Date>(new Date());
+const formatVisitDate = (date: number) =>
+  new Date(date).toLocaleDateString('en-US', {
+    timeZone: 'UTC',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+const VisitsChart: React.FC<Props> = ({
+  visitStats,
+  dateRange,
+  onRangeChange,
+}) => {
+  const startDate = dateRange.start.toDate();
+  const endDate = dateRange.end.toDate();
 
   if (visitStats === null) {
     return <></>;
@@ -42,36 +50,20 @@ const VisitsChart: React.FC<Props> = ({ visitStats, onRangeChange }) => {
   const { visits } = visitStats;
 
   const handlePreset = (days: number) => {
-    const start = dayjs().add(days, 'd');
-    const end = dayjs();
-    setStartDate(start.toDate());
-    setEndDate(end.toDate());
-    onRangeChange(
-      [start, end],
-      [start.format('YYYY-MM-DD'), end.format('YYYY-MM-DD')],
-    );
+    onRangeChange({
+      start: dayjs().add(days, 'd').startOf('day'),
+      end: dayjs().endOf('day'),
+    });
   };
 
   const handleStartSelect = (date: Date | undefined) => {
     if (!date) return;
-    setStartDate(date);
-    const start = dayjs(date);
-    const end = dayjs(endDate);
-    onRangeChange(
-      [start, end],
-      [start.format('YYYY-MM-DD'), end.format('YYYY-MM-DD')],
-    );
+    onRangeChange({ ...dateRange, start: dayjs(date).startOf('day') });
   };
 
   const handleEndSelect = (date: Date | undefined) => {
     if (!date) return;
-    setEndDate(date);
-    const start = dayjs(startDate);
-    const end = dayjs(date);
-    onRangeChange(
-      [start, end],
-      [start.format('YYYY-MM-DD'), end.format('YYYY-MM-DD')],
-    );
+    onRangeChange({ ...dateRange, end: dayjs(date).endOf('day') });
   };
 
   const getMsSinceEpoch = (datum: VisitDatum) =>
@@ -208,6 +200,7 @@ const VisitsChart: React.FC<Props> = ({ visitStats, onRangeChange }) => {
             tickFormatter={(value) => {
               const date = new Date(value);
               return date.toLocaleDateString('en-US', {
+                timeZone: 'UTC',
                 month: 'short',
                 day: 'numeric',
               });
@@ -218,14 +211,7 @@ const VisitsChart: React.FC<Props> = ({ visitStats, onRangeChange }) => {
             content={
               <ChartTooltipContent
                 labelFormatter={(_, payload) =>
-                  new Date(payload[0].payload.date).toLocaleDateString(
-                    'en-US',
-                    {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    },
-                  )
+                  payload.length ? formatVisitDate(payload[0].payload.date) : ''
                 }
                 indicator="dot"
               />
@@ -233,6 +219,33 @@ const VisitsChart: React.FC<Props> = ({ visitStats, onRangeChange }) => {
           />
         </AreaChart>
       </ChartContainer>
+      <div className="sr-only">
+        <table>
+          <caption>Daily link visits</caption>
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">Total visits</th>
+              <th scope="col">Unique visits</th>
+            </tr>
+          </thead>
+          <tbody>
+            {chartData.length ? (
+              chartData.map((datum) => (
+                <tr key={datum.date}>
+                  <th scope="row">{formatVisitDate(datum.date)}</th>
+                  <td>{datum.total}</td>
+                  <td>{datum.unique}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={3}>No visit data in the selected date range.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

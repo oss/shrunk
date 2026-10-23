@@ -1,5 +1,6 @@
-import pytest
 from datetime import datetime, timedelta, timezone
+
+import pytest
 from bson import ObjectId
 from werkzeug.test import Client
 from util import dev_login, create_tracking_pixel, assert_is_response_valid

@@ -748,5 +748,6 @@ def create_app(**_kwargs: Any) -> Flask:
             getattr(current_app, "client").record_visit(netid, endpoint or "error")
         except pymongo.errors.PyMongoError:
             current_app.logger.exception("Unable to record endpoint visit")
+        return None
 
     return app
