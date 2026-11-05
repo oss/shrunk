@@ -9,6 +9,8 @@ if [ -n "$SHRUNK_CONFIG_FILE" ]; then
     set +a
 fi
 
+python -c 'from shrunk.startup import validate_startup; validate_startup()'
+
 if [ "$#" -gt 0 ]; then
     exec "$@"
 elif [ "${FLASK_DEBUG:-false}" = "true" ] || [ "${FLASK_DEBUG:-0}" = "1" ]; then

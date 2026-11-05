@@ -2,10 +2,14 @@
 
 from typing import Any, Dict, List, TYPE_CHECKING
 from datetime import datetime, timezone
+import re
+
+from pymongo.errors import ExecutionTimeout
 
 from pymongo.collation import Collation
 import pymongo
 import pymongo.database
+from werkzeug.exceptions import BadRequest, ServiceUnavailable
 
 __all__ = ["SearchClient"]
 
@@ -28,6 +32,15 @@ class SearchClient:
           the search query format
         """
 
+        for field in ("title", "alias", "url", "query", "owner"):
+            if field in query and (not isinstance(query[field], str) or len(query[field]) > 512):
+                raise BadRequest("Search fields must be strings of at most 512 characters.")
+        try:
+            return self._execute_url(user_netid, query)
+        except ExecutionTimeout as exc:
+            raise ServiceUnavailable("Search timed out. Please try again.") from exc
+
+    def _execute_url(self, user_netid: str, query: Dict[str, Any]) -> Dict[str, Any]:
         sets = [item["set"] for item in query["set"]]
 
         # We're going to build up an aggregation pipeline based on the submitted query.
@@ -38,16 +51,16 @@ class SearchClient:
         exact_score_conditions = []
 
         if query.get("title"):
-            search_filters.append({"title": {"$regex": query["title"], "$options": "i"}})
-            exact_score_conditions.append({"$eq": ["$title", query["title"]]})
+            search_filters.append({"title": {"$regex": re.escape(query["title"]), "$options": "i"}})
+            exact_score_conditions.append({"$eq": ["$title", {"$literal": query["title"]}]})
 
         if query.get("alias"):
-            search_filters.append({"alias": {"$regex": query["alias"], "$options": "i"}})
-            exact_score_conditions.append({"$eq": ["$alias", query["alias"]]})
+            search_filters.append({"alias": {"$regex": re.escape(query["alias"]), "$options": "i"}})
+            exact_score_conditions.append({"$eq": ["$alias", {"$literal": query["alias"]}]})
 
         if query.get("url"):
-            search_filters.append({"long_url": {"$regex": query["url"], "$options": "i"}})
-            exact_score_conditions.append({"$eq": ["$long_url", query["url"]]})
+            search_filters.append({"long_url": {"$regex": re.escape(query["url"]), "$options": "i"}})
+            exact_score_conditions.append({"$eq": ["$long_url", {"$literal": query["url"]}]})
 
         if search_filters:
             pipeline.append({"$match": {"$and": search_filters}})
@@ -204,7 +217,7 @@ class SearchClient:
 
         # Execute the query on the urls collection
         # Always use urls collection since shared pipeline also queries urls
-        cursor = self.db.urls.aggregate(pipeline, collation=Collation("en"))
+        cursor = self.db.urls.aggregate(pipeline, collation=Collation("en"), maxTimeMS=1000)
 
         def prepare_result(res: Dict[str, Any]) -> Dict[str, Any]:
             """Turn a result from the DB into something than can be JSON-serialized."""
@@ -278,7 +291,7 @@ class SearchClient:
         """
         pipeline: List[Dict[str, Any]] = []
 
-        orgs_cursor = self.db.organizations.find({"members.netid": user_netid}, {"_id": 1})
+        orgs_cursor = self.db.organizations.find({"members.netid": user_netid}, {"_id": 1}, max_time_ms=1000)
         org_ids = [org["_id"] for org in orgs_cursor]
 
         # Build filter for shared links

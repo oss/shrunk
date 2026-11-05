@@ -45,6 +45,7 @@ from werkzeug.wrappers import Response as WerkzeugResponse
 from . import api, dev_logins, sso, views
 from .api_errors import ApiProblem, http_error_payload
 from .client import ShrunkClient
+from .startup import validate_startup
 from .util.github import pull_outlook_assets_from_github
 from .util.ldap import is_university_guest, is_valid_netid, query_position_info
 from .util.string import get_domain, validate_url
@@ -81,7 +82,7 @@ class Base32Converter(BaseConverter):
 
 class ShrunkJSONProvider(DefaultJSONProvider):
     @staticmethod
-    def default(o: Any) -> Any:  # type: ignore[override]
+    def default(o: Any) -> Any:
         if isinstance(o, ObjectId):
             return str(o)
         if isinstance(o, datetime.datetime):
@@ -235,6 +236,7 @@ def _init_roles() -> None:
 
 
 def create_app(**_kwargs: Any) -> Flask:
+    validate_startup()
     # Backport the datetime.datetime.fromisoformat method. Can be removed
     # once we update to Python 3.7+.
     datetime_fromisoformat.MonkeyPatch.patch_fromisoformat()
@@ -415,7 +417,6 @@ def create_app(**_kwargs: Any) -> Flask:
     app.register_blueprint(api.motd.bp)
     app.register_blueprint(api.request.bp)
     app.register_blueprint(api.security.bp)
-    app.register_blueprint(api.ticket.bp)
     app.register_blueprint(api.user.bp)
     app.register_blueprint(api.userv1.bp)
     app.register_blueprint(api.linkv1.bp)
@@ -506,45 +507,37 @@ def create_app(**_kwargs: Any) -> Flask:
     # webhook for GitHub Actions to alert server of new Outlook add-in release
     @app.route("/outlook/update", methods=["POST"])
     def _outlook_webhook() -> Any:
-        pull_outlook_assets_from_github()
+        data = request.get_data()
         try:
-            data = request.get_data()
-            data_json = json.loads(data)
-            app.logger.info(("GITHUB_OUTLOOK_WEBHOOK_UPDATE_SECRET"))
-
             verify_signature(
                 data,
                 os.getenv("GITHUB_OUTLOOK_WEBHOOK_UPDATE_SECRET"),
                 request.headers.get("X-Hub-Signature-256"),
             )
-
-            app.logger.info("Signature verified. Proceeding with updating Outlook add-in version.")
         except ValueError:
-            app.logger.error("Signature was incorrect or unable to be verified.\n")
+            app.logger.warning("Outlook webhook authentication failed.")
             return "Unauthorized", 401
 
-        github_event = request.headers.get("X-GitHub-Event")
+        try:
+            data_json = json.loads(data)
+        except ValueError, UnicodeDecodeError:
+            return "Bad Request", 400
+        if not isinstance(data_json, dict):
+            return "Bad Request", 400
 
-        def run_update_outlook_script():
+        if request.headers.get("X-GitHub-Event") == "create" and data_json.get("ref_type") == "tag":
             try:
                 pull_outlook_assets_from_github()
             except Exception:  # pylint: disable=broad-exception-caught
-                app.logger.error("Unable to run outlook update function.")
-
-        if github_event == "create":
-            ref_type = data_json["ref_type"]
-            if ref_type == "tag":
-                run_update_outlook_script()
-        else:
-            print("Not a create event. Ignoring.")
-            return "OK"
+                app.logger.exception("Unable to run outlook update function.")
+                return "Update failed", 500
 
         return "OK"
 
-    @app.route("/outlook/assets/<string:env>/<path:filename>", methods=["GET"])
+    @app.route("/outlook/assets/<string:env>/<path:filename>", methods=["GET"], merge_slashes=False)
     def _outlook_assets_prod(env: str, filename: str) -> Any:
         OUTLOOK_PATH = f"/var/www/outlook/{env}"
-        if env not in {"dev", "prod"}:
+        if env in {"dev", "prod"}:
             return send_from_directory(OUTLOOK_PATH, filename)
         return "Bad Request. Env variable was invalid.", 400
 
@@ -556,7 +549,7 @@ def create_app(**_kwargs: Any) -> Flask:
                 "trackingPixel": bool(int(os.getenv("SHRUNK_TRACKING_PIXELS_ENABLED", "0"))),
                 "domains": bool(int(os.getenv("SHRUNK_DOMAINS_ENABLED", "0"))),
                 "googleSafeBrowsing": bool(int(os.getenv("SHRUNK_GOOGLE_SAFEBROWSE_ENABLED", "0"))),
-                "helpDesk": bool(int(os.getenv("SHRUNK_HELP_DESK_ENABLED", "0"))),
+                "helpDesk": False,
             }
         )
 
@@ -609,9 +602,6 @@ def create_app(**_kwargs: Any) -> Flask:
             custom_domain_alias = client.links.get_custom_domain(alias)
             if request_domain != custom_domain_alias:
                 return jsonify({"message": "Domain not found"}), 404
-
-        if long_url is None and not is_tracking_pixel_link:
-            return jsonify({"message": "Link not found4"}), 404
 
         # Get or generate a tracking id
         tracking_id = request.cookies.get("shrunkid") or client.tracking.get_new_id()
@@ -725,7 +715,8 @@ def create_app(**_kwargs: Any) -> Flask:
     def _record_visit() -> Any:
         nonlocal initialized
         endpoint = flask.request.endpoint
-        if endpoint == "health.health":
+        # Webhooks must authenticate before database initialization or visit writes.
+        if endpoint in {"health.health", "_outlook_webhook"}:
             return None
 
         if not initialized:

@@ -1,10 +1,10 @@
 """Database-level interactions for shrunk."""
 
 from datetime import datetime, timezone, timedelta
-import random
+import secrets
 import string
 import re
-import secrets
+from html import escape
 from typing import Optional, List, Set, Any, Dict, Union, cast, Tuple, TYPE_CHECKING
 from functools import lru_cache
 
@@ -12,11 +12,11 @@ import os
 
 from flask import current_app, url_for
 from flask_mailman import Mail
-import requests
+from werkzeug.exceptions import BadRequest, ServiceUnavailable
 import pymongo
 import pymongo.database
 import pymongo.errors
-from pymongo.collection import ReturnDocument
+from pymongo.collection import Collection, ReturnDocument
 from pymongo.client_session import ClientSession
 from pymongo.read_concern import ReadConcern
 from pymongo.read_preferences import ReadPreference
@@ -41,6 +41,7 @@ from shrunk.mongo_schema import (
     PendingAccessRequestDocument,
     VisitCountSummary,
     VisitDocument,
+    VisitorDocument,
 )
 from . import aggregations
 
@@ -110,17 +111,22 @@ class LinksClient:
     def alias_is_duplicate(self, alias: str, is_tracking_pixel: bool) -> bool:
         """Check whether the given alias already exists"""
 
-        # check to see if the alias is already being used
-        result = self.db.urls.find_one(
-            {
-                "$or": [
-                    {"is_tracking_pixel_link": {"$exists": False}},
-                    {"is_tracking_pixel_link": is_tracking_pixel},
-                ],
-                "alias": {"$regex": f"^{alias}$", "$options": "i"},
-                "deleted": False,
-            }
-        )
+        if not isinstance(alias, str) or not 1 <= len(alias) <= 256:
+            raise BadRequest("Alias must contain between 1 and 256 characters.")
+        try:
+            result = self.db.urls.find_one(
+                {
+                    "$or": [
+                        {"is_tracking_pixel_link": {"$exists": False}},
+                        {"is_tracking_pixel_link": is_tracking_pixel},
+                    ],
+                    "alias": {"$regex": f"^{re.escape(alias)}$", "$options": "i"},
+                    "deleted": False,
+                },
+                max_time_ms=1000,
+            )
+        except pymongo.errors.ExecutionTimeout as exc:
+            raise ServiceUnavailable("Alias validation timed out. Please try again.") from exc
         return result is not None
 
     def _long_url_is_phished(self, long_url: str) -> bool:
@@ -149,16 +155,6 @@ class LinksClient:
                 )
             )
         )
-
-    def redirects_to_blocked_url(self, long_url: str) -> bool:
-        """Follows the url to check whether it redirects to a blocked url.
-        :param long_url: The long url to query
-        """
-        try:
-            redirected_url = requests.head(long_url, allow_redirects=True, timeout=0.5).url
-        except requests.exceptions.RequestException:
-            return False
-        return self.long_url_is_blocked(redirected_url)
 
     def id_of_alias(self, alias: str) -> Optional[ObjectId]:
         """Get the ``_id`` field associated with the short url.
@@ -191,9 +187,6 @@ class LinksClient:
             editors = []
 
         if self.long_url_is_blocked(long_url):
-            raise BadLongURLException
-
-        if self.redirects_to_blocked_url(long_url):
             raise BadLongURLException
 
         self.assert_valid_acl_entry("owner", owner)
@@ -289,8 +282,6 @@ class LinksClient:
         alias: Optional[str] = None,
     ) -> None:
         if long_url is not None and self.long_url_is_blocked(long_url):
-            raise BadLongURLException
-        if long_url is not None and self.redirects_to_blocked_url(long_url):
             raise BadLongURLException
         if title is None and long_url is None and expiration_time is None and owner is None and alias is None:
             return
@@ -522,7 +513,7 @@ class LinksClient:
         link_ids: List[ObjectId],
         original_ids: List[str],
         netid: str,
-        entry: Dict[str, Any],
+        entry: MongoRef,
         add: bool,
         acl: str,
     ) -> None:
@@ -861,7 +852,7 @@ class LinksClient:
                 alias = prefix + "-" + alias
             if extension:
                 alias += extension
-            if not self.alias_is_reserved(alias):
+            if not self.alias_is_reserved(alias) and not self.alias_is_duplicate(alias, bool(extension)):
                 return alias
 
     def get_owner(self, link_id: ObjectId) -> LinkOwnerInfo:
@@ -888,8 +879,9 @@ class LinksClient:
         result = self.db.urls.find_one({"_id": link_id})
         if result is None:
             raise NoSuchObjectException
-        if result["owner"]["type"] == "netid":
-            return result["owner"]["_id"] == netid
+        owner: MongoRef = result["owner"]
+        if owner["type"] == "netid":
+            return owner["_id"] == netid
         if self.other_clients.orgs.is_admin(
             ObjectId(result["owner"]["_id"]), netid
         ):  # Org admins have "owner" permissions
@@ -902,7 +894,7 @@ class LinksClient:
             return False
         if self.other_clients.users.has_role(netid, "admin"):
             return True
-        owner = result["owner"]
+        owner: MongoRef = result["owner"]
         if owner["type"] == "netid":
             return owner["_id"] == netid
         return self.other_clients.orgs.is_member(ObjectId(owner["_id"]), netid)
@@ -1028,7 +1020,7 @@ class LinksClient:
     def get_endpoint_stats(self) -> List[EndpointStatsRow]:
         """Summarizes of the information in the endpoint_statistics collection."""
 
-        def ignore_endpoint(endpoint: str) -> Any:
+        def ignore_endpoint(endpoint: str) -> Dict[str, Any]:
             return {"$match": {"endpoint": {"$not": {"$eq": endpoint}}}}
 
         IGNORE_ENDPOINTS = [
@@ -1039,25 +1031,19 @@ class LinksClient:
             "shrunk.render_login",
         ]
 
-        return cast(
-            List[EndpointStatsRow],
-            list(
-                self.db.endpoint_statistics.aggregate(
-                    [
-                        {
-                            "$group": {
-                                "_id": {"endpoint": "$endpoint"},
-                                "total_visits": {"$sum": "$count"},
-                                "unique_visits": {"$sum": 1},
-                            }
-                        },
-                        {"$addFields": {"endpoint": "$_id.endpoint"}},
-                        {"$project": {"_id": 0}},
-                    ]
-                    + [ignore_endpoint(ep) for ep in IGNORE_ENDPOINTS]
-                )
-            ),
-        )
+        pipeline: List[Dict[str, Any]] = [
+            {
+                "$group": {
+                    "_id": {"endpoint": "$endpoint"},
+                    "total_visits": {"$sum": "$count"},
+                    "unique_visits": {"$sum": 1},
+                }
+            },
+            {"$addFields": {"endpoint": "$_id.endpoint"}},
+            {"$project": {"_id": 0}},
+        ]
+        pipeline.extend(ignore_endpoint(ep) for ep in IGNORE_ENDPOINTS)
+        return cast(List[EndpointStatsRow], list(self.db.endpoint_statistics.aggregate(pipeline)))
 
     def get_link_info(self, link_id: ObjectId, is_tracking_pixel: Optional[bool] = None) -> LinkDocument:
         if is_tracking_pixel:
@@ -1074,7 +1060,7 @@ class LinksClient:
             self.db.urls.find_one({"alias": alias, "deleted": False}),
         )
 
-    def _verify_link_alias_is_valid(self, alias):
+    def _verify_link_alias_is_valid(self, alias: str) -> Optional[LinkDocument]:
         """
         Finds a link by an alias and verifies that it is still valid
         """
@@ -1124,7 +1110,7 @@ class LinksClient:
             return None
 
         # Link exists and is valid; return its long URL
-        return cast(str, result["long_url"])
+        return result["long_url"]
 
     def get_custom_domain(self, alias: str) -> Optional[str]:
         """Given a short URL, returns the domain.
@@ -1141,7 +1127,7 @@ class LinksClient:
         if result is None:
             return ""
 
-        return cast(str, result.get("domain", ""))
+        return result.get("domain", "")
 
     def visit(
         self,
@@ -1207,16 +1193,17 @@ class LinksClient:
         self.db.visits.insert_one(doc)
 
     @lru_cache(maxsize=2048)
-    def get_visitor_id(self, ipaddr: str) -> str:
+    def get_visitor_id(self, ipaddr: str) -> ObjectId:
         """Gets a unique, opaque identifier for an IP address.
 
         :param ipaddr: a string containing an IPv4 address.
 
         :returns:
-          A hexadecimal string which uniquely identifies the given IP address.
+          A Mongo ObjectId which uniquely identifies the given IP address.
         """
         rec = {"ip": str(ipaddr)}
-        res = self.db.visitors.find_one_and_update(
+        visitors: Collection[VisitorDocument] = self.db.visitors
+        res = visitors.find_one_and_update(
             rec,
             {"$setOnInsert": {"ip": str(ipaddr)}},
             upsert=True,
@@ -1356,15 +1343,15 @@ Please do not reply to this email. You may direct any questions to oss@oit.rutge
         </style>
     </head>
     <body>
-        <p>Dear {owner_netid},</p>
+        <p>Dear {escape(owner_netid)},</p>
 
-        <p>You are receiving this message because the user <span class="requesting-user">{requesting_netid}</span>
-        has requested access to edit your link &ldquo;{link_info["title"]}&rdquo;. Please use the buttons
+        <p>You are receiving this message because the user <span class="requesting-user">{escape(requesting_netid)}</span>
+        has requested access to edit your link &ldquo;{escape(link_info["title"])}&rdquo;. Please use the buttons
         below to accept or deny the request.</p>
 
         <div>
-            <a class="btn accept" href="{accept_url}">Accept request</a>
-            <a class="btn deny" href="{deny_url}">Deny request</a>
+            <a class="btn accept" href="{escape(accept_url)}">Accept request</a>
+            <a class="btn deny" href="{escape(deny_url)}">Deny request</a>
         </div>
 
         <p>Please do not reply to this email. You may direct any questions to
@@ -1470,7 +1457,7 @@ Please do not reply to this email. You may direct any questions to oss@oit.rutge
     def _generate_unique_key(cls) -> str:
         """Generates a unique key."""
 
-        return cls._base_encode(random.randint(cls.URL_MIN, cls.URL_MAX))
+        return cls._base_encode(cls.URL_MIN + secrets.randbelow(cls.URL_MAX - cls.URL_MIN + 1))
 
     @classmethod
     def _base_encode(cls, integer: int) -> str:

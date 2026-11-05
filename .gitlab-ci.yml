@@ -19,7 +19,7 @@ cache:
       - IMAGE: ["frontend", "backend", "shib-sp"]
 
 .buildah:
-  image: quay.io/buildah/stable
+  image: quay.io/buildah/stable:v1.43.5@sha256:a6f96bfffc47f36462985573d85e87f782bf2d8b37e02cb3dd307713bfa6cc13
   variables:
     STORAGE_DRIVER: vfs
     BUILDAH_ISOLATION: chroot
@@ -28,7 +28,7 @@ cache:
 
 .skopeo:
   image:
-    name: quay.io/skopeo/stable
+    name: quay.io/skopeo/stable:v1.22.3@sha256:2681eccb8b02c495b013c2669cbf7f41d5c0b0b0e644e7c69bd3ea9bcb20641f
     entrypoint: [""]
   stage: promote
   before_script:
@@ -37,7 +37,7 @@ cache:
 .mongo-service:
   services:
     - &mongo_service
-      name: mongo:7
+      name: mongo:7.0.45-jammy@sha256:8bb4442761a63a8dda452744082cdac9644b429807eb977b42324a63cef59ca4
       alias: mongo
       command:
         - sh
@@ -59,7 +59,7 @@ cache:
 
 eslint:
   stage: lint
-  image: node:latest
+  image: node:26.13.0-trixie@sha256:6c6f2679f5b655c7c6091a34b81372b5962ca9f25d897a501d613742f922567b
   script:
     - cd frontend
     - npm ci --cache .npm --prefer-offline
@@ -70,7 +70,7 @@ eslint:
 
 type-check:
   stage: lint
-  image: node:latest
+  image: node:26.13.0-trixie@sha256:6c6f2679f5b655c7c6091a34b81372b5962ca9f25d897a501d613742f922567b
   script:
     - cd frontend
     - npm ci --cache .npm --prefer-offline
@@ -78,7 +78,7 @@ type-check:
 
 react-doctor:
   stage: lint
-  image: node:24-bookworm
+  image: node:24.22.1-bookworm@sha256:d862bb5d082c5ae0210ac07e8c0344cb8cf7bef6d78e9b8c50c179da923108ea
   interruptible: true
   variables:
     CI: "true"
@@ -100,13 +100,26 @@ react-doctor:
 
 pylint:
   stage: lint
-  image: python:3.14
+  image: python:3.14.10-trixie@sha256:22caa054c0d309b1eee6f448326a8821a674a75b98653247fe706db90491fc87
   script:
     - apt-get update
     - apt-get install -y gcc libldap-common libldap2-dev libsasl2-dev
     - cd backend
-    - curl -LsSf https://astral.sh/uv/install.sh | sh
-    - source $HOME/.local/bin/env
+    # Official uv PyPI Linux wheels; hashes verified against the 0.13.6 release.
+    - &install_uv |
+      python -m pip install --only-binary=:all: --no-deps --require-hashes -r /dev/stdin <<'EOF'
+      uv==0.13.6 \
+          --hash=sha256:7ec5486476d67a4214c460b5492393ee2300d84e1de17b293100a019b413568b \
+          --hash=sha256:710c68ea4853aaf70ab2d0ccf2e147dee59449f035a1f8fe7759f087a31cdbf5 \
+          --hash=sha256:d4d7026c7327dd11fc2c0d4bae4735ff6944293d370644f35d2e6e917cdcae04 \
+          --hash=sha256:46c2ef1f744f20007be0cdd66db3022bb1ddcac477c754efda875e401a48d810 \
+          --hash=sha256:b2d25a49d135a441f688a6869d6d8062fb6f0a2e3e32e18b72c9de1d0eb9521e \
+          --hash=sha256:b9f57153fc98b7aa41dd6720e3de7578747f60b7bff22f50b76dcc47205bdde3 \
+          --hash=sha256:22759b8895e1103578de6fb4cd27e94b4399d021023378d29f01333717751fba \
+          --hash=sha256:2e9a99100abe4f99605366974c4f9fe27f236615e05de8e78c0f357e38f09f97 \
+          --hash=sha256:1cd4b0a35fa599b83da5437748150319ae0917c522da60898327645382942faa \
+          --hash=sha256:8542dcf118ce8a7cf2e4ba1fea7f5cc1638bc02b5b30dab1ead7e9034dc62fd3
+      EOF
     - uv sync
     - uv run pylint --exit-zero --output-format=junit shrunk tests/*.py > pylint.xml
   artifacts:
@@ -116,11 +129,10 @@ pylint:
 mypy:
   # stage: lint
   when: manual
-  image: python:3.14
+  image: python:3.14.10-trixie@sha256:22caa054c0d309b1eee6f448326a8821a674a75b98653247fe706db90491fc87
   script:
     - cd backend
-    - curl -LsSf https://astral.sh/uv/install.sh | sh
-    - source $HOME/.local/bin/env
+    - *install_uv
     - uv sync
     - uv run mypy --junit-xml=./mypy.xml .
   artifacts:
@@ -129,31 +141,29 @@ mypy:
 
 ruff-lint:
   stage: lint
-  image: python:3.14
+  image: python:3.14.10-trixie@sha256:22caa054c0d309b1eee6f448326a8821a674a75b98653247fe706db90491fc87
   script:
     - apt-get update
     - apt-get install -y gcc libldap-common libldap2-dev libsasl2-dev
     - cd backend
-    - curl -LsSf https://astral.sh/uv/install.sh | sh
-    - source $HOME/.local/bin/env
+    - *install_uv
     - uv sync
     - uv run ruff check
 
 ruff-format:
   stage: lint
-  image: python:3.14
+  image: python:3.14.10-trixie@sha256:22caa054c0d309b1eee6f448326a8821a674a75b98653247fe706db90491fc87
   script:
     - apt-get update
     - apt-get install -y gcc libldap-common libldap2-dev libsasl2-dev
     - cd backend
-    - curl -LsSf https://astral.sh/uv/install.sh | sh
-    - source $HOME/.local/bin/env
+    - *install_uv
     - uv sync
     - uv run ruff format --check
 
 prettier:
   stage: lint
-  image: node:latest
+  image: node:26.13.0-trixie@sha256:6c6f2679f5b655c7c6091a34b81372b5962ca9f25d897a501d613742f922567b
   script:
     - cd frontend
     - npm ci --cache .npm --prefer-offline
@@ -200,6 +210,8 @@ backend-test:
     - export SHRUNK_DB_NAME=shrunk_test
     - export SHRUNK_DB_PORT=27017
     - export SHRUNK_FLASK_TESTING=1
+    - export SHRUNK_DEV_LOGINS=1
+    - export SHRUNK_SECRET_KEY=isolated-ci-session-key
     - export SHRUNK_GOOGLE_SAFEBROWSE_ENABLED=1
     - export SHRUNK_GOOGLE_SAFEBROWSE_API_KEY=$GOOGLE_SAFE_BROWSING_API
     - export SHRUNK_REPLICA_SET_NAME="rs0"
@@ -213,7 +225,7 @@ backend-test:
 
 frontend-test:
   stage: test
-  image: node:latest
+  image: node:26.13.0-trixie@sha256:6c6f2679f5b655c7c6091a34b81372b5962ca9f25d897a501d613742f922567b
   script:
     - cd frontend
     - npm ci --cache .npm --prefer-offline
@@ -234,6 +246,7 @@ frontend-test:
     SHRUNK_DB_PORT: 27017
     SHRUNK_DB_NAME: shrunk_test
     SHRUNK_REPLICA_SET_NAME: rs0
+    SHRUNK_FLASK_TESTING: 1
     SHRUNK_DEV_LOGINS: 1
     SHRUNK_SEED_DATABASE: 1
     SHRUNK_SECRET_KEY: something_secret

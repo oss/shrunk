@@ -253,6 +253,8 @@ def get_user_info() -> Any:
     client = cast(ShrunkClient, getattr(current_app, "client"))
     netid = user.get("netid", "")
     user_data = client.users.get_user(netid)
+    if user_data is not None and "blacklisted" in user_data.get("roles", []):
+        abort(403)
 
     return jsonify(
         {

@@ -8,7 +8,6 @@ from . import (
     admin,
     request,
     security,
-    ticket,
     user,
     health,
 )
@@ -22,7 +21,6 @@ __all__ = [
     "motd",
     "request",
     "security",
-    "ticket",
     "user",
     "userv1",
     "linkv1",

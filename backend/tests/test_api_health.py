@@ -7,6 +7,7 @@ import shrunk
 
 
 def test_health_and_ready_without_login_or_database(monkeypatch):
+    monkeypatch.setenv("SHRUNK_FLASK_TESTING", "1")
     monkeypatch.setenv("SHRUNK_SECRET_KEY", "test")
     monkeypatch.setattr(shrunk, "_init_logging", lambda: None)
 
@@ -50,3 +51,11 @@ def test_health_and_ready_without_login_or_database(monkeypatch):
 
     state["init_down"] = True
     assert shrunk.create_app().test_client().get("/api/core/ready").status_code == 503
+
+
+def test_ticket_routes_are_absent(monkeypatch):
+    monkeypatch.setenv("SHRUNK_FLASK_TESTING", "1")
+    monkeypatch.setenv("SHRUNK_SECRET_KEY", "test")
+    monkeypatch.setenv("SHRUNK_HELP_DESK_ENABLED", "1")
+    app = shrunk.create_app()
+    assert not any("ticket" in rule.rule for rule in app.url_map.iter_rules())

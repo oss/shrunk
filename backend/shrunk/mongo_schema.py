@@ -30,7 +30,6 @@ __all__ = [
     "AccessTokenDocument",
     "AccessTokenSummaryDocument",
     "GrantDocument",
-    "TicketDocument",
     "EndpointStatisticDocument",
     "EndpointStatsRow",
     "PhishTankDocument",
@@ -141,6 +140,8 @@ class LinkDocument(TypedDict, total=False):
     editors: Required[List[LinkAclEntry]]
     is_tracking_pixel_link: Required[bool]
     created_using_api: Required[bool]
+    canDelete: bool
+    canTransfer: bool
     is_trackingpixel_legacy_endpoint: bool
     deleted_by: str
     deleted_time: datetime
@@ -232,20 +233,6 @@ class GrantDocument(TypedDict):
     granted_by: str
     comment: str
     time_granted: datetime
-
-
-class TicketDocument(TypedDict, total=False):
-    _id: ObjectId
-    reporter: Required[str]
-    reason: Required[str]
-    entity: str
-    user_comment: Required[str]
-    status: Required[str]
-    created_time: Required[float]
-    actioned_by: str
-    actioned_time: float
-    admin_review: str
-    is_role_granted: bool
 
 
 class EndpointStatisticDocument(TypedDict):

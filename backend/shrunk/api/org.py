@@ -216,7 +216,7 @@ def get_org_links(netid: str, client: ShrunkClient, org_id: ObjectId) -> Any:
         if link["owner"]["type"] == "netid":
             is_link_owner = link["owner"]["_id"] == netid
         else:
-            is_link_owner = client.orgs.is_admin(link["owner"]["_id"], netid)
+            is_link_owner = client.orgs.is_admin(ObjectId(link["owner"]["_id"]), netid)
         can_own_manage = is_admin or is_link_owner
         link["canDelete"] = not deleted and can_own_manage
         link["canTransfer"] = not deleted and can_own_manage
@@ -463,10 +463,8 @@ def put_org_guest(netid: str, client: ShrunkClient, org_id: ObjectId, member_net
         return "Guest user already belongs to an organization", 400
 
     if client.orgs.create_member(org_id, member_netid, "guest"):
-        if client.users.get_user(member_netid) is None:
-            client.users.initialize_user(member_netid, "guest", netid)
-        else:
-            client.users.grant_role(netid, member_netid, "guest")
+        client.users.initialize_user(member_netid, [], netid)
+        client.orgs.grant_guest_access(org_id, member_netid, netid)
 
     return "", 204
 

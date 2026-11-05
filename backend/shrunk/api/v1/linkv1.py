@@ -20,6 +20,7 @@ from shrunk.client.exceptions import (
 from shrunk.mongo_schema import MongoRef
 from shrunk.util.decorators import request_schema, require_token
 from shrunk.util.string import validate_url
+from shrunk.util.visits import anonymize_visit
 
 __all__ = ["bp"]
 bp = Blueprint("linkv1", __name__, url_prefix="/api/v1/links")
@@ -109,7 +110,7 @@ def create_link(token_owner: MongoRef, client: ShrunkClient, req: Any) -> Any:
                 400,
             )
 
-        owner = {"_id": requested_owner_netid, "type": "netid"}
+        owner: MongoRef = {"_id": requested_owner_netid, "type": "netid"}
 
     else:
         if org_id is not None:
@@ -457,67 +458,46 @@ def get_link(token_owner: MongoRef, client: ShrunkClient, link_id: ObjectId) -> 
     return jsonify(json_info), 200
 
 
+VISIT_FILTER_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        key: {
+            "anyOf": [
+                {"type": "string"},
+                {"type": "array", "items": {"type": "string"}},
+                {"type": "null"},
+            ]
+        }
+        for key in ("mid", "uid")
+    },
+}
+
+
 @bp.route("/<ObjectId:org_id>/<ObjectId:link_id>/visits", methods=["POST"])
 @require_token(required_permission="read:links")
-def get_link_visits(token_owner: MongoRef, client: ShrunkClient, org_id: ObjectId, link_id: ObjectId) -> Any:
-    """``POST /api/v1/links/<org_id>/<link_id>/visits``
+@request_schema(VISIT_FILTER_SCHEMA)
+def get_link_visits(req: Any, token_owner: MongoRef, client: ShrunkClient, org_id: ObjectId, link_id: ObjectId) -> Any:
+    """Return anonymized visits for an organization-owned link.
 
-    Get advanced information about visits to an organization-owned link.
-    :param token_owner:
-    :param client:
-    :param org_id:
-    :param link_id:
-
-    ```query: {
-        "mid": str | list[str] | None,
-        "uid": str | list[str] | None,
-    }
-    ```
+    Requires a JSON object. Absent/null mid or uid means no filter; a string
+    matches literally and a list matches any supplied string (empty matches none).
+    Organization tokens are confined to their own org. Supertokens may select
+    any org, but the link must still belong to that org.
     """
+    if token_owner["type"] == "org" and org_id != token_owner["_id"]:
+        return jsonify({"error": {"code": "ORG_TOKEN_MISMATCH", "message": "Organization mismatch"}}), 403
+    if token_owner["type"] not in ("org", "netid"):
+        return jsonify({"error": {"code": "INSUFFICIENT_PERMISSIONS", "message": "Invalid token owner"}}), 403
 
     try:
-        data = request.get_json()
-    except Exception:
-        data = {}
-
-    if data is None:
-        data = {}
-
-    mid = data.get("mid", None)
-    uid = data.get("uid", None)
-
-    if token_owner["type"] == "org":
-        if org_id != token_owner["_id"]:
-            return (
-                jsonify(
-                    {
-                        "error": {
-                            "code": "LINK_TOKEN_MISMATCH",
-                            "message": "Link mismatch",
-                            "details": "The provided link_id does not match the link associated with your access token",
-                        }
-                    }
-                ),
-                403,
-            )
-
-    try:
-        info = client.links.get_visits(link_id, mid=mid, uid=uid)
+        owner = client.links.get_owner(link_id)
+        if owner["type"] != "org" or owner["_id"] != org_id:
+            return jsonify({"error": {"code": "ORG_ISNT_OWNER", "message": "Organization is not the owner"}}), 403
+        visits = client.links.get_visits(link_id, mid=req.get("mid"), uid=req.get("uid"))
+        return jsonify({"visits": [anonymize_visit(client, visit) for visit in visits]}), 200
     except NoSuchObjectException:
-        return (
-            jsonify(
-                {
-                    "error": {
-                        "code": "NO_SUCH_OBJECT",
-                        "message": "Link not found",
-                        "details": "This link does not exist or the id is invalid.",
-                    }
-                }
-            ),
-            404,
-        )
-
-    return jsonify({"visits": list(info)}), 200
+        return jsonify({"error": {"code": "NO_SUCH_OBJECT", "message": "Link not found"}}), 404
 
 
 @bp.route("/<ObjectId:link_id>", methods=["PATCH"])

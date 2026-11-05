@@ -1,7 +1,7 @@
 """Implements API endpoints under ``/api/link``"""
 
 from datetime import datetime, timedelta, timezone
-from typing import Any, Optional, Dict, List, Mapping, Sequence
+from typing import Any, Optional, Dict, List, Mapping, Sequence, Iterator
 
 import os
 import csv
@@ -14,6 +14,7 @@ import bson
 import bson.errors
 from werkzeug.exceptions import abort
 
+from shrunk.util.visits import anonymize_visit, spreadsheet_cell
 from shrunk.api_errors import ApiProblem
 from shrunk.client import ShrunkClient
 from shrunk.mongo_schema import MongoRef
@@ -29,7 +30,6 @@ from shrunk.client.exceptions import (
     BulkLinkValidationError,
 )
 from shrunk.util.stats import (
-    get_human_readable_referer_domain,
     browser_stats_from_visits,
 )
 from shrunk.util.ldap import is_valid_netid
@@ -56,7 +56,7 @@ ACL_ENTRY_SCHEMA = {
     },
 }
 
-CREATE_LINK_SCHEMA = {
+CREATE_LINK_SCHEMA: Dict[str, Any] = {
     "type": "object",
     "additionalProperties": False,
     "properties": {
@@ -346,6 +346,8 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
     if link.get("alias", "").startswith("who-") and not client.users.has_role(netid, "admin"):
         abort(403)
     if "alias" in req:
+        if not client.users.has_role(netid, "admin") and not client.users.has_role(netid, "power_user"):
+            abort(403)
         if client.links.alias_is_duplicate(req["alias"], link.get("is_tracking_pixel_link", False)):
             raise ApiProblem(
                 400,
@@ -360,8 +362,6 @@ def modify_link(netid: str, client: ShrunkClient, req: Any, link_id: ObjectId) -
                 "That alias is reserved and cannot be used.",
                 fields={"alias": "Choose a different alias."},
             )
-        if not client.users.has_role(netid, "admin") and not client.users.has_role(netid, "power_user"):
-            abort(403)
 
     if "owner" in req:
         if not client.users.has_role(netid, "admin") and not client.links.is_owner(link_id, netid):
@@ -791,32 +791,6 @@ def request_exists(netid: str, client: ShrunkClient, mail: Mail, link_id: Object
     return jsonify(exists)
 
 
-def anonymize_visit(client: ShrunkClient, visit: Any) -> Any:
-    """Anonymize a visit by replacing its source IP with an opaque visitor ID.
-
-    :param client:
-    :param visit:
-    """
-
-    visit_anonymized = {
-        "link_id": visit["link_id"],
-        "alias": visit["alias"],
-        "visitor_id": client.links.get_visitor_id(visit["source_ip"]),
-        "user_agent": visit.get("user_agent", "Unknown"),
-        "referer": get_human_readable_referer_domain(visit.get("referer", "Unknown")),
-        "state_code": (visit.get("state_code", "Unknown") if visit.get("country_code") == "US" else "Unknown"),
-        "country_code": visit.get("country_code", "Unknown"),
-        "time": visit["time"],
-    }
-
-    if "mid" in visit:
-        visit_anonymized["mid"] = visit["mid"]
-    if "uid" in visit:
-        visit_anonymized["uid"] = visit["uid"]
-
-    return visit_anonymized
-
-
 @bp.route("/<ObjectId:link_id>/visits", methods=["GET"])
 @require_login
 def get_link_visits(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
@@ -845,7 +819,7 @@ def get_link_visits(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
         abort(403)
     visits = client.links.get_visits(link_id)
 
-    def generate():
+    def generate() -> Iterator[str]:
         output = StringIO()
         writer = csv.writer(output)
         writer.writerow(
@@ -870,16 +844,19 @@ def get_link_visits(netid: str, client: ShrunkClient, link_id: ObjectId) -> Any:
             anon_visit = anonymize_visit(client, visit)
             writer.writerow(
                 [
-                    anon_visit["link_id"],
-                    anon_visit["alias"],
-                    anon_visit.get("visitor_id", ""),
-                    anon_visit.get("mid", ""),
-                    anon_visit.get("uid", ""),
-                    anon_visit["user_agent"],
-                    anon_visit["referer"],
-                    anon_visit["state_code"],
-                    anon_visit["country_code"],
-                    anon_visit["time"].isoformat(),
+                    spreadsheet_cell(value)
+                    for value in [
+                        anon_visit["link_id"],
+                        anon_visit["alias"],
+                        anon_visit.get("visitor_id", ""),
+                        anon_visit.get("mid", ""),
+                        anon_visit.get("uid", ""),
+                        anon_visit["user_agent"],
+                        anon_visit["referer"],
+                        anon_visit["state_code"],
+                        anon_visit["country_code"],
+                        anon_visit["time"].isoformat(),
+                    ]
                 ]
             )
             yield output.getvalue()

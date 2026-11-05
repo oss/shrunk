@@ -405,7 +405,7 @@ def test_google_failure_api_creation_never_logs_key(
         raise requests.Timeout("Simulated HEAD failure")
 
     monkeypatch.setattr("shrunk.client.security.requests.post", lookup)
-    monkeypatch.setattr("shrunk.client.links.requests.head", head)
+    monkeypatch.setattr("requests.head", head)
     with dev_login(client, "user"):
         created = create_link(client, "Google failure control", "https://allowed.example.test")
         assert created.status_code == 201

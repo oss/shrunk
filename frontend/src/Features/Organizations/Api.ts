@@ -1,3 +1,8 @@
+import {
+  objectIdSegment,
+  netidSegment,
+  pathSegment,
+} from '@/Shared/Lib/ApiPath';
 import { api, suppressToastHeader } from '@/Shared/Lib/Http';
 import {
   Organization,
@@ -26,7 +31,7 @@ export async function getOrganizations(
 }
 
 export async function getOrganization(id: string): Promise<Organization> {
-  const result = await api<any>(`org/${id}`);
+  const result = await api<any>(`org/${objectIdSegment(id)}`);
   return {
     ...result,
     timeCreated: new Date(result.timeCreated),
@@ -43,13 +48,13 @@ export async function getOrganization(id: string): Promise<Organization> {
 export async function getOrganizationStats(
   id: string,
 ): Promise<OrganizationStats> {
-  return api<OrganizationStats>(`org/${id}/stats`);
+  return api<OrganizationStats>(`org/${objectIdSegment(id)}/stats`);
 }
 
 export async function getOrganizationLinks(
   id: string,
 ): Promise<OrganizationLink[]> {
-  const result = await api<any[]>(`org/${id}/links`);
+  const result = await api<any[]>(`org/${objectIdSegment(id)}/links`);
 
   return result.map(
     ({
@@ -74,20 +79,20 @@ export async function createOrg(name: string): Promise<void> {
 
 export async function hasAssociatedUrls(id: string): Promise<boolean> {
   const data = await api<{ hasAssociatedUrls: boolean }>(
-    `org/${id}/hasAssociatedUrls`,
+    `org/${objectIdSegment(id)}/hasAssociatedUrls`,
   );
   return data.hasAssociatedUrls;
 }
 
 export async function deleteOrganization(id: string): Promise<void> {
-  await api(`org/${id}`, { method: 'DELETE' });
+  await api(`org/${objectIdSegment(id)}`, { method: 'DELETE' });
 }
 
 export async function renameOrganization(
   id: string,
   newName: string,
 ): Promise<void> {
-  await api(`org/${id}/rename/${newName}`, {
+  await api(`org/${objectIdSegment(id)}/rename/${pathSegment(newName)}`, {
     method: 'PUT',
     headers: suppressToastHeader,
   });
@@ -97,14 +102,20 @@ export async function addMemberToOrganization(
   organizationId: string,
   netid: string,
 ): Promise<void> {
-  await api(`org/${organizationId}/member/${netid}`, { method: 'PUT' });
+  await api(
+    `org/${objectIdSegment(organizationId)}/member/${netidSegment(netid)}`,
+    { method: 'PUT' },
+  );
 }
 
 export async function addGuestToOrganization(
   organizationId: string,
   netid: string,
 ): Promise<void> {
-  await api(`org/${organizationId}/guest/${netid}`, { method: 'PUT' });
+  await api(
+    `org/${objectIdSegment(organizationId)}/guest/${netidSegment(netid)}`,
+    { method: 'PUT' },
+  );
 }
 
 /**
@@ -115,23 +126,29 @@ export async function setAdminStatusOrganization(
   netid: string,
   role: string,
 ): Promise<void> {
-  await api(`org/${organizationId}/member/${netid}`, {
-    method: 'PATCH',
-    body: { role },
-  });
+  await api(
+    `org/${objectIdSegment(organizationId)}/member/${netidSegment(netid)}`,
+    {
+      method: 'PATCH',
+      body: { role },
+    },
+  );
 }
 
 export async function removeMemberFromOrganization(
   organizationId: string,
   netid: string,
 ): Promise<void> {
-  await api(`org/${organizationId}/member/${netid}`, { method: 'DELETE' });
+  await api(
+    `org/${objectIdSegment(organizationId)}/member/${netidSegment(netid)}`,
+    { method: 'DELETE' },
+  );
 }
 
 export async function getOrganizationVisits(
   organizationId: string,
 ): Promise<{ visits: OrganizationVisitDatum[] }> {
-  return api(`org/${organizationId}/stats/visits`);
+  return api(`org/${objectIdSegment(organizationId)}/stats/visits`);
 }
 
 export async function searchOrgs(

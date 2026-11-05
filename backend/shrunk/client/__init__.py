@@ -13,7 +13,6 @@ from .links import LinksClient
 from .orgs import OrgsClient
 from .search import SearchClient
 from .security import SecurityClient
-from .tickets import TicketsClient
 from .tracking import TrackingClient
 from .users import UserClient
 from .access_token import AccessTokenClient
@@ -67,7 +66,6 @@ class ShrunkClient:
         self.orgs = OrgsClient(db=self.db)
         self.search = SearchClient(db=self.db, client=self)
         self.security = SecurityClient(db=self.db, other_clients=self)
-        self.tickets = TicketsClient(db=self.db)
         self.users = UserClient(db=self.db)
         self.access_tokens = AccessTokenClient(db=self.db)
         self.roles = RolesClient(db=self.db)
@@ -122,7 +120,6 @@ class ShrunkClient:
             "endpoint_statistics",
             "grants",
             "organizations",
-            "tickets",
             "unsafe_links",
             "urls",
             "users",

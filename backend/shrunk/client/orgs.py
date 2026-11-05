@@ -8,8 +8,10 @@ import os
 from bson import ObjectId
 import pymongo
 import pymongo.database
+from pymongo.errors import ExecutionTimeout
 import pymongo.errors
 from pymongo.collation import Collation
+from werkzeug.exceptions import BadRequest, ServiceUnavailable
 
 from shrunk.mongo_schema import (
     GeoIpStatsResult,
@@ -201,13 +203,15 @@ class OrgsClient:
         if org is None:
             return False
 
-        for member in org["members"]:
-            if member["role"] == "guest":
-                self.db.grants.delete_many({"entity": member["netid"]})
-                self.db.organizations.update_one(
-                    {"_id": org_id},
-                    {"$pull": {"members": {"netid": member["netid"]}}},
-                )
+        # A member's role may have changed since its guest grant was issued.
+        self.db.users.update_many(
+            {"roles": {"$elemMatch": {"role": "guest", "organization_id": org_id}}},
+            {"$pull": {"roles": {"role": "guest", "organization_id": org_id}}},
+        )
+        self.db.organizations.update_one(
+            {"_id": org_id},
+            {"$pull": {"members": {"role": "guest"}}},
+        )
 
         result = self.db.organizations.update_one(
             {"_id": org_id, "deleted": False},
@@ -273,9 +277,44 @@ class OrgsClient:
         result = self.db.organizations.update_one(match, update)
         return result.modified_count == 1
 
+    def grant_guest_access(self, org_id: ObjectId, netid: str, grantor: str) -> None:
+        """Grant organization-owned guest access without replacing global grants.
+
+        The caller initializes the user and authorizes organization membership.
+        Independent guest grants retain their original ownership.
+        """
+        self.db.users.update_one(
+            {
+                "netid": netid,
+                "roles": {
+                    "$not": {
+                        "$elemMatch": {
+                            "role": "guest",
+                            "organization_id": {"$in": [None, org_id]},
+                        }
+                    }
+                },
+            },
+            {
+                "$push": {
+                    "roles": {
+                        "role": "guest",
+                        "organization_id": org_id,
+                        "granted_by": grantor,
+                        "comment": "",
+                        "time_granted": datetime.now(timezone.utc),
+                    }
+                }
+            },
+        )
+
     def delete_member(self, org_id: ObjectId, netid: str) -> bool:
-        if self.is_guest(org_id, netid):  # remove access to guest
-            self.db.users.update_one({"netid": netid}, {"$set": {"roles": []}})
+        # Only grants with explicit provenance belong to this organization.
+        # Historical/global guest grants cannot safely be attributed to it.
+        self.db.users.update_one(
+            {"netid": netid},
+            {"$pull": {"roles": {"role": "guest", "organization_id": org_id}}},
+        )
         result = self.db.organizations.update_one(
             {"_id": org_id},
             {"$pull": {"members": {"netid": netid}}},
@@ -363,7 +402,7 @@ class OrgsClient:
         return self.domain_enabled
 
     def get_visit_stats(self, org_id: ObjectId) -> List[OrgVisitStatsRow]:
-        pipeline = [
+        pipeline: List[Dict[str, Any]] = [
             {"$match": {"_id": org_id}},
             {"$unwind": {"path": "$members"}},
             {"$replaceRoot": {"newRoot": "$members"}},
@@ -407,7 +446,7 @@ class OrgsClient:
                 raise NoSuchObjectException
             return cast(List[LinkDocument], list(result))
 
-        pipeline = [
+        pipeline: List[Dict[str, Any]] = [
             {
                 "$match": {
                     "deleted": False,
@@ -474,7 +513,7 @@ class OrgsClient:
         :param org_id: The org ID
         :returns: A list of stats for the org
         """
-        pipeline = [
+        pipeline: List[Dict[str, Any]] = [
             {
                 "$match": {
                     "$or": [
@@ -519,7 +558,7 @@ class OrgsClient:
             {"$project": {"_id": 0}},
         ]
 
-        aggregation = [
+        aggregation: List[Dict[str, Any]] = [
             {"$match": {"_id": org_id}},
             {"$unwind": "$members"},
             {
@@ -558,6 +597,14 @@ class OrgsClient:
         :param netid: The NetID of the user performing the search
         :param query: The search query parameters
         """
+        if "query" in query and (not isinstance(query["query"], str) or len(query["query"]) > 512):
+            raise BadRequest("Search fields must be strings of at most 512 characters.")
+        try:
+            return self._search(netid, query)
+        except ExecutionTimeout as exc:
+            raise ServiceUnavailable("Organization search timed out. Please try again.") from exc
+
+    def _search(self, netid: str, query: Dict[str, Any]) -> Dict[str, Any]:
         pipeline: List[Dict[str, Any]] = [{"$match": {"name": {"$not": {"$regex": "^who-"}}}}]
 
         # Match by name
@@ -603,7 +650,7 @@ class OrgsClient:
         # Filter by Role
         if "filter_role" in query and len(query["filter_role"]) > 0:
             selected_roles = [role for role in query["filter_role"] if role != "not_member"]
-            role_clauses = []
+            role_clauses: List[Dict[str, Any]] = []
 
             if len(selected_roles) > 0:
                 role_clauses.append({"role": {"$in": selected_roles}})
@@ -649,7 +696,7 @@ class OrgsClient:
             }
         )
 
-        cursor = self.db.organizations.aggregate(pipeline, collation=Collation("en"))
+        cursor = self.db.organizations.aggregate(pipeline, collation=Collation("en"), maxTimeMS=1000)
 
         try:
             result = next(cursor)

@@ -2,6 +2,7 @@
 
 from typing import TYPE_CHECKING, Any
 import functools
+import os
 
 from flask import current_app, request, session, jsonify
 from flask_mailman import Mail
@@ -41,6 +42,22 @@ def require_login(func: Any) -> Any:
                 },
             )
             abort(403)
+        # Recheck revocable grants for SSO and legacy guest sessions. Faculty
+        # and staff eligibility comes from authenticated SSO attributes, not a
+        # cached whitelist decision or potentially stale persisted role names.
+        if "employeeType" in session["user"] or "guest_only" in session or client.users.has_role(netid, "guest"):
+            roles = set(client.users.get_user_roles(netid))
+            employee_types = set((session["user"].get("employeeType") or "").split(";"))
+            independent_identity = bool(employee_types.intersection({"FACULTY", "STAFF"})) or netid == os.getenv(
+                "SHRUNK_SUPER_ADMIN"
+            )
+            if (
+                not independent_identity
+                and not roles.intersection({"admin", "facstaff", "whitelisted"})
+                and ("guest" not in roles or not client.users.has_guest_membership(netid))
+            ):
+                session.pop("user", None)
+                abort(403)
         return func(netid, client, *args, **kwargs)
 
     return wrapper

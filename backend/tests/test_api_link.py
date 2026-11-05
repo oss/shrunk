@@ -5,6 +5,7 @@ from datetime import datetime, timezone, timedelta, tzinfo
 import random
 import csv
 from typing import Any, Dict, Tuple, Self
+from unittest.mock import Mock
 
 from bson import ObjectId
 from flask import Flask
@@ -255,7 +256,7 @@ def test_blocked_domain_variants_remain_blocked_when_head_fails(
     def unavailable(*_args: Any, **_kwargs: Any) -> None:
         raise requests.RequestException("Simulated HEAD failure; no network request was made")
 
-    monkeypatch.setattr("shrunk.client.links.requests.head", unavailable)
+    monkeypatch.setattr("requests.head", unavailable)
     monkeypatch.setattr(getattr(app, "client").security, "security_measures_on", False)
     blocked = "https://blocked.example.test"
     encoded = base64.b32encode(blocked.encode()).decode()
@@ -268,7 +269,10 @@ def test_blocked_domain_variants_remain_blocked_when_head_fails(
     assert response.status_code == 403
 
 
-def test_modify_link_bad_alias(client: Client) -> None:
+def test_modify_link_bad_alias(client: Client, app: Flask, monkeypatch: pytest.MonkeyPatch) -> None:
+    backend = getattr(app, "client")
+    modify = Mock(wraps=backend.links.modify)
+    monkeypatch.setattr(backend.links, "modify", modify)
     # test short alias
     alias = "test"
     with dev_login(client, "user"):
@@ -296,7 +300,15 @@ def test_modify_link_bad_alias(client: Client) -> None:
             },
         )
 
+        assert resp.status_code == 403
+        modify.assert_not_called()
+
+    with dev_login(client, "admin"):
+        resp = client.patch(f"/api/core/link/{link_id}", json={"alias": linkAlias})
         assert resp.status_code == 400
+        assert resp.json is not None
+        assert resp.json["error"]["code"] == "ALIAS_TAKEN"
+        modify.assert_not_called()
 
 
 def test_modify_link_bad_long_url(client: Client) -> None:
@@ -1830,7 +1842,7 @@ def test_blocklist_registration_and_link_updates_share_hostname_policy(
     def unavailable(*_args: Any, **_kwargs: Any) -> None:
         raise requests.Timeout("Simulated HEAD failure")
 
-    monkeypatch.setattr("shrunk.client.links.requests.head", unavailable)
+    monkeypatch.setattr("requests.head", unavailable)
     monkeypatch.setattr(getattr(app, "client").security, "security_measures_on", False)
     blocked = "https://one.blocked.example.test"
     encoded = base64.b32encode((blocked + blocked_suffix).encode()).decode()
@@ -1869,7 +1881,7 @@ def test_malformed_authority_is_rejected_without_server_error(
     def unavailable(*_args: Any, **_kwargs: Any) -> None:
         raise requests.Timeout("Simulated HEAD failure")
 
-    monkeypatch.setattr("shrunk.client.links.requests.head", unavailable)
+    monkeypatch.setattr("requests.head", unavailable)
     monkeypatch.setattr(getattr(app, "client").security, "security_measures_on", False)
     with dev_login(client, "user"):
         allowed = create_link(client, "Allowed control", "https://allowed.example.test/path")
@@ -1907,7 +1919,7 @@ def test_legacy_blocklist_records_can_be_listed_and_revoked_exactly(
     def unavailable(*_args: Any, **_kwargs: Any) -> None:
         raise requests.Timeout("Simulated HEAD failure")
 
-    monkeypatch.setattr("shrunk.client.links.requests.head", unavailable)
+    monkeypatch.setattr("requests.head", unavailable)
     database = getattr(app, "client")
     monkeypatch.setattr(database.security, "security_measures_on", False)
     url = base_url + "/path"
@@ -1960,7 +1972,7 @@ def test_new_block_and_unblock_restore_uppercase_urls(
     def unavailable(*_args: Any, **_kwargs: Any) -> None:
         raise requests.Timeout("Simulated HEAD failure")
 
-    monkeypatch.setattr("shrunk.client.links.requests.head", unavailable)
+    monkeypatch.setattr("requests.head", unavailable)
     monkeypatch.setattr(getattr(app, "client").security, "security_measures_on", False)
     with dev_login(client, "user"):
         created = create_link(client, "Before block", url)
@@ -1997,7 +2009,7 @@ def test_revoking_one_block_keeps_other_applicable_blocks(
     def unavailable(*_args: Any, **_kwargs: Any) -> None:
         raise requests.Timeout("Simulated HEAD failure")
 
-    monkeypatch.setattr("shrunk.client.links.requests.head", unavailable)
+    monkeypatch.setattr("requests.head", unavailable)
     database = getattr(app, "client")
     monkeypatch.setattr(database.security, "security_measures_on", False)
     with dev_login(client, "user"):

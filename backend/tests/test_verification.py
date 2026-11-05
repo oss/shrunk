@@ -31,3 +31,9 @@ def test_valid_webhook_signature() -> None:
 def test_invalid_webhook_signature(body: bytes, secret: str, signature: str | None) -> None:
     with Flask(__name__).app_context(), pytest.raises(ValueError, match="signature"):
         verify_signature(body, secret, signature)
+
+
+@pytest.mark.parametrize("secret", [None, ""])
+def test_missing_webhook_secret(secret: str | None) -> None:
+    with Flask(__name__).app_context(), pytest.raises(ValueError, match="secret"):
+        verify_signature(BODY, secret, SIGNATURE)

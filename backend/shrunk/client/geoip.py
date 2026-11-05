@@ -1,6 +1,7 @@
 # shrunk - Rutgers University URL Shortener
 
 from typing import Optional, Tuple
+from ipaddress import ip_address, ip_network
 
 import geoip2.errors
 import geoip2.database
@@ -33,13 +34,18 @@ class GeoipClient:
         if self._geoip is None:
             return unk
 
-        if ipaddr.startswith("172.31"):  # RUWireless (NB)
+        try:
+            address = ip_address(ipaddr)
+        except ValueError:
+            address = None
+
+        if address is not None and address in ip_network("172.31.0.0/16"):  # RUWireless (NB)
             return "Rutgers New Brunswick, New Jersey, United States"
-        if ipaddr.startswith("172.27"):  # RUWireless (NWK)
+        if address is not None and address in ip_network("172.27.0.0/16"):  # RUWireless (NWK)
             return "Rutgers Newark, New Jersey, United States"
-        if ipaddr.startswith("172.24"):  # "Camden Computing Services"
+        if address is not None and address in ip_network("172.24.0.0/16"):  # "Camden Computing Services"
             return "Rutgers Camden, New Jersey, United States"
-        if ipaddr.startswith("172."):
+        if address is not None and address in ip_network("172.16.0.0/12"):
             return "New Jersey, United States"
 
         try:
@@ -66,7 +72,11 @@ class GeoipClient:
     def get_location_codes(self, ipaddr: str) -> Tuple[Optional[str], Optional[str]]:
         if self._geoip is None:
             return None, None
-        if ipaddr.startswith("172."):
+        try:
+            address = ip_address(ipaddr)
+        except ValueError:
+            address = None
+        if address is not None and address in ip_network("172.16.0.0/12"):
             return "NJ", "US"
         try:
             resp = self._geoip.city(ipaddr)

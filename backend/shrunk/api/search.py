@@ -26,10 +26,10 @@ SEARCH_SCHEMA = {
         "show_type",
     ],
     "properties": {
-        "alias": {"type": "string"},
-        "url": {"type": "string"},
-        "title": {"type": "string"},
-        "query": {"type": "string"},
+        "alias": {"type": "string", "maxLength": 512},
+        "url": {"type": "string", "maxLength": 512},
+        "title": {"type": "string", "maxLength": 512},
+        "query": {"type": "string", "maxLength": 512},
         # Accept an array of sets for multi-filter support
         "set": {
             "type": "array",
@@ -103,6 +103,7 @@ SEARCH_SCHEMA = {
         "owner": {
             "type": "string",
             "description": "Filter links by owner netid",
+            "maxLength": 512,
         },
     },
 }
@@ -216,7 +217,7 @@ SEARCH_ORG_SCHEMA = {
     "additionalProperties": False,
     "required": ["sort", "pagination"],
     "properties": {
-        "query": {"type": "string"},
+        "query": {"type": "string", "maxLength": 512},
         "show_all": {"type": "boolean"},
         "filter_deleted": {"type": "boolean"},
         "filter_role": {

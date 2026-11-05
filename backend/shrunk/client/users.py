@@ -418,6 +418,14 @@ class UserClient:
             {"$pull": {"roles": {"role": role}}},
         )
 
+    def has_guest_membership(self, netid: str) -> bool:
+        """Guest login requires membership in an active organization.
+
+        Historical guest grants lack provenance and cannot safely be deleted
+        on membership removal. They do not independently confer login access.
+        """
+        return self.db.organizations.find_one({"members.netid": netid, "deleted": False}, {"_id": 1}) is not None
+
     def has_role(self, netid: str, role: str) -> bool:
         """Check if the user has a specific role.
 

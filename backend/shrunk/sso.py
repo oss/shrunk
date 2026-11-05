@@ -42,7 +42,7 @@ def login(user_info: Any) -> Any:
     roles = client.users.get_user_roles(netid)
     is_whitelisted = any(role == "whitelisted" for role in roles)
     is_blacklisted = any(role == "blacklisted" for role in roles)
-    is_guest = any(role == "guest" for role in roles)
+    is_guest = "guest" in roles and client.users.has_guest_membership(netid)
     is_super_admin = os.getenv("SHRUNK_SUPER_ADMIN") == netid
 
     # now make decisions regarding whether the user can login, and what privs they should get
@@ -80,4 +80,5 @@ def login(user_info: Any) -> Any:
         extra={"event_type": "authentication", "action": "login", "actor": netid, "outcome": "success"},
     )
     session["user"] = user_info
+    session["guest_only"] = not (is_super_admin or fac_staff or is_whitelisted)
     return redirect("/app")

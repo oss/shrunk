@@ -1,3 +1,4 @@
+import { objectIdSegment, pathSegment } from '@/Shared/Lib/ApiPath';
 import base32 from 'hi-base32';
 import { Dayjs } from 'dayjs';
 import { api, suppressToastHeader } from '@/Shared/Lib/Http';
@@ -12,7 +13,7 @@ import {
 } from '@/Features/Links/Types';
 
 export async function getLink(linkId: string): Promise<Link> {
-  return api<Link>(`link/${linkId}`);
+  return api<Link>(`link/${objectIdSegment(linkId)}`);
 }
 
 /**
@@ -53,7 +54,7 @@ export async function createLink(
 }
 
 export async function deleteLink(linkId: string): Promise<void> {
-  await api(`link/${linkId}`, { method: 'DELETE' });
+  await api(`link/${objectIdSegment(linkId)}`, { method: 'DELETE' });
 }
 
 export async function deleteLinkBulk(linkIds: string[]): Promise<void> {
@@ -68,7 +69,7 @@ export async function addCollaborator(
   collaborator: LinkSharedWith,
   role: 'editor' | 'viewer',
 ): Promise<void> {
-  await api(`link/${linkId}/acl`, {
+  await api(`link/${objectIdSegment(linkId)}/acl`, {
     method: 'PATCH',
     body: {
       acl: `${role}s`,
@@ -90,13 +91,19 @@ export async function removeCollaborator(
   };
 
   if (role === 'viewer' || role === undefined) {
-    await api(`link/${linkId}/acl`, { method: 'PATCH', body: patchReq });
+    await api(`link/${objectIdSegment(linkId)}/acl`, {
+      method: 'PATCH',
+      body: patchReq,
+    });
   }
 
   patchReq.acl = 'editors';
 
   if (role === 'editor' || role === undefined) {
-    await api(`link/${linkId}/acl`, { method: 'PATCH', body: patchReq });
+    await api(`link/${objectIdSegment(linkId)}/acl`, {
+      method: 'PATCH',
+      body: patchReq,
+    });
   }
 }
 
@@ -150,12 +157,15 @@ export async function transferLink(
 }
 
 export async function reverLinkExpirationDate(linkId: string): Promise<void> {
-  await api(`link/${linkId}/revert`, { method: 'POST' });
+  await api(`link/${objectIdSegment(linkId)}/revert`, { method: 'POST' });
 }
 
 export async function isValidAlias(alias: string): Promise<boolean> {
+  if (typeof alias !== 'string' || !alias || alias.length > 256) {
+    throw new Error('Alias must contain between 1 and 256 characters');
+  }
   const data = await api<{ valid: boolean }>(
-    `link/validate_duplicate_alias/${base32.encode(alias)}`,
+    `link/validate_duplicate_alias/${pathSegment(base32.encode(alias))}`,
   );
   return data.valid;
 }
@@ -164,7 +174,7 @@ export async function getLinkStats(
   linkId: string,
   source?: string,
 ): Promise<OverallStats> {
-  return api<OverallStats>(`link/${linkId}/stats`, {
+  return api<OverallStats>(`link/${objectIdSegment(linkId)}/stats`, {
     query: source ? { source } : undefined,
   });
 }
@@ -176,7 +186,7 @@ export async function getLinkVisitsStats(
   end_date?: Dayjs,
 ): Promise<VisitStats> {
   // The endpoint defaults to one year from today if we don't set these
-  return api<VisitStats>(`link/${linkId}/stats/visits`, {
+  return api<VisitStats>(`link/${objectIdSegment(linkId)}/stats/visits`, {
     query: {
       ...(start_date ? { start_date: start_date.format() } : {}),
       ...(end_date ? { end_date: end_date.format() } : {}),
@@ -189,7 +199,7 @@ export async function getLinkGeoIpStats(
   linkId: string,
   source?: string,
 ): Promise<GeoipStats> {
-  return api<GeoipStats>(`link/${linkId}/stats/geoip`, {
+  return api<GeoipStats>(`link/${objectIdSegment(linkId)}/stats/geoip`, {
     query: source ? { source } : undefined,
   });
 }
@@ -198,7 +208,7 @@ export async function getLinkBrowserStats(
   linkId: string,
   source?: string,
 ): Promise<BrowserStats> {
-  return api<BrowserStats>(`link/${linkId}/stats/browser`, {
+  return api<BrowserStats>(`link/${objectIdSegment(linkId)}/stats/browser`, {
     query: source ? { source } : undefined,
   });
 }
@@ -207,7 +217,10 @@ export async function editLink(
   linkId: string,
   values: Partial<EditLinkValues>,
 ): Promise<void> {
-  await api(`link/${linkId}`, { method: 'PATCH', body: values });
+  await api(`link/${objectIdSegment(linkId)}`, {
+    method: 'PATCH',
+    body: values,
+  });
 }
 
 export async function searchLinks(
