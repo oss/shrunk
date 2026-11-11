@@ -39,7 +39,9 @@ def test_guest_removal_revokes_login_and_existing_session(
     )
     identity = {"netid": "former_guest", "employeeType": "GUEST", "twoFactorAuth": True}
     with app.test_request_context():
-        assert ext.login_callback(identity).status_code == 302
+        response = ext.login_callback(identity)
+        assert response.status_code == 302
+        assert response.location == "/app/"
         assert session["user"] == identity
     if delete_org:
         assert db.orgs.delete(org_id, "alice")

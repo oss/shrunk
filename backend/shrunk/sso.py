@@ -26,7 +26,7 @@ def login(user_info: Any) -> Any:
     netid: str = user_info.get("netid")
     twoFactorAuth = user_info.get("twoFactorAuth")
     if not twoFactorAuth and bool(int(os.getenv("SHRUNK_REQUIRE_2FA", "0"))):
-        return redirect("/app")
+        return redirect("/app/")
 
     def t(typ: str) -> bool:  # pylint: disable=invalid-name
         return typ in types
@@ -81,4 +81,4 @@ def login(user_info: Any) -> Any:
     )
     session["user"] = user_info
     session["guest_only"] = not (is_super_admin or fac_staff or is_whitelisted)
-    return redirect("/app")
+    return redirect("/app/")
